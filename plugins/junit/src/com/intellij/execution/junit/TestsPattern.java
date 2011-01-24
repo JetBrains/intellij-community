@@ -24,6 +24,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,6 +37,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 public class TestsPattern extends TestObject {
@@ -49,21 +52,31 @@ public class TestsPattern extends TestObject {
   protected void initialize() throws ExecutionException {
     super.initialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
-    JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                       myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
-
-    final Project project = module.getProject();
+    final Project project = myConfiguration.getProject();
     boolean isJUnit4 = false;
     final ArrayList<String> classNames = new ArrayList<String>();
+    final Set<Module> modules = new HashSet<Module>();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
       if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
         classNames.add(className);
+        modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
         if (JUnitUtil.isJUnit4TestClass(psiClass)) {
           isJUnit4 = true;
         }
       }
+    }
+    final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+
+    Module module = myConfiguration.getConfigurationModule().getModule();
+    if (module == null && modules.size() == 1 && modules.iterator().next() != null) {
+       module = modules.iterator().next();
+    }
+
+    if (module != null) {
+      JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+    } else {
+      JavaParametersUtil.configureProject(project, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
     addClassesListToJavaParameters(classNames, new Function.Self<String, String>(), "", true, isJUnit4);
   }
@@ -97,7 +110,7 @@ public class TestsPattern extends TestObject {
     if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning("No pattern selected");
     }
-    final GlobalSearchScope searchScope = data.getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myConfiguration.getProject());
     for (String pattern : patterns) {
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), pattern, searchScope);
       if (psiClass == null) {

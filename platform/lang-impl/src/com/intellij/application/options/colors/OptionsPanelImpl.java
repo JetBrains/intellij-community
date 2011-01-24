@@ -47,7 +47,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     mySchemesProvider = schemesProvider;
     myCategoryName = categoryName;
 
-    optionsPanel.addActionListener(new ActionListener(){
+    optionsPanel.setActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myDispatcher.getMulticaster().settingsChanged();
       }

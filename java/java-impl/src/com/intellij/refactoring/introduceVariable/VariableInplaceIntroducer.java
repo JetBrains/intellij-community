@@ -133,46 +133,52 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Override
   protected void moveOffsetAfter(boolean success) {
-    if (success) {
-      final Document document = myEditor.getDocument();
-      final PsiDeclarationStatement declarationStatement = myPointer.getElement();
-      final PsiVariable psiVariable = declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
-      if (psiVariable != null) {
-        JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-        FinalExpression.adjustLine(psiVariable, document);
-      }
-      int startOffset = myExprMarker.getStartOffset();
-      final PsiFile file = declarationStatement.getContainingFile();
-      final PsiReference referenceAt = file.findReferenceAt(startOffset);
-      if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
-        startOffset = referenceAt.getElement().getTextRange().getEndOffset();
-      }
-      else if (declarationStatement != null) {
-        startOffset = declarationStatement.getTextRange().getEndOffset();
-      }
-      myEditor.getCaretModel().moveToOffset(startOffset);
-      final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
-      if (selectedType != null) {
-        TypeSelectorManagerImpl.typeSelected(selectedType, myDefaultType);
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          appendTypeCasts(myOccurrenceMarkers, file, myProject, psiVariable);
+    try {
+      if (success) {
+        final Document document = myEditor.getDocument();
+        final PsiDeclarationStatement declarationStatement = myPointer.getElement();
+        if (declarationStatement == null) return;
+        final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+        final @Nullable PsiVariable psiVariable = declaredElements.length > 0 ? (PsiVariable)declaredElements[0] : null;
+        if (psiVariable != null) {
+          JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+          FinalExpression.adjustLine(psiVariable, document);
         }
-      });
+        int startOffset = myExprMarker.getStartOffset();
+        final PsiFile file = declarationStatement.getContainingFile();
+        final PsiReference referenceAt = file.findReferenceAt(startOffset);
+        if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
+          startOffset = referenceAt.getElement().getTextRange().getEndOffset();
+        }
+        else if (declarationStatement != null) {
+          startOffset = declarationStatement.getTextRange().getEndOffset();
+        }
+        myEditor.getCaretModel().moveToOffset(startOffset);
+        final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
+        if (selectedType != null) {
+          TypeSelectorManagerImpl.typeSelected(selectedType, myDefaultType);
+        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            appendTypeCasts(myOccurrenceMarkers, file, myProject, psiVariable);
+          }
+        });
+      }
     }
-    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
-    for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
-      occurrenceMarker.dispose();
+    finally {
+      myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
+      for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
+        occurrenceMarker.dispose();
+      }
+      myEditor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
+      myExprMarker.dispose();
     }
-    myEditor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
-    myExprMarker.dispose();
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
                                       PsiFile file,
                                       Project project,
-                                      PsiVariable psiVariable) {
+                                      @Nullable PsiVariable psiVariable) {
     for (RangeMarker occurrenceMarker : occurrenceMarkers) {
       final PsiElement refVariableElement = file.findElementAt(occurrenceMarker.getStartOffset());
       final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);

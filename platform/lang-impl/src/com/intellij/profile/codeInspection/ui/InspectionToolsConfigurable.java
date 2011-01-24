@@ -56,6 +56,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -161,6 +162,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           profile.readExternal(rootElement);
           profile.setLocal(true);
           profile.initInspectionTools();
+          profile.setModified(true);
           if (myPanels.get(profile.getName()) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
@@ -245,6 +247,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return "preferences.inspections";
   }
 
+  @NotNull
   public String getId() {
     return ID;
   }

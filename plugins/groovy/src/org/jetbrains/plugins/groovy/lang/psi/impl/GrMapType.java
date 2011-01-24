@@ -80,7 +80,7 @@ public class GrMapType extends GrLiteralClassType {
   public PsiType[] getAllKeyTypes() {
     Set<PsiType> result = new HashSet<PsiType>();
     if (!myStringEntries.isEmpty()) {
-      result.add(PsiType.getJavaLangString(getPsiManager(), getResolveScope()));
+      result.add(GroovyPsiManager.getInstance(getPsiManager().getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
     for (Pair<PsiType, PsiType> entry : myOtherEntries) {
       result.add(entry.first);

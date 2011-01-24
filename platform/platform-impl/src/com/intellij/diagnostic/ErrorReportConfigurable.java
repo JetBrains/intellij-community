@@ -15,7 +15,7 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,7 +32,7 @@ import org.jdom.Element;
  * Time: 8:59:04 PM
  * To change this template use Options | File Templates.
  */
-public class ErrorReportConfigurable implements JDOMExternalizable, ApplicationComponent {
+public class ErrorReportConfigurable implements JDOMExternalizable, NamedComponent {
   public String ITN_LOGIN = "";
   public String ITN_PASSWORD_CRYPT = "";
   public boolean KEEP_ITN_PASSWORD = false;
@@ -57,13 +58,9 @@ public class ErrorReportConfigurable implements JDOMExternalizable, ApplicationC
     ITN_PASSWORD_CRYPT = itnPassword;
   }
 
+  @NotNull
   public String getComponentName() {
     return "ErrorReportConfigurable";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public String getPlainItnPassword () {

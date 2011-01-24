@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -281,6 +282,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     return false;
   }
 
+  @NotNull
   public String getId() {
     return "preferences.sourceCode";
   }
@@ -367,6 +369,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     }
 
+    @NotNull
     public String getId() {
       return "preferences.sourceCode." + getDisplayName();
     }

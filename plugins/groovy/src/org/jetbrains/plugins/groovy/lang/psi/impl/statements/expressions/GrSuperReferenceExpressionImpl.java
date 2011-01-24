@@ -17,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
@@ -46,8 +48,7 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
         }
       }
       else if (context instanceof GroovyFileBase) {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory()
-          .createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, getResolveScope());
+        return GrClassImplUtil.getGroovyObjectType(this);
       }
 
     }

@@ -509,6 +509,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
   
   public boolean JD_PRESERVE_LINE_FEEDS = false;
+  public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE = false;
 
   // ---------------------------------------------------------------------------------------
 

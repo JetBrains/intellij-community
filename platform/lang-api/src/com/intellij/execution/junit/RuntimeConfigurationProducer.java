@@ -111,7 +111,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, @Nullable final ConfigurationContext context) {
-    assert isClone;
     if (context != null) {
       final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null){

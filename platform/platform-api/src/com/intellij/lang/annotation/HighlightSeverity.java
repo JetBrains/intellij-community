@@ -53,7 +53,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
 
 
-  public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK_WARNING", 200);
+  public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK WARNING", 200);
 
   /**
    * The standard severity level for warning annotations.

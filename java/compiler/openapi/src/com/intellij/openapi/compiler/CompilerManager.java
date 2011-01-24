@@ -155,27 +155,24 @@ public abstract class CompilerManager {
    * @param files             a list of files to compile. If a VirtualFile is a directory, all containing files are processed.
    *                          Compiler excludes are not honored.
    * @param callback          a notification callback, or null if no notifications needed.
-   * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable CompileStatusNotification callback, boolean trackDependencies);
+  public abstract void compile(@NotNull VirtualFile[] files, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all sources (including test sources) from the module. Compiler excludes are not honored.
    *
    * @param module            a module which sources are to be compiled
    * @param callback          a notification callback, or null if no notifications needed
-   * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(@NotNull Module module, @Nullable CompileStatusNotification callback, final boolean trackDependencies);
+  public abstract void compile(@NotNull Module module, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all files from the scope given.  Compiler excludes are not honored.
    *
    * @param scope             a scope to be compiled
    * @param callback          a notification callback, or null if no notifications needed
-   * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(@NotNull CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies);
+  public abstract void compile(@NotNull CompileScope scope, CompileStatusNotification callback);
 
   /**
    * Compile all modified files and all files that depend on them all over the project.

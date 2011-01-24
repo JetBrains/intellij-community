@@ -221,7 +221,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {
     node.setObsolete();
-    List<XValueContainerNode<?>> loadedChildren = node.getLoadedChildren();
+    List<? extends XValueContainerNode<?>> loadedChildren = node.getLoadedChildren();
     if (loadedChildren != null) {
       for (XValueContainerNode<?> child : loadedChildren) {
         markNodesObsolete(child);

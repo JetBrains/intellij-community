@@ -28,10 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -1126,24 +1123,6 @@ public class ExpectedTypesProvider {
       return codeStyleManager.variableNameToPropertyName(name, variableKind);
     }
 
-    private static void addBaseType(Set<ExpectedTypeInfo> types, PsiClassType type, PsiMethod method) {
-      PsiType[] supers = type.getSuperTypes();
-      boolean addedSuper = false;
-      for (PsiType aSuper : supers) {
-        PsiClassType superType = (PsiClassType)aSuper;
-        PsiClass superClass = superType.resolve();
-        if (superClass != null) {
-          if (superClass.findMethodBySignature(method, false) != null) {
-            addBaseType(types, superType, method);
-            addedSuper = true;
-          }
-        }
-      }
-      if (!addedSuper) {
-        types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.DOT));
-      }
-    }
-
     private ExpectedTypeInfo[] anyArrayType() {
       PsiType objType = PsiType.getJavaLangObject(myExpr.getManager(), myExpr.getResolveScope()).createArrayType();
       ExpectedTypeInfo info = createInfoImpl(objType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objType,
@@ -1174,9 +1153,8 @@ public class ExpectedTypesProvider {
             method.hasModifierProperty(PsiModifier.FINAL) ||
             method.hasModifierProperty(PsiModifier.PRIVATE)) {
           types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.DOT));
-        }
-        else {
-          addBaseType(types, type, method);
+        } else if (method.findSuperMethods().length == 0) {
+          types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.DOT));
         }
       }
 

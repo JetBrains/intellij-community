@@ -237,4 +237,6 @@ public interface IdeActions {
   @NonNls String ACTION_SHOW_ERROR_DESCRIPTION = "ShowErrorDescription";
 
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
+
+  @NonNls String GROUP_EDITOR_GUTTER = "EditorGutterPopupMenu";
 }

@@ -220,7 +220,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
     CollectionListModel listModel = new CollectionListModel(new ArrayList());
     for (TaskRepository repository : myManager.getAllRepositories()) {
       TaskRepository clone = repository.clone();
-      assert clone.equals(repository);
+      assert clone.equals(repository) : repository.getClass().getName();
       myRepositories.add(clone);
       listModel.add(clone);
     }

@@ -105,9 +105,6 @@
     <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
                         serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.template.ZenCodingSettings"
-                          serviceImplementation="com.intellij.codeInsight.template.ZenCodingSettings"/>
-
     <exportable serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
     <applicationService serviceInterface="com.intellij.application.options.XmlSettings"

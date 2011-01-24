@@ -24,6 +24,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -119,6 +120,11 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
+
+  @TestOnly
+  public static void clearCacheForTests() {
+    ourEnumerationCache.clear();
+  }
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})

@@ -124,7 +124,9 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
     try {
-      String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
+      final String quoteChar = getTextLength() > 0 ? getText().substring(0, 1) : "";
+      String contents = StringUtil.containsAnyChar(quoteChar, "'\"") ?
+              StringUtil.trimEnd(StringUtil.trimStart(text, quoteChar), quoteChar) : text;
       XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("q", contents);
       XmlAttributeValue newValue = newAttribute.getValueElement();
 

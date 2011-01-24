@@ -125,6 +125,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return button;
   }
 
+  public String getExpression() {
+    return myInputComponent.getInputEditor().getText();
+  }
+
   private static String getSwitchButtonText(EvaluationDialogMode mode) {
     return mode != EvaluationDialogMode.EXPRESSION
            ? XDebuggerBundle.message("button.text.expression.mode")

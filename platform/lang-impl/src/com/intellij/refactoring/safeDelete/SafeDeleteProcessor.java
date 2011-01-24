@@ -93,6 +93,12 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    if (ancestor instanceof PsiFile) {
+      for (PsiFile file : ((PsiFile)ancestor).getViewProvider().getAllFiles()) {
+        if (PsiTreeUtil.isAncestor(file, place, false)) return true;
+      }
+    }
+
     return PsiTreeUtil.isAncestor(ancestor, place, false);
   }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -94,6 +95,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     return ICON;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }
@@ -153,6 +155,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
         return result.toArray(new Configurable[result.size()]);
       }
 
+      @NotNull
       public String getId() {
         return "project.propVCSSupport.vcses";
       }
@@ -209,6 +212,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
         delegate.disposeUIResources();
       }
 
+      @NotNull
       public String getId() {
         return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).getId() : getHelpTopic();
       }

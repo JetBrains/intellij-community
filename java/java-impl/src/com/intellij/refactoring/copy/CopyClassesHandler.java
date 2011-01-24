@@ -163,6 +163,9 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
       for (PsiClass aClass : psiClasses) {
+        if (aClass instanceof SyntheticElement) {
+          continue;
+        }
         oldToNewMap.put(aClass, null);
       }
     }

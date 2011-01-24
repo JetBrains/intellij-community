@@ -59,6 +59,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -179,7 +180,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
-      assert fromVFile != null: "can't find testdata file " + sourceFilePath;
+      assert fromVFile != null : "can't find testdata file " + sourceFilePath;
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
@@ -203,8 +204,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath)  {
-    assert getTestDataPath() != null: "test data path not specified";
+  public VirtualFile copyDirectoryToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
+    assert getTestDataPath() != null : "test data path not specified";
     final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
@@ -244,7 +245,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(final Class<? extends LocalInspectionTool>... inspections) {
     final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
-    for (Class clazz: inspections) {
+    for (Class clazz : inspections) {
       try {
         LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
         tools.add(inspection);
@@ -263,7 +264,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final ArrayList<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
     for (Iterator<InspectionProfileEntry> i = tools.iterator(); i.hasNext();) {
       final InspectionProfileEntry tool = i.next();
-      for (InspectionProfileEntry toRemove: inspections) {
+      for (InspectionProfileEntry toRemove : inspections) {
         if (tool.getShortName().equals(toRemove.getShortName())) {
           i.remove();
           break;
@@ -277,8 +278,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(InspectionToolProvider... providers) {
     final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
-    for (InspectionToolProvider provider: providers) {
-      for (Class clazz: provider.getInspectionClasses()) {
+    for (InspectionToolProvider provider : providers) {
+      for (Class clazz : provider.getInspectionClasses()) {
         try {
           Object o = clazz.getConstructor().newInstance();
           if (o instanceof LocalInspectionTool) {
@@ -327,26 +328,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public long testHighlightingAllFiles(final boolean checkWarnings,
-                               final boolean checkInfos,
-                               final boolean checkWeakWarnings,
-                               @NonNls final VirtualFile... files) {
+                                       final boolean checkInfos,
+                                       final boolean checkWeakWarnings,
+                                       @NonNls final VirtualFile... files) {
     final Ref<Long> duration = new Ref<Long>();
     collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration, files);
     return duration.get().longValue();
   }
 
-  private void collectAndCheckHighlightings(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final Ref<Long> duration,
+  private void collectAndCheckHighlightings(final boolean checkWarnings,
+                                            final boolean checkInfos,
+                                            final boolean checkWeakWarnings,
+                                            final Ref<Long> duration,
                                             final VirtualFile[] files) {
-    final List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> datas = ContainerUtil.map2List(files, new Function<VirtualFile, Trinity<PsiFile, Editor, ExpectedHighlightingData>>() {
-      @Override
-      public Trinity<PsiFile, Editor, ExpectedHighlightingData> fun(final VirtualFile file) {
-        final PsiFile psiFile = myPsiManager.findFile(file);
-        assertNotNull(psiFile);
-        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-        assertNotNull(document);
-        return Trinity.create(psiFile, createEditor(file), new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile));
-      }
-    });
+    final List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> datas =
+      ContainerUtil.map2List(files, new Function<VirtualFile, Trinity<PsiFile, Editor, ExpectedHighlightingData>>() {
+        @Override
+        public Trinity<PsiFile, Editor, ExpectedHighlightingData> fun(final VirtualFile file) {
+          final PsiFile psiFile = myPsiManager.findFile(file);
+          assertNotNull(psiFile);
+          final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+          assertNotNull(document);
+          return Trinity.create(psiFile, createEditor(file),
+                                new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile));
+        }
+      });
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
       myEditor = trinity.second;
       myFile = trinity.first;
@@ -377,7 +383,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public long testHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final VirtualFile file) {
+  public long testHighlighting(final boolean checkWarnings,
+                               final boolean checkInfos,
+                               final boolean checkWeakWarnings,
+                               final VirtualFile file) {
     final Ref<Long> duration = new Ref<Long>();
     openFileInEditor(file);
     try {
@@ -399,8 +408,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
     AnalysisScope scope = new AnalysisScope(getPsiManager().findDirectory(sourceDir));
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(getProject());
-    final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(!(myProjectFixture instanceof LightIdeaTestFixture));
+    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    final GlobalInspectionContextImpl globalContext =
+      inspectionManager.createNewGlobalContext(!(myProjectFixture instanceof LightIdeaTestFixture));
     globalContext.setCurrentScope(scope);
     scope.invalidate();
 
@@ -419,7 +429,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public PsiReference getReferenceAtCaretPositionWithAssertion(final String... filePaths) {
     final PsiReference reference = getReferenceAtCaretPosition(filePaths);
-    assert reference != null: "no reference found at " + myEditor.getCaretModel().getLogicalPosition();
+    assert reference != null : "no reference found at " + myEditor.getCaretModel().getLogicalPosition();
     return reference;
   }
 
@@ -492,7 +502,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
       }
     }.execute().throwException();
-
   }
 
   @Override
@@ -562,8 +571,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiElement getElementAtCaret() {
     assertInitialized();
     final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(),
-        TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
+                                                                       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+                                                                       TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assert element != null : "element not found in file " +
+                             myFile.getName() +
+                             " at caret position, offset " +
+                             myEditor.getCaretModel().getOffset();
     return element;
   }
 
@@ -581,23 +594,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void renameElement(final PsiElement element,
-                             final String newName,
-                             final boolean searchInComments,
-                             final boolean searchTextOccurrences) {
+                            final String newName,
+                            final boolean searchInComments,
+                            final boolean searchTextOccurrences) {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       @Override
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
         if (substitution == null) return;
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
-     }
+      }
     }.execute().throwException();
   }
 
   @Override
   public <T extends PsiElement> T findElementByText(String text, Class<T> elementClass) {
     int pos = PsiDocumentManager.getInstance(getProject()).getDocument(getFile()).getText().indexOf(text);
-    assert pos >= 0: "text not found in file";
+    assert pos >= 0 : "text not found in file";
     return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
@@ -608,7 +621,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       protected void run(Result result) throws Exception {
         EditorActionManager actionManager = EditorActionManager.getInstance();
-        final DataContext dataContext = DataManager.getInstance().getDataContext();
         if (c == '\b') {
           performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
           return;
@@ -630,9 +642,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         }
 
-        actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+        actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
       }
     }.execute();
+  }
+
+  private DataContext getEditorDataContext() {
+    return ((EditorEx)myEditor).getDataContext();
   }
 
   @Override
@@ -649,7 +665,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private boolean _performEditorAction(String actionId) {
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    final DataContext dataContext = getEditorDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler handler = actionManager.getActionHandler(actionId);
     if (!handler.isEnabled(myEditor, dataContext)) {
@@ -684,7 +700,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<UsageInfo> findUsages(@NotNull final PsiElement targetElement) {
     final Project project = getProject();
-    final FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
+    final FindUsagesHandler handler =
+      ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     assert handler != null : "Cannot find handler for: " + targetElement;
@@ -718,11 +735,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         final VirtualFile file = findFileInTempDir(to);
         assert file.isDirectory() : to + " is not a directory";
         final PsiDirectory directory = myPsiManager.findDirectory(file);
-        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[] {myFile}, directory,
+        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{myFile}, directory,
                                             false, false, null, null).run();
       }
     }.execute().throwException();
-
   }
 
   @Override
@@ -734,7 +750,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     int offset = myEditor.getCaretModel().getOffset();
 
     final Collection<HighlightInfo> infos = doHighlighting();
-    for (HighlightInfo info :infos) {
+    for (HighlightInfo info : infos) {
       if (info.endOffset >= offset && info.startOffset <= offset) {
         final GutterIconRenderer renderer = info.getGutterIconRenderer();
         if (renderer != null) {
@@ -763,6 +779,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     return ContainerUtil.concat(result.values());
   }
+
   private static void addGutterIconRenderer(final GutterIconRenderer renderer,
                                             final int offset,
                                             SortedMap<Integer, List<GutterIconRenderer>> result) {
@@ -947,10 +964,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(getProject());
   }
 
-  private void enableInspectionTool(InspectionProfileEntry tool){
+  private void enableInspectionTool(InspectionProfileEntry tool) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null){
+    if (key == null) {
       String id = tool instanceof LocalInspectionTool ? ((LocalInspectionTool)tool).getID() : shortName;
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), id);
     }
@@ -1040,9 +1057,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       editorManager.closeFile(openFile);
     }
 
-    myProjectFixture.tearDown();
-    myTempDirFixture.tearDown();
-
     myEditor = null;
     myFile = null;
     myPsiManager = null;
@@ -1050,6 +1064,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAvailableLocalTools.clear();
     myAvailableTools.clear();
     myFileContext = null;
+
+    myProjectFixture.tearDown();
+    myTempDirFixture.tearDown();
 
     super.tearDown();
   }
@@ -1095,7 +1112,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(final String fileName, @NonNls final String text) {
     assertInitialized();
-    new WriteCommandAction(getProject()){
+    new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
         final VirtualFile vFile;
@@ -1104,7 +1121,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           root.refresh(false, false);
           vFile = root.findOrCreateChildData(this, fileName);
         }
-        else{
+        else {
           String prefix = StringUtil.getPackageName(fileName);
           if (prefix.length() < 3) {
             prefix += "___";
@@ -1132,7 +1149,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   /**
-   *
    * @param filePath
    * @throws IOException
    */
@@ -1143,7 +1159,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public PsiFile configureFromTempProjectFile(final String filePath)  {
+  public PsiFile configureFromTempProjectFile(final String filePath) {
     return configureByFileInner(findFileInTempDir(filePath));
   }
 
@@ -1223,7 +1239,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private void collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
     throws Exception {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+    ExpectedHighlightingData data =
+      new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
 
     collectAndCheckHighlightings(data, duration);
   }
@@ -1246,7 +1263,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       infos = doHighlighting();
       removeDuplicatedRangesForInjected(infos);
       final long elapsed = System.currentTimeMillis() - start;
-      duration.set(duration.isNull()? elapsed : duration.get().longValue() + elapsed);
+      duration.set(duration.isNull() ? elapsed : duration.get().longValue() + elapsed);
 //    ProfilingUtil.captureCPUSnapshot("testing");
     }
     finally {
@@ -1292,21 +1309,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
     return
-    ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
-      @Override
-      public List<HighlightInfo> compute() {
-        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
-      }
-    });
+      ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
+        @Override
+        public List<HighlightInfo> compute() {
+          return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
+        }
+      });
   }
 
   @NotNull
-  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file, @NotNull Editor editor, @NotNull int[] toIgnore, boolean canChangeDocument) {
+  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
+                                                      @NotNull Editor editor,
+                                                      @NotNull int[] toIgnore,
+                                                      boolean canChangeDocument) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument,null);
+    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
   }
 
   public static void ensureIndexesUpToDate(Project project) {
@@ -1404,8 +1424,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker selEndMarker;
 
     static SelectionAndCaretMarkupLoader fromFile(String path, Project project) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(path)))), project);
+      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(path)))),
+                                               project);
     }
+
     static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) {
       final String text;
       try {
@@ -1449,8 +1471,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       newFileText = document.getText();
     }
-
   }
+
   private void checkResultByFile(@NonNls String expectedFile,
                                  @NotNull PsiFile originalFile,
                                  boolean stripTrailingSpaces) throws IOException {
@@ -1458,7 +1480,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
+    checkResult(expectedFile, stripTrailingSpaces,
+                SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
   }
 
   private void checkResult(final String expectedFile,
@@ -1490,7 +1513,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText,
                                                  StringUtil.lineColToOffset(loader.newFileText, caretLine, 0),
                                                  loader.caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
+                                                 CodeStyleSettingsManager.getSettings(getProject())
+                                                   .getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
       Assert.assertEquals("caretLine in " + expectedFile, caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
       Assert.assertEquals("caretColumn in " + expectedFile, caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
@@ -1507,7 +1531,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                           StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
       Assert.assertEquals("selectionStartCol in " + expectedFile, selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
-                                                                StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1);
+                                                                                   StringUtil
+                                                                                     .lineColToOffset(loader.newFileText, selStartLine, 0) +
+                                                                                   1);
 
       Assert.assertEquals("selectionEndLine in " + expectedFile, selEndLine + 1,
                           StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
@@ -1570,6 +1596,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return getOffset() < o.getOffset() ? 1 : -1;
     }
   }
+
   private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
                                        boolean doCheckCollapseStatus) {
     configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
@@ -1588,8 +1615,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
       result.insert(border.getOffset(), border.isSide() == Border.LEFT ? ("<fold text=\'" + border.getText() + "\'" +
-             (doCheckCollapseStatus ? (" expand=\'" + border.isExpanded() + "\'") : "") +
-                                  ">") : END_FOLD);
+                                                                          (doCheckCollapseStatus ? (" expand=\'" +
+                                                                                                    border.isExpanded() +
+                                                                                                    "\'") : "") +
+                                                                          ">") : END_FOLD);
     }
 
     return result.toString();

@@ -16,6 +16,9 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.psi.PsiFileSystemItem;
+
 import javax.swing.tree.TreeNode;
 
 /**
@@ -24,5 +27,6 @@ import javax.swing.tree.TreeNode;
 public interface DropTargetNode {
   boolean canDrop(TreeNode[] sourceNodes);
 
-  void drop(TreeNode[] sourceNodes);
+  void drop(TreeNode[] sourceNodes, DataContext dataContext);
+  void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext);
 }

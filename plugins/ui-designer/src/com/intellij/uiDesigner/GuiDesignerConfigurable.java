@@ -216,6 +216,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

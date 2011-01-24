@@ -1,8 +1,7 @@
 package com.intellij.refactoring;
 
-import junit.textui.TestRunner;
 import junit.framework.TestSuite;
-import com.intellij.TestAll;
+import junit.textui.TestRunner;
 
 /**
  *  @author dsl

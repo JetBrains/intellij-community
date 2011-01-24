@@ -170,9 +170,9 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
           public void run() {
             try {
               PsiFile firstFile = null;
-
+              final int[] choice = elements.length > 1 ? new int[]{-1} : null;
               for (PsiElement element : elements) {
-                PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory);
+                PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory, choice);
                 if (firstFile == null) {
                   firstFile = f;
                 }
@@ -220,17 +220,39 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
    * @return first copied PsiFile (recursivly); null if no PsiFiles copied
    */
   @Nullable
-  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy, @Nullable String newName, @NotNull PsiDirectory targetDirectory)
+  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
+                                        @Nullable String newName,
+                                        @NotNull PsiDirectory targetDirectory)
+    throws IncorrectOperationException, IOException {
+    return copyToDirectory(elementToCopy, newName, targetDirectory, null);
+  }
+
+  /**
+   *
+   * @param elementToCopy PsiFile or PsiDirectory
+   * @param newName can be not null only if elements.length == 1
+   * @param choice
+   * @return first copied PsiFile (recursivly); null if no PsiFiles copied
+   */
+  @Nullable
+  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
+                                        @Nullable String newName,
+                                        @NotNull PsiDirectory targetDirectory, int[] choice)
     throws IncorrectOperationException, IOException {
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
       final PsiFile existing = targetDirectory.findFile(name);
       if (existing!=null) {
-        final int selection = Messages.showDialog(
+        final int selection = choice == null || choice[0] == -1 ? Messages.showDialog(
                 String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath()),
                 "Copy",
-                new String[]{"Overwrite", "Skip"}, 0, Messages.getQuestionIcon());
+                choice == null ? new String[]{"Overwrite", "Skip"}
+                               : new String[]{"Overwrite", "Skip", "Overwrite for all", "Skip for all"}, 0, Messages.getQuestionIcon())
+                                             : choice[0];
+        if (choice != null && selection > 1) {
+          choice[0] = selection % 2;
+        }
         if (selection == 0 && file != existing) {
           existing.delete();
         } else return null;
@@ -255,7 +277,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       PsiElement[] children = directory.getChildren();
       for (PsiElement child : children) {
         PsiFileSystemItem item = (PsiFileSystemItem)child;
-        PsiFile f = copyToDirectory(item, item.getName(), subdirectory);
+        PsiFile f = copyToDirectory(item, item.getName(), subdirectory, choice);
         if (firstFile == null) {
           firstFile = f;
         }

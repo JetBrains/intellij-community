@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class CvsApplicationLevelConfiguration implements ApplicationComponent, JDOMExternalizable, RoamingTypeDisabled {
+public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExternalizable, RoamingTypeDisabled {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 
@@ -72,14 +72,9 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
     return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CvsApplicationLevelConfiguration";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-
   }
 
   public void readExternal(Element element) throws InvalidDataException {

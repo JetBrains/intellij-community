@@ -530,6 +530,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return null;
   }
 
+  @NotNull
   @NonNls
   public String getId() {
     return "project.structure";

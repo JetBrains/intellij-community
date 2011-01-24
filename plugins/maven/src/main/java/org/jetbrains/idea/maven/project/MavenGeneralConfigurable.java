@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
@@ -183,6 +184,7 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     return "reference.settings.dialog.project.maven";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

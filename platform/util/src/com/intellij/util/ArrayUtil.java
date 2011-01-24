@@ -50,6 +50,7 @@ public class ArrayUtil {
       return newStringArray(count);
     }
   };
+  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
 
   @NotNull
   public static byte[] realloc(@NotNull byte[] array, final int newSize) {

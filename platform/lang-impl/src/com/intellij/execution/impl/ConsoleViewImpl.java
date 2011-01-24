@@ -929,7 +929,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       public void mouseReleased(final EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
-        if (!mouseEvent.isPopupTrigger()) {
+        if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
           navigate(e);
         }
       }
@@ -938,7 +938,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final MouseEvent mouseEvent = event.getMouseEvent();
-        popupInvoked(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        popupInvoked(mouseEvent);
       }
     });
 
@@ -1110,15 +1110,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     action.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), editor.getContentComponent());
   }
 
-  private void popupInvoked(final Component component, final int x, final int y) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new ClearAllAction());
-    group.add(new CopyAction());
-    group.addSeparator();
+  private void popupInvoked(MouseEvent mouseEvent) {
     final ActionManager actionManager = ActionManager.getInstance();
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
-                                                                     (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU));
-    menu.getComponent().show(component, x, y);
+    final HyperlinkInfo info = getHyperlinkInfoByPoint(mouseEvent.getPoint());
+    ActionGroup group = null;
+    if (info instanceof HyperlinkWithPopupMenuInfo) {
+      group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(mouseEvent);
+    }
+    if (group == null) {
+      group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
+    }
+    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
   }
 
   private void navigate(final EditorMouseEvent event) {

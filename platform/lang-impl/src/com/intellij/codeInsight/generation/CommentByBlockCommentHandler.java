@@ -329,8 +329,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
     }
 
-    Language lang = lineStartLanguage == null || LanguageCommenters.INSTANCE.forLanguage(lineStartLanguage) == null
-                    ? file.getLanguage()
+    final Language fileLanguage = file.getLanguage();
+    Language lang = lineStartLanguage == null || LanguageCommenters.INSTANCE.forLanguage(lineStartLanguage) == null ||
+                    fileLanguage.getBaseLanguage() == lineStartLanguage // file language is a more specific dialect of the line language
+                    ? fileLanguage
                     : lineStartLanguage;
 
     if (viewProvider instanceof TemplateLanguageFileViewProvider &&

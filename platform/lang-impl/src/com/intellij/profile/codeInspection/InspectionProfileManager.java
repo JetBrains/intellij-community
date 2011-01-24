@@ -24,7 +24,8 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider, ExportableApplicationComponent, JDOMExternalizable {
+public class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider, ExportableComponent, JDOMExternalizable,
+                                                                                   NamedComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private final InspectionToolRegistrar myRegistrar;
@@ -120,12 +122,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   private static InspectionProfileImpl createSampleProfile() {
     return new InspectionProfileImpl("Default");
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   @NotNull
@@ -227,7 +223,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   public String getComponentName() {
     return "InspectionProfileManager";
   }
-
 
   public void updateProfile(Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
@@ -362,8 +357,5 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       InspectionProjectProfileManager.getInstance(project).updateStatusBar();
 
     }
-
-
-
   }
 }

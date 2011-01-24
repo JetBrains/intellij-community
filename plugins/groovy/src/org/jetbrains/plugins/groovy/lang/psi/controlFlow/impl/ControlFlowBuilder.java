@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -247,8 +248,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (assertion != null) {
       assertion.accept(this);
       final InstructionImpl assertInstruction = startNode(assertStatement);
-      final PsiType type = JavaPsiFacade.getInstance(assertStatement.getProject()).getElementFactory()
-        .createTypeByFQClassName("java.lang.AssertionError", assertStatement.getResolveScope());
+      final PsiType type = TypesUtil.createTypeByFQClassName("java.lang.AssertionError", assertStatement);
       ExceptionInfo info = findCatch(type);
       if (info != null) {
         info.myThrowers.add(assertInstruction);

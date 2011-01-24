@@ -29,6 +29,7 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -189,6 +190,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     return AbstractConfigurableEP.createConfigurables(EP_NAME);
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.appearance";
   }

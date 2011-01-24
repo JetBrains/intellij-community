@@ -37,7 +37,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), this);
+    DefaultInsertHandler.addImportForItem(context, this);
     super.handleInsert(context);
   }
 

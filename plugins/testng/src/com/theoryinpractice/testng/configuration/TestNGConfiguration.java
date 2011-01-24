@@ -293,15 +293,9 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
     else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
       try {
-        FileInputStream in = new FileInputStream(data.getSuiteName());
-        try {
-          final Parser parser = new Parser(in);
-          parser.setLoadClasses(false);
-          parser.parse();//try to parse suite.xml
-        }
-        finally {
-          in.close();
-        }
+        final Parser parser = new Parser(data.getSuiteName());
+        parser.setLoadClasses(false);
+        parser.parse();//try to parse suite.xml
       }
       catch (Exception e) {
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");

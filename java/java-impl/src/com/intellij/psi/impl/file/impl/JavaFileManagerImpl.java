@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vcs.ComparableComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -35,6 +36,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class JavaFileManagerImpl implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
@@ -172,8 +175,24 @@ public class JavaFileManagerImpl implements JavaFileManager {
     return true;
   }
 
+  /*
+  private static ConcurrentMap<String, Integer> ourStats = new ConcurrentHashMap<String, Integer>();
+
+  public static void printStats() {
+    TreeMap<Integer, List<String>> map = new TreeMap<Integer, List<String>>(new ComparableComparator.Descending<Integer>());
+    for (Map.Entry<String, Integer> entry : ourStats.entrySet()) {
+      ContainerUtil.getOrCreate(map, entry.getValue(), new ArrayList<String>()).add(entry.getKey());
+    }
+    for (Map.Entry<Integer, List<String>> entry : map.entrySet()) {
+      System.out.println(entry.getKey() + ": " + entry.getValue());
+    }
+  }
+  */
+
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+    //ourStats.put(qName, ConcurrencyUtil.cacheOrGet(ourStats, qName, 0) + 1);
+
     if (!myUseRepository) {
       return findClassWithoutRepository(qName);
     }

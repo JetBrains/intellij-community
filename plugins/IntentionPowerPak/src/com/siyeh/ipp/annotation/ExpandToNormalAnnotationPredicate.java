@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.annotation;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExpandToNormalAnnotationPredicate implements PsiElementPredicate {
@@ -38,6 +35,10 @@ class ExpandToNormalAnnotationPredicate implements PsiElementPredicate {
             return false;
         }
         final PsiNameValuePair attribute = attributes[0];
+        final PsiAnnotationMemberValue value = attribute.getValue();
+        if (value == null) {
+            return false;
+        }
         final String name = attribute.getName();
         return name == null;
     }

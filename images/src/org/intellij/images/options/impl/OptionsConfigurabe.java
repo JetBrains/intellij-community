@@ -24,6 +24,7 @@ import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -100,6 +101,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
       util.editConfigurable(project, new OptionsConfigurabe());
     }
 
+  @NotNull
   @NonNls
   public String getId() {
     return "Images";

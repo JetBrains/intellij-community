@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.ui.experts.importToCvs.FileExtension;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
@@ -27,8 +26,7 @@ import java.util.List;
  * author: lesya
  */
 
-public class ImportConfiguration extends AbstractConfiguration implements ApplicationComponent{
-
+public class ImportConfiguration extends AbstractConfiguration {
   public String VENDOR;
   public String RELEASE_TAG;
   public String LOG_MESSAGE;

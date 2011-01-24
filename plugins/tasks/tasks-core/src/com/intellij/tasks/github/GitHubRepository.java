@@ -102,6 +102,11 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return taskList.toArray(new Task[taskList.size()]);
   }
 
+  @Override
+  public String getUrl() {
+    return GITHUB_HOST;
+  }
+
   private List getIssues(String query) throws Exception {
     String url;
     if (!StringUtil.isEmpty(query)) {

@@ -316,10 +316,11 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       myWarnings.clear();
     }
     else {
-      getTableModel().setItems(new ArrayList<Item>(items));
+      myWarnings.clear();
       for (Item item : items) {
         myWarnings.add(null);
       }
+      getTableModel().setItems(new ArrayList<Item>(items));
     }
     updateButtons();
   }

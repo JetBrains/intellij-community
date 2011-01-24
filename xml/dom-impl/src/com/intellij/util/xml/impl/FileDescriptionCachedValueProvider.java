@@ -31,6 +31,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -67,20 +68,27 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    _computeFileElement(false, getRootTag(), null);
-    myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
-    myComputed = true;
-    return myLastResult;
+    DomFileElementImpl<T> result = _computeFileElement(false, getRootTag(), null);
+
+    synchronized (myCondition) {
+      if (myComputed) return myLastResult;
+
+      myLastResult = result;
+      WeakReference<DomFileElementImpl> ref = result != null ? new WeakReference<DomFileElementImpl>(result) : null;
+      myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, ref);
+      myComputed = true;
+      return result;
+    }
   }
 
-  private void _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
+  @Nullable
+  private DomFileElementImpl<T> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
     if (sb != null) {
       sb.append(rootTagName).append("\n");
     }
 
     if (!myXmlFile.isValid()) {
-      myLastResult = null;
-      return;
+      return null;
     }
     if (sb != null) {
       sb.append("File is valid\n");
@@ -100,28 +108,27 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     }
 
     if (description == null) {
-      myLastResult = null;
-      return;
+      return null;
     }
 
     final Class<T> rootElementClass = description.getRootElementClass();
     final XmlName xmlName = DomImplUtil.createXmlName(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
     final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
-    myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
+    DomFileElementImpl<T> result = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
     if (sb != null) {
-      sb.append("success " + myLastResult + "\n");
+      sb.append("success " + result + "\n");
     }
 
     if (fireEvents) {
-      final DomElement element = myLastResult;
-      events.add(new DomEvent(element, true));
+      events.add(new DomEvent(result, true));
     }
+    return result;
   }
 
   @Nullable
   private DomFileDescription<T> findFileDescription(final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
-    final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
+    final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
     if (sb != null) {
@@ -170,7 +177,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   public String getFileElementWithLogging() {
     final XmlFileHeader rootTagName = getRootTag();
     final StringBuilder log = new StringBuilder();
-    _computeFileElement(false, rootTagName, log);
+    myLastResult = _computeFileElement(false, rootTagName, log);
     return log.toString();
   }
 

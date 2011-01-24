@@ -22,6 +22,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -171,6 +172,8 @@ public class GroovyCompiler extends GroovyCompilerBase {
                 deps.add(targetFile);
               }
             }
+          }
+          catch (ProcessCanceledException ignored) {
           }
           catch (Exception e) {
             LOG.error(e);

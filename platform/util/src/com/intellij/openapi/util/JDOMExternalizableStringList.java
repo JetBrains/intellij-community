@@ -71,7 +71,11 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
 
           LOG.assertTrue(String.class.equals(itemClass));
 
-          set(Integer.parseInt(itemIndexString), listItem);
+          int index = Integer.parseInt(itemIndexString);
+          if (index >= listSize) {
+            throw new InvalidDataException("Index out of list size: index " + index + ", size " + listSize);
+          }
+          set(index, listItem);
         }
       }
     }

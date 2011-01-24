@@ -403,7 +403,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (resolved instanceof PsiMethod) {
         return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
       }
-      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
+      return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
     }
     PsiType result = null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -423,7 +423,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else
     if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-        return facade.getElementFactory().createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
+        return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
       }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
@@ -452,8 +452,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     } else if (resolved == null) {
       if ("class".equals(getReferenceName())) {
-        result = createJavaLangClassType(JavaPsiFacade.getInstance(getProject()), JavaPsiFacade.getElementFactory(getProject())
-          .createTypeByFQClassName(getText(), getResolveScope()));
+        result = createJavaLangClassType(JavaPsiFacade.getInstance(getProject()), (PsiClassType) JavaPsiFacade.getElementFactory(getProject())
+          .createTypeFromText(getText(), this));
       }
       else {
         GrExpression qualifier = getQualifierExpression();
@@ -676,8 +676,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
             return;
         }
         else {
-          qualifierType = JavaPsiFacade.getInstance(getProject()).getElementFactory()
-            .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
+          qualifierType = TypesUtil.getJavaLangObject(this);
           processClassQualifierType(processor, qualifierType, qualifier);
         }
       }

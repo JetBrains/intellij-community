@@ -47,7 +47,9 @@ import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.ASTReference;
+import org.apache.velocity.runtime.parser.node.ASTSetDirective;
 import org.apache.velocity.runtime.parser.node.Node;
+import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
 import org.jetbrains.annotations.NonNls;
@@ -74,21 +76,35 @@ public class FileTemplateUtil{
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     initVelocity();
     final Set<String> unsetAttributes = new HashSet<String>();
+    final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
-    addAttributesToVector(unsetAttributes, RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate"), properties, includeDummies);
+    SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");
+    collectAttributes(unsetAttributes, definedAttributes, template, properties, includeDummies);
+    for (String definedAttribute : definedAttributes) {
+      unsetAttributes.remove(definedAttribute);
+    }
     return ArrayUtil.toStringArray(unsetAttributes);
   }
 
-  private static void addAttributesToVector(Set<String> references, Node apacheNode, Properties properties, boolean includeDummies){
+  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, Properties properties, boolean includeDummies){
     int childCount = apacheNode.jjtGetNumChildren();
     for(int i = 0; i < childCount; i++){
       Node apacheChild = apacheNode.jjtGetChild(i);
-      addAttributesToVector(references, apacheChild, properties, includeDummies);
-      if(apacheChild instanceof ASTReference){
+      collectAttributes(referenced, defined, apacheChild, properties, includeDummies);
+      if (apacheChild instanceof ASTReference){
         ASTReference apacheReference = (ASTReference)apacheChild;
         String s = apacheReference.literal();
         s = referenceToAttribute(s, includeDummies);
-        if (s != null && s.length() > 0 && properties.getProperty(s) == null) references.add(s);
+        if (s != null && s.length() > 0 && properties.getProperty(s) == null) {
+          referenced.add(s);
+        }
+      }
+      else if (apacheChild instanceof ASTSetDirective) {
+        ASTReference lhs = (ASTReference) apacheChild.jjtGetChild(0);
+        String attr = referenceToAttribute(lhs.literal(), false);
+        if (attr != null) {
+          defined.add(attr);
+        }
       }
     }
   }

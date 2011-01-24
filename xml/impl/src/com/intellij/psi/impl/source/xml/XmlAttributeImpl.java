@@ -171,6 +171,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   private volatile int[] myGapPhysicalStarts = null;
   private volatile TextRange myValueTextRange; // text inside quotes, if there are any
 
+  protected void appendChildToDisplayValue(StringBuilder buffer, ASTNode child) {
+    buffer.append(child.getChars());
+  }
+
   public String getDisplayValue() {
     String displayText = myDisplayText;
     if (displayText != null) return displayText;
@@ -202,7 +206,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
       }
       else {
-        buffer.append(child.getText());
+        appendChildToDisplayValue(buffer, child);
       }
 
       int end = buffer.length();

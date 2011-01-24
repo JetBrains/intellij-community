@@ -34,6 +34,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,6 +224,12 @@ public class XmlRefCountHolder {
             if (prefix != null) {
               myHolder.addUsedPrefix(prefix.getName());
             }
+          }
+        }
+        String[] prefixes = XmlExtension.getExtension(tag.getContainingFile()).getUsedPrefixes(value);
+        if (prefixes != null) {
+          for (String prefix : prefixes) {
+            myHolder.addUsedPrefix(prefix);
           }
         }
       }

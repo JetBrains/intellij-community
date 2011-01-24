@@ -30,6 +30,7 @@ public class ScriptingLibrariesScope extends GlobalSearchScope {
 
   private GlobalSearchScope myBaseScope;
   private ScriptingIndexableSetContributor myContributor;
+  private Set<VirtualFile> myLibraryFiles;
 
   public ScriptingLibrariesScope(GlobalSearchScope baseScope, Class<? extends IndexableSetContributor> providerClass) {
     super(baseScope.getProject());
@@ -37,7 +38,12 @@ public class ScriptingLibrariesScope extends GlobalSearchScope {
     IndexableSetContributor contributor = IndexableSetContributor.EP_NAME.findExtension(providerClass);
     if (contributor instanceof  ScriptingIndexableSetContributor) {
       myContributor = (ScriptingIndexableSetContributor)contributor;
+      updateLibraryFiles();
     }
+  }
+
+  public void updateLibraryFiles() {
+    myLibraryFiles = myContributor.getLibraryFiles(myBaseScope.getProject());
   }
 
   public boolean contains(VirtualFile file) {
@@ -46,7 +52,7 @@ public class ScriptingLibrariesScope extends GlobalSearchScope {
 
   private boolean contributorContains(VirtualFile file) {
     if (myContributor == null) return false;
-    return myContributor.getLibraryFiles(myBaseScope.getProject()).contains(file);
+    return myLibraryFiles.contains(file);
   }
 
   @Override

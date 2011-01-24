@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -404,9 +403,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
           PsiType returnType = method.getReturnType();
           if (returnType != null) {
-            final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
-              .createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
-            if (TypesUtil.isAssignable(closureType, returnType, place)) {
+            if (TypesUtil.isAssignable(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, element), returnType, place)) {
               return true;
             }
           }

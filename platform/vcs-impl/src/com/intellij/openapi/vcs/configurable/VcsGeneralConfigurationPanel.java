@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -276,6 +277,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
   public void disposeUIResources() {
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

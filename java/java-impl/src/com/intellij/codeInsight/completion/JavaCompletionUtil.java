@@ -88,6 +88,11 @@ public class JavaCompletionUtil {
   static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
     @Nullable
     public ExpectedTypeInfo[] fun(final CompletionLocation location) {
+      if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
+        .accepts(location.getCompletionParameters().getPosition())) {
+        return new ExpectedTypeInfo[0];
+      }
+
       return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
     }
   });

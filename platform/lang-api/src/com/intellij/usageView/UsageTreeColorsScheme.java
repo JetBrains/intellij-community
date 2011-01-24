@@ -15,7 +15,7 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,7 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternalizable{
+public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable{
   private EditorColorsScheme myColorsScheme;
   private final EditorColorsManager myEditorColorsManager;
   @Deprecated
@@ -47,12 +47,6 @@ public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternal
 
   public EditorColorsScheme getScheme() {
     return myColorsScheme;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void readExternal(Element element) throws InvalidDataException {

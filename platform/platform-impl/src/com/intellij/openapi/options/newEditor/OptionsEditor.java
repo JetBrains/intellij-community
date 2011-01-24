@@ -350,15 +350,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
             public void run() {
               ((ApplicationEx)app).runEdtSafeAction(new Runnable() {
                 public void run() {
-                  initConfigurable(configurable).notifyWhenDone(result);
+                  if (myProject.isDisposed()) {
+                    result.setRejected();
+                  }
+                  else {
+                    initConfigurable(configurable).notifyWhenDone(result);
+                  }
                 }
               });
             }
           });
         }
       });
-
-    } else {
+    }
+    else {
       result.setDone();
     }
 
@@ -1076,6 +1081,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myConfigurable = configurable;
     }
 
+    @NotNull
     public String getId() {
       return myConfigurable.getClass().getName();
     }

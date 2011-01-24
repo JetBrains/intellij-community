@@ -490,6 +490,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
+      } else {
+        LOG.assertTrue(!indicator.isZombie(), indicator);
       }
     }
   }

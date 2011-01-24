@@ -43,7 +43,7 @@ public class GithubLoginPanel {
       }
     });
     mySignupTextField.setText(
-      "<html>Do not have an account? <a href=\"" + GithubUtil.GITHUB_HOST + "\">" + "Signup" + "</a></html>");
+      "<html>Do not have an account? <a href=\"" + GithubUtil.GITHUB_HOST + "\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {

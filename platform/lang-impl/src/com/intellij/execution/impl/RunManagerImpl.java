@@ -799,6 +799,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
+    if (shareConfiguration && isTemporary(runConfiguration)) makeStable(runConfiguration);
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
   }
 

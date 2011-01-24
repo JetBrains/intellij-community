@@ -91,7 +91,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
   }
 
   public boolean canNavigate() {
-    return true;
+    return ProjectSettingsService.getInstance(myProject).canOpenModuleSettings();
   }
 
   public boolean canNavigateToSource() {

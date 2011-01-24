@@ -88,6 +88,10 @@ public class JavaParametersUtil {
     if (module == null) {
       throw CantRunException.noModuleConfigured(runConfigurationModule.getModuleName());
     }
+    configureModule(module, parameters, classPathType, jreHome);
+  }
+
+  public static void configureModule(Module module, JavaParameters parameters, int classPathType, String jreHome) throws CantRunException {
     parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
   }
 

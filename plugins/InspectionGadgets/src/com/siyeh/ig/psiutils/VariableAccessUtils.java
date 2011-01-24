@@ -158,8 +158,19 @@ public class VariableAccessUtils{
         if(expression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)expression;
-            final PsiExpression lOperand = binaryExpression.getLOperand();
-            final PsiExpression rOperand = binaryExpression.getROperand();
+            PsiExpression lOperand = binaryExpression.getLOperand();
+            PsiExpression rOperand = binaryExpression.getROperand();
+            // iterate instead of recurse to prevent SOE in very deeply nested
+            // binary expressions
+            while (lOperand instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression innerBinaryExpression =
+                        (PsiBinaryExpression) lOperand;
+                if (mayEvaluateToVariable(rOperand, variable)) {
+                    return true;
+                }
+                lOperand = innerBinaryExpression.getLOperand();
+                rOperand = innerBinaryExpression.getROperand();
+            }
             return mayEvaluateToVariable(lOperand, variable) ||
                     mayEvaluateToVariable(rOperand, variable);
         }

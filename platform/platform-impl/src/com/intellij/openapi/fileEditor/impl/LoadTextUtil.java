@@ -114,17 +114,17 @@ public final class LoadTextUtil {
     EncodingManager settings = EncodingManager.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingManager.getInstance().getDefaultCharset()) : null;
-    setUtfCharsetWasDetectedFromBytes(virtualFile, false);
+    setCharsetWasDetectedFromBytes(virtualFile, false);
     if (shouldGuess) {
       toolkit.setEnforce8Bit(true);
       Charset charset = toolkit.guessFromBOM();
       if (charset != null) {
-        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
+        setCharsetWasDetectedFromBytes(virtualFile, true);
         return charset;
       }
       CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
       if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
+        setCharsetWasDetectedFromBytes(virtualFile, true);
         return CharsetToolkit.UTF8_CHARSET; //UTF detected, ignore all directives
       }
     }
@@ -140,7 +140,7 @@ public final class LoadTextUtil {
   }
 
   // returns offset of the BOM end
-  private static int detectAndSetBOM(final VirtualFile virtualFile, byte[] content) {
+  private static int detectAndSetBOM(@NotNull VirtualFile virtualFile, byte[] content) {
     final byte[] bom = getBOM(content, Patches.SUN_BUG_ID_4508058 ? virtualFile.getCharset() : null);
     if (bom.length != 0) {
       virtualFile.setBOM(bom);
@@ -149,7 +149,7 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  private static byte[] getBOM(byte[] content, final Charset charset) {
+  private static byte[] getBOM(@NotNull byte[] content, final Charset charset) {
     if (Patches.SUN_BUG_ID_4508058) {
       if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
         return CharsetToolkit.UTF8_BOM;
@@ -171,30 +171,43 @@ public final class LoadTextUtil {
    * Normally you should not use this method.
    *
    * @param project
-   *@param virtualFile
+   * @param virtualFile
    * @param requestor            any object to control who called this method. Note that
- *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
- *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param text
    * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
    * @throws java.io.IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Writer getWriter(@Nullable Project project, final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp)
+  public static Writer getWriter(@Nullable Project project, @NotNull VirtualFile virtualFile, Object requestor, @NotNull String text, final long newModificationStamp)
     throws IOException {
     Charset existing = virtualFile.getCharset();
     Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
     Charset charset = chooseMostlyHarmlessCharset(existing, specified, text);
-    if (charset != null && !charset.equals(existing)) {
-      virtualFile.setCharset(charset);
-      if (virtualFile.getBOM() != null) {
-        // prevent file to be reloaded in other encoding after save with BOM
-        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
+    if (charset != null) {
+      if (!charset.equals(existing)) {
+        virtualFile.setCharset(charset);
       }
+      setDetectedFromBytesFlagBack(virtualFile, charset, text);
     }
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
+  }
+
+  private static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull Charset charset, @NotNull String text) {
+    if (virtualFile.getBOM() != null) {
+      // prevent file to be reloaded in other encoding after save with BOM
+      setCharsetWasDetectedFromBytes(virtualFile, true);
+      return;
+    }
+
+    byte[] content = text.getBytes(charset);
+    CharsetToolkit.GuessedEncoding guessedEncoding = new CharsetToolkit(content).guessFromContent(content.length);
+    if (guessedEncoding == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
+      setCharsetWasDetectedFromBytes(virtualFile, true);
+    }
   }
 
   private static Charset chooseMostlyHarmlessCharset(Charset existing, Charset specified, String text) {
@@ -213,7 +226,7 @@ public final class LoadTextUtil {
     return str.equals(buffer.toString());
   }
 
-  public static Charset extractCharsetFromFileContent(@Nullable Project project, final VirtualFile virtualFile, final String text) {
+  public static Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
     Charset charset = charsetFromContentOrNull(project, virtualFile, text);
     if (charset == null) charset = virtualFile.getCharset();
     return charset;
@@ -363,11 +376,11 @@ public final class LoadTextUtil {
     return convertLineSeparators(charBuffer);
   }
 
-  private static final Key<Boolean> UTF_CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("UTF_CHARSET_WAS_DETECTED_FROM_BYTES");
-  public static boolean utfCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile) {
-    return virtualFile.getUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES) != null;
+  private static final Key<Boolean> CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("CHARSET_WAS_DETECTED_FROM_BYTES");
+  public static boolean wasCharsetDetectedFromBytes(@NotNull VirtualFile virtualFile) {
+    return virtualFile.getUserData(CHARSET_WAS_DETECTED_FROM_BYTES) != null;
   }
-  private static void setUtfCharsetWasDetectedFromBytes(@NotNull  VirtualFile virtualFile, boolean flag) {
-    virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, flag ? Boolean.TRUE : null);
+  public static void setCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile, boolean flag) {
+    virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, flag ? Boolean.TRUE : null);
   }
 }

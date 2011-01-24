@@ -92,5 +92,6 @@ public interface StructureViewModel extends TreeModel {
 
   interface ExpandInfoProvider {
     boolean isAutoExpand(StructureViewTreeElement element);
+    boolean isSmartExpand();
   }
 }

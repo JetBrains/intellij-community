@@ -269,7 +269,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     if (nodeType != null) {
       return nodeType;
     }
-    return PsiType.getJavaLangString(PsiManager.getInstance(el.getProject()), el.getResolveScope());
+    return TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, this);
   }
 
   public GrNamedArgument getNamedArgument() {

@@ -57,7 +57,8 @@ public class JDMethodComment extends JDParamListOwnerComment {
                    myFormatter.getSettings().JD_ALIGN_EXCEPTION_COMMENTS,
                    myFormatter.getSettings().JD_MIN_EXCEPTION_NAME_LENGTH,
                    myFormatter.getSettings().JD_MAX_EXCEPTION_NAME_LENGTH,
-                   myFormatter.getSettings().JD_KEEP_EMPTY_EXCEPTION
+                   myFormatter.getSettings().JD_KEEP_EMPTY_EXCEPTION,
+                   myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
       );
     }
   }

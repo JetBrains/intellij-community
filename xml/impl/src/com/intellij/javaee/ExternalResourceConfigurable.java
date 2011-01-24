@@ -24,10 +24,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -336,6 +338,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
+  @NotNull
   public String getId() {
     return "preferences.externalResources";
   }
@@ -346,6 +349,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public boolean needDisplay() {
-    return !"Ruby".equals(System.getProperty("idea.platform.prefix"));
+    return !PlatformUtils.isRubyMine();
   }
 }

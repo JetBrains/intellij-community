@@ -168,6 +168,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

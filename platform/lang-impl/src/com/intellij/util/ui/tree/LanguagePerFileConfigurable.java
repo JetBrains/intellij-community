@@ -101,6 +101,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     return myTreeView;
   }
 
+  @NotNull
   public String getId() {
     return getDisplayName();
   }

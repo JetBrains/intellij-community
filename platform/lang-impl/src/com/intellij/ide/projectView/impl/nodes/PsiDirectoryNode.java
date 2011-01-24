@@ -179,9 +179,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     VirtualFile file = getVirtualFile();
     Project project = getProject();
 
-    return file != null && (ProjectRootsUtil.isModuleContentRoot(file, project) ||
-                            ProjectRootsUtil.isSourceOrTestRoot(file, project) ||
-                            ProjectRootsUtil.isLibraryRoot(file, project));
+    ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
+    return file != null && ((ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings()) ||
+                            (ProjectRootsUtil.isSourceOrTestRoot(file, project)  && service.canOpenContentEntriesSettings()) ||
+                            (ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings()));
   }
 
   public boolean canNavigateToSource() {
@@ -193,14 +194,15 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (module != null) {
       final VirtualFile file = getVirtualFile();
       final Project project = getProject();
+      ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
       if (ProjectRootsUtil.isModuleContentRoot(file, project)) {
-        ProjectSettingsService.getInstance(myProject).openModuleSettings(module);
+        service.openModuleSettings(module);
       }
       else if (ProjectRootsUtil.isLibraryRoot(file, project)) {
-        ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);
+        service.openModuleLibrarySettings(module);
       }
       else {
-        ProjectSettingsService.getInstance(myProject).openContentEntriesSettings(module);
+        service.openContentEntriesSettings(module);
       }
     }
   }

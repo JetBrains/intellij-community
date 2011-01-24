@@ -1,0 +1,81 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package standardDsls
+
+import static standardDsls.Constants.NUMBER
+import static standardDsls.Constants.STRING
+
+/**
+ * @author Maxim.Medvedev
+ */
+
+interface Constants {
+  String NUMBER = "java.lang.Number"
+  String STRING = "java.lang.String"
+}
+
+def extractTypeParameter(def typeText) {
+  final int start = typeText.indexOf('<')
+  final int end = typeText.lastIndexOf('>')
+
+  if (start < 0) return null
+  if (end < 0) return typeText.substring(start + 1)
+  return typeText.substring(start + 1, end);
+}
+
+def constructTypeArg(def psiType) {
+  def typeText = psiType.canonicalText ?: psiType.presentableText
+  if (!typeText || typeText == 'null') return ""
+  def arg = extractTypeParameter(typeText)
+  if (!arg) return ""
+  return "<$arg>"
+}
+
+contributor(ctype: "java.util.Collection") {
+  method name: "getAt", params: [arg: "java.lang.Number"], type: extractTypeParameter(psiType.canonicalText ?: psiType.presentableText)
+  method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List${constructTypeArg(psiType)}"
+  method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List${constructTypeArg(psiType)}"
+}
+
+contributor (ctype:'java.lang.Enum') {
+  method name: 'values', type: "java.util.Collection${constructTypeArg(psiType)}", isStatic: true
+  method name: 'valueOf', type: psiType.canonicalText, params: [name: 'java.lang.String'], isStatic:true
+  method name: 'next', type: psiType.canonicalText
+  method name: 'previous', type: psiType.canonicalText
+}
+
+contributor(ctype:"groovy.lang.GString") {
+  delegatesTo(findClass("java.lang.String"))
+}
+
+contributor(ctype:NUMBER) {
+  method name: "plus", type: NUMBER, params:[arg:NUMBER]
+  method name: "minus", type: NUMBER, params:[arg:NUMBER]
+  method name: "multiply", type: NUMBER, params:[arg:NUMBER]
+  method name: "power", type: NUMBER, params:[arg:NUMBER]
+  method name: "div", type: NUMBER, params:[arg:NUMBER]
+  method name: "mod", type: NUMBER, params:[arg:NUMBER]
+  method name: "or", type: NUMBER, params:[arg:NUMBER]
+  method name: "and", type: NUMBER, params:[arg:NUMBER]
+  method name: "xor", type: NUMBER, params:[arg:NUMBER]
+  method name: "next", type: psiType.canonicalText
+  method name: "previous", type: psiType.canonicalText
+  method name: "negative", type: psiType.canonicalText
+  method name: "positive", type: psiType.canonicalText
+
+  method name: "plus", type: STRING, params:[arg:STRING]
+}
+

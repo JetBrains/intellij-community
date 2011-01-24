@@ -16,7 +16,6 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -41,14 +40,13 @@ import java.util.List;
 public class CompileAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-    final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
     if (module != null) {
-      CompilerManager.getInstance(project).compile(module, null, trackDependencies);
+      CompilerManager.getInstance(project).compile(module, null);
     }
     else {
       VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (files.length > 0) {
-        CompilerManager.getInstance(project).compile(files, null, trackDependencies);
+        CompilerManager.getInstance(project).compile(files, null);
       }
     }
 

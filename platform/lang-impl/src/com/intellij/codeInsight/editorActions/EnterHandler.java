@@ -20,7 +20,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.*;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -35,6 +38,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -145,9 +149,12 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final DoEnterAction action = new DoEnterAction(file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get());
+    final DoEnterAction action = new DoEnterAction(
+      file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project
+    );
     action.setForceIndent(forceIndent);
     action.run();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
   }
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
@@ -212,13 +219,14 @@ public class EnterHandler extends BaseEnterHandler {
     private final Document myDocument;
     private final boolean myInsertSpace;
     private final Editor myEditor;
+    private final Project myProject;
     private int myCaretAdvance;
 
     private boolean myForceIndent = false;
     private static final String LINE_SEPARATOR = "\n";
 
     public DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
-                         int caretAdvance) 
+                         int caretAdvance, Project project) 
     {
       myEditor = view;
       myFile = file;
@@ -227,6 +235,7 @@ public class EnterHandler extends BaseEnterHandler {
       myDocument = document;
       myInsertSpace = insertSpace;
       myCaretAdvance = caretAdvance;
+      myProject = project;
     }
 
     public void setForceIndent(boolean forceIndent) {
@@ -234,110 +243,117 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     public void run() {
+      CaretModel caretModel = myEditor.getCaretModel();
       try {
         final CharSequence chars = myDocument.getCharsSequence();
+        int i = CharArrayUtil.shiftBackwardUntil(chars, myOffset - 1, LINE_SEPARATOR) - 1;
+        i = CharArrayUtil.shiftBackwardUntil(chars, i, LINE_SEPARATOR) + 1;
+        if (i < 0) i = 0;
+        int lineStart = CharArrayUtil.shiftForward(chars, i, " \t");
+        CodeDocumentationUtil.CommentContext commentContext 
+          = CodeDocumentationUtil.tryParseCommentContext(myFile, chars, myOffset, lineStart);
 
-        int offset = CharArrayUtil.shiftBackwardUntil(chars, myOffset - 1, LINE_SEPARATOR) - 1;
-        offset = CharArrayUtil.shiftBackwardUntil(chars, offset, LINE_SEPARATOR) + 1;
-        if (offset < 0) offset = 0;
-        int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
-
-        final Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(myFile, offset));
-        final boolean isInsideJavalikeCode = langCommenter instanceof CodeDocumentationAwareCommenter;
-        final CodeDocumentationAwareCommenter commenter = isInsideJavalikeCode ? (CodeDocumentationAwareCommenter)langCommenter:null;
-
-        boolean docStart = isInsideJavalikeCode &&
-                           commenter.getDocumentationCommentPrefix() != null &&
-                           CharArrayUtil.regionMatches(chars, lineStart, commenter.getDocumentationCommentPrefix());
-        boolean cStyleStart = isInsideJavalikeCode &&
-                              commenter.getBlockCommentPrefix() != null &&
-                              CharArrayUtil.regionMatches(chars, lineStart, commenter.getBlockCommentPrefix());
-        boolean docAsterisk = isInsideJavalikeCode &&
-                              commenter.getDocumentationCommentLinePrefix() != null &&
-                              CharArrayUtil.regionMatches(chars, lineStart, commenter.getDocumentationCommentLinePrefix());
-        final int firstNonSpaceInLine = CharArrayUtil.shiftForward(chars, myOffset, " \t");
-        boolean slashSlash = isInsideJavalikeCode &&
-                             commenter.getLineCommentPrefix() != null &&
-                             CharArrayUtil.regionMatches(chars, lineStart, commenter.getLineCommentPrefix()) &&
-                             firstNonSpaceInLine < chars.length() && chars.charAt(firstNonSpaceInLine) != '\n';
-
-        if (docStart) {
-          PsiElement element = myFile.findElementAt(lineStart);
+        if (commentContext.docStart) {
+          PsiElement element = myFile.findElementAt(commentContext.lineStart);
           final String text = element.getText();
           final PsiElement parent = element.getParent();
 
-          if (text.equals(commenter.getDocumentationCommentPrefix()) && isDocComment(parent, commenter) ||
-              text.startsWith(commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment
+          if (text.equals(commentContext.commenter.getDocumentationCommentPrefix()) && isDocComment(parent, commentContext.commenter) ||
+              text.startsWith(commentContext.commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment
              ) {
-            PsiComment comment = isDocComment(parent, commenter) ? (PsiComment)parent:(PsiComment)element;
+            PsiComment comment = isDocComment(parent, commentContext.commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
             if (myOffset >= commentEnd) {
-              docStart = false;
+              commentContext.docStart = false;
             }
             else {
-              if (isCommentComplete(comment, commenter)) {
+              if (isCommentComplete(comment, commentContext.commenter)) {
                 if (myOffset >= commentEnd) {
-                  docAsterisk = false;
-                  docStart = false;
+                  commentContext.docAsterisk = false;
+                  commentContext.docStart = false;
                 }
                 else {
-                  docAsterisk = true;
-                  docStart = false;
+                  commentContext.docAsterisk = true;
+                  commentContext.docStart = false;
                 }
               }
               else {
-                generateJavadoc(commenter);
+                generateJavadoc(commentContext.commenter);
               }
             }
           }
           else {
-            docStart = false;
+            commentContext.docStart = false;
           }
         }
-        else if (cStyleStart) {
-          PsiElement element = myFile.findElementAt(lineStart);
-          if (element instanceof PsiComment && commenter.getBlockCommentTokenType() == ((PsiComment)element).getTokenType()) {
+        else if (commentContext.cStyleStart) {
+          PsiElement element = myFile.findElementAt(commentContext.lineStart);
+          if (element instanceof PsiComment && commentContext.commenter.getBlockCommentTokenType() == ((PsiComment)element).getTokenType()) {
             final PsiComment comment = (PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
             if (myOffset >= commentEnd) {
-              docStart = false;
+              commentContext.docStart = false;
             }
             else {
-              if (isCommentComplete(comment, commenter)) {
+              if (isCommentComplete(comment, commentContext.commenter)) {
                 if (myOffset >= commentEnd) {
-                  docAsterisk = false;
-                  docStart = false;
+                  commentContext.docAsterisk = false;
+                  commentContext.docStart = false;
                 }
                 else {
-                  docAsterisk = true;
-                  docStart = false;
+                  commentContext.docAsterisk = true;
+                  commentContext.docStart = false;
                 }
               }
               else {
                 final int currentEndOfLine = CharArrayUtil.shiftForwardUntil(chars, myOffset, "\n");
-                myDocument.insertString(currentEndOfLine, " " + commenter.getBlockCommentSuffix());
+                myDocument.insertString(currentEndOfLine, " " + commentContext.commenter.getBlockCommentSuffix());
                 int lstart = CharArrayUtil.shiftBackwardUntil(chars, myOffset, "\n");
                 myDocument.insertString(currentEndOfLine, chars.subSequence(lstart, myOffset));
               }
             }
           }
           else {
-            docStart = false;
+            commentContext.docStart = false;
           }
         }
 
-        if (docAsterisk) {
-          docAsterisk = insertDocAsterisk(lineStart, docAsterisk, commenter);
+        String indentInsideJavadoc = null;
+        int line = myDocument.getLineNumber(myOffset);
+        if (line > 0) {
+          indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(myDocument, myDocument.getLineStartOffset(line - 1));
+        }
+        
+        if (commentContext.docAsterisk) {
+          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
+                                                         !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
         }
 
-        if (CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER || myForceIndent || docStart || docAsterisk ||
-            slashSlash) {
+        boolean docIndentApplied = false;
+        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+        if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
+            || commentContext.slashSlash) 
+        {
           final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          
+          if (!StringUtil.isEmpty(indentInsideJavadoc)) {
+            myDocument.insertString(myOffset + 1, indentInsideJavadoc);
+            myOffset += indentInsideJavadoc.length();
+            docIndentApplied = true;
+          }
+
+          if (myForceIndent && indentInsideJavadoc != null) {
+            int indentSize = CodeStyleSettingsManager.getSettings(myProject).getIndentSize(myFile.getFileType());
+            //TODO den check tabs
+            myDocument.insertString(myOffset + 1, StringUtil.repeatSymbol(' ', indentSize));
+            myCaretAdvance += indentSize;
+          }
         }
 
-        if (docAsterisk || docStart || slashSlash) {
+        if ((commentContext.docAsterisk || commentContext.docStart || commentContext.slashSlash) && !docIndentApplied) {
           if (myInsertSpace) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
@@ -351,21 +367,21 @@ public class EnterHandler extends BaseEnterHandler {
           }
         }
 
-        if ((docAsterisk || slashSlash) && !docStart) {
-          myCaretAdvance = slashSlash ? commenter.getLineCommentPrefix().length() : 1;
+        if ((commentContext.docAsterisk || commentContext.slashSlash) && !commentContext.docStart) {
+          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().length() : 1;
         }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
 
-      myEditor.getCaretModel().moveToOffset(myOffset);
+      caretModel.moveToOffset(myOffset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
       if (myCaretAdvance != 0) {
-        LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
+        LogicalPosition caretPosition = caretModel.getLogicalPosition();
         LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + myCaretAdvance);
-        myEditor.getCaretModel().moveToLogicalPosition(pos);
+        caretModel.moveToLogicalPosition(pos);
       }
     }
 
@@ -526,7 +542,9 @@ public class EnterHandler extends BaseEnterHandler {
       document.deleteString(startOffset, endOffset);
     }
 
-    private boolean insertDocAsterisk(int lineStart, boolean docAsterisk, CodeDocumentationAwareCommenter commenter) {
+    private boolean insertDocAsterisk(int lineStart, boolean docAsterisk, boolean previousLineIndentUsed,
+                                      CodeDocumentationAwareCommenter commenter) 
+    {
       PsiElement atLineStart = myFile.findElementAt(lineStart);
       if (atLineStart == null) return false;
 
@@ -551,7 +569,8 @@ public class EnterHandler extends BaseEnterHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            myDocument.insertString(myOffset, CodeDocumentationUtil.createDocCommentLine("", getProject(),commenter));
+            String toInsert = previousLineIndentUsed ? "*" : CodeDocumentationUtil.createDocCommentLine("", getProject(), commenter);
+            myDocument.insertString(myOffset, toInsert);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }
         }

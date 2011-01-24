@@ -106,6 +106,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean myDeploy = true;
 
+  private volatile boolean myApplicationDeployed = false;
+
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
   }
@@ -404,6 +406,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myDebugLauncher == null) {
         return;
       }
+      if (myDeploy && !myApplicationDeployed) {
+        return;
+      }
       IDevice device = client.getDevice();
       if (isMyDevice(device) && device.isOnline()) {
         if (myTargetDeviceSerialNumbers.length == 0) {
@@ -510,7 +515,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       boolean installed = false;
 
       public void deviceConnected(IDevice device) {
-        if (isMyDevice(device)) {
+        if (device.getAvdName() == null || isMyDevice(device)) {
           getProcessHandler().notifyTextAvailable("Device connected: " + device.getSerialNumber() + '\n', STDOUT);
         }
       }
@@ -528,7 +533,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
               if (myTargetDeviceSerialNumbers.length == 0) {
                 myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
               }
-              getProcessHandler().notifyTextAvailable("Device is online.\n", STDOUT);
+              getProcessHandler().notifyTextAvailable("Device is online: " + device.getSerialNumber() + "\n", STDOUT);
               installed = true;
               if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
                 getProcessHandler().destroyProcess();
@@ -566,8 +571,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myDeploy) {
         if (!uploadAndInstall(device, myPackageName, myFacet)) return false;
         if (!uploadAndInstallDependentModules(device)) return false;
+        myApplicationDeployed = true;
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
+
+      if (!checkDdms()) {
+        return false;
+      }
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
         if (client != null) {
@@ -592,6 +602,15 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       getProcessHandler().notifyTextAvailable("I/O Error" + (message != null ? ": " + message : "") + '\n', STDERR);
       return false;
     }
+  }
+
+  private boolean checkDdms() {
+    if (myDebugMode && AndroidRunConfigurationBase.isDdmsCorrupted(myFacet)) {
+      getProcessHandler()
+        .notifyTextAvailable("Debug info is not available. Please close other application using ADB: DDMS, Eclipse\n", STDERR);
+      return false;
+    }
+    return true;
   }
 
   private boolean uploadAndInstallDependentModules(@NotNull IDevice device) throws IOException {

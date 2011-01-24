@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -42,9 +42,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
                                      PsiScopeProcessor processor,
                                      GroovyPsiElement place,
                                      ResolveState state) {
-//    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place.getProject())) {
-    if (InheritanceUtil.isInheritor(qualifierType, "groovy.util.AntBuilder")) {
-
+    if (GroovyPsiManager.isInheritorCached(qualifierType, "groovy.util.AntBuilder")) {
       processAntTasks(processor, place, state);
       return;
     }
@@ -99,7 +97,6 @@ public class GantMemberContributor extends NonCodeMembersContributor {
     if (!antTasksProcessed) {
       processAntTasks(processor, place, state);
     }
-
   }
 
   private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place, ResolveState state) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,6 +62,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
     return "reference.settingsdialog.IDE.editor.code.completion";
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.completion";
   }

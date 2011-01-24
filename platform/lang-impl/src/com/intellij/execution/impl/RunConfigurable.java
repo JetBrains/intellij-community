@@ -307,16 +307,9 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
 
-    info.addNameListner(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
+    info.addNameListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
         update();
       }
     });

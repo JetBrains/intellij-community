@@ -25,6 +25,7 @@ import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -86,6 +87,7 @@ public class DiffOptionsForm implements SearchableConfigurable {
     return "diff";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

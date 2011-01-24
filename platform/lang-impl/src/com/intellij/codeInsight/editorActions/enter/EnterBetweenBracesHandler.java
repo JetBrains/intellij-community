@@ -16,21 +16,20 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightSettings;
 
 public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler");
@@ -40,21 +39,31 @@ public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
     int caretOffset = caretOffsetRef.get().intValue();
-    if (CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
-      // special case: enter inside "()" or "{}"
-      if (caretOffset > 0 && caretOffset < text.length() && ((text.charAt(caretOffset - 1) == '(' && text.charAt(caretOffset) == ')') ||
-                                                             (text.charAt(caretOffset - 1) == '{' && text.charAt(caretOffset) == '}'))) {
-        originalHandler.execute(editor, dataContext);
-        PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-        try {
-          CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, editor.getCaretModel().getOffset());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return Result.Default;
-      }
+    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+      return Result.Continue;
     }
-    return Result.Continue;
+    
+    if (caretOffset <= 0 || caretOffset >= text.length() || ((text.charAt(caretOffset - 1) != '(' || text.charAt(caretOffset) != ')') &&
+                                                             (text.charAt(caretOffset - 1) != '{' || text.charAt(caretOffset) != '}'))) {
+      return Result.Continue;
+    }
+
+    // special case: enter inside "()" or "{}"
+    String indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset);
+    originalHandler.execute(editor, dataContext);
+
+    Project project = editor.getProject();
+    if (indentInsideJavadoc != null && project != null && CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      document.insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
+    }
+
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    try {
+      CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, editor.getCaretModel().getOffset());
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
   }
 }

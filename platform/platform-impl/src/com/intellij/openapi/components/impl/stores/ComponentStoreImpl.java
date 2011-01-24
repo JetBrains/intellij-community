@@ -18,29 +18,24 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.IFile;
-import net.sf.cglib.core.CollectionUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -95,12 +90,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
     };
 
     final ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-    if (applicationEx.isUnitTestMode()) {
-      r.run();
-    }
-    else {
+    //if (applicationEx.isUnitTestMode()) {
+    //  r.run();
+    //}
+    //else {
       applicationEx.runReadAction(r);
-    }
+    //}
 
     return componentName[0];
   }
@@ -167,14 +162,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component,
                                                @NotNull StateStorageManager.ExternalizationSession session) {
-    final String componentName = getComponentName(component);
+    final String componentName = ComponentManagerImpl.getComponentName(component);
 
     session.setStateInOldStorage(component, componentName, component);
   }
 
   @Nullable
-  String initJdomExternalizable(@NotNull JDOMExternalizable component) {
-    final String componentName = getComponentName(component);
+  private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
+    final String componentName = ComponentManagerImpl.getComponentName(component);
 
     myComponents.put(componentName, component);
 
@@ -182,11 +177,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     loadJdomDefaults(component, componentName);
 
-    Element element = null;
     StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
 
     if (stateStorage == null) return null;
-    element = getJdomState(component, componentName, stateStorage);
+    Element element = getJdomState(component, componentName, stateStorage);
 
     if (element == null) return null;
 
@@ -203,15 +197,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
     validateUnusedMacros(componentName, true);
 
     return componentName;
-  }
-
-  private static String getComponentName(@NotNull final JDOMExternalizable component) {
-    if ((component instanceof BaseComponent)) {
-      return ((BaseComponent)component).getComponentName();
-    }
-    else {
-      return component.getClass().getName();
-    }
   }
 
   private void loadJdomDefaults(@NotNull final Object component, final String componentName) {

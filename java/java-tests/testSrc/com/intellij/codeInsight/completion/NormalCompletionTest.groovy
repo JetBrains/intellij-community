@@ -842,6 +842,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("myField1", "myField2");
   }
 
+  public void testClassNameInsideIdentifierInIf() throws Throwable {
+    configure()
+    type '\n'
+    checkResult()
+  }
+
   public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -874,6 +880,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInstanceMagicMethod() throws Exception { doTest() }
+
+  public void testNoDotOverwrite() throws Exception { doTest('.') }
 
   public void testNoMethodsInParameterType() {
     configure()

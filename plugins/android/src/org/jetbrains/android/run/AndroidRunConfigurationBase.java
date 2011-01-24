@@ -300,7 +300,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return true;
   }
 
-  private static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
+  static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
     AndroidDebugBridge bridge = facet.getDebugBridge();
     if (bridge != null) {
       IDevice[] devices = bridge.getDevices();

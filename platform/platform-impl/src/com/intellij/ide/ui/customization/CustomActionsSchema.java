@@ -66,6 +66,7 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));
     myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP));
+    myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu"));
     myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP));

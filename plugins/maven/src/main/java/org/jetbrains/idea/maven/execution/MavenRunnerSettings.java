@@ -22,15 +22,17 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.SortedList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MavenRunnerSettings implements Cloneable {
 
@@ -42,6 +44,8 @@ public class MavenRunnerSettings implements Cloneable {
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
   private Map<String, String> mavenProperties = new LinkedHashMap<String, String>();
+
+  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public boolean isRunMavenInBackground() {
     return runMavenInBackground;
@@ -81,6 +85,7 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   public void setSkipTests(boolean skipTests) {
+    if (skipTests != this.skipTests) fireSkipTestsChanged();
     this.skipTests = skipTests;
   }
 
@@ -117,6 +122,24 @@ public class MavenRunnerSettings implements Cloneable {
     return recent.getName();
   }
 
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public void removeListener(Listener l) {
+    myListeners.remove(l);
+  }
+
+  private void fireSkipTestsChanged() {
+    for (Listener each : myListeners) {
+      each.skipTestsChanged();
+    }
+  }
+
+  public interface Listener {
+    void skipTestsChanged();
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -147,6 +170,7 @@ public class MavenRunnerSettings implements Cloneable {
     try {
       final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
+      clone.myListeners = ContainerUtil.createEmptyCOWList();
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -154,9 +178,9 @@ public class MavenRunnerSettings implements Cloneable {
     }
   }
 
-  private static <K,V> Map<K,V> cloneMap(final Map<K, V> source) {
+  private static <K, V> Map<K, V> cloneMap(final Map<K, V> source) {
     final Map<K, V> clone = new LinkedHashMap<K, V>();
-    for (Map.Entry<K,V> entry : source.entrySet()) {
+    for (Map.Entry<K, V> entry : source.entrySet()) {
       clone.put(entry.getKey(), entry.getValue());
     }
     return clone;

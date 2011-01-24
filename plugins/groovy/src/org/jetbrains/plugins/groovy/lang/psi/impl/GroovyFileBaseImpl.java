@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -74,8 +75,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
-  public GrTopLevelDefintion[] getTopLevelDefinitions() {
-    return findChildrenByClass(GrTopLevelDefintion.class);
+  public GrTopLevelDefinition[] getTopLevelDefinitions() {
+    return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
   public GrMethod[] getTopLevelMethods() {
@@ -189,14 +190,15 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myControlFlow = null;
   }
 
-
-  private Instruction[] myControlFlow = null;
+  private volatile SoftReference<Instruction[]> myControlFlow = null;
 
   public Instruction[] getControlFlow() {
-    if (myControlFlow == null) {
-      myControlFlow = new ControlFlowBuilder(getProject()).buildControlFlow(this, null, null);
+    SoftReference<Instruction[]> flow = myControlFlow;
+    Instruction[] result = flow != null ? flow.get() : null;
+    if (result == null) {
+      result = new ControlFlowBuilder(getProject()).buildControlFlow(this, null, null);
+      myControlFlow = new SoftReference<Instruction[]>(result);
     }
-
-    return myControlFlow;
+    return result;
   }
 }

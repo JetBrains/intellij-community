@@ -17,8 +17,10 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -62,11 +64,22 @@ public class BrowseFilesListener implements ActionListener {
     final VirtualFile fileToSelect = getFileToSelect();
     myChooserDescriptor.setTitle(myTitle); // important to set title and description here because a shared descriptor instance can be used
     myChooserDescriptor.setDescription(myDescription);
-    VirtualFile[] files = (fileToSelect != null)?
-                          FileChooser.chooseFiles(myTextField, myChooserDescriptor, fileToSelect) :
-                          FileChooser.chooseFiles(myTextField, myChooserDescriptor);
-    if (files != null && files.length > 0) {
-      myTextField.setText(files[0].getPath().replace('/', File.separatorChar));
+    if (SystemInfo.isMac) {
+      FileChooser.chooseFilesWithSlideEffect(myChooserDescriptor, null, fileToSelect, new Consumer<VirtualFile[]>() {
+        @Override
+        public void consume(final VirtualFile[] files) {
+          if (files != null && files.length > 0) {
+            myTextField.setText(files[0].getPath().replace('/', File.separatorChar));
+          }
+        }
+      });
+    } else {
+      VirtualFile[] files = (fileToSelect != null) ?
+                            FileChooser.chooseFiles(myTextField, myChooserDescriptor, fileToSelect) :
+                            FileChooser.chooseFiles(myTextField, myChooserDescriptor);
+      if (files.length > 0) {
+        myTextField.setText(files[0].getPath().replace('/', File.separatorChar));
+      }
     }
   }
 }

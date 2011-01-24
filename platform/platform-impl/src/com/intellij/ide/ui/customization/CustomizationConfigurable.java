@@ -20,6 +20,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -65,6 +66,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
   public void disposeUIResources() {
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

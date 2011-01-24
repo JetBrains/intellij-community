@@ -47,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -473,7 +474,7 @@ public final class UpdateChecker {
     InputStream in = null;
     OutputStream out = null;
 
-    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String platform = PlatformUtils.getPlatformPrefix();
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
 

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -844,10 +845,23 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
-      if (myGoal.equals(myMavenProject.getDefaultGoal())) {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, getColor());
+      SimpleTextAttributes original = super.getPlainAttributes();
+
+      int style = original.getStyle();
+      Color color = original.getFgColor();
+      boolean custom = false;
+
+      if ("test".equals(myGoal) && MavenRunner.getInstance(myProject).getSettings().isSkipTests()) {
+        color = SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
+        style |= SimpleTextAttributes.STYLE_STRIKEOUT;
+        custom = true;
       }
-      return super.getPlainAttributes();
+      if (myGoal.equals(myMavenProject.getDefaultGoal())) {
+        style |= SimpleTextAttributes.STYLE_BOLD;
+        custom = true;
+      }
+      if (custom) return original.derive(style, color, null, null);
+      return original;
     }
 
     @Nullable

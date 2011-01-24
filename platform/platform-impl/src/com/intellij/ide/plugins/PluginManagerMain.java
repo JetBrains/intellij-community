@@ -122,7 +122,8 @@ public class PluginManagerMain implements Disposable {
           if (selectedRow < 0 || !installedPluginTable.isCellEditable(selectedRow, column)) {
             return;
           }
-          currentlyMarked &= ((Boolean)installedPluginTable.getValueAt(selectedRow, column)).booleanValue();
+          final Boolean enabled = (Boolean)installedPluginTable.getValueAt(selectedRow, column);
+          currentlyMarked &= enabled == null || enabled.booleanValue();
         }
         for (int selectedRow : selectedRows) {
           installedPluginTable.setValueAt(currentlyMarked ? Boolean.FALSE : Boolean.TRUE, selectedRow, column);

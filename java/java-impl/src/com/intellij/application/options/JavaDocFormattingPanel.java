@@ -96,6 +96,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("JD_KEEP_EMPTY_LINES", ApplicationBundle.message("checkbox.keep.empty.lines"), OTHER_GROUP);
     initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"), OTHER_GROUP);
     initBooleanField("JD_PRESERVE_LINE_FEEDS", ApplicationBundle.message("checkbox.preserve.line.feeds"), OTHER_GROUP);
+    initBooleanField("JD_PARAM_DESCRIPTION_ON_NEW_LINE", ApplicationBundle.message("checkbox.param.description.on.new.line"), OTHER_GROUP);
   }
 
   protected int getRightMargin() {

@@ -42,7 +42,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.EditorListenerTracker;
@@ -52,11 +57,11 @@ import com.intellij.testFramework.ThreadTracker;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -90,6 +95,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     initApplication();
     setUpProject();
 
+    EncodingManager.getInstance(); // adds listeners
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
@@ -103,30 +109,26 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       moduleFixtureBuilder.getFixture().tearDown();
     }
 
+    InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        UIUtil.dispatchAllInvocationEvents();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             Disposer.dispose(myProject);
+            myProject = null;
           }
         });
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      SwingUtilities.invokeAndWait(runnable);
-    }
+    UIUtil.invokeAndWaitIfNeeded(runnable);
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
       assert deleted : "Can't delete " + fileToDelete;
     }
-
-    InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
 
     super.tearDown();
 
@@ -152,8 +154,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
           moduleFixtureBuilder.getFixture().setUp();
         }
-
-        //PropertiesReferenceManager.getInstance(myProject).projectOpened();
 
         StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
         sm.runStartupActivities();

@@ -24,6 +24,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -75,14 +76,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             node = myNode;
             if (node == null) {
               String message = new StringBuilder().
-                append("failed to bind stub to AST for element ").
+                append("Failed to bind stub to AST for element ").
                 append(getClass()).
                 append(" in ").
                 append(file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()).
                 append("\nFile stub tree:\n").
-                append(stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : " is null").
+                append(stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null").
                 append("\nLoaded file AST:\n").
-                append(DebugUtil.treeToString(fileElement, true)).
+                append(StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024)).
                 toString();
               throw new IllegalArgumentException(message);
             }

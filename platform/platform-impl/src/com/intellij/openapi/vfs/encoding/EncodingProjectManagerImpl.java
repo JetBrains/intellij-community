@@ -23,6 +23,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
@@ -30,14 +31,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -70,7 +72,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     documentManager.addListener(new PsiDocumentManager.Listener() {
       public void documentCreated(Document document, PsiFile psiFile) {
         if (document != null) {
-          ((EncodingManagerImpl)EncodingManagerImpl.getInstance()).updateEncodingFromContent(document);
+          ((EncodingManagerImpl)EncodingManager.getInstance()).queueUpdateEncodingFromContent(document);
         }
       }
 
@@ -183,6 +185,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       return;
     }
     virtualFileOrDir.setCharset(charset);
+    LoadTextUtil.setCharsetWasDetectedFromBytes(virtualFileOrDir, false);
     saveOrReload(virtualFileOrDir);
   }
 
@@ -205,7 +208,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     result.addAll(myMapping.values());
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
-    //result.add(CharsetSettings.getIDEOptionsCharset());
     return result;
   }
 
@@ -215,7 +217,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
   public void setMapping(final Map<VirtualFile, Charset> result) {
     Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>(result);
-    //todo return it back as soon as FileIndex get to the platfrom
+    //todo return it back as soon as FileIndex get to the platform
     //ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     //for (VirtualFile file : result.keySet()) {
     //  if (file != null && !fileIndex.isInContent(file)) {
@@ -273,11 +275,16 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener){
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
     EncodingManager.getInstance().addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener){
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    EncodingManager.getInstance().addPropertyChangeListener(listener,parentDisposable);
+  }
+
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     EncodingManager.getInstance().removePropertyChangeListener(listener);
   }
 

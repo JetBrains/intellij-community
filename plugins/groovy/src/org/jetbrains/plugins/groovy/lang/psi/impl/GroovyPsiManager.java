@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,35 +26,49 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ven
  */
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
+  private static final Set<String> ourPopularClasses = Sets.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
+                                                                       GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME,
+                                                                       GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT,
+                                                                       CommonClassNames.JAVA_UTIL_LIST,
+                                                                       CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                                       CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
   private GrTypeDefinition myArrayClass;
 
-  private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
   private final GroovyShortNamesCache myCache;
 
   private final TypeInferenceHelper myTypeInferenceHelper;
@@ -69,6 +84,11 @@ public class GroovyPsiManager {
         dropTypesCache();
       }
     });
+    ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnChange(new Runnable() {
+      public void run() {
+        myClassCache.clear();
+      }
+    });
 
     myTypeInferenceHelper = new TypeInferenceHelper(myProject);
 
@@ -78,6 +98,7 @@ public class GroovyPsiManager {
 
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
+        myClassCache.clear();
       }
     });
   }
@@ -90,12 +111,50 @@ public class GroovyPsiManager {
     myCalculatedTypes.clear();
   }
 
-
+  public static boolean isInheritorCached(@Nullable PsiType type, @NotNull String baseClassName) {
+    if (type instanceof PsiClassType) {
+      PsiClass resolve = ((PsiClassType)type).resolve();
+      if (resolve != null) {
+        return InheritanceUtil.isInheritorOrSelf(resolve, getInstance(resolve.getProject()).findClassWithCache(baseClassName, resolve.getResolveScope()), true);
+      }
+    }
+    return false;
+  }
 
   public static GroovyPsiManager getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
+  public PsiClassType createTypeByFQClassName(String fqName, GlobalSearchScope resolveScope) {
+    if (ourPopularClasses.contains(fqName)) {
+      PsiClass result = findClassWithCache(fqName, resolveScope);
+      if (result != null) {
+        return JavaPsiFacade.getElementFactory(myProject).createType(result);
+      }
+    }
+
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
+  }
+
+  @Nullable
+  public PsiClass findClassWithCache(String fqName, GlobalSearchScope resolveScope) {
+    SoftReference<Map<GlobalSearchScope, PsiClass>> reference = myClassCache.get(fqName);
+    Map<GlobalSearchScope, PsiClass> map = reference == null ? null : reference.get();
+    if (map == null) {
+      map = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
+      myClassCache.put(fqName, new SoftReference<Map<GlobalSearchScope, PsiClass>>(map));
+    }
+    PsiClass cached = map.get(resolveScope);
+    if (cached != null) {
+      return cached;
+    }
+
+    PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
+    if (result != null) {
+      map.put(resolveScope, result);
+    }
+    return result;
+  }
 
   private final ThreadLocal<Multiset<GroovyPsiElement>> inferring = new ThreadLocal<Multiset<GroovyPsiElement>>(){
     @Override

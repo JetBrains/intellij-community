@@ -39,6 +39,13 @@
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
     <string>@@build@@</string>
+    <key>LSArchitecturePriority</key>
+    <array>
+      <string>i386</string>
+      <string>x86_64</string>
+      <string>ppc</string>
+    </array>
+
     <key>Java</key>
    <dict>
       <key>ClassPath</key>
@@ -46,20 +53,6 @@
 
       <key>JVMVersion</key>
       <string>@@jdk_req@@</string>
-
-      <key>JVMArchs</key>
-      <array>
-        <string>i386</string>
-        <string>x86_64</string>
-        <string>ppc</string>
-      </array>
-
-      <key>LSArchitecturePriority</key>
-      <array>
-        <string>i386</string>
-        <string>x86_64</string>
-        <string>ppc</string>
-      </array>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>

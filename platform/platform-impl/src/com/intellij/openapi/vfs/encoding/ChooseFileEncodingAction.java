@@ -28,9 +28,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,26 +56,23 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   public void update(final AnActionEvent e) {
-    boolean enabled = isEnabled(myVirtualFile);
+    Pair<String, Boolean> result = update(myVirtualFile);
+
+    boolean enabled = result.second;
     if (myVirtualFile != null) {
-      String prefix;
-      Charset charset = charsetFromContent(myVirtualFile);
-      if (charset == null) {
-        prefix = "";
-      }
-      else {
-        prefix = "Encoding:";
-      }
+      Charset charset = cachedCharsetFromContent(myVirtualFile);
+      String prefix = charset == null ? "" : "Encoding (auto-detected):";
       if (charset == null) charset = myVirtualFile.getCharset();
       e.getPresentation().setText(prefix + " " + charset.toString());
     }
     e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setDescription(result.first);
   }
 
-  public static boolean isEnabled(VirtualFile virtualFile) {
+  public static boolean isEnabled(@Nullable VirtualFile virtualFile) {
     boolean enabled = true;
     if (virtualFile != null) {
-      Charset charset = charsetFromContent(virtualFile);
+      Charset charset = cachedCharsetFromContent(virtualFile);
       if (charset != null) {
         enabled = false;
       }
@@ -97,7 +97,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
-  public static Charset charsetFromContent(final VirtualFile virtualFile) {
+  public static Charset cachedCharsetFromContent(final VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return null;
@@ -119,6 +119,49 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       };
       group.add(action);
     }
+  }
+
+  // returns (action text, enabled flag)
+  @NotNull
+  public static Pair<String,Boolean> update(@Nullable VirtualFile virtualFile) {
+    String pattern;
+    boolean enabled = virtualFile != null && isEnabled(virtualFile);
+    Charset charsetFromContent = cachedCharsetFromContent(virtualFile);
+    if (virtualFile != null && FileDocumentManager.getInstance().isFileModified(virtualFile)) {
+      //no sense to reload file with UTF-detected chars using other encoding
+      if (charsetFromContent != null) {
+        pattern = "Encoding (content-specified): {0}";
+        enabled = false;
+      }
+      else if (enabled) {
+        pattern = "Save ''{0}''-encoded file in";
+      }
+      else {
+        pattern = "Encoding ''{0}''";
+      }
+    }
+    else {
+      // try to reload
+      // no sense in reloading file with UTF-detected chars using other encoding
+      if (virtualFile != null && LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile)) {
+        pattern = "Encoding (auto-detected): {0}";
+        enabled = false;
+      }
+      else if (enabled) {
+        pattern = "Reload ''{0}''-encoded file in";
+      }
+      else if (charsetFromContent != null) {
+        pattern = "Encoding (content-specified): {0}";
+      }
+      else {
+        pattern = "Encoding ''{0}''";
+      }
+    }
+
+    Charset charset = charsetFromContent != null ? charsetFromContent : virtualFile != null ? virtualFile.getCharset() : NO_ENCODING;
+    String text = MessageFormat.format(pattern, charset.displayName());
+
+    return Pair.create(text, enabled);
   }
 
   private class ClearThisFileEncodingAction extends AnAction {
@@ -155,7 +198,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
-    Charset current = myVirtualFile == null ? null : charsetFromContent(myVirtualFile);
+    Charset current = myVirtualFile == null ? null : myVirtualFile.getCharset();
     favorites.remove(current);
 
     if (showClear) {

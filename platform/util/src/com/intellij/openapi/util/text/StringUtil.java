@@ -800,6 +800,13 @@ public class StringUtil {
     return s;
   }
 
+  public static String trimLog(final String text, final int limit) {
+    if (limit > 5 && text.length() > limit) {
+      return text.substring(0, limit - 5) + " ...\n";
+    }
+    return text;
+  }
+
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
   }
@@ -858,7 +865,7 @@ public class StringUtil {
     return s;
   }
 
-  public static boolean isEmptyOrSpaces(final String s) {
+  public static boolean isEmptyOrSpaces(@Nullable final String s) {
     return s == null || s.trim().length() == 0;
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -58,6 +59,7 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
 
   public void initComponent() { }
 
+  @NotNull
   public String getComponentName() {
     return "VcsManagerConfiguration";
   }

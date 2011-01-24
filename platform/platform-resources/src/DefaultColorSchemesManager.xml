@@ -2,10 +2,7 @@
   <scheme name="Default" default_scheme="true" version="1">
     <option name="LINE_SPACING" value="1.0"/>
     <option name="EDITOR_FONT_SIZE" value="12"/>
-    <!--
-    <option name="EDITOR_FONT_NAME" value="Monospaced"/>
-    -->
-
+    <!--<option name="EDITOR_FONT_NAME" value="Monospaced"/>-->
     <colors>
 
       <option name="SELECTION_BACKGROUND" value="526da5"/>

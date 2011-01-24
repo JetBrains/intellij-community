@@ -365,7 +365,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + text + "}");
     file.setContext(context);
-    GrTopLevelDefintion definition = file.getTopLevelDefinitions()[0];
+    GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
     assert definition != null && definition instanceof GrClassDefinition;
     final PsiMethod constructor = ((GrClassDefinition) definition).getMethods()[0];
     assert constructor instanceof GrConstructorImpl;
@@ -385,14 +385,15 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (context != null) {
       file.setContext(context);
     }
-    try {
-      GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
-      assert defintion != null && defintion instanceof GrMethod;
-      return ((GrMethod)defintion);
+    GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
+    if (definitions.length != 1) {
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
-    catch (Exception error) {
-      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'", error);
+    GrTopLevelDefinition definition = definitions[0];
+    if (!(definition instanceof GrMethod)) {
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
+    return ((GrMethod)definition);
   }
 
   @Override
@@ -404,8 +405,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createGroovyFile(idText, false, null);
   }
 
-  public GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context) {
-    GroovyFileImpl file = createDummyFile(idText, isPhisical);
+  public GroovyFile createGroovyFile(String idText, boolean isPhysical, PsiElement context) {
+    GroovyFileImpl file = createDummyFile(idText, isPhysical);
     file.setContext(context);
     return file;
   }
@@ -578,8 +579,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrDocComment createDocCommentFromText(String text) {
     StringBuilder builder = new StringBuilder();
     builder.append(text);
-    builder.append(" def foo(){}");
-    return (GrDocComment)createGroovyFile(text+"def foo(){}").getFirstChild();
+    return (GrDocComment)createGroovyFile(text).getFirstChild();
+  }
+
+  @Override
+  public GrDocTag createDocTagFromText(String text) {
+    final GrDocComment docComment = createDocCommentFromText("/**" + text + "*/");
+    return docComment.getTags()[0];
   }
 
   @Override

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
@@ -80,7 +81,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
 
       return factory.createType(enumClass, substitutor);
     }
-    return factory.createTypeByFQClassName(JAVA_LANG_ENUM, getResolveScope());
+    return TypesUtil.createTypeByFQClassName(JAVA_LANG_ENUM, this);
   }
 
   @NotNull

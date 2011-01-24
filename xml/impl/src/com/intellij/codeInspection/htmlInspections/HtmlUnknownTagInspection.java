@@ -217,7 +217,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
           ContainerUtil.addIfNotNull(CreateNSDeclarationIntentionFix.createFix(startTagName, ""), quickfixes);
         }
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
-          quickfixes.add(new SwitchToHtml5Action());
+          quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
         }
         ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING :

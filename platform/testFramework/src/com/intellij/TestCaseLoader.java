@@ -52,6 +52,8 @@ public class TestCaseLoader {
   private static final String FAST_TESTS_ONLY_FLAG = "idea.fast.only";
 
   private final List<Class> myClassList = new ArrayList<Class>();
+  private Class myFirstTestClass;
+  private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
   private final Set<String> blockedTests = new HashSet<String>();
@@ -129,17 +131,29 @@ public class TestCaseLoader {
    * <code>shouldLoadTestCase ()</code> to determine that.
    */
   void addClassIfTestCase(final Class testCaseClass) {
-    if (shouldAddTestCase(testCaseClass)) {
+    if (shouldAddTestCase(testCaseClass, true) && testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass) {
       myClassList.add(testCaseClass);
     }
+  }
+
+  void addFirstTest(Class aClass) {
+    assert myFirstTestClass == null : "already added: "+aClass;
+    assert shouldAddTestCase(aClass, false) : "not a test: "+aClass;
+    myFirstTestClass = aClass;
+  }
+
+  void addLastTest(Class aClass) {
+    assert myLastTestClass == null : "already added: "+aClass;
+    assert shouldAddTestCase(aClass, false) : "not a test: "+aClass;
+    myLastTestClass = aClass;
   }
 
   /**
    * Determine if we should load this test case.
    */
-  private boolean shouldAddTestCase(final Class testCaseClass) {
+  private boolean shouldAddTestCase(final Class testCaseClass, boolean testForExcluded) {
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
-    if (shouldExcludeTestClass(testCaseClass)) return false;
+    if (testForExcluded && shouldExcludeTestClass(testCaseClass)) return false;
 
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
       return true;
@@ -233,16 +247,26 @@ public class TestCaseLoader {
     }
   }
 
-  private static int getRank(Class aClass) {
+  private int getRank(Class aClass) {
     final String name = aClass.getName();
-    if (ourRanklist.contains(name)) {
-      return ourRanklist.indexOf(name);
+    if (aClass == myFirstTestClass) return -1;
+    if (aClass == myLastTestClass) return myClassList.size() + ourRanklist.size();
+    int i = ourRanklist.indexOf(name);
+    if (i != -1) {
+      return i;
     }
-    return Integer.MAX_VALUE;
+    return ourRanklist.size();
   }
 
   public List<Class> getClasses() {
-    List<Class> result = new ArrayList<Class>(myClassList);
+    List<Class> result = new ArrayList<Class>(myClassList.size());
+    if (myFirstTestClass != null) {
+      result.add(myFirstTestClass);
+    }
+    result.addAll(myClassList);
+    if (myLastTestClass != null) {
+      result.add(myLastTestClass);
+    }
 
     if (!ourRanklist.isEmpty()) {
       Collections.sort(result, new Comparator<Class>() {

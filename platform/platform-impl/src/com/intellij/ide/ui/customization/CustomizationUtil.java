@@ -122,6 +122,7 @@ public class CustomizationUtil {
     private AnAction[] myChildren;
     private final CustomActionsSchema mySchema;
     private final String myDefaultGroupName;
+
     public CachedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
       super(shortName, popup);
       myGroup = group;

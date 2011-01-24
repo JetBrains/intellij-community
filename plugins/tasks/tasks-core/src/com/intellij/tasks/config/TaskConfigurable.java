@@ -110,6 +110,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public void disposeUIResources() {
   }
 
+  @NotNull
   public String getId() {
     return "tasks";
   }

@@ -47,16 +47,36 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
     });
   }
 
+  @Override
+  public boolean canOpenModuleSettings() {
+    return true;
+  }
+
   public void openModuleSettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), null, false);
+  }
+
+  @Override
+  public boolean canOpenModuleLibrarySettings() {
+    return true;
   }
 
   public void openModuleLibrarySettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.NAME, false);
   }
 
+  @Override
+  public boolean canOpenContentEntriesSettings() {
+    return true;
+  }
+
   public void openContentEntriesSettings(final Module module) {
     ModulesConfigurator.showDialog(myProject, module.getName(), ContentEntriesEditor.NAME, false);
+  }
+
+  @Override
+  public boolean canOpenProjectLibrarySettings(NamedLibraryElement value) {
+    return true;
   }
 
   public void openProjectLibrarySettings(final NamedLibraryElement element) {

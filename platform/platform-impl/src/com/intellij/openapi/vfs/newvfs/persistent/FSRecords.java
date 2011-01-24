@@ -143,9 +143,20 @@ public class FSRecords implements Forceable {
       return myFreeRecords.remove(myFreeRecords.size() - 1);
     }
 
-    private static void createBrokenMarkerFile() {
+    private static void createBrokenMarkerFile(Throwable reason) {
       File brokenMarker = getCorruptionMarkerFile();
       try {
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final PrintStream stream = new PrintStream(out);
+        new Exception().printStackTrace(stream);
+        if (reason != null) {
+          stream.print("\nReason:\n");
+          reason.printStackTrace(stream);
+        }
+        stream.close();
+        LOG.info("Creating VFS corruption marker; Trace=\n" + out.toString());
+
         final FileWriter writer = new FileWriter(brokenMarker);
         writer.write("These files are corrupted and must be rebuilt from the scratch on next startup");
         writer.close();
@@ -429,7 +440,7 @@ public class FSRecords implements Forceable {
 
     private static RuntimeException handleError(final Throwable e) {
       if (!myCorrupted) {
-        createBrokenMarkerFile();
+        createBrokenMarkerFile(e);
         myCorrupted = true;
         force();
       }
@@ -1193,7 +1204,7 @@ public class FSRecords implements Forceable {
   }
 
   public static void invalidateCaches() {
-    DbConnection.createBrokenMarkerFile();
+    DbConnection.createBrokenMarkerFile(null);
   }
 
   public static void checkSanity() {

@@ -668,6 +668,28 @@
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="/debugger/muteBreakpoints.png"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
+      <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="/objectBrowser/sorted.png"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar">
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
+      <reference ref="StepOver"/>
+      <reference ref="StepInto"/>
+      <reference ref="ForceStepInto"/>
+      <reference ref="StepOut"/>
+      <reference ref="RunToCursor"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.LeftToolbar">
+      <reference ref="Resume"/>
+      <reference ref="Pause"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,8 +155,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
-            if (isOnTheFly() &&
-                    variable.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (isOnTheFly() && !isCheapEnoughToSearch(variable)) {
                 return;
             }
             if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
@@ -234,8 +233,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
-            if (isOnTheFly() &&
-                    method.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (isOnTheFly() && !isCheapEnoughToSearch(method)) {
                 return;
             }
             final PsiType type = method.getReturnType();

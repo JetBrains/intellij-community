@@ -84,7 +84,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<GridImpl, Wrapper>();
   Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<GridImpl, Wrapper>();
-  Map<GridImpl, Set<Content>> myContextActions = new HashMap<GridImpl, Set<Content>>();
+  Map<GridImpl, AnAction[]> myContextActions = new HashMap<GridImpl, AnAction[]>();
 
   boolean myUiLastStateWasRestored;
 
@@ -447,7 +447,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         groupToBuild = group;
       }
 
-      if (!contents.equals(myContextActions.get(entry.getKey()))) {
+      final AnAction[] actions = groupToBuild.getChildren(null);
+      if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
         ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
@@ -457,7 +458,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         hasToolbarContent = true;
       }
 
-      myContextActions.put(entry.getKey(), contents);
+      myContextActions.put(entry.getKey(), actions);
     }
 
     return hasToolbarContent;
@@ -486,7 +487,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       hasToolbarContent |= updateTabUI(each);
     }
 
-    myTabs.getPresentation().setHideTabs(!hasToolbarContent);
+    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabs.size() <= 1);
 
     myTabs.updateTabActions(validateNow);
 

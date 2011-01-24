@@ -70,4 +70,23 @@ public class NonClasspathDirectoryScope extends GlobalSearchScope {
   public boolean isSearchInLibraries() {
     return false;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof NonClasspathDirectoryScope)) return false;
+
+    NonClasspathDirectoryScope that = (NonClasspathDirectoryScope)o;
+
+    if (!myRoot.equals(that.myRoot)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myRoot.hashCode();
+    return result;
+  }
 }

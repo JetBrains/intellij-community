@@ -90,7 +90,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.imports"), "BLANK_LINES_AFTER_IMPORTS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.class"), "BLANK_LINES_AROUND_CLASS");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"), "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"),
+                 "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
     createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
     createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.field"), "BLANK_LINES_AROUND_FIELD");
     createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
@@ -127,7 +128,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private void doCreateOption(OptionGroup optionGroup, String title, IntOption option, String fieldName) {
     String renamed = myRenamedFields.get(fieldName);
     if (renamed != null) title = renamed;
-    
+
     JLabel l = new JLabel(title);
     optionGroup.add(l, option.myTextField);
     myOptions.add(option);
@@ -152,7 +153,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
       }
     }
     return false;
-
   }
 
   public JComponent getPanel() {
@@ -202,6 +202,9 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   @Override
   public void renameStandardOption(String fieldName, String newTitle) {
+    if (myIsFirstUpdate) {
+      myRenamedFields.put(fieldName, newTitle);
+    }
     for (IntOption option : myOptions) {
       option.myTextField.invalidate();
     }
@@ -221,6 +224,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     private IntOption(String fieldName) {
       this(CodeStyleSettings.class, fieldName, false);
     }
+
     private IntOption(Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
       this(targetClass, fieldName, false);
       myTargetClass = targetClass;
@@ -289,5 +293,4 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
       }
     }
   }
-  
 }

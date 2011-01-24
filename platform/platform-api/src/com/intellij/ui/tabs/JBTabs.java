@@ -18,6 +18,7 @@ package com.intellij.ui.tabs;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.SwitchProvider;
@@ -91,6 +92,8 @@ public interface JBTabs extends SwitchProvider {
 
   JBTabs removeListener(@NotNull TabsListener listener);
 
+  JBTabs setSelectionChangeHandler(SelectionChangeHandler handler);
+
   @NotNull
   JComponent getComponent();
 
@@ -125,4 +128,8 @@ public interface JBTabs extends SwitchProvider {
   void processDropOver(TabInfo over, RelativePoint point);
 
   boolean isEmptyVisible();
+
+  interface SelectionChangeHandler {
+    ActionCallback execute(final TabInfo info, final boolean requestFocus, ActiveRunnable doChangeSelection);
+  }
 }

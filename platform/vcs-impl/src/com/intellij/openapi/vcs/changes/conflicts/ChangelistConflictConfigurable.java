@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -122,6 +123,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     return "project.propVCSSupport.ChangelistConflict";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

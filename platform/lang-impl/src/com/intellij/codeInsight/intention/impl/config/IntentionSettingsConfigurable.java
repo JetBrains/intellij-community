@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,6 +100,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return myPanel.showOption(this, option);
   }
 
+  @NotNull
   public String getId() {
     return HELP_ID;
   }

@@ -20,8 +20,16 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,13 +46,53 @@ public class ProjectSettingsService {
   public void openModuleSettings(final Module module) {
   }
 
+  public boolean canOpenModuleSettings() {
+    return false;
+  }
+
   public void openModuleLibrarySettings(final Module module) {
+  }
+
+  public boolean canOpenModuleLibrarySettings() {
+    return false;
   }
 
   public void openContentEntriesSettings(final Module module) {
   }
 
+  public boolean canOpenContentEntriesSettings() {
+    return false;
+  }
+
   public void openProjectLibrarySettings(final NamedLibraryElement value) {
+    Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(value);
+    if (additionalSettingsConfigurable != null) {
+      LibraryOrderEntry entry = (LibraryOrderEntry) value.getOrderEntry();
+      ShowSettingsUtil.getInstance().showSettingsDialog(entry.getOwnerModule().getProject(), additionalSettingsConfigurable);
+    }
+  }
+
+  public boolean canOpenProjectLibrarySettings(final NamedLibraryElement value) {
+    return getLibrarySettingsConfigurable(value) != null;
+  }
+
+  @Nullable
+  private static Configurable getLibrarySettingsConfigurable(NamedLibraryElement value) {
+    OrderEntry orderEntry = value.getOrderEntry();
+    if (!(orderEntry instanceof LibraryOrderEntry)) return null;
+    LibraryOrderEntry libOrderEntry = (LibraryOrderEntry)orderEntry;
+    Library lib = libOrderEntry.getLibrary();
+    if (lib instanceof LibraryEx) {
+      Project project = libOrderEntry.getOwnerModule().getProject();
+      LibraryType libType = ((LibraryEx)lib).getType();
+      if (libType != null) {
+        LibraryRootsComponentDescriptor libComponentDescriptor = libType.createLibraryRootsComponentDescriptor();
+        if (libComponentDescriptor != null) {
+          return libComponentDescriptor.getAdditionalSettingsConfigurable(project);
+        }
+      }
+    }
+    return null;
   }
 
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {

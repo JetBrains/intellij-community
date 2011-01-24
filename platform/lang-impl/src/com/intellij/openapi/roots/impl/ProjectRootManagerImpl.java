@@ -97,7 +97,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private boolean myStartupActivityPerformed = false;
 
   private final MessageBusConnection myConnection;
-  private final VirtualFileManagerAdapter myVFSListener;
   private final BatchUpdateListener myHandler;
 
   private class BatchSession {
@@ -141,7 +140,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    private void rootsChanged(boolean force) {
+    private void rootsChanged() {
       if (myBatchLevel == 0) {
         if (fireChange()) {
           myChanged = false;
@@ -157,22 +156,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  //private final Stack<String> myRootsChangedEvents = new Stack<String>();
-
-  /*private void putRootsChangedStachTrace() {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream stream = new PrintStream(out);
-    new RuntimeException().printStackTrace(stream);
-    stream.close();
-    myRootsChangedEvents.push(new String(out.toByteArray()));
-  }  */
-
   public ProjectRootManagerImpl(Project project,
                                 FileTypeManager fileTypeManager,
                                 DirectoryIndex directoryIndex,
                                 StartupManager startupManager) {
     myProject = (ProjectEx)project;
-    myConnection = project.getMessageBus().connect();
+    myConnection = project.getMessageBus().connect(project);
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
@@ -183,13 +172,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     });
 
-    myVFSListener = new VirtualFileManagerAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
       @Override
-      public void afterRefreshFinish(boolean asynchonous) {
+      public void afterRefreshFinish(boolean asynchronous) {
         doUpdateOnRefresh();
       }
-    };
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(myVFSListener);
+    },project);
 
     myRootsCache = new OrderRootsCache(project);
     myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
@@ -394,12 +382,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void disposeComponent() {
-    VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVFSListener);
-    if (myJdkTableMultilistener != null) {
-      myJdkTableMultilistener.uninstallListner(false);
-      myJdkTableMultilistener = null;
-    }
-    myConnection.disconnect();
+    myJdkTableMultiListener = null;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -439,7 +422,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       finally {
         if (myMergedCallHasRootChange) {
           LOG.assertTrue(myRootsChangesDepth == 1, "myMergedCallDepth = " + myRootsChangesDepth);
-          getBatchSession(false).rootsChanged(true);
+          getBatchSession(false).rootsChanged();
         }
         myMergedCallStarted = false;
         myMergedCallHasRootChange = false;
@@ -478,12 +461,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       runnable.run();
     }
     finally {
-      if (fireEvents) session.rootsChanged(false);
+      if (fireEvents) session.rootsChanged();
     }
   }
 
   private void rootsChanged(boolean filetypes) {
-    getBatchSession(filetypes).rootsChanged(false);
+    getBatchSession(filetypes).rootsChanged();
   }
 
   private BatchSession getBatchSession(final boolean filetypes) {
@@ -900,14 +883,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  private JdkTableMultilistener myJdkTableMultilistener = null;
+  private JdkTableMultiListener myJdkTableMultiListener = null;
 
-  private class JdkTableMultilistener implements ProjectJdkTable.Listener {
+  private class JdkTableMultiListener implements ProjectJdkTable.Listener {
     final EventDispatcher<ProjectJdkTable.Listener> myDispatcher = EventDispatcher.create(ProjectJdkTable.Listener.class);
     final Set<ProjectJdkTable.Listener> myListeners = new HashSet<ProjectJdkTable.Listener>();
+    private MessageBusConnection listenerConnection;
 
-    private JdkTableMultilistener() {
-      ProjectJdkTable.getInstance().addListener(this);
+    private JdkTableMultiListener(Project project) {
+      listenerConnection = project.getMessageBus().connect();
+      listenerConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
     }
 
     private void addListener(ProjectJdkTable.Listener listener) {
@@ -918,7 +903,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     private void removeListener(ProjectJdkTable.Listener listener) {
       myDispatcher.removeListener(listener);
       myListeners.remove(listener);
-      uninstallListner(true);
+      uninstallListener(true);
     }
 
     public void jdkAdded(final Sdk jdk) {
@@ -951,30 +936,32 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void uninstallListner(boolean soft) {
+    public void uninstallListener(boolean soft) {
       if (!soft || !myDispatcher.hasListeners()) {
-        ProjectJdkTable.getInstance().removeListener(this);
+        if (listenerConnection != null) {
+          listenerConnection.disconnect();
+          listenerConnection = null;
+        }
       }
     }
   }
 
-  private final Map<RootProvider, RootSetChangedMulticaster> myRegisteredRootProviderListeners
-    = new HashMap<RootProvider, RootSetChangedMulticaster>();
+  private final Map<RootProvider, RootSetChangedMulticaster> myRegisteredRootProviderListeners = new HashMap<RootProvider, RootSetChangedMulticaster>();
 
   void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
     getJdkTableMultiListener().addListener(jdkTableListener);
   }
 
-  private JdkTableMultilistener getJdkTableMultiListener() {
-    if (myJdkTableMultilistener == null) {
-      myJdkTableMultilistener = new JdkTableMultilistener();
+  private JdkTableMultiListener getJdkTableMultiListener() {
+    if (myJdkTableMultiListener == null) {
+      myJdkTableMultiListener = new JdkTableMultiListener(myProject);
     }
-    return myJdkTableMultilistener;
+    return myJdkTableMultiListener;
   }
 
   void removeJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
-    if (myJdkTableMultilistener == null) return;
-    myJdkTableMultilistener.removeListener(jdkTableListener);
+    if (myJdkTableMultiListener == null) return;
+    myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 
   private class RootSetChangedMulticaster implements RootProvider.RootSetChangedListener {

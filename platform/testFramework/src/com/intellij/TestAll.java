@@ -24,12 +24,7 @@
  */
 package com.intellij;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
@@ -48,14 +43,12 @@ import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestAll implements Test {
-
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
   }
 
-  private TestCaseLoader myTestCaseLoader;
+  private final TestCaseLoader myTestCaseLoader;
   private long myStartTime = 0;
-  private final boolean myInterruptedByOutOfMemory = false;
   private boolean myInterruptedByOutOfTime = false;
   private long myLastTestStartTime = 0;
   private String myLastTestClass;
@@ -185,15 +178,7 @@ public class TestAll implements Test {
       }
     }
     else {
-      if (myInterruptedByOutOfMemory) {
-        addErrorMessage(testResult,
-                        "Current Test Interrupted: OUT OF MEMORY! Class = " + myLastTestClass + " Total " + myRunTests + " of " +
-                        totalTests +
-                        " tests run");
-        testResult.stop();
-        return;
-      }
-      else if (myInterruptedByOutOfTime) {
+      if (myInterruptedByOutOfTime) {
         addErrorMessage(testResult,
                         "Current Test Interrupted: OUT OF TIME! Class = " + myLastTestClass + " Total " + myRunTests + " of " +
                         totalTests +
@@ -215,41 +200,7 @@ public class TestAll implements Test {
     myLastTestTestMethodCount = test.countTestCases();
 
     try {
-      try {
-        Thread.sleep(100);
-      }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-      }
       test.run(testResult);
-      try {
-        final Application app = ApplicationManager.getApplication();
-        if (app != null) {
-          app.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                app.runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    //todo[myakovlev] is it necessary?
-                    FileDocumentManager manager = FileDocumentManager.getInstance();
-                    if (manager instanceof FileDocumentManagerImpl) {
-                      ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-                    }
-                  }
-                });
-              }
-              catch (Throwable e) {
-                e.printStackTrace(System.err);
-              }
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
     }
     catch (Throwable t) {
       if (t instanceof OutOfMemoryError) {
@@ -339,7 +290,7 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static String [] getClassRoots() {
+  private static String[] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
@@ -370,10 +321,9 @@ public class TestAll implements Test {
   }
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
-
     myTestCaseLoader = new TestCaseLoader((ourMode & FILTER_CLASSES) != 0 ? "tests/testGroups.properties" : "");
-
-    myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
+    myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
+    myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
 
     for (String classRoot : classRoots) {
       int oldCount = myTestCaseLoader.getClasses().size();

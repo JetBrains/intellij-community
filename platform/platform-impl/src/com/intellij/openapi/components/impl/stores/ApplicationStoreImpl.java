@@ -81,12 +81,12 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 
-  public void initStore() {
-  }
-
-
   public void load() throws IOException {
+    long start = System.currentTimeMillis();
+//    ProfilingUtil.startCPUProfiling();
     myApplication.initComponents();
+//    ProfilingUtil.captureCPUSnapshot();
+    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + (System.currentTimeMillis() - start) + " ms");
   }
 
   public void setOptionsPath(final String path) {

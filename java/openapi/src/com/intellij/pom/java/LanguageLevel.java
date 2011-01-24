@@ -17,6 +17,7 @@ package com.intellij.pom.java;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiBundle;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -56,5 +57,17 @@ public enum LanguageLevel {
 
   public boolean isAtLeast(final LanguageLevel level) {
     return compareTo(level) >= 0;
+  }
+
+  @Nullable
+  public static LanguageLevel parse(final String value) {
+    if ("1.3".equals(value)) return JDK_1_3;
+    if ("1.4".equals(value)) return JDK_1_4;
+    if ("1.5".equals(value)) return JDK_1_5;
+    if ("1.6".equals(value)) return JDK_1_6;
+    if ("1.7".equals(value)) return JDK_1_7;
+    if ("1.8".equals(value)) return JDK_1_8;
+
+    return null;
   }
 }

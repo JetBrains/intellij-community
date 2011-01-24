@@ -28,6 +28,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -1248,8 +1249,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
-                                                                        (ActionGroup) actionManager.getAction("EditorGutterPopupMenu"));
+        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
         popupMenu.getComponent().show(this, e.getX(), e.getY());
         e.consume();
       }

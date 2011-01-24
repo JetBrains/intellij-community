@@ -33,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -87,6 +89,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
       return JavaPsiFacade.getElementFactory(project).createReferenceElementByType(type);
     }
     String qName = ref.getReferenceName(); //not null
+    assert qName != null;
     return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));
   }
 
@@ -138,11 +141,11 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiClass getSuperClass() {
     final PsiClass psiClass = getBaseClass();
     if (psiClass != null && !psiClass.isInterface()) return psiClass;
-    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, getResolveScope());
+    return GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, getResolveScope());
   }
 
   private PsiClassType createTypeByName(String className) {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(className, getResolveScope());
+    return TypesUtil.createTypeByFQClassName(className, this);
   }
 
   @Override

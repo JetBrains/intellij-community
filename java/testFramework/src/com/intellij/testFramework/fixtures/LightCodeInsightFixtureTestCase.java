@@ -116,7 +116,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
 
   /**
-   * Return absolute path to the test data. Not intended to be overrided.
+   * Return absolute path to the test data. Not intended to be overridden.
    *
    * @return absolute path to the test data.
    */

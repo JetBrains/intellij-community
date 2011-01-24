@@ -1816,7 +1816,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     }
   }
 
-  private class ScrollFromSourceAction extends AnAction {
+  private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
       super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/autoscrollFromSource.png"));
     }

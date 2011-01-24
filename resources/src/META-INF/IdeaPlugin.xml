@@ -348,8 +348,6 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.runners.RunStrategy"
-                        serviceImplementation="com.intellij.execution.runners.RunStrategyImpl"/>
     <applicationService serviceInterface="com.intellij.execution.runners.ProcessProxyFactory"
                         serviceImplementation="com.intellij.execution.runners.ProcessProxyFactoryImpl"/>
 

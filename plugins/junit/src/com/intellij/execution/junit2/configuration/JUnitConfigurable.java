@@ -22,6 +22,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
@@ -36,10 +37,12 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Icons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -260,8 +263,14 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields.contains(i));
-    if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) myModule.setEnabled(true);
-    else onScopeChanged();
+    if (newType == JUnitConfigurationModel.PATTERN) {
+      myModule.setEnabled(false);
+    } else if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
+      myModule.setEnabled(true);
+    }
+    else {
+      onScopeChanged();
+    }
   }
 
   private static class PackageChooserActionListener extends BrowseModuleValueActionListener {
@@ -288,13 +297,25 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     }
 
     @Override
+    protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
+      try {
+        return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
+      }
+      catch (JUnitUtil.NoJUnitException ignore) {
+        throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
+                                                               ignore.getMessage(),
+                                                               ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
+      }
+    }
+
+    @Override
     public void actionPerformed(ActionEvent e) {
       showDialog();
     }
   }
 
   private void onScopeChanged() {
-    myModule.setEnabled(!myWholeProjectScope.isSelected());
+    myModule.setEnabled(!myWholeProjectScope.isSelected() && !myTestPatternButton.isSelected());
   }
 
   private class TestClassBrowser extends ClassBrowser {

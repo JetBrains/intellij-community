@@ -729,6 +729,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     createTemplate(preferredName, extension, text);
   }
 
+  @NotNull
   public String getId() {
     return "fileTemplates";
   }

@@ -98,7 +98,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     LOG.assertTrue(context.getTailOffset() >= 0);
     String docText = context.getDocument().getText();
-    DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
+    DefaultInsertHandler.addImportForItem(context, item);
     if (context.getTailOffset() < 0) {
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         LOG.error("Tail offset degraded: " + context.getStartOffset() + "; " + docText);

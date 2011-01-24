@@ -88,4 +88,69 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                "class A {\n" +
                "}");
   }
+  
+  public void testParagraphTagGeneration() {
+    // Inspired by IDEA-61811
+    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().JD_P_AT_EMPTY_LINES = true;
+    doTextTest(
+      "/**\n" +
+      " * line 1\n" +
+      " *\n" +
+      " * line 2\n" +
+      " * <pre>\n" +
+      " *   line 3\n" +
+      " *\n" +
+      " *   line 4\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "class Test {\n" +
+      "}",
+      "/**\n" +
+      " * line 1\n" +
+      " * <p/>\n" +
+      " * line 2\n" +
+      " * <pre>\n" +
+      " *   line 3\n" +
+      " *\n" +
+      " *   line 4\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "class Test {\n" +
+      "}"
+    );
+  }
+  
+  public void testWrappedParameterDescription() throws Exception {
+    // Inspired by IDEA-13072
+    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true;
+    doClassTest(
+      "/**\n" +
+      " * test description\n" +
+      " * @param first first description\n" +
+      " * @param second\n" +
+      " * @param third third\n" +
+      " *              description\n" +
+      " * @param forth\n" +
+      " *          forth description\n" +
+      " */\n" +
+      "void test(int first, int second, int third, int forth) {\n" +
+      "}",
+      "/**\n" +
+      " * test description\n" +
+      " *\n" +
+      " * @param first\n" +
+      " *         first description\n" +
+      " * @param second\n" +
+      " * @param third\n" +
+      " *         third description\n" +
+      " * @param forth\n" +
+      " *         forth description\n" +
+      " */\n" +
+      "void test(int first, int second, int third, int forth) {\n" +
+      "}"
+    );
+  }
 }

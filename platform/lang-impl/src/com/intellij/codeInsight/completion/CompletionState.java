@@ -91,7 +91,7 @@ public class CompletionState {
   }
 
   public boolean isWaitingAfterAutoInsertion() {
-    return myRestorePrefix != null;
+    return myRestorePrefix != null && isZombie();
   }
 
   public void setRestorePrefix(Runnable restorePrefix) {
@@ -127,15 +127,21 @@ public class CompletionState {
     }
   }
 
-  public void handleDeath() {
+  public void handleDeath(boolean afterDeath) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean zombie = isZombie();
+    LOG.assertTrue(afterDeath == zombie, this);
     assertDisposed();
-    if (myZombieCleanup != null) {
+    if (zombie) {
       myZombieCleanup.run();
     }
     myZombieCleanup = null;
     myCompletionHint = null;
     setRestorePrefix(null);
+  }
+
+  public boolean isZombie() {
+    return myZombieCleanup != null;
   }
 
   int incCount() {

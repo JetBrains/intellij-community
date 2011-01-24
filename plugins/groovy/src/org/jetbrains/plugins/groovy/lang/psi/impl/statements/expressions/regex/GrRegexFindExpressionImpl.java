@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 /**
  * @author ilyas
@@ -32,7 +33,7 @@ public class GrRegexFindExpressionImpl extends GrRegexExpressionImpl {
   }
 
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
+    return getTypeByFQName(MATCHER_FQ_NAME);
   }
 
   public String toString() {

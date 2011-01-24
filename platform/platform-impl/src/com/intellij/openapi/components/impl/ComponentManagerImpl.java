@@ -20,10 +20,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -231,7 +228,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       final ProgressIndicator indicator = progressManager != null ? progressManager.getProgressIndicator() : null;
       if (indicator != null) {
-        String name = component instanceof BaseComponent ? ((BaseComponent)component).getComponentName() : component.getClass().getName();
+        String name = getComponentName(component);
         indicator.checkCanceled();
         indicator.setText2(name);
         indicator.setIndeterminate(false);
@@ -301,6 +298,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsRegistry.registerComponent(config);
   }
 
+  /** @Deprecated */
   @NotNull
   public synchronized Class[] getComponentInterfaces() {
     LOG.warn("Deprecated method usage: getComponentInterfaces", new Throwable());
@@ -440,6 +438,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   public Condition getDisposed() {
     return myDisposedCondition;
+  }
+
+  public static String getComponentName(@NotNull final Object component) {
+    if (component instanceof NamedComponent) {
+      return ((NamedComponent)component).getComponentName();
+    }
+    else {
+      return component.getClass().getName();
+    }
   }
 
   private class ComponentsRegistry {

@@ -44,7 +44,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     final Document document = editor.getDocument();
     try {
       PsiManager.getInstance(getProject()).addPsiTreeChangeListener(detector);
-      detector.addDocListener(editor.getVirtualFile());
+      detector.addDocListener(document);
       new WriteCommandAction.Simple(getProject()) {
         @Override
         protected void run() throws Throwable {

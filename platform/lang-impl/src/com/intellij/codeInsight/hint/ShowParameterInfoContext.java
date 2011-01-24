@@ -125,7 +125,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart);
+    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -158,7 +158,12 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   /**
    * @return Point in layered pane coordinate system
    */
-  static Pair<Point, Short> chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
+  static Pair<Point, Short> chooseBestHintPosition(Project project,
+                                                   Editor editor,
+                                                   int line,
+                                                   int col,
+                                                   LightweightHint hint,
+                                                   boolean awtTooltip) {
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
@@ -177,10 +182,13 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       p2 = hintManager.getHintPosition(hint, editor, pos, HintManagerImpl.ABOVE);
     }
 
-    p1.x = Math.min(p1.x, layeredPane.getWidth() - hintSize.width);
-    p1.x = Math.max(p1.x, 0);
-    p2.x = Math.min(p2.x, layeredPane.getWidth() - hintSize.width);
-    p2.x = Math.max(p2.x, 0);
+    if (!awtTooltip) {
+      p1.x = Math.min(p1.x, layeredPane.getWidth() - hintSize.width);
+      p1.x = Math.max(p1.x, 0);
+      p2.x = Math.min(p2.x, layeredPane.getWidth() - hintSize.width);
+      p2.x = Math.max(p2.x, 0);
+    }
+
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
@@ -209,7 +217,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     }
 
     @NotNull
-    public Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset) {
+    public Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset, final boolean awtTooltip) {
       final TextRange textRange = list.getTextRange();
       offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
       if (previousOffset == offset) return new Pair<Point, Short>(previousBestPoint, previousBestPosition);
@@ -220,7 +228,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint);
+        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint, awtTooltip);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);

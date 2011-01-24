@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
+import org.jetbrains.annotations.NotNull;
 
 public class InspectionGadgetsProjectComponent implements ProjectComponent{
 
@@ -49,6 +50,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
         }
     }
 
+    @NotNull
     public String getComponentName(){
         return "InspectionGadgetsProjectComponent";
     }

@@ -22,9 +22,15 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kirill Likhodedov
@@ -62,7 +68,11 @@ public class GitBranchTest extends GitCollaborativeTest {
     for (String b : branches) {
       boolean current = b.charAt(0) == '*';
       b = b.substring(2);
-      TestBranch branch = new TestBranch(current, !b.startsWith("remotes"), b);
+      final boolean remote = b.startsWith("remotes");  // we don't store the 'remote' prefix. Instead we store a boolean flag.
+      if (remote) {
+        b = b.substring("remotes/".length());
+      }
+      TestBranch branch = new TestBranch(current, !remote, b);
       if (current) {
         myFeatureBranch = branch; // it is current at the end of setUp.
       }

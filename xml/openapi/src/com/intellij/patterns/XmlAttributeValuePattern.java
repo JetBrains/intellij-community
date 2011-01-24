@@ -32,8 +32,12 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
     }
   };
 
-  protected XmlAttributeValuePattern() {
-    super(CONDITION);
+  public XmlAttributeValuePattern() {
+    this(CONDITION);
+  }
+
+  public XmlAttributeValuePattern(InitialPatternCondition<XmlAttributeValue> condition) {
+    super(condition);
   }
 
   public XmlAttributeValuePattern withLocalName(@NonNls String... names) {

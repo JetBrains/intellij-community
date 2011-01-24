@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author ven
  */
-public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefintion, GrDocCommentOwner {
+public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefinition, GrDocCommentOwner {
   GrField[] EMPTY_ARRAY = new GrField[0];
 
   boolean isProperty();

@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -52,6 +53,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     return ID;
   }
 
+  @NotNull
   public String getId() {
     return ID;
   }

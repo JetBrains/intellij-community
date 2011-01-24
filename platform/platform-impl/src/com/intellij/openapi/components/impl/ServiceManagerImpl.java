@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ServiceManagerImpl implements BaseComponent {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
   private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
@@ -73,6 +76,11 @@ public class ServiceManagerImpl implements BaseComponent {
       }
     };
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
+  }
+
+  public List<ServiceDescriptor> getAllDescriptors() {
+    ServiceDescriptor[] extensions = Extensions.getExtensions(myExtensionPointName);
+    return Arrays.asList(extensions);
   }
 
   @NonNls

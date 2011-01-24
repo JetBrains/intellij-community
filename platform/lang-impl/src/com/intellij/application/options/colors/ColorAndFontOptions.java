@@ -957,6 +957,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }
@@ -1093,6 +1094,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     }
 
+    @NotNull
     public String getId() {
       return ColorAndFontOptions.this.getId() + "." + getDisplayName();
     }

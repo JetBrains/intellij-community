@@ -118,6 +118,10 @@ public class GrTableParameterInfo {
     catch (PsiTypeCodeFragment.NoTypeException e) {
       type = null;
     }
-    return new GrParameterInfo(getName(), getDefaultValue(), defaultInitializer, type, myPosition);
+    String defaultValue = getDefaultValue();
+    if (defaultValue.length() == 0) {
+      defaultValue = defaultInitializer;
+    }
+    return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition);
   }
 }

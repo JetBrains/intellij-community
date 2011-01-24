@@ -164,7 +164,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     boolean softWrapsUsedBefore = myUseSoftWraps;
     EditorSettings settings = myEditor.getSettings();
     myUseSoftWraps = settings.isUseSoftWraps();
-    if (myUseSoftWraps && !softWrapsUsedBefore) {
+    if (myUseSoftWraps && (!softWrapsUsedBefore || settings.getAdditionalColumnsCount() > 0)) {
       myApplianceManager.reset();
       myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
       settings.setAdditionalColumnsCount(0);

@@ -226,7 +226,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   @NotNull
   public Module[] getModules() {
-    if ((TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) &&
+    if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       return Module.EMPTY_ARRAY;
     }

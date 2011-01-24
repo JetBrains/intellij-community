@@ -80,7 +80,7 @@
 
     <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
 
-    <applicationConfigurable provider="com.intellij.profile.codeInspection.ui.PlatformInspectionsConfigurableProvider" order="before intentions"/>
+    <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before intentions"/>
 
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
 

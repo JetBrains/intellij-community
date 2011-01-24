@@ -428,7 +428,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public void hide(IdeTooltip tooltip) {
-    if (myCurrentTooltip == tooltip || tooltip == null) {
+    if (myCurrentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
       hideCurrent(null, null, null);
     }
   }

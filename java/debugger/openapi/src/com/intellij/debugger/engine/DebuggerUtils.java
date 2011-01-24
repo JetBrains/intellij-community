@@ -24,7 +24,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class DebuggerUtils  implements ApplicationComponent {
+public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<Method>("CachedToStringMethod");
   public static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(

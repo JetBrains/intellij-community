@@ -199,9 +199,11 @@ public abstract class DialogWrapper {
   private int myValidationDelay = 300;
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
-  private Icon ERROR_POINT = IconLoader.getIcon("/ide/errorPoint.png");
-  private Icon ERROR_SIGN = IconLoader.getIcon("/ide/errorSign.png");
+  private static final Icon ERROR_POINT = IconLoader.getIcon("/ide/errorPoint.png");
+  private static final Icon ERROR_SIGN = IconLoader.getIcon("/ide/errorSign.png");
   private final ErrorPainter myErrorPainter = new ErrorPainter();
+  private JComponent myErrorPane;
+  private boolean myErrorPainterInstalled = false;
 
   /**
    * Allows to postpone first start of validation
@@ -228,6 +230,8 @@ public abstract class DialogWrapper {
   }
 
   private void reportProblem(final ValidationInfo info) {
+    installErrorPainter();
+
     myErrorPainter.setValidationInfo(info);
     if (! myErrorText.isTextSet(info.message)) {
     SwingUtilities.invokeLater(new Runnable() {
@@ -239,6 +243,12 @@ public abstract class DialogWrapper {
       }
     });
   }
+  }
+
+  private void installErrorPainter() {
+    if (myErrorPainterInstalled) return;
+    myErrorPainterInstalled = true;
+    IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
   }
 
   private void clearProblems() {
@@ -884,7 +894,7 @@ public abstract class DialogWrapper {
     if (c != null) {
       final JComponent wrap = wrap(c, isCenterStrictedToPreferredSize());
       centerSection.add(wrap, BorderLayout.CENTER);
-      IdeGlassPaneUtil.installPainter(wrap, myErrorPainter, myDisposable);
+      myErrorPane = wrap;
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());

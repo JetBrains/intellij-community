@@ -21,6 +21,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -156,6 +157,12 @@ public abstract class XDebugProcess {
    * Override this method to provide additional tabs for 'Debug' tool window
    */
   public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+  }
+
+  /**
+   * Override this method to provide additional actions in 'Debug' tool window
+   */
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
   }
 
   /**

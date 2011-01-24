@@ -43,8 +43,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableBaseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -85,16 +87,17 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
         return new PsiEllipsisType(type);
       }
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (isVarArgs()) {
-      PsiClassType type = factory.createTypeByFQClassName("java.lang.Object", getResolveScope());
+      PsiClassType type = TypesUtil.getJavaLangObject(this);
       return new PsiEllipsisType(type);
     }
+
+    GroovyPsiManager factory = GroovyPsiManager.getInstance(getProject());
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
-        return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, getResolveScope());
+        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, this);
       }
       else if (iteratedExpression != null) {
         PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, factory, this);
@@ -103,7 +106,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
         }
       }
     } else if (parent instanceof GrCatchClause) {
-      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope());
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, this);
     }
 
     return GrVariableEnhancer.getEnhancedType(this);
@@ -123,9 +126,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   public PsiType getType() {
     PsiType type = super.getType();
     if (isMainMethodFirstUntypedParameter()) {
-      PsiClassType stringType =
-        JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
-      return stringType.createArrayType();
+      return TypesUtil.createTypeByFQClassName("java.lang.String", this).createArrayType();
     }
     if (getParent() instanceof GrForClause) { //inside for loop
       final PsiType typeGroovy = getTypeGroovy();

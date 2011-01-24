@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -62,11 +63,16 @@ public class ExecutionCallback {
   }
 
   private void callback() {
-    if (myExecuted.isExecuted() && myRunnables != null) {
+    if (myExecuted.isExecuted()) {
       Runnable[] all;
       synchronized (this) {
-        all = myRunnables.toArray(new Runnable[myRunnables.size()]);
-        myRunnables.clear();
+        if (myRunnables == null) {
+          all = ArrayUtil.EMPTY_RUNNABLE_ARRAY;
+        }
+        else {
+          all = myRunnables.toArray(new Runnable[myRunnables.size()]);
+          myRunnables.clear();
+        }
       }
       for (Runnable each : all) {
         each.run();

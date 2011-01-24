@@ -133,6 +133,7 @@ public class TestClassesFilter {
       LineNumberReader lineNumberReader = new LineNumberReader(inputStreamReader);
       String line;
       while ((line = lineNumberReader.readLine()) != null) {
+        if (line.startsWith("#")) continue;
         if (line.startsWith("[") && line.endsWith("]")) {
           currentGroupName = line.substring(1, line.length() - 1);
         }

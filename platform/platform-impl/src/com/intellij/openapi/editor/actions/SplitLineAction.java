@@ -44,8 +44,6 @@ public class SplitLineAction extends EditorAction {
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =
         document.createRangeMarker(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset() );
-      rangeMarker.setGreedyToLeft(false);
-      rangeMarker.setGreedyToRight(false);
       final CharSequence chars = document.getCharsSequence();
 
       int offset = editor.getCaretModel().getOffset();

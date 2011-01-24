@@ -40,7 +40,7 @@ public class XInspectDialog extends DialogWrapper {
     setModal(false);
     myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
     XDebuggerTree tree = myTreePanel.getTree();
-    tree.setRoot(new XValueNodeImpl(tree, null, value), true);
+    tree.setRoot(new XValueNodeImpl(tree, null, nodeName, value), true);
     init();
   }
 

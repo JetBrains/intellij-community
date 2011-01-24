@@ -46,6 +46,7 @@ import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
@@ -406,6 +407,7 @@ public class TestNGUtil
     return results;
   }
 
+  @Nullable
   public static PsiClass[] getAllTestClasses(final TestClassFilter filter, boolean sync) {
     final PsiClass[][] holder = new PsiClass[1][];
     final Runnable process = new Runnable() {

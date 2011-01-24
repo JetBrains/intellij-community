@@ -46,7 +46,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       Assert.assertEquals("Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"\n" +
-                          "Method finalMethod() will override\n" +
+                          "Method finalMethod() will override \n" +
                           "a method of the base class <b><code>p.A</code></b>.", e.getMessage());
       return;
     }

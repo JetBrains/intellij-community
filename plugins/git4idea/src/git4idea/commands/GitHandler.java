@@ -390,11 +390,11 @@ public abstract class GitHandler {
     }
 
     try {
-      LOG.info(myCommandLine.getCommandLineString());
       // setup environment
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
+        LOG.info(myCommandLine.getCommandLineString());
       }
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();

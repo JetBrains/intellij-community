@@ -37,7 +37,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -149,6 +151,16 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     }
   }
 
+  public List<BrowserFamily> getActiveBrowsers() {
+    final List<BrowserFamily> browsers = new ArrayList<BrowserFamily>();
+    for (BrowserFamily family : BrowserFamily.values()) {
+      if (getBrowserSettings(family).isActive()) {
+        browsers.add(family);
+      }
+    }
+    return browsers;
+  }
+
   public void updateBrowserValue(final BrowserFamily family, final String path, boolean isActive) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     myBrowserToSettingsMap.put(family, new WebBrowserSettings(path, isActive, settings.getBrowserSpecificSettings()));
@@ -175,8 +187,13 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     return ServiceManager.getService(BrowsersConfiguration.class);
   }
 
-  public static void launchBrowser(final BrowserFamily family, @NotNull final String url) {
-    getInstance()._launchBrowser(family, url);
+  public static void launchBrowser(final @Nullable BrowserFamily family, @NotNull final String url) {
+    if (family == null) {
+      BrowserUtil.launchBrowser(url);
+    }
+    else {
+      getInstance()._launchBrowser(family, url);
+    }
   }
 
   private void _launchBrowser(final BrowserFamily family, @NotNull String url) {

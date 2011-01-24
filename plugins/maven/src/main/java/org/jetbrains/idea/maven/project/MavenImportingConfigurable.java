@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -66,6 +67,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return "reference.settings.project.maven.importing";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

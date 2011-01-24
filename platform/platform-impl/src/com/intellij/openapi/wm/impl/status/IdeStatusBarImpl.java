@@ -35,8 +35,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -244,17 +242,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void dispose() {
-    final List<StatusBarWidget> widgets = ContainerUtil.map(myWidgetMap.values(),
-                                                            new Function<WidgetBean, StatusBarWidget>() {
-                                                              @Override
-                                                              public StatusBarWidget fun(final WidgetBean bean) {
-                                                                return bean.widget;
-                                                              }
-                                                            });
-    for (final StatusBarWidget widget : widgets) {
-      Disposer.dispose(widget);
-    }
-
     myWidgetMap.clear();
   }
 
@@ -451,6 +438,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private void installWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final JComponent c, String anchor) {
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
     widget.install(this);
+    Disposer.register(this, widget);
   }
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
@@ -596,6 +584,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       myPresentation = presentation;
 
       putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
         @Override
@@ -613,6 +602,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     public void beforeUpdate() {
       setText(myPresentation.getSelectedValue());
+    }
+
+    @Override
+    @Nullable
+    public String getToolTipText() {
+      return myPresentation.getTooltipText();
     }
 
     @Override
@@ -646,6 +641,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setTextAlignment(presentation.getAlignment());
 
       putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
         @Override
@@ -669,6 +665,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
+    @Override
+    @Nullable
+    public String getToolTipText() {
+      return myPresentation.getTooltipText();
+    }
+
     public void beforeUpdate() {
       setText(myPresentation.getText());
     }
@@ -685,6 +687,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       myIcon = myPresentation.getIcon();
 
       putClientProperty(UIUtil.CENTER_TOOLTIP, Boolean.TRUE);
+      setToolTipText(presentation.getTooltipText());
 
       addMouseListener(new MouseAdapter() {
         @Override
@@ -695,10 +698,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       });
 
-      ToolTipManager.sharedInstance().registerComponent(this);
       setOpaque(false);
-
-
     }
 
     public void beforeUpdate() {

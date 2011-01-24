@@ -24,6 +24,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVcsApplicationSettings;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -41,7 +42,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
 
   public static final String GIT_EXECUTABLE_PATH = "IDEA_TEST_GIT_EXECUTABLE_PATH";
 
-  private static final String GIT_EXECUTABLE = (SystemInfo.isWindows ? "git.exe" : "git");
+  private static final String GIT_EXECUTABLE = "git";
   protected GitTestRepository myMainRepo;
   private File myProjectDir;
 
@@ -71,6 +72,10 @@ public abstract class GitTest extends AbstractVcsTestCase {
         }
       }
     });
+
+    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    File executable = new File(myClientBinaryPath, SystemInfo.isWindows ? GIT_EXECUTABLE + ".exe" : GIT_EXECUTABLE);
+    settings.setPathToGit(executable.getPath());
 
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);

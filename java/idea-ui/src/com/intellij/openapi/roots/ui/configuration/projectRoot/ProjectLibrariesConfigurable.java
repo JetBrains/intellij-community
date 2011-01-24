@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,6 +44,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
     return null;
   }
 
+  @NotNull
   @NonNls
   public String getId() {
     return "project.libraries";

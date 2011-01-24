@@ -23,11 +23,14 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -82,8 +85,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
-    }, ActionPlaces.EDITOR_POPUP, false).setNavigationActionsEnabled(false).addTabMouseListener(new TabMouseListener()).getPresentation().
-      setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
+    }, ActionPlaces.EDITOR_POPUP, false).setNavigationActionsEnabled(false).addTabMouseListener(new TabMouseListener()).getPresentation()
+      .setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
@@ -103,7 +106,21 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
             newEditor.selectNotify();
           }
         }
-      }).setAdditinalSwitchProviderWhenOriginal(new MySwitchProvider());
+      }).setAdditinalSwitchProviderWhenOriginal(new MySwitchProvider())
+    .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {
+      @Override
+      public ActionCallback execute(TabInfo info, boolean requestFocus, final ActiveRunnable doChangeSelection) {
+        final ActionCallback result = new ActionCallback();
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
+          public void run() {
+            ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
+            result.notify(doChangeSelection.run());
+          }
+        }, "EditorChange", null);
+        return result;
+      }
+    });
 
     setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
 
@@ -157,10 +174,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
     if (!uiSettings.HIDE_TOOL_STRIPES) {
-      border.top = topIds.size() > 0 ? 1: 0;
-      border.bottom = bottom.size() > 0 ? 1: 0;
-      border.left = leftIds.size() > 0 ? 1: 0;
-      border.right = rightIds.size() > 0 ? 1: 0;
+      border.top = topIds.size() > 0 ? 1 : 0;
+      border.bottom = bottom.size() > 0 ? 1 : 0;
+      border.left = leftIds.size() > 0 ? 1 : 0;
+      border.right = rightIds.size() > 0 ? 1 : 0;
     }
 
     for (String each : ids) {
@@ -171,11 +188,14 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         ToolWindowAnchor eachAnchor = eachWnd.getAnchor();
         if (eachAnchor == ToolWindowAnchor.TOP) {
           border.top = 1;
-        } else if (eachAnchor == ToolWindowAnchor.BOTTOM) {
+        }
+        else if (eachAnchor == ToolWindowAnchor.BOTTOM) {
           border.bottom = 1;
-        } else if (eachAnchor == ToolWindowAnchor.LEFT) {
+        }
+        else if (eachAnchor == ToolWindowAnchor.LEFT) {
           border.left = 1;
-        } else if (eachAnchor == ToolWindowAnchor.RIGHT) {
+        }
+        else if (eachAnchor == ToolWindowAnchor.RIGHT) {
           border.right = 0;
         }
       }
@@ -272,8 +292,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
-      .setTabColor(calcTabColor(myProject, file))
-      .setDragOutDelegate(myDragOutDelegate);
+      .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();

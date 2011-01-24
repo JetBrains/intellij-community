@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
@@ -71,6 +72,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable {
   }
 
 
+  @NotNull
   public String getId() {
     return "Groovy compiler";
   }

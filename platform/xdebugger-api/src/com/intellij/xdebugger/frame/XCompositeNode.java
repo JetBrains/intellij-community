@@ -34,6 +34,12 @@ public interface XCompositeNode extends Obsolescent {
    * @param children child nodes to add
    * @param last <code>true</code> if all children added
    */
+  void addChildren(@NotNull XValueChildrenList children, final boolean last);
+
+
+  /**
+   * @deprecated use {@link #addChildren(XValueChildrenList, boolean)} instead
+   */
   void addChildren(List<? extends XValue> children, final boolean last);
 
   /**

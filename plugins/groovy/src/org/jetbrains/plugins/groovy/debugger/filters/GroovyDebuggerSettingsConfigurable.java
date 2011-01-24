@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
@@ -59,6 +60,7 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
     return "reference.idesettings.debugger.groovy";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

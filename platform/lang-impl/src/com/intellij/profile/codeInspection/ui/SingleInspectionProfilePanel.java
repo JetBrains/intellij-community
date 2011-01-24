@@ -276,11 +276,13 @@ public class SingleInspectionProfilePanel extends JPanel {
           profileModifiableModel.disableTool(entry.getShortName(), (NamedScope)null);
         }
         profileModifiableModel.setLocal(true);
+        profileModifiableModel.setModified(true);
         return profileModifiableModel;
       } else if (initValue == 0) {
         inspectionProfile.copyFrom(selectedProfile);
         inspectionProfile.setName(profileName);
         inspectionProfile.initInspectionTools();
+        inspectionProfile.setModified(true);
         return inspectionProfile;
       }
       return null;

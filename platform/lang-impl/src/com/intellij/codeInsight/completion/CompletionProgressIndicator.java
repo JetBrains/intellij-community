@@ -289,12 +289,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           myState.modifiersChanged();
           if (myState.isWaitingAfterAutoInsertion()) {
-            unregisterItself();
+            unregisterItself(true);
           }
           contentComponent.removeKeyListener(this);
         }
       }
     });
+  }
+
+  boolean isZombie() {
+    return myState.isZombie();
   }
 
   private void setMergeCommand() {
@@ -330,23 +334,23 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final HintListener hintListener = new HintListener() {
       public void hintHidden(final EventObject event) {
-        unregisterItself();
+        unregisterItself(true);
       }
     };
     final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
-        unregisterItself();
+        unregisterItself(true);
       }
     };
     final SelectionListener selectionListener = new SelectionListener() {
       public void selectionChanged(SelectionEvent e) {
-        unregisterItself();
+        unregisterItself(true);
       }
     };
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        unregisterItself();
+        unregisterItself(true);
       }
     };
 
@@ -475,7 +479,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
-    unregisterItself();
+    unregisterItself(false);
   }
 
   @TestOnly
@@ -486,8 +490,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private void unregisterItself() {
-    myState.handleDeath();
+  private void unregisterItself(boolean afterDeath) {
+    myState.handleDeath(afterDeath);
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     assert currentCompletion == this : currentCompletion + "!=" + this;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);

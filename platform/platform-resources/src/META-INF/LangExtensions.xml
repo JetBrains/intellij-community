@@ -446,6 +446,7 @@
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"/>
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler" id="EnterBetweenBracesHandler"/>
+  <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>
   <enterHandlerDelegate implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenamerEnterHandler"/>
 
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
@@ -456,6 +457,7 @@
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
+  <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
@@ -510,6 +512,7 @@
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler" order="after hide-hints"/>
 
   <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"/>
+  <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler"/>
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
 
@@ -607,4 +610,5 @@
   <statistics.usagesCollector  implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
+
 </extensions>

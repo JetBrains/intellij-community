@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
   private JTextField myResourcePatternsField;
   private JCheckBox myCbCompileInBackground;
   private JCheckBox myCbClearOutputDirectory;
-  private JCheckBox myCbCompileDependent;
   private JCheckBox myCbAssertNotNull;
   private JLabel myPatternLegendLabel;
   private JCheckBox myCbAutoShowFirstError;
@@ -52,7 +52,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     myCbCompileInBackground.setSelected(workspaceConfiguration.COMPILE_IN_BACKGROUND);
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    myCbCompileDependent.setSelected(workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
 
@@ -78,7 +77,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
-    workspaceConfiguration.COMPILE_DEPENDENT_FILES = myCbCompileDependent.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
 
@@ -126,7 +124,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    isModified |= ComparingUtils.isModified(myCbCompileDependent, workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -148,6 +145,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     return null;
   }
 
+  @NotNull
   public String getId() {
     return "compiler.general";
   }

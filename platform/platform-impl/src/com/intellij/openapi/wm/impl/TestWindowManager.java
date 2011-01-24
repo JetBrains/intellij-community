@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -124,9 +125,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
+      Disposer.register(parentDisposable, widget);
     }
 
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
+      Disposer.register(parentDisposable, widget);
     }
 
     public void updateWidgets() {
@@ -282,6 +285,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
   }
 
+  @NotNull
   public final String getComponentName() {
     return "TestWindowManager";
   }

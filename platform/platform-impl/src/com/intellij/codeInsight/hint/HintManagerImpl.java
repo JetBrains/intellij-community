@@ -388,7 +388,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, layeredPane);
     }
-    else if (layeredPane.getWidth() < p.x + size.width) {
+    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
 

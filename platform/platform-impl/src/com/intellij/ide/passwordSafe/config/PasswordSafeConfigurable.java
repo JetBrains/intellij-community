@@ -97,6 +97,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable {
   /**
    * {@inheritDoc}
    */
+  @NotNull
   public String getId() {
     return "application.passwordSafe";
   }

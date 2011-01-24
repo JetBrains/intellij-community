@@ -47,6 +47,7 @@ public class JUnitUtil {
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls private static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
+  @NonNls public static final String SUITE_METHOD_NAME = "suite";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
     if (psiMethod == null) return false;
@@ -194,7 +195,7 @@ public class JUnitUtil {
     if (getTestMethod(psiMethod) != null) return true;
     final String name = psiMethod.getName();
     if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      if ("suite".equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
+      if (SUITE_METHOD_NAME.equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
         return true;
       }
       if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {

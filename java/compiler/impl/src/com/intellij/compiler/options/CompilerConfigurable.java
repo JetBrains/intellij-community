@@ -26,12 +26,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,6 +63,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
     return "project.propCompiler";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }
@@ -178,6 +179,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
           excludes.disposeUIResources();
         }
 
+      @NotNull
       public String getId() {
         return getHelpTopic();
       }

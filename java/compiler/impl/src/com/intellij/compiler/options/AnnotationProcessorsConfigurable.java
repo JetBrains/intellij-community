@@ -18,6 +18,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -69,6 +70,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
     return "reference.projectsettings.compiler.annotationProcessors";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

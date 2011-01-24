@@ -22,7 +22,6 @@
  */
 package com.intellij.lang.injection;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -36,13 +35,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class InjectedLanguageManager implements ProjectComponent {
+public abstract class InjectedLanguageManager {
 
   /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
   @Deprecated
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
-  private final static NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
+  private static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
 
   public static InjectedLanguageManager getInstance(Project project) {
     return INSTANCE_CACHE.getValue(project);

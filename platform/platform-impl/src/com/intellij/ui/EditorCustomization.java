@@ -33,7 +33,7 @@ import java.util.Set;
 public interface EditorCustomization {
 
   enum Feature {
-    SOFT_WRAP, SPELL_CHECK, NO_HORIZONTAL_SCROLLBAR, ONE_LINE
+    SOFT_WRAP, SPELL_CHECK, HORIZONTAL_SCROLLBAR, ONE_LINE, ADDITIONAL_PAGE_AT_BOTTOM
   }
 
   ExtensionPointName<EditorCustomization> EP_NAME = ExtensionPointName.create("com.intellij.editorCustomization");

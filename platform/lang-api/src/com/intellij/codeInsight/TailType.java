@@ -38,10 +38,14 @@ import java.util.List;
 public abstract class TailType {
 
   public static int insertChar(final Editor editor, final int tailOffset, final char c) {
+    return insertChar(editor, tailOffset, c, true);
+  }
+
+  public static int insertChar(Editor editor, int tailOffset, char c, boolean overwrite) {
     Document document = editor.getDocument();
     int textLength = document.getTextLength();
     CharSequence chars = document.getCharsSequence();
-    if (tailOffset == textLength || chars.charAt(tailOffset) != c){
+    if (tailOffset == textLength || !overwrite || chars.charAt(tailOffset) != c){
       document.insertString(tailOffset, String.valueOf(c));
     }
     return moveCaret(editor, tailOffset, 1);

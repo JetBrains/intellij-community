@@ -77,17 +77,11 @@ public class BrowserSelector {
   }
 
   private void initBrowsersComboModel() {
-    final BrowsersConfiguration.BrowserFamily[] browsers = BrowsersConfiguration.BrowserFamily.values();
     final List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
     if (myAllowDefaultBrowser) {
       activeBrowsers.add(null);
     }
-    final BrowsersConfiguration browsersConfiguration = BrowsersConfiguration.getInstance();
-    for (final BrowsersConfiguration.BrowserFamily browser : browsers) {
-      if (browsersConfiguration.getBrowserSettings(browser).isActive()) {
-        activeBrowsers.add(browser);
-      }
-    }
+    activeBrowsers.addAll(BrowsersConfiguration.getInstance().getActiveBrowsers());
 
     myBrowserComboWithBrowse.getComboBox().setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(activeBrowsers)));
   }

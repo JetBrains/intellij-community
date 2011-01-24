@@ -50,17 +50,17 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         final Charset t = (Charset)value;
         final Object userObject = table.getModel().getValueAt(row, 0);
         final VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
-        final Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(file);
+        final Pair<String,Boolean> pair = ChooseFileEncodingAction.update(file);
         final boolean enabled = file == null || pair.getSecond();
         if (t != null) {
           setText(t.displayName());
         }
         else if (file != null) {
-          Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
+          Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
           if (charset != null) {
             setText(charset.displayName());
           }
-          else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(file)) {
+          else if (LoadTextUtil.wasCharsetDetectedFromBytes(file)) {
             setText(file.getCharset().displayName());
           }
           else if (!ChooseFileEncodingAction.isEnabled(file)) {
@@ -102,11 +102,14 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         Presentation templatePresentation = changeAction.getTemplatePresentation();
         final JComponent comboComponent = changeAction.createCustomComponent(templatePresentation);
 
-        DataContext dataContext = SimpleDataContext
-          .getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), myVirtualFile, SimpleDataContext.getProjectContext(getProject()));
-        AnActionEvent event =
-          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
+        DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), myVirtualFile,
+                                                                      SimpleDataContext.getProjectContext(getProject()));
+        AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
+        changeAction.getTemplatePresentation().setDescription(null);
+        if (myVirtualFile == null) {
+          changeAction.getTemplatePresentation().setEnabled(true); // enable changing encoding for tree root (entire project)
+        }
         editorComponent = comboComponent;
         comboComponent.addComponentListener(new ComponentAdapter() {
           @Override
@@ -116,6 +119,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         });
         Charset charset = (Charset)getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
         templatePresentation.setText(charset == null ? "" : charset.displayName());
+        comboComponent.setToolTipText(null);
         comboComponent.revalidate();
 
         return editorComponent;
@@ -130,6 +134,6 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
 
   @Override
   protected boolean isValueEditableForFile(final VirtualFile virtualFile) {
-    return ChangeEncodingUpdateGroup.update(virtualFile).getSecond();
+    return ChooseFileEncodingAction.update(virtualFile).getSecond();
   }
 }

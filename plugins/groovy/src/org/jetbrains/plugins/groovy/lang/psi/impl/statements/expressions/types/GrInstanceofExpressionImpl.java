@@ -20,10 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
 /**
@@ -44,7 +46,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
   }
 
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
+    return getTypeByFQName("java.lang.Boolean");
   }
 
   public GrTypeElement getTypeElement() {

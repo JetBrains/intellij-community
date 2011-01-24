@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -68,6 +69,11 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   public GrDocComment getContainingComment() {
     return (GrDocComment)getParent();
+  }
+
+  @Override
+  public GrDocParameterReference getDocParameterReference() {
+    return null;
   }
 
   public GrDocTagValueToken getValueElement() {

@@ -285,7 +285,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     return panel;
   }
 
-  public void addActionListener(ActionListener actionListener) {
+  public void setActionListener(ActionListener actionListener) {
     myActionListener = actionListener;
   }
 

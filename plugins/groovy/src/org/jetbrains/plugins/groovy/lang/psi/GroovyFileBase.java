@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportHolder;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -52,7 +52,7 @@ public interface GroovyFileBase extends PsiFile, GrVariableDeclarationOwner, GrS
 
   GrTypeDefinition[] getTypeDefinitions();
 
-  GrTopLevelDefintion[] getTopLevelDefinitions();
+  GrTopLevelDefinition[] getTopLevelDefinitions();
 
   GrMethod[] getTopLevelMethods();
 

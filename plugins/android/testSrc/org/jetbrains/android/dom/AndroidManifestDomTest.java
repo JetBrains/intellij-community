@@ -116,6 +116,11 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestCompletion();
   }
 
+  public void testApplicationNameCompletion() throws Throwable {
+    copyFileToProject("MyApplication.java", "src/p1/p2/MyApplication.java");
+    doTestCompletion();
+  }
+
   private void doTestCompletion() throws Throwable {
     toTestCompletion(getTestName(false) + ".xml", getTestName(false) + "_after.xml");
   }

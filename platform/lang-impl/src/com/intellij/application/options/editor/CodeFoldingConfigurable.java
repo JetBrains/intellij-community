@@ -29,6 +29,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,6 +105,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     return AbstractConfigurableEP.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.folding";
   }

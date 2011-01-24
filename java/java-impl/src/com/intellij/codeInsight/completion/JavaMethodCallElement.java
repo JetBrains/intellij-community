@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,9 +34,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaMethodCallElement");
   private static final Key<PsiSubstitutor> INFERENCE_SUBSTITUTOR = Key.create("INFERENCE_SUBSTITUTOR");
-  private final PsiClass myContainingClass;
+  @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final boolean myCanImportStatic;
   private boolean myShouldImportStatic;
@@ -52,9 +50,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myMethod = method;
     myMergedOverloads = mergedOverloads;
     myContainingClass = method.getContainingClass();
-    if (myContainingClass == null) {
-      LOG.error(method.getName());
-    }
     myCanImportStatic = canImportStatic;
   }
 
@@ -115,7 +110,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       context.commitDocument();
       if (myCanImportStatic && myShouldImportStatic) {
         final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
-        if (ref != null) {
+        if (ref != null && myContainingClass != null) {
           ref.bindToElementViaStaticImport(myContainingClass);
         }
         return;
@@ -184,6 +179,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       return;
     }
 
+    if (myContainingClass == null) return;
+
     document.insertString(startOffset, ".");
     JavaCompletionUtil.insertClassReference(myContainingClass, file, startOffset);
   }
@@ -216,8 +213,19 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
+  public LookupItem<PsiMethod> forceQualify() {
+    if (myContainingClass != null) {
+      String className = myContainingClass.getName();
+      if (className != null) {
+        addLookupStrings(className + "." + myMethod.getName());
+      }
+    }
+    return super.forceQualify();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
-    final String className = myContainingClass.getName();
+    final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
 
@@ -229,7 +237,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       presentation.setItemText(methodName);
     }
 
-    final String qname = myContainingClass.getQualifiedName();
+    final String qname = myContainingClass == null ? "" : myContainingClass.getQualifiedName();
     String location = !myCanImportStatic || StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));

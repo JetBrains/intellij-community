@@ -72,6 +72,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +166,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ourTestCase = this;
     if (myProject != null) {
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
-      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
+      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).pushInjectors();
     }
   }
 
@@ -214,14 +215,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       StringBuilder leakers = new StringBuilder();
       leakers.append("Too many projects leaked: \n");
       for (Project project : e.getLeakedProjects()) {
-        String place = project.getUserData(CREATION_PLACE);
-        leakers.append(place != null ? place : project.getBaseDir());
+        String presentableString = getCreationPlace(project);
+        leakers.append(presentableString);
         leakers.append("\n");
       }
 
       fail(leakers.toString());
       return null;
     }
+  }
+
+  public static String getCreationPlace(Project project) {
+    String place = project.getUserData(CREATION_PLACE);
+    return project.toString() + (place != null ? place : project.getBaseDir());
   }
 
   protected void runStartupActivities() {
@@ -388,6 +394,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private void disposeProject() {
+    UIUtil.dispatchAllInvocationEvents();
     if (myProject != null) {
       Disposer.dispose(myProject);
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();

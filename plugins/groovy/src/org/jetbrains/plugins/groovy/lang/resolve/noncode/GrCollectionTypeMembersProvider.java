@@ -21,10 +21,10 @@ import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -39,7 +39,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
                                      final GroovyPsiElement place,
                                      final ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
-    if (!InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) return;
+    if (!GroovyPsiManager.isInheritorCached(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) return;
 
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;

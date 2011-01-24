@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -191,6 +192,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     return IconLoader.getIcon("/general/pluginManager.png");
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

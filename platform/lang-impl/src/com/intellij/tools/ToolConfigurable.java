@@ -19,6 +19,7 @@ package com.intellij.tools;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,6 +68,7 @@ public class ToolConfigurable implements SearchableConfigurable {
   }
 
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

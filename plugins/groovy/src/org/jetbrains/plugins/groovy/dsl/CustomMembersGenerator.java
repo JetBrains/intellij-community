@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.HashMap;
@@ -135,10 +136,10 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   }
 
   private static String stringifyType(Object type) {
-    return type instanceof Closure ? "groovy.lang.Closure" :
+    return type instanceof Closure ? GroovyCommonClassNames.GROOVY_LANG_CLOSURE :
     type instanceof Map ? "java.util.Map" :
     type instanceof Class ? ((Class)type).getName() :
-    type != null ? type.toString() : "java.lang.Object";
+    type != null ? type.toString() : CommonClassNames.JAVA_LANG_OBJECT;
   }
 
 }

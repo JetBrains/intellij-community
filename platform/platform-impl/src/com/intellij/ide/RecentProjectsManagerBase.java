@@ -45,6 +45,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   public static class State {
     public List<String> recentPaths = new ArrayList<String>();
+    public List<String> openPaths = new ArrayList<String>();
     public String lastPath;
   }
 
@@ -123,8 +124,13 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) {
       myState.lastPath = null;
+      myState.openPaths = Collections.emptyList();
     } else {
       myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
+      myState.openPaths = new ArrayList<String>();
+      for (Project openProject : openProjects) {
+        myState.openPaths.add(getProjectPath(openProject));
+      }
     }
   }
 
@@ -292,9 +298,17 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (projectFromCommandLine != null) return;
       GeneralSettings generalSettings = GeneralSettings.getInstance();
       if (generalSettings.isReopenLastProject()) {
-        String lastProjectPath = getLastProjectPath();
-        if (lastProjectPath != null) {
-          doOpenProject(lastProjectPath, null, false);
+        List<String> openPaths = myState.openPaths;
+        if (openPaths.size() > 0) {
+          for (String openPath : openPaths) {
+            doOpenProject(openPath, null, true);
+          }
+        }
+        else {
+          String lastProjectPath = getLastProjectPath();
+          if (lastProjectPath != null) {
+            doOpenProject(lastProjectPath, null, false);
+          }
         }
       }
     }
@@ -304,6 +318,10 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     public void projectOpenFailed() {
+      updateLastProjectPath();
+    }
+
+    public void appClosing() {
       updateLastProjectPath();
     }
   }

@@ -28,8 +28,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import junit.framework.Test;
-import junit.framework.TestCase;
+
 
 public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
   private PsiPackage myPackage = null;

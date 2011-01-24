@@ -51,6 +51,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -60,6 +61,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author max
@@ -174,6 +176,20 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       return Boolean.FALSE;
     }
     return null;
+  }
+
+  // for using in tests !
+  @Nullable
+  public IntentionAction getAction(int index) {
+    if (myPopup == null || myPopup.isDisposed()) {
+      return null;
+    }
+    IntentionListStep listStep = (IntentionListStep)myPopup.getListStep();
+    List<IntentionActionWithTextCaching> values = listStep.getValues();
+    if (values.size() <= index) {
+      return null;
+    }
+    return values.get(index).getAction();
   }
 
   public synchronized void recreate() {

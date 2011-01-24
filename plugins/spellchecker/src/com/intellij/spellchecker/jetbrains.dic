@@ -8,6 +8,7 @@ arity
 asensitive
 auth
 authid
+autoboxing
 autocommit
 autoextend
 autoincrement
@@ -22,6 +23,8 @@ binlog
 bool
 btree
 calc
+cancelable
+cancellable
 capath
 captcha
 ccflags
@@ -262,6 +265,7 @@ tooltips
 trinary
 twitter
 uncomment
+uncommented
 underwave
 undofile
 unhandled

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
@@ -27,7 +28,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ import java.util.Set;
 public class ImportNSAction implements QuestionAction {
   private final Set<String> myNamespaces;
   private final XmlFile myFile;
-  @Nullable private final PsiElement myElement;
+  private final PsiElement myElement;
   private final Editor myEditor;
   private final String myTitle;
 
@@ -59,6 +59,8 @@ public class ImportNSAction implements QuestionAction {
     final JList list = new JBList(objects);
     list.setCellRenderer(XmlNSRenderer.INSTANCE);
     list.setSelectedIndex(0);
+    final int offset = myElement.getTextOffset();
+    final RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
     final Runnable runnable = new Runnable() {
 
       public void run() {
@@ -77,7 +79,10 @@ public class ImportNSAction implements QuestionAction {
                                                      new XmlExtension.Runner<String, IncorrectOperationException>() {
                     public void run(final String s) throws IncorrectOperationException {
                       PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                      extension.qualifyWithPrefix(s, myElement, myEditor.getDocument());
+                      PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                      if (element != null) {
+                        extension.qualifyWithPrefix(s, element, myEditor.getDocument());
+                      }
                     }
                   }
                 );

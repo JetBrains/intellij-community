@@ -150,6 +150,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
         }
 
+        @NotNull
         public String getId() {
           return getHelpTopic();
         }

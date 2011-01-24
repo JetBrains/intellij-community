@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,7 @@ import java.util.Collection;
 /**
  * @author cdr
  */
-public abstract class EncodingManager implements ApplicationComponent {
+public abstract class EncodingManager {
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
@@ -42,8 +42,8 @@ public abstract class EncodingManager implements ApplicationComponent {
   public abstract Collection<Charset> getFavorites();
 
   /**
-   * @param virtualFile
-   * @param useParentDefaults
+   * @param virtualFile  file to get encoding for
+   * @param useParentDefaults true to determine encoding from the parent
    * @return encoding configured for this file in Settings|File Encodings or,
    *         if useParentDefaults is true, encoding configured for nearest parent of virtualFile or,
    *         null if there is no configured encoding found.
@@ -79,9 +79,13 @@ public abstract class EncodingManager implements ApplicationComponent {
   public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
-  public abstract void addPropertyChangeListener(PropertyChangeListener listener);
+  /**
+   * @deprecated use {@link EncodingManager#addPropertyChangeListener(java.beans.PropertyChangeListener, com.intellij.openapi.Disposable)} instead
+   */
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+  public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 }

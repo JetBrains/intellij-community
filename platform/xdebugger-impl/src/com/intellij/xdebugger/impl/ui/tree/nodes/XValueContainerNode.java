@@ -15,15 +15,14 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.util.containers.SortedList;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
-  private List<XValueContainerNode<?>> myValueChildren;
+  private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
   private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
@@ -61,15 +60,21 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
-  public void addChildren(final List<? extends XValue> children, final boolean last) {
+  @Override
+  public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         if (myValueChildren == null) {
-          myValueChildren = new ArrayList<XValueContainerNode<?>>();
+          if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+            myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
+          }
+          else {
+            myValueChildren = new ArrayList<XValueNodeImpl>();
+          }
         }
         List<XValueContainerNode<?>> newChildren = new ArrayList<XValueContainerNode<?>>();
-        for (XValue child : children) {
-          XValueContainerNode<?> node = createChildNode(child);
+        for (int i = 0; i < children.size(); i++) {
+          XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
           myValueChildren.add(node);
           newChildren.add(node);
         }
@@ -87,16 +92,20 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     });
   }
 
+  public void addChildren(final List<? extends XValue> children, final boolean last) {
+    final XValueChildrenList list = new XValueChildrenList();
+    for (XValue child : children) {
+      list.add(null, child);
+    }
+    addChildren(list, last);
+  }
+
   public void tooManyChildren(final int remaining) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         setMessageNode(MessageTreeNode.createEllipsisNode(myTree, XValueContainerNode.this, remaining));
       }
     });
-  }
-
-  protected XValueContainerNode<?> createChildNode(final XValue child) {
-    return new XValueNodeImpl(myTree, this, child);
   }
 
   public boolean isObsolete() {
@@ -158,7 +167,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Nullable
-  public List<XValueContainerNode<?>> getLoadedChildren() {
+  public List<XValueNodeImpl> getLoadedChildren() {
     return myValueChildren;
   }
 

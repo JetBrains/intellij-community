@@ -122,7 +122,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   public boolean canNavigate() {
-    return true;
+    return ProjectSettingsService.getInstance(myProject).canOpenProjectLibrarySettings(getValue());
   }
 
   @Override

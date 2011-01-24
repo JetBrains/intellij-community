@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XValue extends XValueContainer {
 
   /**
-   * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(String, javax.swing.Icon, String, String, boolean)}
+   * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(javax.swing.Icon, String, String, boolean)}
    * when computation is finished.
    * Note that this method is called from the Event Dispatch thread so it should return quickly.
    * @param node node.

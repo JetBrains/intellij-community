@@ -71,44 +71,88 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
     }
   };
 
+  @NotNull
   @Override
   public EditorTextField getEditorField(@NotNull Language language,
                                         @NotNull final Project project,
                                         @NotNull final EditorCustomization.Feature... features)
   {
-    return new LanguageTextField(language, project, "", false) {
+    return new MyEditorTextField(language, project) {
       @Override
-      protected EditorEx createEditor() {
-        final EditorEx ex = super.createEditor();
-        ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        ex.setHorizontalScrollbarVisible(true);
-        EditorSettings settings = ex.getSettings();
-        settings.setAdditionalColumnsCount(3);
-        settings.setVirtualSpace(false);
-        EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
+      protected void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor) {
         for (EditorCustomization.Feature feature : features) {
           for (EditorCustomization customization : customizations) {
             if (customization.getSupportedFeatures().contains(feature)) {
-              customization.addCustomization(ex, feature);
+              customization.addCustomization(editor, feature);
               break;
             }
           }
         }
-        return ex;
-      }
-
-      @Override
-      protected boolean isOneLineMode() {
-        return false;
-      }
-
-      @Override
-      public Object getData(String dataId) {
-        if (PlatformDataKeys.ACTIONS_SORTER.is(dataId)) {
-          return ACTIONS_COMPARATOR;
-        }
-        return super.getData(dataId);
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public EditorTextField getEditorField(@NotNull Language language,
+                                        @NotNull Project project,
+                                        @NotNull final Iterable<EditorCustomization.Feature> enabledFeatures,
+                                        @NotNull final Iterable<EditorCustomization.Feature> disabledFeatures) {
+    return new MyEditorTextField(language, project) {
+      @Override
+      protected void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor) {
+        for (EditorCustomization.Feature feature : enabledFeatures) {
+          for (EditorCustomization customization : customizations) {
+            if (customization.getSupportedFeatures().contains(feature)) {
+              customization.addCustomization(editor, feature);
+              break;
+            }
+          }
+        }
+        for (EditorCustomization.Feature feature : disabledFeatures) {
+          for (EditorCustomization customization : customizations) {
+            if (customization.getSupportedFeatures().contains(feature)) {
+              customization.removeCustomization(editor, feature);
+              break;
+            }
+          }
+        }
+      }
+    };
+  }
+  
+  private abstract static class MyEditorTextField extends LanguageTextField {
+
+    MyEditorTextField(Language language, @NotNull Project project) {
+      super(language, project, "", false);
+    }
+
+    @Override
+    protected EditorEx createEditor() {
+      final EditorEx ex = super.createEditor();
+      ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      ex.setHorizontalScrollbarVisible(true);
+      EditorSettings settings = ex.getSettings();
+      settings.setAdditionalColumnsCount(3);
+      settings.setVirtualSpace(false);
+      EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, getProject());
+      applyFeatures(customizations, ex);
+      return ex;
+    }
+    
+    protected abstract void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor);
+
+    @Override
+    protected boolean isOneLineMode() {
+      return false;
+    }
+
+    @Override
+    public Object getData(String dataId) {
+      if (PlatformDataKeys.ACTIONS_SORTER.is(dataId)) {
+        return ACTIONS_COMPARATOR;
+      }
+      return super.getData(dataId);
+    }
   }
 }

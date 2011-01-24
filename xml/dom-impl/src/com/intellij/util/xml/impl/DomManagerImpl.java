@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.List;
@@ -55,8 +56,8 @@ import java.util.Set;
  */
 public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
-  public static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
-  static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
+  static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
+  static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
   static final Key<DomInvocationHandler> CACHED_DOM_HANDLER = Key.create("CACHED_DOM_HANDLER");
 
   static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
@@ -294,8 +295,8 @@ public final class DomManagerImpl extends DomManager {
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     //noinspection unchecked
-    if (file.getUserData(MOCK_DESCIPRTION) == null) {
-      file.putUserData(MOCK_DESCIPRTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
+    if (file.getUserData(MOCK_DESCRIPTION) == null) {
+      file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
       mySemService.clearCache();
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
@@ -354,7 +355,8 @@ public final class DomManagerImpl extends DomManager {
 
   @Nullable
   static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(XmlFile file) {
-    return file.getUserData(CACHED_FILE_ELEMENT);
+    WeakReference<DomFileElementImpl> ref = file.getUserData(CACHED_FILE_ELEMENT);
+    return ref == null ? null : ref.get();
   }
 
   @Nullable

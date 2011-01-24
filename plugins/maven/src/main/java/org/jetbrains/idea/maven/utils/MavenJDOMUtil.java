@@ -59,6 +59,7 @@ public class MavenJDOMUtil {
     return doRead(CharsetToolkit.bytesToString(bytes), handler);
   }
 
+  // todo: rewrite it using NanoXML. PSI is too heavy for this
   @Nullable
   private static Element doRead(String text, final ErrorHandler handler) {
     final LinkedList<Element> stack = new LinkedList<Element>();

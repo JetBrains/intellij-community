@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
@@ -48,7 +49,6 @@ import java.util.Arrays;
  */
 public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   public static final GroovyInsertHandler INSTANCE = new GroovyInsertHandler();
-  private static final String CLOSURE_CLASS = "groovy.lang.Closure";
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     @NonNls Object obj = item.getObject();
@@ -88,7 +88,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         final PsiType type = parameters[0].getType();
         if (type instanceof PsiClassType) {
           final PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass != null && CLOSURE_CLASS.equals(psiClass.getQualifiedName())) {
+          if (psiClass != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName())) {
             document.insertString(offset, " {}");
             caretModel.moveToOffset(offset + 2);
             return;

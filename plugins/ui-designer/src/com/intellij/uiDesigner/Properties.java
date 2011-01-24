@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -37,7 +37,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class Properties implements BaseComponent, JDOMExternalizable{
+public final class Properties implements NamedComponent, JDOMExternalizable{
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
   private final Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
@@ -178,11 +178,5 @@ public final class Properties implements BaseComponent, JDOMExternalizable{
   @NonNls @NotNull
   public String getComponentName() {
     return "gui-designer-properties";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }
