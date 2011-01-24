@@ -122,29 +122,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     if (file != null) {
       CachedValue<Map<String, XmlTag>> value = file.getUserData(ourCachedIdsKey);
       if (value == null) {
-        value = CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
-          public Result<Map<String, XmlTag>> compute() {
-            final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
-            XmlDocument document = HtmlUtil.getRealXmlDocument(file.getDocument());
-            final XmlTag rootTag = document != null ? document.getRootTag():null;
-            
-            if (rootTag != null) {
-              processXmlElements(rootTag,
-                new PsiElementProcessor() {
-                  public boolean execute(final PsiElement element) {
-                    final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
-
-                    if (anchorValue!=null) {
-                      resultMap.put(anchorValue, (XmlTag)element);
-                    }
-                    return true;
-                  }
-                }
-              );
-            }
-            return new Result<Map<String, XmlTag>>(resultMap, file);
-          }
-        }, false);
+        value = CachedValuesManager.getManager(file.getProject()).createCachedValue(new MapCachedValueProvider(file), false);
         file.putUserData(ourCachedIdsKey, value);
       }
 
@@ -238,5 +216,36 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     return xmlFile == null ? 
            XmlBundle.message("cannot.resolve.anchor", myAnchor) :
            XmlBundle.message("cannot.resolve.anchor.in.file", myAnchor, xmlFile.getName());
+  }
+
+  // separate static class to avoid memory leak via this$0
+  private static class MapCachedValueProvider implements CachedValueProvider<Map<String, XmlTag>> {
+    private final XmlFile myFile;
+
+    public MapCachedValueProvider(XmlFile file) {
+      myFile = file;
+    }
+
+    public Result<Map<String, XmlTag>> compute() {
+      final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
+      XmlDocument document = HtmlUtil.getRealXmlDocument(myFile.getDocument());
+      final XmlTag rootTag = document != null ? document.getRootTag():null;
+
+      if (rootTag != null) {
+        processXmlElements(rootTag,
+          new PsiElementProcessor() {
+            public boolean execute(final PsiElement element) {
+              final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
+
+              if (anchorValue!=null) {
+                resultMap.put(anchorValue, (XmlTag)element);
+              }
+              return true;
+            }
+          }
+        );
+      }
+      return new Result<Map<String, XmlTag>>(resultMap, myFile);
+    }
   }
 }
