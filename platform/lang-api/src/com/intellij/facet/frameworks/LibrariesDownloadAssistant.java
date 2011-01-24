@@ -56,7 +56,7 @@ public class LibrariesDownloadAssistant {
         LOG.error(e);
       }
       catch (IOException e) {
-        LOG.error(e);
+         // no route to host, unknown host, etc.
       }
     }
 

@@ -98,6 +98,11 @@ public class PasswordSafePromptDialog extends DialogWrapper {
     return myRoot;
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPasswordPasswordField;
+  }
+
   /**
    * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link com.intellij.util.ui.UIUtil#invokeAndWaitIfNeeded(Runnable)}

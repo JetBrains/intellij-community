@@ -71,7 +71,7 @@ public class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
       final String value = generateValue(returnStatement);
 
       latestReplaced = (PsiReturnStatement) myFactory.createStatementFromText("return " + value+";", returnStatement.getParent());
-      returnStatement.replace(latestReplaced);
+      latestReplaced = (PsiReturnStatement)returnStatement.replace(latestReplaced);
     }
 
     return latestReplaced;

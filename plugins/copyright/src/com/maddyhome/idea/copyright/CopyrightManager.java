@@ -17,6 +17,7 @@
 package com.maddyhome.idea.copyright;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -102,7 +103,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
                         new UpdateCopyrightProcessor(myProject, module, file).run();
                       }
                     }
-                  });
+                  }, ModalityState.NON_MODAL);
                 }
               }
             }

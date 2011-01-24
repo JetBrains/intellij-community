@@ -929,9 +929,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myShareProfile != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
     if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
     if (descriptorsAreChanged()) {
-      return setSelectedProfileModified(true);
+      return true;
     }
-    setSelectedProfileModified(false);
     return false;
   }
 
