@@ -15,12 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.AbstractUnappliableEditorCustomization;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Editor customization that can make target editor soft wraps-aware.
@@ -30,15 +26,14 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 4:54:48 PM
  */
-public class SoftWrapsEditorCustomization extends AbstractUnappliableEditorCustomization {
+public class SoftWrapsEditorCustomization extends AbstractEditorCustomization {
 
-  @Override
-  public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.SOFT_WRAP);
+  public SoftWrapsEditorCustomization() {
+    super(Feature.SOFT_WRAP);
   }
 
   @Override
-  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setUseSoftWraps(true);
+  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
+    editor.getSettings().setUseSoftWraps(apply);
   }
 }
