@@ -1,11 +1,11 @@
+import org.jetbrains.jps.Jps
 import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
-import org.jetbrains.jps.Jps
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "102.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", "104.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)

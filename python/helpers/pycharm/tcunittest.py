@@ -17,6 +17,26 @@ class TeamcityTestResult(TestResult):
         self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
         self.current_suite = None
 
+    def find_first(self, val):
+      quot = val[0]
+      count = 1
+      quote_ind = val[count:].find(quot)
+      while val[count+quote_ind-1] == "\\":
+        count = count + quote_ind + 1
+        quote_ind = val[count:].find(quot)
+
+      return val[0:quote_ind+count+1]
+
+    def find_second(self, val):
+      quot = val[-1]
+      count = 1
+      quote_ind = val[:len(val)-count-1].rfind(quot)
+      while val[quote_ind-1] == "\\":
+        quote_ind = val[:quote_ind-1].rfind(quot)
+
+      return val[quote_ind:]
+
+
     def formatErr(self, err):
         exctype, value, tb = err
         return ''.join(traceback.format_exception(exctype, value, tb))
@@ -46,10 +66,17 @@ class TeamcityTestResult(TestResult):
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
+        error_value = err[1][0]
+
+        if error_value.startswith("'") or error_value.startswith('"'):
+          first = self.find_first(err[1][0])
+          second = self.find_second(err[1][0])
+        else:
+          first = second = ""
         err = self.formatErr(err)
 
         self.messages.testFailed(self.getTestName(test),
-            message='Failure', details=err)
+            message='Failure', details=err, expected=first, actual=second)
 
     def addSkip(self, test, reason):
         self.messages.testIgnored(self.getTestName(test), message=reason)

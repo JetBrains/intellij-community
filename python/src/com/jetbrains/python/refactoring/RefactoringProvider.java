@@ -16,10 +16,7 @@ import com.jetbrains.python.refactoring.introduce.field.FieldIntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 19, 2009
- * Time: 6:26:22 PM
+ * @author Alexey.Ivanov
  */
 public class RefactoringProvider extends RefactoringSupportProvider {
   @Override
@@ -59,7 +56,15 @@ public class RefactoringProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
-    return (element instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) ||
-           element instanceof PyNamedParameter;
+    PyFunction containingFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    if (containingFunction != null) {
+      if (element instanceof PyTargetExpression) {
+        return true;
+      }
+      if (element instanceof PyNamedParameter) {
+        return containingFunction.getContainingClass() == null;
+      }
+    }
+    return false;
   }
 }
