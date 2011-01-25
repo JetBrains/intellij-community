@@ -53,6 +53,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyChainedComparisonsInspection.class,
       PyOldStyleClassesInspection.class,
       PyCompatibilityInspection.class,
+      PyListCreationInspection.class,
     };
   }
 }
