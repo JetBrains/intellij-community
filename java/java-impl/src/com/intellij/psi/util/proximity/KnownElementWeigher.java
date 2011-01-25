@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-public class KnownPackageWeigher extends ProximityWeigher {
+public class KnownElementWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     if (element instanceof PsiClass) {
@@ -32,6 +34,15 @@ public class KnownPackageWeigher extends ProximityWeigher {
       if (qname != null) {
         if (qname.startsWith("java.")) return 2;
         if (qname.startsWith("javax.")) return 1;
+      }
+    }
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      if ("finalize".equals(method.getName()) || "registerNatives".equals(method.getName())) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          return -1;
+        }
       }
     }
     return 0;

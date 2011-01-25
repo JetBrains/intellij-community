@@ -781,7 +781,7 @@
              order="before openedInEditor"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.JavaInheritanceWeigher" id="javaInheritance"
              order="after explicitlyImported, before sameLogicalRoot"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.KnownPackageWeigher" id="knownPackage"
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.KnownElementWeigher" id="knownElement"
              order="after sameModule, before sdkOrLibrary"/>
 
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
