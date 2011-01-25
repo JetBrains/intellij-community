@@ -823,6 +823,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.TYPE_PARAMETER_LIST) return defaultAlignment;
       if (role == ChildRole.TYPE) return defaultAlignment;
       if (role == ChildRole.NAME) return defaultAlignment;
+      if (role == ChildRole.THROWS_LIST && mySettings.ALIGN_THROWS_KEYWORD) return defaultAlignment;
       return null;
     }
 
