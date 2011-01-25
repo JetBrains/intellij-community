@@ -511,6 +511,10 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         else {
           if (skipOptionals && isParameterOptional(parameter)) continue;
           GrExpression fromText = null;
+          if (forceOptional(parameter)) {
+            skipOptionals = true;
+            continue;
+          }
           try {
             fromText = factory.createExpressionFromText(parameter.getDefaultValue());
           }
@@ -533,6 +537,10 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       PsiClassType[] exceptions = getExceptions(exceptionInfos, element, element.getManager());
       fixExceptions(element, exceptions);
     }
+  }
+
+  protected static boolean forceOptional(JavaParameterInfo parameter) {
+    return parameter instanceof GrParameterInfo && ((GrParameterInfo)parameter).forceOptional();
   }
 
   private static void fixExceptions(PsiElement element, PsiClassType[] exceptions) {

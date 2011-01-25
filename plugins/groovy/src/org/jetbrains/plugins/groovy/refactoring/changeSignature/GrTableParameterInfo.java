@@ -119,9 +119,6 @@ public class GrTableParameterInfo {
       type = null;
     }
     String defaultValue = getDefaultValue();
-    if (defaultValue.length() == 0) {
-      defaultValue = defaultInitializer;
-    }
     return new GrParameterInfo(getName(), defaultValue, defaultInitializer, type, myPosition);
   }
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -37,7 +36,6 @@ public class GrParameterInfo implements JavaParameterInfo {
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
-    final Project project = parameter.getProject();
     myName = parameter.getName();
     final PsiType type = parameter.getDeclaredType();
     if (type != null) {
@@ -82,6 +80,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public String getDefaultValue() {
+    if (forceOptional()) return getDefaultInitializer();
     return myDefaultValue;
   }
 
@@ -131,6 +130,10 @@ public class GrParameterInfo implements JavaParameterInfo {
 
   public boolean hasNoType() {
     return getTypeText().length() == 0;
+  }
+
+  public boolean forceOptional() {
+    return myPosition < 0 && myDefaultValue.length() == 0;
   }
 
   /**
