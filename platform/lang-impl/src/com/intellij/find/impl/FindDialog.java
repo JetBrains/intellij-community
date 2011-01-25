@@ -57,6 +57,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -110,6 +111,7 @@ class FindDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myModel = model;
+
     this.myOkHandler = myOkHandler;
 
     if (myModel.isReplaceState()){
@@ -274,6 +276,22 @@ class FindDialog extends DialogWrapper {
     validateFindButton();
   }
 
+  public FindModel getModel() {
+    return myModel;
+  }
+
+  @Nullable
+  public FindModel getCurrentModel() {
+    FindModel validateModel = (FindModel)myModel.clone();
+    applyTo(validateModel, false);
+
+
+    if (getValidationInfo(validateModel) == null) {
+      return validateModel;
+    }
+    return null;
+  }
+
   private static int getCaretPosition(JComboBox comboBox) {
     Component editorComponent = comboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField){
@@ -293,7 +311,6 @@ class FindDialog extends DialogWrapper {
 
   private void validateFindButton() {
     final String toFind = getStringToFind();
-
     if (toFind == null || toFind.length() == 0){
       setOKStatus(false);
       return;
@@ -416,76 +433,130 @@ class FindDialog extends DialogWrapper {
 
   private void doOKAction(boolean findAll) {
     FindModel validateModel = (FindModel)myModel.clone();
-    applyTo(validateModel);
-    validateModel.setFindAll(findAll);
-    if (validateModel.getDirectoryName() != null) {
-      PsiDirectory directory = FindInProjectUtil.getPsiDirectory(validateModel, myProject);
-      if (directory == null) {
+    applyTo(validateModel, findAll);
+
+    ValidationInfo validationInfo = getValidationInfo(validateModel);
+
+    if (validationInfo == null) {
+
+      myModel.copyFrom(validateModel);
+      updateFindSettings();
+
+      super.doOKAction();
+      myOkHandler.run();
+    } else {
+      String message = validationInfo.message;
+      if (message != null) {
         Messages.showMessageDialog(
           myProject,
-          FindBundle.message("find.directory.not.found.error", validateModel.getDirectoryName()),
+          message,
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
-        return;
       }
     }
+  }
 
-    if (validateModel.isRegularExpressions()) {
-      String toFind = validateModel.getStringToFind();
-      try {
-        Pattern pattern = Pattern.compile(toFind, validateModel.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-        if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {
-          throw new PatternSyntaxException(FindBundle.message("find.empty.match.regular.expression.error"),toFind, -1);
-        }
-      }
-      catch(PatternSyntaxException e){
-        Messages.showMessageDialog(
-            myProject,
-            FindBundle.message("find.invalid.regular.expression.error", toFind, e.getDescription()),
-            CommonBundle.getErrorTitle(),
-            Messages.getErrorIcon()
-        );
-        return;
-      }
+  private void updateFindSettings() {
+    FindSettings findSettings = FindSettings.getInstance();
+    findSettings.setCaseSensitive(myModel.isCaseSensitive());
+    if (myModel.isReplaceState()) {
+      findSettings.setPreserveCase(myModel.isPreserveCase());
     }
 
-    validateModel.setFileFilter( null );
-    FindSettings.getInstance().setFileMask(null);
+    findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
+    findSettings.setInStringLiteralsOnly(myModel.isInStringLiteralsOnly());
+    findSettings.setInCommentsOnly(myModel.isInCommentsOnly());
 
-    if (useFileFilter!=null && useFileFilter.isSelected() &&
-        myFileFilter.getSelectedItem()!=null
-       ) {
-      final String mask = (String)myFileFilter.getSelectedItem();
+    findSettings.setRegularExpressions(myModel.isRegularExpressions());
+    if (!myModel.isMultipleFiles()){
+      findSettings.setForward(myModel.isForward());
+      findSettings.setFromCursor(myModel.isFromCursor());
 
-      if (mask.length() > 0) {
-        try {
-          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
-          validateModel.setFileFilter(mask);
-          FindSettings.getInstance().setFileMask(mask);
-        }
-        catch (PatternSyntaxException ex) {
-          Messages.showMessageDialog(myProject, FindBundle.message("find.filter.invalid.file.mask.error", myFileFilter.getSelectedItem()),
-                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-          return;
-        }
+      findSettings.setGlobal(myModel.isGlobal());
+    } else{
+      String directoryName = myModel.getDirectoryName();
+      if (directoryName != null && !directoryName.isEmpty()) {
+        findSettings.setWithSubdirectories(myModel.isWithSubdirectories());
       }
-      else {
-        Messages.showMessageDialog(myProject, FindBundle.message("find.filter.empty.file.mask.error"), CommonBundle.getErrorTitle(),
-                                   Messages.getErrorIcon());
-        return;
+      else if (myRbModule.isSelected()) {
+      }
+      else if (myRbCustomScope.isSelected()) {
+        SearchScope selectedScope = myScopeCombo.getSelectedScope();
+        String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
+        findSettings.setCustomScope(customScopeName);
       }
     }
 
     if (myCbToSkipResultsWhenOneUsage != null){
-      FindSettings.getInstance().setSkipResultsWithOneUsage(
+      findSettings.setSkipResultsWithOneUsage(
         isSkipResultsWhenOneUsage()
       );
     }
 
-    myModel.copyFrom(validateModel);
-    super.doOKAction();
-    myOkHandler.run();
+    findSettings.setFileMask(myModel.getFileFilter());
+  }
+
+  @Override
+  protected boolean postponeValidation() {
+    return true;
+  }
+
+  private ValidationInfo getValidationInfo(FindModel model) {
+    if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
+      PsiDirectory directory = FindInProjectUtil.getPsiDirectory(model, myProject);
+      if (directory == null) {
+        return new ValidationInfo(FindBundle.message("find.directory.not.found.error", getDirectory()), myDirectoryComboBox);
+      }
+    }
+
+    String toFind = (String)myInputComboBox.getSelectedItem();
+    if (toFind != null && toFind.isEmpty()) {
+      return new ValidationInfo("String to find is empty", myInputComboBox);
+    }
+
+    if (myCbRegularExpressions != null && myCbRegularExpressions.isEnabled()) {
+      try {
+        boolean isCaseSensitive = myCbCaseSensitive != null && myCbCaseSensitive.isEnabled();
+        Pattern pattern =
+          Pattern.compile(toFind, isCaseSensitive ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {
+          return new ValidationInfo(FindBundle.message("find.empty.match.regular.expression.error"), myInputComboBox);
+        }
+      }
+      catch (PatternSyntaxException e) {
+        return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", toFind, e.getDescription()), myInputComboBox);
+      }
+    }
+
+    final String mask = myFileFilter == null ? null : (String)myFileFilter.getSelectedItem();
+
+    if (mask != null) {
+      if (mask.length() == 0) {
+        return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), myFileFilter);
+      }
+      else {
+        try {
+          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
+        }
+        catch (PatternSyntaxException ex) {
+          return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileFilter);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    FindModel validateModel = (FindModel)myModel.clone();
+    applyTo(validateModel, false);
+
+    ValidationInfo result = getValidationInfo(validateModel);
+
+    setOKStatus(result == null);
+
+    return result;
   }
 
   public void doHelpAction() {
@@ -768,7 +839,7 @@ class FindDialog extends DialogWrapper {
           public void consume(final VirtualFile[] files) {
             if (files.length != 0) {
               myDirectoryComboBox.setSelectedItem(files[0].getPresentableUrl());
-              validateFindButton();
+              //validateFindButton();
             }
           }
         });
@@ -845,10 +916,12 @@ class FindDialog extends DialogWrapper {
   }
 
   private String getStringToFind() {
-    return (String)myInputComboBox.getEditor().getItem();
+    String string = (String)myInputComboBox.getEditor().getItem();
+    return string == null ? "" : string;
   }
   private String getStringToReplace() {
-    return (String)myReplaceComboBox.getEditor().getItem();
+    String item = (String)myReplaceComboBox.getEditor().getItem();
+    return item == null ? "" : item;
   }
 
   private String getDirectory() {
@@ -886,27 +959,26 @@ class FindDialog extends DialogWrapper {
     }
   }
 
-  private void applyTo(FindModel model) {
-    FindSettings findSettings = FindSettings.getInstance();
+
+
+  private void applyTo(FindModel model, boolean findAll) {
+
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
-    findSettings.setCaseSensitive(myCbCaseSensitive.isSelected());
 
     if (model.isReplaceState()) {
       model.setPreserveCase(myCbPreserveCase.isSelected());
-      findSettings.setPreserveCase(myCbPreserveCase.isSelected());
     }
 
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
-    findSettings.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
     model.setInStringLiteralsOnly(myCbInStringLiteralsOnly.isSelected());
-    findSettings.setInStringLiteralsOnly(myCbInStringLiteralsOnly.isSelected());
 
     model.setInCommentsOnly(myCbInCommentsOnly.isSelected());
-    findSettings.setInCommentsOnly(myCbInCommentsOnly.isSelected());
 
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
-    findSettings.setRegularExpressions(myCbRegularExpressions.isSelected());
-    model.setStringToFind(getStringToFind());
+    String stringToFind = getStringToFind();
+    if (stringToFind.length() > 0) {
+      model.setStringToFind(stringToFind);
+    }
 
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
@@ -920,11 +992,8 @@ class FindDialog extends DialogWrapper {
 
     if (!model.isMultipleFiles()){
       model.setForward(myRbForward.isSelected());
-      findSettings.setForward(myRbForward.isSelected());
       model.setFromCursor(myRbFromCursor.isSelected());
-      findSettings.setFromCursor(myRbFromCursor.isSelected());
       model.setGlobal(myRbGlobal.isSelected());
-      findSettings.setGlobal(myRbGlobal.isSelected());
     }
     else{
       if (myCbToOpenInNewTab != null){
@@ -942,7 +1011,6 @@ class FindDialog extends DialogWrapper {
         String directory = getDirectory();
         model.setDirectoryName(directory == null ? "" : directory);
         model.setWithSubdirectories(myCbWithSubdirectories.isSelected());
-        findSettings.setWithSubdirectories(myCbWithSubdirectories.isSelected());
       }
       else if (myRbModule.isSelected()) {
         model.setModuleName((String)myModuleComboBox.getSelectedItem());
@@ -953,9 +1021,17 @@ class FindDialog extends DialogWrapper {
         model.setCustomScopeName(customScopeName);
         model.setCustomScope(selectedScope == null ? null : selectedScope);
         model.setCustomScope(true);
-        findSettings.setCustomScope(customScopeName);
       }
     }
+
+    model.setFindAll(findAll);
+
+    String mask = null;
+    if (useFileFilter!=null && useFileFilter.isSelected()) {
+      mask = (String)myFileFilter.getSelectedItem();
+    }
+    model.setFileFilter(mask);
+
   }
 
 
@@ -1061,7 +1137,7 @@ class FindDialog extends DialogWrapper {
       setStringsToComboBox(FindSettings.getInstance().getRecentReplaceStrings(), myReplaceComboBox, myModel.getStringToReplace());
     }
     updateControls();
-    validateFindButton();
+
   }
 }
 
