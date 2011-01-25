@@ -311,7 +311,13 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
     FoldRegion endFold = foldingModel.getCollapsedRegionAtOffset(endOffset);
     if (endFold != null) {
-      endOffset = endFold.getEndOffset();
+      VisualPosition visualFoldStart = myEditor.offsetToVisualPosition(endFold.getStartOffset());
+      // All visual positions that lay at collapsed fold region placeholder are mapped to the same offset. Hence, there are
+      // at least two distinct situations - selection end is located inside collapsed fold region placeholder and just before it.
+      // We want to expand selection to the fold region end at the former case and keep selection as-is at the latest one.
+      if (visualFoldStart.column < endPosition.column) {
+        endOffset = endFold.getEndOffset();
+      }
     }
 
     int oldSelectionStart;
@@ -583,6 +589,20 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       if (marker != null) {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
+        if (caretOffset != startOffset && caretOffset != endOffset) {
+          // Try to check if current selection is tweaked by fold region.
+          FoldingModelEx foldingModel = myEditor.getFoldingModel();
+          FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(caretOffset);
+          if (foldRegion != null) {
+            if (foldRegion.getStartOffset() == startOffset) {
+              return endOffset;
+            }
+            else if (foldRegion.getEndOffset() == endOffset) {
+              return startOffset;
+            }
+          }
+        }
+        
         if (caretOffset == endOffset) {
           return startOffset;
         }

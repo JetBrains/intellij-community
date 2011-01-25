@@ -78,10 +78,13 @@ public class InlineUtil {
                 final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
                 final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
                 if (qualifierExpression == null) {
-                  if (((PsiMethod)resolved).getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-                    methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(thisClass));
+                  final PsiMethod method = (PsiMethod)resolved;
+                  final PsiClass containingClass = method.getContainingClass();
+                  LOG.assertTrue(containingClass != null);
+                  if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+                    methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
                   } else {
-                    methodExpression.setQualifierExpression(createThisExpression(manager, thisClass, refParent));
+                    methodExpression.setQualifierExpression(createThisExpression(manager, containingClass, refParent));
                   }
                 }
               }

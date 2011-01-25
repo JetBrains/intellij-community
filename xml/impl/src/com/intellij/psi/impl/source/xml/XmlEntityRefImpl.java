@@ -66,16 +66,19 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return cachedValue != null ? cachedValue.getValue():null;
   }
 
-  public static void cacheParticularEntity(PsiFile file, final XmlEntityDecl decl) {
+  public static void cacheParticularEntity(PsiFile file, XmlEntityDecl decl) {
     synchronized(PsiLock.LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       final String name = decl.getName();
       if (cachingMap.containsKey(name)) return;
+      final SmartPsiElementPointer declPointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(decl);
+
       cachingMap.put(
         name, CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
           public Result<XmlEntityDecl> compute() {
-            if (decl.isValid() && name.equals(decl.getName()))
-              return new Result<XmlEntityDecl>(decl,decl);
+            PsiElement declElement = declPointer.getElement();
+            if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
+              return new Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
             cachingMap.put(name,null);
             return new Result<XmlEntityDecl>(null,null);
           }

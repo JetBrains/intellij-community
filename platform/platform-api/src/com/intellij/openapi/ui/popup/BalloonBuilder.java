@@ -69,4 +69,8 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setPositionChangeYShift(int positionChangeYShift);
+
+  boolean isHideOnAction();
+
+  BalloonBuilder setHideOnAction(boolean hideOnAction);
 }

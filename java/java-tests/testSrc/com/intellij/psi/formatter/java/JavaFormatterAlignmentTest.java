@@ -251,4 +251,26 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void testAlignThrowsKeyword() throws Exception {
+    // Inspired by IDEA-63820
+    
+    getSettings().ALIGN_THROWS_KEYWORD = true;
+    doClassTest(
+      "public void test()\n" +
+      "                 throws Exception {}",
+      "public void test()\n" +
+      "throws Exception {\n" +
+      "}"
+    );
+
+    getSettings().ALIGN_THROWS_KEYWORD = false;
+    doClassTest(
+      "public void test()\n" +
+      "                 throws Exception {}",
+      "public void test()\n" +
+      "        throws Exception {\n" +
+      "}"
+    );
+  }
 }

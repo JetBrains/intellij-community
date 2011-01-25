@@ -64,7 +64,7 @@ def wire_build_date(String buildNumber) {
 target('default': 'The default target') {
   depends(compile)
   layoutAll(
-          buildNumber: "IC-102.SNAPSHOT",
+          buildNumber: "IC-104.SNAPSHOT",
           version: "IdeaX",
           system_selector: "IntelliJIdeaCE10",
           jdk_req: "1.6*",

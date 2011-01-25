@@ -49,6 +49,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
     addOption("THROWS_LIST_WRAP", WRAPPING_THROWS_LIST, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_THROWS_LIST);
+    addOption("ALIGN_THROWS_KEYWORD", ApplicationBundle.message("wrapping.align.throws.keyword"), WRAPPING_THROWS_LIST);
     addOption("THROWS_KEYWORD_WRAP", WRAPPING_THROWS_KEYWORD, WRAP_OPTIONS_FOR_SINGLETON, WRAP_VALUES_FOR_SINGLETON);
 
     addOption("METHOD_PARAMETERS_WRAP", WRAPPING_METHOD_PARAMETERS, WRAP_OPTIONS, WRAP_VALUES);

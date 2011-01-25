@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
@@ -150,18 +149,24 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   @NotNull
   public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                    @NotNull XDebugProcessStarter starter) throws ExecutionException {
-    XDebugSession session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName));
-    RunContentDescriptor descriptor = session.getRunContentDescriptor();
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
-    ProcessHandler handler = descriptor.getProcessHandler();
-    if (handler != null) {
-      handler.startNotify();
+                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
+    return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
+  }
+
+  @NotNull
+  @Override
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                              boolean showToolWindowOnSuspendOnly,
+                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
+    XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName,
+                                                                                        showToolWindowOnSuspendOnly));
+    if (!showToolWindowOnSuspendOnly) {
+      session.showSessionTab();
     }
     return session;
   }
 
-  private XDebugSession startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
+  private XDebugSessionImpl startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
                                      final XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
 

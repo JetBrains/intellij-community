@@ -197,6 +197,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private final JComponent myContent;
   private final boolean myHideOnMouse;
   private final boolean myHideOnKey;
+  private boolean myHideOnAction;
   private final boolean myEnableCloseButton;
   private final Icon myCloseButton = IconLoader.getIcon("/general/balloonClose.png");
 
@@ -205,6 +206,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      Color fillColor,
                      boolean hideOnMouse,
                      boolean hideOnKey,
+                     boolean hideOnAction,
                      boolean showPointer,
                      boolean enableCloseButton,
                      long fadeoutTime,
@@ -220,6 +222,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myContent = content;
     myHideOnMouse = hideOnMouse;
     myHideOnKey = hideOnKey;
+    myHideOnAction = hideOnAction;
     myShowPointer = showPointer;
     myEnableCloseButton = enableCloseButton;
     myHideOnFrameResize = hideOnFrameResize;
@@ -380,6 +383,14 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
                                                                            KeyEvent.KEY_EVENT_MASK);
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (myHideOnAction) {
+          hide();
+        }
+      }
+    }, this);
   }
 
   private Rectangle getRecForPosition(Position position, boolean adjust) {
@@ -462,13 +473,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
     myAnimator = new Animator("Balloon", 10, myAnimationCycle, false, 0, 1, forward) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
-        if (myComp.getParent() == null) return;
+        if (myComp == null || myComp.getParent() == null) return;
         myComp.setAlpha(frame / totalFrames);
       }
 
       @Override
       protected void paintCycleEnd() {
-        if (myComp.getParent() == null) return;
+        if (myComp == null || myComp.getParent() == null) return;
 
         if (isForward()) {
           myComp.clear();
@@ -1230,7 +1241,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500, 5, 0, 0));
+          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
