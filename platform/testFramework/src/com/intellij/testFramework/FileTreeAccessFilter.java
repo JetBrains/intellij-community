@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import gnu.trove.THashSet;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 /**
@@ -51,6 +52,6 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
   }
 
   public String toString() {
-    return "JAVA {allowed=" + myTreeAccessAllowed + " files=" + myAddedClasses + "}";
+    return "JAVA {allowed=" + myTreeAccessAllowed + " files=" + new ArrayList<VirtualFile>(myAddedClasses) + "}";
   }
 }
