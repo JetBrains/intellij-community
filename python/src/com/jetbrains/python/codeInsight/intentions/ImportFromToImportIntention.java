@@ -40,6 +40,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * </small>
  */
 public class ImportFromToImportIntention implements IntentionAction {
+  private String myText;
 
   /**
    * This class exists to extract bunches of info we can't store in our stateless instance.
@@ -50,6 +51,17 @@ public class ImportFromToImportIntention implements IntentionAction {
     PyReferenceExpression myModuleReference = null;
     String myModuleName = null;
     int myRelativeLevel = 0;
+
+    public String getText() {
+      String name = myModuleName != null ? myModuleName : "...";
+      if (myRelativeLevel > 0) {
+        String[] relative_names = getRelativeNames(false, this);
+        return PyBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+      }
+      else {
+        return PyBundle.message("INTN.convert.to.import.$0", name);
+      }
+    }
 
     public static InfoHolder collect(final PsiElement position) {
       InfoHolder ret = new InfoHolder();
@@ -66,24 +78,9 @@ public class ImportFromToImportIntention implements IntentionAction {
     }
   }
 
-  private static final ThreadLocal<InfoHolder> ourInfoHolder = new ThreadLocal<InfoHolder>();
-
   @NotNull
   public String getText() {
-    InfoHolder info = ourInfoHolder.get();
-    if (info == null) {
-      DataContext ctx = DataManager.getInstance().getDataContext();
-      Editor editor = PlatformDataKeys.EDITOR.getData(ctx);
-      PsiElement element = null;
-      if (editor != null) element = getElementFromEditor(editor, null);
-      info = InfoHolder.collect(element);
-    }
-    String name = info.myModuleName != null? info.myModuleName : "...";
-    if (info.myRelativeLevel > 0) {
-      String[] relative_names = getRelativeNames(false, info);
-      return PyBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
-    }
-    else return PyBundle.message("INTN.convert.to.import.$0", name);
+    return myText;
   }
 
   @Nullable
@@ -136,7 +133,6 @@ public class ImportFromToImportIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
-    ourInfoHolder.set(info);
     info.myModuleReference = null;
     final PsiElement position = file.findElementAt(editor.getCaretModel().getOffset());
     info.myFromImportStatement = PsiTreeUtil.getParentOfType(position, PyFromImportStatement.class);
@@ -158,7 +154,11 @@ public class ImportFromToImportIntention implements IntentionAction {
     if (info.myModuleReference != null) {
       info.myModuleName = PyResolveUtil.toPath(info.myModuleReference, ".");
     }
-    return info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null;
+    if (info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null) {
+      myText = info.getText();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -174,7 +174,7 @@ public class ImportFromToImportIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InfoHolder info = ourInfoHolder.get();
+    InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
     if (info == null) info = InfoHolder.collect(getElementFromEditor(editor, file));
     try {
       String qualifier; // we don't always qualify with module name
