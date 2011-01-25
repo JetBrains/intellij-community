@@ -45,5 +45,10 @@
     <line>48</line>
     <description>Getter should return something</description>
   </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>76</line>
+    <description>Strange argument; a callable expected</description>
+  </problem>
 </problems>
 

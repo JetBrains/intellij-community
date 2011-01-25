@@ -120,13 +120,13 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                 if (resolved instanceof PyFunction) callable = (PyFunction)resolved;
                 else if (resolved instanceof PyLambdaExpression) callable = (PyLambdaExpression)resolved;
                 else {
-                  reportStrangeArg(resolved, argument);
+                  reportNonCallableArg(resolved, argument);
                   continue;
                 }
               }
               else if (argument instanceof PyLambdaExpression) callable = (PyLambdaExpression)argument;
               else if (! "doc".equals(param_name)) {
-                reportStrangeArg(argument, argument);
+                reportNonCallableArg(argument, argument);
                 continue;
               }
               if ("fget".equals(param_name)) checkGetter(callable, argument);
@@ -152,9 +152,18 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }, false);
     }
 
-    void reportStrangeArg(PsiElement resolved, PsiElement being_checked) {
+    private void reportNonCallableArg(PsiElement resolved, PsiElement being_checked) {
       if (! PyUtil.instanceOf(resolved, PySubscriptionExpression.class, PyNoneLiteralExpression.class)) {
-        registerProblem(being_checked, PyBundle.message("INSP.strange.arg.want.callable"));
+        boolean is_not_callable = true;
+        if (resolved instanceof PyExpression) {
+          PyType expr_type = ((PyExpression)resolved).getType(myTypeEvalContext);
+          if (expr_type instanceof PyClassType) {
+            final PyClassType cls_type = (PyClassType)expr_type;
+            PyClass cls = cls_type.getPyClass();
+            if (cls != null && !cls_type.isDefinition()) is_not_callable = cls.findMethodByName("__call__", true) == null;
+          }
+        }
+        if (is_not_callable) registerProblem(being_checked, PyBundle.message("INSP.strange.arg.want.callable"));
       }
     }
 
