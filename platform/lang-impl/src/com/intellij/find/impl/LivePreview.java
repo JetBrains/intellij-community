@@ -144,6 +144,7 @@ public class LivePreview extends DocumentAdapter {
   }
 
   public void cleanUp() {
+    myLivePreviewAlarm.cancelAllRequests();
     if (myReplacementBalloon != null) {
       myReplacementBalloon.hide();
     }
