@@ -379,7 +379,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       computeRunnable.run();
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
