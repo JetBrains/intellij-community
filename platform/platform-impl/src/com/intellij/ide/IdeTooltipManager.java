@@ -53,6 +53,7 @@ import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
 
+  public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
 
   private Component myCurrentComponent;
@@ -304,7 +305,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public Color getTextBackground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? new Color(100, 100, 100, 230) : UIUtil.getToolTipBackground();
+    return useGraphite(awtTooltip) ? GRAPHITE_COLOR : UIUtil.getToolTipBackground();
   }
 
   public String getUlImg(boolean awtTooltip) {

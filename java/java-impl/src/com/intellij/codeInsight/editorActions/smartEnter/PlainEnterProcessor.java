@@ -71,6 +71,10 @@ public class PlainEnterProcessor implements EnterProcessor {
     else if (element instanceof PsiDoWhileStatement) {
       body =  ((PsiDoWhileStatement)element).getBody();
     }
+    else if (element instanceof PsiMethod) {
+      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
+      if (methodBody != null) return methodBody;
+    }
 
     return body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : null;
   }

@@ -111,6 +111,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
+    myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
 
@@ -213,7 +214,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int newLineNumber = visualCaret.line + lineShift;
     int newColumnNumber = visualCaret.column + columnShift;
     if (desiredX >= 0) {
-      newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, newLineNumber * myEditor.getLineHeight())).column;
+      newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, Math.max(0, newLineNumber) * myEditor.getLineHeight())).column;
     }
 
     Document document = myEditor.getDocument();

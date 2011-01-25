@@ -18,29 +18,20 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 /**
  * {@link EditorCustomization} for {@link EditorCustomization.Feature#ADDITIONAL_PAGE_AT_BOTTOM}.
  * 
  * @author Denis Zhdanov
  * @since 1/21/11 4:06 PM
  */
-public class AdditionalPageAtBottomEditorCustomization implements EditorCustomization {
+public class AdditionalPageAtBottomEditorCustomization extends AbstractEditorCustomization {
 
-  @Override
-  public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.ADDITIONAL_PAGE_AT_BOTTOM);
+  public AdditionalPageAtBottomEditorCustomization() {
+    super(Feature.ADDITIONAL_PAGE_AT_BOTTOM);
   }
 
   @Override
-  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setAdditionalPageAtBottom(true);
-  }
-
-  @Override
-  public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setAdditionalPageAtBottom(false);
+  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
+    editor.getSettings().setAdditionalPageAtBottom(apply);
   }
 }

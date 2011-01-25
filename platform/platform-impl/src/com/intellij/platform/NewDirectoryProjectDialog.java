@@ -49,6 +49,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private JPanel myRootPane;
   private JComboBox myProjectTypeComboBox;
   private JPanel myProjectTypePanel;
+  private JLabel myLocationLabel;
   private String myBaseDir;
   private boolean myModifyingLocation = false;
   private boolean myModifyingProjectName = false;
@@ -59,6 +60,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     super(project, true);
     setTitle("Create New Project");
     init();
+
+    myLocationLabel.setLabelFor(myLocationField.getChildComponent());
 
     myBaseDir = getBaseDir();
     File projectName = FileUtil.findSequentNonexistentFile(new File(myBaseDir), "untitled", "");

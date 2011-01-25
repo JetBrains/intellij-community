@@ -34,7 +34,7 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   }
 
   public Icon getIcon() {
-    return HgVcs.MERCURIAL_ICON;
+    return null;
   }
 
   public String getHelpTopic() {

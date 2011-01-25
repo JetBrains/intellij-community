@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,10 +73,22 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
 
             final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
             PsiMethodCallExpression copy = (PsiMethodCallExpression)expression.copy();
-            final PsiReferenceParameterList parameterList = copy.getMethodExpression().getParameterList();
+            final PsiReferenceExpression methodExpression = copy.getMethodExpression();
+            final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
             LOG.assertTrue(parameterList != null);
             for (PsiType mapping : mappings) {
               parameterList.add(factory.createTypeElement(mapping));
+            }
+            if (methodExpression.getQualifierExpression() == null) {
+              final PsiExpression qualifierExpression;
+              final PsiClass containingClass = method.getContainingClass();
+              LOG.assertTrue(containingClass != null);
+              if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                qualifierExpression = factory.createReferenceExpression(containingClass);
+              } else {
+                qualifierExpression = RefactoringUtil.createThisExpression(method.getManager(), null);
+              }
+              methodExpression.setQualifierExpression(qualifierExpression);
             }
 
             return copy;

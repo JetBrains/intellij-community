@@ -22,7 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgExecutableValidator;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +35,9 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -155,15 +161,43 @@ public final class HgCommandService {
 
     // logging to the Version Control console (without extensions and configs)
     final String cmdString = String.format("%s %s %s", mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
-            StringUtils.join(arguments, " "));
-    myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
+            StringUtils.join(maskAuthInfoFromUrl(arguments), " "));
+    myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
+    LOG.info(cmdString);
     if (!silent) {
       myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      LOG.info(result.getRawOutput());
     }
     myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+    LOG.info(result.getRawError());
 
     return result;
+  }
 
+  /**
+   * Strips possible authentication information from arguments passed to the command line
+   * to prevent private information appear in the VCS console or logs.
+   * @param arguments command line arguments.
+   * @return command line arguments which don't contain authentication information.
+   */
+  private static List<String> maskAuthInfoFromUrl(List<String> arguments) {
+    if (arguments == null || arguments.isEmpty()) {
+      return arguments;
+    }
+    final List<String> newArgs = new ArrayList<String>(arguments.size());
+    for (String arg : arguments) {
+      if (!arg.contains("@")) { // simple filter
+        newArgs.add(arg);
+      } else {
+        try {
+          final URI uri = new URI(arg); // parsing via URI methods, exception means it's not an URI
+          newArgs.add(uri.toString().replace(uri.getUserInfo(), "<username>:<password>"));
+        } catch (Throwable e) {
+          newArgs.add(arg);
+        }
+      }
+    }
+    return newArgs;
   }
 
   private void showError(Exception e) {

@@ -31,12 +31,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.AbstractEditorCustomization;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Makes current editor to have spell checking turned on all the time.
@@ -46,7 +48,7 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 3:54:42 PM
  */
-public class SpellCheckingEditorCustomization implements EditorCustomization {
+public class SpellCheckingEditorCustomization extends AbstractEditorCustomization {
 
   /**
    * Holds custom inspection profile wrapper.
@@ -59,6 +61,10 @@ public class SpellCheckingEditorCustomization implements EditorCustomization {
    */
   @Nullable
   private static final InspectionProfileWrapper INSPECTION_PROFILE_WRAPPER = initProvider();
+
+  public SpellCheckingEditorCustomization() {
+    super(Feature.SPELL_CHECK);
+  }
 
   @SuppressWarnings("unchecked")
   @Nullable
@@ -116,12 +122,7 @@ public class SpellCheckingEditorCustomization implements EditorCustomization {
   }
 
   @Override
-  public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.SPELL_CHECK);
-  }
-
-  @Override
-  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
+  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
     if (INSPECTION_PROFILE_WRAPPER == null) {
       return;
     }
@@ -135,27 +136,16 @@ public class SpellCheckingEditorCustomization implements EditorCustomization {
     if (file == null) {
       return;
     }
-    file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER);
-    editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
-    updateRepresentation(project, file);
-  }
-
-  @Override
-  public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    Project project = editor.getProject();
-    if (project == null) {
-      return;
+    
+    if (apply) {
+      file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER);
+      editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
+    }
+    else {
+      file.putUserData(InspectionProfileWrapper.KEY, null);
     }
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null) {
-      return;
-    }
-    file.putUserData(InspectionProfileWrapper.KEY, null);
-    updateRepresentation(project, file);
-  }
-  
-  private static void updateRepresentation(@NotNull Project project, @NotNull PsiFile file) {
+    // Update representation.
     DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
     if (analyzer != null) {
       analyzer.restart(file);

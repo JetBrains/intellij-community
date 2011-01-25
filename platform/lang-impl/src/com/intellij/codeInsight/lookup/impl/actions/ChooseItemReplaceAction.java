@@ -19,7 +19,6 @@ package com.intellij.codeInsight.lookup.impl.actions;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -31,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
@@ -74,9 +74,10 @@ public class ChooseItemReplaceAction extends EditorAction {
     final Editor editor = lookup.getEditor();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
-    final int offset = editor.getCaretModel().getOffset();
-    final String prefix = CompletionUtil.findJavaIdentifierPrefix(file, offset);
-    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, offset, prefix);
+    final int end = editor.getCaretModel().getOffset();
+    final int start = lookup.getLookupStart();
+    final String prefix = editor.getDocument().getText(TextRange.create(start, end));
+    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, end, prefix);
     return template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template);
   }
 

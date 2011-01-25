@@ -184,7 +184,15 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testIDEADEV40479() throws Exception { doTest(); }
 
-  public void testIDEADEV13019() throws Exception { 
+  public void testIDEADEV13019() throws Exception {
+    doTestBracesNextLineStyle();
+  }
+
+  public void testIDEA25139() throws Exception {
+    doTestBracesNextLineStyle();
+  }
+
+  private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
     settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;

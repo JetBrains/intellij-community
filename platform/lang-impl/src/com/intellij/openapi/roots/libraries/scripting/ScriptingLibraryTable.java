@@ -79,7 +79,7 @@ public class ScriptingLibraryTable {
     if (myCompactFilesCache == null) {
       myCompactFilesCache = new HashSet<VirtualFile>();
       for (LibraryModel libraryModel : myLibraryModels) {
-        myCompactFilesCache.addAll(Arrays.asList(libraryModel.getCompactFiles()));
+        myCompactFilesCache.addAll(libraryModel.getCompactFiles());
       }
     }
     return myCompactFilesCache.contains(file);
@@ -149,8 +149,8 @@ public class ScriptingLibraryTable {
 
   public static class LibraryModel {
     private String myName;
-    private ArrayList<VirtualFile> mySourceFiles = new ArrayList<VirtualFile>();
-    private ArrayList<VirtualFile> myCompactFiles = new ArrayList<VirtualFile>();
+    private Set<VirtualFile> mySourceFiles = new HashSet<VirtualFile>();
+    private Set<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
     private ArrayList<String> myDocUrls = new ArrayList<String>(); 
 
     public LibraryModel(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles, String[] docUrls) {
@@ -183,12 +183,12 @@ public class ScriptingLibraryTable {
       myDocUrls.addAll(Arrays.asList(docUrls));
     }
 
-    public VirtualFile[] getSourceFiles() {
-      return mySourceFiles.toArray(new VirtualFile[mySourceFiles.size()]);
+    public Set<VirtualFile> getSourceFiles() {
+      return mySourceFiles;
     }
-
-    public VirtualFile[] getCompactFiles() {
-      return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
+    
+    public Set<VirtualFile> getCompactFiles() {
+      return myCompactFiles;
     }
     
     public String[] getDocUrls() {
@@ -196,7 +196,7 @@ public class ScriptingLibraryTable {
     }
 
     @NotNull
-    public VirtualFile[] getFiles(OrderRootType rootType) {
+    public Set<VirtualFile> getFiles(OrderRootType rootType) {
       if (rootType == COMPACT_ROOT_TYPE) {
         return getCompactFiles();
       }

@@ -165,15 +165,19 @@ public class EditorActionUtil {
 
     if (isCamel) {
       if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (Character.isLowerCase(prev) && Character.isUpperCase(current) ||
+          (isLowerCaseOrDigit(prev) && Character.isUpperCase(current) ||
            prev == '_' && current != '_' ||
-           Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
+           Character.isUpperCase(prev) && Character.isUpperCase(current) && isLowerCaseOrDigit(next))) {
         return true;
       }
     }
 
     return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
            !Character.isWhitespace(current) && !secondIsIdentifierPart;
+  }
+  
+  private static boolean isLowerCaseOrDigit(char c) {
+    return Character.isLowerCase(c) || Character.isDigit(c);
   }
 
   public static boolean isWordEnd(CharSequence text, int offset, boolean isCamel) {

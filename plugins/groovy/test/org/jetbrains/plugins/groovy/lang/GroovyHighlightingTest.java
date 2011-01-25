@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -287,6 +288,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testSOEInFieldDeclarations() {doTest();}
+
+  public void testVeryLongDfaWithComplexGenerics() {
+    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
+      @Override
+      public void run() {
+        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection());
+      }
+    });
+  }
 
   public void testWrongAnnotation() {doTest();}
 

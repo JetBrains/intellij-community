@@ -33,8 +33,7 @@ import com.intellij.xml.util.XmlTagUtil;
 /**
  * @author ven
  */
-public class XMLExternalAnnotator implements ExternalAnnotator, Validator.ValidationHost {
-  private AnnotationHolder myHolder;
+public class XMLExternalAnnotator implements ExternalAnnotator {
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
     if (!(file instanceof XmlFile)) return;
@@ -44,64 +43,68 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
     if (nsDescriptor instanceof Validator && !HtmlUtil.isHtml5Document(document)) {
-      myHolder = holder;
-      try {
         //noinspection unchecked
-        ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
-      }
-      finally {
-        myHolder = null;
-      }
+        ((Validator<XmlDocument>)nsDescriptor).validate(document, new MyHost(holder));
     }
   }
 
-  private static final ErrorType[] types = ErrorType.values();
-
-  public void addMessage(PsiElement context, String message, int type) {
-    addMessage(context, message, types[type]);
-  }
-
-  public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
-    if (message != null && message.length() > 0) {
-      if (context instanceof XmlTag) {
-        addMessagesForTag((XmlTag)context, message, type, fixes);
-      }
-      else {
-        if (type == Validator.ValidationHost.ErrorType.ERROR) {
-          appendFixes(myHolder.createErrorAnnotation(context, message), fixes);
-        } else {
-          appendFixes(myHolder.createWarningAnnotation(context, message), fixes);
-        }
-      }
-    }
-  }
-
-  private void addMessagesForTag(XmlTag tag, String message, ErrorType type, IntentionAction... actions) {
-    XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
-
-    addMessagesForTreeChild(childByRole, type, message, actions);
-
-    childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    addMessagesForTreeChild(childByRole, type, message, actions);
-  }
-
-  private void addMessagesForTreeChild(final XmlToken childByRole, final ErrorType type, final String message, IntentionAction... actions) {
-    if (childByRole != null) {
-      Annotation annotation;
-      if (type == ErrorType.ERROR) {
-        annotation = myHolder.createErrorAnnotation(childByRole, message);
-      }
-      else {
-        annotation = myHolder.createWarningAnnotation(childByRole, message);
-      }
-
-      appendFixes(annotation, actions);
-    }
-  }
+  private static final Validator.ValidationHost.ErrorType[] types = Validator.ValidationHost.ErrorType.values();
 
   private static void appendFixes(final Annotation annotation, final IntentionAction... actions) {
     if (actions != null) {
       for(IntentionAction action:actions) annotation.registerFix(action);
+    }
+  }
+
+  private static class MyHost implements Validator.ValidationHost {
+
+    private final AnnotationHolder myHolder;
+
+    public MyHost(AnnotationHolder holder) {
+
+      myHolder = holder;
+    }
+
+    public void addMessage(PsiElement context, String message, int type) {
+      addMessage(context, message, types[type]);
+    }
+
+    public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
+      if (message != null && message.length() > 0) {
+        if (context instanceof XmlTag) {
+          addMessagesForTag((XmlTag)context, message, type, fixes);
+        }
+        else {
+          if (type == Validator.ValidationHost.ErrorType.ERROR) {
+            appendFixes(myHolder.createErrorAnnotation(context, message), fixes);
+          } else {
+            appendFixes(myHolder.createWarningAnnotation(context, message), fixes);
+          }
+        }
+      }
+    }
+
+    private void addMessagesForTag(XmlTag tag, String message, ErrorType type, IntentionAction... actions) {
+      XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
+
+      addMessagesForTreeChild(childByRole, type, message, actions);
+
+      childByRole = XmlTagUtil.getEndTagNameElement(tag);
+      addMessagesForTreeChild(childByRole, type, message, actions);
+    }
+
+    private void addMessagesForTreeChild(final XmlToken childByRole, final ErrorType type, final String message, IntentionAction... actions) {
+      if (childByRole != null) {
+        Annotation annotation;
+        if (type == ErrorType.ERROR) {
+          annotation = myHolder.createErrorAnnotation(childByRole, message);
+        }
+        else {
+          annotation = myHolder.createWarningAnnotation(childByRole, message);
+        }
+
+        appendFixes(annotation, actions);
+      }
     }
   }
 }

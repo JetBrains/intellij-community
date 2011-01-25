@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import org.apache.commons.lang.StringUtils;
@@ -25,10 +24,9 @@ import javax.swing.*;
 import java.util.List;
 
 public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidget {
-  private static final Icon MERCURIAL_ICON = IconLoader.getIcon("/images/mercurial.png");
 
   public HgCurrentBranchStatus() {
-    super(MERCURIAL_ICON, SwingConstants.TRAILING);
+    super("", SwingConstants.TRAILING);
     setVisible(false);
   }
 

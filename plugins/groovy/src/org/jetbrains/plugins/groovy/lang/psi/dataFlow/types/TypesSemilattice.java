@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -72,7 +73,7 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
         if (t1 != null || t2 != null) return false;
       }
       else {
-        if (!t1.equals(t2)) return false;
+        if (!TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))) return false;
       }
     }
     return true;

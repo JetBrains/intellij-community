@@ -55,6 +55,8 @@ public abstract class LookupManager {
   public abstract Lookup showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
+
+  @Nullable
   public abstract Lookup getActiveLookup();
 
   @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
