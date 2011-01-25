@@ -26,7 +26,6 @@ public class CompletionState {
 
   public void setCompletionDisposed(boolean completionDisposed) {
     LOG.assertTrue(!myCompletionDisposed, this);
-    LOG.assertTrue(!isWaitingAfterAutoInsertion(), this);
     myCompletionDisposed = completionDisposed;
   }
 
@@ -44,14 +43,6 @@ public class CompletionState {
 
   public void modifiersChanged() {
     myModifiersChanged = true;
-  }
-
-  public boolean isWaitingAfterAutoInsertion() {
-    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    if (phase instanceof CompletionPhase.InsertedSingleItem && ((CompletionPhase.InsertedSingleItem)phase).indicator.getCompletionState() == this) {
-      return true;
-    }
-    return false;
   }
 
   public boolean isBackgrounded() {

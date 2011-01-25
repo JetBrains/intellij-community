@@ -91,7 +91,6 @@ public abstract class CompletionPhase implements Disposable {
         public void dispose() {
           if (hint != null) {
             hint.removeHintListener(hintListener);
-            hint.hide();
           }
           document.removeDocumentListener(documentListener);
           selectionModel.removeSelectionListener(selectionListener);

@@ -286,11 +286,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           contentComponent.removeKeyListener(this);
           myState.modifiersChanged();
-          if (myState.isWaitingAfterAutoInsertion()) {
-            myState.assertDisposed();
-            CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-            assert currentCompletion == null : currentCompletion;
-
+          if (CompletionServiceImpl.isPhase(CompletionPhase.ZombiePhase.class)) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
@@ -468,8 +464,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
-            CompletionServiceImpl
-              .setCompletionPhase(myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this));
+            myHandler.handleEmptyLookup(CompletionProgressIndicator.this);
           }
         }
         else {

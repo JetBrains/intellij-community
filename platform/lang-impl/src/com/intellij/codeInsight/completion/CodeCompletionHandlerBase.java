@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -479,8 +478,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final LookupElement[] items) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      CompletionServiceImpl.setCompletionPhase(
-        handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator));
+      handleEmptyLookup(indicator);
       return;
     }
 
@@ -506,7 +504,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
           !ApplicationManager.getApplication().isUnitTestMode()) {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator, restorePrefix));
-        assert indicator.getCompletionState().isWaitingAfterAutoInsertion();
       }
     }
   }
@@ -606,38 +603,35 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
-  protected CompletionPhase handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return CompletionPhase.NoCompletion;
-    if (!invokedExplicitly) {
-      return CompletionPhase.NoCompletion;
-    }
+  protected void handleEmptyLookup(final CompletionProgressIndicator indicator) {
     indicator.assertDisposed();
     assert !indicator.isAutopopupCompletion();
 
-    final CompletionPhase[] result = {CompletionPhase.NoCompletion};
-    for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
-      final String text = contributor.handleEmptyLookup(parameters, editor);
-      if (StringUtil.isNotEmpty(text)) {
-        final EditorHintListener listener = new EditorHintListener() {
-          public void hintShown(final Project project, final LightweightHint hint, final int flags) {
-            if (!indicator.areModifiersChanged()) {
-              result[0] = new CompletionPhase.NoSuggestionsHint(hint, indicator);
-              CompletionServiceImpl.setCompletionPhase(result[0]);
-            }
-          }
-        };
-        final MessageBusConnection connection = project.getMessageBus().connect();
-        connection.subscribe(EditorHintListener.TOPIC, listener);
-        assert text != null;
-        HintManager.getInstance().showErrorHint(editor, text);
-        connection.disconnect();
-        break;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && invokedExplicitly) {
+      for (final CompletionContributor contributor : CompletionContributor.forParameters(indicator.getParameters())) {
+        final String text = contributor.handleEmptyLookup(indicator.getParameters(), indicator.getEditor());
+        if (StringUtil.isNotEmpty(text)) {
+          LightweightHint hint = showErrorHint(indicator.getProject(), indicator.getEditor(), text);
+          CompletionServiceImpl.setCompletionPhase(indicator.areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, indicator));
+          return;
+        }
       }
     }
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    if (codeAnalyzer != null) {
-      codeAnalyzer.updateVisibleHighlighters(editor);
-    }
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+  }
+
+  private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
+    final LightweightHint[] result = {null};
+    final EditorHintListener listener = new EditorHintListener() {
+      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+        result[0] = hint;
+      }
+    };
+    final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorHintListener.TOPIC, listener);
+    assert text != null;
+    HintManager.getInstance().showErrorHint(editor, text);
+    connection.disconnect();
     return result[0];
   }
 
