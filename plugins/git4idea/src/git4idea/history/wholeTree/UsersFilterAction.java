@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -113,7 +114,9 @@ public class UsersFilterAction extends BasePopupAction {
   private void createPopup(Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    myEditorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, EditorCustomization.Feature.SOFT_WRAP);
+    myEditorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project,
+                                           Collections.singletonList(EditorCustomization.Feature.SOFT_WRAP),
+                                           Collections.singletonList(EditorCustomization.Feature.SPELL_CHECK));
     myEditorField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), myEditorField.getBorder()));
     myEditorField.setText("s");
     myEditorField.setText(myCurrentText);
