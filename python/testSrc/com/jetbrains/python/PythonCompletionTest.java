@@ -263,4 +263,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testFromDotImport() {  // PY-2772
     doTest3K();
   }
+
+  public void testNoIdentifiersInImport() {
+    doTest();
+  }
 }
