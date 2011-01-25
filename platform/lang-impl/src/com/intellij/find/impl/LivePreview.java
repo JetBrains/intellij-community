@@ -41,6 +41,7 @@ public class LivePreview extends DocumentAdapter {
   private final Collection<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
   private RangeHighlighter myCursorHighlighter;
   private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
+  private boolean myShouldStop;
 
   public interface Delegate {
     @NotNull
@@ -108,7 +109,7 @@ public class LivePreview extends DocumentAdapter {
           if (needToUpdate && fileEditor instanceof TextEditor) {
             Editor editor1 = ((TextEditor) fileEditor).getEditor();
             if (editor1 != myEditor) {
-              cleanUp();
+              doInternalCleanUp();
             }
             if (myEditor != null) {
               myEditor.getDocument().removeDocumentListener(this);
@@ -128,10 +129,11 @@ public class LivePreview extends DocumentAdapter {
 
   @Override
   public void documentChanged(DocumentEvent e) {
-    update();
+    doInternalCleanUp();
   }
 
   public void update() {
+    myShouldStop = false;
     myLivePreviewAlarm.cancelAllRequests();
     if (updateEditorReference() != null) {
       myLivePreviewAlarm.addRequest(new Runnable() {
@@ -144,11 +146,17 @@ public class LivePreview extends DocumentAdapter {
   }
 
   public void cleanUp() {
+    myShouldStop = true;
+    doInternalCleanUp();
+  }
+
+  private void doInternalCleanUp() {
     myLivePreviewAlarm.cancelAllRequests();
     if (myReplacementBalloon != null) {
       myReplacementBalloon.hide();
     }
     if (myEditor != null) {
+      
       for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
         myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
       }
@@ -177,7 +185,7 @@ public class LivePreview extends DocumentAdapter {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-           cleanUp();
+          doInternalCleanUp();
           highlightUsages(oldCursorRange);
         }
       });
@@ -196,7 +204,7 @@ public class LivePreview extends DocumentAdapter {
   }
 
   private void highlightUsages(TextRange oldCursorRange) {
-    if (myEditor == null) return;
+    if (myEditor == null || myShouldStop) return;
     LiveOccurrence firstVisibleOccurrence = null;
     LiveOccurrence firstOccurrence = null;
     int offset = Integer.MAX_VALUE;
