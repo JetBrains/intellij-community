@@ -628,7 +628,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
       final Collection<VirtualFile> filesToProcess = promptAboutAddition(vcs, addedVFiles, value, vcsHelper);
-      if (filesToProcess != null) {
+      if (filesToProcess != null && !filesToProcess.isEmpty()) {
         final List<VcsException> exceptions = new ArrayList<VcsException>();
         runInBackground(project, "Adding files to Subversion",
                         createAdditionRunnable(project, vcs, copyFromMap, filesToProcess, exceptions));
@@ -758,7 +758,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
       Collection<FilePath> filesToProcess;
       filesToProcess = promptAboutDeletion(deletedFiles, vcs, value, vcsHelper);
-      if (filesToProcess != null) {
+      if (filesToProcess != null && !filesToProcess.isEmpty()) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
         runInBackground(project, "Deleting files from Subversion", createDeleteRunnable(project, vcs, filesToProcess, exceptions));
         if (!exceptions.isEmpty()) {
@@ -845,6 +845,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private void processMovedFiles(final Project project) {
+    if (myMovedFiles.isEmpty()) return;
+
     final Runnable runnable = new Runnable() {
       public void run() {
         for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext();) {
