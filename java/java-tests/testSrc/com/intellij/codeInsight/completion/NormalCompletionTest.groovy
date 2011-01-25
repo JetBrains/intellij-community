@@ -787,6 +787,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCastTooComplexInstanceofedQualifier() throws Throwable { doAntiTest(); }
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
+  public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
 
   public void testWildcardsInLookup() throws Exception {
     configure()

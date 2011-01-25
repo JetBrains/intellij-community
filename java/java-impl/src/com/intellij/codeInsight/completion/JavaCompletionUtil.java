@@ -680,8 +680,8 @@ public class JavaCompletionUtil {
         final Document document = context.getEditor().getDocument();
         PsiDocumentManager.getInstance(project).commitDocument(document);
         final PsiFile file = context.getFile();
-        final PsiReferenceExpression ref =
-          PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiReferenceExpression.class, false);
+        final PsiJavaCodeReferenceElement ref =
+          PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null) {
           final PsiElement qualifier = ref.getQualifier();
           if (qualifier != null) {
