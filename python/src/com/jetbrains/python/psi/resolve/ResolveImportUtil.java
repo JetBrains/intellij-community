@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.*;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
 
 /**
  * @author dcheryasov
@@ -878,6 +879,8 @@ public class ResolveImportUtil {
     }
   }
 
+  public static final PointInImport NOT_IN_IMPORT = new PointInImport(null, null, PointInImport.ROLE.NONE);
+
   /**
    * @param element what we test (identifier, reference, import element, etc)
    * @return the how the element relates to an enclosing import statement, if any
@@ -905,6 +908,6 @@ public class ResolveImportUtil {
         } // from bar import foo,...
       }
     }
-    return new PointInImport(null, null, NONE);
+    return NOT_IN_IMPORT;
   }
 }

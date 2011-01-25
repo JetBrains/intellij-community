@@ -25,9 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.NONE;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.*;
 // .impl looks impure
 
 /**
@@ -107,14 +105,14 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
 
+    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(location);
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(myModule)) {
+      for (PyDynamicMember member : provider.getMembers(myModule, point)) {
         final String name = member.getName();
         result.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
       }
     }
 
-    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(location);
     if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor(location);
       processor.setPlainNamesOnly(point.role == AS_NAME); // no parens after imported function names
