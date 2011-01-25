@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 
@@ -28,13 +28,7 @@ import com.intellij.util.ui.UIUtil
  */
 abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
-                                 @Override
-                                 void run() {
-                                   superSetUp()
-                                 }
-
-                                 })
+    edt { superSetUp() }
     CompletionAutoPopupHandler.ourTestingAutopopup = true
   }
   void superSetUp() {
@@ -46,27 +40,42 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   @Override protected void tearDown() {
     CompletionAutoPopupHandler.ourTestingAutopopup = false
-    UIUtil.invokeAndWaitIfNeeded(new Runnable(){
-                                 @Override
-                                 void run() {
-                                   superTearDown()
-                                 }
-
-                                 })
+    edt { superTearDown() }
   }
 
   protected void doHighlighting() {
-    UIUtil.invokeAndWaitIfNeeded({ myFixture.doHighlighting() } as Runnable)
+    edt { myFixture.doHighlighting() }
   }
 
   void type(String s) {
     for (i in 0..<s.size()) {
       final c = s.charAt(i)
       myFixture.type(c)
-      ApplicationManager.application.invokeAndWait({ } as Runnable, ModalityState.NON_MODAL) // for the autopopup handler's alarm, or the restartCompletion's invokeLater
-      ApplicationManager.application.invokeAndWait({ } as Runnable, ModalityState.NON_MODAL) // for invokeLater in CompletionProgressIndicator.stop()
+      joinAlarm() // for the autopopup handler's alarm, or the restartCompletion's invokeLater
+      joinCompletion()
     }
   }
+
+  protected void joinCompletion() {
+    for (j in 1..1000) {
+      def l = lookup
+      if (!l || !l.calculating) {
+        joinAlarm() // for invokeLater in CompletionProgressIndicator.stop()
+        return
+      }
+      Thread.sleep(10)
+    }
+    fail("Too long completion")
+  }
+
+  protected void joinAlarm() {
+    edt { PlatformTestUtil.waitForAlarm(CodeInsightSettings.instance.AUTO_LOOKUP_DELAY)}
+  }
+
+  protected void edt(Closure c) {
+    UIUtil.invokeAndWaitIfNeeded(c as Runnable)
+  }
+
 
   @Override protected void runTest() {
     runTestBare()
@@ -81,7 +90,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   LookupImpl getLookup() {
-    LookupManager.getActiveLookup(myFixture.getEditor())
+    (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor())
   }
 
 }

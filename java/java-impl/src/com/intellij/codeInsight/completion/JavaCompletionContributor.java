@@ -509,6 +509,12 @@ public class JavaCompletionContributor extends CompletionContributor {
           return;
         }
 
+        final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+        if (ref != null && !(ref instanceof PsiReferenceExpression)) {
+          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+          return;
+        }
+
         final PsiElement element = file.findElementAt(context.getStartOffset());
 
         if (psiElement().inside(PsiAnnotation.class).accepts(element)) {

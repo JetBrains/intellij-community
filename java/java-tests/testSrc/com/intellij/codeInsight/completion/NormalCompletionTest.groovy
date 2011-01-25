@@ -664,6 +664,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testClassNameWithInner() throws Throwable { doTest() }
 
+  public void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
+
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("false", "finalize");
@@ -785,6 +787,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCastTooComplexInstanceofedQualifier() throws Throwable { doAntiTest(); }
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
+  public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
+  public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
 
   public void testWildcardsInLookup() throws Exception {
     configure()

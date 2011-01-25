@@ -120,7 +120,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
-    final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    if (indicator != null) {
+      indicator.closeAndFinish(false);
+    } else {
+      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      if (phase instanceof CompletionPhase.ZombiePhase) {
+        indicator = ((CompletionPhase.ZombiePhase)phase).indicator;
+      }
+    }
+
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+
     if (indicator != null) {
       boolean repeated = indicator.isRepeatedInvocation(myCompletionType, editor);
       if (repeated && !indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
@@ -130,8 +141,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (repeated) {
         time = Math.max(indicator.getParameters().getInvocationCount() + 1, 2);
         indicator.restorePrefix();
-      } else {
-        indicator.closeAndFinish(false);
       }
     }
 
@@ -267,6 +276,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final LookupImpl lookup = obtainLookup(editor);
 
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous());
+
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
@@ -274,7 +285,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly && (!ApplicationManager.getApplication().isUnitTestMode() || CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if ((!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) || CompletionAutoPopupHandler.ourTestingAutopopup) {
       indicator.notifyBackgrounded();
       return;
     }
@@ -368,7 +379,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       computeRunnable.run();
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
@@ -467,12 +478,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final LookupElement[] items) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator);
+      CompletionServiceImpl.setCompletionPhase(
+        handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator));
       return;
     }
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated());
       indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
@@ -488,10 +501,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
-        indicator.liveAfterDeath(null);
-      } else {
-        LOG.assertTrue(!indicator.isZombie(), indicator);
+      if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
+          !ApplicationManager.getApplication().isUnitTestMode()) {
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator));
+        assert indicator.getCompletionState().isWaitingAfterAutoInsertion();
       }
     }
   }
@@ -591,22 +604,29 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
-  protected void handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  protected CompletionPhase handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return CompletionPhase.NoCompletion;
     if (!invokedExplicitly) {
-      return;
+      return CompletionPhase.NoCompletion;
     }
+    indicator.assertDisposed();
+    assert !indicator.isAutopopupCompletion();
 
+    final CompletionPhase[] result = {CompletionPhase.NoCompletion};
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
         final EditorHintListener listener = new EditorHintListener() {
           public void hintShown(final Project project, final LightweightHint hint, final int flags) {
-            indicator.liveAfterDeath(hint);
+            if (!indicator.areModifiersChanged()) {
+              result[0] = new CompletionPhase.NoSuggestionsHint(hint, indicator);
+              CompletionServiceImpl.setCompletionPhase(result[0]);
+            }
           }
         };
         final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(EditorHintListener.TOPIC, listener);
+        assert text != null;
         HintManager.getInstance().showErrorHint(editor, text);
         connection.disconnect();
         break;
@@ -616,32 +636,36 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (codeAnalyzer != null) {
       codeAnalyzer.updateVisibleHighlighters(editor);
     }
+    return result[0];
   }
 
-  private static void lookupItemSelected(final CompletionProgressIndicator context, @NotNull final LookupElement item, final char completionChar,
+  private static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
                                          final List<LookupElement> items) {
-    if (context.getHandler().autopopup) {
+    if (indicator.getHandler().autopopup) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
-    final Editor editor = context.getEditor();
-    final PsiFile file = context.getParameters().getOriginalFile();
-    final InsertionContext context1 = new InsertionContext(context.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor);
+    final Editor editor = indicator.getEditor();
+    final PsiFile file = indicator.getParameters().getOriginalFile();
+    final InsertionContext context = new InsertionContext(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final int idEndOffset = context.getIdentifierEndOffset();
-        if (idEndOffset != context.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
-          editor.getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
+        final int idEndOffset = indicator.getIdentifierEndOffset();
+        if (idEndOffset != indicator.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
+          editor.getDocument().deleteString(indicator.getSelectionEndOffset(), idEndOffset);
         }
 
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-        item.handleInsert(context1);
-        PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+        assert context.getStartOffset() >= 0 : "stale startOffset";
+        assert context.getTailOffset() >= 0 : "stale tailOffset";
+
+        PsiDocumentManager.getInstance(indicator.getProject()).commitAllDocuments();
+        item.handleInsert(context);
+        PostprocessReformattingAspect.getInstance(indicator.getProject()).doPostponedFormatting();
 
 
-        final int tailOffset = context1.getTailOffset();
+        final int tailOffset = context.getTailOffset();
         if (tailOffset >= 0) {
-          if (context1.shouldAddCompletionChar() &&
+          if (context.shouldAddCompletionChar() &&
               completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
               completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
             TailType.insertChar(editor, tailOffset, completionChar);
@@ -653,11 +677,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
-    final Runnable runnable = context1.getLaterRunnable();
+    final Runnable runnable = context.getLaterRunnable();
     if (runnable != null) {
       final Runnable runnable1 = new Runnable() {
         public void run() {
-          final Project project = context1.getProject();
+          final Project project = context.getProject();
           if (project.isDisposed()) return;
           runnable.run();
         }

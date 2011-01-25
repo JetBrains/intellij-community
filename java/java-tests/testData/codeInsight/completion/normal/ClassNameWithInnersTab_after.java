@@ -10,7 +10,7 @@ class Xxx {
     private Xxx(String x) {
     }
 
-    class Yyy {
+    static class Yyy {
 
     }
 }

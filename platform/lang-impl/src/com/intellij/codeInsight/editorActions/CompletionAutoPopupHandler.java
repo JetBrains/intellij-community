@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -93,9 +94,14 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm();
+    CompletionServiceImpl.setCompletionPhase(phase);
+
     final Runnable request = new Runnable() {
       @Override
       public void run() {
+        if (CompletionServiceImpl.getCompletionPhase() != phase) return;
+
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
@@ -152,9 +158,16 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    if (currentCompletion != null) {
-      currentCompletion.closeAndFinish(true);
+    if (CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.EmptyAutoPopup.class, CompletionPhase.PossiblyDisturbingAutoPopup.class)) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      assert currentCompletion == null;
+    } else {
+      if (currentCompletion != null) {
+        currentCompletion.closeAndFinish(true);
+      }
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
+
     state.stopAutoPopup();
   }
 

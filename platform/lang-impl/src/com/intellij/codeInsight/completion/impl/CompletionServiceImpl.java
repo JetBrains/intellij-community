@@ -20,10 +20,12 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,8 @@ public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
   private CompletionProgressIndicator myCurrentCompletion;
+  private static CompletionPhase ourPhase = CompletionPhase.NoCompletion;
+  private static String ourPhaseTrace;
 
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl)CompletionService.getCompletionService();
@@ -138,7 +142,13 @@ public class CompletionServiceImpl extends CompletionService{
       final String newLookupString = handleCaseInsensitiveVariant(prefix, oldLookupString);
       if (!newLookupString.equals(oldLookupString)) {
         final Document document = context.getEditor().getDocument();
-        document.replaceString(context.getStartOffset(), context.getTailOffset(), newLookupString);
+        int startOffset = context.getStartOffset();
+        int tailOffset = context.getTailOffset();
+
+        assert startOffset >= 0 : "stale startOffset";
+        assert tailOffset >= 0 : "stale tailOffset";
+
+        document.replaceString(startOffset, tailOffset, newLookupString);
         PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
       }
     }
@@ -162,4 +172,31 @@ public class CompletionServiceImpl extends CompletionService{
     return lookupString;
   }
 
+  public static void assertPhase(Class<? extends CompletionPhase>... possibilities) {
+    if (!isPhase(possibilities)) {
+      LOG.error(ourPhase + "; set at " + ourPhaseTrace);
+    }
+  }
+
+  public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    for (Class<? extends CompletionPhase> possibility : possibilities) {
+      if (possibility.isInstance(ourPhase)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static void setCompletionPhase(@NotNull CompletionPhase phase) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Disposer.dispose(ourPhase);
+    ourPhase = phase;
+    ourPhaseTrace = DebugUtil.currentStackTrace();
+  }
+
+  public static CompletionPhase getCompletionPhase() {
+//    ApplicationManager.getApplication().assertIsDispatchThread();
+    return ourPhase;
+  }
 }
