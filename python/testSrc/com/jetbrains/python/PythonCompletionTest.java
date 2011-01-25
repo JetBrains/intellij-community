@@ -231,6 +231,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   }
 
   public void testNonlocal() {  // PY-2289
+    doTest3K();
+  }
+
+  private void doTest3K() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
       doTest();
@@ -254,5 +258,9 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testDictKeyPrefix() {
     doTest();
+  }
+
+  public void testFromDotImport() {  // PY-2772
+    doTest3K();
   }
 }
