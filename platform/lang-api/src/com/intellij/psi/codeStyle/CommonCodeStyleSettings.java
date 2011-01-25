@@ -299,6 +299,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_ASSIGNMENT = false;
   public boolean ALIGN_MULTILINE_TERNARY_OPERATION = false;
   public boolean ALIGN_MULTILINE_THROWS_LIST = false;
+  public boolean ALIGN_THROWS_KEYWORD = false;
 
   public boolean ALIGN_MULTILINE_EXTENDS_LIST = false;
   public boolean ALIGN_MULTILINE_METHOD_BRACKETS = false;

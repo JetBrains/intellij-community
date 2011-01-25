@@ -1015,7 +1015,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       charWidth = EditorUtil.charWidth(c, fontType, this);
     }
     
-    if (charWidth <= 0) {
+    if (charWidth < 0) {
       charWidth = spaceSize;
     }
 
