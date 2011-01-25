@@ -19,6 +19,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -32,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
@@ -455,7 +458,7 @@ public class ControlFlowUtils {
       flow = ((GrCodeBlock)element).getControlFlow();
     }
     else {
-      flow = new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element, null, null);
+      flow = new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
     }
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<GrStatement>();
@@ -463,13 +466,8 @@ public class ControlFlowUtils {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
         final PsiElement element = instruction.getElement();
-        if (allExitPoints) {
-          if (element instanceof GrStatement) {
-            res.add((GrStatement)element);
-          }
-        }
-        else if (element instanceof GrReturnStatement) {
-          res.add(((GrReturnStatement)element));
+        if (element instanceof GrReturnStatement || (allExitPoints && instruction instanceof MaybeReturnInstruction)) {
+          res.add((GrStatement)element);
         }
         return true;
       }
@@ -623,4 +621,14 @@ public class ControlFlowUtils {
     return true;
   }
 
+  @Nullable
+  public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
+    while (place.getParent() != null) {
+      place = place.getParent();
+      if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
+      if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
+      if (place instanceof GroovyFile) return (GroovyFile)place;
+    }
+    return null;
+  }
 }

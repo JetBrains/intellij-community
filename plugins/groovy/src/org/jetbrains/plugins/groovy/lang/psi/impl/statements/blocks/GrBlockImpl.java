@@ -57,7 +57,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
       myControlFlow = controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {
         @Override
         public Result<Instruction[]> compute() {
-          return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this, null, null), getContainingFile());
+          return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this), getContainingFile());
         }
       }, false);
     }

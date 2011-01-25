@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -38,11 +37,11 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     assertEquals(errorMessage, handler.getInvokeResult());
   }
 
-  private List<String> readInput() throws IOException {
+  private List<String> readInput() {
     return TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final List<String> data = readInput();
     GroovyExtractMethodHandler handler = configureFromText(data.get(0));
     assertTrue(handler.invokeOnEditor(getProject(), myFixture.getEditor(), myFixture.getFile()));
@@ -50,7 +49,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     myFixture.checkResult(data.get(1));
   }
 
-  private GroovyExtractMethodHandler configureFromText(String fileText) throws IOException {
+  private GroovyExtractMethodHandler configureFromText(String fileText) {
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
@@ -89,5 +88,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testForIn() throws Throwable { doTest(); }
   
   public void testClosureIt() throws Throwable { doTest(); }
+  public void testImplicitReturn() {doTest();}
 
 }

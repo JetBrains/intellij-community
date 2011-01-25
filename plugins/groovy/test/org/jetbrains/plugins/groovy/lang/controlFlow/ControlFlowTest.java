@@ -68,7 +68,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
     final PsiElement start = file.findElementAt(model.hasSelection() ? model.getSelectionStart() : 0);
     final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    final Instruction[] instructions = new ControlFlowBuilder(getProject()).buildControlFlow(owner, null, null);
+    final Instruction[] instructions = new ControlFlowBuilder(getProject()).buildControlFlow(owner);
     final String cf = dumpControlFlow(instructions);
     assertEquals(input.get(1).trim(), cf.trim());
   }

@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -75,24 +77,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private InstructionImpl myHead;
   private boolean myNegate;
   private boolean myAssertionsOnly;
+  private GroovyPsiElement myLastInScope;
 
   private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
-  private GroovyPsiElement myStartInScope;
-  private GroovyPsiElement myEndInScope;
 
-  private boolean myIsInScope;
   private int myInstructionNumber;
-
-  public void visitElement(GroovyPsiElement element) {
-    if (element == myStartInScope) {
-      myIsInScope = true;
-    }
-    else if (element == myEndInScope) myIsInScope = false;
-
-    if (myIsInScope) {
-      super.visitElement(element);
-    }
-  }
 
   public void visitOpenBlock(GrOpenBlock block) {
     final PsiElement parent = block.getParent();
@@ -114,22 +103,37 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void handlePossibleReturn(GrStatement last) {
-    if (last instanceof GrExpression) {
+    if (last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false)) {
       final MaybeReturnInstruction instruction = new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++);
       checkPending(instruction);
       addNode(instruction);
     }
   }
 
-  public Instruction[] buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {
+  public Instruction[] buildControlFlow(GroovyPsiElement scope) {
     myInstructions = new ArrayList<InstructionImpl>();
     myProcessingStack = new Stack<InstructionImpl>();
     myCatchedExceptionInfos = new Stack<ExceptionInfo>();
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     myInstructionNumber = 0;
-    myStartInScope = startInScope;
-    myEndInScope = endInScope;
-    myIsInScope = startInScope == null;
+
+    myLastInScope = null;
+
+    if (scope instanceof GrCodeBlock) {
+      GrStatement[] statements = ((GrCodeBlock)scope).getStatements();
+      if (statements.length > 0) {
+        myLastInScope = statements[statements.length - 1];
+      }
+    }
+    else if (scope instanceof GroovyFileBase) {
+      GrTopStatement[] topStatements = ((GroovyFileBase)scope).getTopStatements();
+      for (int i = topStatements.length - 1; i >= 0; i--) {
+        if (topStatements[i] instanceof GrStatement) {
+          myLastInScope = topStatements[i];
+          break;
+        }
+      }
+    }
 
     startNode(null);
     if (scope instanceof GrClosableBlock) {
