@@ -173,7 +173,9 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public static void assertPhase(Class<? extends CompletionPhase>... possibilities) {
-    assert isPhase(possibilities) : ourPhase + "; set at " + ourPhaseTrace;
+    if (!isPhase(possibilities)) {
+      LOG.error(ourPhase + "; set at " + ourPhaseTrace);
+    }
   }
 
   public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
