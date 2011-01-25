@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>OverloadedMethodsWithSameNumberOfParameters.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overloaded methods with same number of parameters</problem_class>
+    <description>Multiple methods named &lt;code&gt;equals&lt;/code&gt; with the same number of parameters #loc</description>
+  </problem>
+
+  <problem>
+    <file>OverloadedMethodsWithSameNumberOfParameters.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overloaded methods with same number of parameters</problem_class>
+    <description>Multiple methods named &lt;code&gt;foo&lt;/code&gt; with the same number of parameters #loc</description>
+  </problem>
+
+  <problem>
+    <file>OverloadedMethodsWithSameNumberOfParameters.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overloaded methods with same number of parameters</problem_class>
+    <description>Multiple methods named &lt;code&gt;foo&lt;/code&gt; with the same number of parameters #loc</description>
+  </problem>
+  
+</problems>
