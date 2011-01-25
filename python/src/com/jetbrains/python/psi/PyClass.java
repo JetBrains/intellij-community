@@ -104,7 +104,9 @@ public interface PyClass extends
    * A lazy way to list ancestor classes width first, in method-resolution order (MRO).
    * @return an iterable of ancestor classes.
    */
-  Iterable<PyClass> iterateAncestors();
+  Iterable<PyClassRef> iterateAncestors();
+
+  Iterable<PyClass> iterateAncestorClasses();
 
   /**
    * Scan properties in order of definition, until processor returns true for one of them.

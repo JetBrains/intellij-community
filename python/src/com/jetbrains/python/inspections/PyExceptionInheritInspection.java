@@ -44,8 +44,8 @@ public class PyExceptionInheritInspection extends PyInspection {
           PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
           if (psiElement instanceof PyClass) {
             PyClass aClass = (PyClass) psiElement;
-            for (PyClass pyClass : aClass.iterateAncestors()) {
-              if ("Exception".equals(pyClass.getName())) {
+            for (PyClassRef pyClass : aClass.iterateAncestors()) {
+              if ("Exception".equals(pyClass.getClassName())) {
                 return;
               }
             }
