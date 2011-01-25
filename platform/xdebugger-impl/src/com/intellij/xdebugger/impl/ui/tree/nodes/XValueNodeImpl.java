@@ -96,6 +96,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  public void errorOccurred(@NotNull String message, @Nullable String type) {
+    setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, type, message, false);
+  }
+
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {

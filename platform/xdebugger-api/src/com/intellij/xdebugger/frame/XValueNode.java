@@ -30,10 +30,11 @@ import javax.swing.*;
  * @author nik
  */
 public interface XValueNode extends Obsolescent {
-
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+
+  void errorOccurred(@NotNull String message, @Nullable String type);
 
   /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(javax.swing.Icon, String, String, boolean)}
