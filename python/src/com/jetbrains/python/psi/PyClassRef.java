@@ -10,8 +10,17 @@ public class PyClassRef {
   @Nullable
   private final PsiElement myElement;
 
+  @Nullable
+  private final String myQName;
+
   public PyClassRef(PsiElement element) {
     myElement = element;
+    myQName = null;
+  }
+
+  public PyClassRef(String qName) {
+    myElement = null;
+    myQName = qName;
   }
 
   @Nullable
@@ -26,7 +35,10 @@ public class PyClassRef {
 
   @Nullable
   public String getQualifiedName() {
-    return myElement instanceof PyClass ? ((PyClass) myElement).getQualifiedName() : null;
+    if (myQName != null) {
+      return myQName;
+    }
+    return myElement instanceof PyClass ? ((PyClass)myElement).getQualifiedName() : null;
   }
 
   @Override

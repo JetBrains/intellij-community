@@ -221,14 +221,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return Collections.emptyList();
     }
 
-    List<PyClassRef> result = new ArrayList<PyClassRef>();
-    List<PyClass> superClasses = resolveSuperClassesFromStub();
-    if (superClasses != null) {
-      for (PyClass superClass : superClasses) {
-        result.add(new PyClassRef(superClass));
-      }
-    }
-    else {
+    List<PyClassRef> result = resolveSuperClassesFromStub();
+    if (result == null) {
+      result = new ArrayList<PyClassRef>();
       PsiElement[] superClassElements = getSuperClassElements();
       for (PsiElement element : superClassElements) {
         result.add(new PyClassRef(element));
@@ -247,7 +242,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private List<PyClass> resolveSuperClassesFromStub() {
+  private List<PyClassRef> resolveSuperClassesFromStub() {
     final PyClassStub stub = getStub();
     if (stub == null) {
       return null;
@@ -259,39 +254,50 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return null;
     }
 
-    List<PyClass> result = new ArrayList<PyClass>();
+    List<PyClassRef> result = new ArrayList<PyClassRef>();
     for (PyQualifiedName qualifiedName : stub.getSuperClasses()) {
-      if (qualifiedName == null) {
-        return null;
-      }
-
-      NameDefiner currentParent = (NameDefiner) parent;
-      for (String component : qualifiedName.getComponents()) {
-        PsiElement element = currentParent.getElementNamed(component);
-        element = PyUtil.turnDirIntoInit(element);
-        if (element instanceof PyImportElement) {
-          element = ResolveImportUtil.resolveImportElement((PyImportElement) element);
-        }
-        if (!(element instanceof NameDefiner)) {
-          return null;
-        }
-        currentParent = (NameDefiner)element;
-      }
-
-      if (!(currentParent instanceof PyClass)) {
-        return null;
-      }
-      result.add((PyClass) currentParent);
+      result.add(classRefFromQName((NameDefiner)parent, qualifiedName));
     }
     return result;
+  }
+
+  @Nullable
+  private static PyClassRef classRefFromQName(NameDefiner parent, PyQualifiedName qualifiedName) {
+    if (qualifiedName == null) {
+      return null;
+    }
+    NameDefiner currentParent = parent;
+    for (String component : qualifiedName.getComponents()) {
+      PsiElement element = currentParent.getElementNamed(component);
+      element = PyUtil.turnDirIntoInit(element);
+      if (element instanceof PyImportElement) {
+        element = ResolveImportUtil.resolveImportElement((PyImportElement)element);
+      }
+      if (!(element instanceof NameDefiner)) {
+        return new PyClassRef(qualifiedName.toString());
+      }
+      currentParent = (NameDefiner)element;
+    }
+
+    return new PyClassRef(currentParent);
   }
 
   @NotNull
   public PyClass[] getSuperClasses() {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      final List<PyClass> pyClasses = resolveSuperClassesFromStub();
-      return pyClasses == null ? EMPTY_ARRAY : pyClasses.toArray(new PyClass[pyClasses.size()]);
+      final List<PyClassRef> pyClasses = resolveSuperClassesFromStub();
+      if (pyClasses == null) {
+        return EMPTY_ARRAY;
+      }
+      List<PyClass> result = new ArrayList<PyClass>();
+      for (PyClassRef clsRef : pyClasses) {
+        PyClass pyClass = clsRef.getPyClass();
+        if (pyClass != null) {
+          result.add(pyClass);
+        }
+      }
+      return result.toArray(new PyClass[result.size()]);
     }
 
     PsiElement[] superClassElements = getSuperClassElements();
