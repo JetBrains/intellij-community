@@ -23,7 +23,7 @@ public class NameSuggestorUtil {
 
   @NotNull
   public static Collection<String> generateNames(@NotNull String name) {
-    name = StringUtil.decapitalize(deleteNonLetterFromString(name.replace('.', '_')));
+    name = StringUtil.decapitalize(deleteNonLetterFromString(StringUtil.unquoteString(name.replace('.', '_'))));
     if (name.startsWith("get")) {
       name = name.substring(3);
     }
