@@ -561,6 +561,10 @@ public class PyCompatibilityInspection extends PyInspection {
         if (hasProblem)
           registerProblem(node, message.toString());
       }
+      else {
+        if (myVersionsToProcess.contains(LanguageLevel.PYTHON24))
+          registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+      }
     }
   }
 }
