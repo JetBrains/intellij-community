@@ -20,15 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.ZipperUpdater;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
+import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class MergeInfoUpdatesListener {
   public MergeInfoUpdatesListener(final Project project, final MessageBusConnection connection) {
     myConnection = connection;
     myProject = project;
-    myUpdater = new ZipperUpdater(DELAY);
+    myUpdater = new ZipperUpdater(DELAY, myProject);
   }
 
   public void addPanel(final RootsAndBranches action) {
