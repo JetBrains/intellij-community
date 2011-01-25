@@ -406,15 +406,13 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   private void updateProjectLibraryFiles() {
     myProjectLibFiles = new HashSet<VirtualFile>();
-    for (CompoundLibrary container : myCompoundLibMap.values()) {
-      for (ScriptingLibraryTable.LibraryModel libModel : container.getLibraries()) {
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
+    for (ScriptingLibraryTable.LibraryModel container : getMappings().values()) {
+      if (container instanceof CompoundLibrary) {
+        for (ScriptingLibraryTable.LibraryModel libModel : ((CompoundLibrary)container).getLibraries()) {
+          myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
+          myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
+        }
       }
-    }
-    for (ScriptingLibraryTable.LibraryModel libModel : myProjectLibs.getLibraries()) {
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
     }
   }
 
