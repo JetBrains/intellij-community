@@ -1001,11 +1001,11 @@ public class JavaCompletionUtil {
   }
 
   public static boolean hasAccessibleInnerClass(@NotNull PsiClass psiClass, @NotNull PsiElement position) {
-    final PsiClass[] inners = psiClass.getAllInnerClasses();
+    final PsiClass[] inners = psiClass.getInnerClasses();
     if (inners.length > 0) {
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
       for (PsiClass inner : inners) {
-        if (resolveHelper.isAccessible(inner, position, null)) {
+        if (inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, position, null)) {
           return true;
         }
       }
