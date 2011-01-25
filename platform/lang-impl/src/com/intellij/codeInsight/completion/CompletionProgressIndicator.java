@@ -26,7 +26,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -288,7 +287,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           contentComponent.removeKeyListener(this);
           myState.modifiersChanged();
           if (myState.isWaitingAfterAutoInsertion()) {
-            myState.handleDeath();
+            myState.assertDisposed();
             CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             assert currentCompletion == null : currentCompletion;
 
@@ -420,8 +419,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
 
-    myState.handleDeath();
-
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     assert currentCompletion == this : currentCompletion + "!=" + this;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
@@ -547,27 +544,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public Editor getEditor() {
     return myEditor;
-  }
-
-  public Runnable rememberDocumentState() {
-    myState.assertDisposed();
-    assert !myState.areModifiersChanged() : myState;
-
-    final String documentText = myEditor.getDocument().getText();
-    final int caret = myEditor.getCaretModel().getOffset();
-    final int selStart = myEditor.getSelectionModel().getSelectionStart();
-    final int selEnd = myEditor.getSelectionModel().getSelectionEnd();
-
-    return new Runnable() {
-      @Override
-      public void run() {
-        DocumentEx document = (DocumentEx) myEditor.getDocument();
-
-        document.replaceString(0, myEditor.getCaretModel().getOffset(), documentText.substring(0, caret));
-        document.replaceString(caret, document.getTextLength(), documentText.substring(caret));
-        myEditor.getSelectionModel().setSelection(selStart, selEnd);
-      }
-    };
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {

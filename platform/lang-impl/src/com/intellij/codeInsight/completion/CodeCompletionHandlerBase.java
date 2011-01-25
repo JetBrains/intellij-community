@@ -41,6 +41,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -495,7 +496,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish(true);
-      final Runnable restorePrefix = indicator.rememberDocumentState();
+      indicator.getCompletionState().assertDisposed();
+      final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
       indicator.getOffsetMap()
         .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
@@ -768,5 +770,24 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       case BASIC:
       default: return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
     }
+  }
+
+  private static Runnable rememberDocumentState(final Editor editor) {
+    final String documentText = editor.getDocument().getText();
+    final int caret = editor.getCaretModel().getOffset();
+    final int selStart = editor.getSelectionModel().getSelectionStart();
+    final int selEnd = editor.getSelectionModel().getSelectionEnd();
+
+    return new Runnable() {
+      @Override
+      public void run() {
+        DocumentEx document = (DocumentEx) editor.getDocument();
+
+        // restore the text in two steps, because otherwise the dumb caret model will scroll the editor
+        document.replaceString(0, editor.getCaretModel().getOffset(), documentText.substring(0, caret));
+        document.replaceString(caret, document.getTextLength(), documentText.substring(caret));
+        editor.getSelectionModel().setSelection(selStart, selEnd);
+      }
+    };
   }
 }

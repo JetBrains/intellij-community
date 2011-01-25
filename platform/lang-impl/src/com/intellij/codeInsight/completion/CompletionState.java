@@ -76,11 +76,6 @@ public class CompletionState {
     LOG.assertTrue(myCompletionDisposed, this);
   }
 
-  public void handleDeath() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    assertDisposed();
-  }
-
   int incCount() {
     return ++myCount;
   }
