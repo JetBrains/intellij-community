@@ -413,7 +413,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void finishCompletionProcess() {
-    myState.setToRestart(false);
     cancel();
 
     myState.setCompletionDisposed(true);
@@ -450,8 +449,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (isOutdated()) return;
         if (!isBackgrounded()) return;
 
-        if (isCanceled() && myState.isRestartScheduled()) {
-          CompletionServiceImpl.assertPhase(CompletionPhase.Restarted.class);
+        if (CompletionServiceImpl.isPhase(CompletionPhase.Restarted.class)) {
           return;
         }
 
@@ -509,13 +507,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
     return false;
-  }
-
-  public void cancelByWriteAction() {
-    myState.setToRestart(true);
-    cancel();
-
-    scheduleRestart();
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
@@ -608,12 +599,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void prefixUpdated() {
-    if (myState.isToRestart()) {
-      scheduleRestart();
-      return;
-    }
-
-
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
@@ -629,8 +614,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
+    cancel();
+
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myState.scheduleRestart();
     final CompletionPhase phase = new CompletionPhase.Restarted();
     CompletionServiceImpl.setCompletionPhase(phase);
 

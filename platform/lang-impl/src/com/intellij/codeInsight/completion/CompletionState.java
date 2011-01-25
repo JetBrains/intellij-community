@@ -11,8 +11,6 @@ public class CompletionState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionState");
   private boolean myCompletionDisposed;
   private boolean myShownLookup;
-  private Boolean myToRestart;
-  private boolean myRestartScheduled;
   private boolean myModifiersChanged;
   private boolean myBackgrounded;
   private volatile boolean myFocusLookupWhenDone;
@@ -38,27 +36,6 @@ public class CompletionState {
 
   public void setShownLookup(boolean shownLookup) {
     myShownLookup = shownLookup;
-  }
-
-  public boolean isToRestart() {
-    return myToRestart == Boolean.TRUE;
-  }
-
-  public void setToRestart(boolean toRestart) {
-    if (toRestart && myToRestart != null) {
-      LOG.assertTrue(myToRestart == Boolean.FALSE, this); //explicit completionFinished was invoked before this write action
-      return;
-    }
-
-    myToRestart = toRestart;
-  }
-
-  public boolean isRestartScheduled() {
-    return myRestartScheduled;
-  }
-
-  public void scheduleRestart() {
-    myRestartScheduled = true;
   }
 
   public boolean areModifiersChanged() {
@@ -118,8 +95,6 @@ public class CompletionState {
            "phase=" + CompletionServiceImpl.getCompletionPhase() +
            ", myCompletionDisposed=" + myCompletionDisposed +
            ", myShownLookup=" + myShownLookup +
-           ", myToRestart=" + myToRestart +
-           ", myRestartScheduled=" + myRestartScheduled +
            ", myModifiersReleased=" + myModifiersChanged +
            ", myBackgrounded=" + myBackgrounded +
            ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +

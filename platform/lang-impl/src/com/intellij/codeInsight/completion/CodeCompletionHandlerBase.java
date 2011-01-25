@@ -309,7 +309,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        indicator.cancelByWriteAction();
+        indicator.scheduleRestart();
       }
     };
     ApplicationManager.getApplication().addApplicationListener(listener);
