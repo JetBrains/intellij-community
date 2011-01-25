@@ -18,8 +18,9 @@ package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.codeInsight.lookup.LookupManager
 
- /**
+/**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -301,19 +302,31 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testTwoQuickRestartsAfterHiding() {
-    myFixture.configureByText("a.java", """
-    class A {
-      { <caret> }
+    for (i in 0..10) {
+      myFixture.configureByText("a${i}.java", """
+      class A {
+        { <caret> }
+      }
+      """)
+      edt { myFixture.type 'A' }
+      joinAlarm() // completion started
+      boolean tooQuick = false
+      edt {
+        tooQuick = lookup == null
+        myFixture.type 'IO'
+      }
+      joinCompletion()
+      assert lookup
+      assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
+      if (!tooQuick) {
+        return
+      }
+      edt {
+        LookupManager.getInstance(project).hideActiveLookup()
+        CompletionProgressIndicator.cleanupForNextTest()
+      }
     }
-    """)
-    edt { myFixture.type 'A' }
-    joinAlarm() // completion started
-    edt { assert lookup; myFixture.type 'IO' }
-    joinAlarm()
-    joinAlarm()
-    joinCompletion()
-    assert lookup
-    assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
+    fail "too many too quick attempts"
   }
 
   public void testTypingDuringExplicitCompletion() {
