@@ -401,16 +401,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
 
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
-    if (lookup != null) {
-      LOG.assertTrue(lookup == myLookup);
-      myLookup.removeLookupListener(myLookupListener);
-      finishCompletionProcess();
+    LOG.assertTrue(lookup == myLookup);
+    myLookup.removeLookupListener(myLookupListener);
+    finishCompletionProcess();
+    myState.assertDisposed();
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
 
-      if (hideLookup) {
-        LookupManager.getInstance(getProject()).hideActiveLookup();
-      }
-    } else {
-      myState.assertDisposed();
+    if (hideLookup) {
+      LookupManager.getInstance(getProject()).hideActiveLookup();
     }
   }
 
@@ -451,9 +449,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       public void run() {
         if (isOutdated()) return;
         if (!isBackgrounded()) return;
-        if (isCanceled() && !myState.isRestartScheduled()) return;
+
+        if (isCanceled() && myState.isRestartScheduled()) {
+          CompletionServiceImpl.assertPhase(CompletionPhase.Restarted.class);
+          return;
+        }
 
         myLookup.setCalculating(false);
+
+        if (isCanceled()) {
+          CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
+          return;
+        }
 
         if (CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class) && hideAutopopupIfMeaningless()) {
           return;
@@ -466,7 +473,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
-            CompletionServiceImpl.setCompletionPhase(myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this));
+            CompletionServiceImpl
+              .setCompletionPhase(myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this));
           }
         }
         else {

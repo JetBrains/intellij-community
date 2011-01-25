@@ -316,4 +316,19 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
   }
 
+  public void testTypingDuringExplicitCompletion() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { Runnable r = new <caret> }
+    }
+    """)
+    myFixture.complete CompletionType.SMART
+    edt { myFixture.type 'Thr' }
+    joinCompletion()
+    assert lookup
+    assert 'Thread' in myFixture.lookupElementStrings
+  }
+
+
+
 }
