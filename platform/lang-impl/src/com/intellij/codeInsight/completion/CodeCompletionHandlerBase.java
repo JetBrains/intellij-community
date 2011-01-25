@@ -21,8 +21,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
-import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -62,11 +60,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -478,7 +474,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final LookupElement[] items) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      handleEmptyLookup(indicator);
+      indicator.handleEmptyLookup();
       return;
     }
 
@@ -601,38 +597,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
-  }
-
-  protected void handleEmptyLookup(final CompletionProgressIndicator indicator) {
-    indicator.assertDisposed();
-    assert !indicator.isAutopopupCompletion();
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && invokedExplicitly) {
-      for (final CompletionContributor contributor : CompletionContributor.forParameters(indicator.getParameters())) {
-        final String text = contributor.handleEmptyLookup(indicator.getParameters(), indicator.getEditor());
-        if (StringUtil.isNotEmpty(text)) {
-          LightweightHint hint = showErrorHint(indicator.getProject(), indicator.getEditor(), text);
-          CompletionServiceImpl.setCompletionPhase(indicator.areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, indicator));
-          return;
-        }
-      }
-    }
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-  }
-
-  private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
-    final LightweightHint[] result = {null};
-    final EditorHintListener listener = new EditorHintListener() {
-      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
-        result[0] = hint;
-      }
-    };
-    final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(EditorHintListener.TOPIC, listener);
-    assert text != null;
-    HintManager.getInstance().showErrorHint(editor, text);
-    connection.disconnect();
-    return result[0];
   }
 
   private static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,

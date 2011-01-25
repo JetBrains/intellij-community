@@ -17,6 +17,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.hint.EditorHintListener;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -42,9 +44,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -464,7 +468,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
-            myHandler.handleEmptyLookup(CompletionProgressIndicator.this);
+            handleEmptyLookup();
           }
         }
         else {
@@ -618,5 +622,41 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public String toString() {
     return myState.toString();
+  }
+
+  protected void handleEmptyLookup() {
+    assertDisposed();
+    assert !isAutopopupCompletion();
+
+    if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      return;
+    }
+
+    for (final CompletionContributor contributor : CompletionContributor.forParameters(getParameters())) {
+      final String text = contributor.handleEmptyLookup(getParameters(), getEditor());
+      if (StringUtil.isNotEmpty(text)) {
+        LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
+        CompletionServiceImpl.setCompletionPhase(
+          areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, this));
+        return;
+      }
+    }
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+  }
+
+  private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
+    final LightweightHint[] result = {null};
+    final EditorHintListener listener = new EditorHintListener() {
+      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+        result[0] = hint;
+      }
+    };
+    final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorHintListener.TOPIC, listener);
+    assert text != null;
+    HintManager.getInstance().showErrorHint(editor, text);
+    connection.disconnect();
+    return result[0];
   }
 }
