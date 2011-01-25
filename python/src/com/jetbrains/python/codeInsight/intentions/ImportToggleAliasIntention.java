@@ -14,16 +14,16 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-
-import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
-import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds an alias to "import foo" or "from foo import bar" import elements, or removes it if it's already present. 
@@ -31,26 +31,55 @@ import java.util.Collection;
  * Date: Oct 9, 2009 6:07:19 PM
  */
 public class ImportToggleAliasIntention implements IntentionAction {
+  private static class IntentionState {
+    private PyImportElement myImportElement;
+    private PyFromImportStatement myFromImportStatement;
+    private PyImportStatement myImportStatement;
+    private String myAlias;
 
-  private PyImportElement myImportElement;
-  private PyFromImportStatement myFromImportStatement;
-  private PyImportStatement myImportStatement;
-  private String myAlias;
+    private static IntentionState fromContext(@NotNull Project project, Editor editor, PsiFile file) {
+      IntentionState state = new IntentionState();
+      state.myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
+      if (state.myImportElement != null && state.myImportElement.isValid()) {
+        PyTargetExpression target = state.myImportElement.getAsNameElement();
+        if (target != null && target.isValid()) state.myAlias = target.getName();
+        else state.myAlias = null;
+        state.myFromImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyFromImportStatement.class);
+        state.myImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyImportStatement.class);
+      }
+      return state;
+    }
+
+    public boolean isAvailable() {
+      if (myFromImportStatement != null) {
+        return myFromImportStatement.isValid() && !myFromImportStatement.isFromFuture();
+      }
+      else {
+        return myImportStatement != null && myImportStatement.isValid();
+      }
+    }
+
+    public String getText() {
+      String add_name = "Add alias";
+      if (myImportElement != null) {
+        PyReferenceExpression refex = myImportElement.getImportReference();
+        if (refex != null) {
+          String name = refex.getReferencedName();
+          if (name != null && !"".equals(name)) {
+            add_name = PyBundle.message("INTN.add.alias.for.import.$0", name);
+          }
+        }
+      }
+      return myAlias == null? add_name : PyBundle.message("INTN.remove.alias.for.import.$0", myAlias);
+    }
+  }
+
+  private String myLastText;
 
 
   @NotNull
   public String getText() {
-    String add_name = "Add alias";
-    if (myImportElement != null) {
-      PyReferenceExpression refex = myImportElement.getImportReference();
-      if (refex != null) {
-        String name = refex.getReferencedName();
-        if (name != null && !"".equals(name)) {
-          add_name = PyBundle.message("INTN.add.alias.for.import.$0", name);
-        }
-      }
-    }
-    return myAlias == null? add_name : PyBundle.message("INTN.remove.alias.for.import.$0", myAlias);
+    return myLastText;
   }
 
   @NotNull
@@ -59,38 +88,25 @@ public class ImportToggleAliasIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
-    if (myImportElement != null && myImportElement .isValid()) {
-      PyTargetExpression target = myImportElement.getAsNameElement();
-      if (target != null && target.isValid()) myAlias = target.getName();
-      else myAlias = null;
-      myFromImportStatement = PsiTreeUtil.getParentOfType(myImportElement, PyFromImportStatement.class);
-      if (myFromImportStatement != null && myFromImportStatement.isValid() && !myFromImportStatement.isFromFuture()) {
-        return true;
-      }
-      else {
-        myImportStatement = PsiTreeUtil.getParentOfType(myImportElement, PyImportStatement.class);
-        return myImportStatement != null && myImportStatement.isValid();
-      }
-    }
-    return false;
+    IntentionState state = IntentionState.fromContext(project, editor, file);
+    myLastText = state.getText();
+    return state.isAvailable();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
-    assert myImportElement != null;
-    assert myImportStatement != null || myFromImportStatement != null;
+    IntentionState state = IntentionState.fromContext(project, editor, file);
     //
     final String target_name; // we set in in the source
     final String remove_name; // we replace it in the source
-    PyReferenceExpression reference = sure(myImportElement.getImportReference());
+    PyReferenceExpression reference = sure(state.myImportElement.getImportReference());
     // search for references to us with the right name
     try {
       String imported_name = PyResolveUtil.toPath(reference, ".");
-      if (myAlias != null) {
+      if (state.myAlias != null) {
         // have to remove alias, rename everything to original
         target_name = imported_name;
-        remove_name = myAlias;
+        remove_name = state.myAlias;
       }
       else {
         // ask for and add alias
@@ -129,9 +145,9 @@ public class ImportToggleAliasIntention implements IntentionAction {
 
         // alter the import element
         PyElementGenerator generator = PyElementGenerator.getInstance(project);
-        if (myAlias != null) {
+        if (state.myAlias != null) {
           // remove alias
-          ASTNode node = sure(myImportElement.getNode());
+          ASTNode node = sure(state.myImportElement.getNode());
           ASTNode parent = sure(node.getTreeParent());
           node = sure(node.getFirstChildNode()); // this is the reference
           node = sure(node.getTreeNext()); // things past the reference: space, 'as', and alias
@@ -139,7 +155,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         }
         else {
           // add alias
-          ASTNode my_ielt_node = sure(myImportElement.getNode());
+          ASTNode my_ielt_node = sure(state.myImportElement.getNode());
           PyImportElement fountain = generator.createFromText(LanguageLevel.getDefault(), PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
           ASTNode graft_node = sure(fountain.getNode()); // at import elt
           graft_node = sure(graft_node.getFirstChildNode()); // at ref
