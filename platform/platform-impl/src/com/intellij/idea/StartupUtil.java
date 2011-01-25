@@ -37,6 +37,8 @@ public class StartupUtil {
   static SocketLock ourLock;
   private static String myDefaultLAF;
 
+  @NonNls public static final String NOSPLASH = "nosplash";
+
   private StartupUtil() {
   }
 
@@ -49,7 +51,7 @@ public class StartupUtil {
   }
 
   public static boolean shouldShowSplash(final String[] args) {
-    @NonNls final String nosplashCode = "nosplash";
+    @NonNls final String nosplashCode = NOSPLASH;
     return !Arrays.asList(args).contains(nosplashCode);
   }
 
