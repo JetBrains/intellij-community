@@ -37,7 +37,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
     private PyImportStatement myImportStatement;
     private String myAlias;
 
-    private static IntentionState fromContext(@NotNull Project project, Editor editor, PsiFile file) {
+    private static IntentionState fromContext(Editor editor, PsiFile file) {
       IntentionState state = new IntentionState();
       state.myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
       if (state.myImportElement != null && state.myImportElement.isValid()) {
@@ -88,14 +88,14 @@ public class ImportToggleAliasIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    IntentionState state = IntentionState.fromContext(project, editor, file);
+    IntentionState state = IntentionState.fromContext(editor, file);
     myLastText = state.getText();
     return state.isAvailable();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
-    IntentionState state = IntentionState.fromContext(project, editor, file);
+    IntentionState state = IntentionState.fromContext(editor, file);
     //
     final String target_name; // we set in in the source
     final String remove_name; // we replace it in the source
