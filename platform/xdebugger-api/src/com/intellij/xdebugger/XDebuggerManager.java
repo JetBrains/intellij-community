@@ -21,7 +21,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
@@ -70,5 +69,15 @@ public abstract class XDebuggerManager {
    */
   @NotNull
   public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+
+  /**
+   * Start a new debugging session and open 'Debug' tool window
+   * @param sessionName title of 'Debug' tool window
+   * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   */
+  @NotNull
+  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                                       boolean showToolWindowOnSuspendOnly,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }

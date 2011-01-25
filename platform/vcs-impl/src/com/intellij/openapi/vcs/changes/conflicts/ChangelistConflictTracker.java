@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -24,12 +26,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -38,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -57,6 +63,8 @@ public class ChangelistConflictTracker {
   private final DocumentAdapter myDocumentListener;
 
   private final FileStatusManager myFileStatusManager;
+  private final Set<VirtualFile> myCheckSet;
+  private final Object myCheckSetLock;
 
   public ChangelistConflictTracker(Project project,
                                    ChangeListManager changeListManager, 
@@ -68,7 +76,26 @@ public class ChangelistConflictTracker {
     myEditorNotifications = editorNotifications;
     myDocumentManager = FileDocumentManager.getInstance();
     myFileStatusManager = fileStatusManager;
+    myCheckSetLock = new Object();
+    myCheckSet = new HashSet<VirtualFile>();
 
+    final Application application = ApplicationManager.getApplication();
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, myProject);
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        if (application.isDisposed() || myProject.isDisposed() || (! myProject.isOpen())) return;
+        final Set<VirtualFile> localSet;
+        synchronized (myCheckSetLock) {
+          localSet = new HashSet<VirtualFile>();
+          localSet.addAll(myCheckSet);
+          myCheckSet.clear();
+        }
+        for (VirtualFile file : localSet) {
+          checkFile(file);
+        }
+      }
+    };
     myDocumentListener = new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -77,31 +104,10 @@ public class ChangelistConflictTracker {
         }
         Document document = e.getDocument();
         final VirtualFile file = myDocumentManager.getFile(document);
-        if (file == null || isFromActiveChangelist(file) || ChangesUtil.isInternalOperation(file)) {
-          return;
+        synchronized (myCheckSetLock) {
+          myCheckSet.add(file);
         }
-        myChangeListManager.invokeAfterUpdate(new Runnable() {
-          public void run() {
-
-            if (!isFromActiveChangelist(file)) {
-              String path = file.getPath();
-              Conflict conflict = myConflicts.get(path);
-              boolean newConflict = false;
-              if (conflict == null) {
-                conflict = new Conflict();
-                myConflicts.put(path, conflict);
-                newConflict = true;
-              }
-              conflict.timestamp = System.currentTimeMillis();
-              conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
-
-              if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
-                myFileStatusManager.fileStatusChanged(file);
-                myEditorNotifications.updateNotifications(file);
-              }
-            }
-          }
-        }, InvokeAfterUpdateMode.SILENT, null, null);
+        zipperUpdater.queue(runnable);
       }
     };
 
@@ -126,6 +132,34 @@ public class ChangelistConflictTracker {
         clearChanges(newDefaultList.getChanges(), true);  
       }
     };
+  }
+
+  private void checkFile(final VirtualFile file) {
+    if (file == null || isFromActiveChangelist(file) || ChangesUtil.isInternalOperation(file)) {
+      return;
+    }
+    myChangeListManager.invokeAfterUpdate(new Runnable() {
+      public void run() {
+
+        if (!isFromActiveChangelist(file)) {
+          String path = file.getPath();
+          Conflict conflict = myConflicts.get(path);
+          boolean newConflict = false;
+          if (conflict == null) {
+            conflict = new Conflict();
+            myConflicts.put(path, conflict);
+            newConflict = true;
+          }
+          conflict.timestamp = System.currentTimeMillis();
+          conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
+
+          if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
+            myFileStatusManager.fileStatusChanged(file);
+            myEditorNotifications.updateNotifications(file);
+          }
+        }
+      }
+    }, InvokeAfterUpdateMode.SILENT, null, null);
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
