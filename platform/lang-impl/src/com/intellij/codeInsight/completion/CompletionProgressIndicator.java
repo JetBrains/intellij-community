@@ -539,13 +539,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return aBoolean.booleanValue();
   }
 
-  public void restorePrefix() {
+  public void restorePrefix(final CompletionPhase zombie) {
     new WriteCommandAction(getProject(), getCompletionCommandName()) {
       @Override
       protected void run(Result result) throws Throwable {
         setMergeCommand();
 
-        myState.restorePrefix();
+        if (zombie instanceof CompletionPhase.InsertedSingleItem) {
+          ((CompletionPhase.InsertedSingleItem)zombie).restorePrefix.run();
+        }
         getLookup().restorePrefix();
       }
     }.execute();
@@ -556,7 +558,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myEditor;
   }
 
-  public void rememberDocumentState() {
+  public Runnable rememberDocumentState() {
     myState.assertDisposed();
     assert !myState.areModifiersChanged() : myState;
 
@@ -565,7 +567,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final int selStart = myEditor.getSelectionModel().getSelectionStart();
     final int selEnd = myEditor.getSelectionModel().getSelectionEnd();
 
-    myState.setRestorePrefix(new Runnable() {
+    return new Runnable() {
       @Override
       public void run() {
         DocumentEx document = (DocumentEx) myEditor.getDocument();
@@ -574,7 +576,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         document.replaceString(caret, document.getTextLength(), documentText.substring(caret));
         myEditor.getSelectionModel().setSelection(selStart, selEnd);
       }
-    });
+    };
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {

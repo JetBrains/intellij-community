@@ -14,7 +14,6 @@ public class CompletionState {
   private Boolean myToRestart;
   private boolean myRestartScheduled;
   private boolean myModifiersChanged;
-  private Runnable myRestorePrefix;
   private boolean myBackgrounded;
   private volatile boolean myFocusLookupWhenDone;
   private volatile int myCount;
@@ -73,15 +72,9 @@ public class CompletionState {
   public boolean isWaitingAfterAutoInsertion() {
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     if (phase instanceof CompletionPhase.InsertedSingleItem && ((CompletionPhase.InsertedSingleItem)phase).indicator.getCompletionState() == this) {
-      LOG.assertTrue(myRestorePrefix != null, this);
       return true;
     }
     return false;
-  }
-
-  public void setRestorePrefix(Runnable restorePrefix) {
-    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
-    myRestorePrefix = restorePrefix;
   }
 
   public boolean isBackgrounded() {
@@ -106,18 +99,9 @@ public class CompletionState {
     LOG.assertTrue(myCompletionDisposed, this);
   }
 
-  public void restorePrefix() {
-    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
-    if (myRestorePrefix != null) {
-      myRestorePrefix.run();
-      myRestorePrefix = null;
-    }
-  }
-
   public void handleDeath() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assertDisposed();
-    myRestorePrefix = null;
   }
 
   int incCount() {
@@ -137,7 +121,6 @@ public class CompletionState {
            ", myToRestart=" + myToRestart +
            ", myRestartScheduled=" + myRestartScheduled +
            ", myModifiersReleased=" + myModifiersChanged +
-           ", myRestorePrefix=" + myRestorePrefix +
            ", myBackgrounded=" + myBackgrounded +
            ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +
            ", myCount=" + myCount +

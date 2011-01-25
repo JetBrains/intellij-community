@@ -121,10 +121,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
     CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     if (indicator != null) {
       indicator.closeAndFinish(false);
     } else {
-      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
       if (phase instanceof CompletionPhase.ZombiePhase) {
         indicator = ((CompletionPhase.ZombiePhase)phase).indicator;
       }
@@ -140,7 +140,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       if (repeated) {
         time = Math.max(indicator.getParameters().getInvocationCount() + 1, 2);
-        indicator.restorePrefix();
+        indicator.restorePrefix(phase);
       }
     }
 
@@ -495,7 +495,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish(true);
-      indicator.rememberDocumentState();
+      final Runnable restorePrefix = indicator.rememberDocumentState();
       indicator.getOffsetMap()
         .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
@@ -503,7 +503,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
           !ApplicationManager.getApplication().isUnitTestMode()) {
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator));
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator, restorePrefix));
         assert indicator.getCompletionState().isWaitingAfterAutoInsertion();
       }
     }

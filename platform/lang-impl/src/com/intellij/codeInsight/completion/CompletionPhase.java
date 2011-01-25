@@ -103,8 +103,11 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public static class InsertedSingleItem extends ZombiePhase {
-    public InsertedSingleItem(CompletionProgressIndicator indicator) {
+    public final Runnable restorePrefix;
+
+    public InsertedSingleItem(CompletionProgressIndicator indicator, Runnable restorePrefix) {
       super(null, indicator);
+      this.restorePrefix = restorePrefix;
     }
   }
   public static class NoSuggestionsHint extends ZombiePhase {
