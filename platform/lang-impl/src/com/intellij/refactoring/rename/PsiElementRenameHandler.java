@@ -99,10 +99,6 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element == null) return "";
     if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return "";
 
-    if (!element.isWritable()) {
-      return RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-    }
-
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
@@ -110,9 +106,15 @@ public class PsiElementRenameHandler implements RenameHandler {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.rename"));
     }
 
-    if (!PsiManager.getInstance(project).isInProject(element) && element.isPhysical()) {
-      return RefactoringBundle
-          .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
+    if (!PsiManager.getInstance(project).isInProject(element)) {
+      if (element.isPhysical()) {
+        return RefactoringBundle
+            .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
+      }
+
+      if (!element.isWritable()) {
+        return RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
+      }
     }
 
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {

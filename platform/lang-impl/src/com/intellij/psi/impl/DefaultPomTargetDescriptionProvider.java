@@ -35,14 +35,19 @@ public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider 
     if (element instanceof PsiElement) return null;
     
     if (location == UsageViewTypeLocation.INSTANCE) {
-      return TypeNameManager.getTypeName(element.getClass());
+      return getTypeName(element);
     }
     if (location == UsageViewNodeTextLocation.INSTANCE) {
-      return TypeNameManager.getTypeName(element.getClass()) + " " + StringUtil.notNullize(element instanceof PomNamedTarget ? ((PomNamedTarget)element).getName() : null, "''");
+      return getTypeName(element) + " " + StringUtil.notNullize(element instanceof PomNamedTarget ? ((PomNamedTarget)element).getName() : null, "''");
     }
     if (location instanceof HighlightUsagesDescriptionLocation) {
-      return TypeNameManager.getTypeName(element.getClass());
+      return getTypeName(element);
     }
     return null;
+  }
+
+  private static String getTypeName(PomTarget element) {
+    final String s = TypeNameManager._getTypeName(element.getClass());
+    return s == null ? "Element" : s;
   }
 }
