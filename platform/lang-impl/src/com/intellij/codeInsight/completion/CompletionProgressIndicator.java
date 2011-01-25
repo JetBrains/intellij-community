@@ -455,20 +455,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         myLookup.setCalculating(false);
 
-        if (hideAutopopupIfMeaningless()) {
+        if (CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class) && hideAutopopupIfMeaningless()) {
           return;
         }
 
         if (myState.hasNoVariants()) {
-          LookupManager.getInstance(getProject()).hideActiveLookup();
-
-          final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-          LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
-
           if (!isAutopopupCompletion()) {
+            LookupManager.getInstance(getProject()).hideActiveLookup();
+
+            final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+            LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
+
             CompletionServiceImpl.setCompletionPhase(myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this));
-          } else {
-            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
         else {
