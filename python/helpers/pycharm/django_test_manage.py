@@ -9,6 +9,9 @@ if not manage_file:
     manage_file = 'manage'
 
 if __name__ == "__main__":
+  try:
     __import__(manage_file)
-    fixGetpass()
-    execute_manager(django_settings)
+  except ImportError:
+    print ("There is no such manage file " + str(manage_file))
+  fixGetpass()
+  execute_manager(django_settings)
