@@ -171,6 +171,12 @@ public class PyBlock implements ASTBlock {
         childAlignment = getAlignmentForChildren();
       }
     }
+    else if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
+      PyKeyValueExpression keyValue = (PyKeyValueExpression) _node.getPsi();
+      if (keyValue != null && child.getPsi() == keyValue.getValue()) {
+        childIndent = Indent.getNormalIndent();
+      }
+    }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
@@ -543,6 +549,10 @@ public class PyBlock implements ASTBlock {
         if (elements.length == 0) {
           return null;
         }
+        PyKeyValueExpression last = elements[elements.length-1];
+        if (last.getValue() == null) { // incomplete
+          return null;
+        }
       }
       return getAlignmentForChildren();
     }
@@ -550,17 +560,12 @@ public class PyBlock implements ASTBlock {
   }
 
   private Indent getChildIndent(int newChildIndex) {
+    ASTNode afterNode = getAfterNode(newChildIndex);
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && _subBlocks.size() >= newChildIndex) {
-      if (newChildIndex == 0) {  // block text contains backslash line wrappings, child block list not built
+      if (afterNode == null) {
         return Indent.getNoneIndent();
       }
-      int prevIndex = newChildIndex - 1;
-      while (prevIndex > 0 && _subBlocks.get(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
-        prevIndex--;
-      }
-      PyBlock insertAfterBlock = _subBlocks.get(prevIndex);
-      ASTNode afterNode = insertAfterBlock.getNode();
 
       // handle pressing Enter after colon and before first statement in
       // existing statement list
@@ -614,6 +619,13 @@ public class PyBlock implements ASTBlock {
       }
     }
 
+    if (afterNode != null && afterNode.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION) {
+      PyKeyValueExpression keyValue = (PyKeyValueExpression) afterNode.getPsi();
+      if (keyValue != null && keyValue.getValue() == null) {  // incomplete
+        return Indent.getContinuationIndent(true);
+      }
+    }
+
     // constructs that imply indent for their children
     if (ourListElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
@@ -631,6 +643,19 @@ public class PyBlock implements ASTBlock {
         }
         return indent;
 */
+  }
+
+  @Nullable
+  private ASTNode getAfterNode(int newChildIndex) {
+    if (newChildIndex == 0) {  // block text contains backslash line wrappings, child block list not built
+      return null;
+    }
+    int prevIndex = newChildIndex - 1;
+    while (prevIndex > 0 && _subBlocks.get(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+      prevIndex--;
+    }
+    PyBlock insertAfterBlock = _subBlocks.get(prevIndex);
+    return insertAfterBlock.getNode();
   }
 
   private static ASTNode getLastNonSpaceChild(ASTNode node, boolean acceptError) {

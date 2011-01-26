@@ -94,6 +94,26 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "})");
   }
 
+  public void testIndentDictMissingValue() {  // PY-1469
+    doTest("some_dict = {\n" +
+           "    'key': <caret>\n" +
+           "}",
+           "some_dict = {\n" +
+           "    'key': \n" +
+           "        <caret>\n" +
+           "}");
+  }
+
+  public void testIndentDictStringValue() {  // PY-1469
+    doTest("some_dict = {\n" +
+           "    'key': <caret>''\n" +
+           "}",
+           "some_dict = {\n" +
+           "    'key': \n" +
+           "        <caret>''\n" +
+           "}");
+  }
+
   public void testClass() {
     doTest("class A:\n" + "    print a<caret>", "class A:\n" + "    print a\n" + "    <caret>");
   }

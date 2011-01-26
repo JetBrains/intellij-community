@@ -239,6 +239,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testIncompleteDict() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

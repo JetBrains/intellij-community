@@ -188,7 +188,10 @@ public class ExpressionParsing extends Parsing {
   private void parseDictLiteralTail(PsiBuilder.Marker startMarker, PsiBuilder.Marker firstKeyValueMarker) {
     if (!parseSingleExpression(false)) {
       myBuilder.error("expression expected");
-      firstKeyValueMarker.drop();
+      firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
+      if (atToken(PyTokenTypes.RBRACE)) {
+        myBuilder.advanceLexer();
+      }
       startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
       return;
     }
