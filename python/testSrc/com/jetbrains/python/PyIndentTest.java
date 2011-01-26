@@ -71,6 +71,16 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     doTest("__all__ = [a for<caret>", "__all__ = [a for\n" + "           <caret>");
   }
 
+  public void testAlignInListOnceMore() {  // PY-2407
+    doTest("for id in [\"SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"WRITE_SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"IDENTIFIER_UNDER_CARET_ATTRIBUTES\",<caret>]:",
+           "for id in [\"SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"WRITE_SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"IDENTIFIER_UNDER_CARET_ATTRIBUTES\",\n" +
+           "           <caret>]:");
+  }
+
   public void testAlignInDict() {
     doTest("some_call({'aaa': 'v1',<caret>})",
            "some_call({'aaa': 'v1',\n" +

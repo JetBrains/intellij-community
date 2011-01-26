@@ -209,13 +209,8 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
-      PsiElement psi = child.getPsi();
-      PyArgumentList argumentList = PsiTreeUtil.getParentOfType(psi, PyArgumentList.class);
-      if (argumentList != null) {
-        if (psi != null && psi.getParent() == argumentList &&
-            (child.getElementType() == PyTokenTypes.RPAR || argumentList.getArguments().length == 1)) {
-          return false;
-        }
+      ASTNode prevNonSpace = findPrevNonSpaceNode(child);
+      if (prevNonSpace != null && prevNonSpace.getElementType() == PyTokenTypes.COMMA) {
         return true;
       }
       return false;
@@ -225,6 +220,14 @@ public class PyBlock implements ASTBlock {
       return argList != null && argList.getArguments().length > 1;
     }
     return true;
+  }
+
+  @Nullable
+  private static ASTNode findPrevNonSpaceNode(ASTNode node) {
+    do {
+      node = node.getTreePrev();
+    } while(node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType())));
+    return node;
   }
 
   private static boolean hasLineBreaksBefore(ASTNode child, int minCount) {
