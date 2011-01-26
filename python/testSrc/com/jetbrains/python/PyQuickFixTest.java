@@ -215,6 +215,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("INTN.replace.noteq.operator"), true, true);
   }
 
+  public void testListCreation() {
+    doInspectionTest("ListCreation.py", PyListCreationInspection.class,
+                     PyBundle.message("QFIX.list.creation"), true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

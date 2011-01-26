@@ -53,7 +53,9 @@ public class PyListCreationInspection extends PyInspection {
           PyCallExpression callExpression = (PyCallExpression)statement;
           PyExpression callee = callExpression.getCallee();
           if (callee instanceof PyQualifiedExpression) {
-            if (((PyQualifiedExpression)callee).getQualifier().getText().equals(name)) {
+            PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+            String funcName = ((PyQualifiedExpression)callee).getReferencedName();
+            if (qualifier != null && qualifier.getText().equals(name) && "append".equals(funcName)) {
               PyArgumentList argList = callExpression.getArgumentList();
               if (argList != null) {
                 for (PyExpression argument : argList.getArguments()) {
@@ -62,13 +64,14 @@ public class PyListCreationInspection extends PyInspection {
                     availableFix = true;
                   }
                 }
+                if(availableFix)
+                  quickFix.addStatement(expressionStatement);
               }
             }
           }
           if (quickFix == null) {
             return;
           }
-          quickFix.addStatement(expressionStatement);
           expressionStatement = PsiTreeUtil.getNextSiblingOfType(expressionStatement, PyExpressionStatement.class);
           if (expressionStatement != null)
             statement = expressionStatement.getExpression();
