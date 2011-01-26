@@ -37,6 +37,6 @@ public class TimedReference<T> extends Timed<T> {
   }
 
   public static void disposeTimed(boolean force) {
-    Timed.disposeTimed(force);
+    Timed.disposeTimed();
   }
 }
