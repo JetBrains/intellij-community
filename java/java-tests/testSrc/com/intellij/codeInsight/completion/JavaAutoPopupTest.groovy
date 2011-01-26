@@ -315,6 +315,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
         tooQuick = lookup == null
         myFixture.type 'IO'
       }
+      joinAlarm() //I
+      joinAlarm() //O
       joinCompletion()
       assert lookup
       assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
