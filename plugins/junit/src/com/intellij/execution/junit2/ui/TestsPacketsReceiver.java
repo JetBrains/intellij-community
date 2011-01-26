@@ -311,9 +311,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
       state.setMagitude(myInstanceMagnitude);
       state.initializeFrom(reader);
       testProxy.setState(state);
-      if (state.isFinal() && !(state instanceof FaultyState)) {
-        complete(testProxy);
-      }
+      complete(testProxy);
     }
 
     public void setMagnitude(final int magnitude) {
