@@ -324,11 +324,10 @@ public class SearchUtil {
       head = textToMarkup.substring(0, bodyStart);
       if (bodyEnd >= 0) {
         foot = textToMarkup.substring(bodyEnd);
-        textToMarkup = textToMarkup.substring(0, bodyEnd);
       } else {
         foot = "";
       }
-      textToMarkup = textToMarkup.substring(bodyStart);
+      textToMarkup = textToMarkup.substring(bodyStart, bodyEnd);
     } else {
       foot = "";
       head = "";
