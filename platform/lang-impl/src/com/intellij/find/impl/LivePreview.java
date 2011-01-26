@@ -27,6 +27,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -298,6 +299,12 @@ public class LivePreview extends DocumentAdapter {
     }
   }
 
+  private static void drawMatch(Graphics2D g2d, Point start, Point end, int lineHeight, int horizontalGap, int verticalGap) {
+    g2d.translate(0, start.y-verticalGap);
+    UIUtil.drawSearchMatch(g2d, start.x-horizontalGap, end.x+horizontalGap, lineHeight+2*verticalGap);
+    g2d.translate(0, -start.y+verticalGap);
+  }
+
   private void setCursor(LiveOccurrence liveOccurrence) {
     hideBalloon();
     myCursor = liveOccurrence;
@@ -319,17 +326,7 @@ public class LivePreview extends DocumentAdapter {
             VisualPosition endVp = editor.offsetToVisualPosition(highlighter.getEndOffset());
             Point start = editor.visualPositionToXY(startVp);
             Point end = editor.visualPositionToXY(endVp);
-            g2d.setColor(Color.YELLOW);
-            Point startP = new Point(start.x-5, start.y-5);
-            int lineHeight = editor.getLineHeight();
-            Point endP = new Point(start.x-5, end.y+ lineHeight +10);
-            g2d.setPaint(new GradientPaint(startP, Color.YELLOW, endP, new Color(255, 200, 0)));
-
-            g2d.fillRoundRect(startP.x, startP.y,
-                            end.x - start.x+10, lineHeight +10, 10, 10);
-            g2d.setColor(Color.GRAY);
-            g2d.drawRoundRect(start.x - 5, start.y - 5,
-                              end.x - start.x + 10, lineHeight + 10, 10, 10);
+            drawMatch(g2d, start, end, editor.getLineHeight(), 1, 4);
           }
         });
       }
