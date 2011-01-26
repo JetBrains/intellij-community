@@ -1040,6 +1040,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     private int myCnt;
     private final Object mySynchObject;
     private boolean mySuccess;
+    private boolean mySaved;
 
     private TestListener(final Object synchObject) {
       mySynchObject = synchObject;
@@ -1057,9 +1058,26 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     @Override
-    public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind, boolean withCredentials) {
+    public void saveAttemptStarted(ProviderType type, SVNURL url, String realm, String kind) {
+      mySaved = false;
+    }
+
+    @Override
+    public void saveAttemptFinished(ProviderType type, SVNURL url, String realm, String kind) {
       if (! mySuccess) return;
-      
+      if (! mySaved) {
+        saveRegistration(type, url, false);
+      }
+    }
+
+    @Override
+    public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind) {
+      if (! mySuccess) return;
+      mySaved = true;
+      saveRegistration(type, url, true);
+    }
+
+    private void saveRegistration(ProviderType type, SVNURL url, boolean withCredentials) {
       mySuccess = myExpectedSequence.get(myCnt).equals(new Trinity<ProviderType, SVNURL, Type>(type, url, withCredentials ? Type.save : Type.without_pasword_save));
       if (mySuccess) {
         ++ myCnt;
@@ -1097,6 +1115,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     private final Set<Pair<SVNURL, String>> myClientRequested;
     private final Set<Pair<SVNURL, String>> mySaved;
     private String myCause;
+    private boolean mySaveCalled;
 
     private SavedOnceListener() {
       myClientRequested = new HashSet<Pair<SVNURL, String>>();
@@ -1109,7 +1128,24 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     @Override
-    public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind, boolean withCredentials) {
+    public void saveAttemptStarted(ProviderType type, SVNURL url, String realm, String kind) {
+      mySaveCalled = false;
+    }
+
+    @Override
+    public void saveAttemptFinished(ProviderType type, SVNURL url, String realm, String kind) {
+      if (! mySaveCalled) {
+        saveRegistration(url, kind);
+      }
+    }
+
+    @Override
+    public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind) {
+      mySaveCalled = true;
+      saveRegistration(url, kind);
+    }
+
+    private void saveRegistration(SVNURL url, String kind) {
       final Pair<SVNURL, String> pair = new Pair<SVNURL, String>(url, kind);
       if (mySaved.contains(pair)) {
         myCause = "saved twice";
