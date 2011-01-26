@@ -63,18 +63,19 @@ public class NullableNotNullDialog extends DialogWrapper {
     setTitle("Nullable/NotNull configuration");
   }
 
+
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    final JPanel panel = new JPanel(new GridBagLayout());
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     myNullablePanel =
       new AnnoPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
-    panel.add(myNullablePanel);
+    panel.add(myNullablePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
     myNotNullPanel = new AnnoPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
-    panel.add(myNotNullPanel);
+    panel.add(myNotNullPanel, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+    panel.add(Box.createVerticalBox(), new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,0));
     return panel;
   }
-
 
   @Override
   protected void doOKAction() {
@@ -95,7 +96,7 @@ public class NullableNotNullDialog extends DialogWrapper {
     private final JBList myList;
 
     private AnnoPanel(final String title, final String defaultAnn, final List<String> anns, final String[] defaultAnns) {
-      super(new BorderLayout());
+      super(new GridBagLayout());
       myDefaultAnn = defaultAnn;
       myDefaultAnns = defaultAnns;
       setBorder(BorderFactory.createTitledBorder(title));
@@ -117,7 +118,6 @@ public class NullableNotNullDialog extends DialogWrapper {
       });
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setSelectedValue(defaultAnn, true);
-      add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
       final DefaultActionGroup group = new DefaultActionGroup();
       group.add(new AnAction("Add", "Add", ADD_ICON) {
         {
@@ -156,7 +156,14 @@ public class NullableNotNullDialog extends DialogWrapper {
            myDefaultAnn = (String)myList.getSelectedValue();
         }
       });
-      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
+      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), gc);
+      gc.gridy = 1;
+      gc.weighty = 1;
+      gc.fill = GridBagConstraints.BOTH;
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+      scrollPane.setMinimumSize(new Dimension(-1, 150));
+      add(scrollPane, gc);
     }
 
     private void chooseAnnotation(String title, JBList list, PsiClass initial) {
