@@ -491,7 +491,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PsiFile file = resolved.getContainingFile();
             if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
               final String name = callee.getText();
-              if (UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+              if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
                 if (hasProblem)
                   message.append(", ");
                 hasProblem = true;
@@ -521,7 +521,7 @@ public class PyCompatibilityInspection extends PyInspection {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)) {
         PsiElement[] arguments = node.getChildren();
         for (PsiElement element : arguments) {
-          if (!(element instanceof PyParenthesizedExpression))
+          if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression)))
             registerProblem(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
         }
       }

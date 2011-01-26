@@ -159,7 +159,7 @@ public class UnsupportedFeatures extends PyAnnotator {
         PsiElement resolved = reference.resolve();
         if (resolved == null) {
           final String name = callee.getText();
-          if (UnsupportedFeaturesUtil.BUILTINS.get(getLanguageLevel(callee)).contains(name)) {
+          if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(getLanguageLevel(callee)).contains(name)) {
             getHolder().createWarningAnnotation(callee, PyBundle.message("ANN.method.$0.removed", name));
           }
         }
@@ -293,7 +293,7 @@ public class UnsupportedFeatures extends PyAnnotator {
     PsiElement[] arguments = node.getChildren();
     if (getLanguageLevel(node).isPy3K()) {
       for (PsiElement element : arguments) {
-        if (!(element instanceof PyParenthesizedExpression))
+        if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression)))
           getHolder().createWarningAnnotation(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
       }
     }
