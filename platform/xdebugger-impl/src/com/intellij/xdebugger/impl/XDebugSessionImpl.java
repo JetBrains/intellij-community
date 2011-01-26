@@ -227,10 +227,6 @@ public class XDebugSessionImpl implements XDebugSession {
   public void showSessionTab() {
     RunContentDescriptor descriptor = getRunContentDescriptor();
     ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
-    ProcessHandler handler = descriptor.getProcessHandler();
-    if (handler != null) {
-      handler.startNotify();
-    }
   }
 
   private static <B extends XBreakpoint<?>> XBreakpointType<?, ?> getBreakpointTypeClass(final XBreakpointHandler<B> handler) {
