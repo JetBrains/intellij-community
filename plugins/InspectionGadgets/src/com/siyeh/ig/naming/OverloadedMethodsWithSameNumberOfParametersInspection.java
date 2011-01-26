@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,13 +23,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class OverloadedMethodsWithSameNumberOfParametersInspection
         extends BaseInspection {
-
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreLibraryOverrides = true;
 
     @Override
     @NotNull
@@ -48,18 +41,11 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
     }
 
     @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "overloaded.methods.with.same.number.parameters.option"),
-                this, "ignoreLibraryOverrides");
-    }
-
-    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new OverloadedMethodsWithSameNumberOfParametersVisitor();
     }
 
-    private class OverloadedMethodsWithSameNumberOfParametersVisitor
+    private static class OverloadedMethodsWithSameNumberOfParametersVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
@@ -69,7 +55,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            final int parameterCount = calculateParameterCount(method);
+            final int parameterCount = getParameterCount(method);
             if (parameterCount == 0) {
                 return;
             }
@@ -77,31 +63,25 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             if (aClass == null) {
                 return;
             }
-            if (ignoreLibraryOverrides) {
-                final PsiMethod[] superMethods = method.findSuperMethods();
-                for (PsiMethod superMethod : superMethods) {
-                    if (superMethod instanceof PsiCompiledElement) {
-                        return;
-                    }
-                }
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            if (superMethods.length > 0) {
+                return;
             }
             final String methodName = method.getName();
             final PsiMethod[] sameNameMethods =
                     aClass.findMethodsByName(methodName, true);
             for (PsiMethod sameNameMethod : sameNameMethods) {
-                if (sameNameMethod.equals(method)) {
+                if (method.equals(sameNameMethod)) {
                     continue;
                 }
-                final int testParameterCount =
-                        calculateParameterCount(sameNameMethod);
-                if (parameterCount == testParameterCount) {
+                if (parameterCount == getParameterCount(sameNameMethod)) {
                     registerMethodError(method);
                     return;
                 }
             }
         }
 
-        private int calculateParameterCount(PsiMethod method) {
+        private static int getParameterCount(PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             return parameterList.getParametersCount();
         }
