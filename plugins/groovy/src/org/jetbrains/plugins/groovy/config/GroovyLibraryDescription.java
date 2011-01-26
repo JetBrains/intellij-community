@@ -111,10 +111,9 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    final String envHome = System.getenv(myEnvVariable);
-    VirtualFile initial = null;
-    if (envHome != null && envHome.length() > 0) {
-      initial = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(envHome));
+    VirtualFile initial = findFile(System.getenv(myEnvVariable));
+    if (initial == null) {
+      initial = findFile("/usr/share/groovy");
     }
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -149,6 +148,14 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         provider.fillLibrary(path, editor);
       }
     };
+  }
+
+  @Nullable
+  private VirtualFile findFile(String path) {
+    if (path != null && path.length() > 0) {
+      return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+    }
+    return null;
   }
 
   @NotNull
