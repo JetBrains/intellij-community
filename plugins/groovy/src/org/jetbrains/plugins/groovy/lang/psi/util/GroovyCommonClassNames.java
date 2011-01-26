@@ -26,6 +26,8 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
   public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
+  public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
+  public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
 
   private GroovyCommonClassNames() {
   }

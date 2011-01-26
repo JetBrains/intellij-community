@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -224,6 +225,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     if (iterType instanceof GrTupleType) {
       PsiType[] types = ((GrTupleType)iterType).getParameters();
       return types.length == 1 ? types[0] : null;
+    }
+
+    if (iterType instanceof GrRangeType) {
+      return ((GrRangeType)iterType).getIterationType();
     }
 
     if (InheritanceUtil.isInheritor(iterType, "groovy.lang.IntRange")) {

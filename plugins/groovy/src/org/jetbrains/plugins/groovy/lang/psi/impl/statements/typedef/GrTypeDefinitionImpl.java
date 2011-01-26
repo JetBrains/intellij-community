@@ -653,7 +653,9 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
 
     final GrTypeDefinitionBody body = getBody();
-    assert anchor.getParent() == body;
+    if (anchor.getParent() != body) {
+      return super.addBefore(element, anchor);
+    }
 
     ASTNode node = element.getNode();
     assert node != null;
@@ -662,6 +664,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     bodyNode.addChild(node, anchorNode);
     bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", node);
     bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
+
     return element;
   }
 
