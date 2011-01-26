@@ -845,14 +845,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private String myName;
     private boolean myIsNew = false;
 
-    private MyColorScheme(EditorColorsScheme parenScheme) {
-      super(parenScheme, DefaultColorSchemesManager.getInstance());
-      myFontSize = parenScheme.getEditorFontSize();
-      myLineSpacing = parenScheme.getLineSpacing();
-      myFontName = parenScheme.getEditorFontName();
-      myName = parenScheme.getName();
-      if (parenScheme instanceof ExternalizableScheme) {
-        getExternalInfo().copy(((ExternalizableScheme)parenScheme).getExternalInfo());
+    private MyColorScheme(EditorColorsScheme parentScheme) {
+      super(parentScheme, DefaultColorSchemesManager.getInstance());
+      myFontSize = parentScheme.getEditorFontSize();
+      myLineSpacing = parentScheme.getLineSpacing();
+      myFontName = parentScheme.getEditorFontName();
+      setQuickDocFontSize(parentScheme.getQuickDocFontSize());
+      myName = parentScheme.getName();
+      if (parentScheme instanceof ExternalizableScheme) {
+        getExternalInfo().copy(((ExternalizableScheme)parentScheme).getExternalInfo());
       }
       initFonts();
     }
@@ -897,6 +898,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       if (myFontSize != myParentScheme.getEditorFontSize()) return true;
       if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
       if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
+      if (myQuickDocFontSize != myParentScheme.getQuickDocFontSize()) return true;
       return false;
     }
 
@@ -908,6 +910,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       scheme.setEditorFontSize(myFontSize);
       scheme.setEditorFontName(myFontName);
       scheme.setLineSpacing(myLineSpacing);
+      scheme.setQuickDocFontSize(getQuickDocFontSize());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
