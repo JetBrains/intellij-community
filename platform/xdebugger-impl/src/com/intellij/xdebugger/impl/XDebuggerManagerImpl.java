@@ -163,6 +163,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
     }
+    ProcessHandler handler = session.getDebugProcess().getProcessHandler();
+    handler.startNotify();
     return session;
   }
 
