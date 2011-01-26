@@ -17,11 +17,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,14 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   private final Type myType;
   private Map<Class, Annotation> myCustomAnnotations;
   @Nullable private Map myUserMap;
+  private final NullableLazyValue<ElementPresentationTemplate> myPresentationTemplate = new NullableLazyValue<ElementPresentationTemplate>() {
+    @Override
+    protected ElementPresentationTemplate compute() {
+      Class clazz = ReflectionUtil.getRawType(getType());
+      Presentation presentation = DomApplicationComponent.getInstance().getInvocationCache(clazz).getClassAnnotation(Presentation.class);
+      return presentation == null ? null : new ElementPresentationTemplateImpl(presentation, clazz);
+    }
+  };
 
   protected AbstractDomChildDescriptionImpl(final Type type) {
     myType = type;
@@ -111,5 +118,11 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @Override
   public boolean canNavigateToSource() {
     return false;
+  }
+
+  @Override
+  @Nullable
+  public ElementPresentationTemplate getPresentationTemplate() {
+    return myPresentationTemplate.getValue();
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentationTemplate;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
@@ -120,6 +121,10 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   public Icon getNodeIcon() {
     Class clazz = ReflectionUtil.getRawType(myChildDescription.getType());
 //        Class arrayClass = Array.newInstance(clazz, 0).getClass();
+    ElementPresentationTemplate template = myChildDescription.getPresentationTemplate();
+    if (template != null) {
+      return template.createPresentation(null).getIcon();
+    }
     return ElementPresentationManager.getIconForClass(clazz);
   }
 }
