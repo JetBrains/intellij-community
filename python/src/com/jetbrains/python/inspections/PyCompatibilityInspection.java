@@ -509,17 +509,21 @@ public class PyCompatibilityInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {    //PY-2719
-      PyArgumentList list = node.getSuperClassExpressionList();
-      if (list != null && list.getArguments().length == 0)
-        registerProblem(list, "Python version 2.4 does not support this syntax.");
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+        PyArgumentList list = node.getSuperClassExpressionList();
+        if (list != null && list.getArguments().length == 0)
+          registerProblem(list, "Python version 2.4 does not support this syntax.");
+      }
     }
 
     @Override
     public void visitPyPrintStatement(PyPrintStatement node) {
-      PsiElement[] arguments = node.getChildren();
-      for (PsiElement element : arguments) {
-        if (!(element instanceof PyParenthesizedExpression))
-          registerProblem(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)) {
+        PsiElement[] arguments = node.getChildren();
+        for (PsiElement element : arguments) {
+          if (!(element instanceof PyParenthesizedExpression))
+            registerProblem(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
+        }
       }
     }
 
