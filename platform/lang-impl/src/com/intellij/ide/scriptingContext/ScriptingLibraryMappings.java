@@ -47,7 +47,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   private final ScriptingLibraryManager myLibraryManager;
   private final Map<VirtualFile, CompoundLibrary> myCompoundLibMap = new HashMap<VirtualFile, CompoundLibrary>();
   private CompoundLibrary myProjectLibs = new CompoundLibrary();
-  private Set<VirtualFile> myProjectLibFiles;
 
   public ScriptingLibraryMappings(final Project project, final LibraryType libraryType) {
     super(project);
@@ -96,7 +95,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   public void setMappings(Map<VirtualFile, ScriptingLibraryTable.LibraryModel> mappings) {
     super.setMappings(mappings);
     updateDependencies(mappings);
-    updateProjectLibraryFiles();
   }
 
   private static boolean dependencyExists(ModuleRootManager rootManager, Library library) {
@@ -173,7 +171,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       setMapping(file, container);
     }
     updateDependencies(getMappings());
-    updateProjectLibraryFiles();
   }
   
   public boolean isAssociatedWith(VirtualFile file, String libName) {
@@ -378,6 +375,24 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       myLibraries.clear();
       myLibraries.putAll(myOldLibraries);
     }
+
+    @Override
+    public Set<VirtualFile> getSourceFiles() {
+      Set<VirtualFile> sourceFiles = new HashSet<VirtualFile>();
+      for (ScriptingLibraryTable.LibraryModel libModel : myLibraries.values()) {
+        sourceFiles.addAll(libModel.getSourceFiles());
+      }
+      return sourceFiles;
+    }
+
+    @Override
+    public Set<VirtualFile> getCompactFiles() {
+      Set<VirtualFile> compactFiles = new HashSet<VirtualFile>();
+      for (ScriptingLibraryTable.LibraryModel libModel : myLibraries.values()) {
+        compactFiles.addAll(libModel.getCompactFiles());
+      }
+      return compactFiles;
+    }
   }
 
   /**
@@ -403,28 +418,21 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
     return isApplicable(libFile, srcFile.getParent());
   }
-
-  private void updateProjectLibraryFiles() {
-    myProjectLibFiles = new HashSet<VirtualFile>();
-    for (CompoundLibrary container : myCompoundLibMap.values()) {
-      for (ScriptingLibraryTable.LibraryModel libModel : container.getLibraries()) {
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
-      }
-    }
-    for (ScriptingLibraryTable.LibraryModel libModel : myProjectLibs.getLibraries()) {
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
-    }
-  }
-
-  public Set<VirtualFile> getProjectLibraryFiles() {
-    if (myProjectLibFiles == null) {
-      updateProjectLibraryFiles();
-    }
-    return myProjectLibFiles;
+  
+  public Set<VirtualFile> getLibraryFilesFor(VirtualFile srcFile) {
+    Set<VirtualFile> libFiles = new HashSet<VirtualFile>();
+    collectLibraryFilesFor(srcFile, libFiles);
+    return libFiles;
   }
   
-
+  private void collectLibraryFilesFor(VirtualFile file, Set<VirtualFile> libFiles) {
+    if (file == null) return;
+    ScriptingLibraryTable.LibraryModel libraryModel = getMapping(file);
+    if (libraryModel != null) {
+      libFiles.addAll(libraryModel.getCompactFiles());
+      libFiles.addAll(libraryModel.getSourceFiles());
+    }
+    collectLibraryFilesFor(file.getParent(), libFiles);
+  }
 
 }
