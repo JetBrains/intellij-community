@@ -20,24 +20,29 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
-  public static boolean isReferenceInNewExpression(PsiElement reference) {
-    if (!(reference instanceof GrCodeReferenceElement)) return false;
+  @Nullable
+  private static GrNewExpression findNewExpression(@Nullable PsiElement position) {
+    if (position == null) return null;
+    final PsiElement reference = position.getParent();
+    if (!(reference instanceof GrCodeReferenceElement)) return null;
 
     PsiElement parent = reference.getParent();
     while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
     if (parent instanceof GrAnonymousClassDefinition) parent = parent.getParent();
-    return parent instanceof GrNewExpression;
+    return parent instanceof GrNewExpression ? (GrNewExpression)parent : null;
   }
 
   @Override
@@ -51,7 +56,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     PsiElement position = file.findElementAt(endOffset - 1);
 
-    final boolean inNew = position != null && isReferenceInNewExpression(position.getParent());
+    boolean parens = shouldInsertParentheses(position, item.getObject());
 
     final PsiClass psiClass = item.getObject();
     if (isInVariable(position) || GroovyCompletionContributor.isInClosurePropertyParameters(position)) {
@@ -71,10 +76,16 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     AllClassesGetter.TRY_SHORTENING.handleInsert(context, item);
 
-    if (inNew && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
+    if (parens) {
       JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(psiClass));
     }
 
+  }
+
+  private static boolean shouldInsertParentheses(PsiElement position, PsiClass psiClass) {
+    final GrNewExpression newExpression = findNewExpression(position);
+    return newExpression != null && JavaCompletionUtil
+      .isDefinitelyExpected(psiClass, GroovyExpectedTypesProvider.getDefaultExpectedTypes(newExpression), position);
   }
 
   private static boolean isInVariable(PsiElement position) {

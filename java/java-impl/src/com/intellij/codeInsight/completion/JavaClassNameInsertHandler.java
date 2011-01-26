@@ -30,6 +30,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.hash.HashSet;
+
+import java.util.Set;
 
 /**
 * @author peter
@@ -129,20 +132,13 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(position, PsiJavaCodeReferenceElement.class);
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-      final PsiClassType classType = JavaPsiFacade.getElementFactory(position.getProject()).createType(psiClass);
 
+      Set<PsiType> expectedTypes = new HashSet<PsiType>();
       for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression)prevElement.getParent(), true)) {
-        final PsiType type = info.getType();
-
-        if (info.isArrayTypeInfo()) {
-          return false;
-        }
-
-        if (type instanceof PsiClassType && ((PsiClassType)type).rawType().isAssignableFrom(classType)) {
-          return true;
-        }
+        expectedTypes.add(info.getType());
       }
-      return !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, position);
+
+      return JavaCompletionUtil.isDefinitelyExpected(psiClass, expectedTypes, position);
     }
 
     return false;
