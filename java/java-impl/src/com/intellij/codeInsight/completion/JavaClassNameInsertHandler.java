@@ -86,7 +86,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
+    if (shouldInsertParentheses(psiClass, position)) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
       }
@@ -125,22 +125,24 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   }
 
-  private static boolean completingRawConstructor(InsertionContext context, JavaPsiClassReferenceElement item) {
-    final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+  private static boolean shouldInsertParentheses(PsiClass psiClass, PsiElement position) {
+    final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(position, PsiJavaCodeReferenceElement.class);
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-      PsiTypeParameter[] typeParameters = item.getObject().getTypeParameters();
+      final PsiClassType classType = JavaPsiFacade.getElementFactory(position.getProject()).createType(psiClass);
+
       for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression)prevElement.getParent(), true)) {
         final PsiType type = info.getType();
 
         if (info.isArrayTypeInfo()) {
           return false;
         }
-        if (typeParameters.length > 0 && type instanceof PsiClassType && !((PsiClassType)type).isRaw()) {
-          return false;
+
+        if (type instanceof PsiClassType && ((PsiClassType)type).rawType().isAssignableFrom(classType)) {
+          return true;
         }
       }
-      return true;
+      return !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, position);
     }
 
     return false;
