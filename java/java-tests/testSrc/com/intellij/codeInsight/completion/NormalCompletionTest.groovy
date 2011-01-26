@@ -832,6 +832,14 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
   public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
 
+  public void testSuperProtectedMethod() throws Throwable {
+    myFixture.addClass """package foo;
+      public class Bar {
+          protected void foo() { }
+      }"""
+    doTest()
+  }
+
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"
     final text = "package foo; class Bar { Fooo<caret> }"
