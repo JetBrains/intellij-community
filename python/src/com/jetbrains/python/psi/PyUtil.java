@@ -342,15 +342,9 @@ public class PyUtil {
    * Collects superclasses of a class all the way up the inheritance chain. The order is <i>not</i> necessarily the MRO.
    */
   @NotNull
-  public static PyClass[] getAllSuperClasses(@NotNull PyClass pyClass) {
-    Set<PyClass> superClasses = getAllSuperClassesSet(pyClass);
-    return superClasses.toArray(new PyClass[superClasses.size()]);
-  }
-
-  @NotNull
-  public static Set<PyClass> getAllSuperClassesSet(PyClass pyClass) {
-    Set<PyClass> superClasses = new HashSet<PyClass>();
-    for (PyClass ancestor : pyClass.iterateAncestors()) superClasses.add(ancestor);
+  public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
+    List<PyClass> superClasses = new ArrayList<PyClass>();
+    for (PyClass ancestor : pyClass.iterateAncestorClasses()) superClasses.add(ancestor);
     return superClasses;
   }
 
@@ -721,7 +715,7 @@ public class PyUtil {
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {
-    for (PyClass c: pyClass.iterateAncestors()) {
+    for (PyClassRef c: pyClass.iterateAncestors()) {
       if ("BaseException".equals(c.getQualifiedName())) {
         return true;
       }
@@ -776,7 +770,7 @@ public class PyUtil {
         Set<PyFunction.Flag> flags = detectDecorationsAndWrappersOf(node);
         boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
-        for (PyClass ancestor_cls : cls.iterateAncestors()) {
+        for (PyClass ancestor_cls : cls.iterateAncestorClasses()) {
           if (ancestor_cls == type_cls) {
             isMetaclassMethod = true;
             break;

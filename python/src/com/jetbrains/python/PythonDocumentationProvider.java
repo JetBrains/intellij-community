@@ -426,7 +426,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     if (cls != null && meth_name != null) {
       final boolean is_constructor = PyNames.INIT.equals(meth_name);
       // look for inherited and its doc
-      Iterable<PyClass> classes = cls.iterateAncestors();
+      Iterable<PyClass> classes = cls.iterateAncestorClasses();
       if (is_constructor) {
         // look at our own class again and maybe inherit class's doc 
         classes = new ChainIterable<PyClass>(cls).add(classes);
@@ -496,9 +496,9 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       PyClass cls = inferContainingClassOf(context);
       if (cls != null) {
         String desired_name = link.substring(LINK_TYPE_PARENT.length());
-        for (PyClass parent : cls.iterateAncestors()) {
-          final String parent_name = parent.getName();
-          if (parent_name != null && parent_name.equals(desired_name)) return parent;
+        for (PyClassRef parent : cls.iterateAncestors()) {
+          final String parent_name = parent.getClassName();
+          if (parent_name != null && parent_name.equals(desired_name)) return parent.getPyClass();
         }
       }
     }

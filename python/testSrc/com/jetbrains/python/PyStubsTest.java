@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.TestDataPath;
@@ -19,8 +20,10 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
 
+import java.util.Collection;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
@@ -267,6 +270,16 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     final PsiElement element = file.findExportedName("md5");
     assertTrue(element != null ? element.toString() : "null", element instanceof PyTargetExpression);
     assertNotParsed(file);
+  }
+
+  public void testVariableIndex() {
+    getTestFile();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    Collection<PyTargetExpression> result = PyVariableNameIndex.find("xyzzy", myFixture.getProject(), scope);
+    assertEquals(1, result.size());
+    assertEquals(0, PyVariableNameIndex.find("shazam", myFixture.getProject(), scope).size());
+    assertEquals(0, PyVariableNameIndex.find("boohoo", myFixture.getProject(), scope).size());
+    assertEquals(0, PyVariableNameIndex.find("__all__", myFixture.getProject(), scope).size());
   }
 
   private PyFile getTestFile() {

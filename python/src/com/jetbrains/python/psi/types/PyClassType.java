@@ -128,7 +128,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
         return new SmartList<PsiElement>(classMember);
       }
 
-      for (PyClass superClass : myClass.iterateAncestors()) {
+      for (PyClass superClass : myClass.iterateAncestorClasses()) {
         PsiElement superMember = resolveClassMember(superClass, name, null);
         if (superMember != null) {
           return new SmartList<PsiElement>(superMember);

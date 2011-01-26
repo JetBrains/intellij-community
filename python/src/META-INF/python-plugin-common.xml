@@ -54,6 +54,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
@@ -405,6 +406,7 @@
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.PyStdlibTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibModuleMembersProvider"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>

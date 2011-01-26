@@ -8,7 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -42,7 +45,7 @@ public class PySuperAttributesCompletionContributor extends CompletionContributo
                for (PyTargetExpression expr : containingClass.getClassAttributes()) {
                  seenNames.add(expr.getName());
                }
-               for (PyClass ancestor : containingClass.iterateAncestors()) {
+               for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
                  for (PyTargetExpression expr : ancestor.getClassAttributes()) {
                    if (!seenNames.contains(expr.getName())) {
                      result.addElement(LookupElementBuilder.create(expr, expr.getName() + " = "));

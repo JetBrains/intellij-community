@@ -1,10 +1,12 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,7 +25,7 @@ public class NameSuggestorUtil {
 
   @NotNull
   public static Collection<String> generateNames(@NotNull String name) {
-    name = StringUtil.decapitalize(deleteNonLetterFromString(name.replace('.', '_')));
+    name = StringUtil.decapitalize(deleteNonLetterFromString(StringUtil.unquoteString(name.replace('.', '_'))));
     if (name.startsWith("get")) {
       name = name.substring(3);
     }
@@ -34,7 +36,7 @@ public class NameSuggestorUtil {
       name = name.substring(1);
     }
     final int length = name.length();
-    final Collection<String> possibleNames = new HashSet<String>();
+    final Collection<String> possibleNames = new LinkedHashSet<String>();
     for (int i = 0; i < length; i++) {
       if (Character.isLetter(name.charAt(i)) &&
           (i == 0 || name.charAt(i - 1) == '_' || (Character.isLowerCase(name.charAt(i - 1)) && Character.isUpperCase(name.charAt(i))))) {
@@ -44,11 +46,14 @@ public class NameSuggestorUtil {
         }
       }
     }
-    return possibleNames;
+    // prefer shorter names
+    ArrayList<String> reversed = new ArrayList<String>(possibleNames);
+    Collections.reverse(reversed);
+    return reversed;
   }
 
   public static Collection<String> generateNamesByType(@NotNull String name) {
-    final Collection<String> possibleNames = new HashSet<String>();
+    final Collection<String> possibleNames = new LinkedHashSet<String>();
     name = StringUtil.decapitalize(deleteNonLetterFromString(name.replace('.', '_')));
     name = toUnderscoreCase(name);
     possibleNames.add(name);

@@ -2,10 +2,7 @@ package com.jetbrains.python.testing.pytest;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -40,26 +37,21 @@ public class PyTestUtil {
   }
 
   public static boolean isPyTestClass(PyClass pyClass) {
-    for (PyClass ancestor : pyClass.iterateAncestors()) {
-      if (ancestor == null) continue;
-
+    for (PyClassRef ancestor : pyClass.iterateAncestors()) {
       String qName = ancestor.getQualifiedName();
       if (PYTHON_TEST_QUALIFIED_CLASSES.contains(qName)) {
         return true;
       }
-      
-      String name = pyClass.getName().toLowerCase();
-      if (name != null && name.startsWith("test")) {
-        List<PyStatement> result = Lists.newArrayList();
-        for (PyFunction cls : pyClass.getMethods()) {
-          if (isPyTestFunction(cls)) {
-            result.add(cls);
-          }
+    }
+
+    String name = pyClass.getName().toLowerCase();
+    if (name != null && name.startsWith("test")) {
+      for (PyFunction cls : pyClass.getMethods()) {
+        if (isPyTestFunction(cls)) {
+          return true;
         }
-        if (!result.isEmpty()) return true;
       }
     }
     return false;
   }
-
 }

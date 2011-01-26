@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -25,6 +26,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,8 +106,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
     Project project = node.getProject();
     List<PsiElement> symbols = new ArrayList<PsiElement>();
     symbols.addAll(PyClassNameIndex.find(ref_text, project, true));
-    symbols.addAll(PyFunctionNameIndex.find(ref_text, project, PyClassNameIndex.projectWithLibrariesScope(project)));
-    // NOTE: possible CPU hog
+    GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
+    symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+    symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
@@ -138,7 +141,8 @@ public class PythonReferenceImporter implements ReferenceImporter {
     if (symbol instanceof PyFunction) {
       return ((PyFunction) symbol).isTopLevel();
     }
-    return false;
+    // only top-level target expressions are included in VariableNameIndex
+    return symbol instanceof PyTargetExpression;
   }
 
   private final static String[] AS_PREFIXES = {"other_", "one_more_", "different_", "pseudo_", "true_"};

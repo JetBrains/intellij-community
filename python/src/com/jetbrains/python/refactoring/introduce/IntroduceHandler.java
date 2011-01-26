@@ -90,7 +90,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
-    Collection<String> candidates = new HashSet<String>();
+    Collection<String> candidates = new LinkedHashSet<String>();
     String text = expression.getText();
     if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
@@ -124,7 +124,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     
-    Collection<String> res = new HashSet<String>();
+    Collection<String> res = new ArrayList<String>();
     for (String name : candidates) {
       if (myValidator.checkPossibleName(name, expression)) {
         res.add(name);

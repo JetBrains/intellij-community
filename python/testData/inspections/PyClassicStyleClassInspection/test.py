@@ -13,3 +13,12 @@ class D(C):
 
 class E:
     __metaclass__ = None
+
+
+def create_meta():
+    return type
+
+Meta = create_meta()
+
+class Something(Meta):
+    pass

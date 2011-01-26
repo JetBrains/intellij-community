@@ -17,18 +17,18 @@ import java.util.Collections;
 public abstract class PyModuleMembersProvider {
   public static final ExtensionPointName<PyModuleMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyModuleMembersProvider");
 
-  public Collection<PyDynamicMember> getMembers(PyFile module) {
+  public Collection<PyDynamicMember> getMembers(PyFile module, ResolveImportUtil.PointInImport point) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
       final String qName = ResolveImportUtil.findShortestImportableName(module, vFile);
-      return getMembersByQName(module, qName);
+      return getMembersByQName(module, qName, point);
     }
     return Collections.emptyList();
   }
 
   @Nullable
   public PsiElement resolveMember(PyFile module, String name) {
-    for (PyDynamicMember o : getMembers(module)) {
+    for (PyDynamicMember o : getMembers(module, ResolveImportUtil.NOT_IN_IMPORT)) {
       if (o.getName().equals(name)) {
         return o.resolve(module);
       }
@@ -36,5 +36,5 @@ public abstract class PyModuleMembersProvider {
     return null;
   }
 
-  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName);
+  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, ResolveImportUtil.PointInImport point);
 }

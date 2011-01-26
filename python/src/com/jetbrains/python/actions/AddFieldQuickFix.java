@@ -96,7 +96,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         return appendToInit(init, callback);
       }
       else { // no init! boldly copy ancestor's.
-        for (PyClass ancestor : cls.iterateAncestors()) {
+        for (PyClass ancestor : cls.iterateAncestorClasses()) {
           init = ancestor.findMethodByName(PyNames.INIT, false);
           if (init != null) break;
         }
