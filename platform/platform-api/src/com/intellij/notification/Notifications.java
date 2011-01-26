@@ -58,17 +58,8 @@ public interface Notifications {
           });
         }
         else {
-          if (EventQueue.isDispatchThread()) {
-            project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-          }
-          else {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-              }
-            });
-          }
+          final MessageBus bus = project.getMessageBus();
+          _notify(notification, defaultDisplayType, bus);
         }
 
         return;
@@ -80,20 +71,24 @@ public interface Notifications {
           final MessageBus bus =
             project == null ? ApplicationManager.getApplication().getMessageBus() : (project.isDisposed() ? null : project.getMessageBus());
           if (bus != null) {
-            if (EventQueue.isDispatchThread()) {
-              bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-            }
-            else {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-                }
-              });
-            }
+            _notify(notification, defaultDisplayType, bus);
           }
         }
       });
+    }
+
+    private static void _notify(final Notification notification, final NotificationDisplayType defaultDisplayType, final MessageBus bus) {
+      if (EventQueue.isDispatchThread()) {
+        bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+      }
+      else {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+          }
+        });
+      }
     }
   }
 }
