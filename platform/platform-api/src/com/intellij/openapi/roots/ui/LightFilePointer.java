@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -35,6 +36,7 @@ public class LightFilePointer  {
     myFile = file;
   }
 
+  @Nullable
   public VirtualFile getFile() {
     refreshFile();
     return myFile;
