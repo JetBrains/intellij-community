@@ -3,7 +3,7 @@ def List getMethodArguments(def methodCall) {
   if (respondsTo(argumentsExpression, 'getExpressions')) {
     return [1, 2, 3]
   }
-  []<end>
+  [4]<end>
 }
 -----
 def List getMethodArguments(def methodCall) {
