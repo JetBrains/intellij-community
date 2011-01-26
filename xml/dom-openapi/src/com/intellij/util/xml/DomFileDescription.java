@@ -45,6 +45,7 @@ public class DomFileDescription<T> {
   private final String[] myAllPossibleRootTagNamespaces;
   private volatile boolean myInitialized;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class<? extends Converter>, Converter> myConverters = new HashMap<Class<? extends Converter>, Converter>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   private final List<DomReferenceInjector> myInjectors = new ArrayList<DomReferenceInjector>();
   private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new ConcurrentHashMap<String, NotNullFunction<XmlTag, List<String>>>();
@@ -70,6 +71,10 @@ public class DomFileDescription<T> {
    */
   public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
+  }
+
+  public <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl) {
+    myConverters.put(converterInterface, converterImpl);
   }
 
   /**
@@ -167,6 +172,10 @@ public class DomFileDescription<T> {
       myInitialized = true;
     }
     return myImplementations;
+  }
+
+  public Map<Class<? extends Converter>, Converter> getConverters() {
+    return myConverters;
   }
 
   @NotNull
