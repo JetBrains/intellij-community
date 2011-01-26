@@ -43,8 +43,7 @@ public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
     
-    if (caretOffset <= 0 || caretOffset >= text.length() || ((text.charAt(caretOffset - 1) != '(' || text.charAt(caretOffset) != ')') &&
-                                                             (text.charAt(caretOffset - 1) != '{' || text.charAt(caretOffset) != '}'))) {
+    if (caretOffset <= 0 || caretOffset >= text.length() || !isBracePair(text.charAt(caretOffset - 1), text.charAt(caretOffset))) {
       return Result.Continue;
     }
 
@@ -65,5 +64,9 @@ public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
       LOG.error(e);
     }
     return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
+  }
+
+  protected boolean isBracePair(char c1, char c2) {
+    return (c1 == '(' && c2 == ')') || (c1 == '{' && c2 == '}');
   }
 }
