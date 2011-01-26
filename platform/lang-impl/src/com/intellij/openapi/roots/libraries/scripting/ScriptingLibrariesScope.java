@@ -38,11 +38,12 @@ public class ScriptingLibrariesScope extends GlobalSearchScope {
     IndexableSetContributor contributor = IndexableSetContributor.EP_NAME.findExtension(providerClass);
     if (contributor instanceof ScriptingIndexableSetContributor) {
       myAllLibraryFiles = ((ScriptingIndexableSetContributor)contributor).getLibraryFiles(myBaseScope.getProject());
-      myLibraryFiles = myAllLibraryFiles;
+      setLibraryFiles();
     }
   }
 
   protected void setLibraryFiles() {
+    myLibraryFiles = myAllLibraryFiles;
   }
 
   public boolean contains(VirtualFile file) {
