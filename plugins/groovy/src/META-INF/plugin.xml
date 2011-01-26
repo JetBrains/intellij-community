@@ -529,7 +529,7 @@
     </action>
     <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
             text="Groovy Script" description="Create new Groovy script">
-      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
     <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
