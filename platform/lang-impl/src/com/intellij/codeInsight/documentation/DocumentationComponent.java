@@ -27,6 +27,11 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -35,7 +40,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
@@ -46,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.View;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -67,6 +71,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
   private boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
+  private Style myFontSizeStyle;
 
   private static class Context {
     final SmartPsiElementPointer element;
@@ -146,7 +151,36 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myScrollPane = ScrollPaneFactory.createScrollPane(myEditorPane);
+    myScrollPane = new JBScrollPane(myEditorPane) {
+      @Override
+      protected void processMouseWheelEvent(MouseWheelEvent e) {
+        if (!EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() || !EditorUtil.isChangeFontSize(e)) {
+          super.processMouseWheelEvent(e);
+          return;
+        }
+        
+        int change = Math.abs(e.getWheelRotation());
+        boolean increase = e.getWheelRotation() <= 0;
+        EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+        EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+        FontSize newFontSize = scheme.getQuickDocFontSize();
+        for (; change > 0; change--) {
+          if (increase) {
+            newFontSize = newFontSize.larger();
+          }
+          else {
+            newFontSize = newFontSize.smaller();
+          }
+        }
+        
+        if (newFontSize == scheme.getQuickDocFontSize()) {
+          return;
+        }
+
+        scheme.setQuickDocFontSize(newFontSize);
+        applyFontSize();
+      }
+    };
     myScrollPane.setBorder(null);
 
     final MouseAdapter mouseAdapter = new MouseAdapter() {
@@ -332,12 +366,14 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
     if (!myIsShown && myHint != null) {
       myEditorPane.setText(text);
+      applyFontSize();
       myManager.showHint(myHint);
       myIsShown = justShown = true;
     }
 
     if (!justShown) {
       myEditorPane.setText(text);
+      applyFontSize();
     }
 
     if (!skip) {
@@ -351,6 +387,23 @@ public class DocumentationComponent extends JPanel implements Disposable {
     });
   }
 
+  private void applyFontSize() {
+    Document document = myEditorPane.getDocument();
+    if (!(document instanceof StyledDocument)) {
+      return;
+    }
+
+    StyledDocument styledDocument = (StyledDocument)document;
+    if (myFontSizeStyle == null) {
+      myFontSizeStyle = styledDocument.addStyle("active", null);
+    }
+
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+    StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
+    styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, true);
+  }
+  
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();

@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -4973,6 +4974,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       initFonts();
     }
 
+    @Override
+    public FontSize getQuickDocFontSize() {
+      return myGlobalScheme.getQuickDocFontSize();
+    }
+
+    @Override
+    public void setQuickDocFontSize(@NotNull FontSize fontSize) {
+      myGlobalScheme.setQuickDocFontSize(fontSize);
+    }
+
     public String getEditorFontName() {
       if (myFaceName == null) {
         return getGlobal().getEditorFontName();
@@ -5520,12 +5531,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
-  public static boolean isChangeFontSize(MouseWheelEvent e) {
-    return SystemInfo.isMac
-           ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
-           : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
-  }
-
   private class MyScrollPane extends JBScrollPane {
 
 
@@ -5535,7 +5540,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
-        if (isChangeFontSize(e)) {
+        if (EditorUtil.isChangeFontSize(e)) {
           setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }

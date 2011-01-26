@@ -20,6 +20,8 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -190,6 +192,11 @@ public class XDebugSessionImpl implements XDebugSession {
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
 
+    myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+      public void processTerminated(final ProcessEvent event) {
+        stopImpl();
+      }
+    });
     if (!myShowTabOnSuspend) {
       initSessionTab();
     }
@@ -562,7 +569,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myStopped;
   }
 
-  public void stopImpl() {
+  private void stopImpl() {
     if (myStopped) return;
 
     myDebugProcess.stop();

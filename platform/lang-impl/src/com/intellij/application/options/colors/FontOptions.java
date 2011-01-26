@@ -20,6 +20,7 @@ import com.intellij.application.options.SelectFontDialog;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -34,13 +35,18 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private final ColorAndFontOptions myOptions;
 
   private JTextField myEditorFontSizeField;
+  private JComboBox myEditorJavaDocFontSizeBox;
 
   private JTextField myLineSpacingField;
   private JTextField myFontNameField;
@@ -67,18 +73,14 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     myLineSpacingField.setText(Float.toString(getCurrentScheme().getLineSpacing()));
     myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
+    myEditorJavaDocFontSizeBox.setSelectedItem(getCurrentScheme().getQuickDocFontSize());
     myFontNameField.setText(getCurrentScheme().getEditorFontName());
 
-    if (ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme())) {
-      myLineSpacingField.setEnabled(false);
-      myEditorFontSizeField.setEditable(false);
-      myFontNameField.setEnabled(false);
-    }
-    else {
-      myLineSpacingField.setEnabled(true);
-      myEditorFontSizeField.setEditable(true);
-      myFontNameField.setEnabled(true);
-    }
+    boolean enabled = !ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme());
+    myLineSpacingField.setEnabled(enabled);
+    myEditorFontSizeField.setEditable(enabled);
+    myFontNameField.setEnabled(enabled);
+    myEditorJavaDocFontSizeBox.setEnabled(enabled);
 
     myIsInSchemeChange = false;
 
@@ -100,6 +102,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
   }
 
   private JPanel createFontPanel() {
+    JPanel result = new JPanel(new GridLayout(2, 1));
+    result.add(createEditorFontPanel());
+    result.add(createJavaDocFontPanel());
+    return result;
+  }
+  
+  private JPanel createEditorFontPanel() {
     JPanel editorFontPanel = new JPanel();
     editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("group.editor.font")));
     editorFontPanel.setLayout(new GridBagLayout());
@@ -201,6 +210,31 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
 
     return editorFontPanel;
+  }
+  
+  private JPanel createJavaDocFontPanel() {
+    JPanel result = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    result.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("group.quickdoc.font")));
+    result.add(new JLabel(ApplicationBundle.message("editbox.font.size")));
+    myEditorJavaDocFontSizeBox = new JComboBox(FontSize.values());
+    result.add(myEditorJavaDocFontSizeBox);
+    
+    myEditorJavaDocFontSizeBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (myIsInSchemeChange) {
+          return;
+        }
+        Object item = e.getItem();
+        if (e.getStateChange() != ItemEvent.SELECTED || !(item instanceof FontSize)) {
+          return;
+        }
+        getCurrentScheme().setQuickDocFontSize((FontSize)item);
+        updateDescription(true);
+      }
+    });
+    
+    return result;
   }
 
   private void selectFont() {

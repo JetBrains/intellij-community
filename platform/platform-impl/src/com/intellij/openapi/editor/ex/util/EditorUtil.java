@@ -24,10 +24,12 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
 import java.util.List;
 
 public class EditorUtil {
@@ -575,6 +577,12 @@ public class EditorUtil {
     editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
     editor.getSelectionModel().removeSelection();
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  public static boolean isChangeFontSize(MouseWheelEvent e) {
+    return SystemInfo.isMac
+           ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
+           : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 }
 

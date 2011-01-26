@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -85,6 +86,16 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public void setEditorFontSize(int fontSize) {
     myDelegate.setEditorFontSize(fontSize);
+  }
+
+  @Override
+  public FontSize getQuickDocFontSize() {
+    return myDelegate.getQuickDocFontSize();
+  }
+
+  @Override
+  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
+    myDelegate.setQuickDocFontSize(fontSize);
   }
 
   @Override
