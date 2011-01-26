@@ -300,6 +300,7 @@ public class LivePreview extends DocumentAdapter {
   }
 
   private static void drawMatch(Graphics2D g2d, Point start, Point end, int lineHeight, int horizontalGap, int verticalGap) {
+    g2d.setColor(new Color(50, 50, 50));
     g2d.translate(0, start.y-verticalGap);
     UIUtil.drawSearchMatch(g2d, start.x-horizontalGap, end.x+horizontalGap, lineHeight+2*verticalGap);
     g2d.translate(0, -start.y+verticalGap);
