@@ -184,9 +184,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public void removeSession(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
-    XDebugSessionData data = sessionTab.saveData();
     mySessions.remove(session);
-    mySessionData.put(session.getDebugProcess().getProcessHandler(), data);
+    if (sessionTab != null) {
+      XDebugSessionData data = sessionTab.saveData();
+      mySessionData.put(session.getDebugProcess().getProcessHandler(), data);
+    }
     if (myActiveSession == session) {
       myActiveSession = null;
       onActiveSessionChanged();
