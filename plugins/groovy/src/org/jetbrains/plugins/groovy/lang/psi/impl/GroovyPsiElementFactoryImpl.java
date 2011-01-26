@@ -304,7 +304,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("");
     GrVariableDeclaration decl = (GrVariableDeclaration) statement;
     final GrTypeElement element = decl.getTypeElementGroovy();
-    if (element == null) throw new IncorrectOperationException("");
+    if (element == null) throw new IncorrectOperationException(typeText);
 
     return element;
   }
