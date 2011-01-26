@@ -5,5 +5,6 @@ class Foo:
     def boo(self):
         print "rrrrr"
 
+
 class Boo(Foo):
     pass

@@ -57,6 +57,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "BLANK_LINES_AFTER_IMPORTS",
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS", "Between top-level classes and functions",
+                                BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showAllStandardOptions();

@@ -263,7 +263,16 @@ public class PyBlock implements ASTBlock {
     IElementType type2 = childNode2.getElementType();
 
     if (type1 == PyElementTypes.CLASS_DECLARATION) {
+      if ((type2 == PyElementTypes.CLASS_DECLARATION || type2 == PyElementTypes.FUNCTION_DECLARATION) &&
+          parentType instanceof PyFileElementType) {
+        return getBlankLinesForOption(getPySettings().BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS);
+      }
       return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
+    }
+    if (type1 == PyElementTypes.FUNCTION_DECLARATION &&
+              (type2 == PyElementTypes.CLASS_DECLARATION || type2 == PyElementTypes.FUNCTION_DECLARATION) &&
+        parentType instanceof PyFileElementType) {
+      return getBlankLinesForOption(getPySettings().BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS);
     }
     if (type1 == PyElementTypes.FUNCTION_DECLARATION ||
         (type2 == PyElementTypes.FUNCTION_DECLARATION && isStatementOrDeclaration(type1))) {
