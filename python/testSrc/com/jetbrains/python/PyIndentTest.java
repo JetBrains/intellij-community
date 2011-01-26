@@ -77,6 +77,13 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "           <caret>})");
   }
 
+  public void testAlignInDictInParams() {  // PY-1947
+    doTest("foobar({<caret>})",
+           "foobar({\n" +
+           "    <caret>\n" +
+           "})");
+  }
+
   public void testClass() {
     doTest("class A:\n" + "    print a<caret>", "class A:\n" + "    print a\n" + "    <caret>");
   }
@@ -128,7 +135,7 @@ public class PyIndentTest extends PyLightFixtureTestCase {
   }
 
   public void testEnterInEmptyList() {
-    doTest("[<caret>]", "[\n]");
+    doTest("[<caret>]", "[\n    <caret>\n]");
   }
 
   public void testEnterInEmptyDict() {
@@ -147,6 +154,12 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    'foo',\n" +
            "    <caret>\n" +
            ")");
+  }
+
+  public void testEnterInNonEmptyArgList() {  // PY-1947
+    doTest("Task(<caret>params=1)",
+           "Task(\n" +
+           "    <caret>params=1)");
   }
 
   public void testIndentAfterComment() {   // PY-641
