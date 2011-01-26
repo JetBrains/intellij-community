@@ -104,11 +104,6 @@ public class XValueHint extends AbstractValueHint {
             setPresentation(icon, type, separator, value, hasChildren);
           }
 
-          @Override
-          public void errorOccurred(@NotNull String message, @Nullable String type) {
-            setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, type, message, false);
-          }
-
           public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
             //todo[nik] implement?
           }
