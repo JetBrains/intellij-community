@@ -81,6 +81,10 @@ public class NewLibraryEditor implements LibraryEditor {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (LightFilePointer pointer : myRoots.get(rootType)) {
       final VirtualFile file = pointer.getFile();
+      if (file == null) {
+        continue;
+      }
+
       if (file.isDirectory()) {
         final Boolean recursively = myJarDirectories.get(file.getUrl());
         if (recursively != null) {
