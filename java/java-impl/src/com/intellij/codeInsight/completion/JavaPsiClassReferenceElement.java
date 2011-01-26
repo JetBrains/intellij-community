@@ -16,11 +16,18 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiAnchor;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -77,4 +84,90 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     final String s = myQualifiedName;
     return s == null ? 239 : s.hashCode();
   }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    LookupItem item = this;
+    PsiClass psiClass = getObject();
+    renderClassItem(presentation, item, psiClass);
+  }
+
+  public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass) {
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
+
+    final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
+    boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
+    presentation.setItemText(getName(psiClass, item));
+    presentation.setStrikeout(strikeout);
+    presentation.setItemTextBold(bold);
+
+    String tailText = StringUtil.notNullize((String) item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
+    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+
+    if (item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null &&
+        (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+      tailText = "{...}" + tailText;
+    }
+    if (substitutor == null && psiClass.getTypeParameters().length > 0) {
+      tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
+        public String fun(PsiTypeParameter psiTypeParameter) {
+          return psiTypeParameter.getName();
+        }
+      }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
+    }
+    presentation.setTailText(tailText, true);
+  }
+
+  private static String getName(final PsiClass psiClass, final LookupItem<?> item) {
+    String name = PsiUtilBase.getName(psiClass);
+
+    if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
+      if (psiClass.getContainingClass() != null) {
+        name = psiClass.getContainingClass().getName() + "." + name;
+      }
+    }
+
+    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+    if (substitutor != null) {
+      final PsiTypeParameter[] params = psiClass.getTypeParameters();
+      if (params.length > 0) {
+        return name + formatTypeParameters(substitutor, params);
+      }
+    }
+
+    return StringUtil.notNullize(name);
+  }
+
+  @Nullable
+  private static String formatTypeParameters(@NotNull final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
+    final boolean space = showSpaceAfterComma(params[0]);
+    StringBuilder buffer = new StringBuilder();
+    buffer.append("<");
+    for(int i = 0; i < params.length; i++){
+      final PsiTypeParameter param = params[i];
+      final PsiType type = substitutor.substitute(param);
+      if(type == null){
+        return "";
+      }
+      if (type instanceof PsiClassType && ((PsiClassType)type).getParameters().length > 0) {
+        buffer.append(((PsiClassType)type).rawType().getPresentableText()).append("<...>");
+      } else {
+        buffer.append(type.getPresentableText());
+      }
+
+      if(i < params.length - 1) {
+        buffer.append(",");
+        if (space) {
+          buffer.append(" ");
+        }
+      }
+    }
+    buffer.append(">");
+    return buffer.toString();
+  }
+
+  private static boolean showSpaceAfterComma(PsiClass element) {
+    return CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_AFTER_COMMA;
+  }
+
 }
