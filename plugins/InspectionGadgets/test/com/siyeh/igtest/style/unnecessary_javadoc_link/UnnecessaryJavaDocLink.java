@@ -1,0 +1,14 @@
+package com.siyeh.igtest.style.unnecessary_javadoc_link;
+
+public class UnnecessaryJavaDocLink {
+
+    /**
+     * {@link UnnecessaryJavaDocLink}
+     * {@linkplain UnnecessaryJavaDocLink#equals(Object)}
+     * @see Object#equals(Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+}
