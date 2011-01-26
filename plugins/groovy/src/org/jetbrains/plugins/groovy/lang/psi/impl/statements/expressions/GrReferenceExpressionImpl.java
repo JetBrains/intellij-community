@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -432,7 +433,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
                 "getClass".equals(method.getName())) {
-          result = getTypeForObjectGetClass(facade, method);
+          if (seemsToBeQualifiedClassName(getQualifierExpression())) {
+            result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(getQualifier().getText(), this));
+          }
+          else {
+            result = getTypeForObjectGetClass(facade, method);
+          }
         } else {
           result = PsiUtil.getSmartReturnType(method);
         }
@@ -454,7 +460,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     else if (resolved == null) {
       GrExpression qualifier = getQualifierExpression();
       if ("class".equals(getReferenceName())) {
-        result = createJavaLangClassType(JavaPsiFacade.getInstance(getProject()), getQualifierType());
+        if (seemsToBeQualifiedClassName(qualifier)) {
+          assert qualifier != null;
+          result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(qualifier.getText(), this));
+        } else {
+          result = createJavaLangClassType(facade, getQualifierType());
+        }
       }
       else {
         if (qualifier != null) {
@@ -485,6 +496,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else {
       return ResolveUtil.getListTypeForSpreadOperator(this, result);
     }
+  }
+
+  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
+    if (qualifier == null) return false;
+    while (qualifier instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
+      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
+    }
+    return qualifier == null;
   }
 
   @Nullable
