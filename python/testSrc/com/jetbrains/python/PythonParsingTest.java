@@ -243,6 +243,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testSliceList() {  // PY-1928
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

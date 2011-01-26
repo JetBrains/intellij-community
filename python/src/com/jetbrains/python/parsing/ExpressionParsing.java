@@ -311,9 +311,13 @@ public class ExpressionParsing extends Parsing {
             parseSliceEnd(expr, sliceItemStart);
           }
           else {
-            parseExpressionOptional();
-            if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+            parseSingleExpression(false);
+            if (atToken(PyTokenTypes.COLON)) {
               parseSliceEnd(expr, sliceItemStart);
+            }
+            else if (atToken(PyTokenTypes.COMMA)) {
+              sliceItemStart.done(PyElementTypes.SLICE_ITEM);
+              parseSliceListTail(expr);
             }
             else {
               sliceItemStart.drop();
@@ -376,9 +380,13 @@ public class ExpressionParsing extends Parsing {
       }
     }
 
+    parseSliceListTail(exprStart);
+  }
+
+  private void parseSliceListTail(PsiBuilder.Marker exprStart) {
     while (atToken(PyTokenTypes.COMMA)) {
       nextToken();
-      sliceItemStart = myBuilder.mark();
+      PsiBuilder.Marker sliceItemStart = myBuilder.mark();
       parseTestExpression(false, false);
       if (matchToken(PyTokenTypes.COLON)) {
         parseTestExpression(false, false);
