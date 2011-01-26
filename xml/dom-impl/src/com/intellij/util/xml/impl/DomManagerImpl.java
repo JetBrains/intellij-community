@@ -49,7 +49,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -174,15 +173,6 @@ public final class DomManagerImpl extends DomManager {
     }
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
-    List<DomFileDescription> fileDescriptions = myApplicationComponent.getAllFileDescriptions();
-    for (DomFileDescription fileDescription : fileDescriptions) {
-      Map<Class<? extends Converter>, ? extends Converter> converters = fileDescription.getConverters();
-      Set<? extends Map.Entry<Class<? extends Converter>, ? extends Converter>> entries = converters.entrySet();
-      for (Map.Entry<Class<? extends Converter>, ? extends Converter> entry: entries){
-        getConverterManager().registerConverterImplementation((Class<Converter>)entry.getKey(), entry.getValue());
-      }
-    }
   }
 
   private void processVfsChange(final VirtualFile file) {
