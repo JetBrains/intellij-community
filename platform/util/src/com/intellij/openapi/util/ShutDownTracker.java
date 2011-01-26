@@ -24,7 +24,6 @@ import java.util.List;
 
 public class ShutDownTracker implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ShutDownTracker");
-  private static ShutDownTracker ourInstance;
   private final List<Thread> myThreads = new ArrayList<Thread>();
   private final LinkedList<Thread> myShutdownThreads = new LinkedList<Thread>();
   private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
@@ -35,11 +34,12 @@ public class ShutDownTracker implements Runnable {
     Runtime.getRuntime().addShutdownHook(new Thread(this, "Shutdown tracker"));
   }
 
-  public static synchronized ShutDownTracker getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new ShutDownTracker();
-    }
-    return ourInstance;
+  private static class ShutDownTrackerHolder {
+    private static final ShutDownTracker ourInstance = new ShutDownTracker();
+  }
+
+  public static ShutDownTracker getInstance() {
+    return ShutDownTrackerHolder.ourInstance;
   }
 
   public static boolean isShutdownHookRunning() {
@@ -62,7 +62,7 @@ public class ShutDownTracker implements Runnable {
         try {
           thread.join(100);
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException ignored) {
         }
       }
       threads = getStopperThreads();
