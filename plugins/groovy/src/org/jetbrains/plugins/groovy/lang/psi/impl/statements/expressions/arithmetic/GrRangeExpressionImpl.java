@@ -16,13 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
@@ -38,9 +34,8 @@ public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrR
   }
 
   public PsiType getType() {
-    GroovyPsiManager factory = GroovyPsiManager.getInstance(getProject());
-    GrExpression lop = getLeftOperand();
-    if (lop.getType() != null && INTEGER_FQ_NAME.equals(lop.getType().getCanonicalText())) {
+    final PsiType ltype = getLeftOperand().getType();
+    if (ltype != null && INTEGER_FQ_NAME.equals(ltype.getCanonicalText())) {
       return getTypeByFQName(INT_RANGE_FQ_NAME);
     }
     return getTypeByFQName(OBJECT_RANGE_FQ_NAME);

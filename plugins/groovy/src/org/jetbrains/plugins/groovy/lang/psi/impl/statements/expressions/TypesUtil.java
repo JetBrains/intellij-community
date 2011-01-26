@@ -223,7 +223,7 @@ public class TypesUtil {
       return true;
     }
 
-    if (allowConversion && lType != null && rType != null) {
+    if (allowConversion) {
       for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
         final Boolean result = converter.isConvertible(lType, rType, context);
         if (result != null) {

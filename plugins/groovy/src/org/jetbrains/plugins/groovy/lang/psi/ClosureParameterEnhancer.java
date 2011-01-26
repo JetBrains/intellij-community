@@ -15,11 +15,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author peter
@@ -85,7 +86,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     if (!(parent instanceof GrMethodCall)) {
       return null;
     }
-    GroovyPsiManager factory = GroovyPsiManager.getInstance(closure.getProject());
     String methodName = findMethodName((GrMethodCall)parent);
 
     GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
@@ -109,7 +109,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
     if (iterations.contains(methodName)) {
       if (params.length == 1) {
-        return findTypeForIteration(qualifier, factory, closure);
+        return findTypeForIteration(qualifier, closure);
       }
       if (params.length == 2 && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         if (index == 0) {
@@ -122,7 +122,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return type;
     }
     else if ("eachWithIndex".equals(methodName)) {
-      PsiType res = findTypeForIteration(qualifier, factory, closure);
+      PsiType res = findTypeForIteration(qualifier, closure);
       if (params.length == 2 && res != null) {
         if (index == 0) {
           return res;
@@ -152,7 +152,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, closure);
       }
 
-      PsiType res = findTypeForIteration(qualifier, factory, closure);
+      PsiType res = findTypeForIteration(qualifier, closure);
       if (res != null) {
         return res;
       }
@@ -161,7 +161,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       }
     }
     else if ("eachPermutation".equals(methodName) && params.length == 1) {
-      final PsiType itemType = findTypeForIteration(qualifier, factory, closure);
+      final PsiType itemType = findTypeForIteration(qualifier, closure);
       if (itemType != null) {
         return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(
           "java.util.ArrayList<" + itemType.getCanonicalText() + ">", closure);
@@ -175,7 +175,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     else if ("sort".equals(methodName)) {
       if (params.length < 3) {
-        return findTypeForIteration(qualifier, factory, closure);
+        return findTypeForIteration(qualifier, closure);
       }
     }
     else if ("withStream".equals(methodName)) {
@@ -215,11 +215,11 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Nullable
-  public static PsiType findTypeForIteration(GrExpression qualifier, GroovyPsiManager factory, PsiElement context) {
+  public static PsiType findTypeForIteration(GrExpression qualifier, PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
     if (iterType instanceof PsiArrayType) {
-      return ((PsiArrayType)iterType).getComponentType();
+      return TypesUtil.boxPrimitiveType(((PsiArrayType)iterType).getComponentType(), context.getManager(), context.getResolveScope());
     }
     if (iterType instanceof GrTupleType) {
       PsiType[] types = ((GrTupleType)iterType).getParameters();
@@ -231,10 +231,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     if (InheritanceUtil.isInheritor(iterType, "groovy.lang.ObjectRange")) {
       PsiElement element = qualifier;
-      element = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses(element, false);
+      element = skipParentheses(element, false);
       if (element instanceof GrReferenceExpression) {
         GrReferenceExpression ref = (GrReferenceExpression)element;
-        element = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses(ref.resolve(), false);
+        element = skipParentheses(ref.resolve(), false);
       }
       if (element instanceof GrRangeExpression) {
         return getRangeElementType((GrRangeExpression)element);
