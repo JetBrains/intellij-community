@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -474,11 +475,12 @@ public class PropertyUtil {
 
   private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiElementFactory factory, final PsiModifierListOwner listOwner)
     throws IncorrectOperationException {
-    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NOT_NULL, false)) {
-      annotate(factory, listOwner, AnnotationUtil.NOT_NULL);
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
+    if (manager.isNotNull(field, false)) {
+      annotate(factory, listOwner, manager.getDefaultNotNull());
     }
-    else if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NULLABLE, false)) {
-      annotate(factory, listOwner, AnnotationUtil.NULLABLE);
+    else if (manager.isNullable(field, false)) {
+      annotate(factory, listOwner, manager.getDefaultNullable());
     }
   }
 

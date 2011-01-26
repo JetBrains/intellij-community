@@ -22,6 +22,7 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.compiler.*;
 import com.intellij.compiler.classParsing.AnnotationConstantValue;
 import com.intellij.compiler.classParsing.MethodInfo;
@@ -827,7 +828,7 @@ public class BackendCompilerWrapper {
           FileObject path = myPaths.take();
 
           if (path == myStopThreadToken) break;
-          processPath(path);
+          processPath(path, myProject);
         }
       }
       catch (InterruptedException e) {
@@ -852,7 +853,7 @@ public class BackendCompilerWrapper {
       myPaths.offer(myStopThreadToken);
     }
 
-    private void processPath(FileObject fileObject) throws CacheCorruptedException {
+    private void processPath(FileObject fileObject, Project project) throws CacheCorruptedException {
       File file = fileObject.getFile();
       final String path = file.getPath();
       try {
@@ -866,7 +867,7 @@ public class BackendCompilerWrapper {
           final String qName = dependencyCache.resolve(newClassQName);
           String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
           putName(sourceFileName, newClassQName, relativePathToSource, path);
-          boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName);
+          boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName, project);
 
           if (haveToInstrument) {
             try {
@@ -913,17 +914,19 @@ public class BackendCompilerWrapper {
     }
   }
 
-  private static boolean hasNotNullAnnotations(final Cache cache, final SymbolTable symbolTable, final int className) throws CacheCorruptedException {
+  private static boolean hasNotNullAnnotations(final Cache cache, final SymbolTable symbolTable, final int className, Project project) throws CacheCorruptedException {
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    final List<String> notNulls = manager.getNotNulls();
     for (MethodInfo methodId : cache.getMethods(className)) {
       for (AnnotationConstantValue annotation : methodId.getRuntimeInvisibleAnnotations()) {
-        if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
+        if (notNulls.contains(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
           return true;
         }
       }
       final AnnotationConstantValue[][] paramAnnotations = methodId.getRuntimeInvisibleParameterAnnotations();
       for (AnnotationConstantValue[] _singleParamAnnotations : paramAnnotations) {
         for (AnnotationConstantValue annotation : _singleParamAnnotations) {
-          if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
+          if (notNulls.contains(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
             return true;
           }
         }

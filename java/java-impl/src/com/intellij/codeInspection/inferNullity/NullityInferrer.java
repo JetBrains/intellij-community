@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -148,11 +149,12 @@ public class NullityInferrer {
   }
 
   public void apply(final Project project) {
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
         if (shouldIgnore(element)) continue;
-        new AddAnnotationFix(AnnotationUtil.NULLABLE, element, AnnotationUtil.NOT_NULL).invoke(project, null, element.getContainingFile());
+        new AddAnnotationFix(manager.getDefaultNullable(), element, manager.getDefaultNotNull()).invoke(project, null, element.getContainingFile());
       }
     }
 
@@ -160,7 +162,8 @@ public class NullityInferrer {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
         if (shouldIgnore(element)) continue;
-        new AddAnnotationFix(AnnotationUtil.NOT_NULL, element, AnnotationUtil.NULLABLE).invoke(project, null, element.getContainingFile());
+        new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
+                                                                                                        element.getContainingFile());
       }
     }
 
@@ -425,8 +428,8 @@ public class NullityInferrer {
           return;
         }
       }
-      if (!AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false) &&
-          AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, true)) {
+      final NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
+      if (!manager.isNotNull(method, false) && manager.isNotNull(method, true)) {
         registerNotNullAnnotation(method);
         return;
       }

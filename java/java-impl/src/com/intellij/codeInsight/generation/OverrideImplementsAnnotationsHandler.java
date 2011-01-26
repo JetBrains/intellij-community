@@ -21,12 +21,13 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface OverrideImplementsAnnotationsHandler {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");
 
-  String[] getAnnotations();
+  String[] getAnnotations(Project project);
   @NotNull
-  String [] annotationsToRemove(@NotNull String fqName);
+  String [] annotationsToRemove(Project project, @NotNull String fqName);
 }

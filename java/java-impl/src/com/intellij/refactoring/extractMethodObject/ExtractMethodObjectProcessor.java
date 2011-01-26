@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -524,8 +525,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
-      if (AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NULLABLE, false)) {
-        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, field), null);
+      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+      if (manager.isNullable(parameter, false)) {
+        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
