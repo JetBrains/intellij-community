@@ -16,7 +16,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.xml.*;
 
 import javax.swing.*;
@@ -28,8 +30,27 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
   private final Presentation myPresentation;
   private final Class<?> myClass;
-  private Icon myIcon;
-  private boolean myIconLoaded;
+
+  private final NullableLazyValue<Icon> myIcon = new NullableLazyValue<Icon>() {
+    @Override
+    protected Icon compute() {
+      if (StringUtil.isEmpty(myPresentation.icon())) return null;
+      return IconLoader.getIcon(myPresentation.icon(), myClass);
+    }
+  };
+
+  private final NullableLazyValue<NullableFunction<DomElement, String>> myNamer = new NullableLazyValue<NullableFunction<DomElement, String>>() {
+    @Override
+    protected NullableFunction<DomElement, String> compute() {
+      if (StringUtil.isEmpty(myPresentation.namerClass())) return null;
+      try {
+        return (NullableFunction<DomElement, String>)Class.forName(myPresentation.namerClass(), true, myClass.getClassLoader()).newInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
 
   public ElementPresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
     myPresentation = presentation;
@@ -41,7 +62,8 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     return new ElementPresentation() {
       @Override
       public String getElementName() {
-        return ElementPresentationManager.getElementName(element);
+        NullableFunction<DomElement, String> namer = myNamer.getValue();
+        return namer == null ? ElementPresentationManager.getElementName(element) : namer.fun(element);
       }
 
       @Override
@@ -51,13 +73,7 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
       @Override
       public Icon getIcon() {
-        if (!myIconLoaded) {
-          if (StringUtil.isNotEmpty(myPresentation.icon())) {
-            myIcon = IconLoader.getIcon(myPresentation.icon(), myClass);
-          }
-          myIconLoaded = true;
-        }
-        return myIcon;
+        return myIcon.getValue();
       }
     };
   }

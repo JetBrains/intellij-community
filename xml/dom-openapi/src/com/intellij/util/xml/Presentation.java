@@ -27,5 +27,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface Presentation {
 
+  /**
+   * @return Path to image resource, e.g. /foo/bar/MyIcon.png
+   */
   String icon() default "";
+
+  /**
+   * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, String>}
+   */
+  String namerClass() default "";
 }
