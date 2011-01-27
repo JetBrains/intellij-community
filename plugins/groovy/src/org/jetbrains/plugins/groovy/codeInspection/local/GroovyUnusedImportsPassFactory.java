@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -32,6 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 public class GroovyUnusedImportsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public GroovyUnusedImportsPassFactory(Project project) {
     super(project);
+
+    TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL},
+                                                                                                 null, true, -1);
   }
 
   @Nullable
