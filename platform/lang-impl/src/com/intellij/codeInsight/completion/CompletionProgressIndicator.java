@@ -104,6 +104,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
   private final CompletionState myState;
 
+  private volatile int myCount;
+
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
     myEditor = editor;
@@ -372,10 +374,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     myLookup.addItem(item);
-    final int count = myState.incCount();
+    myCount++;
     if (unitTestMode) return;
 
-    if (count == 1) {
+    if (myCount == 1) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           try {
@@ -447,7 +449,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return;
         }
 
-        if (myState.hasNoVariants()) {
+        if (myCount == 0) {
           if (!isAutopopupCompletion()) {
             LookupManager.getInstance(getProject()).hideActiveLookup();
 
@@ -604,7 +606,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public String toString() {
-    return myState.toString();
+    return "CompletionProgressIndicator[count=" + myCount + "," + myState.toString() + "]";
   }
 
   protected void handleEmptyLookup(final boolean awaitSecondInvocation) {

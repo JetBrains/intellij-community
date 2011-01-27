@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 public class CompletionState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionState");
   private boolean myCompletionDisposed;
-  private volatile int myCount;
 
   public boolean isCompletionDisposed() {
     return myCompletionDisposed;
@@ -24,20 +23,11 @@ public class CompletionState {
     LOG.assertTrue(myCompletionDisposed, this);
   }
 
-  int incCount() {
-    return ++myCount;
-  }
-
-  boolean hasNoVariants() {
-    return myCount == 0;
-  }
-
   @Override
   public String toString() {
     return "CompletionState{" +
            "phase=" + CompletionServiceImpl.getCompletionPhase() +
            ", myCompletionDisposed=" + myCompletionDisposed +
-           ", myCount=" + myCount +
            '}';
   }
 }
