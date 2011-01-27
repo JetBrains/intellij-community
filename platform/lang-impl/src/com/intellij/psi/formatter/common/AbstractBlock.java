@@ -23,12 +23,11 @@ import com.intellij.psi.formatter.FormatterUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractBlock implements ASTBlock {
-  public static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
+  public static final List<Block> EMPTY = Collections.emptyList();
 
   protected final ASTNode myNode;
   protected final Wrap myWrap;

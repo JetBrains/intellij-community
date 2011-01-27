@@ -57,7 +57,9 @@ public class PsiChangeTracker {
     return getElementsChanged(file, oldFile, filter);
   }
 
-  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, PsiFile oldFile, final PsiFilter<T> filter) {
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiElement file,
+                                                                             PsiElement oldFile,
+                                                                             final PsiFilter<T> filter) {
     final HashMap<T, FileStatus> result = new HashMap<T, FileStatus>();
     final List<T> oldElements = new ArrayList<T>();
     final List<T> elements = new ArrayList<T>();
@@ -71,7 +73,7 @@ public class PsiChangeTracker {
     final Project project = file.getProject();
 
     file.accept(filter.createVisitor(elements));
-    final VirtualFile vf = file.getVirtualFile();
+    final VirtualFile vf = file.getContainingFile().getVirtualFile();
     FileStatus status = vf == null ? null : FileStatusManager.getInstance(project).getStatus(vf);
     if (status == null && oldFile == null) {
       status = FileStatus.ADDED;

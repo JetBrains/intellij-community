@@ -48,6 +48,9 @@ import java.util.Map;
  */
 public class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
+  public static final int MAX_LINE_TO_SHOW = 140;
+  public static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = MAX_LINE_TO_SHOW / 2;
+  public static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = MAX_LINE_TO_SHOW / 2;
 
   private final EditorColorsScheme myColorsScheme;
 
@@ -133,8 +136,8 @@ public class ChunkExtractor {
     final int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);
 
     Collections.sort(markers, RangeMarker.BY_START_OFFSET);
-    final int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
-    final int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
+    int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
+    int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
     if (lineStartOffset > lineEndOffset) return TextChunk.EMPTY_ARRAY;
 
     final CharSequence chars = myDocument.getCharsSequence();
@@ -143,6 +146,10 @@ public class ChunkExtractor {
     }
     final List<TextChunk> result = new ArrayList<TextChunk>();
     appendPrefix(result, lineNumber, columnNumber);
+    if (lineEndOffset - lineStartOffset > MAX_LINE_TO_SHOW) {
+      lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
+      lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
+    }
     return createTextChunks(markers, chars, lineStartOffset, lineEndOffset, result);
   }
 
