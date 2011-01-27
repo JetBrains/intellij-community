@@ -65,5 +65,28 @@ import <warning descr="Python versions 3.0, 3.1 do not have module Bastion">Bast
 var = Bastion.BastionClass()
 
 ########################
+def foo():    # PY-2796
+  <warning descr="Python version 2.4 doesn't support this syntax. In Python <= 2.4, yield was a statement; it didn’t return any value.">a = (yield 1)</warning>
+
+########################
 
 <warning descr="Python versions 3.0 3.1  do not support this syntax. Raise with no arguments can only be used in an except block">raise</warning>
+
+########################
+# PY-2792
+<warning descr="Python version 2.4 doesn't support this syntax.">x = True if condition else False</warning>
+
+########################
+# PY-2792
+
+def unified_tef():
+    <warning descr="Python version 2.4 doesn't support this syntax. You could use a finally block to ensure that code is always executed, or one or more except blocks to catch specific exceptions.">try:
+        pass
+    except ImportError:
+        pass
+    except KeyError:
+        pass
+    else:
+        pass
+    finally:
+        pass</warning>
