@@ -185,7 +185,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return t;
     }
 
-    private StreamSource makeSource(String name) throws IOException {
+    private static StreamSource makeSource(String name) throws IOException {
         final URL resource = XsltSupport.class.getResource(name);
         return new StreamSource(resource.openStream(), resource.toExternalForm());
     }

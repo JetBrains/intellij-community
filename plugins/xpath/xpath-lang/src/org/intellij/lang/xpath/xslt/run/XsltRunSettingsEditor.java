@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,8 +45,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.Table;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
@@ -85,7 +86,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     static class RemoveParameterAction extends AnAction {
         private final JTable myParams;
 
-        public RemoveParameterAction(Table paramModel) {
+        public RemoveParameterAction(JBTable paramModel) {
             super("Remove", "Remove Parameter", IconLoader.getIcon("/general/remove.png"));
             myParams = paramModel;
         }
@@ -108,7 +109,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         private JCheckBox myOpenOutputFile;
         private JCheckBox myOpenInBrowser;
         private JPanel myParamsToolbar;
-        private Table myParameters;
+        private JBTable myParameters;
 
         private ButtonGroup myOutputOptions;
         private JRadioButton myShowInConsole;
@@ -265,22 +266,21 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
             final Module[] modules = ModuleManager.getInstance(project).getModules();
             myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{ "<default>" }, modules, Object.class)));
-            myModule.setRenderer(new DefaultListCellRenderer() {
-                public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (value instanceof Module) {
-                        final Module module = (Module)value;
-                        setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-                            public String compute() {
-                                return module.getName();
-                            }
-                        }));
-                        setIcon(module.getModuleType().getNodeIcon(true));
-                    } else if (value instanceof String) {
-                        setText((String)value);
+            myModule.setRenderer(new ListCellRendererWrapper(myModule) {
+              @Override
+              public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+                if (value instanceof Module) {
+                  final Module module = (Module)value;
+                  setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+                    public String compute() {
+                      return module.getName();
                     }
-                    return this;
+                  }));
+                  setIcon(module.getModuleType().getNodeIcon(true));
+                } else if (value instanceof String) {
+                  setText((String)value);
                 }
+              }
             });
 
             final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
@@ -291,20 +291,18 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
                 myJdkChoice.setEnabled(false);
                 myJDK.setEnabled(false);
             }
-            myJDK.setRenderer(new DefaultListCellRenderer() {
-                public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (value != null) {
-                        final Sdk jdk = (Sdk)value;
-                        setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-                            public String compute() {
-                                return jdk.getName();
-                            }
-                        }));
-                        setIcon(jdk.getSdkType().getIcon());
+            myJDK.setRenderer(new ListCellRendererWrapper<Sdk>(myJDK) {
+              @Override
+              public void customize(JList list, final Sdk jdk, int index, boolean isSelected, boolean cellHasFocus) {
+                if (jdk != null) {
+                  setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+                    public String compute() {
+                      return jdk.getName();
                     }
-                    return this;
+                  }));
+                  setIcon(jdk.getSdkType().getIcon());
                 }
+              }
             });
 
             final ItemListener updateListener = new ItemListener() {
@@ -328,6 +326,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             myVmArguments.setDialogCaption("VM Arguments");
         }
 
+        @SuppressWarnings({"UseOfObsoleteCollectionType"})
         private static Vector<FileType> getFileTypes(Project project) {
             final Vector<FileType> v = new Vector<FileType>();
 
@@ -452,7 +451,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             return s != null ? s : "";
         }
 
-        private void setSelectedIndex(ButtonGroup group, int i) {
+        private static void setSelectedIndex(ButtonGroup group, int i) {
             final Enumeration<AbstractButton> buttons = group.getElements();
             //noinspection ForLoopThatDoesntUseLoopVariable
             for (int j = 0; buttons.hasMoreElements(); j++) {
@@ -460,7 +459,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             }
         }
 
-        private int getSelectedIndex(ButtonGroup group) {
+        private static int getSelectedIndex(ButtonGroup group) {
             final ButtonModel selection = group.getSelection();
             if (selection == null) return -1;
             final Enumeration<AbstractButton> buttons = group.getElements();

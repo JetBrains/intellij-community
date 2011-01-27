@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.psi.impl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,8 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
 
     @Nullable
     public QName getMode() {
-        return getQName(getTag().getAttributeValue("mode"));
+      final String mode = getTag().getAttributeValue("mode");
+      return mode != null ? QNameUtil.createQName(mode, getTag()) : null;
     }
 
     public boolean isAbstract() {

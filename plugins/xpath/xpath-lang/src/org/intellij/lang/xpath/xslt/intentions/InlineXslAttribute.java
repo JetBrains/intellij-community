@@ -71,9 +71,7 @@ public class InlineXslAttribute implements IntentionAction {
         if (node == null) return false;
         final ASTNode nameNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
 
-        if (nameNode == null) {
-            return false;
-        } else if (!nameNode.getTextRange().contains(offset)) {
+        if (nameNode == null || !nameNode.getTextRange().contains(offset)) {
             return false;
         }
 

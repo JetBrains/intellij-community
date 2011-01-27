@@ -15,19 +15,18 @@
  */
 package org.intellij.lang.xpath.psi;
 
+@SuppressWarnings({"UnusedDeclaration"})
 public enum NodeType {
-    NODE("node"),
-    TEXT("text"),
-    COMMENT("comment"),
-    PROCESSING_INSTRUCTION("processing-instruction");
-
-    private final String type;
-
-    NodeType(String s) {
-        type = s;
-    }
+    NODE,
+    ATTRIBUTE,
+    ELEMENT,
+    SCHEMA_ELEMENT,
+    DOCUMENT_NODE,
+    TEXT,
+    COMMENT,
+    PROCESSING_INSTRUCTION;
 
     public String getType() {
-        return type;
+        return name().toLowerCase().replace('_', '-');
     }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +108,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     }
 
     public void dispose() {
-        myConsole.dispose();
+      Disposer.dispose(myConsole);
     }
 
     public ConsoleView getConsole() {
