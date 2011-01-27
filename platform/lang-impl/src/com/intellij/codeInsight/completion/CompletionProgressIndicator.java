@@ -288,7 +288,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           contentComponent.removeKeyListener(this);
-          myState.modifiersChanged();
           if (CompletionServiceImpl.isPhase(CompletionPhase.ZombiePhase.class)) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
@@ -452,7 +451,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
-            handleEmptyLookup();
+            handleEmptyLookup(!((CompletionPhase.BgCalculation)phase).modifiersChanged);
           }
         }
         else {
@@ -605,7 +604,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myState.toString();
   }
 
-  protected void handleEmptyLookup() {
+  protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
     assertDisposed();
     assert !isAutopopupCompletion();
 
@@ -619,7 +618,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (StringUtil.isNotEmpty(text)) {
         LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
         CompletionServiceImpl.setCompletionPhase(
-          myState.areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, this));
+          awaitSecondInvocation ? new CompletionPhase.NoSuggestionsHint(hint, this) : CompletionPhase.NoCompletion);
         return;
       }
     }

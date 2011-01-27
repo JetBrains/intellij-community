@@ -75,6 +75,8 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
   public static class BgCalculation extends CompletionPhase {
+    boolean modifiersChanged = false;
+
     public BgCalculation(CompletionProgressIndicator indicator) {
       super(indicator);
     }
