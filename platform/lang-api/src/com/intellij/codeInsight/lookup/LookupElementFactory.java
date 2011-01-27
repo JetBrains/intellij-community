@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,10 +29,6 @@ public abstract class LookupElementFactory {
   public static LookupElementFactory getInstance() {
     return ServiceManager.getService(LookupElementFactory.class);
   }
-
-  public abstract MutableLookupElement<String> createLookupElement(@NotNull String lookupString);
-
-  public abstract <T extends PsiNamedElement> MutableLookupElement<T> createLookupElement(@NotNull T element);
 
   public abstract <T> MutableLookupElement<T> createLookupElement(@NotNull T element, @NotNull String lookupString);
 
