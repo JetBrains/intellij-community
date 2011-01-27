@@ -21,9 +21,11 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -46,7 +48,16 @@ public class IntroduceTargetChooser {
                                                         final Pass<T> callback,
                                                         final Function<T, String> renderer,
                                                         String title) {
-    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
+    showChooser(editor, expressions, callback, renderer, title, ScopeHighlighter.NATURAL_RANGER);
+  }
+
+  public static <T extends PsiElement> void showChooser(final Editor editor,
+                                                        final List<T> expressions,
+                                                        final Pass<T> callback,
+                                                        final Function<T, String> renderer,
+                                                        String title,
+                                                        NotNullFunction<PsiElement, TextRange> ranger) {
+    final ScopeHighlighter highlighter = new ScopeHighlighter(editor, ranger);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
       model.addElement(expr);
