@@ -66,8 +66,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(myFile.getProject());
-    myUnusedImports = importsTracker.getUnusedImportStatements(myFile);
+    myUnusedImports = GroovyImportsTracker.getInstance(myFile.getProject()).getUnusedImportStatements(myFile);
     if (!myUnusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
       final VirtualFile vfile = myFile.getVirtualFile();
       if (vfile != null && ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().isInSource(vfile)) {
