@@ -15,17 +15,20 @@
  */
 package org.jetbrains.android.facet;
 
+import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.Library;
-import com.android.sdklib.IAndroidTarget;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
@@ -72,6 +75,29 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   private AndroidPlatform myAndroidPlatform;
   private AndroidFacet myFacet = null;
+
+  public void init(@NotNull Module module, @NotNull VirtualFile contentRoot) {
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
+    if (moduleDirPath == null) {
+      return;
+    }
+    if (moduleDirPath.equals(contentRoot.getPath())) {
+      return;
+    }
+
+    String s = FileUtil.getRelativePath(moduleDirPath, contentRoot.getPath(), '/');
+
+    GEN_FOLDER_RELATIVE_PATH_APT = '/' + s + GEN_FOLDER_RELATIVE_PATH_APT;
+    GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + s + GEN_FOLDER_RELATIVE_PATH_AIDL;
+    MANIFEST_FILE_RELATIVE_PATH = '/' + s + MANIFEST_FILE_RELATIVE_PATH;
+    RES_FOLDER_RELATIVE_PATH = '/' + s + RES_FOLDER_RELATIVE_PATH;
+    ASSETS_FOLDER_RELATIVE_PATH = '/' + s + ASSETS_FOLDER_RELATIVE_PATH;
+    LIBS_FOLDER_RELATIVE_PATH = '/' + s + LIBS_FOLDER_RELATIVE_PATH;
+
+    for (int i = 0; i < RES_OVERLAY_FOLDERS.length; i++) {
+      RES_OVERLAY_FOLDERS[i] = '/' + s + RES_OVERLAY_FOLDERS[i];
+    }
+  }
 
   @Nullable
   public AndroidPlatform getAndroidPlatform() {
