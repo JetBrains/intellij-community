@@ -28,6 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated this should not be used
+ * @see com.intellij.ide.TypeNameEP
+ * @see @Presentation
+ */
 public class TypeNameManager {
   public static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();
   public static final List<Function<Class, String>> ourTypeProviders = new ArrayList<Function<Class, String>>();
