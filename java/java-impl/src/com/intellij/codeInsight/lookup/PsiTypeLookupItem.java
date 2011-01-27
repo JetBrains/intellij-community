@@ -82,7 +82,10 @@ public class PsiTypeLookupItem extends LookupItem {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-      final String text = type.getCanonicalText();
+      String text = type.getCanonicalText();
+      if (text == null) {
+        text = type.getPresentableText();
+      }
       String typeString = text;
       String typeParams = "";
       if (text.indexOf('<') > 0 && text.endsWith(">")) {
