@@ -110,7 +110,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME == myFrameworkName && SystemInfo.isLinux) {
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
       initial = findFile("/usr/share/groovy");
     }
 
