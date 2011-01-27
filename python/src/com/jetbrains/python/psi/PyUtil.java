@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -442,10 +443,23 @@ public class PyUtil {
           if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
+          for(PyKnownDecoratorProvider provider: KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+            String name = provider.toKnownDecorator(deconame);
+            if (name != null) {
+              return name;
+            }
+          }
         }
       }
     }
     return null;
+  }
+
+  public static class KnownDecoratorProviderHolder {
+    public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+
+    private KnownDecoratorProviderHolder() {
+    }
   }
 
   /**
