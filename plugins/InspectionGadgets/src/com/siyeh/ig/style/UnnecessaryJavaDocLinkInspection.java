@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -34,7 +35,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreInlineLinkToSuper = false;
 
     @Nls
     @NotNull
@@ -49,6 +55,13 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.javadoc.link.problem.descriptor");
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("unnecessary.javadoc.link.option"),
+                this, "ignoreInlineLinkToSuper");
     }
 
     @Override
@@ -114,7 +127,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         return new UnnecessaryJavaDocLinkVisitor();
     }
 
-    private static class UnnecessaryJavaDocLinkVisitor
+    private class UnnecessaryJavaDocLinkVisitor
             extends BaseInspectionVisitor {
 
         @Override
@@ -160,10 +173,13 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             if (!isSuperMethod(method, containingMethod)) {
                 return;
             }
+            if (ignoreInlineLinkToSuper && tag instanceof PsiInlineDocTag) {
+                return;
+            }
             registerError(tag, '@' + name);
         }
 
-        private static PsiReference extractReference(PsiDocTag tag) {
+        private PsiReference extractReference(PsiDocTag tag) {
             final PsiDocTagValue valueElement = tag.getValueElement();
             if (valueElement != null) {
                 return valueElement.getReference();
@@ -190,7 +206,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             return (PsiReference) child;
         }
 
-        public static boolean isSuperMethod(PsiMethod superMethodCandidate,
+        public boolean isSuperMethod(PsiMethod superMethodCandidate,
                                             PsiMethod derivedMethod) {
             final PsiClass superClassCandidate =
                     superMethodCandidate.getContainingClass();
