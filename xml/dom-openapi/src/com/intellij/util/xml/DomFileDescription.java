@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -141,6 +142,11 @@ public class DomFileDescription<T> {
 
   public boolean isAutomaticHighlightingEnabled() {
     return true;
+  }
+
+  @Nullable
+  public Icon getFileIcon(int flags) {
+    return null;
   }
 
   /**
