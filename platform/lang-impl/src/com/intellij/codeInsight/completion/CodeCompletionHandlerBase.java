@@ -487,7 +487,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish(true);
-      indicator.getCompletionState().assertDisposed();
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
       indicator.getOffsetMap()
         .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
