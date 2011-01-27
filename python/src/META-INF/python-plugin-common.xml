@@ -339,6 +339,8 @@
 
     <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
 
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
