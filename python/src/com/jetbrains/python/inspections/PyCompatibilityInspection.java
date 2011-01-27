@@ -572,10 +572,21 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(PyAssignmentStatement node) { // PY-2792
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
         if (node.getAssignedValue() instanceof PyConditionalExpression)
           registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+      }
+    }
+
+    @Override
+    public void visitPyTryExceptStatement(PyTryExceptStatement node) { // PY-2795
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+        PyExceptPart[] excepts =  node.getExceptParts();
+        PyFinallyPart finallyPart = node.getFinallyPart();
+        if (excepts.length != 0 && finallyPart != null)
+          registerProblem(node, "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
+                                                  "that code is always executed, or one or more except blocks to catch specific exceptions.");
       }
     }
   }
