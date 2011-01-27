@@ -355,7 +355,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
       element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, EDITOR_QUICK_JAVADOC_FONT_SIZE);
-      element.setAttribute(VALUE_ELEMENT, getQuickDocFontSize().getEnumName());
+      element.setAttribute(VALUE_ELEMENT, getQuickDocFontSize().toString());
       parentNode.addContent(element);
     }
 
