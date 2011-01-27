@@ -71,10 +71,47 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     doTest("__all__ = [a for<caret>", "__all__ = [a for\n" + "           <caret>");
   }
 
+  public void testAlignInListOnceMore() {  // PY-2407
+    doTest("for id in [\"SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"WRITE_SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"IDENTIFIER_UNDER_CARET_ATTRIBUTES\",<caret>]:",
+           "for id in [\"SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"WRITE_SEARCH_RESULT_ATTRIBUTES\", \n" +
+           "           \"IDENTIFIER_UNDER_CARET_ATTRIBUTES\",\n" +
+           "           <caret>]:");
+  }
+
   public void testAlignInDict() {
     doTest("some_call({'aaa': 'v1',<caret>})",
            "some_call({'aaa': 'v1',\n" +
            "           <caret>})");
+  }
+
+  public void testAlignInDictInParams() {  // PY-1947
+    doTest("foobar({<caret>})",
+           "foobar({\n" +
+           "    <caret>\n" +
+           "})");
+  }
+
+  public void testIndentDictMissingValue() {  // PY-1469
+    doTest("some_dict = {\n" +
+           "    'key': <caret>\n" +
+           "}",
+           "some_dict = {\n" +
+           "    'key': \n" +
+           "        <caret>\n" +
+           "}");
+  }
+
+  public void testIndentDictStringValue() {  // PY-1469
+    doTest("some_dict = {\n" +
+           "    'key': <caret>''\n" +
+           "}",
+           "some_dict = {\n" +
+           "    'key': \n" +
+           "        <caret>''\n" +
+           "}");
   }
 
   public void testClass() {
@@ -128,7 +165,7 @@ public class PyIndentTest extends PyLightFixtureTestCase {
   }
 
   public void testEnterInEmptyList() {
-    doTest("[<caret>]", "[\n]");
+    doTest("[<caret>]", "[\n    <caret>\n]");
   }
 
   public void testEnterInEmptyDict() {
@@ -147,6 +184,12 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "    'foo',\n" +
            "    <caret>\n" +
            ")");
+  }
+
+  public void testEnterInNonEmptyArgList() {  // PY-1947
+    doTest("Task(<caret>params=1)",
+           "Task(\n" +
+           "    <caret>params=1)");
   }
 
   public void testIndentAfterComment() {   // PY-641

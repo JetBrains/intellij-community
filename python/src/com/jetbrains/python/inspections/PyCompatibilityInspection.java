@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -20,6 +21,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 
 /**
@@ -38,6 +40,11 @@ public class PyCompatibilityInspection extends PyInspection {
     if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
     myVersionsToProcess = new Vector<LanguageLevel>();
     updateVersionsToProcess();
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   private void updateVersionsToProcess() {
@@ -432,7 +439,10 @@ public class PyCompatibilityInspection extends PyInspection {
       StringBuilder message = new StringBuilder(myCommonMessage);
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        if (!languageLevel.supportsSetLiterals()) {
+        if (languageLevel == LanguageLevel.PYTHON24) {
+          registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+        }
+        else if (!languageLevel.supportsSetLiterals()) {
           final PyWithItem[] items = node.getWithItems();
           if (items.length > 1) {
             for (int j = 1; j < items.length; j++) {
@@ -491,7 +501,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PsiFile file = resolved.getContainingFile();
             if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
               final String name = callee.getText();
-              if (UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+              if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
                 if (hasProblem)
                   message.append(", ");
                 hasProblem = true;
@@ -521,7 +531,7 @@ public class PyCompatibilityInspection extends PyInspection {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)) {
         PsiElement[] arguments = node.getChildren();
         for (PsiElement element : arguments) {
-          if (!(element instanceof PyParenthesizedExpression))
+          if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression)))
             registerProblem(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
         }
       }
@@ -551,6 +561,12 @@ public class PyCompatibilityInspection extends PyInspection {
       StringBuilder message = new StringBuilder(myCommonMessage);
       PyReferenceExpression importSource  = node.getImportSource();
       if (importSource != null) {
+        if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {      //PY-2793
+          PsiElement prev = importSource.getPrevSibling();
+          if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT)
+            registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+        }
+
         String name = importSource.getText();
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
           LanguageLevel languageLevel = myVersionsToProcess.get(i);
@@ -568,6 +584,39 @@ public class PyCompatibilityInspection extends PyInspection {
       else {
         if (myVersionsToProcess.contains(LanguageLevel.PYTHON24))
           registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+      }
+    }
+
+    @Override
+    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+        PyExpression assignedValue = node.getAssignedValue();
+        if (assignedValue instanceof PyConditionalExpression)                        // PY-2792
+          registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+
+        Stack<PsiElement> st = new Stack<PsiElement>();           // PY-2796
+        st.push(assignedValue);
+        while (!st.isEmpty()) {
+          PsiElement el = st.pop();
+          if (el instanceof PyYieldExpression)
+            registerProblem(node, "Python version 2.4 doesn't support this syntax. " +
+                                                      "In Python <= 2.4, yield was a statement; it didn't return any value.");
+          else {
+            for (PsiElement e : el.getChildren())
+              st.push(e);
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyTryExceptStatement(PyTryExceptStatement node) { // PY-2795
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+        PyExceptPart[] excepts =  node.getExceptParts();
+        PyFinallyPart finallyPart = node.getFinallyPart();
+        if (excepts.length != 0 && finallyPart != null)
+          registerProblem(node, "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
+                                                  "that code is always executed, or one or more except blocks to catch specific exceptions.");
       }
     }
   }
