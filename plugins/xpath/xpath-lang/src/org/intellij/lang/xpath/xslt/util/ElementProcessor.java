@@ -29,7 +29,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
 public abstract class ElementProcessor<T extends PsiElement> implements ResolveUtil.XmlProcessor {
-    private boolean myInclude;
+    private int myInclude;
     private boolean myIsCyclic;
 
     protected final T myRoot;
@@ -48,7 +48,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
     protected abstract boolean followImport();
 
     protected boolean isInclude() {
-        return myInclude;
+        return myInclude > 0;
     }
 
     public boolean isCyclic() {
@@ -64,7 +64,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
 
         if (XsltSupport.isVariableOrParam(tag)) {
             processVarOrParam(tag);
-        } else if (XsltSupport.isTemplate(tag)) {
+        } else if (XsltSupport.isTemplate(tag, false)) {
             processTemplate(tag);
         } else if (XsltSupport.isIncludeOrImport(tag)) {
             if (XsltSupport.isImport(tag) && !followImport()) {
@@ -78,8 +78,13 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
             if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
                 processExternalFile(psiFile, tag);
             }
+        } else {
+          processTag(tag);
         }
         return shouldContinue();
+    }
+
+    protected void processTag(XmlTag tag) {
     }
 
     public void processExternalFile(PsiFile psiFile, XmlTag place) {
@@ -89,7 +94,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
         final XmlTag rootTag = document.getRootTag();
         assert rootTag != null;
 
-        myInclude = true;
+        myInclude++;
         try {
             rootTag.processElements(new PsiElementProcessor() {
                 public boolean execute(PsiElement element) {
@@ -100,7 +105,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
                 }
             }, place);
         } finally {
-            myInclude = false;
+            myInclude--;
         }
     }
 }

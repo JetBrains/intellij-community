@@ -61,6 +61,10 @@ public class HgUrl {
     return password;
   }
 
+  public HgUrlScheme getScheme() {
+    return scheme;
+  }
+
   public void setUsername(String username) {
     this.username = username;
   }

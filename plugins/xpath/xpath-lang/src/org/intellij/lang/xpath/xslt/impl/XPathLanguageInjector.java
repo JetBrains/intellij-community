@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -157,9 +158,16 @@ class XPathLanguageInjector implements MultiHostInjector {
         prefix = "";
       }
       if (value.getTextRange().contains(rangeInsideHost.shiftRight(value.getTextRange().getStartOffset()))) {
-        registrar.startInjecting(XPathFileType.XPATH.getLanguage())
-        .addPlace(prefix, "",value, rangeInsideHost)
-        .doneInjecting();
+        final Language language;
+        if (XsltSupport.getXsltLanguageLevel(attribute.getContainingFile()) == XsltChecker.LanguageLevel.V2) {
+          language = XPathFileType.XPATH2.getLanguage();
+        } else {
+          language = XPathFileType.XPATH.getLanguage();
+        }
+
+        registrar.startInjecting(language)
+                .addPlace(prefix, "", value, rangeInsideHost)
+                .doneInjecting();
       }
     }
   }

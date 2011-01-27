@@ -66,7 +66,7 @@ public class HgPushCommand {
     arguments.add(myDestination);
 
     final HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(myProject, myRepo, myDestination, "push", arguments);
-    myProject.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(myProject);
+    myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
     return result;
   }
 

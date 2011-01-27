@@ -15,36 +15,41 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import org.intellij.lang.xpath.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
 import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.XPathElementType;
-import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.XPathElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.lang.ASTNode;
 
 public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPathBinaryExpression {
+    private static final TokenSet BINARY_OPERATIONS = TokenSet.orSet(XPathTokenTypes.BINARY_OPERATIONS,
+          XPath2TokenTypes.COMP_OPS,
+          XPath2TokenTypes.MULT_OPS,
+          TokenSet.create(XPath2TokenTypes.TO, XPath2TokenTypes.INSTANCE, XPath2TokenTypes.EXCEPT, XPath2TokenTypes.INTERSECT, XPath2TokenTypes.UNION));
+
     public XPathBinaryExpressionImpl(ASTNode node) {
         super(node);
     }
 
     @Nullable
     public XPathExpression getLOperand() {
-        final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.EXPRESSIONS);
+        final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
     @Nullable
     public XPathExpression getROperand() {
-        final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.EXPRESSIONS);
+        final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 1 ? nodes[1].getPsi() : null);
     }
 
     @NotNull
     public XPathElementType getOperator() {
-        final ASTNode[] nodes = getNode().getChildren(XPathTokenTypes.BINARY_OPERATIONS);
+        final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
         final XPathElementType elementType = (XPathElementType)(nodes.length > 0 ? nodes[0].getElementType() : null);
         assert elementType != null;
         return elementType;
@@ -53,14 +58,78 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
     @NotNull
     public XPathType getType() {
         final XPathElementType operator = getOperator();
-        if (operator == XPathTokenTypes.UNION) {
+        if (operator == XPathTokenTypes.UNION || XPath2TokenTypes.INTERSECT_EXCEPT.contains(operator)) {
             return XPathType.NODESET;
-        } else if (XPathTokenTypes.BOOLEAN_OPERATIONS.contains(operator)) {
+        } else if (XPath2TokenTypes.BOOLEAN_OPERATIONS.contains(operator)) {
             return XPathType.BOOLEAN;
+        } else if (operator == XPath2TokenTypes.IDIV) {
+            return XPath2Type.INTEGER;
         } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(operator)) {
-            return XPathType.NUMBER;
+          final XPathExpression lop = getLOperand();
+          final XPathExpression rop = getROperand();
+          if (is(lop, XPathType.UNKNOWN) || is(rop, XPathType.UNKNOWN)) {
+            return XPathType.UNKNOWN;
+          }
+          if (operator == XPathTokenTypes.DIV) {
+            if (is(lop, XPath2Type.INTEGER) || is(rop, XPath2Type.INTEGER)) {
+              return XPath2Type.DECIMAL;
+            }
+            return mostSpecificType(lop, rop, XPath2Type.NUMERIC);
+          }
+          if (is(lop, XPath2Type.DATE) && is(rop, XPath2Type.DATE) ) {
+            return XPath2Type.DAYTIMEDURATION;
+          }
+          if (is(lop, XPath2Type.TIME) && is(rop, XPath2Type.TIME) ) {
+            return XPath2Type.DAYTIMEDURATION;
+          }
+          if (sameType(lop, rop)) {
+            assert lop != null;
+            return lop.getType();
+          }
+
+          if (is(lop, XPath2Type.NUMERIC) || is(rop, XPath2Type.NUMERIC) ) {
+            return XPath2Type.NUMERIC;
+          }
+          if (is(lop, XPath2Type.DATETIME) || is(rop, XPath2Type.DATETIME) ) {
+            return XPath2Type.DATETIME;
+          }
+          if (is(lop, XPath2Type.DATE) || is(rop, XPath2Type.DATE) ) {
+            return XPath2Type.DATE;
+          }
+          if (is(lop, XPath2Type.TIME) || is(rop, XPath2Type.TIME) ) {
+            return XPath2Type.TIME;
+          }
+
+          return mostSpecificType(lop, rop, XPathType.NUMBER);
         } else {
             return XPathType.UNKNOWN;
         }
     }
+
+  private static XPathType mostSpecificType(XPathExpression lop, XPathExpression rop, XPathType type) {
+    XPathType lType = lop != null ? lop.getType() : XPathType.UNKNOWN;
+    XPathType rType = rop != null ? rop.getType() : XPathType.UNKNOWN;
+    if (lType.isAbstract()) {
+      if (rType.isAbstract()) {
+        return type;
+      } else {
+        return rType;
+      }
+    } else {
+      if (rType.isAbstract()) {
+        return lType;
+      } else {
+        if (lType.isAssignableFrom(rType)) return rType;
+        return lType;
+      }
+    }
+  }
+
+  private static boolean sameType(XPathExpression lop, XPathExpression rop) {
+    return lop != null && rop != null && is(lop, rop.getType());
+  }
+
+  private static boolean is(XPathExpression op, XPathType type) {
+    return op != null && (type instanceof XPath2Type ? type.isAssignableFrom(op.getType()) : type == op.getType());
+  }
 }

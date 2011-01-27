@@ -17,7 +17,6 @@
 package org.intellij.lang.xpath.xslt.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -29,9 +28,7 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
@@ -177,7 +174,6 @@ public class XsltCodeInsightUtil {
       ContainerUtil.addAll(usages, moreUsages);
 
       // collect all other possible unresolved references with the same name in the current template
-      final Project project = currentUsageTag.getProject();
       usageBlock.accept(new PsiRecursiveElementVisitor() {
         public void visitElement(PsiElement element) {
           if (element instanceof XPathVariableReference) {
@@ -261,4 +257,16 @@ public class XsltCodeInsightUtil {
     public static XmlDocument getDocument(@NotNull XsltElement element) {
         return getDocument(element.getTag());
     }
+
+  @Nullable
+  public static XPathType getDeclaredType(XmlTag element) {
+    final XmlAttribute typeAttr = element.getAttribute("as");
+    final XPathType returnType;
+    if (typeAttr != null) {
+      final String value = typeAttr.getValue();
+      returnType = value != null ? XPath2Type.fromName(QNameUtil.createQName(value, element)) : null;
+      return returnType != null ? returnType : XPathType.UNKNOWN;
+    }
+    return null;
+  }
 }

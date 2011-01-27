@@ -15,11 +15,17 @@
  */
 package org.intellij.lang.xpath.context.functions;
 
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
+
 import javax.xml.namespace.QName;
 import java.util.Map;
 
 public interface FunctionContext {
-    Map<QName, ? extends Function> getFunctions();
+    Map<Pair<QName, Integer>, ? extends Function> getFunctions();
 
     boolean allowsExtensions();
+
+  @Nullable
+  Function resolve(QName name, int argCount);
 }

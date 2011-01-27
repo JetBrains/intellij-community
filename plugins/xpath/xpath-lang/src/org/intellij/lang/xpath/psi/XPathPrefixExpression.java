@@ -15,9 +15,14 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import org.intellij.lang.xpath.XPathElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XPathPrefixExpression extends XPathExpression {
     @Nullable
     XPathExpression getExpression();
+
+    @NotNull
+    XPathElementType getOperator();
 }

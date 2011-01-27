@@ -30,11 +30,7 @@ public class XPathAxisSpecifierImpl extends XPathElementImpl implements XPathAxi
     public Axis getAxis() {
         final ASTNode[] nodes = getNode().getChildren(XPathTokenTypes.AXIS);
         if (nodes.length > 0) {
-            try {
-                return Axis.valueOf(nodes[0].getText().toUpperCase().replace('-', '_'));
-            } catch (IllegalArgumentException e) {
-                return Axis.INVALID;
-            }
+          return Axis.fromName(nodes[0].getText());
         } else if (getNode().findChildByType(XPathTokenTypes.AT) != null) {
             return Axis.ATTRIBUTE;
         } else {

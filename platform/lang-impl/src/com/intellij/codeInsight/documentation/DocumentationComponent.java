@@ -27,14 +27,19 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -48,6 +53,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
@@ -71,7 +78,10 @@ public class DocumentationComponent extends JPanel implements Disposable {
   private boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
+  private JBPopup mySettingsPopup;
   private Style myFontSizeStyle;
+  private JSlider myFontSizeSlider;
+  private boolean myIgnoreFontSizeSliderChange;
 
   private static class Context {
     final SmartPsiElementPointer element;
@@ -179,6 +189,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
         scheme.setQuickDocFontSize(newFontSize);
         applyFontSize();
+        setFontSizeSliderSize(newFontSize);
       }
     };
     myScrollPane.setBorder(null);
@@ -243,6 +254,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
     myControlPanel.add(dummyPanel, BorderLayout.CENTER);
+    myControlPanel.add(createSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     final HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -275,6 +287,76 @@ public class DocumentationComponent extends JPanel implements Disposable {
     this(manager, null);
   }
 
+  private JComponent createSettingsButton() {
+    String tooltipText = ApplicationBundle.message("quickdoc.tooltip.font.size.by.wheel");
+    final JPanel fontSizePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    fontSizePanel.add(new JLabel(ApplicationBundle.message("label.font.size")));
+    myFontSizeSlider = new JSlider(JSlider.HORIZONTAL, 0, FontSize.values().length - 1, 3);
+    myFontSizeSlider.setMinorTickSpacing(1);
+    myFontSizeSlider.setPaintTicks(true);
+    myFontSizeSlider.setSnapToTicks(true);
+    fontSizePanel.add(myFontSizeSlider);
+
+    myFontSizeSlider.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        if (myIgnoreFontSizeSliderChange) {
+          return;
+        }
+        EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+        EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+        scheme.setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
+        applyFontSize();
+      }
+    });
+    Presentation presentation = new Presentation();
+    presentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
+    final Ref<JComponent> ref = new Ref<JComponent>();
+    ActionButton result = new ActionButton(
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+          EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+          setFontSizeSliderSize(scheme.getQuickDocFontSize());
+          mySettingsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(fontSizePanel, DocumentationComponent.this)
+            .setFocusable(false).setBelongsToGlobalPopupStack(false).setCancelCallback(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                mySettingsPopup = null;
+                return true;
+              }
+            }).createPopup();
+          mySettingsPopup.showUnderneathOf(ref.get());
+        }
+      },
+      presentation,
+      ActionPlaces.JAVADOC_INPLACE_SETTINGS,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+    );
+    ref.set(result);
+    
+    fontSizePanel.setToolTipText(tooltipText);
+    myFontSizeSlider.setToolTipText(tooltipText);
+    return result;
+  }
+  
+  private void setFontSizeSliderSize(FontSize fontSize) {
+    myIgnoreFontSizeSliderChange = true;
+    try {
+      FontSize[] sizes = FontSize.values();
+      for (int i = 0; i < sizes.length; i++) {
+        if (fontSize == sizes[i]) {
+          myFontSizeSlider.setValue(i);
+          break;
+        }
+      }
+    }
+    finally {
+      myIgnoreFontSizeSliderChange = false;
+    }
+  }
+  
   public synchronized boolean isEmpty() {
     return myIsEmpty;
   }
@@ -612,6 +694,10 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myManager = null;
     myHint = null;
     myNavigateCallback = null;
+    
+    if (mySettingsPopup != null) {
+      Disposer.dispose(mySettingsPopup);
+      mySettingsPopup = null;
+    }
   }
-
 }

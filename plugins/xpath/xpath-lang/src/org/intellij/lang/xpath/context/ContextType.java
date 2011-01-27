@@ -17,23 +17,27 @@ package org.intellij.lang.xpath.context;
 
 import org.intellij.lang.xpath.XPathFile;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public final class ContextType {
     private static final Map<String, ContextType> ourRegistry = new HashMap<String, ContextType>();
 
-    public static final ContextType PLAIN = lookupOrCreate("PLAIN");
+    public static final ContextType PLAIN = lookupOrCreate("PLAIN", XPathVersion.V1);
+    public static final ContextType PLAIN_V2 = lookupOrCreate("PLAIN_V2", XPathVersion.V2);
 
     /** @deprecated left here for compatibility with IntelliLang */
     public static final ContextType INTERACTIVE = lookupOrCreate("INTERACTIVE");
 
     private final String myName;
+    private final XPathVersion myVersion;
 
-    private ContextType(String name) {
+    public ContextType(String name, XPathVersion version) {
         assert !ourRegistry.containsKey(name);
-        myName = name;
         ourRegistry.put(name, this);
+
+        myName = name;
+        myVersion = version;
     }
 
     public static synchronized ContextType valueOf(String name) {
@@ -42,12 +46,20 @@ public final class ContextType {
         return t;
     }
 
+    public static synchronized ContextType lookupOrCreate(String name, XPathVersion version) {
+      return ourRegistry.containsKey(name) ? ourRegistry.get(name) : new ContextType(name, version);
+    }
+
     public static synchronized ContextType lookupOrCreate(String name) {
-        return ourRegistry.containsKey(name) ? ourRegistry.get(name) : new ContextType(name);
+        return ourRegistry.containsKey(name) ? ourRegistry.get(name) : new ContextType(name, XPathVersion.V1);
     }
 
     public static ContextType fromFile(XPathFile file){
         return ContextProvider.getContextProvider(file).getContextType();
+    }
+
+    public XPathVersion getVersion() {
+      return myVersion;
     }
 
     public boolean equals(Object o) {

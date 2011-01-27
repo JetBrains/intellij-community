@@ -15,29 +15,32 @@
  */
 package org.intellij.lang.xpath.psi;
 
+@SuppressWarnings({"UnusedDeclaration"})
 public enum Axis {
-    ANCESTOR("ancestor"),
-    ANCESTOR_OR_SELF("ancestor_or_self"),
-    ATTRIBUTE("attribute"),
-    CHILD("child"),
-    DESCENDANT("descendant"),
-    DESCENDANT_OR_SELF("descendant_or_self"),
-    FOLLOWING("following"),
-    FOLLOWING_SIBLING("following_sibling"),
-    NAMESPACE("namespace"),
-    PARENT("parent"),
-    PRECEDING("preceding"),
-    PRECEDING_SIBLING("preceding_sibling"),
-    SELF("self"),
-    INVALID("invalid");
-
-    private final String name;
-
-    Axis(String name) {
-        this.name = name;
-    }
+    ANCESTOR,
+    ANCESTOR_OR_SELF,
+    ATTRIBUTE,
+    CHILD,
+    DESCENDANT,
+    DESCENDANT_OR_SELF,
+    FOLLOWING,
+    FOLLOWING_SIBLING,
+    NAMESPACE,
+    PARENT,
+    PRECEDING,
+    PRECEDING_SIBLING,
+    SELF,
+    INVALID;
 
     public String getName() {
-        return name;
+        return name().toLowerCase().replace('_', '-');
+    }
+
+    public static Axis fromName(String name) {
+      try {
+        return valueOf(name.toUpperCase().replace('-', '_'));
+      } catch (IllegalArgumentException e) {
+        return INVALID;
+      }
     }
 }

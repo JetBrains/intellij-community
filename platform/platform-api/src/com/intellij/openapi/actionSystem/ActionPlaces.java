@@ -76,6 +76,7 @@ public abstract class ActionPlaces {
   //todo: probably these context should be splitted into several contexts
   public static final String CODE_INSPECTION = "CodeInspection";
   public static final String JAVADOC_TOOLBAR = "JavadocToolbar";
+  public static final String JAVADOC_INPLACE_SETTINGS = "JavadocInplaceSettings";
   public static final String FILEHISTORY_VIEW_TOOLBAR = "FileHistoryViewToolbar";
   public static final String UPDATE_POPUP = "UpdatePopup";
   public static final String COMBO_PAGER = "ComboBoxPager";

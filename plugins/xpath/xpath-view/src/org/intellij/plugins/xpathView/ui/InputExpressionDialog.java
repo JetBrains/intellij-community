@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
@@ -127,11 +128,11 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         });
 
         myComboboxEditor = new EditorTextField(myDocument, project, XPathFileType.XPATH);
-        myComboBox.setRenderer(new DefaultListCellRenderer() {
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                value = ((HistoryElement)value).expression;
-                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            }
+        myComboBox.setRenderer(new ListCellRendererWrapper<HistoryElement>(myComboBox) {
+          @Override
+          public void customize(JList list, HistoryElement value, int index, boolean selected, boolean hasFocus) {
+            setText(value.expression);
+          }
         });
         myComboBox.setModel(myModel);
 

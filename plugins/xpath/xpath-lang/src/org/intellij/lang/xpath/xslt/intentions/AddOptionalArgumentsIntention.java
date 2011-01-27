@@ -74,7 +74,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
         return params.size() > 0 && isAvailableAt(element, tag, offset);
     }
 
-    protected boolean isAvailableAt(PsiElement element, XmlTag tag, int offset) {
+    protected static boolean isAvailableAt(PsiElement element, XmlTag tag, int offset) {
         final ASTNode node = tag.getNode();
         if (node != null) {
             final ASTNode child = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);

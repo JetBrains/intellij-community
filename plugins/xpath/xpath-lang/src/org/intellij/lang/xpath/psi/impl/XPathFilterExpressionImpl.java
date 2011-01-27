@@ -17,11 +17,9 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathFilterExpression;
-import org.intellij.lang.xpath.psi.XPathPredicate;
-import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +36,16 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
 
     @Nullable
     public XPathExpression getExpression() {
-        final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.EXPRESSIONS);
-        return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
+      final XPathExpression expression = findChildByClass(XPathExpression.class);
+      if (expression != null) {
+        return expression;
+      } else {
+        final XPathNodeTest nt = findChildByClass(XPathNodeTest.class);
+        if (nt == null) return null;
+        final ASTNode node = nt.getNode().findChildByType(XPath2ElementTypes.EXPRESSIONS);
+        return node != null ? node.getPsi(XPathExpression.class) : null;
+      }
+//        return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
     @NotNull

@@ -15,14 +15,15 @@
  */
 package org.intellij.lang.xpath.context;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import org.intellij.lang.xpath.XPathFile;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
-import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionContext;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
@@ -39,7 +40,7 @@ public abstract class ContextProvider {
      */
     private static final Key<ContextProvider> KEY = Key.create("CONTEXT_PROVIDER");
 
-    private DefaultFunctionContext myFunctionContext;
+    private volatile FunctionContext myFunctionContext;
 
     protected ContextProvider() {
     }
@@ -57,11 +58,16 @@ public abstract class ContextProvider {
     public abstract VariableContext getVariableContext();
 
     @NotNull
-    public synchronized FunctionContext getFunctionContext() {
-        if (myFunctionContext == null) {
-            myFunctionContext = DefaultFunctionContext.getInstance(getContextType());
-        }
-        return myFunctionContext;
+    public FunctionContext getFunctionContext() {
+      FunctionContext context = myFunctionContext;
+      if (context == null) {
+        context = createFunctionContext();
+      }
+      return (myFunctionContext = context);
+    }
+
+    protected FunctionContext createFunctionContext() {
+      return DefaultFunctionContext.getInstance(getContextType());
     }
 
     @NotNull
@@ -122,7 +128,7 @@ public abstract class ContextProvider {
                 return instance;
             }
         }
-        return new DefaultProvider(PsiTreeUtil.getContextOfType(psiFile, XmlElement.class, true));
+        return new DefaultProvider(PsiTreeUtil.getContextOfType(psiFile, XmlElement.class, true), psiFile.getLanguage());
     }
 
     @SuppressWarnings({ "ClassReferencesSubclass" })
@@ -133,14 +139,6 @@ public abstract class ContextProvider {
                         (PsiFile)element :
                         element.getContainingFile()) :
                 new DefaultProvider(PsiTreeUtil.getParentOfType(element, XmlElement.class, false));
-    }
-
-    @NotNull
-    public XPathType getFunctionType(XPathFunctionCall call) {
-        final XPathFunction f = call.resolve();
-        if (f == null) return XPathType.UNKNOWN;
-        final Function function = f.getDeclaration();
-        return function != null ? function.returnType : XPathType.UNKNOWN;
     }
 
     public PsiFile[] getRelatedFiles(XPathFile file) {
@@ -179,14 +177,21 @@ public abstract class ContextProvider {
 
     static class DefaultProvider extends ContextProvider {
         private final XmlElement myContextElement;
+        private final ContextType myContextType;
 
         DefaultProvider(XmlElement contextElement) {
             myContextElement = contextElement;
+            myContextType = ContextType.PLAIN;
+        }
+
+        public DefaultProvider(XmlElement element, Language language) {
+          myContextElement = element;
+          myContextType = language == XPathFileType.XPATH2.getLanguage() ? ContextType.PLAIN_V2 : ContextType.PLAIN;
         }
 
         @NotNull
         public ContextType getContextType() {
-            return ContextType.PLAIN;
+            return myContextType;
         }
 
         @Nullable

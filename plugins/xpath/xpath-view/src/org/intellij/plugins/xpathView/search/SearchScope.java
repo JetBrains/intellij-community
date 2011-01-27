@@ -168,15 +168,16 @@ public class SearchScope implements JDOMExternalizable {
         final String moduleName = getModuleName();
 
         switch (getScopeType()) {
-            case MODULE:
-                return moduleName != null && moduleName.length() > 0;
-            case DIRECTORY:
-                return dirName != null && dirName.length() > 0 && findFile(dirName) != null;
-            case CUSTOM:
-                return myCustomScope != null;
-        }
-
-        return true;
+          case MODULE:
+            return moduleName != null && moduleName.length() > 0;
+          case DIRECTORY:
+            return dirName != null && dirName.length() > 0 && findFile(dirName) != null;
+          case CUSTOM:
+            return myCustomScope != null;
+          case PROJECT:
+            return true;
+      }
+      return false;
     }
 
 

@@ -29,7 +29,11 @@ public interface XPathStep extends XPathExpression {
     XPathPredicate[] getPredicates();
 
     @Nullable
-    XPathExpression getStepExpression();
+    XPathExpression getPreviousStep();
+
+    /** only available with XPath 2.0 PSI */
+    @Nullable
+    XPathExpression getStep();
 
     boolean isAbsolute();
 }

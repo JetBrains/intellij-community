@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,11 +33,9 @@ public enum FontSize {
   
   XX_SMALL(8), X_SMALL(10), SMALL(12), MEDIUM(14), LARGE(18), X_LARGE(24), XX_LARGE(36);
 
-  private final String myName;
   private final int    mySize;
   
   FontSize(int size) {
-    myName = ApplicationBundle.message("font.size." + StringUtil.toLowerCase(name().replace("_", "")));
     mySize = size;
   }
 
@@ -63,14 +59,5 @@ public enum FontSize {
   public FontSize smaller() {
     int i = ordinal();
     return i > 0 ? values()[i - 1] : this;
-  }
-  
-  public String getEnumName() {
-    return super.toString();
-  }
-  
-  @Override
-  public String toString() {
-    return myName;
   }
 }

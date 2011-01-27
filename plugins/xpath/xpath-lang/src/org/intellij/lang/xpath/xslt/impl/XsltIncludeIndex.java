@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 */
 public class XsltIncludeIndex {
 
+  private XsltIncludeIndex() {
+  }
 
   public static boolean isReachableFrom(XmlFile which, XmlFile from) {
         return from == which || _isReachableFrom(from.getVirtualFile(), FileIncludeManager.getManager(which.getProject()).getIncludingFiles(which.getVirtualFile(), true));

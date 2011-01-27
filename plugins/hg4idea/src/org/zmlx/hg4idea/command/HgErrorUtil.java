@@ -29,7 +29,10 @@ public final class HgErrorUtil {
     return StringUtils.isNotBlank(line) && StringUtils.contains(line, "abort:");
   }
 
-  static boolean isAuthorizationRequiredAbort(HgCommandResult result) {
+  static boolean isAuthorizationError(HgCommandResult result) {
+    if (result == null) {
+      return true;
+    }
     String line = getLastErrorLine(result);
     return StringUtils.isNotBlank(line) && (
       StringUtils.contains(line, "authorization required")

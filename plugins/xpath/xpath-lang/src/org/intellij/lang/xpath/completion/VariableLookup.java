@@ -27,8 +27,8 @@ public class VariableLookup extends AbstractLookup implements Lookup, Iconable, 
     private final Icon myIcon;
     private final PsiElement myPsiElement;
 
-    public VariableLookup(String name, String type, Icon icon) {
-        this(name, type, icon, null);
+    public VariableLookup(String name, Icon icon) {
+        this(name, "", icon, null);
     }
 
     public VariableLookup(String name, String type, Icon icon, PsiElement psiElement) {

@@ -342,7 +342,7 @@ class AssociationsEditor {
             super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
         }
 
-        private class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
+        private static class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
             private final PsiFileNode myNode;
 
             public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {

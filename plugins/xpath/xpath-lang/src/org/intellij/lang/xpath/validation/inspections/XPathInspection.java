@@ -16,13 +16,13 @@
 package org.intellij.lang.xpath.validation.inspections;
 
 import com.intellij.codeInspection.*;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -43,11 +43,6 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
         return ContextProvider.getContextProvider(e != null ? e : element).getQuickFixFactory().getSuppressActions(this);
     }
 
-    @Nullable
-    public SuppressIntentionAction[] getSuppressActions() {
-        return new SuppressIntentionAction[0];
-    }
-
     public boolean isSuppressedFor(PsiElement element) {
         return ContextProvider.getContextProvider(element.getContainingFile()).getQuickFixFactory().isSuppressedFor(element, this);
     }
@@ -56,7 +51,9 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
 
     @Nullable
     public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-        if (file.getLanguage() != XPathFileType.XPATH.getLanguage()) return null;
+        final Language language = file.getLanguage();
+        if (!acceptsLanguage(language)) return null;
+
         final Visitor visitor = createVisitor(manager, isOnTheFly);
 
         file.accept(visitor);
@@ -64,7 +61,9 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
         return visitor.getProblems();
     }
 
-    protected static abstract class Visitor extends PsiRecursiveElementVisitor {
+  protected abstract boolean acceptsLanguage(Language language);
+
+  protected static abstract class Visitor extends PsiRecursiveElementVisitor {
         protected final InspectionManager myManager;
       protected boolean myOnTheFly;
       private SmartList<ProblemDescriptor> myProblems;

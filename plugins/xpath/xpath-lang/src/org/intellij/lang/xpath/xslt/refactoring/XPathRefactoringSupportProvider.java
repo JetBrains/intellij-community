@@ -64,6 +64,11 @@ public class XPathRefactoringSupportProvider extends RefactoringSupportProvider 
   }
 
   @Override
+  public RefactoringActionHandler getExtractMethodHandler() {
+    return new XsltExtractFunctionAction();
+  }
+
+  @Override
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof XPathVariable ||
             element instanceof XsltTemplate;

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 
 class FileTypeFunction extends BasicFileInfoFunction {
     public FileTypeFunction() {
-        super(XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
+        super("file-type", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
     protected String extractInfo(PsiFile psiFile) {

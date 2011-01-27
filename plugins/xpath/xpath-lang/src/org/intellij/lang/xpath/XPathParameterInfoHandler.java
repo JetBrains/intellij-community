@@ -96,12 +96,13 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
     public void updateUI(XPathFunction function, ParameterInfoUIContext context) {
         final Function declaration = function.getDeclaration();
         if (declaration != null) {
-            if (declaration.parameters.length > 0) {
-                final String signature = declaration.buildSignature("");
-                final String hint = signature.substring(1, signature.length() - 1);
+            if (declaration.getParameters().length > 0) {
+                final String signature = declaration.buildSignature();
+                final int length = declaration.getName().length();
+                final String hint = signature.substring(length + 1, signature.length() - 1);
                 final int currentParameterIndex = context.getCurrentParameterIndex();
 
-                if (currentParameterIndex < 0 || currentParameterIndex >= declaration.parameters.length) {
+                if (currentParameterIndex < 0 || currentParameterIndex >= declaration.getParameters().length) {
                     context.setupUIComponentPresentation(hint, -1, -1,
                             false, false, false, context.getDefaultParameterColor());
                 } else {

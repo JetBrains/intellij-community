@@ -15,23 +15,25 @@
  */
 package org.intellij.lang.xpath;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XPathFileType extends LanguageFileType {
+public final class XPathFileType extends LanguageFileType {
 
-    public static final XPathFileType XPATH = new XPathFileType();
+    public static final XPathFileType XPATH = new XPathFileType(new XPathLanguage());
+    public static final XPathFileType XPATH2 = new XPathFileType(new XPath2Language());
 
-    private XPathFileType() {
-        super(new XPathLanguage());
+    private XPathFileType(Language language) {
+        super(language);
     }
 
     @NotNull
     public String getName() {
-        return "XPath";
+        return getLanguage().getID();
     }
 
     @NotNull
@@ -41,7 +43,7 @@ public class XPathFileType extends LanguageFileType {
 
     @NotNull
     public String getDefaultExtension() {
-        return "xpath";
+        return getLanguage().getID().toLowerCase();
     }
 
     public Icon getIcon() {

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
@@ -80,11 +81,12 @@ public class XsltLanguage extends Language {
             }
             if (element instanceof XPathVariable) return "variable";
             if (element instanceof XsltTemplate) return "template";
+            if (element instanceof XPathFunction) return "function";
             if (element instanceof ImplicitModeElement) return "mode";
             return "";
         }
 
-        private String getParameterType(XsltParameter myTarget) {
+        private static String getParameterType(XsltParameter myTarget) {
             final XmlTag parentTag = PsiTreeUtil.getParentOfType(myTarget.getNavigationElement(), XmlTag.class);
             if (parentTag != null) {
                 if (XsltSupport.isXsltRootTag(parentTag)) {

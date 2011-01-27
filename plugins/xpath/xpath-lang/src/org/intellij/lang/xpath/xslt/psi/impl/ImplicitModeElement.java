@@ -3,7 +3,6 @@
  */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
-import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -20,12 +19,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
+import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
@@ -56,7 +55,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
     @Nullable
     private String getPrefix() {
-        return hasPrefix() ? getPrefixRange(myAttribute).substring(myAttribute.getValue()) : null;
+        return hasPrefix() ? PrefixReference.getPrefixRange(myAttribute).substring(myAttribute.getValue()) : null;
     }
 
     @Override
@@ -118,12 +117,6 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
     public boolean isValid() {
         return myAttribute.isValid();
-    }
-
-    @Override
-    @NotNull
-    public Language getLanguage() {
-        return XsltLanguage.INSTANCE;
     }
 
     @Override
@@ -228,16 +221,6 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     @Override
     public PsiFile getContainingFile() {
         return myAttribute.getContainingFile();
-    }
-
-    public static TextRange getPrefixRange(XmlAttribute attribute) {
-        final String value = attribute.getValue();
-        final int p = value.indexOf(':');
-        if (p == -1) {
-            return TextRange.from(0, 0);
-        } else {
-            return TextRange.from(0, p);
-        }
     }
 
     public TextRange getModeRange() {
