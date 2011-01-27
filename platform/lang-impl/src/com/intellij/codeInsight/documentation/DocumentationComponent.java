@@ -401,7 +401,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
-    styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, true);
+    styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
   }
   
   private void goBack() {
