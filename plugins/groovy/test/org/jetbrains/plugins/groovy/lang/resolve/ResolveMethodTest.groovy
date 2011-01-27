@@ -636,4 +636,8 @@ class Zoo {
   public void testResolveCategories() {
     assertNotNull resolve("A.groovy")
   }
+
+  public void testResolveValuesOnEnum() {
+    assertNotNull resolve("A.groovy")
+  }
 }

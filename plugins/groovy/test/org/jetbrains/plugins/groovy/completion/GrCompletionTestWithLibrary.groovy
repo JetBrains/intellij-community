@@ -99,4 +99,15 @@ def foo(def... args) {
 }"""
   }
 
+  public void testBoxForinParams() {
+    myFixture.configureByText "A.groovy", """
+for (def ch: "abc".toCharArray()) {
+  print ch.toUpperCa<caret>
+}"""
+    myFixture.completeBasic()
+    myFixture.checkResult """
+for (def ch: "abc".toCharArray()) {
+  print ch.toUpperCase()
+}"""
+  }
 }
