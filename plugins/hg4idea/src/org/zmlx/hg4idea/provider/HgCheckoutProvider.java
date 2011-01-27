@@ -130,7 +130,17 @@ public class HgCheckoutProvider implements CheckoutProvider {
             parseLine = parseLine.substring(eqIdx+1).trim();  // getting value of paths.default
             try {
               final URI uri = new URI(parseLine);
-              final String urlWithoutAuthData = uri.toString().replace(uri.getUserInfo() + "@", "");
+              final String userInfo = uri.getUserInfo();
+              if (userInfo == null) { // no user info => OK
+                writer.println(line);
+                continue;
+              }
+              int colonIdx = userInfo.indexOf(':');
+              if (colonIdx == -1) {  // no password given => OK
+                writer.println(line);
+                continue;
+              }
+              final String urlWithoutAuthData = uri.toString().replace(userInfo, userInfo.substring(0, colonIdx)); // remove password, leave username
               writer.println("default = " + urlWithoutAuthData);
             } catch (Throwable t) { // not URI => no sensitive data
               writer.println(line);
