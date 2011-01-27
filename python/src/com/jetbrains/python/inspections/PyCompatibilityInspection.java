@@ -20,9 +20,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
 /**
  * User: catherine
@@ -33,12 +34,12 @@ public class PyCompatibilityInspection extends PyInspection {
   public String fromVersion = LanguageLevel.PYTHON24.toString();
   public String toVersion = LanguageLevel.PYTHON27.toString();
 
-  private Vector<LanguageLevel> myVersionsToProcess;
+  private List<LanguageLevel> myVersionsToProcess;
 
   public PyCompatibilityInspection () {
     super();
     if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
-    myVersionsToProcess = new Vector<LanguageLevel>();
+    myVersionsToProcess = new ArrayList<LanguageLevel>();
     updateVersionsToProcess();
   }
 
@@ -112,10 +113,10 @@ public class PyCompatibilityInspection extends PyInspection {
 
 
   private static class Visitor extends PyInspectionVisitor {
-    Vector<LanguageLevel> myVersionsToProcess;
+    List<LanguageLevel> myVersionsToProcess;
     private String myCommonMessage = "Python versions ";
 
-    public Visitor(final ProblemsHolder holder, Vector<LanguageLevel> versionsToProcess) {
+    public Visitor(final ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(holder);
       myVersionsToProcess = versionsToProcess;
     }
