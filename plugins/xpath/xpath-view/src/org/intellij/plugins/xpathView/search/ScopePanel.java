@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.search;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
@@ -91,16 +91,14 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScope.setSelected(scope.getScopeType() == SearchScope.ScopeType.CUSTOM);
 
         myModuleSelection.setModel(createModel(ModuleManager.getInstance(myProject).getModules()));
-        myModuleSelection.setRenderer(new DefaultListCellRenderer() {
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                final JLabel l = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value != null) {
-                    final Module m = ((Module)value);
-                    l.setIcon(m.getModuleType().getNodeIcon(true));
-                    l.setText(m.getName());
-                }
-                return l;
+        myModuleSelection.setRenderer(new ListCellRendererWrapper<Module>(myModuleSelection) {
+          @Override
+          public void customize(JList list, Module m, int index, boolean selected, boolean hasFocus) {
+            if (m != null) {
+              setIcon(m.getModuleType().getNodeIcon(true));
+              setText(m.getName());
             }
+          }
         });
 
         Module m;
@@ -131,7 +129,7 @@ public class ScopePanel extends JPanel implements Disposable{
         myRecursive.setSelected(scope.isRecursive());
     }
 
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
     private static ComboBoxModel createModel(Object[] elements) {
         return new DefaultComboBoxModel(new Vector(Arrays.asList(elements)));
     }
