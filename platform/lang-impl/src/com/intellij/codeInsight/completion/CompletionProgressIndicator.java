@@ -288,7 +288,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           contentComponent.removeKeyListener(this);
-          if (CompletionServiceImpl.isPhase(CompletionPhase.ZombiePhase.class)) {
+          final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+          if (phase instanceof CompletionPhase.BgCalculation) {
+            ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
+          } else if (phase instanceof CompletionPhase.ZombiePhase) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
