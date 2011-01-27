@@ -600,7 +600,7 @@ public class PyCompatibilityInspection extends PyInspection {
           PsiElement el = st.pop();
           if (el instanceof PyYieldExpression)
             registerProblem(node, "Python version 2.4 doesn't support this syntax. " +
-                                                      "In Python <= 2.4, yield was a statement; it didn’t return any value.");
+                                                      "In Python <= 2.4, yield was a statement; it didn't return any value.");
           else {
             for (PsiElement e : el.getChildren())
               st.push(e);
