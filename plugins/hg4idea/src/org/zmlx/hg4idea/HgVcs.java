@@ -72,11 +72,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> BRANCH_TOPIC =
     new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
 
-  public static final Topic<HgUpdater> INCOMING_TOPIC =
-    new Topic<HgUpdater>("hg4idea.incoming", HgUpdater.class);
-
-  public static final Topic<HgUpdater> OUTGOING_TOPIC =
-    new Topic<HgUpdater>("hg4idea.outgoing", HgUpdater.class);
+  public static final Topic<HgUpdater> REMOTE_TOPIC =
+    new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
 
   private static final Icon INCOMING_ICON = IconLoader.getIcon("/actions/moveDown.png");
   private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
@@ -97,8 +94,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
   private final HgCurrentBranchStatus hgCurrentBranchStatus = new HgCurrentBranchStatus();
-  private final HgChangesetStatus incomingChangesStatus = new HgChangesetStatus(INCOMING_ICON);
-  private final HgChangesetStatus outgoingChangesStatus = new HgChangesetStatus(OUTGOING_ICON);
+  private final HgChangesetStatus incomingChangesStatus = new HgChangesetStatus(INCOMING_ICON, "Incoming");
+  private final HgChangesetStatus outgoingChangesStatus = new HgChangesetStatus(OUTGOING_ICON, "Outgoing");
   private MessageBusConnection messageBusConnection;
   private ScheduledFuture<?> changesUpdaterScheduledFuture;
   private final HgGlobalSettings globalSettings;
@@ -255,19 +252,16 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // updaters and listeners
-    final HgIncomingStatusUpdater incomingUpdater = new HgIncomingStatusUpdater(incomingChangesStatus, projectSettings);
-    final HgOutgoingStatusUpdater outgoingUpdater = new HgOutgoingStatusUpdater(outgoingChangesStatus, projectSettings);
+    final HgRemoteStatusUpdater remoteUpdater = new HgRemoteStatusUpdater(incomingChangesStatus, outgoingChangesStatus, projectSettings);
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
       new Runnable() {
         public void run() {
-          incomingUpdater.update(myProject);
-          outgoingUpdater.update(myProject);
+          remoteUpdater.update(myProject);
         }
       }, 0, HgGlobalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
 
     messageBusConnection = myProject.getMessageBus().connect();
-    messageBusConnection.subscribe(INCOMING_TOPIC, incomingUpdater);
-    messageBusConnection.subscribe(OUTGOING_TOPIC, outgoingUpdater);
+    messageBusConnection.subscribe(REMOTE_TOPIC, remoteUpdater);
     messageBusConnection.subscribe(BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus));
     messageBusConnection.subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
