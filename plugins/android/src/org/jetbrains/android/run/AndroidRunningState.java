@@ -415,20 +415,28 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
         }
         ClientData data = client.getClientData();
-        String description = data.getClientDescription();
-        if (description != null && description.equals(myTargetPackageName)) {
+        if (myDebugLauncher != null && isToLaunchDebug(data)) {
           launchDebug(client);
         }
       }
     }
   }
 
-  private void launchDebug(Client client) {
-    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
-      String port = Integer.toString(client.getDebuggerListenPort());
-      myDebugLauncher.launchDebug(client.getDevice(), port);
-      myDebugLauncher = null;
+  private boolean isToLaunchDebug(@NotNull ClientData data) {
+    if (data.getDebuggerConnectionStatus() == ClientData.DebuggerStatus.WAITING) {
+      return true;
     }
+    String description = data.getClientDescription();
+    if (description == null) {
+      return false;
+    }
+    return description.equals(myTargetPackageName) && myApplicationLauncher.isReadyForDebugging(data, getProcessHandler());
+  }
+
+  private void launchDebug(Client client) {
+    String port = Integer.toString(client.getDebuggerListenPort());
+    myDebugLauncher.launchDebug(client.getDevice(), port);
+    myDebugLauncher = null;
   }
 
   private Boolean isMyCompatibleDevice(@NotNull IDevice device) {
@@ -580,7 +588,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
-        if (client != null) {
+        if (client != null &&
+            myDebugLauncher != null &&
+            myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
           launchDebug(client);
         }
       }
