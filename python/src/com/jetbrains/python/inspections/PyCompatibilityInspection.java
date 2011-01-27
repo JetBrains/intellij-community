@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 
 /**
@@ -572,10 +573,24 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) { // PY-2792
+    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
-        if (node.getAssignedValue() instanceof PyConditionalExpression)
+        PyExpression assignedValue = node.getAssignedValue();
+        if (assignedValue instanceof PyConditionalExpression)                        // PY-2792
           registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+
+        Stack<PsiElement> st = new Stack<PsiElement>();           // PY-2796
+        st.push(assignedValue);
+        while (!st.isEmpty()) {
+          PsiElement el = st.pop();
+          if (el instanceof PyYieldExpression)
+            registerProblem(node, "Python version 2.4 doesn't support this syntax." +
+                                                      "In Python <= 2.4, yield was a statement; it didn’t return any value.");
+          else {
+            for (PsiElement e : el.getChildren())
+              st.push(e);
+          }
+        }
       }
     }
 
