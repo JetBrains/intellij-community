@@ -15,75 +15,166 @@
  */
 package org.intellij.lang.xpath.xslt.validation;
 
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.quickfix.RenameVariableFix;
-import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
+import gnu.trove.THashMap;
 import org.intellij.lang.xpath.xslt.util.ElementProcessor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 // TODO: include/import semantics are not 100% correct currently
-public final class DeclarationChecker extends ElementProcessor<XmlTag> {
-    boolean myContinue = true;
-    private final boolean myVar;
-    private final String myValue;
-    private final PsiElement myToken;
-    private final ProblemsHolder myProblemsHolder;
-    private final boolean myOnTheFly;
+public final class DeclarationChecker extends ElementProcessor<XmlTag> implements PsiElementProcessor<PsiElement> {
 
-    public DeclarationChecker(boolean var, XmlTag tag, String value, ProblemsHolder problemsHolder, boolean onTheFly) {
-        super(tag);
-        myVar = var;
-        myValue = value;
-        myProblemsHolder = problemsHolder;
-        myOnTheFly = onTheFly;
-        final XmlAttribute attribute = tag.getAttribute("name", null);
-        assert attribute != null;
-        myToken = XsltSupport.getAttValueToken(attribute);
-    }
-
-    protected boolean followImport() {
-        return false;
-    }
-
-    protected void processTemplate(XmlTag tag) {
-        if (!myVar) {
-            processTag(tag);
-        }
-    }
-
-    protected void processVarOrParam(XmlTag tag) {
-        if (myVar) {
-            processTag(tag);
-        }
-    }
-
-    protected boolean shouldContinue() {
-        return myContinue;
-    }
-
-    private void processTag(XmlTag t) {
-        if (t != myRoot) {
-            if (myValue.equals(t.getAttributeValue("name"))) {
-                if (t.getParent() == myRoot.getParent() || !myVar || isInclude()) {
-                    myProblemsHolder.registerProblem(myToken, "Duplicate declaration");
-                } else {
-                    final String innerKind = XsltSupport.isParam(myRoot) ? "Parameter" : "Variable";
-                    final String outerKind = XsltSupport.isParam(t) ? "parameter" : "variable";
-
-                    final LocalQuickFix fix1 = new RenameVariableFix(myRoot, "local").createQuickFix(myOnTheFly);
-                    final LocalQuickFix fix2 = new RenameVariableFix(t, "outer").createQuickFix(myOnTheFly);
-
-                    myProblemsHolder.registerProblem(myToken,
-                            innerKind + " '" + myValue + "' shadows " + outerKind + " in outer scope",
-                            AbstractFix.createFixes(fix1, fix2));
+  private final static UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void> CACHE =
+          new UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void>("CACHE") {
+            protected CachedValue<DeclarationChecker> compute(final XmlFile file, final Void p) {
+              return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<DeclarationChecker>() {
+                @Override
+                public CachedValueProvider.Result<DeclarationChecker> compute() {
+                  final DeclarationChecker holder = new DeclarationChecker(file);
+                  holder.check(file);
+                  return CachedValueProvider.Result.create(holder, file);
                 }
-                myContinue = false;
+              }, false);
             }
-        }
+          };
+
+  private final Map<XmlTag, XmlTag> myDuplications = new HashMap<XmlTag, XmlTag>();
+  private final Map<XmlTag, XmlTag> myShadows = new HashMap<XmlTag, XmlTag>();
+
+  private State myProcessingState;
+
+  DeclarationChecker(XmlFile file) {
+    super(file.getRootTag());
+  }
+
+  @Override
+  public boolean execute(PsiElement element) {
+    if (element instanceof XmlTag) {
+      return process((XmlTag)element);
     }
+    return true;
+  }
+
+  protected boolean followImport() {
+    return false;
+  }
+
+  protected void processTemplate(XmlTag t) {
+    final String n = t.getAttributeValue("name");
+    if (n != null) {
+      myProcessingState.processTemplate(n, t);
+    }
+
+    // template contents from included files are not relevant
+    if (!isInclude()) {
+      myProcessingState.enterTemplate();
+      try {
+        processChildren(t);
+      } finally {
+        myProcessingState.leaveTemplate();
+      }
+    }
+  }
+
+  protected void processVarOrParam(XmlTag t) {
+    final String n = t.getAttributeValue("name");
+    if (n != null) {
+      myProcessingState.processVariable(n, t);
+    }
+
+    processChildren(t);
+  }
+
+  protected boolean shouldContinue() {
+    return true;
+  }
+
+  public XmlTag getShadowedVariable(XmlTag var) {
+    return myShadows.get(var);
+  }
+
+  public XmlTag getDuplicatedSymbol(XmlTag var) {
+    return myDuplications.get(var);
+  }
+
+  @Override
+  protected void processTag(XmlTag tag) {
+    if (myProcessingState.insideTemplate()) {
+      processChildren(tag);
+    }
+  }
+
+  private void processChildren(XmlTag t) {
+    final XmlTag[] subTags = t.getSubTags();
+    for (XmlTag subTag : subTags) {
+      process(subTag);
+    }
+  }
+
+  private void check(XmlFile file) {
+    final XmlTag rootTag = file.getRootTag();
+    if (rootTag != null) {
+      myProcessingState = new State();
+      try {
+        rootTag.processElements(this, rootTag);
+      } finally {
+        myProcessingState = null;
+      }
+    }
+  }
+
+  public static DeclarationChecker getInstance(XmlFile file) {
+    return CACHE.get(file, null).getValue();
+  }
+
+  final class State {
+    private final Map<String, XmlTag> myTemplateDeclarations = new THashMap<String, XmlTag>();
+    private final Map<String, XmlTag> myTopLevelVariables = new THashMap<String, XmlTag>();
+    private final Map<String, XmlTag> myLocalVariables = new THashMap<String, XmlTag>();
+
+    private Map<String, XmlTag> myVariableDeclarations = myTopLevelVariables;
+
+    public void enterTemplate() {
+      myVariableDeclarations = myLocalVariables;
+    }
+
+    public void leaveTemplate() {
+      myLocalVariables.clear();
+      myVariableDeclarations = myTopLevelVariables;
+    }
+
+    public boolean insideTemplate() {
+      return myVariableDeclarations == myLocalVariables;
+    }
+
+    public void processVariable(String name, XmlTag tag) {
+      XmlTag var = myVariableDeclarations.get(name);
+      if (var != null) {
+        myDuplications.put(tag, var);
+      } else if (insideTemplate()) {
+        var = myTopLevelVariables.get(name);
+
+        if (var != null) {
+          myShadows.put(tag, var);
+        }
+      }
+      myVariableDeclarations.put(name, tag);
+    }
+
+    public void processTemplate(String name, XmlTag tag) {
+      final XmlTag templ = myTemplateDeclarations.get(name);
+      if (templ != null) {
+        myDuplications.put(tag, templ);
+      }
+      myTemplateDeclarations.put(name, tag);
+    }
+  }
 }
