@@ -37,5 +37,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
     }
+    else if (context.getCompletionChar() == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+      context.setAddCompletionChar(false);
+      TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
+    }
   }
 }
