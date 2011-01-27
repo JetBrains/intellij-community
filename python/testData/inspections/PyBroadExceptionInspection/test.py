@@ -29,3 +29,11 @@ try:
 except:
   someCleanup()
   raise
+
+result = []
+
+## PY-2698
+try:
+  function_throws_exception()
+except Exception, e:
+  result.append(e)
