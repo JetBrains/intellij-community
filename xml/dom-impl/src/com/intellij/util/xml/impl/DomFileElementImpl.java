@@ -200,7 +200,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public ElementPresentation getPresentation() {
-    return new DomElementPresentation() {
+    return new ElementPresentation() {
 
       public @NonNls String getElementName() {
         return "<ROOT>";

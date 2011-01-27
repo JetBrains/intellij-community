@@ -42,6 +42,14 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     doTest("i");
   }
 
+  public void testRenameLocalIncomplete() throws Exception {
+    doTest("_i");
+  }
+
+  public void testRenameParamIncomplete() throws Exception {
+    doTest("_i");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

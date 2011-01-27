@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -57,8 +58,8 @@ class ImplementationClassCache {
         }
     };
 
-  ImplementationClassCache() {
-    for (DomImplementationClassEP ep : DomImplementationClassEP.EP_NAME.getExtensions()) {
+  ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
+    for (DomImplementationClassEP ep : epName.getExtensions()) {
       myImplementationClasses.putValue(ep.interfaceName, ep);
     }
   }

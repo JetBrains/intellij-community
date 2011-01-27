@@ -131,6 +131,7 @@ public abstract class DomManager implements ModificationTracker {
 
   /**
    * @return {@link com.intellij.util.xml.ConverterManager} instance
+   * @deprecated This will be moved at the application level
    */
   public abstract ConverterManager getConverterManager();
 

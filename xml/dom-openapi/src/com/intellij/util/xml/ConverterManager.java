@@ -38,6 +38,7 @@ public interface ConverterManager {
    *
    * @param converterInterface Interface defined in {@link DomElement} definition.
    * @param converterImpl      Implementation to use.
+   * @deprecated use com.intellij.dom.converter extension instead
    */
   <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl);
 }

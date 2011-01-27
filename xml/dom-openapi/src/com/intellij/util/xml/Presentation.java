@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,25 @@
  */
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @author peter
- * @see com.intellij.util.xml.DomElement#getPresentation()
- * @see ElementPresentationTemplate
+ * @author Dmitry Avdeev
  */
-public abstract class ElementPresentation {
-  @Nullable
-  public abstract String getElementName();
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface Presentation {
 
-  public abstract String getTypeName();
+  /**
+   * @return Path to image resource, e.g. /foo/bar/MyIcon.png
+   */
+  String icon() default "";
 
-  @Nullable
-  public abstract Icon getIcon();
+  /**
+   * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, String>}
+   */
+  String namerClass() default "";
 }

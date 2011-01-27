@@ -15,20 +15,27 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author max
  */
 public class SplitLineAction extends EditorAction {
+  public static Key<Boolean> SPLIT_LINE_KEY = Key.create("com.intellij.openapi.editor.actions.SplitLineAction");
+
   public SplitLineAction() {
     super(new Handler());
     setEnabledInModalContext(false);
@@ -60,7 +67,13 @@ public class SplitLineAction extends EditorAction {
         document.insertString(lineStart, strToInsert);
         editor.getCaretModel().moveToOffset(offset);
       } else {
-        getEnterHandler().execute(editor, dataContext);
+        DataManager.getInstance().saveInDataContext(dataContext, SPLIT_LINE_KEY, true);
+        try {
+          getEnterHandler().execute(editor, dataContext);
+        }
+        finally {
+          DataManager.getInstance().saveInDataContext(dataContext, SPLIT_LINE_KEY, null);
+        }
 
         editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

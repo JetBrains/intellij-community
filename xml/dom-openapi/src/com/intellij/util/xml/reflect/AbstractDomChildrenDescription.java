@@ -21,7 +21,9 @@ import com.intellij.pom.PomTarget;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.ElementPresentationTemplate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -43,4 +45,7 @@ public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTar
   DomNameStrategy getDomNameStrategy(@NotNull DomElement parent);
 
   <T> T getUserData(Key<T> key);
+
+  @Nullable
+  ElementPresentationTemplate getPresentationTemplate();
 }

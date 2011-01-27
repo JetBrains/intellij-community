@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DomImplementationClassEP extends AbstractExtensionPointBean {
   public static final ExtensionPointName<DomImplementationClassEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.implementation");
+  public static final ExtensionPointName<DomImplementationClassEP> CONVERTER_EP_NAME = ExtensionPointName.create("com.intellij.dom.converter");
 
   @Attribute("interfaceClass")
   public String interfaceName;

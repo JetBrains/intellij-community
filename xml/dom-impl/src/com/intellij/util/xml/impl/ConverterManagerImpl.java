@@ -17,7 +17,17 @@ import java.util.Map;
  * @author peter
  */
 class ConverterManagerImpl implements ConverterManager {
-  private final ConcurrentInstanceMap<Object> myConverterInstances = new ConcurrentInstanceMap<Object>();
+
+  private final ImplementationClassCache myImplementationClassCache = new ImplementationClassCache(DomImplementationClassEP.CONVERTER_EP_NAME);
+
+  private final ConcurrentInstanceMap<Object> myConverterInstances = new ConcurrentInstanceMap<Object>() {
+    @NotNull
+    @Override
+    protected Object create(Class key) {
+      Class implementation = myImplementationClassCache.get(key);
+      return super.create(implementation == null ? key : implementation);
+    }
+  };
   private final Map<Class,Converter> mySimpleConverters = new HashMap<Class, Converter>();
 
   ConverterManagerImpl() {
@@ -36,7 +46,9 @@ class ConverterManagerImpl implements ConverterManager {
 
   @NotNull
   public final Converter getConverterInstance(final Class<? extends Converter> converterClass) {
-    return getInstance(converterClass);
+    Converter converter = getInstance(converterClass);
+    assert converter != null: "Converter not found for " + converterClass;
+    return converter;
   }
 
   <T> T getInstance(Class<T> clazz) {
