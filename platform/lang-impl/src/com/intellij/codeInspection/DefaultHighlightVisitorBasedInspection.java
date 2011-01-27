@@ -176,6 +176,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalInspe
             };
           }
         };
+      pass.setFailFastOnAcquireReadAction(false);
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
       progress.start();
       pass.collectInformation(progress);
