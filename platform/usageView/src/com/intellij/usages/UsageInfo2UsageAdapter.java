@@ -374,7 +374,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
           int lineNumber = document.getLineNumber(startOffset);
           int lineStart = document.getLineStartOffset(lineNumber);
           int lineEnd = document.getLineEndOffset(lineNumber);
-          return document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
+          String prefixSuffix = null;
+
+          if (lineEnd - lineStart > ChunkExtractor.MAX_LINE_TO_SHOW) {
+            prefixSuffix = "...";
+            lineStart = Math.max(startOffset - ChunkExtractor.OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE, lineStart);
+            lineEnd = Math.min(startOffset + ChunkExtractor.OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE, lineEnd);
+          }
+          String s = document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
+          if (prefixSuffix != null) s = prefixSuffix + s + prefixSuffix;
+          return s;
         }
       }
       return "";

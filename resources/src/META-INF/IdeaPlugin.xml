@@ -447,6 +447,9 @@
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManagerImpl"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
+                    serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
+
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"

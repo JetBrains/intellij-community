@@ -18,7 +18,9 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
@@ -957,11 +959,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullConditionalCheck) {
       final boolean isNullCheckReturnNull = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length <= 1;
       if (isNullCheckReturnNull && PsiUtil.isLanguageLevel5OrHigher(myElements[0])) {
+        final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
         final PsiClass nullableAnnotationClass =
-          JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NULLABLE, GlobalSearchScope.allScope(myProject));
+          JavaPsiFacade.getInstance(myProject).findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
         if (nullableAnnotationClass != null) {
-          new AddNullableNotNullAnnotationFix(AnnotationUtil.NULLABLE, newMethod, AnnotationUtil.NOT_NULL)
-            .invoke(myProject, myEditor, myTargetClass.getContainingFile());
+          new AddNullableAnnotationFix(newMethod).invoke(myProject, myEditor, myTargetClass.getContainingFile());
         }
       }
     }

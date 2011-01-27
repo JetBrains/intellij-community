@@ -76,11 +76,11 @@ public class AnnotationUtil {
   }
 
   public static boolean isNullable(@NotNull PsiModifierListOwner owner) {
-    return !isNotNull(owner) && isAnnotated(owner, NULLABLE, true);
+    return !isNotNull(owner) && NullableNotNullManager.getInstance(owner.getProject()).isNullable(owner, true);
   }
 
   public static boolean isNotNull(@NotNull PsiModifierListOwner owner) {
-    return isAnnotated(owner, NOT_NULL, true);
+    return NullableNotNullManager.getInstance(owner.getProject()).isNotNull(owner, true);
   }
 
   @Nullable
@@ -198,8 +198,14 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(PsiModifierListOwner listOwner, Collection<String> annotations) {
+    return isAnnotated(listOwner, annotations, false);
+  }
+
+  public static boolean isAnnotated(PsiModifierListOwner listOwner,
+                                    Collection<String> annotations,
+                                    final boolean checkHierarchy) {
     for (String annotation : annotations) {
-      if (isAnnotated(listOwner, annotation, false)) return true;
+      if (isAnnotated(listOwner, annotation, checkHierarchy)) return true;
     }
     return false;
   }

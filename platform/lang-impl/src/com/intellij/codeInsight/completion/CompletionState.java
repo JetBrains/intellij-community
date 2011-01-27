@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
@@ -12,7 +11,6 @@ public class CompletionState {
   private boolean myCompletionDisposed;
   private boolean myShownLookup;
   private boolean myModifiersChanged;
-  private boolean myBackgrounded;
   private volatile boolean myFocusLookupWhenDone;
   private volatile int myCount;
 
@@ -45,16 +43,6 @@ public class CompletionState {
     myModifiersChanged = true;
   }
 
-  public boolean isBackgrounded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myBackgrounded;
-  }
-
-  public void setBackgrounded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBackgrounded = true;
-  }
-
   public boolean isFocusLookupWhenDone() {
     return myFocusLookupWhenDone;
   }
@@ -82,7 +70,6 @@ public class CompletionState {
            ", myCompletionDisposed=" + myCompletionDisposed +
            ", myShownLookup=" + myShownLookup +
            ", myModifiersReleased=" + myModifiersChanged +
-           ", myBackgrounded=" + myBackgrounded +
            ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +
            ", myCount=" + myCount +
            '}';

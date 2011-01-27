@@ -116,15 +116,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
-    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    if (indicator != null) {
-      indicator.closeAndFinish(false);
-    } else {
-      if (phase instanceof CompletionPhase.ZombiePhase) {
-        indicator = ((CompletionPhase.ZombiePhase)phase).indicator;
-      }
-    }
+    CompletionProgressIndicator indicator = phase.newCompletionStarted();
 
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
 
@@ -272,17 +265,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final LookupImpl lookup = obtainLookup(editor);
 
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous());
-
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), lookup);
 
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
+
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
     if ((!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) || CompletionAutoPopupHandler.ourTestingAutopopup) {
-      indicator.notifyBackgrounded();
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
       return;
     }
 
@@ -294,7 +287,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
 
-    indicator.notifyBackgrounded();
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
     indicator.showLookup();
   }
 
@@ -480,7 +473,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated());
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {

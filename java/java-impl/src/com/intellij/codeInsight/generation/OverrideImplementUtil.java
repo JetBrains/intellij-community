@@ -313,12 +313,13 @@ public class OverrideImplementUtil {
     }
     final Module module = ModuleUtil.findModuleForPsiElement(targetClass);
     final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(targetClass.getProject());
+    final Project project = targetClass.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-      for (String annotation : each.getAnnotations()) {
+      for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false)) {
-          annotate(method, annotation, each.annotationsToRemove(annotation));
+          annotate(method, annotation, each.annotationsToRemove(project, annotation));
         }
       }
     }

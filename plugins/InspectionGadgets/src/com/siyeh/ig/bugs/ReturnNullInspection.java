@@ -16,9 +16,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -58,11 +60,13 @@ public class ReturnNullInspection extends BaseInspection {
 
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        if (!AnnotationUtil.isAnnotatingApplicable((PsiElement) infos[0])) {
+        final PsiElement elt = (PsiElement)infos[0];
+        if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
             return null;
         }
-        return new DelegatingFix(new AnnotateMethodFix(
-                AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
+      final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
+      return new DelegatingFix(new AnnotateMethodFix(
+          manager.getDefaultNullable(), ArrayUtil.toStringArray(manager.getNotNulls())));
     }
 
   public JComponent createOptionsPanel() {
@@ -110,8 +114,7 @@ public class ReturnNullInspection extends BaseInspection {
                 return;
             }
             final boolean isArray = returnType.getArrayDimensions() > 0;
-            if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE,
-                    false)) {
+            if (NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false)) {
                 return;
             }
             if (m_reportCollectionMethods &&

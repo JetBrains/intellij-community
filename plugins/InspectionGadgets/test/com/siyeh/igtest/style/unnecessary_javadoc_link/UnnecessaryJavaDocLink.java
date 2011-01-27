@@ -11,4 +11,12 @@ public class UnnecessaryJavaDocLink {
     public boolean equals(Object obj) {
         return super.equals(obj);
     }
+
+    /**
+     * {@link #foo()}
+     * @see #foo()
+     */
+    void foo() {
+
+    }
 }

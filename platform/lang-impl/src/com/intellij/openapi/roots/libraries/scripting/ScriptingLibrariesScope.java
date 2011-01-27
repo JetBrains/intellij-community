@@ -29,25 +29,31 @@ import java.util.Set;
 public class ScriptingLibrariesScope extends GlobalSearchScope {
 
   private GlobalSearchScope myBaseScope;
-  private ScriptingIndexableSetContributor myContributor;
   protected Set<VirtualFile> myLibraryFiles;
+  private Set<VirtualFile> myAllLibraryFiles;
 
   public ScriptingLibrariesScope(GlobalSearchScope baseScope, Class<? extends IndexableSetContributor> providerClass) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
     IndexableSetContributor contributor = IndexableSetContributor.EP_NAME.findExtension(providerClass);
-    if (contributor instanceof  ScriptingIndexableSetContributor) {
-      myContributor = (ScriptingIndexableSetContributor)contributor;
+    if (contributor instanceof ScriptingIndexableSetContributor) {
+      myAllLibraryFiles = ((ScriptingIndexableSetContributor)contributor).getLibraryFiles(myBaseScope.getProject());
       setLibraryFiles();
     }
   }
 
-  public void setLibraryFiles() {
-    myLibraryFiles = myContributor.getLibraryFiles(myBaseScope.getProject());
+  protected void setLibraryFiles() {
+    myLibraryFiles = myAllLibraryFiles;
   }
 
   public boolean contains(VirtualFile file) {
-    return myBaseScope.contains(file) | (myLibraryFiles == null ? false : myLibraryFiles.contains(file));
+    //
+    // exclude library files from base scope
+    //
+    if (myAllLibraryFiles != null && myAllLibraryFiles.contains(file)) {
+      return myLibraryFiles == null ? false : myLibraryFiles.contains(file); 
+    }
+    return myBaseScope.contains(file);
   }
 
   @Override

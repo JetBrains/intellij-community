@@ -41,8 +41,8 @@ import java.util.List;
  */
 public class SocketLock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.SocketLock");
-  private static final int SOCKET_NUMBER_START = 6942;
-  private static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
+  public static final int SOCKET_NUMBER_START = 6942;
+  public static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
 
   // IMPORTANT: Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = new int[]{6953, 6969, 6970};
@@ -126,7 +126,7 @@ public class SocketLock {
     return status;
   }
 
-  private static boolean isPortForbidden(int port) {
+  public static boolean isPortForbidden(int port) {
     for (int forbiddenPort : FORBIDDEN_PORTS) {
       if (port == forbiddenPort) return true;
     }

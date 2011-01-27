@@ -34,9 +34,6 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
   }
 
   public MyResult weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
     final Object object = item.getObject();
 
     if (location.getCompletionType() == CompletionType.SMART) {

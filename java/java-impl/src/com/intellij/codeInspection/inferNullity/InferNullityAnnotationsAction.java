@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -87,7 +88,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (module != null && !processed.contains(module)) {
               processed.add(module);
               if (JavaPsiFacade.getInstance(project)
-                    .findClass(AnnotationUtil.NULLABLE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
+                    .findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
                 modulesWithoutAnnotations.add(module);
               }
               if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -103,8 +104,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the JetBrains nullity annotations" +
-                                               " be available to your project.\n\nYou will need to add annotations.jar (available in your IDEA distribution) as a library. " +
+      if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
+                                               " be available to your project.\n\nYou will need to add annotations.jar as a library. " +
+                                               "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
                                                " The IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
                                       INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -1,6 +1,6 @@
 class Foo {
   {
-    Zzoo l = new Zzoo()<caret>
+    Zzoo.Impl l = new Zzoo<caret>
   }
 }
 
