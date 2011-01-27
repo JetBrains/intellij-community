@@ -33,6 +33,11 @@ public @interface Presentation {
   String icon() default "";
 
   /**
+   * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, Icon>}
+   */
+  String iconProviderClass() default "";
+
+  /**
    * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, String>}
    */
   String namerClass() default "";
