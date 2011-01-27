@@ -23,7 +23,11 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,7 +69,7 @@ public class HgCommitCommand {
         parameters.add(hgFile.getRelativePath());
       }
       ensureSuccess(HgCommandService.getInstance(project).execute(repo, "commit", parameters));
-      project.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(project);
+      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
     } catch (IOException e) {
       LOG.info(e);
     }
