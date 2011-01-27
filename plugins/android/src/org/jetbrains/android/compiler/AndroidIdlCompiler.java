@@ -24,7 +24,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -232,9 +231,9 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       if (item instanceof IdlGenerationItem) {
         final IdlGenerationItem idlItem = (IdlGenerationItem)item;
         try {
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(idlItem.myModule);
+          VirtualFile[] sourceRoots = AndroidPackagingCompiler.getSourceRootsForModuleAndDependencies(idlItem.myModule);
           final Map<CompilerMessageCategory, List<String>> messages = AndroidIdl
-            .execute(idlItem.myAndroidTarget, idlItem.myFile.getPath(), idlItem.myGeneratedFile.getPath(), rootManager.getSourceRoots());
+            .execute(idlItem.myAndroidTarget, idlItem.myFile.getPath(), idlItem.myGeneratedFile.getPath(), sourceRoots);
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (context.getProject().isDisposed()) return;
