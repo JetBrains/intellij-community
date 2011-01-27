@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.util.PsiFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -31,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.util.PsiFilter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -58,21 +57,23 @@ public class PsiChangeTracker {
     return getElementsChanged(file, oldFile, filter);
   }
 
-  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, PsiFile oldFile, final PsiFilter<T> filter) {
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiElement file,
+                                                                             PsiElement oldFile,
+                                                                             final PsiFilter<T> filter) {
     final HashMap<T, FileStatus> result = new HashMap<T, FileStatus>();
     final List<T> oldElements = new ArrayList<T>();
     final List<T> elements = new ArrayList<T>();
 
     if (file == null) {
-      oldFile.accept(new MyVisitor<T>(filter, oldElements));
+      oldFile.accept(filter.createVisitor(oldElements));
       calculateStatuses(elements, oldElements, result, filter);
       return result;
     }
 
     final Project project = file.getProject();
 
-    file.accept(new MyVisitor<T>(filter, elements));
-    final VirtualFile vf = file.getVirtualFile();
+    file.accept(filter.createVisitor(elements));
+    final VirtualFile vf = file.getContainingFile().getVirtualFile();
     FileStatus status = vf == null ? null : FileStatusManager.getInstance(project).getStatus(vf);
     if (status == null && oldFile == null) {
       status = FileStatus.ADDED;
@@ -88,7 +89,7 @@ public class PsiChangeTracker {
     }
 
     if (oldFile == null) return result;
-    oldFile.accept(new MyVisitor<T>(filter, oldElements));
+    oldFile.accept(filter.createVisitor(oldElements));
     calculateStatuses(elements, oldElements, result, filter);
 
     return result;
@@ -154,26 +155,5 @@ public class PsiChangeTracker {
     }
 
     return null;
-  }
-
-  static class MyVisitor<T extends PsiElement> extends PsiRecursiveElementVisitor {
-    private final PsiFilter<T> filter;
-    private final List<T> elements;
-
-    protected MyVisitor(final PsiFilter<T> filter, final List<T> elements) {
-      this.filter = filter;
-      this.elements = elements;
-    }
-
-    @Override
-    public void visitElement(PsiElement element) {
-      if (filter.getParentClass().isAssignableFrom(element.getClass())) {
-        final T e = (T)element;
-        if (filter.accept(e)) {
-          elements.add(e);
-        }
-      }
-      super.visitElement(element);
-    }
   }
 }

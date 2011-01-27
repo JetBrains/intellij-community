@@ -21,19 +21,29 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
-  public String[] getAnnotations() {
-    return new String[]{AnnotationUtil.NOT_NULL,AnnotationUtil.NLS};
+  public String[] getAnnotations(Project project) {
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
+    anns.add(AnnotationUtil.NLS);
+    return ArrayUtil.toStringArray(anns);
   }
 
   @NotNull
-  public String[] annotationsToRemove(@NotNull final String fqName) {
-    if (Comparing.strEqual(fqName, AnnotationUtil.NOT_NULL)) {
-      return new String[]{AnnotationUtil.NULLABLE};
+  public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    if (manager.getNotNulls().contains(fqName)) {
+      return ArrayUtil.toStringArray(manager.getNullables());
     }
     if (Comparing.strEqual(fqName, AnnotationUtil.NLS)){
       return new String[]{AnnotationUtil.NON_NLS};

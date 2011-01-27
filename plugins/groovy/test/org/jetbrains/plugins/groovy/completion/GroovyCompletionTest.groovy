@@ -344,7 +344,7 @@ class A {
       }"""
     configure "Zzoo l = new Zz<caret>"
     myFixture.completeBasic()
-    myFixture.checkResult "Zzoo l = new Zzoo<caret>"
+    myFixture.checkResult "Zzoo l = new Zzoo()<caret>"
   }
 
   public void testNothingAfterIntegerLiteral() {
@@ -426,6 +426,20 @@ format<caret>"""
     myFixture.configureByText "a.groovy", "def foo(@Abcd<caret> ) {}"
     myFixture.completeBasic()
     myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
+  }
+
+  public void testParenthesesForExpectedClassTypeRegardlessInners() {
+    myFixture.addClass "class Fooooo { interface Bar {} }"
+    myFixture.configureByText "a.groovy", "Fooooo f = new Foo<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult "Fooooo f = new Fooooo()<caret>"
+  }
+
+  public void testParenthesesForUnexpectedClassTypeRegardingInners() {
+    myFixture.addClass "class Fooooo { interface Bar {} }"
+    myFixture.configureByText "a.groovy", "Fooooo.Bar f = new Foo<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult "Fooooo.Bar f = new Fooooo<caret>"
   }
 
   public void testOnlyExceptionsInCatch() {

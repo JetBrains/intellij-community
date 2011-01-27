@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -32,15 +33,20 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
+  
+  private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
+  
   protected  EditorColorsScheme myParentScheme;
 
   protected int myEditorFontSize;
+  protected FontSize myQuickDocFontSize = DEFAULT_FONT_SIZE;
   protected float myLineSpacing;
 
   private final Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
@@ -71,6 +77,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String BACKGROUND_COLOR_NAME = "BACKGROUND";
   @NonNls private static final String LINE_SPACING = "LINE_SPACING";
   @NonNls private static final String EDITOR_FONT_SIZE = "EDITOR_FONT_SIZE";
+  @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     myParentScheme = parentScheme;
@@ -109,6 +116,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     newScheme.myEditorFontSize = myEditorFontSize;
     newScheme.myLineSpacing = myLineSpacing;
     newScheme.setEditorFontName(getEditorFontName());
+    newScheme.myQuickDocFontSize = myQuickDocFontSize;
 
     final Set<EditorFontType> types = myFonts.keySet();
     for (EditorFontType type : types) {
@@ -129,6 +137,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public void setEditorFontSize(int fontSize) {
     myEditorFontSize = fontSize;
     initFonts();
+  }
+  
+  @Override
+  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
+    myQuickDocFontSize = fontSize;
   }
 
   public void setLineSpacing(float lineSpacing) {
@@ -154,6 +167,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return myEditorFontSize;
   }
 
+  @NotNull
+  @Override
+  public FontSize getQuickDocFontSize() {
+    return myQuickDocFontSize;
+  }
+  
   public float getLineSpacing() {
     return myLineSpacing <= 0 ? 1.0f : myLineSpacing;
   }
@@ -307,6 +326,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else if (EDITOR_FONT_SIZE.equals(name)) {
       myEditorFontSize = Integer.parseInt(value);
     }
+    else if (EDITOR_QUICK_JAVADOC_FONT_SIZE.equals(name)) {
+      myQuickDocFontSize = FontSize.valueOf(value);
+    }
     else if (AbstractColorsScheme.EDITOR_FONT_NAME.equals(name)) {
       setEditorFontName(value);
     }
@@ -329,6 +351,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
     element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize()));
     parentNode.addContent(element);
+
+    if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
+      element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, EDITOR_QUICK_JAVADOC_FONT_SIZE);
+      element.setAttribute(VALUE_ELEMENT, getQuickDocFontSize().getEnumName());
+      parentNode.addContent(element);
+    }
 
     element = new Element(OPTION_ELEMENT);
     element.setAttribute(NAME_ATTR, EDITOR_FONT_NAME);

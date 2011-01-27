@@ -663,6 +663,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testClassNameWithInner() throws Throwable { doTest() }
+  public void testClassNameWithInner2() throws Throwable { doTest() }
 
   public void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
 
@@ -805,23 +806,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
-  public void testQualifyInnerMembers() throws Throwable {
-    configure()
-    selectItem myItems[0]
-    checkResult()
-  }
+  public void testNewExpectedClassParens() throws Throwable { doTest(); }
 
-  public void testSuggestExpectedTypeMembers() throws Throwable {
-    configure()
-    selectItem myItems[0]
-    checkResult()
-  }
+  public void testQualifyInnerMembers() throws Throwable { doTest('\n') }
 
-  public void testSuggestExpectedTypeMembersInCall() throws Throwable {
-    configure()
-    selectItem myItems[0]
-    checkResult();
-  }
+  public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
+
+  public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
 
   public void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
@@ -831,6 +822,14 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
   public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
+
+  public void testSuperProtectedMethod() throws Throwable {
+    myFixture.addClass """package foo;
+      public class Bar {
+          protected void foo() { }
+      }"""
+    doTest()
+  }
 
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"

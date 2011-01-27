@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -522,12 +523,13 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiMethod methodToAdd = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
     final PsiModifierList modifierList = methodToAdd.getModifierList();
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, methodToAdd), null);
+    if (manager.isNullable(method, false)) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), methodToAdd), null);
     }
-    else if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false)) {
-      modifierList.addAfter(myFactory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, methodToAdd), null);
+    else if (manager.isNotNull(method, false)) {
+      modifierList.addAfter(myFactory.createAnnotationFromText("@" + manager.getDefaultNotNull(), methodToAdd), null);
     }
 
     final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);

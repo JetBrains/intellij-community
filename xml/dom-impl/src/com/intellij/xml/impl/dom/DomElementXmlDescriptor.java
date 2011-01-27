@@ -165,6 +165,11 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
       return null;
     }
 
+    @Override
+    public ElementPresentationTemplate getPresentationTemplate() {
+      return null;
+    }
+
     @Nullable
       public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
           throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());

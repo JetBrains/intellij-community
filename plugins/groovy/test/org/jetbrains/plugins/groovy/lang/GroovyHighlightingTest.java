@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
@@ -262,10 +263,14 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testTupleTypeAssignments() throws Exception{doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testUnusedImportsForImportsOnDemand() throws Exception {
-    doTest();
+    doTest(new GroovyAccessibilityInspection());
     final Set<GrImportStatement> unusedImportStatements =
       GroovyImportsTracker.getInstance(getProject()).getUnusedImportStatements(((GroovyFile)myFixture.getFile()));
     assertEquals(0, unusedImportStatements.size());
+  }
+
+  public void testInaccessibleConstructorCall() {
+    doTest(new GroovyAccessibilityInspection());
   }
 
   public void testSignatureIsNotApplicableToList() throws Exception {

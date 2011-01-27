@@ -34,23 +34,84 @@ import java.util.EventObject;
  * @author peter
  */
 public abstract class CompletionPhase implements Disposable {
-  public static final CompletionPhase NoCompletion = new CompletionPhase() {};
+  public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      return null;
+    }
+  };
+
+  public final CompletionProgressIndicator indicator;
+
+  protected CompletionPhase(CompletionProgressIndicator indicator) {
+    this.indicator = indicator;
+  }
 
   @Override
   public void dispose() {
   }
 
-  public static class AutoPopupAlarm extends CompletionPhase {}
-  public static class Synchronous extends CompletionPhase {}
-  public static class BgCalculation extends CompletionPhase {}
-  public static class ItemsCalculated extends CompletionPhase {}
-  public static class Restarted extends CompletionPhase {}
+  @Nullable
+  public abstract CompletionProgressIndicator newCompletionStarted();
+
+  public static class AutoPopupAlarm extends CompletionPhase {
+    public AutoPopupAlarm() {
+      super(null);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      return null;
+    }
+  }
+  public static class Synchronous extends CompletionPhase {
+    public Synchronous(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  }
+  public static class BgCalculation extends CompletionPhase {
+    public BgCalculation(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      indicator.closeAndFinish(false);
+      return indicator;
+    }
+  }
+  public static class ItemsCalculated extends CompletionPhase {
+    public ItemsCalculated(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      indicator.closeAndFinish(false);
+      return indicator;
+    }
+  }
+  public static class Restarted extends CompletionPhase {
+    public Restarted(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      indicator.closeAndFinish(false);
+      return indicator;
+    }
+  }
 
   public static class ZombiePhase extends CompletionPhase {
-    public final CompletionProgressIndicator indicator;
 
     protected ZombiePhase(@Nullable final LightweightHint hint, final CompletionProgressIndicator indicator) {
-      this.indicator = indicator;
+      super(indicator);
       @NotNull Editor editor = indicator.getEditor();
       final HintListener hintListener = new HintListener() {
         public void hintHidden(final EventObject event) {
@@ -99,6 +160,10 @@ public abstract class CompletionPhase implements Disposable {
       });
     }
 
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      return indicator;
+    }
   }
 
   public static class InsertedSingleItem extends ZombiePhase {
@@ -114,7 +179,25 @@ public abstract class CompletionPhase implements Disposable {
       super(hint, indicator);
     }
   }
-  public static class PossiblyDisturbingAutoPopup extends CompletionPhase {}
-  public static class EmptyAutoPopup extends CompletionPhase {}
+  public static class PossiblyDisturbingAutoPopup extends CompletionPhase {
+    public PossiblyDisturbingAutoPopup(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      return null;
+    }
+  }
+  public static class EmptyAutoPopup extends CompletionPhase {
+    public EmptyAutoPopup(CompletionProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Override
+    public CompletionProgressIndicator newCompletionStarted() {
+      return null;
+    }
+  }
 
 }

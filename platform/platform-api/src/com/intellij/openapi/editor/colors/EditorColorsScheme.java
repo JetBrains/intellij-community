@@ -16,9 +16,11 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -39,6 +41,9 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   int getEditorFontSize();
   void setEditorFontSize(int fontSize);
 
+  FontSize getQuickDocFontSize();
+  void setQuickDocFontSize(@NotNull FontSize fontSize);
+  
   String getEditorFontName();
   void setEditorFontName(String fontName);
 

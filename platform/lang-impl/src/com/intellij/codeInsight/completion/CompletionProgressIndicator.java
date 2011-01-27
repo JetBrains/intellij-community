@@ -141,15 +141,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return getOffsetMap().getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
-  void notifyBackgrounded() {
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation());
-    myState.setBackgrounded();
-  }
-
-  boolean isBackgrounded() {
-    return myState.isBackgrounded();
-  }
-
   void duringCompletion(CompletionInitializationContext initContext) {
     try {
       ProgressManager.checkCanceled();
@@ -249,9 +240,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isAutopopupCompletion() && !myState.isShownLookup()) {
                   return;
                 }
-                if (!isBackgrounded()) {
+                if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
                   return;
                 }
+                if (CompletionServiceImpl.getCompletionPhase().indicator != CompletionProgressIndicator.this) {
+                  return;
+                }
+
                 updateLookup();
               }
             }, myQueue.getModalityState());
@@ -443,21 +438,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (isOutdated()) return;
-        if (!isBackgrounded()) return;
-
-        if (CompletionServiceImpl.isPhase(CompletionPhase.Restarted.class)) {
-          return;
-        }
+        final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+        if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != CompletionProgressIndicator.this) return;
 
         myLookup.setCalculating(false);
 
-        if (isCanceled()) {
-          CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
-          return;
-        }
-
-        if (CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class) && hideAutopopupIfMeaningless()) {
+        if (hideAutopopupIfMeaningless()) {
           return;
         }
 
@@ -476,7 +462,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setFocused(true);
           }
           updateLookup();
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated());
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
         }
       }
     }, myQueue.getModalityState());
@@ -489,7 +475,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
         LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup());
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
         return true;
       }
 
@@ -497,7 +483,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
           LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.PossiblyDisturbingAutoPopup());
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.PossiblyDisturbingAutoPopup(this));
           return true;
         }
       }
@@ -592,7 +578,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     cancel();
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final CompletionPhase phase = new CompletionPhase.Restarted();
+    final CompletionPhase phase = new CompletionPhase.Restarted(this);
     CompletionServiceImpl.setCompletionPhase(phase);
 
     final Project project = getProject();

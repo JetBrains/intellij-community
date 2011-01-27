@@ -1032,4 +1032,17 @@ public class JavaCompletionUtil {
 
     return true;
   }
+
+  public static boolean isDefinitelyExpected(PsiClass psiClass, Set<PsiType> expectedTypes, PsiElement position) {
+    final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+    for (PsiType expectedType : expectedTypes) {
+      if (expectedType instanceof PsiArrayType) return false;
+    }
+    for (PsiType type : expectedTypes) {
+      if (type instanceof PsiClassType && ((PsiClassType)type).rawType().isAssignableFrom(classType)) {
+        return true;
+      }
+    }
+    return !hasAccessibleInnerClass(psiClass, position);
+  }
 }

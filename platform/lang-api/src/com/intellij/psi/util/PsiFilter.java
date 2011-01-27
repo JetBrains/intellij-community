@@ -17,7 +17,10 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,5 +43,30 @@ public class PsiFilter<T extends PsiElement> {
 
   public boolean areEquivalent(T e1, T e2) {
     return e1.isEquivalentTo(e2);
+  }
+
+  public Visitor<T> createVisitor(List<T> elements) {
+    return new Visitor<T>(this, elements);
+  }
+
+  public static class Visitor<T extends PsiElement> extends PsiRecursiveElementVisitor {
+    private final PsiFilter<T> filter;
+    private final List<T> elements;
+
+    protected Visitor(final PsiFilter<T> filter, final List<T> elements) {
+      this.filter = filter;
+      this.elements = elements;
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (filter.getParentClass().isAssignableFrom(element.getClass())) {
+        final T e = (T)element;
+        if (filter.accept(e)) {
+          elements.add(e);
+        }
+      }
+      super.visitElement(element);
+    }
   }
 }

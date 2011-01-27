@@ -35,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public abstract class GroovyFix implements LocalQuickFix {
 
+  public static final GroovyFix[] EMPTY_ARRAY = new GroovyFix[0];
+
   //to appear in "Apply Fix" statement when multiple Quick Fixes exist
   @NotNull
   public String getFamilyName() {

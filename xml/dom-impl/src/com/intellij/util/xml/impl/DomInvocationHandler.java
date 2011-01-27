@@ -507,6 +507,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public ElementPresentation getPresentation() {
+    ElementPresentationTemplate template = getChildDescription().getPresentationTemplate();
+    if (template != null) {
+      return template.createPresentation(getProxy());
+    }
     return new ElementPresentation() {
       public String getElementName() {
         return ElementPresentationManager.getElementName(getProxy());
