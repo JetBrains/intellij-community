@@ -433,7 +433,10 @@ public class PyCompatibilityInspection extends PyInspection {
       StringBuilder message = new StringBuilder(myCommonMessage);
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        if (!languageLevel.supportsSetLiterals()) {
+        if (languageLevel == LanguageLevel.PYTHON24) {
+          registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+        }
+        else if (!languageLevel.supportsSetLiterals()) {
           final PyWithItem[] items = node.getWithItems();
           if (items.length > 1) {
             for (int j = 1; j < items.length; j++) {

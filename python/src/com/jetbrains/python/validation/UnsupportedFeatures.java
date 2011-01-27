@@ -271,7 +271,10 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
     final LanguageLevel languageLevel = getLanguageLevel(node);
-    if (!languageLevel.supportsSetLiterals()) {
+    if (languageLevel == LanguageLevel.PYTHON24) {
+      getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+    }
+    else if (!languageLevel.supportsSetLiterals()) {
       final PyWithItem[] items = node.getWithItems();
       if (items.length > 1) {
         for (int i = 1; i < items.length; i++) {
@@ -280,6 +283,7 @@ public class UnsupportedFeatures extends PyAnnotator {
       }
     }
   }
+
   @Override
   public void visitPyClass(PyClass node) {  //PY-2719
     if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
