@@ -15,8 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -24,8 +23,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
-import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
@@ -534,8 +531,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Nullable
   private static Object createSubclassLookupValue(@NotNull final PsiPackage context, @NotNull final PsiClass clazz) {
-    String name = clazz.getQualifiedName();
-    if (name == null) return null;
+    final String qname = clazz.getQualifiedName();
+    if (qname == null) return null;
+
+    String name = qname;
     final String pack = context.getQualifiedName();
     if (pack.length() > 0) {
       if (name.startsWith(pack)) {
@@ -545,9 +544,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         return null;
       }
     }
-    final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
-    lookup.addLookupStrings(clazz.getName());
-    return JavaCompletionUtil.setShowFQN(lookup).setTailType(TailType.NONE);
+    return JavaLookupElementBuilder.forClass(clazz, name, true).addLookupString(qname).addLookupString(clazz.getName());
   }
 
   public LocalQuickFix[] getQuickFixes() {
