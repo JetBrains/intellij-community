@@ -24,7 +24,7 @@ public class Xslt1ContextProviderExtension extends XsltContextProviderExtensionB
 
   @Override
   protected ContextProvider create(XmlElement xmlElement) {
-    return new Xslt1ContextProvider(xmlElement);
+    return new XsltContextProvider(xmlElement);
   }
 
   protected boolean acceptsLanguage(Language language) {

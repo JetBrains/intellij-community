@@ -146,7 +146,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
 //            names.elementNames.add(any);
 //            names.attributeNames.add(any);
     } catch (IncorrectOperationException e) {
-      Logger.getInstance(Xslt1ContextProvider.class.getName()).error(e);
+      Logger.getInstance(XsltContextProvider.class.getName()).error(e);
     }
   }
 

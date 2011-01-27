@@ -21,10 +21,10 @@ import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.FunctionContext;
 import org.jetbrains.annotations.NotNull;
 
-public class Xslt1ContextProvider extends XsltContextProviderBase {
+public class XsltContextProvider extends XsltContextProviderBase {
   public static final ContextType TYPE = ContextType.lookupOrCreate("XSLT", XPathVersion.V1);
 
-  protected Xslt1ContextProvider(@NotNull XmlElement contextElement) {
+  protected XsltContextProvider(@NotNull XmlElement contextElement) {
     super(contextElement);
   }
 

@@ -79,7 +79,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
   }
 
   public XsltFunctionContext() {
-    super(Xslt1ContextProvider.TYPE);
+    super(XsltContextProvider.TYPE);
   }
 
   @Override
@@ -92,6 +92,6 @@ public class XsltFunctionContext extends DefaultFunctionContext {
   }
 
   public static FunctionContext getInstance() {
-    return getInstance(Xslt1ContextProvider.TYPE, FACTORY);
+    return getInstance(XsltContextProvider.TYPE, FACTORY);
   }
 }
