@@ -153,6 +153,9 @@ public class ResolveUtil {
                                               PsiScopeProcessor processor,
                                               GroovyPsiElement place,
                                               ResolveState state) {
+    if (type instanceof PsiEllipsisType) {
+      type = ((PsiEllipsisType)type).toArrayType();
+    }
     if (!NonCodeMembersContributor.runContributors(type, processor, place, state)) {
       return false;
     }

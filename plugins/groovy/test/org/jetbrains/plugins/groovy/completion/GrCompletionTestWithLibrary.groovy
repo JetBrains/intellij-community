@@ -86,4 +86,28 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testCompletionInEachClosure() {
     myFixture.testCompletionVariants getTestName(false)+".groovy", "intValue", "intdiv", "intdiv"
   }
+
+  public void testEllipsisTypeCompletion() {
+    myFixture.configureByText "a.groovy", """
+def foo(def... args) {
+  args.si<caret>
+}"""
+    myFixture.completeBasic()
+    myFixture.checkResult """
+def foo(def... args) {
+  args.size()
+}"""
+  }
+
+  public void testBoxForinParams() {
+    myFixture.configureByText "A.groovy", """
+for (def ch: "abc".toCharArray()) {
+  print ch.toUpperCa<caret>
+}"""
+    myFixture.completeBasic()
+    myFixture.checkResult """
+for (def ch: "abc".toCharArray()) {
+  print ch.toUpperCase()
+}"""
+  }
 }

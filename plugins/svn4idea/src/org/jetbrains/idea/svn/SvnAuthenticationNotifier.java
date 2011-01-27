@@ -286,14 +286,12 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
-      /*try {
+      try {
         configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
       }
       catch (SVNException e) {
         LOG.info(e);
-        // acknowledge at least in runtime
-        configuration.acknowledge(kind, realm, svnAuthentication);
-      }*/
+      }
       return true;
     }
     return false;

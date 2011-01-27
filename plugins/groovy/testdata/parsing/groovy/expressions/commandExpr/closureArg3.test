@@ -1,0 +1,49 @@
+foo
+        {
+
+} bar
+{
+
+        } df
+        {
+
+}
+-----
+Groovy script
+  Reference expression
+    Method call
+      Reference expression
+        PsiElement(identifier)('foo')
+      Arguments
+        <empty list>
+      PsiElement(new line)('\n        ')
+      Closable block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n\n')
+        Parameter list
+          <empty list>
+        PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('bar')
+  PsiElement(new line)('\n')
+  Call expression
+    Closable block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n\n        ')
+      Parameter list
+        <empty list>
+      PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Method call
+        Reference expression
+          PsiElement(identifier)('df')
+        Arguments
+          <empty list>
+        PsiElement(new line)('\n        ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n')
+          Parameter list
+            <empty list>
+          PsiElement(})('}')
