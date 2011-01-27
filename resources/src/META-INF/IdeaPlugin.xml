@@ -207,6 +207,8 @@
 
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
 
+    <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
+
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
