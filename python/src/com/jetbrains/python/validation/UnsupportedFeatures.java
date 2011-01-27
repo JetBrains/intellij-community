@@ -306,5 +306,12 @@ public class UnsupportedFeatures extends PyAnnotator {
         getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
     }
   }
+  @Override
+  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      if (node.getAssignedValue() instanceof PyConditionalExpression)
+        getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+    }
+  }
 
 }

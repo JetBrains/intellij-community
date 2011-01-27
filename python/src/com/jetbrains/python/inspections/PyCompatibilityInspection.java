@@ -570,5 +570,13 @@ public class PyCompatibilityInspection extends PyInspection {
           registerProblem(node, "Python version 2.4 doesn't support this syntax.");
       }
     }
+
+    @Override
+    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
+        if (node.getAssignedValue() instanceof PyConditionalExpression)
+          registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+      }
+    }
   }
 }
