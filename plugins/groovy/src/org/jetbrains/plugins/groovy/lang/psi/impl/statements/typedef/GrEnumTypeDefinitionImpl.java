@@ -18,9 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
@@ -29,6 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+
+import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -91,6 +100,47 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     if (bodyFields.length == 0) return enumConstants;
     if (enumConstants.length == 0) return bodyFields;
     return ArrayUtil.mergeArrays(bodyFields, enumConstants, GrField.class);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+      for (PsiMethod method : generateDefEnumMethods()) {
+        if (!processor.execute(method, state)) return false;
+      }
+    }
+
+    return super.processDeclarations(processor, state, lastParent,place);
+  }
+
+  private PsiMethod[] defMethods = null;
+  private static final Object lock = new Object();
+
+  private PsiMethod[] generateDefEnumMethods() {
+    if (defMethods == null) {
+      synchronized (lock) {
+        defMethods = new PsiMethod[3];
+        final PsiManagerEx manager = getManager();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+        defMethods[0] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "values",
+                                               new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                               new LightModifierList(manager, GROOVY_LANGUAGE, "public", "static"))
+          .setReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this));
+        defMethods[1] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "next", new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                               new LightModifierList(manager, GROOVY_LANGUAGE, "public"))
+          .setReturnType(factory.createType(this));
+        defMethods[1] =
+          new LightMethodBuilder(manager, GROOVY_LANGUAGE, "previous", new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
+                                 new LightModifierList(manager, GROOVY_LANGUAGE, "public"))
+            .setReturnType(factory.createType(this));
+        //method name: 'valueOf', type: psiType.canonicalText, params: [name: 'java.lang.String'], isStatic:true
+      }
+    }
+    return defMethods;
   }
 
   public GrEnumConstant[] getEnumConstants() {
