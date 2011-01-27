@@ -9,13 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 public class CompletionState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionState");
   private boolean myCompletionDisposed;
-  private boolean myShownLookup;
   private boolean myModifiersChanged;
   private volatile int myCount;
-
-  public CompletionState(boolean shownLookup) {
-    myShownLookup = shownLookup;
-  }
 
   public boolean isCompletionDisposed() {
     return myCompletionDisposed;
@@ -24,14 +19,6 @@ public class CompletionState {
   public void setCompletionDisposed(boolean completionDisposed) {
     LOG.assertTrue(!myCompletionDisposed, this);
     myCompletionDisposed = completionDisposed;
-  }
-
-  public boolean isShownLookup() {
-    return myShownLookup;
-  }
-
-  public void setShownLookup(boolean shownLookup) {
-    myShownLookup = shownLookup;
   }
 
   public boolean areModifiersChanged() {
@@ -59,7 +46,6 @@ public class CompletionState {
     return "CompletionState{" +
            "phase=" + CompletionServiceImpl.getCompletionPhase() +
            ", myCompletionDisposed=" + myCompletionDisposed +
-           ", myShownLookup=" + myShownLookup +
            ", myModifiersReleased=" + myModifiersChanged +
            ", myCount=" + myCount +
            '}';

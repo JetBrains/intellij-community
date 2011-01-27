@@ -114,7 +114,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
-    myState = new CompletionState(lookup.isShown());
+    myState = new CompletionState();
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -241,7 +241,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isOutdated()) {
                   return;
                 }
-                if (isAutopopupCompletion() && !myState.isShownLookup()) {
+                if (isAutopopupCompletion() && !myLookup.isShown()) {
                   return;
                 }
                 if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
@@ -337,11 +337,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myState.isShownLookup()) {
+    if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
         return;
       }
-      myState.setShownLookup(true);
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
@@ -353,7 +352,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.show();
     }
     myLookup.refreshUi();
-    LOG.assertTrue(myLookup.isShown());
     hideAutopopupIfMeaningless();
   }
 
