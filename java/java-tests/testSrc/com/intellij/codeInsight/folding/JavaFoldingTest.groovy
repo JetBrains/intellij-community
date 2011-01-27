@@ -18,13 +18,13 @@ package com.intellij.codeInsight.folding;
 
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Denis Zhdanov
  * @since 1/17/11 1:00 PM
  */
-public class JavaFoldingTest extends CodeInsightFixtureTestCase {
+public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   
   public void testEndOfLineComments() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
