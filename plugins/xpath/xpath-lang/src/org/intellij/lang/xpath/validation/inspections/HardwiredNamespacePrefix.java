@@ -19,6 +19,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.Language;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -94,4 +96,8 @@ public class HardwiredNamespacePrefix extends XPathInspection {
     public String getShortName() {
         return "HardwiredNamespacePrefix";
     }
+
+  protected boolean acceptsLanguage(Language language) {
+    return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
+  }
 }

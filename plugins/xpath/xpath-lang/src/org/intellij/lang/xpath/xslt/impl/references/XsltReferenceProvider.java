@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -24,22 +23,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
-import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
-import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltElement;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.util.ArgumentMatcher;
-import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
-import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
-import org.intellij.lang.xpath.xslt.util.ParamMatcher;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.util.*;
+import org.jetbrains.annotations.NotNull;
 
 public class XsltReferenceProvider extends PsiReferenceProvider {
     private static final Key<CachedValue<PsiReference[]>> CACHED_XSLT_REFS = Key.create("CACHED_XSLT_REFS");
@@ -118,9 +107,16 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
             } else if (XsltSupport.isVariableOrParamName(attribute) || XsltSupport.isTemplateName(attribute)) {
                 final XsltElement myElement = myXsltElementFactory.wrapElement(tag, XsltElement.class);
                 psiReferences = new PsiReference[]{ new SelfReference(attribute, myElement) };
+            } else if (XsltSupport.isFunctionName(attribute)) {
+                final XsltFunction myElement = myXsltElementFactory.wrapElement(tag, XsltFunction.class);
+                if (attribute.getValue().contains(":")) {
+                  psiReferences = new PsiReference[]{ new PrefixReference(attribute), new SelfReference(attribute, myElement, attribute.getValue().indexOf(':') + 1) };
+                } else {
+                  psiReferences = new PsiReference[]{ new SelfReference(attribute, myElement) };
+                }
             } else if (XsltSupport.isIncludeOrImportHref(attribute)) {
                 final String href = attribute.getValue();
-                final String resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(href);
+                final String resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(href, attribute.getProject());
                 //noinspection StringEquality
                 if (href == resourceLocation) {
                     // not a configured external resource

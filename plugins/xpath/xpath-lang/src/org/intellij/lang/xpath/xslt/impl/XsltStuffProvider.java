@@ -17,6 +17,7 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
@@ -32,12 +33,12 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
+import org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,21 +48,22 @@ import javax.xml.namespace.QName;
 
 public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProvider {
 
-  private final XsltConfig myConfig;
+    @SuppressWarnings({"unchecked"})
+    public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
+            UnusedElementInspection.class,
+            TemplateInvocationInspection.class,
+            XsltDeclarationInspection.class,
+            VariableShadowingInspection.class
+    };
 
-  private final UsageGroupingRule[] myUsageGroupingRules;
+    private final UsageGroupingRule[] myUsageGroupingRules;
 
-  public XsltStuffProvider(XsltConfig config) {
-        myConfig = config;
-        myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
+    public XsltStuffProvider() {
+      myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
 
     public Class[] getInspectionClasses() {
-        return new Class[]{
-                UnusedElementInspection.class,
-                TemplateInvocationInspection.class,
-                XsltDeclarationInspection.class
-        };
+        return INSPECTION_CLASSES;
     }
 
     @NotNull
@@ -168,10 +170,12 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionT
         }
 
         @Nullable
-        private UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+        private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
             if (referencedElement instanceof XsltParameter) {
                 final XsltParameter parameter = (XsltParameter)referencedElement;
-                final XsltTemplate template = XsltCodeInsightUtil.getTemplate(u.getElement(), false);
+                final PsiElement element = u.getElement();
+                if (element == null) return null;
+                final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
                 if (template == null) return null;
 
                 final boolean isForeign = XsltCodeInsightUtil.getTemplate(parameter, false) != template;

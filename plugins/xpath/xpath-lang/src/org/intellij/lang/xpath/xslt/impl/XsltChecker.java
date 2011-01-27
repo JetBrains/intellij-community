@@ -21,13 +21,11 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import com.intellij.util.xml.NanoXmlUtil;
 
 public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
-    public enum SupportLevel { FULL, NONE, PARTIAL }
+    public enum LanguageLevel { NONE, V1, V2 }
 
     enum State {
-        YES, SIMPLIFIED, NO, POSSIBLY, POSSIBLY_SIMPLIFIED_SYNTAX, PARTIAL
+        YES, SIMPLIFIED, NO, POSSIBLY, POSSIBLY_SIMPLIFIED_SYNTAX, VERSION2
     }
-
-    private static final RuntimeException STOP = new NanoXmlUtil.ParserStoppedException();
 
     private State myState;
 
@@ -43,53 +41,48 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     @Override
     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
         if (myState == State.POSSIBLY) {
-            if ("version".equals(key) && (nsURI == null || nsURI.equals(""))) {
+            if ("version".equals(key) && (nsURI == null || nsURI.length() == 0)) {
                 checkVersion(value, State.YES);
-                stopFast();
+                stop();
             }
         } else if (myState == State.POSSIBLY_SIMPLIFIED_SYNTAX) {
             if ("version".equals(key) && nsURI.equals(XsltSupport.XSLT_NS)) {
                 checkVersion(value, State.SIMPLIFIED);
-                stopFast();
+                stop();
             }
         }
     }
 
-    private static void stopFast() {
-        // same as stop(), but pre-allocated instance avoids filling stacktrace information each time
-        throw STOP;
-    }
-
     private void checkVersion(String value, State yes) {
-        if (isFullySupportedVersion(value)) {
+        if (isVersion1(value)) {
             myState = yes;
-        } else if (isPartiallySupportedVersion(value)) {
-            myState = State.PARTIAL;
+        } else if (isVersion2(value)) {
+            myState = State.VERSION2;
         } else {
             myState = State.NO;
         }
     }
 
     public static boolean isSupportedVersion(String value) {
-        return isFullySupportedVersion(value) || isPartiallySupportedVersion(value);
+        return isVersion1(value) || isVersion2(value);
     }
 
-    public static boolean isFullySupportedVersion(String value) {
+    public static boolean isVersion1(String value) {
         return "1.0".equals(value) || "1.1".equals(value);
     }
 
-    public static boolean isPartiallySupportedVersion(String value) {
+    public static boolean isVersion2(String value) {
         return "2.0".equals(value);
     }
 
     @Override
     public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
-        stopFast();  // the first element (or its attrs) decides - stop here
+        stop();  // the first element (or its attrs) decides - stop here
     }
 
     @Override
     public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-        stopFast();  // the first element (or its attrs) decides - stop here
+        stop();  // the first element (or its attrs) decides - stop here
     }
 
     public boolean isFullySupportedXsltFile() {
@@ -100,21 +93,21 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
         return myState == State.SIMPLIFIED;
     }
 
-    public static SupportLevel getSupportLevel(String value) {
+    public static LanguageLevel getLanguageLevel(String value) {
         if (value == null) {
-            return SupportLevel.NONE;
+            return LanguageLevel.NONE;
         }
-        if (isFullySupportedVersion(value)) {
-            return SupportLevel.FULL;
+        if (isVersion1(value)) {
+            return LanguageLevel.V1;
         }
-        if (isPartiallySupportedVersion(value)) {
-            return SupportLevel.PARTIAL;
+        if (isVersion2(value)) {
+            return LanguageLevel.V2;
         }
-        return SupportLevel.NONE;
+        return LanguageLevel.NONE;
     }
 
-    public SupportLevel getSupportLevel() {
-        return myState == State.PARTIAL ? SupportLevel.PARTIAL :
-                (isFullySupportedXsltFile() ? SupportLevel.FULL : SupportLevel.NONE);
+    public LanguageLevel getLanguageLevel() {
+        return myState == State.VERSION2 ? LanguageLevel.V2 :
+                (isFullySupportedXsltFile() ? LanguageLevel.V1 : LanguageLevel.NONE);
     }
 }

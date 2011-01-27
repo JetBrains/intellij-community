@@ -16,11 +16,20 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ProcessingContext;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
+import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 /**
  * @author yole
@@ -28,7 +37,31 @@ import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
 public class XsltReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-      PlatformPatterns.psiElement(XmlAttributeValue.class).and(new FilterPattern(new XsltAttributeFilter())),
-      new XsltReferenceProvider(registrar.getProject()));
+            PlatformPatterns.psiElement(XmlAttributeValue.class).and(new FilterPattern(new XsltAttributeFilter())),
+            new XsltReferenceProvider(registrar.getProject()));
+
+// TODO: 1. SchemaReferencesProvider doesn't know about "as" attribute / 2. what to do with non-schema types (xs:yearMonthDuretion, xs:dayTimeDuration)?
+//    registrar.registerReferenceProvider(
+//            XmlPatterns.xmlAttributeValue().withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+//            new SchemaReferencesProvider());
+
+    registrar.registerReferenceProvider(
+            XmlPatterns.xmlAttributeValue().withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+            new PsiReferenceProvider() {
+              @NotNull
+              @Override
+              public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+                if (element.textContains(':')) {
+                  return new PsiReference[]{new PrefixReference((XmlAttribute)element.getParent()) {
+                    @NotNull
+                    @Override
+                    public Object[] getVariants() {
+                      return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
+                    }
+                  }};
+                }
+                return PsiReference.EMPTY_ARRAY;
+              }
+            });
   }
 }

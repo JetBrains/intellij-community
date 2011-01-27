@@ -40,6 +40,7 @@ public class XPathSupportLoader extends FileTypeFactory implements InspectionToo
     public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
         if (DBG_MODE || ApplicationManager.getApplication().isUnitTestMode()) {
             consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
+            consumer.consume(XPathFileType.XPATH2, XPathFileType.XPATH2.getDefaultExtension());
         }
     }
 }

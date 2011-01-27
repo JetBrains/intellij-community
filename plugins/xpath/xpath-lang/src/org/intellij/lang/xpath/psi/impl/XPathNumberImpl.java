@@ -16,6 +16,8 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.context.XPathVersion;
+import org.intellij.lang.xpath.psi.XPath2Type;
 import org.intellij.lang.xpath.psi.XPathNumber;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,8 @@ public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
 
     @NotNull
     public XPathType getType() {
-        return XPathType.NUMBER;
+        return getXPathVersion() == XPathVersion.V1 ? XPathType.NUMBER :
+                (textContains('.') ? XPath2Type.DOUBLE : XPath2Type.INTEGER);
     }
 
     public double getValue() {

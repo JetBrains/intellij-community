@@ -17,25 +17,30 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
+import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
-import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.psi.XPathElement;
+import org.jetbrains.annotations.NotNull;
 
 public class XPathElementImpl extends ASTWrapperPsiElement implements XPathElement {
 
+    private final NotNullLazyValue<ContextProvider> myContext = new NotNullLazyValue<ContextProvider>() {
+      @NotNull
+      @Override
+      protected synchronized ContextProvider compute() {
+        return ContextProvider.getContextProvider(XPathElementImpl.this);
+      }
+    };
+
     public XPathElementImpl(ASTNode node) {
         super(node);
-    }
-
-    @NotNull
-    public Language getLanguage() {
-        return XPathFileType.XPATH.getLanguage();
     }
 
     public String toString() {
@@ -81,7 +86,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
         final ASTNode next = node.getTreeNext();
         parent.removeChild(node);
 
-        if (XPathElementTypes.EXPRESSIONS.contains(node.getElementType())) {
+        if (XPath2ElementTypes.EXPRESSIONS.contains(node.getElementType())) {
             if (parent.getElementType() == XPathElementTypes.FUNCTION_CALL) {
                 if (next != null && next.getElementType() == XPathTokenTypes.COMMA) {
                     parent.removeChild(next);
@@ -104,5 +109,20 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
     public final ASTNode getNode() {
         return super.getNode();
+    }
+
+    @Override
+    public XPathFile getContainingFile() {
+      return (XPathFile)super.getContainingFile();
+    }
+
+    @Override
+    public ContextProvider getXPathContext() {
+      return myContext.getValue();
+    }
+
+    @Override
+    public XPathVersion getXPathVersion() {
+      return getContainingFile().getXPathVersion();
     }
 }

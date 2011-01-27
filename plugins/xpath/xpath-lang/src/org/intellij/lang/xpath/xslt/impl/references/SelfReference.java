@@ -27,50 +27,56 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 class SelfReference implements PsiReference {
-    private final XmlAttributeValue myValue;
-    private final PsiElement myTarget;
+  private final XmlAttributeValue myValue;
+  private final PsiElement myTarget;
+  private final int myStartOffset;
 
-    public SelfReference(XmlAttribute element, PsiElement target) {
-        this.myTarget = target;
-        this.myValue = element.getValueElement();
-    }
+  public SelfReference(XmlAttribute element, PsiElement target, int startOffset) {
+    myTarget = target;
+    myValue = element.getValueElement();
+    myStartOffset = startOffset;
+  }
 
-    public PsiElement getElement() {
-        return myValue;
-    }
+  public SelfReference(XmlAttribute element, PsiElement target) {
+    this(element, target, 0);
+  }
 
-    public TextRange getRangeInElement() {
-        return TextRange.from(1, myValue.getTextLength() - 2);
-    }
+  public PsiElement getElement() {
+    return myValue;
+  }
 
-    @Nullable
-    public PsiElement resolve() {
-        return myValue.isValid() ? myTarget : null;
-    }
+  public TextRange getRangeInElement() {
+    return TextRange.from(1 + myStartOffset, myValue.getTextLength() - (2 + myStartOffset));
+  }
 
-    @NotNull
-    public String getCanonicalText() {
-        return myValue.getText();
-    }
+  @Nullable
+  public PsiElement resolve() {
+    return myValue.isValid() ? myTarget : null;
+  }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        return myValue;
-    }
+  @NotNull
+  public String getCanonicalText() {
+    return myValue.getText();
+  }
 
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-        return myValue;
-    }
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return myValue;
+  }
 
-    public boolean isReferenceTo(PsiElement element) {
-        return false;
-    }
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return myValue;
+  }
 
-    @NotNull
-    public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
+  public boolean isReferenceTo(PsiElement element) {
+    return false;
+  }
 
-    public boolean isSoft() {
-        return false;
-    }
+  @NotNull
+  public Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  public boolean isSoft() {
+    return false;
+  }
 }

@@ -49,6 +49,9 @@ class XsltAttributeFilter implements ElementFilter {
             if (XsltSupport.isMode(xmlattribute)) {
                 return true;
             }
+            if (XsltSupport.isFunctionName(xmlattribute)) {
+                return true;
+            }
         }
         return false;
     }

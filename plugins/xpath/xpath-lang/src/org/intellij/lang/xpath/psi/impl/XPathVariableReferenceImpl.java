@@ -16,35 +16,24 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.VariableContext;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathVariable;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathVariableReferenceImpl extends XPathElementImpl implements XPathVariableReference {
     private static final TokenSet QNAME_FILTER = TokenSet.create(XPathTokenTypes.VARIABLE_PREFIX, XPathTokenTypes.VARIABLE_NAME);
 
-    private final NotNullLazyValue<ContextProvider> myContext = new NotNullLazyValue<ContextProvider>() {
-        @NotNull
-        @Override
-        protected synchronized ContextProvider compute() {
-            return ContextProvider.getContextProvider(XPathVariableReferenceImpl.this);
-        }
-    };
-    
     public XPathVariableReferenceImpl(ASTNode node) {
         super(node);
     }
@@ -81,11 +70,21 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
 
     @Nullable
     public XPathVariable resolve() {
-        final VariableContext context = myContext.getValue().getVariableContext();
-        if (context == null) {
-            return null;
+      if (getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
+        XPathVariableDeclaration f = PsiTreeUtil.getParentOfType(this, XPathVariableDeclaration.class, true);
+        while (f != null) {
+          final XPathVariable variable = f.getVariable(getReferencedName());
+          if (variable != null) {
+            return variable;
+          }
+          f = PsiTreeUtil.getParentOfType(f, XPathVariableDeclaration.class, true);
         }
-        return context.resolve(this);
+      }
+      final VariableContext context = getXPathContext().getVariableContext();
+      if (context == null) {
+        return null;
+      }
+      return context.resolve(this);
     }
 
     @NotNull
@@ -124,7 +123,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
                 }
             }
         }
-        final VariableContext context = myContext.getValue().getVariableContext();
+        final VariableContext context = getXPathContext().getVariableContext();
         if (context != null) {
             return context.isReferenceTo(element, this);
         }

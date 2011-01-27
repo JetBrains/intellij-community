@@ -51,7 +51,7 @@ public interface XPathQuickFixFactory {
 
     boolean isSuppressedFor(PsiElement element, XPathInspection inspection);
 
-    static abstract class Fix<E extends PsiElement> implements LocalQuickFix, IntentionAction {
+    abstract class Fix<E extends PsiElement> implements LocalQuickFix, IntentionAction {
         protected final E myElement;
 
         protected Fix(E element) {
