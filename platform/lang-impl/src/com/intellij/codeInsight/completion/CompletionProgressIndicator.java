@@ -179,9 +179,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void setFocusLookupWhenDone(boolean focusLookup) {
-    myState.setFocusLookupWhenDone(focusLookup);
-    if (!focusLookup && isAutopopupCompletion()) {
-      myLookup.setAdvertisementText("Press " + CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) + " to choose the first suggestion");
+    LOG.assertTrue(isAutopopupCompletion());
+    if (focusLookup) {
+      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone();
+    } else {
+      myLookup.setAdvertisementText("Press " +
+                                    CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
+                                    " to choose the first suggestion");
     }
   }
 
@@ -458,11 +462,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           }
         }
         else {
-          if (myState.isFocusLookupWhenDone()) {
-            myLookup.setFocused(true);
-          }
-          updateLookup();
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
+          updateLookup();
         }
       }
     }, myQueue.getModalityState());

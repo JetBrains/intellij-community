@@ -79,6 +79,15 @@ public abstract class CompletionPhase implements Disposable {
       super(indicator);
     }
 
+    void focusLookupWhenDone() {
+      Disposer.register(this, new Disposable() {
+        @Override
+        public void dispose() {
+          indicator.getLookup().setFocused(true);
+        }
+      });
+    }
+
     @Override
     public CompletionProgressIndicator newCompletionStarted() {
       indicator.closeAndFinish(false);

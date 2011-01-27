@@ -11,7 +11,6 @@ public class CompletionState {
   private boolean myCompletionDisposed;
   private boolean myShownLookup;
   private boolean myModifiersChanged;
-  private volatile boolean myFocusLookupWhenDone;
   private volatile int myCount;
 
   public CompletionState(boolean shownLookup) {
@@ -43,14 +42,6 @@ public class CompletionState {
     myModifiersChanged = true;
   }
 
-  public boolean isFocusLookupWhenDone() {
-    return myFocusLookupWhenDone;
-  }
-
-  public void setFocusLookupWhenDone(boolean focusLookupWhenDone) {
-    myFocusLookupWhenDone = focusLookupWhenDone;
-  }
-
   public void assertDisposed() {
     LOG.assertTrue(myCompletionDisposed, this);
   }
@@ -70,7 +61,6 @@ public class CompletionState {
            ", myCompletionDisposed=" + myCompletionDisposed +
            ", myShownLookup=" + myShownLookup +
            ", myModifiersReleased=" + myModifiersChanged +
-           ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +
            ", myCount=" + myCount +
            '}';
   }
