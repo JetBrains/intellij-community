@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,6 +104,7 @@ import java.util.Set;
  */
 public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+  private static final Key<Boolean> CLEAR_IMPORTS = Key.create("ClearImports");
 
   private AnnotationHolder myHolder;
 
@@ -113,6 +115,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.getCurrentAnnotationSession().getUserData(CLEAR_IMPORTS) == null) {
+      final PsiFile file = element.getContainingFile();
+      if (file instanceof GroovyFile) {
+        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)file);
+      }
+      holder.getCurrentAnnotationSession().putUserData(CLEAR_IMPORTS, Boolean.TRUE);
+    }
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);

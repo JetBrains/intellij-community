@@ -270,12 +270,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
                                                                                   initContext.getOffsetMap(), lookup);
 
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
+    boolean sync =
+      (invokedExplicitly || ApplicationManager.getApplication().isUnitTestMode()) && !CompletionAutoPopupHandler.ourTestingAutopopup;
+
+    CompletionServiceImpl.setCompletionPhase(sync ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if ((!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) || CompletionAutoPopupHandler.ourTestingAutopopup) {
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
+    if (!sync) {
       return;
     }
 
@@ -313,7 +315,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               startSemaphore.up();
-              indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
+              if (autopopup) {
+                indicator.setFocusLookupWhenDone(shouldFocusLookup(parameters));
+              }
               indicator.duringCompletion(initContext);
             }
           });
@@ -467,7 +471,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final LookupElement[] items) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      indicator.handleEmptyLookup();
+      indicator.handleEmptyLookup(true);
       return;
     }
 
@@ -483,7 +487,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
       indicator.closeAndFinish(true);
-      indicator.getCompletionState().assertDisposed();
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
       indicator.getOffsetMap()
         .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));

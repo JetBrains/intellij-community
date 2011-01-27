@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,17 +16,21 @@
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-/**
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer
+import org.jetbrains.plugins.groovy.util.TestUtils
+
+ /**
  * @author ilyas
  */
 public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
@@ -33,6 +38,19 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "optimizeImports/";
+  }
+
+  @Override protected void setUp() {
+    super.setUp()
+    CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = true
+    DaemonCodeAnalyzer.getInstance(project).projectOpened()
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true)
+  }
+
+  @Override protected void tearDown() {
+    DaemonCodeAnalyzer.getInstance(project).projectClosed()
+    CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = false
+    super.tearDown()
   }
 
   public void testNewline() throws Throwable {
@@ -109,6 +127,8 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testJavaUtilString() throws Throwable { doTest(); }
+
   public void testSamePackage() throws Throwable {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
@@ -155,7 +175,6 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
-
     }
     finally {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
@@ -173,5 +192,21 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
       }
     }, "Optimize imports", null);
   }
+
+  public void testOptimizeOnTheFly() {
+    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("a.groovy", "import java.lang.String<caret>").virtualFile)
+    //myFixture.configureByText "a.groovy", "import java.lang.String<caret>"
+    myFixture.type '\n\nfoo'
+    myFixture.doHighlighting()
+    myFixture.checkResult "foo<caret>"
+  }
+
+  public void testNoOptimizeOnTheFlyDuringEditing() {
+    myFixture.configureByText "a.groovy", "import java.util.String<caret>"
+    myFixture.type '\nimport java.lang.String'
+    myFixture.doHighlighting()
+    myFixture.checkResult "import java.util.String\nimport java.lang.String<caret>"
+  }
+
 
 }

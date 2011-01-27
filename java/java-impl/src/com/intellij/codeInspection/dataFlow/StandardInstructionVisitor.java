@@ -92,7 +92,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           onAssigningToNotNullableVariable(instruction, runner);
         }
       }
-      memState.setVarValue(var, dfaSource);
+      if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+        memState.setVarValue(var, dfaSource);
+      }
     }
 
     memState.push(dfaDest);
