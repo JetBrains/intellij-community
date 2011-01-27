@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -39,6 +40,11 @@ public class PyCompatibilityInspection extends PyInspection {
     if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
     myVersionsToProcess = new Vector<LanguageLevel>();
     updateVersionsToProcess();
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   private void updateVersionsToProcess() {
@@ -555,6 +561,12 @@ public class PyCompatibilityInspection extends PyInspection {
       StringBuilder message = new StringBuilder(myCommonMessage);
       PyReferenceExpression importSource  = node.getImportSource();
       if (importSource != null) {
+        if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {      //PY-2793
+          PsiElement prev = importSource.getPrevSibling();
+          if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT)
+            registerProblem(node, "Python version 2.4 doesn't support this syntax.");
+        }
+
         String name = importSource.getText();
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
           LanguageLevel languageLevel = myVersionsToProcess.get(i);

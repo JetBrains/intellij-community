@@ -95,4 +95,7 @@ def unified_tef():
 # PY-2797
 
 <warning descr="Python version 2.4 doesn't support this syntax.">with open("x.txt") as f:
-    data = f.read()</warning>
+    data = f.read()
+</warning>########################
+
+<warning descr="Python version 2.4 doesn't support this syntax.">from .module import name1, name2</warning>

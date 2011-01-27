@@ -13,6 +13,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.intentions.RemoveTrailingLIntention;
 import com.jetbrains.python.psi.*;
@@ -307,9 +308,14 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyFromImportStatement(PyFromImportStatement node) {
     PyReferenceExpression importSource  = node.getImportSource();
-    if (importSource == null) {
-      if (getLanguageLevel(node) == LanguageLevel.PYTHON24)
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      if (importSource == null)
         getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+      else {
+        PsiElement prev = importSource.getPrevSibling();
+        if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT)
+          getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+      }
     }
   }
 
