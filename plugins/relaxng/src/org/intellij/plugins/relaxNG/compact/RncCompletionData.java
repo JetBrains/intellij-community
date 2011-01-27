@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
