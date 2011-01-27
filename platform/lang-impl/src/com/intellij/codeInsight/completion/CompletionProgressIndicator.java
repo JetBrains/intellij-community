@@ -321,10 +321,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myState.assertDisposed();
   }
 
-  boolean areModifiersChanged() {
-    return myState.areModifiersChanged();
-  }
-
   public CodeCompletionHandlerBase getHandler() {
     return myHandler;
   }
@@ -623,7 +619,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (StringUtil.isNotEmpty(text)) {
         LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
         CompletionServiceImpl.setCompletionPhase(
-          areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, this));
+          myState.areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, this));
         return;
       }
     }
