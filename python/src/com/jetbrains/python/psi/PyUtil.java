@@ -728,6 +728,12 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
+    PyExpression argument = getKeywordArgument(expr, keyword);
+    return argument instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)argument).getStringValue() : null;
+  }
+
   public static boolean isExceptionClass(PyClass pyClass) {
     for (PyClassRef c: pyClass.iterateAncestors()) {
       if ("BaseException".equals(c.getQualifiedName())) {

@@ -86,6 +86,11 @@ public class PyDynamicMember {
     return this;
   }
 
+  public PyDynamicMember toClassAttribute(String name) {
+    myPsiPath = new PyPsiPath.ToClassAttribute(myPsiPath, name);
+    return this;
+  }
+
   public PyDynamicMember toCall(String name, String... args) {
     myPsiPath = new PyPsiPath.ToCall(myPsiPath, name, args);
     return this;
