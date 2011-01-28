@@ -250,6 +250,8 @@ subpartition
 subpartitions
 substring
 sysdate
+symlink
+symlinks
 systimestamp
 tablespace
 taglib
