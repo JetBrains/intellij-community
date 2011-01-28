@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,21 +28,6 @@ import java.util.List;
 public abstract class CheckinHandlersManager {
   public static CheckinHandlersManager getInstance(final Project project) {
     return project.getComponent(CheckinHandlersManager.class);
-  }
-
-  class Dummy extends CheckinHandlersManager {
-    @Override
-    public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory) {
-    }
-
-    @Override
-    public void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler) {
-    }
   }
 
   /**
