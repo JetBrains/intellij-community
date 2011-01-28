@@ -69,6 +69,10 @@ public class HtmlCompletionData extends XmlCompletionData {
     return true;
   }
 
+  public final boolean isCaseSensitive() {
+    return !isCaseInsensitive();
+  }
+
   protected void setCaseInsensitive(final boolean caseInsensitive) {
     myCaseInsensitive = caseInsensitive;
   }

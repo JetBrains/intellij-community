@@ -15,24 +15,24 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 
 /**
 * @author peter
 */
-public class XmlAttributeInsertHandler implements InsertHandler<MutableLookupElement> {
+public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlAttributeInsertHandler INSTANCE = new XmlAttributeInsertHandler();
 
-  public void handleInsert(InsertionContext context, MutableLookupElement item) {
+  public void handleInsert(InsertionContext context, LookupElement item) {
     final Editor editor = context.getEditor();
 
     final Document document = editor.getDocument();

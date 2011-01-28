@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.*;
@@ -95,11 +93,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
-  private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
-
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
-  private boolean myCheckinHandlerFactoriesLoaded = false;
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
@@ -511,22 +506,6 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   @NotNull
   public VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
     return myOptionsAndConfirmations.getConfirmation(option);
-  }
-
-  public List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
-    if (!myCheckinHandlerFactoriesLoaded) {
-      myCheckinHandlerFactoriesLoaded = true;
-      Collections.addAll(myRegisteredBeforeCheckinHandlers, Extensions.getExtensions(CheckinHandlerFactory.EP_NAME, myProject));
-    }
-    return Collections.unmodifiableList(myRegisteredBeforeCheckinHandlers);
-  }
-
-  public void registerCheckinHandlerFactory(CheckinHandlerFactory factory) {
-    myRegisteredBeforeCheckinHandlers.add(factory);
-  }
-
-  public void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler) {
-    myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 
   private final Map<VcsListener, MessageBusConnection> myAdapters = new HashMap<VcsListener, MessageBusConnection>();

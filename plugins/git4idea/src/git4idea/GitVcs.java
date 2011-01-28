@@ -55,7 +55,6 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
-import git4idea.checkin.GitCheckinHandlerFactory;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
@@ -163,7 +162,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myIndexChangeListener = new RepositoryChangeListener(myProject, ".git/index");
-    myVcsManager.registerCheckinHandlerFactory(new GitCheckinHandlerFactory());
   }
 
   public GitVFSListener getVFSListener() {
@@ -578,5 +576,4 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public RepositoryChangeListener getIndexChangeListener() {
     return myIndexChangeListener;
   }
-
 }

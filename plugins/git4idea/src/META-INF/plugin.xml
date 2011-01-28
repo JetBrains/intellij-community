@@ -71,6 +71,7 @@
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
+    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
 
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"

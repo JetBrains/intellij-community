@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -180,31 +179,6 @@ public abstract class ProjectLevelVcsManager {
 
 
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
-
-  /**
-   * Returns the list of all registered factories which provide callbacks to run before and after
-   * VCS checkin operations.
-   *
-   * @return the list of registered factories.
-   * @since 5.1
-   */
-  public abstract List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
-
-  /**
-   * Registers a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to register.
-   * @since 5.1
-   */
-  public abstract void registerCheckinHandlerFactory(CheckinHandlerFactory factory);
-
-  /**
-   * Unregisters a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to unregister.
-   * @since 5.1
-   */
-  public abstract void unregisterCheckinHandlerFactory(CheckinHandlerFactory factory);
 
   /**
    * Adds a listener for receiving notifications about changes in VCS configuration for the project.
