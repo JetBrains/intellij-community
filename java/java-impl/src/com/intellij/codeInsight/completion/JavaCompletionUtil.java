@@ -680,8 +680,8 @@ public class JavaCompletionUtil {
         final Document document = context.getEditor().getDocument();
         PsiDocumentManager.getInstance(project).commitDocument(document);
         final PsiFile file = context.getFile();
-        final PsiReferenceExpression ref =
-          PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiReferenceExpression.class, false);
+        final PsiJavaCodeReferenceElement ref =
+          PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null) {
           final PsiElement qualifier = ref.getQualifier();
           if (qualifier != null) {
@@ -1001,11 +1001,11 @@ public class JavaCompletionUtil {
   }
 
   public static boolean hasAccessibleInnerClass(@NotNull PsiClass psiClass, @NotNull PsiElement position) {
-    final PsiClass[] inners = psiClass.getAllInnerClasses();
+    final PsiClass[] inners = psiClass.getInnerClasses();
     if (inners.length > 0) {
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
       for (PsiClass inner : inners) {
-        if (resolveHelper.isAccessible(inner, position, null)) {
+        if (inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, position, null)) {
           return true;
         }
       }
@@ -1031,5 +1031,18 @@ public class JavaCompletionUtil {
     }
 
     return true;
+  }
+
+  public static boolean isDefinitelyExpected(PsiClass psiClass, Set<PsiType> expectedTypes, PsiElement position) {
+    final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+    for (PsiType expectedType : expectedTypes) {
+      if (expectedType instanceof PsiArrayType) return false;
+    }
+    for (PsiType type : expectedTypes) {
+      if (type instanceof PsiClassType && ((PsiClassType)type).rawType().isAssignableFrom(classType)) {
+        return true;
+      }
+    }
+    return !hasAccessibleInnerClass(psiClass, position);
   }
 }

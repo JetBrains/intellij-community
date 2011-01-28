@@ -20,28 +20,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.jetbrains.annotations.Nullable;
 
 class XsltElementFactoryImpl extends XsltElementFactory {
     private static final Key<Pair<ASTNode, XsltElement>> WRAPPER = Key.create("WRAPPER");
-
-    @NotNull
-    @NonNls
-    public String getComponentName() {
-        return "XSLT-Support.ElementFactory";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
 
     @SuppressWarnings({ "unchecked" })
     public XsltElement wrapElement(XmlTag target) {
@@ -79,6 +64,8 @@ class XsltElementFactoryImpl extends XsltElementFactory {
             element = new XsltWithParamImpl(target);
         } else if (XsltSupport.isXsltRootTag(target)) {
             element = new XsltStylesheetImpl(target);
+        } else if (XsltSupport.isFunction(target)) {
+            element = new XsltFunctionImpl(target);
         } else {
             element = new DummyElementImpl(target);
         }

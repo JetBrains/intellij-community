@@ -1,6 +1,6 @@
 class A {
 
-    static final LOCAL_BUFFER = null
+    static final LOCAL_BUFFER = null;
 
     {
         LOCAL_BUFFER = "bugoga"
@@ -31,6 +31,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(null)('null')
+      PsiElement(;)(';')
       PsiElement(new line)('\n\n    ')
       Class initializer
         Modifiers

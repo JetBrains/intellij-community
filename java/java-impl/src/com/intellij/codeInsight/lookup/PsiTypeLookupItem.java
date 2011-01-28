@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,10 @@ public class PsiTypeLookupItem extends LookupItem {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-      final String text = type.getCanonicalText();
+      String text = type.getCanonicalText();
+      if (text == null) {
+        text = type.getPresentableText();
+      }
       String typeString = text;
       String typeParams = "";
       if (text.indexOf('<') > 0 && text.endsWith(">")) {
@@ -120,5 +124,25 @@ public class PsiTypeLookupItem extends LookupItem {
     }
     
     return null;
+  }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    final Object object = getObject();
+    if (object instanceof PsiClass) {
+      JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object);
+    } else {
+      assert object instanceof PsiType;
+
+      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+
+      presentation.setItemText(((PsiType)object).getCanonicalText());
+      presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
+
+      String tailText = (String)getAttribute(LookupItem.TAIL_TEXT_ATTR);
+      if (tailText != null) {
+        presentation.setTailText(tailText, getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
+      }
+    }
   }
 }

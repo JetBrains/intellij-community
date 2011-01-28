@@ -19,17 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XPathNodeTest extends XPathElement, QNameElement {
-    public enum PrincipalType {
-        ELEMENT("element"), ATTRIBUTE("attribute"), NAMESPACE("namespace"), UNKNOWN("unknown");
-
-        private final String type;
-
-        PrincipalType(String s) {
-            this.type = s;
-        }
+    enum PrincipalType {
+        ELEMENT, ATTRIBUTE, NAMESPACE, UNKNOWN;
 
         public String getType() {
-            return type;
+            return name().toLowerCase();
         }
     }
 

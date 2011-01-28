@@ -30,7 +30,6 @@ import javax.swing.*;
  * @author nik
  */
 public interface XValueNode extends Obsolescent {
-
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);

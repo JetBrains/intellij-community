@@ -17,11 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
@@ -29,24 +31,34 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
  * @author ilyas
  */
 public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrRangeExpression {
-  private static final String INTEGER_FQ_NAME = "java.lang.Integer";
-  private static final String INT_RANGE_FQ_NAME = "groovy.lang.IntRange";
-  private static final String OBJECT_RANGE_FQ_NAME = "groovy.lang.ObjectRange";
 
   public GrRangeExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public PsiType getType() {
-    GroovyPsiManager factory = GroovyPsiManager.getInstance(getProject());
-    GrExpression lop = getLeftOperand();
-    if (lop.getType() != null && INTEGER_FQ_NAME.equals(lop.getType().getCanonicalText())) {
-      return getTypeByFQName(INT_RANGE_FQ_NAME);
-    }
-    return getTypeByFQName(OBJECT_RANGE_FQ_NAME);
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
   public String toString() {
     return "Range expression";
   }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitRangeExpression(this);
+  }
+
+  private static final Function<GrRangeExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrRangeExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrRangeExpressionImpl range) {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(range.getProject());
+
+      final GrExpression right = range.getRightOperand();
+      final PsiType rtype = right == null ? null : right.getType();
+      final PsiType ltype = range.getLeftOperand().getType();
+
+      return new GrRangeType(range.getResolveScope(), facade, ltype, rtype);
+    }
+  };
 }

@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -122,6 +123,9 @@ public class CommandLineProcessor {
     int line = -1;
     for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
       String arg = args.get(i);
+      if (arg.equals(StartupUtil.NOSPLASH)) {
+        continue;
+      }
       if (arg.equals("-l") || arg.equals("--line")) {
         //noinspection AssignmentToForLoopParameter
         i++;

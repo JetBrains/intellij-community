@@ -32,22 +32,17 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.completion.CompletionLists;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.util.QNameUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.xml.namespace.QName;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 
 abstract class XsltElementImpl extends LightElement implements Iconable, NavigationItem, XsltElement, ItemPresentation {
 
@@ -327,19 +322,11 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
         return t;
     }
 
-    @Nullable
-    protected QName getQName(String name) {
-        if (name == null) return null;
+  public ContextProvider getXPathContext() {
+    throw new UnsupportedOperationException();
+  }
 
-        final int p = name.indexOf(':');
-        if (p == -1) return new QName(name);
-
-        final String prefix = name.substring(0, p);
-        final String uri = getTag().getNamespaceByPrefix(prefix);
-        if (uri.length() > 0) {
-            return new QName(uri, name.substring(p + 1), prefix);
-        } else {
-            return QNameUtil.UNRESOLVED;
-        }
-    }
+  public XPathVersion getXPathVersion() {
+    throw new UnsupportedOperationException();
+  }
 }

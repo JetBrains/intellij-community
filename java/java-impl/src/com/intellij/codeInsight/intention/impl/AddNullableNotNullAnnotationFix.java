@@ -30,11 +30,11 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
-  public AddNullableNotNullAnnotationFix(final String annotation, final String annotationToRemove) {
+  public AddNullableNotNullAnnotationFix(final String annotation, final String... annotationToRemove) {
     super(annotation, annotationToRemove);
   }
 
-  public AddNullableNotNullAnnotationFix(final String fqn, final PsiModifierListOwner owner, final String annotationToRemove) {
+  public AddNullableNotNullAnnotationFix(final String fqn, final PsiModifierListOwner owner, final String... annotationToRemove) {
     super(fqn, owner, annotationToRemove);
   }
 

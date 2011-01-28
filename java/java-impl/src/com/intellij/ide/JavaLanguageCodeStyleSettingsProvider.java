@@ -215,7 +215,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      "        x--;\n" +
                                                      "    } while (x > 10) \n" +
                                                      "  }\n" +
-                                                     "    public static void test() { \n" +
+                                                     "    public static void test() \n" +
+                                                     "        throws Exception { \n" +
                                                      "        foo.foo().bar(\"arg1\", \n" +
                                                      "                      \"arg2\"); \n" +
                                                      "    } \n" +

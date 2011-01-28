@@ -138,7 +138,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals(1, ((PsiMethod)myItems[1].getObject()).getParameterList().getParametersCount());
     assertEquals(2, ((PsiMethod)myItems[2].getObject()).getParameterList().getParametersCount());
   }
-
   public void testStatsForClassNameInExpression() throws Throwable {
     final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
     VfsUtil.saveText(foo.createChildData(this, "FooBar.java"), "package foo; public interface FooBar {}");
@@ -147,6 +146,18 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "FooBar", "FooBee");
     incUseCount(getLookup(), 1);
     assertPreferredItems(0, "FooBee", "FooBar");
+  }
+
+  public void testDispreferFinalize() throws Throwable {
+    checkPreferredItems(0, "final", "finalize");
+  }
+
+  public void testPreferNewExpectedInner() throws Throwable {
+    checkPreferredItems(0, "Foooo.Bar", "Foooo");
+
+    /*final LookupElementPresentation presentation = new LookupElementPresentation();
+    getLookup().getItems().get(0).renderElement(presentation);
+    assertEquals("Foooo.Bar", presentation.getItemText());*/
   }
 
 }

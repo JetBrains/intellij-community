@@ -11,9 +11,9 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltNamedElement;
@@ -53,20 +53,20 @@ public class XsltDeclarationInspection extends XsltInspection {
                 final XmlAttribute nameAttr = tag.getAttribute("name", null);
                 if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
 
-                if (XsltSupport.isVariableOrParam(tag)) {
-                    final XsltNamedElement instance = getXsltElementFactory().wrapElement(tag, XsltNamedElement.class);
-                    checkDeclaration(instance, nameAttr.getValue(), true, holder);
-                } else if (XsltSupport.isTemplate(tag)) {
-                    final XsltTemplate tmpl = getXsltElementFactory().wrapElement(tag, XsltTemplate.class);
-                    checkDeclaration(tmpl, nameAttr.getValue(), false, holder);
-                }
+              if (XsltSupport.isVariableOrParam(tag)) {
+                final XsltNamedElement instance = getXsltElementFactory().wrapElement(tag, XsltNamedElement.class);
+                checkDeclaration(instance, nameAttr.getValue(), holder);
+              } else if (XsltSupport.isTemplate(tag)) {
+                final XsltTemplate tmpl = getXsltElementFactory().wrapElement(tag, XsltTemplate.class);
+                checkDeclaration(tmpl, nameAttr.getValue(), holder);
+              }
             }
 
-            private void checkDeclaration(final XsltNamedElement element, final String value, final boolean isVar, ProblemsHolder holder) {
+            private void checkDeclaration(final XsltNamedElement element, final String name, ProblemsHolder holder) {
                 final XmlTag tag = element.getTag();
 
                 final PsiElement token = element.getNameIdentifier();
-                if (value == null || value.length() == 0) {
+                if (name == null || name.length() == 0) {
                     if (token != null) {
                         holder.registerProblem(token, "Empty name not permitted");
                     } else {
@@ -78,12 +78,20 @@ public class XsltDeclarationInspection extends XsltInspection {
                             }
                         }
                     }
-                } else if (!isLegalName(value, holder.getManager().getProject())) {
+                } else if (!isLegalName(name, holder.getManager().getProject())) {
                     assert token != null;
                     holder.registerProblem(token, "Illegal name");
                 } else {
                     assert token != null;
-                    ResolveUtil.treeWalkUp(new DeclarationChecker(isVar, tag, value, holder, isOnTheFly), tag);
+                    final XmlFile file = (XmlFile)tag.getContainingFile();
+                    final XmlTag duplicatedSymbol = DeclarationChecker.getInstance(file).getDuplicatedSymbol(tag);
+                    if (duplicatedSymbol != null) {
+                      if (duplicatedSymbol.getContainingFile() == file) {
+                        holder.registerProblem(token, "Duplicate declaration");
+                      } else {
+                        holder.registerProblem(token, "Duplicates declaration from '" + duplicatedSymbol.getContainingFile().getName() + "'");
+                      }
+                    }
                 }
             }
 

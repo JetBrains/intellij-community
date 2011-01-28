@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SerializationUtils {
 
-    private SerializationUtils() {
-        super();
-    }
+    private SerializationUtils() {}
 
     public static boolean isSerializable(@Nullable PsiClass aClass) {
         return ClassUtils.isSubclass(aClass,

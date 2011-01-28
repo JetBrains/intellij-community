@@ -492,6 +492,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     doAction(IdeActions.ACTION_EDITOR_PASTE);
   }
   
+  protected static void moveCaretToPreviousWordWithSelection() {
+    doAction("EditorPreviousWordWithSelection");
+  }
+
+  protected static void moveCaretToNextWordWithSelection() {
+    doAction("EditorNextWordWithSelection");
+  }
+  
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }

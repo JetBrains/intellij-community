@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
@@ -228,9 +229,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       parmName = javaStyle.suggestUniqueVariableName(parmName, constructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
-
-      if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NOT_NULL, false)) {
-        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, field);
+      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
+      if (nullableManager.isNotNull(field, false)) {
+        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + nullableManager.getDefaultNotNull(), field);
         parm.getModifierList().addAfter(annotation, null);
       }
 

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
@@ -45,7 +46,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         final PsiParameter[] params = callee.getParameterList().getParameters();
         boolean[] result = new boolean[params.length];
         for (int i = 0; i < params.length; i++) {
-          result[i] = AnnotationUtil.isAnnotated(params[i], AnnotationUtil.NOT_NULL, false);
+          result[i] = NullableNotNullManager.getInstance(params[i].getProject()).isNotNull(params[i], false);
         }
         return result;
       }
@@ -85,12 +86,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
-      if (AnnotationUtil.isAnnotated(psiVariable, AnnotationUtil.NOT_NULL, false)) {
+      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(psiVariable.getProject());
+      if (nullableManager.isNotNull(psiVariable, false)) {
         if (!memState.applyNotNull(dfaSource)) {
           onAssigningToNotNullableVariable(instruction, runner);
         }
       }
-      memState.setVarValue(var, dfaSource);
+      if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+        memState.setVarValue(var, dfaSource);
+      }
     }
 
     memState.push(dfaDest);

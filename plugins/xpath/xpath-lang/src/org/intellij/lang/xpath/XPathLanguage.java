@@ -126,7 +126,7 @@ public final class XPathLanguage extends Language {
     }
 
     public static class XPathNamesValidator implements NamesValidator {
-        private final XPathLexer xPathLexer = new XPathLexer();
+        private final XPathLexer xPathLexer = new XPathLexer(false);
 
         public synchronized boolean isIdentifier(String text, Project project) {
             xPathLexer.start(text);
@@ -155,7 +155,7 @@ public final class XPathLanguage extends Language {
     public static class XPathSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
         @NotNull
         protected SyntaxHighlighter createHighlighter() {
-            return new XPathHighlighter();
+            return new XPathHighlighter(false);
         }
     }
 }

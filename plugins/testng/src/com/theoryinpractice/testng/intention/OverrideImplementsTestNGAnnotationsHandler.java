@@ -21,18 +21,19 @@
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OverrideImplementsTestNGAnnotationsHandler implements OverrideImplementsAnnotationsHandler{
-  public String[] getAnnotations() {
+  public String[] getAnnotations(Project project) {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }
 
 
   @NotNull
-  public String[] annotationsToRemove(@NotNull final String fqName) {
+  public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

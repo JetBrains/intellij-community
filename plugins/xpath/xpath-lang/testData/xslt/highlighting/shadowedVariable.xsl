@@ -2,7 +2,7 @@
   <xsl:variable name="foo" />
 
   <xsl:template name="abc">
-    <xsl:variable name="<error>foo</error>" />
+    <xsl:variable name="<warning>foo</warning>" />
     <xsl:value-of select="$foo" />
   </xsl:template>
 </xsl:stylesheet>

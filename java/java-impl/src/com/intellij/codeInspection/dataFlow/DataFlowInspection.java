@@ -26,17 +26,24 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +54,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -266,7 +275,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         final String text = isNullLiteralExpression(expr)
                                 ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable")
                                 : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable");
-        holder.registerProblem(expr, text, new AnnotateMethodFix(AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
+        final NullableNotNullManager manager = NullableNotNullManager.getInstance(expr.getProject());
+        holder.registerProblem(expr, text, new AnnotateMethodFix(manager.getDefaultNullable(),  ArrayUtil.toStringArray(manager.getNotNulls())));
 
       }
     }
@@ -416,10 +426,27 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
       });
 
-      gc.insets = new Insets(0, 0, 15, 0);
+      gc.insets = new Insets(0, 0, 0, 0);
       gc.gridy = 0;
       add(mySuggestNullables, gc);
 
+      final JButton configureAnnotations = new JButton("Configure annotations");
+      configureAnnotations.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          final NullableNotNullDialog dialog = new NullableNotNullDialog(project);
+          dialog.show();
+        }
+      });
+      gc.gridy++;
+      gc.fill = GridBagConstraints.NONE;
+      gc.insets.left = 20;
+      gc.insets.bottom = 15;
+      add(configureAnnotations, gc);
+
+      gc.insets.left = 0;
       gc.gridy++;
       add(myDontReportTrueAsserts, gc);
     }

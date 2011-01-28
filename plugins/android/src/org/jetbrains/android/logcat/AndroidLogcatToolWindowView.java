@@ -23,9 +23,7 @@ import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogFilterModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -37,6 +35,7 @@ import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +152,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     group.addAll(myLogConsole.getToolbarActions());
     group.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
+    group.add(new MyRestartAction());
     final JComponent tbComp =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent();
     myConsoleWrapper.add(tbComp, BorderLayout.WEST);
@@ -270,4 +270,16 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     }
   }
 
+  private class MyRestartAction extends AnAction {
+    public MyRestartAction() {
+      super(AndroidBundle.message("android.restart.logcat.action.text"), AndroidBundle.message("android.restart.logcat.action.description"),
+            AndroidUtils.RESTART_LOGCAT_ICON);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myDevice = null;
+      updateLogConsole();
+    }
+  }
 }

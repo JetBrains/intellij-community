@@ -51,12 +51,19 @@ public abstract class HgChangesetsCommand {
 
     List<String> args = new ArrayList<String>(Arrays.asList(
       "--template",
-      "{rev}|{node|short}|{author}|{desc|firstline}" + SEPARATOR_STRING
+      "{rev}|{node|short}|{author}|{desc|firstline}" + SEPARATOR_STRING,
+      "--quiet"
     ));
 
     addArguments(args);
 
-    HgCommandResult result = commandService.execute(repo, Arrays.asList("--quiet"), command, args, Charset.defaultCharset(), isSilentCommand());
+    HgCommandResult result;
+    if (isAuthenticationNeeded()) {
+      String repositoryURL = new HgShowConfigCommand(project).getDefaultPath(repo);
+      result = new HgCommandAuthenticator().executeCommandAndAuthenticateIfNecessary(project, repo, repositoryURL, command, args, args.size()-1);
+    } else {
+      result = commandService.execute(repo, HgCommandService.DEFAULT_OPTIONS, command, args, Charset.defaultCharset(), isSilentCommand());
+    }
 
     if (result == null) {
       return Collections.emptyList();
@@ -83,6 +90,13 @@ public abstract class HgChangesetsCommand {
   }
 
   protected boolean isSilentCommand() {
+    return false;
+  }
+
+  /**
+   * Return false for local operations, true - for remote, which may require authenticate on the server.
+   */
+  protected boolean isAuthenticationNeeded() {
     return false;
   }
 

@@ -34,7 +34,7 @@ public abstract class ReferenceBase implements PsiReference {
         this.nameNode = nameNode;
     }
 
-    public PsiElement getElement() {
+    public XPathElement getElement() {
         return element;
     }
 

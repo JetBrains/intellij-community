@@ -593,6 +593,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public boolean isShown() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myShown;
   }
 

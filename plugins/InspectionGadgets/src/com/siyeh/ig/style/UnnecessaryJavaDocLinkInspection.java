@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,9 +32,15 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreInlineLinkToSuper = false;
 
     @Nls
     @NotNull
@@ -48,6 +55,13 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.javadoc.link.problem.descriptor");
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("unnecessary.javadoc.link.option"),
+                this, "ignoreInlineLinkToSuper");
     }
 
     @Override
@@ -113,15 +127,14 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         return new UnnecessaryJavaDocLinkVisitor();
     }
 
-    private static class UnnecessaryJavaDocLinkVisitor
+    private class UnnecessaryJavaDocLinkVisitor
             extends BaseInspectionVisitor {
 
         @Override
         public void visitDocTag(PsiDocTag tag) {
             super.visitDocTag(tag);
-            final String name = tag.getName();
-            if ("link".equals(name) ||
-                    "linkplain".equals(name)) {
+            @NonNls final String name = tag.getName();
+            if ("link".equals(name) || "linkplain".equals(name)) {
                 if (!(tag instanceof PsiInlineDocTag)) {
                     return;
                 }
@@ -130,25 +143,9 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
                     return;
                 }
             }
-            final PsiElement[] dataElements = tag.getDataElements();
-            if (dataElements.length == 0) {
-                return;
-            }
-            final PsiElement firstElement = dataElements[0];
-            if (firstElement == null) {
-                return;
-            }
-            PsiReference reference = firstElement.getReference();
+            final PsiReference reference = extractReference(tag);
             if (reference == null) {
-                final PsiElement[] children = firstElement.getChildren();
-                if (children.length == 0) {
-                    return;
-                }
-                final PsiElement child = children[0];
-                if (!(child instanceof PsiReference)) {
-                    return;
-                }
-                reference = (PsiReference) child;
+                return;
             }
             final PsiElement target = reference.resolve();
             if (target == null) {
@@ -156,17 +153,17 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             }
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(tag, PsiMethod.class);
+            if (containingMethod == null) {
+                return;
+            }
             if (target.equals(containingMethod)) {
-                registerError(tag, "@" + name);
+                registerError(tag, '@' + name);
                 return;
             }
             final PsiClass containingClass =
                     PsiTreeUtil.getParentOfType(tag, PsiClass.class);
             if (target.equals(containingClass)) {
-                registerError(tag, "@" + name);
-                return;
-            }
-            if (containingMethod == null) {
+                registerError(tag, '@' + name);
                 return;
             }
             if (!(target instanceof PsiMethod)) {
@@ -176,10 +173,40 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             if (!isSuperMethod(method, containingMethod)) {
                 return;
             }
-            registerError(tag, "@" + name);
+            if (ignoreInlineLinkToSuper && tag instanceof PsiInlineDocTag) {
+                return;
+            }
+            registerError(tag, '@' + name);
         }
 
-        public static boolean isSuperMethod(PsiMethod superMethodCandidate,
+        private PsiReference extractReference(PsiDocTag tag) {
+            final PsiDocTagValue valueElement = tag.getValueElement();
+            if (valueElement != null) {
+                return valueElement.getReference();
+            }
+            // hack around the fact that a reference to a class is apparently
+            // not a PsiDocTagValue
+            final PsiElement[] dataElements = tag.getDataElements();
+            if (dataElements.length == 0) {
+                return null;
+            }
+            final PsiElement lastElement =
+                    dataElements[dataElements.length - 1];
+            if (lastElement == null) {
+                return null;
+            }
+            final PsiElement[] children = lastElement.getChildren();
+            if (children.length == 0) {
+                return null;
+            }
+            final PsiElement child = children[0];
+            if (!(child instanceof PsiReference)) {
+                return null;
+            }
+            return (PsiReference) child;
+        }
+
+        public boolean isSuperMethod(PsiMethod superMethodCandidate,
                                             PsiMethod derivedMethod) {
             final PsiClass superClassCandidate =
                     superMethodCandidate.getContainingClass();

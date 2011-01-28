@@ -39,7 +39,10 @@ import com.intellij.util.Query;
 import java.util.Collection;
 
 public class XsltValidator {
-    public static void checkUnusedVariable(XsltVariable variable, ProblemsHolder holder) {
+  private XsltValidator() {
+  }
+
+  public static void checkUnusedVariable(XsltVariable variable, ProblemsHolder holder) {
         if (variable instanceof XsltParameter) {
             if (((XsltParameter)variable).isAbstract()) {
                 return;
@@ -72,6 +75,7 @@ public class XsltValidator {
             assert attribute != null;
 
             final PsiElement token = XsltSupport.getAttValueToken(attribute);
+            assert token != null;
             holder.registerProblem(token, ((DeleteUnusedElementBase)fixes[0]).getType() +
                     " '" + name + "' is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes);
         }

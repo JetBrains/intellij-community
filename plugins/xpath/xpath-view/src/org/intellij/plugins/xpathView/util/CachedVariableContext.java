@@ -53,7 +53,7 @@ public class CachedVariableContext implements VariableContext {
        return o;
    }
 
-   private String makePrefix(String uri) {
+   private static String makePrefix(String uri) {
        return uri != null ? "{" + uri + "}:" : "";
    }
 }

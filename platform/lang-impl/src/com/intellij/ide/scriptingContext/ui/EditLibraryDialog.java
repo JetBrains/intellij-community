@@ -44,6 +44,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
 public class EditLibraryDialog extends DialogWrapper {
 
@@ -290,11 +291,11 @@ public class EditLibraryDialog extends DialogWrapper {
       fireTableDataChanged();
     }
 
-    public void setFiles(VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
+    public void setFiles(Set<VirtualFile> sourceFiles, Set<VirtualFile> compactFiles) {
       myFiles.clear();
-      myFiles.addAll(Arrays.asList(sourceFiles));
-      myFiles.addAll(Arrays.asList(compactFiles));
-      myCompactFiles.addAll(Arrays.asList(compactFiles));
+      myFiles.addAll(sourceFiles);
+      myFiles.addAll(compactFiles);
+      myCompactFiles.addAll(compactFiles);
     }
 
     public void setFileType(VirtualFile file, boolean isCompact) {

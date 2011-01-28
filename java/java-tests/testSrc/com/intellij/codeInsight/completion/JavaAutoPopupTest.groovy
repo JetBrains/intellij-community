@@ -17,11 +17,10 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.codeInsight.lookup.LookupManager
 
- /**
+/**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -252,13 +251,13 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     }
     """)
     type 'ite'
-    ApplicationManager.application.invokeAndWait({
-                                                   myFixture.type 'r'
-                                                   lookup.markReused()
-                                                   lookup.currentItem = lookup.items[0]
-                                                   CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
+    edt {
+      myFixture.type 'r'
+      lookup.markReused()
+      lookup.currentItem = lookup.items[0]
+      CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
 
-                                                 } as Runnable, ModalityState.NON_MODAL)
+    }
     myFixture.checkResult """
     class A { Iterable iterable;
       { iterable<caret> }
@@ -273,14 +272,13 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     }
     """)
     type 'ite'
-    ApplicationManager.application.invokeAndWait({
-                                                   myFixture.type 'r'
-                                                   lookup.markReused()
-                                                   myFixture.type '\b\b'
-                                                   lookup.currentItem = lookup.items[0]
-                                                   CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
-
-                                                 } as Runnable, ModalityState.NON_MODAL)
+    edt {
+      myFixture.type 'r'
+      lookup.markReused()
+      myFixture.type '\b\b'
+      lookup.currentItem = lookup.items[0]
+      CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
+    }
     myFixture.checkResult """
     class A { Iterable iterable;
       { iterable<caret> }
@@ -295,15 +293,57 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     }
     """)
     type 'th'
-    ApplicationManager.application.invokeAndWait({
-                                                   myFixture.type 'r'
-                                                   myFixture.type '\t'
-                                                 } as Runnable, ModalityState.NON_MODAL)
+    edt { myFixture.type 'r\t'}
     myFixture.checkResult """
     class A {
       { throw new <caret> }
     }
     """
   }
+
+  public void testTwoQuickRestartsAfterHiding() {
+    for (i in 0..10) {
+      myFixture.configureByText("a${i}.java", """
+      class A {
+        { <caret> }
+      }
+      """)
+      edt { myFixture.type 'A' }
+      joinAlarm() // completion started
+      boolean tooQuick = false
+      edt {
+        tooQuick = lookup == null
+        myFixture.type 'IO'
+      }
+      joinAlarm() //I
+      joinAlarm() //O
+      joinCompletion()
+      assert lookup
+      assert 'ArrayIndexOutOfBoundsException' in myFixture.lookupElementStrings
+      if (!tooQuick) {
+        return
+      }
+      edt {
+        LookupManager.getInstance(project).hideActiveLookup()
+        CompletionProgressIndicator.cleanupForNextTest()
+      }
+    }
+    fail "too many too quick attempts"
+  }
+
+  public void testTypingDuringExplicitCompletion() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { Runnable r = new <caret> }
+    }
+    """)
+    myFixture.complete CompletionType.SMART
+    edt { myFixture.type 'Thr' }
+    joinCompletion()
+    assert lookup
+    assert 'Thread' in myFixture.lookupElementStrings
+  }
+
+
 
 }

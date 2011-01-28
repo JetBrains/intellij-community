@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiDocTag extends PsiElement, PsiNamedElement{
   PsiDocTag[] EMPTY_ARRAY = new PsiDocTag[0];
@@ -28,5 +29,5 @@ public interface PsiDocTag extends PsiElement, PsiNamedElement{
   PsiElement getNameElement();
   @NonNls @NotNull String getName();
   PsiElement[] getDataElements();
-  PsiDocTagValue getValueElement();
+  @Nullable PsiDocTagValue getValueElement();
 }

@@ -38,12 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableBaseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -92,18 +90,13 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
       return new PsiEllipsisType(type);
     }
 
-    GroovyPsiManager factory = GroovyPsiManager.getInstance(getProject());
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
-      if (iteratedExpression instanceof GrRangeExpression) {
-        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, this);
-      }
-      else if (iteratedExpression != null) {
-        PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, factory, this);
-        if (result != null) {
-          return result;
-        }
+
+      PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, this);
+      if (result != null) {
+        return result;
       }
     } else if (parent instanceof GrCatchClause) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, this);

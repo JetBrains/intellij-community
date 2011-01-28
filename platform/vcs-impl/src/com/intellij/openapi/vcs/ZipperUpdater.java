@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
 
@@ -25,9 +26,13 @@ public class ZipperUpdater {
   private final Object myLock = new Object();
   private final int myDelay;
 
-  public ZipperUpdater(final int delay) {
+  public ZipperUpdater(final int delay, Disposable parentDisposable) {
+    this(delay, Alarm.ThreadToUse.SHARED_THREAD, parentDisposable);
+  }
+
+  public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {
     myDelay = delay;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
   public void queue(final Runnable runnable) {
@@ -36,16 +41,19 @@ public class ZipperUpdater {
 
   public void queue(final Runnable runnable, final boolean urgent) {
     synchronized (myLock) {
+      final boolean wasRaised = myRaised;
       myRaised = true;
-    }
-    myAlarm.addRequest(new Runnable() {
-      public void run() {
-        synchronized (myLock) {
-          if (! myRaised) return;
-          myRaised = false;
-        }
-        runnable.run();
+      if (! wasRaised) {
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            synchronized (myLock) {
+              if (! myRaised) return;
+              myRaised = false;
+            }
+            runnable.run();
+          }
+        }, urgent ? 0 : myDelay);
       }
-    }, urgent ? 0 : myDelay);
+    }
   }
 }

@@ -17,21 +17,22 @@
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -56,12 +57,17 @@ public class ExtractMethodInfoHelper {
                                  GrStatement[] statements,
                                  GrMemberOwner targetClass,
                                  boolean isStatic,
-                                 boolean isReturnStatement) {
+                                 ArrayList<GrStatement> returnStatements) {
     myInnerElements = innerElements;
     myStatements = statements;
     myTargetClass = targetClass;
     myIsStatic = isStatic;
-    myIsReturnStatement = isReturnStatement;
+    myIsReturnStatement = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
+      @Override
+      public boolean value(GrStatement statement) {
+        return statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null;
+      }
+    }) != null;
     myVisibility = PsiModifier.PRIVATE;
     assert myStatements.length > 0;
     myProject = myStatements[0].getProject();
@@ -87,15 +93,21 @@ public class ExtractMethodInfoHelper {
     }
     else {
       myOutputName = null;
-      if (isReturnStatement) {
-        assert myStatements.length > 0;
-        GrStatement finalStatement = myStatements[myStatements.length - 1];
-        if (finalStatement instanceof GrExpression) {
-          outputType = ((GrExpression)finalStatement).getType();
-          if (outputType != null) {
-            outputType = TypeConversionUtil.erasure(outputType);
+      if (myIsReturnStatement) {
+        assert returnStatements.size() > 0;
+        List<PsiType> types = new ArrayList<PsiType>(returnStatements.size());
+        for (GrStatement statement : returnStatements) {
+          if (statement instanceof GrReturnStatement) {
+            GrExpression returnValue = ((GrReturnStatement)statement).getReturnValue();
+            if (returnValue != null) {
+              types.add(returnValue.getType());
+            }
+          }
+          else if (statement instanceof GrExpression){
+            types.add(((GrExpression)statement).getType());
           }
         }
+        outputType = TypesUtil.getLeastUpperBoundNullable(types, targetClass.getManager());
       }
     }
     myOutputType = outputType != null ? outputType : PsiType.VOID;

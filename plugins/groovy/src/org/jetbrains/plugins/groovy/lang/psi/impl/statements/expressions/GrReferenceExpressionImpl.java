@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -432,7 +433,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
                 "getClass".equals(method.getName())) {
-          result = getTypeForObjectGetClass(facade, method);
+          if (seemsToBeQualifiedClassName(getQualifierExpression())) {
+            result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(getQualifier().getText(), this));
+          }
+          else {
+            result = getTypeForObjectGetClass(facade, method);
+          }
         } else {
           result = PsiUtil.getSmartReturnType(method);
         }
@@ -450,13 +456,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           }
         }
       }
-    } else if (resolved == null) {
+    }
+    else if (resolved == null) {
+      GrExpression qualifier = getQualifierExpression();
       if ("class".equals(getReferenceName())) {
-        result = createJavaLangClassType(JavaPsiFacade.getInstance(getProject()), (PsiClassType) JavaPsiFacade.getElementFactory(getProject())
-          .createTypeFromText(getText(), this));
+        if (seemsToBeQualifiedClassName(qualifier)) {
+          assert qualifier != null;
+          result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(qualifier.getText(), this));
+        } else {
+          result = createJavaLangClassType(facade, getQualifierType());
+        }
       }
       else {
-        GrExpression qualifier = getQualifierExpression();
         if (qualifier != null) {
           PsiType qType = qualifier.getType();
           if (qType instanceof PsiClassType) {
@@ -487,8 +498,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
+  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
+    if (qualifier == null) return false;
+    while (qualifier instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
+      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
+    }
+    return qualifier == null;
+  }
+
   @Nullable
-  private PsiType createJavaLangClassType(JavaPsiFacade facade, PsiClassType type) {
+  private PsiType createJavaLangClassType(JavaPsiFacade facade, @Nullable PsiType type) {
     PsiType result = null;
     PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, getResolveScope());
     if (javaLangClass != null) {
@@ -503,32 +523,32 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @Nullable
+  private PsiType getQualifierType() {
+    final GrExpression qualifier = getQualifierExpression();
+    if (qualifier == null) {
+      final PsiNamedElement context = PsiTreeUtil.getParentOfType(this, GroovyFile.class, PsiClass.class);
+      PsiClass contextClass = null;
+      if (context instanceof PsiClass) {
+        contextClass = (PsiClass)context;
+      }
+      else if (context instanceof GroovyFile) contextClass = ((GroovyFile)context).getScriptClass();
+      if (contextClass == null) return null;
+      return JavaPsiFacade.getElementFactory(getProject()).createType(contextClass);
+    }
+    else {
+      return qualifier.getType();
+    }
+  }
+
+  @Nullable
   private PsiType getTypeForObjectGetClass(JavaPsiFacade facade, PsiMethod method) {
     PsiType type = PsiUtil.getSmartReturnType(method);
     if (type instanceof PsiClassType) {
-      PsiClass clazz = ((PsiClassType) type).resolve();
+      PsiClass clazz = ((PsiClassType)type).resolve();
       if (clazz != null && CommonClassNames.JAVA_LANG_CLASS.equals(clazz.getQualifiedName())) {
         PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
         if (typeParameters.length == 1) {
-          PsiClass qualifierClass = null;
-          GrExpression qualifier = getQualifierExpression();
-          if (qualifier != null) {
-            PsiType qualifierType = qualifier.getType();
-            if (qualifierType instanceof PsiClassType) {
-              qualifierClass = ((PsiClassType) qualifierType).resolve();
-            }
-          } else {
-            PsiNamedElement context = PsiTreeUtil.getParentOfType(this, PsiClass.class, GroovyFile.class);
-            if (context instanceof PsiClass) qualifierClass = (PsiClass) context;
-            else if (context instanceof GroovyFile) qualifierClass = ((GroovyFile) context).getScriptClass();
-          }
-
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          if (qualifierClass != null) {
-            PsiType t = facade.getElementFactory().createType(qualifierClass);
-            substitutor = substitutor.put(typeParameters[0], t);
-          }
-          return facade.getElementFactory().createType(clazz, substitutor);
+          return createJavaLangClassType(facade, getQualifierType());
         }
       }
     }

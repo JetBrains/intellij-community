@@ -419,6 +419,9 @@ public class ExtractMethodUtil {
       return checked & returnStatements.size() == 0;
 
     }
+    if (statement instanceof GrExpression) {
+      return returnStatements.contains(statement);
+    }
     return false;
   }
 

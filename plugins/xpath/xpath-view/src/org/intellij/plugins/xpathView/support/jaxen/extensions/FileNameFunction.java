@@ -21,7 +21,7 @@ import org.intellij.lang.xpath.psi.XPathType;
 
 class FileNameFunction extends BasicFileInfoFunction {
     public FileNameFunction() {
-        super(XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
+        super("file-name", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
     protected String extractInfo(PsiFile psiFile) {

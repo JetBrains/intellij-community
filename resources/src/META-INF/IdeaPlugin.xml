@@ -207,6 +207,8 @@
 
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
 
+    <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
+
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
@@ -446,6 +448,9 @@
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManagerImpl"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
+                    serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
 
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
@@ -781,7 +786,7 @@
              order="before openedInEditor"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.JavaInheritanceWeigher" id="javaInheritance"
              order="after explicitlyImported, before sameLogicalRoot"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.KnownPackageWeigher" id="knownPackage"
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.KnownElementWeigher" id="knownElement"
              order="after sameModule, before sdkOrLibrary"/>
 
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>

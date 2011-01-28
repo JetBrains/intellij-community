@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
@@ -261,10 +263,14 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testTupleTypeAssignments() throws Exception{doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testUnusedImportsForImportsOnDemand() throws Exception {
-    doTest();
+    doTest(new GroovyAccessibilityInspection());
     final Set<GrImportStatement> unusedImportStatements =
       GroovyImportsTracker.getInstance(getProject()).getUnusedImportStatements(((GroovyFile)myFixture.getFile()));
     assertEquals(0, unusedImportStatements.size());
+  }
+
+  public void testInaccessibleConstructorCall() {
+    doTest(new GroovyAccessibilityInspection());
   }
 
   public void testSignatureIsNotApplicableToList() throws Exception {
@@ -287,6 +293,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testSOEInFieldDeclarations() {doTest();}
+
+  public void testVeryLongDfaWithComplexGenerics() {
+    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
+      @Override
+      public void run() {
+        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection());
+      }
+    });
+  }
 
   public void testWrongAnnotation() {doTest();}
 

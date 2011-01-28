@@ -1,6 +1,6 @@
 class A {
     def r() {
-        def a = 0
+        def a = 0;
         {
           a.intValue()
         }.call()

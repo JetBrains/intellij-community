@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XPathType {
     public static final XPathType UNKNOWN = new XPathType("unknown", true);
     public static final XPathType ANY = new XPathType("any", true);
@@ -24,10 +26,10 @@ public class XPathType {
     public static final XPathType STRING = new XPathType("string", false);
     public static final XPathType NODESET = new XPathType("nodeset", false);
 
-    private final String type;
+    protected final String type;
     private final boolean myAbstract;
 
-    private XPathType(String s, boolean isAbstract) {
+    protected XPathType(String s, boolean isAbstract) {
         type = s;
         myAbstract = isAbstract;
     }
@@ -56,4 +58,16 @@ public class XPathType {
         }
         return XPathType.UNKNOWN;
     }
+
+  public boolean isAssignableFrom(XPathType type) {
+    return isAbstract() || type.isAbstract() || this != NODESET || type == NODESET;
+  }
+
+  protected boolean canBePromotedTo(XPathType type) {
+    return type != NODESET;
+  }
+
+  public static boolean isAssignable(@NotNull XPathType left, @NotNull XPathType type) {
+    return left.isAssignableFrom(type) || type.canBePromotedTo(left);
+  }
 }

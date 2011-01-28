@@ -54,6 +54,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -839,35 +840,42 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public LookupElement[] complete(final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
-    new WriteCommandAction(getProject()) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      protected void run(Result result) throws Exception {
-        final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
-          protected PsiFile createFileCopy(final PsiFile file) {
-            final PsiFile copy = super.createFileCopy(file);
-            if (myFileContext != null) {
-              final PsiElement contextCopy = myFileContext.copy();
-              final PsiFile containingFile = contextCopy.getContainingFile();
-              if (containingFile instanceof PsiFileImpl) {
-                ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
+          public void run() {
+            final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
+              @Override
+              protected PsiFile createFileCopy(final PsiFile file) {
+                final PsiFile copy = super.createFileCopy(file);
+                if (myFileContext != null) {
+                  final PsiElement contextCopy = myFileContext.copy();
+                  final PsiFile containingFile = contextCopy.getContainingFile();
+                  if (containingFile instanceof PsiFileImpl) {
+                    ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
+                  }
+                  setContext(copy, contextCopy);
+                }
+                return copy;
               }
-              setContext(copy, contextCopy);
-            }
-            return copy;
-          }
 
-          @Override
-          protected void completionFinished(final int offset1, final int offset2, final CompletionProgressIndicator indicator,
-                                            final LookupElement[] items) {
-            myEmptyLookup = items.length == 0;
-            super.completionFinished(offset1, offset2, indicator, items);
+              @Override
+              protected void completionFinished(final int offset1, final int offset2, final CompletionProgressIndicator indicator,
+                                                final LookupElement[] items) {
+                myEmptyLookup = items.length == 0;
+                super.completionFinished(offset1, offset2, indicator, items);
+              }
+            };
+            Editor editor = getCompletionEditor();
+            handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
+
           }
-        };
-        Editor editor = getCompletionEditor();
-        handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
+        }, null, null);
       }
-    }.execute();
+    });
+
     return getLookupElements();
   }
 

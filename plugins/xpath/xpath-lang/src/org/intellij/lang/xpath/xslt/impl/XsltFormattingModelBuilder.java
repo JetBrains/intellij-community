@@ -25,29 +25,36 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ide.highlighter.XmlFileType;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
-    private final FormattingModelBuilder myBuilder;
+  private final FormattingModelBuilder myBuilder;
 
-    public XsltFormattingModelBuilder(FormattingModelBuilder builder) {
-        myBuilder = builder;
-    }
+  public XsltFormattingModelBuilder(FormattingModelBuilder builder) {
+    myBuilder = builder;
+  }
 
-    public boolean isEngagedToFormat(PsiElement context) {
-        final PsiFile file = context.getContainingFile();
-        return file != null && (file.getFileType() == XmlFileType.INSTANCE
-                && file.getLanguage() == XMLLanguage.INSTANCE);
-    }
+  public boolean isEngagedToFormat(PsiElement context) {
+    final PsiFile file = context.getContainingFile();
+    if (file == null) {
+      return false;
+    } else if (file.getFileType() == XmlFileType.INSTANCE
+            && file.getLanguage() == XMLLanguage.INSTANCE) {
 
-    @Nullable
-    public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-        return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
+      return XsltSupport.isXsltFile(file);
     }
+    return false;
+  }
 
-    @NotNull
-    public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new XslTextFormattingModel(myBuilder.createModel(element, settings), settings);
-    }
+  @Nullable
+  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
+  }
+
+  @NotNull
+  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+    return new XslTextFormattingModel(myBuilder.createModel(element, settings), settings);
+  }
 }

@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -222,7 +223,7 @@ public class TypesUtil {
       return true;
     }
 
-    if (allowConversion && lType != null && rType != null) {
+    if (allowConversion) {
       for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
         final Boolean result = converter.isConvertible(lType, rType, context);
         if (result != null) {
@@ -373,6 +374,17 @@ public class TypesUtil {
     if (type1.isAssignableFrom(type2)) return type1;
     if (type2.isAssignableFrom(type1)) return type2;
     return getLeastUpperBound(type1, type2, manager);
+  }
+
+  @Nullable
+  public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<PsiType> collection, @NotNull PsiManager manager) {
+    Iterator<PsiType> iterator = collection.iterator();
+    if (!iterator.hasNext()) return null;
+    PsiType result = iterator.next();
+    while (iterator.hasNext()) {
+      result = getLeastUpperBoundNullable(result, iterator.next(), manager);
+    }
+    return result;
   }
 
   @Nullable

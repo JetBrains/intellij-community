@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
 
 class FileExtensionFunction extends BasicFileInfoFunction {
     public FileExtensionFunction() {
-        super(XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
+        super("file-ext", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
     @Nullable

@@ -30,11 +30,18 @@ import java.util.Map;
 @SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
 public class XPathHighlighter extends SyntaxHighlighterBase {
     private static final Map keys1;
+    private static final Map keys1_2;
     private static final Map keys2;
 
-    @NotNull
+  private final boolean myXPath2Syntax;
+
+  public XPathHighlighter(boolean xpath2Syntax) {
+    myXPath2Syntax = xpath2Syntax;
+  }
+
+  @NotNull
     public Lexer getHighlightingLexer() {
-        return new XPathLexer();
+        return new XPathLexer(myXPath2Syntax);
     }
 
     static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(
@@ -119,18 +126,13 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
 
         keys1.put(XPathTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
         keys1.put(XPathTokenTypes.BAD_AXIS_NAME, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+
+      keys1_2 = new HashMap(keys1);
+      fillMap(keys1_2, XPath2TokenTypes.KEYWORDS, XPATH_KEYWORD);
     }
 
     @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-        return pack(((TextAttributesKey)keys1.get(tokenType)), ((TextAttributesKey)keys2.get(tokenType)));
-    }
-
-    public Map getKeys1() {
-        return (Map)((HashMap)keys1).clone();
-    }
-
-    public Map getKeys2() {
-        return (Map)((HashMap)keys2).clone();
+        return pack(((TextAttributesKey)(myXPath2Syntax ? keys1_2 : keys1).get(tokenType)), ((TextAttributesKey)keys2.get(tokenType)));
     }
 }

@@ -84,16 +84,48 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static Pair<String, String> parseAttrNameAndValue(@NotNull String text) {
-    int eqIndex = text.indexOf('=');
+  private static List<Pair<String, String>> parseAttrNameAndValueList(@NotNull String text) {
+    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+    char lastQuote = 0;
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0, n = text.length(); i <= n; i++) {
+      char c = i < n ? text.charAt(i) : 0;
+      if (lastQuote != 0 && i < n) {
+        if (c == lastQuote) {
+          lastQuote = 0;
+        }
+        builder.append(c);
+      }
+      else if (c == ',' || c == '\t' || c == ' ' || i == n) {
+        if (builder.length() > 0) {
+          Pair<String, String> pair = parseAttrNameAndValue(builder.toString());
+          if (pair == null) {
+            return null;
+          }
+          result.add(pair);
+          builder = new StringBuilder();
+        }
+      }
+      else {
+        if (c == '\'' || c == '"') {
+          lastQuote = c;
+        }
+        builder.append(c);
+      }
+    }
+    return result;
+  }
+
+  private static Pair<String, String> parseAttrNameAndValue(String assignment) {
+    int eqIndex = assignment.indexOf('=');
     if (eqIndex > 0) {
-      String value = text.substring(eqIndex + 1);
+      String value = assignment.substring(eqIndex + 1);
       if (value.length() >= 2 && (
         (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'') ||
         (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"'))) {
         value = value.substring(1, value.length() - 1);
       }
-      return new Pair<String, String>(text.substring(0, eqIndex), value);
+      return new Pair<String, String>(assignment.substring(0, eqIndex), value);
     }
     return null;
   }
@@ -144,11 +176,16 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
           return null;
         }
         else {
-          Pair<String, String> pair = parseAttrNameAndValue(builder.toString());
-          if (pair == null || !definedAttrs.add(pair.first)) {
+          List<Pair<String, String>> pairs = parseAttrNameAndValueList(builder.toString());
+          if (pairs == null) {
             return null;
           }
-          attributes.add(pair);
+          for (Pair<String, String> pair : pairs) {
+            if (!definedAttrs.add(pair.first)) {
+              return null;
+            }
+            attributes.add(pair);
+          }
         }
         lastDelim = c;
         builder = new StringBuilder();
@@ -263,17 +300,23 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
     boolean inQuotes = false;
     boolean inApostrophes = false;
+    boolean inSqBrackets = false;
     text += MARKER;
     StringBuilder templateKeyBuilder = new StringBuilder();
     List<ZenCodingToken> result = new ArrayList<ZenCodingToken>();
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
-      if (inQuotes || inApostrophes) {
+      if (inQuotes || inApostrophes || inSqBrackets) {
         templateKeyBuilder.append(c);
         if (c == '"') {
           inQuotes = false;
         }
-        else if (c == '\'') inApostrophes = false;
+        else if (c == '\'') {
+          inApostrophes = false;
+        }
+        else if (c == ']') {
+          inSqBrackets = false;
+        }
       }
       else if (i == n - 1 || (c == ')' || c == '*' || i < n - 2 && DELIMS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
@@ -306,14 +349,19 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
         if (c == '"') {
           inQuotes = true;
         }
-        else if (c == '\'') inApostrophes = true;
+        else if (c == '\'') {
+          inApostrophes = true;
+        }
+        else if (c == '[') {
+          inSqBrackets = true;
+        }
       }
       else {
         return null;
       }
     }
 
-    if (inQuotes || inApostrophes) {
+    if (inQuotes || inApostrophes || inSqBrackets) {
       return null;
     }
 

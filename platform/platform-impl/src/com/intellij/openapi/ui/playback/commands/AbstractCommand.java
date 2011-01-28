@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
@@ -45,15 +46,31 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return true;
   }
 
-  public final ActionCallback execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean useDirectActionCall) {
+  public final ActionCallback execute(final PlaybackRunner.StatusCallback cb, final Robot robot, final boolean useDirectActionCall) {
     try {
       dumpCommand(cb);
-      return _execute(cb, robot, useDirectActionCall);
+      final ActionCallback result = new ActionCallback();
+      if (isAwtThread()) {
+        _execute(cb, robot, useDirectActionCall).notify(result);
+      } else {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            _execute(cb, robot, useDirectActionCall).notify(result);
+          }
+        });
+      }
+
+     return result;
     }
     catch (Exception e) {
       cb.error(e.getMessage(), getLine());
       return new ActionCallback.Rejected();
     }
+  }
+
+  protected boolean isAwtThread() {
+    return false;
   }
 
   protected abstract ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall);

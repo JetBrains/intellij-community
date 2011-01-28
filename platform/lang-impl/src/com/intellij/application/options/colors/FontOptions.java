@@ -34,8 +34,10 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private final ColorAndFontOptions myOptions;
@@ -57,7 +59,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     JPanel schemesGroup = new JPanel(new BorderLayout());
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(createFontPanel(), BorderLayout.NORTH);
+    panel.add(createEditorFontPanel(), BorderLayout.NORTH);
     schemesGroup.add(panel, BorderLayout.CENTER);
     add(schemesGroup, BorderLayout.CENTER);
   }
@@ -69,16 +71,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
     myFontNameField.setText(getCurrentScheme().getEditorFontName());
 
-    if (ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme())) {
-      myLineSpacingField.setEnabled(false);
-      myEditorFontSizeField.setEditable(false);
-      myFontNameField.setEnabled(false);
-    }
-    else {
-      myLineSpacingField.setEnabled(true);
-      myEditorFontSizeField.setEditable(true);
-      myFontNameField.setEnabled(true);
-    }
+    boolean enabled = !ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme());
+    myLineSpacingField.setEnabled(enabled);
+    myEditorFontSizeField.setEditable(enabled);
+    myFontNameField.setEnabled(enabled);
 
     myIsInSchemeChange = false;
 
@@ -99,7 +95,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     return myOptions.getSelectedScheme();
   }
 
-  private JPanel createFontPanel() {
+  private JPanel createEditorFontPanel() {
     JPanel editorFontPanel = new JPanel();
     editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("group.editor.font")));
     editorFontPanel.setLayout(new GridBagLayout());
@@ -202,7 +198,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     return editorFontPanel;
   }
-
+  
   private void selectFont() {
     initFontTables();
 

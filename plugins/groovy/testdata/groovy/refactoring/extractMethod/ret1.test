@@ -12,6 +12,6 @@ static def foo(int i, int j, int k) {
   <caret>return testMethod(v, j)
 }
 
-private static def testMethod(int v, int j) {
+private static int testMethod(int v, int j) {
   return v + j
 }

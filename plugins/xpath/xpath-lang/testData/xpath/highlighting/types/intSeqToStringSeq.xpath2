@@ -1,0 +1,1 @@
+string-join(<error descr="Expected type 'xs:string*', got 'xs:integer*'">index-of(('1', '2'), '1')</error>, ' ')

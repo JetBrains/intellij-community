@@ -25,9 +25,11 @@ package org.intellij.lang.xpath.validation.inspections;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.Alarm;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
@@ -102,6 +104,10 @@ public class ImplicitTypeConversion extends XPathInspection {
             if (OPTIONS.get(i)) BITS |= 1;
         }
         super.writeSettings(node);
+    }
+
+    protected boolean acceptsLanguage(Language language) {
+      return language == XPathFileType.XPATH.getLanguage();
     }
 
     final class MyElementVisitor extends Visitor {

@@ -29,8 +29,8 @@ import org.jaxen.FunctionCallException;
 import java.util.List;
 
 public abstract class BasicFileInfoFunction extends FunctionImplementation implements Function {
-    public BasicFileInfoFunction(XPathType returnType, Parameter... parameters) {
-        super(returnType, parameters);
+    public BasicFileInfoFunction(String name, XPathType returnType, Parameter... parameters) {
+        super(name, returnType, parameters);
     }
 
     public Function getImplementation() {

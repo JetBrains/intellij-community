@@ -71,7 +71,7 @@ public class HgPullCommand {
 
     HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, source, "pull", arguments);
 
-    project.getMessageBus().syncPublisher(HgVcs.INCOMING_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
 
     return result;
   }

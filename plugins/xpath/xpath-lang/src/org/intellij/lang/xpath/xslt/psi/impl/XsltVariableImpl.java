@@ -15,19 +15,18 @@
  */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Icons;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
-
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.util.Icons;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +45,11 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
 
     @NotNull
     public XPathType getType() {
+        final XPathType declaredType = XsltCodeInsightUtil.getDeclaredType(getTag());
+        if (declaredType != null) {
+          return declaredType;
+        }
+
         final XmlAttribute attr = getTag().getAttribute("type", XsltSupport.PLUGIN_EXTENSIONS_NS);
         if (attr != null) {
             return XPathType.fromString(attr.getValue());

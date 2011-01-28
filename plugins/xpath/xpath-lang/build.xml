@@ -8,13 +8,6 @@
   <property name="build.dir" value="${basedir}/build" />
   <property name="build.classes.dir" value="${build.dir}/classes" />
 
-  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
-    <classpath refid="classpath.uidesigner" />
-  </taskdef>
-  <taskdef name="jflex" classname="JFlex.anttask.JFlexTask">
-    <classpath location="${idea.home}/tools/jflex/lib/JFlex.jar"/>
-  </taskdef>
-
   <path id="idea.classpath">
     <fileset dir="${idea.home}">
       <include name="lib/*.jar"/>
@@ -28,6 +21,13 @@
       <include name="redist/*.jar"/>
     </fileset>
   </path>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+    <classpath refid="classpath.uidesigner" />
+  </taskdef>
+  <taskdef name="jflex" classname="JFlex.anttask.JFlexTask">
+    <classpath location="${idea.home}/tools/jflex/lib/JFlex.jar"/>
+  </taskdef>
 
   <target name="init">
   </target>

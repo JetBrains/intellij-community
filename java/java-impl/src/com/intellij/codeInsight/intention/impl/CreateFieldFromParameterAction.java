@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -213,8 +214,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           modifierList.setModifierProperty(PsiModifier.STATIC, isMethodStatic);
           modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-          if (AnnotationUtil.isAnnotated(myParameter, AnnotationUtil.NULLABLE, false)) {
-            modifierList.addAfter(factory.createAnnotationFromText("@" + AnnotationUtil.NULLABLE, field), null);
+          final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+          if (manager.isNullable(myParameter, false)) {
+            modifierList.addAfter(factory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
           }
 
           PsiCodeBlock methodBody = method.getBody();

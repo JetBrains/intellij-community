@@ -20,15 +20,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.validation.XsltValidator;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedElementInspection extends XsltInspection {
 
@@ -62,9 +60,7 @@ public class UnusedElementInspection extends XsltInspection {
             if (!XsltSupport.isVariableOrParamName(attribute)) {
                 return;
             }
-            if (XsltSupport.getXsltSupportLevel(attribute.getContainingFile()) != XsltChecker.SupportLevel.FULL) {
-                return;
-            }
+
             final XmlTag tag = attribute.getParent();
             if (XsltSupport.isTopLevelElement(tag)) {
                 return;

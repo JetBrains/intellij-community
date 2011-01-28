@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,17 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -103,6 +104,7 @@ import java.util.Set;
  */
 public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+  private static final Key<Boolean> CLEAR_IMPORTS = Key.create("ClearImports");
 
   private AnnotationHolder myHolder;
 
@@ -113,6 +115,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.getCurrentAnnotationSession().getUserData(CLEAR_IMPORTS) == null) {
+      final PsiFile file = element.getContainingFile();
+      if (file instanceof GroovyFile) {
+        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)file);
+      }
+      holder.getCurrentAnnotationSession().putUserData(CLEAR_IMPORTS, Boolean.TRUE);
+    }
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);
@@ -185,13 +194,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (resolved instanceof PsiMember) {
         highlightMemberResolved(myHolder, referenceExpression, ((PsiMember)resolved));
       }
-      if (!resolveResult.isAccessible()) {
+      /*if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
         final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(referenceExpression), message);
         if (resolved instanceof PsiMember) {
           registerAccessFix(annotation, referenceExpression, ((PsiMember)resolved));
         }
-      }
+      }*/
 
       //todo uncomment when correct isStatic() is working
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
@@ -252,6 +261,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  /*
   private static void registerAccessFix(Annotation annotation, PsiElement place, PsiMember refElement) {
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
@@ -284,6 +294,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       LOG.error(e);
     }
   }
+  */
 
   private static void registerStaticImportFix(GrReferenceExpression referenceExpression, Annotation annotation) {
     final String referenceName = referenceExpression.getReferenceName();
@@ -580,7 +591,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         checkDefaultMapConstructor(myHolder, argList, constructor);
       }
 
-      if (!constructorResolveResult.isAccessible()) {
+/*      if (!constructorResolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)constructor, PsiSubstitutor.EMPTY,
                                                                                           PsiFormatUtil.SHOW_NAME |
                                                                                           PsiFormatUtil.SHOW_TYPE |
@@ -590,7 +601,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         ));
         final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(refElement), message);
         registerAccessFix(annotation, refElement, ((PsiMember)constructor));
-      }
+      }*/
 
     }
     else {

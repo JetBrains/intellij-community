@@ -24,6 +24,7 @@ import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -162,7 +163,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       if (originalElement instanceof GrReferenceExpression) {
         final PsiType inferredType = ((GrReferenceExpression)originalElement).getType();
         if (inferredType != null) {
-          buffer.append("[inferred type] ").append(inferredType.getCanonicalText());
+          buffer.append("[inferred type] ");
+          appendTypeString(buffer, inferredType);
           return;
         }
       }
@@ -256,7 +258,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   private static void appendTypeString(StringBuffer buffer, PsiType type) {
     if (type != null) {
-      buffer.append(type.getCanonicalText());
+      buffer.append(StringUtil.escapeXml(type.getCanonicalText()));
     }
     else {
       buffer.append(GrModifier.DEF);
