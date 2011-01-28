@@ -102,6 +102,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
             }
             result.addElement(item);
           }
+
+          JavaCompletionContributor.addAllClasses(parameters, result, position, new InheritorsHolder(position, result));
         }
       }
     });

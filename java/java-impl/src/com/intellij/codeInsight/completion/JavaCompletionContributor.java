@@ -198,6 +198,14 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addKeywords(parameters, result);
 
+    addAllClasses(parameters, result, position, inheritors);
+    result.stopHere();
+  }
+
+  public static void addAllClasses(CompletionParameters parameters,
+                                   final CompletionResultSet result,
+                                   PsiElement position,
+                                   final InheritorsHolder inheritors) {
     if (shouldRunClassNameCompletion(result, position)) {
       result.runRemainingContributors(parameters.withType(CompletionType.CLASS_NAME),
         new Consumer<LookupElement>() {
@@ -209,7 +217,6 @@ public class JavaCompletionContributor extends CompletionContributor {
           }
         });
     }
-    result.stopHere();
   }
 
   private static void addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final InheritorsHolder inheritors) {
