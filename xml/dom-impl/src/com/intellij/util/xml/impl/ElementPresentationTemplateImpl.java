@@ -69,6 +69,7 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
       @Override
       public String getTypeName() {
+        if (StringUtil.isNotEmpty(myPresentation.typeName())) return myPresentation.typeName();
         return ElementPresentationManager.getTypeNameForObject(element);
       }
 
@@ -86,6 +87,7 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
       String className = getClassName();
       if (StringUtil.isEmpty(className)) return null;
       try {
+        //noinspection unchecked
         return (NullableFunction<DomElement, T>)Class.forName(className, true, myClass.getClassLoader()).newInstance();
       }
       catch (Exception e) {

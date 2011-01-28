@@ -41,4 +41,6 @@ public @interface Presentation {
    * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, String>}
    */
   String namerClass() default "";
+
+  String typeName() default "";
 }
