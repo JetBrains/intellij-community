@@ -63,7 +63,8 @@ public class DeleteAction extends EditorAction {
       }
       else if (!selectionModel.hasSelection()) {
         deleteCharAtCaret(editor);
-      } else {
+      }
+      else {
         EditorModificationUtil.deleteSelectedText(editor);
       }
     }
@@ -71,35 +72,33 @@ public class DeleteAction extends EditorAction {
 
   private static int getCaretLineLength(Editor editor) {
     Document document = editor.getDocument();
-    if(document.getLineCount() == 0)
+    if (document.getLineCount() == 0) {
       return 0;
+    }
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    if(lineNumber >= document.getLineCount()) {
+    if (lineNumber >= document.getLineCount()) {
       return 0;
     }
-    else {
-      return document.getLineEndOffset(lineNumber) - document.getLineStartOffset(lineNumber);
-    }
+    return document.getLineEndOffset(lineNumber) - document.getLineStartOffset(lineNumber);
   }
 
   private static int getCaretLineStart(Editor editor) {
     Document document = editor.getDocument();
-    if(document.getLineCount() == 0)
+    if (document.getLineCount() == 0) {
       return 0;
+    }
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    if(lineNumber >= document.getLineCount()) {
+    if (lineNumber >= document.getLineCount()) {
       return document.getLineStartOffset(document.getLineCount() - 1);
     }
-    else {
-      return document.getLineStartOffset(lineNumber);
-    }
+    return document.getLineStartOffset(lineNumber);
   }
 
   public static void deleteCharAtCaret(Editor editor) {
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();
-    if(afterLineEnd < 0) {
+    if (afterLineEnd < 0) {
       int offset = editor.getCaretModel().getOffset();
       FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (region != null && region.shouldNeverExpand()) {
@@ -113,7 +112,7 @@ public class DeleteAction extends EditorAction {
       return;
     }
 
-    if(lineNumber + 1 >= document.getLineCount()) return;
+    if (lineNumber + 1 >= document.getLineCount()) return;
 
     // Do not group delete newline and other deletions.
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -121,7 +120,7 @@ public class DeleteAction extends EditorAction {
 
     int nextLineStart = document.getLineStartOffset(lineNumber + 1);
     int nextLineEnd = document.getLineEndOffset(lineNumber + 1);
-    if(nextLineEnd - nextLineStart > 0) {
+    if (nextLineEnd - nextLineStart > 0) {
       StringBuilder buf = new StringBuilder();
       StringUtil.repeatSymbol(buf, ' ', afterLineEnd);
       document.insertString(getCaretLineStart(editor) + getCaretLineLength(editor), buf.toString());

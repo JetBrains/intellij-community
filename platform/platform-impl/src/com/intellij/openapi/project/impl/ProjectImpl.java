@@ -337,7 +337,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
-    TimedReference.disposeTimed(true);
+    TimedReference.disposeTimed();
   }
 
   private void projectOpened() {
