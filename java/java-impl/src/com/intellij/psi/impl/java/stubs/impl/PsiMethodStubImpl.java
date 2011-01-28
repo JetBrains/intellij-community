@@ -38,11 +38,11 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final StringRef myName;
   private StringRef myDefaultValueText;
 
-  private final static int CONSTRUCTOR = 0x01;
-  private final static int VARARGS = 0x02;
-  private final static int ANNOTATION = 0x04;
-  private final static int DEPRECATED = 0x08;
-  private final static int DEPRECATED_ANNOTATION = 0x10;
+  private static final int CONSTRUCTOR = 0x01;
+  private static final int VARARGS = 0x02;
+  private static final int ANNOTATION = 0x04;
+  private static final int DEPRECATED = 0x08;
+  private static final int DEPRECATED_ANNOTATION = 0x10;
 
 
   public PsiMethodStubImpl(final StubElement parent,

@@ -346,6 +346,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myDeleteButton.setEnabled(getProfiles().size() > 1 && inspectionProfile.getProfileManager() == myProfileManager);
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
+      panel.setVisible(true);//make sure that UI was initialized
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

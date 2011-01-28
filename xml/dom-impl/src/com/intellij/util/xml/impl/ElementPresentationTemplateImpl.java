@@ -16,7 +16,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.xml.*;
 
 import javax.swing.*;
@@ -28,8 +30,28 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
   private final Presentation myPresentation;
   private final Class<?> myClass;
-  private Icon myIcon;
-  private boolean myIconLoaded;
+
+  private final NullableLazyValue<Icon> myIcon = new NullableLazyValue<Icon>() {
+    @Override
+    protected Icon compute() {
+      if (StringUtil.isEmpty(myPresentation.icon())) return null;
+      return IconLoader.getIcon(myPresentation.icon(), myClass);
+    }
+  };
+
+  private final NullableLazyValue<NullableFunction<DomElement, String>> myNamer = new MyLazyValue<String>() {
+    @Override
+    String getClassName() {
+      return myPresentation.namerClass();
+    }
+  };
+
+  private final NullableLazyValue<NullableFunction<DomElement, Icon>> myIconProvider = new MyLazyValue<Icon>() {
+    @Override
+    String getClassName() {
+      return myPresentation.iconProviderClass();
+    }
+  };
 
   public ElementPresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
     myPresentation = presentation;
@@ -41,24 +63,38 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     return new ElementPresentation() {
       @Override
       public String getElementName() {
-        return ElementPresentationManager.getElementName(element);
+        NullableFunction<DomElement, String> namer = myNamer.getValue();
+        return namer == null ? ElementPresentationManager.getElementName(element) : namer.fun(element);
       }
 
       @Override
       public String getTypeName() {
+        if (StringUtil.isNotEmpty(myPresentation.typeName())) return myPresentation.typeName();
         return ElementPresentationManager.getTypeNameForObject(element);
       }
 
       @Override
       public Icon getIcon() {
-        if (!myIconLoaded) {
-          if (StringUtil.isNotEmpty(myPresentation.icon())) {
-            myIcon = IconLoader.getIcon(myPresentation.icon(), myClass);
-          }
-          myIconLoaded = true;
-        }
-        return myIcon;
+        NullableFunction<DomElement, Icon> iconProvider = myIconProvider.getValue();
+        return iconProvider == null ? myIcon.getValue() : iconProvider.fun(element);
       }
     };
+  }
+
+  private abstract class MyLazyValue<T> extends NullableLazyValue<NullableFunction<DomElement, T>> {
+    @Override
+    protected NullableFunction<DomElement, T> compute() {
+      String className = getClassName();
+      if (StringUtil.isEmpty(className)) return null;
+      try {
+        //noinspection unchecked
+        return (NullableFunction<DomElement, T>)Class.forName(className, true, myClass.getClassLoader()).newInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    abstract String getClassName();
   }
 }

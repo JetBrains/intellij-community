@@ -12,6 +12,7 @@ package org.intellij.lang.xpath.xslt.psi.impl;
 
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
+import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 import com.intellij.psi.xml.XmlTag;
@@ -36,6 +37,7 @@ public class XsltApplyTemplatesImpl extends XsltTemplateInvocationBase implement
     }
 
     public QName getMode() {
-        return getQName(getTag().getAttributeValue("mode"));
+      final String mode = getTag().getAttributeValue("mode");
+      return mode != null ? QNameUtil.createQName(mode, getTag()) : null;
     }
 }

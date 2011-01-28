@@ -15,10 +15,9 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
-
 import org.intellij.lang.xpath.context.functions.Function;
 
 import javax.swing.*;
@@ -27,8 +26,8 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
     private final String type;
     private final boolean hasParameters;
 
-    FunctionLookup(String name, String _presentation, String type) {
-        this(name, _presentation, type, false);
+    FunctionLookup(String name, String _presentation) {
+        this(name, _presentation, null, false);
     }
 
     FunctionLookup(String name, String _presentation, String type, boolean hasParams) {
@@ -57,11 +56,30 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
         return IconLoader.getIcon("/icons/function.png");
     }
 
-    public static Lookup newFunctionLookup(String name, Function functionDecl) {
-        final CodeInsightSettings codeinsightsettings = CodeInsightSettings.getInstance();
-        final String presentation = functionDecl.buildSignature(name);
-        final String returnType = functionDecl.returnType.getName();
-        final boolean hasParams = functionDecl.parameters.length > 0;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final FunctionLookup that = (FunctionLookup)o;
+
+    if (!Comparing.equal(myPresentation, that.myPresentation)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    return result;
+  }
+
+  public static Lookup newFunctionLookup(String name, Function functionDecl) {
+        final String presentation = functionDecl.buildSignature();
+        final String returnType = functionDecl.getReturnType().getName();
+        final boolean hasParams = functionDecl.getParameters().length > 0;
         return new FunctionLookup(name, presentation, returnType, hasParams);
     }
 }

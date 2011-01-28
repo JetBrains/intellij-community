@@ -15,17 +15,14 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen.extensions;
 
-import org.intellij.lang.xpath.context.functions.Function;
+import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPathType;
 
-public abstract class FunctionImplementation extends Function {
-    public FunctionImplementation(XPathType returnType) {
-        super(returnType);
-    }
+public abstract class FunctionImplementation extends FunctionImpl {
 
-    public FunctionImplementation(XPathType returnType, Parameter... parameters) {
-        super(returnType, parameters);
+    public FunctionImplementation(String name, XPathType returnType, Parameter... parameters) {
+        super(name, returnType, parameters);
     }
 
     public abstract org.jaxen.Function getImplementation();

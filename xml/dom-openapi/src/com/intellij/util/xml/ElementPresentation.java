@@ -15,15 +15,21 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
  * @author peter
+ * @see com.intellij.util.xml.DomElement#getPresentation()
+ * @see ElementPresentationTemplate
  */
 public abstract class ElementPresentation {
+  @Nullable
   public abstract String getElementName();
 
   public abstract String getTypeName();
 
+  @Nullable
   public abstract Icon getIcon();
 }

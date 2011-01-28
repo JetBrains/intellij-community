@@ -33,7 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -156,7 +160,14 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     if (expr == null) return false;
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner) return true;
-    if (parent instanceof GrExpression || parent instanceof GrArgumentList) return false;
+    if (parent instanceof GrExpression ||
+        parent instanceof GrArgumentList ||
+        parent instanceof GrReturnStatement ||
+        parent instanceof GrAssertStatement ||
+        parent instanceof GrThrowStatement ||
+        parent instanceof GrSwitchStatement) {
+      return false;
+    }
     return true;
   }
 

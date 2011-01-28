@@ -17,16 +17,14 @@
   </description>
 
   <!-- Plugin version -->
-  <version>3.1-Diana</version>
+  <version>4</version>
 
   <!-- Plugin's vendor -->
   <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
 
   <change-notes>
     <![CDATA[
-      * Support for XSLT-Runner-Extensions (e.g. a debugger, coming soon)<br>
-      * "Extract XSLT Template" Refactoring (bound to "Extract Method")<br>
-      * Extract/Inline XSLT attribute intentions (literal attributes vs. <tt>xsl:attribute</tt>)<br>
+      * Basic XPath 2.0 / XSLT 2.0 Support<br>
   ]]>
   </change-notes>
 
@@ -78,11 +76,15 @@
     <lang.namesValidator language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathNamesValidator" />
     <lang.syntaxHighlighterFactory key="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
 
+    <lang.parserDefinition language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2ParserDefinition" />
+    <lang.syntaxHighlighterFactory key="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPathSyntaxHighlighterFactory" />
+
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
     <inspectionToolProvider implementation="org.intellij.lang.xpath.XPathSupportLoader"/>
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
     <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
+    <completion.contributor language="XPath2" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
@@ -136,7 +138,8 @@
   <extensions defaultExtensionNs="XPathView">
     <xpath.functionProvider implementation="org.intellij.plugins.xpathView.support.jaxen.extensions.XPathFunctionProviderImpl" />
 
-    <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.XsltContextProviderExtension" />
+    <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt1ContextProviderExtension" />
+    <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt2ContextProviderExtension" />
 
   </extensions>
 

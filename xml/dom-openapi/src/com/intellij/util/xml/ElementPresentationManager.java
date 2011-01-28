@@ -102,14 +102,23 @@ public abstract class ElementPresentationManager {
     });
   }
 
-  /** Use extension point {@code com.intellij.typeName} for static names.
-   * @deprecated */
+  /**
+   * @deprecated
+   * @see com.intellij.util.xml.Presentation#namerClass()
+   */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 
-  /** Use extension point {@code com.intellij.typeIcon} instead. */
+  /**
+   * @deprecated
+   * @see com.intellij.util.xml.Presentation#icon()
+   */
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
+  /**
+   * @deprecated
+   * @see com.intellij.util.xml.Presentation#icon()
+   */
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
 

@@ -124,22 +124,18 @@ public class Messages {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    else {
-      MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
-      dialog.show();
-      return dialog.getExitCode();
-    }
+    MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, focusedOptionIndex, icon);
+    dialog.show();
+    return dialog.getExitCode();
   }
 
   public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
-    else {
-      MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
-      dialog.show();
-      return dialog.getExitCode();
-    }
+    MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
+    dialog.show();
+    return dialog.getExitCode();
   }
 
   private static boolean isApplicationInUnitTestOrHeadless(){
@@ -558,7 +554,7 @@ public class Messages {
   }
 
   private static class MoreInfoMessageDialog extends MessageDialog {
-    private String myInfoText;
+    private final String myInfoText;
 
     public MoreInfoMessageDialog(Project project,
                                  String message,
@@ -784,7 +780,7 @@ public class Messages {
 
   protected static class TwoStepConfirmationDialog extends MessageDialog {
     private JCheckBox myCheckBox;
-    private String myCheckboxText;
+    private final String myCheckboxText;
 
     public TwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
       myCheckboxText = checkboxText;

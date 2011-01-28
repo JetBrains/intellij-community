@@ -105,7 +105,7 @@ public class GroovyOverrideImplementUtil {
     }
   }
 
-  public static void generateImplementation(final Editor editor,
+  public static void generateImplementation(@Nullable final Editor editor,
                                             final PsiFile file,
                                             final GrTypeDefinition aClass,
                                             final PsiMethod method, final PsiSubstitutor substitutor) {
@@ -135,10 +135,18 @@ public class GroovyOverrideImplementUtil {
 
           PsiElement anchor = null;
 
-          final int caretPosition = editor.getCaretModel().getOffset();
-          final PsiElement atCaret = file.findElementAt(caretPosition);
+          final PsiElement atCaret;
+          final GrTopLevelDefinition previousTopLevelElement;
+          if (editor == null) {
+            atCaret = null;
+            previousTopLevelElement = null;
+          }
+          else {
+            final int caretPosition = editor.getCaretModel().getOffset();
+            atCaret = file.findElementAt(caretPosition);
 
-          final GrTopLevelDefinition previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
+            previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
+          }
 
           if (atCaret != null && atCaret.getParent() instanceof GrTypeDefinitionBody) {
             if (GroovyTokenTypes.mRCURLY.equals(atCaret.getNode().getElementType())) {
@@ -180,7 +188,9 @@ public class GroovyOverrideImplementUtil {
             //[GenerateMembersUtil.positionCaret in unsuitable because method.getBody() returns null, it is necessary use method.getBlock() instead.
             //but it is impossible in common case]
 //            GenerateMembersUtil.positionCaret(editor, result, true);
-          positionCaret(editor, addedMethod);
+          if (editor != null) {
+            positionCaret(editor, addedMethod);
+          }
         } catch (IncorrectOperationException e) {
           throw new RuntimeException(e);
         }

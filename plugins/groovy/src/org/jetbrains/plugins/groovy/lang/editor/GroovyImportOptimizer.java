@@ -193,14 +193,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       });
 
 
-      final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
-      for (GrImportStatement statement : myFile.getImportStatements()) {
-        final GrCodeReferenceElement reference = statement.getImportReference();
-        if (reference != null && reference.multiResolve(false).length > 0) {
-          oldImports.add(statement);
-        }
-      }
-      return oldImports;
+      return getValidImportStatements(myFile);
     }
 
     @Nullable private String getTargetQualifiedName(PsiElement element) {
@@ -287,5 +280,16 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       return explicated.toArray(new GrImportStatement[explicated.size()]);
     }
 
+  }
+
+  public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
+    final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
+    for (GrImportStatement statement : file.getImportStatements()) {
+      final GrCodeReferenceElement reference = statement.getImportReference();
+      if (reference != null && reference.multiResolve(false).length > 0) {
+        oldImports.add(statement);
+      }
+    }
+    return oldImports;
   }
 }

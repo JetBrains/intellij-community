@@ -102,7 +102,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
-  private final CompletionState myState;
+
+  private volatile int myCount;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
@@ -114,7 +115,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
-    myState = new CompletionState(lookup.isShown());
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -179,14 +179,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void setFocusLookupWhenDone(boolean focusLookup) {
-    myState.setFocusLookupWhenDone(focusLookup);
-    if (!focusLookup && isAutopopupCompletion()) {
-      myLookup.setAdvertisementText("Press " + CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) + " to choose the first suggestion");
+    LOG.assertTrue(isAutopopupCompletion());
+    if (focusLookup) {
+      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone();
+    } else {
+      myLookup.setAdvertisementText("Press " +
+                                    CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
+                                    " to choose the first suggestion");
     }
-  }
-
-  public CompletionState getCompletionState() {
-    return myState;
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
@@ -234,10 +234,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                if (isOutdated()) {
-                  return;
-                }
-                if (isAutopopupCompletion() && !myState.isShownLookup()) {
+                if (isAutopopupCompletion() && !myLookup.isShown()) {
                   return;
                 }
                 if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
@@ -258,11 +255,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean isOutdated() {
-    if (!myState.isCompletionDisposed()) {
-      CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-      LOG.assertTrue(this == current, current + " != " + this);
-    }
-    return myState.isCompletionDisposed() || myEditor.isDisposed() || getProject().isDisposed();
+    return CompletionServiceImpl.getCompletionPhase().indicator != this;
   }
 
   private void trackModifiers() {
@@ -284,8 +277,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           contentComponent.removeKeyListener(this);
-          myState.modifiersChanged();
-          if (CompletionServiceImpl.isPhase(CompletionPhase.ZombiePhase.class)) {
+          final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+          if (phase instanceof CompletionPhase.BgCalculation) {
+            ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
+          } else if (phase instanceof CompletionPhase.ZombiePhase) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
@@ -313,14 +308,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(this);
   }
 
-  void assertDisposed() {
-    myState.assertDisposed();
-  }
-
-  boolean areModifiersChanged() {
-    return myState.areModifiersChanged();
-  }
-
   public CodeCompletionHandlerBase getHandler() {
     return myHandler;
   }
@@ -333,11 +320,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myState.isShownLookup()) {
+    if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
         return;
       }
-      myState.setShownLookup(true);
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
@@ -349,7 +335,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.show();
     }
     myLookup.refreshUi();
-    LOG.assertTrue(myLookup.isShown());
     hideAutopopupIfMeaningless();
   }
 
@@ -372,10 +357,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     myLookup.addItem(item);
-    final int count = myState.incCount();
+    myCount++;
     if (unitTestMode) return;
 
-    if (count == 1) {
+    if (myCount == 1) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           try {
@@ -398,7 +383,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LOG.assertTrue(lookup == myLookup);
     myLookup.removeLookupListener(myLookupListener);
     finishCompletionProcess();
-    myState.assertDisposed();
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
 
     if (hideLookup) {
@@ -408,8 +392,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void finishCompletionProcess() {
     cancel();
-
-    myState.setCompletionDisposed(true);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
@@ -447,22 +429,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return;
         }
 
-        if (myState.hasNoVariants()) {
+        if (myCount == 0) {
           if (!isAutopopupCompletion()) {
             LookupManager.getInstance(getProject()).hideActiveLookup();
 
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
-            handleEmptyLookup();
+            handleEmptyLookup(!((CompletionPhase.BgCalculation)phase).modifiersChanged);
           }
         }
         else {
-          if (myState.isFocusLookupWhenDone()) {
-            myLookup.setFocused(true);
-          }
-          updateLookup();
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
+          updateLookup();
         }
       }
     }, myQueue.getModalityState());
@@ -585,9 +564,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (isOutdated()) {
-          return;
-        }
         if (phase != CompletionServiceImpl.getCompletionPhase()) {
           return;
         }
@@ -607,11 +583,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public String toString() {
-    return myState.toString();
+    return "CompletionProgressIndicator[count=" + myCount + ",phase=" + CompletionServiceImpl.getCompletionPhase() + "]";
   }
 
-  protected void handleEmptyLookup() {
-    assertDisposed();
+  protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
     assert !isAutopopupCompletion();
 
     if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {
@@ -624,7 +599,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (StringUtil.isNotEmpty(text)) {
         LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
         CompletionServiceImpl.setCompletionPhase(
-          areModifiersChanged() ? CompletionPhase.NoCompletion : new CompletionPhase.NoSuggestionsHint(hint, this));
+          awaitSecondInvocation ? new CompletionPhase.NoSuggestionsHint(hint, this) : CompletionPhase.NoCompletion);
         return;
       }
     }

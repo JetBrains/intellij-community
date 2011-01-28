@@ -48,7 +48,7 @@ public class XsltSupport {
     public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
     public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
     public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
-    public static final Key<ParameterizedCachedValue<XsltChecker.SupportLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+    public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
 
     private static final Icon XSLT_OVERLAY = IconLoader.getIcon("/icons/xslt-filetype-overlay.png");
     private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
@@ -58,6 +58,9 @@ public class XsltSupport {
         XPATH_ATTR_MAP.put("select", "");
         XPATH_ATTR_MAP.put("match", "");
         XPATH_ATTR_MAP.put("test", "");
+        XPATH_ATTR_MAP.put("use-when", "");
+        XPATH_ATTR_MAP.put("group-by", "");
+        XPATH_ATTR_MAP.put("group-adjacent", "");
         XPATH_ATTR_MAP.put("count", "number");
         XPATH_ATTR_MAP.put("from", "number");
         XPATH_ATTR_MAP.put("value", "number");
@@ -65,10 +68,21 @@ public class XsltSupport {
 
         XPATH_AVT_MAP.put("element", new THashSet<String>(Arrays.asList("name", "namespace")));
         XPATH_AVT_MAP.put("attribute", new THashSet<String>(Arrays.asList("name", "namespace")));
+        XPATH_AVT_MAP.put("namespace", new THashSet<String>(Arrays.asList("name")));
         XPATH_AVT_MAP.put("processing-instruction", new THashSet<String>(Arrays.asList("name")));
 
-        XPATH_AVT_MAP.put("number", new THashSet<String>(Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size")));
-        XPATH_AVT_MAP.put("sort", new THashSet<String>(Arrays.asList("lang", "data-type", "order", "case-order")));
+        XPATH_AVT_MAP.put("number", new THashSet<String>(Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal")));
+        XPATH_AVT_MAP.put("sort", new THashSet<String>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
+
+        XPATH_AVT_MAP.put("message", new THashSet<String>(Arrays.asList("terminate")));
+        XPATH_AVT_MAP.put("value-of", new THashSet<String>(Arrays.asList("separator")));
+
+        XPATH_AVT_MAP.put("result-document", new THashSet<String>(Arrays.asList("format", "href", "method", "byte-order-mark",
+                "cdata-section-elements", "doctype-public", "doctype-system", "encoding", "escape-uri-attributes", "include-content-type",
+                "indent", "media-type", "normalization-form", "omit-xml-declaration", "standalone", "undeclare-prefixes", "output-version")));
+    }
+
+    private XsltSupport() {
     }
 
     @NotNull
@@ -117,7 +131,13 @@ public class XsltSupport {
         }
 
         final PsiFile file = attribute.getContainingFile();
-        return file != null && getXsltSupportLevel(file) == XsltChecker.SupportLevel.FULL;
+        if (file != null) {
+          XsltChecker.LanguageLevel level = getXsltLanguageLevel(file);
+          if (level != XsltChecker.LanguageLevel.NONE) {
+            return true;
+          }
+        }
+      return false;
     }
 
     private static boolean isAttributeValueTemplate(@NotNull XmlAttribute attribute, boolean isXsltAttribute) {
@@ -167,6 +187,10 @@ public class XsltSupport {
         return "call-template".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltTag(tag);
     }
 
+    public static boolean isFunction(@NotNull XmlTag tag) {
+        return "function".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltTag(tag);
+    }
+
     public static boolean isApplyTemplates(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
         return "apply-templates".equals(localName) && isXsltTag(tag);
@@ -188,6 +212,10 @@ public class XsltSupport {
         return isXsltNameAttribute(attribute) && isTemplate(attribute.getParent());
     }
 
+    public static boolean isFunctionName(@NotNull XmlAttribute attribute) {
+        return isXsltNameAttribute(attribute) && isFunction(attribute.getParent());
+    }
+
     public static boolean isTemplate(@NotNull XmlTag element) {
         return isTemplate(element, true);
     }
@@ -201,12 +229,12 @@ public class XsltSupport {
 
         if (!(psiFile instanceof XmlFile)) return false;
 
-        final XsltChecker.SupportLevel level = getXsltSupportLevel(psiFile);
-        return level == XsltChecker.SupportLevel.FULL || level == XsltChecker.SupportLevel.PARTIAL;
+        final XsltChecker.LanguageLevel level = getXsltLanguageLevel(psiFile);
+        return level != XsltChecker.LanguageLevel.NONE;
     }
 
-    public static XsltChecker.SupportLevel getXsltSupportLevel(PsiFile psiFile) {
-      final CachedValuesManager mgr = CachedValuesManager.getManager(psiFile.getProject());
+    public static XsltChecker.LanguageLevel getXsltLanguageLevel(PsiFile psiFile) {
+        final CachedValuesManager mgr = CachedValuesManager.getManager(psiFile.getProject());
         return mgr.getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
     }
 
@@ -312,10 +340,10 @@ public class XsltSupport {
         return LayeredIcon.create(icon, XSLT_OVERLAY);
     }
 
-    private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.SupportLevel, PsiFile> {
-        public static final ParameterizedCachedValueProvider<XsltChecker.SupportLevel, PsiFile> INSTANCE = new XsltSupportProvider();
+    private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {
+        public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
-        public CachedValueProvider.Result<XsltChecker.SupportLevel> compute(PsiFile psiFile) {
+        public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
             if (psiFile instanceof PsiFileEx) {
                 if (((PsiFileEx)psiFile).isContentsLoaded()) {
                     final XmlDocument doc = ((XmlFile)psiFile).getDocument();
@@ -323,13 +351,13 @@ public class XsltSupport {
                         final XmlTag rootTag = doc.getRootTag();
                         if (rootTag != null) {
                             XmlAttribute v;
-                            XsltChecker.SupportLevel level;
+                            XsltChecker.LanguageLevel level;
                             if (isXsltRootTag(rootTag)) {
                                 v = rootTag.getAttribute("version");
-                                level = v != null ? XsltChecker.getSupportLevel(v.getValue()) : XsltChecker.SupportLevel.NONE;
+                                level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
                             } else {
                                 v = rootTag.getAttribute("version", XSLT_NS);
-                                level = v != null ? XsltChecker.getSupportLevel(v.getValue()) : XsltChecker.SupportLevel.NONE;
+                                level = v != null ? XsltChecker.getLanguageLevel(v.getValue()) : XsltChecker.LanguageLevel.NONE;
                             }
                             return CachedValueProvider.Result.create(level, rootTag);
                        }
@@ -339,7 +367,7 @@ public class XsltSupport {
 
             final XsltChecker xsltChecker = new XsltChecker();
             NanoXmlUtil.parseFile(psiFile, xsltChecker);
-            return CachedValueProvider.Result.create(xsltChecker.getSupportLevel(), psiFile);
+            return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
         }
     }
 }

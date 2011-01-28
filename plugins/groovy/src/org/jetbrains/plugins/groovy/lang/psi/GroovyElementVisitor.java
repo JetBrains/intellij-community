@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -418,5 +419,9 @@ public abstract class GroovyElementVisitor {
 
   public void visitModifierList(GrModifierList modifierList) {
     visitElement(modifierList);
+  }
+
+  public void visitRangeExpression(GrRangeExpression range) {
+    visitBinaryExpression(range);
   }
 }

@@ -61,7 +61,7 @@ public class QNameUtil {
         return isNamespaceDeclared(tag.getParentTag(), namespace);
     }
 
-    public static QName createQName(String qname, @NotNull PsiElement context) {
+    public static QName createQName(@NotNull String qname, @NotNull PsiElement context) {
         final String[] strings = qname.split(":", 2);
         if (strings.length == 1) {
             return new QName(null, qname);
@@ -71,7 +71,7 @@ public class QNameUtil {
         final String uri = XsltNamespaceContext.getNamespaceUriStatic(strings[0], ctx);
         if (uri == null) return UNRESOLVED;
 
-        return new QName(uri, strings[1]);
+        return new QName(uri, strings[1], strings[0]);
     }
 
     public static QName createQName(@NotNull XmlAttribute attribute) {

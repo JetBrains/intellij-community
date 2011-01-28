@@ -29,6 +29,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -152,7 +153,11 @@ class XsltCommandLineState extends CommandLineState {
         if (!rtClasspath.exists()) {
             LOG.warn("Plugin's Runtime classes not found in " + rtClasspath.getAbsolutePath());
             if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
+              if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
+                rtClasspath = pluginPath;
+              } else {
                 throw new CantRunException("Runtime classes not found");
+              }
             }
             parameters.getVMParametersList().prepend("-ea");
         }

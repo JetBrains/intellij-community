@@ -64,7 +64,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    * Rectangle objects that are used in calculation of preferred sizes and
    * layouting of components.
    */
-  private final ArrayList<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
+  private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
   private Dimension myMinimumButtonSize;
   /**
@@ -75,8 +75,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private final ActionGroup myActionGroup;
   private final String myPlace;
   @SuppressWarnings({"FieldCanBeLocal"}) private final MyKeymapManagerListener myKeymapManagerListener;
-  private ArrayList<AnAction> myNewVisibleActions;
-  protected ArrayList<AnAction> myVisibleActions;
+  private List<AnAction> myNewVisibleActions;
+  protected List<AnAction> myVisibleActions;
   private final PresentationFactory myPresentationFactory;
   /**
    * @see ActionToolbar#adjustTheSameSize(boolean)
@@ -102,7 +102,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private boolean myReservePlaceAutoPopupIcon = true;
   private WeakTimerListener myWeakTimerListener;
-  private ActionToolbarImpl.MyTimerListener myTimerListener;
+  @SuppressWarnings({"FieldCanBeLocal"}) private ActionToolbarImpl.MyTimerListener myTimerListener;
 
   public ActionToolbarImpl(final String place,
                            @NotNull final ActionGroup actionGroup,
@@ -198,7 +198,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private void fillToolBar(final ArrayList<AnAction> actions, boolean layoutSecondaries) {
+  private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
 
@@ -291,7 +291,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     return height;
   }
 
-  private void calculateBoundsNowrapImpl(ArrayList<Rectangle> bounds) {
+  private void calculateBoundsNowrapImpl(List<Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -347,7 +347,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private void calculateBoundsAutoImp(Dimension sizeToFit, ArrayList<Rectangle> bounds) {
+  private void calculateBoundsAutoImp(Dimension sizeToFit, List<Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -457,7 +457,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   }
 
-  private void calculateBoundsWrapImpl(Dimension sizeToFit, ArrayList<Rectangle> bounds) {
+  private void calculateBoundsWrapImpl(Dimension sizeToFit, List<Rectangle> bounds) {
     // We have to gracefull handle case when toolbar was not layed out yet.
     // In this case we calculate bounds as it is a NOWRAP toolbar.
     if (getWidth() == 0 || getHeight() == 0) {
@@ -582,7 +582,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   /**
    * Calculates bounds of all the components in the toolbar
    */
-  private void calculateBounds(Dimension size2Fit, ArrayList<Rectangle> bounds) {
+  private void calculateBounds(Dimension size2Fit, List<Rectangle> bounds) {
     bounds.clear();
     for (int i = 0; i < getComponentCount(); i++) {
       bounds.add(new Rectangle());
@@ -759,7 +759,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
           final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
-          final ArrayList<AnAction> temp = myVisibleActions;
+          final List<AnAction> temp = myVisibleActions;
           myVisibleActions = myNewVisibleActions;
           myNewVisibleActions = temp;
 
@@ -1012,12 +1012,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     @Override
     protected void paintButtonLook(Graphics g) {
       final Color bright = new Color(255, 255, 255, 200);
-      final Color dark = new Color(64, 64, 64, 110);
-
-      int padding = 3;
 
       g.setColor(bright);
+      int padding = 3;
       g.drawLine(0, padding, 0, getHeight() - padding - 1);
+      final Color dark = new Color(64, 64, 64, 110);
       g.setColor(dark);
       g.drawLine(1, padding, 1, getHeight() - padding - 1);
 
@@ -1028,7 +1027,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
     ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
 
-    if ((getBounds().width * getBounds().height) <= 0) return result;
+    if (getBounds().width * getBounds().height <= 0) return result;
 
     for (int i = 0; i < getComponentCount(); i++) {
       Component each = getComponent(i);
@@ -1040,7 +1039,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private class ActionTarget implements SwitchTarget {
-    private ActionButton myButton;
+    private final ActionButton myButton;
 
     private ActionTarget(ActionButton button) {
       myButton = button;

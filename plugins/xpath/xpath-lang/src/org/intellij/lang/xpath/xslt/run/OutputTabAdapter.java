@@ -16,34 +16,38 @@
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.net.ConnectException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 class OutputTabAdapter extends ProcessAdapter {
+    private static final int CONNECT_TIMEOUT = Integer.parseInt(System.getProperty("xslt.connect.timeout", "8000"));
+
     private final ProcessHandler myStartedProcess;
     private final HighlightingOutputConsole myConsole;
 
-    public OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
+  public OutputTabAdapter(ProcessHandler startedProcess, HighlightingOutputConsole console) {
         myStartedProcess = startedProcess;
         myConsole = console;
     }
 
     public void startNotified(ProcessEvent event) {
         final XsltCommandLineState state = event.getProcessHandler().getUserData(XsltCommandLineState.STATE);
-        attachOutputConsole(state.getPort());
+        if (state != null) {
+          attachOutputConsole(state.getPort());
+        }
     }
 
     public void attachOutputConsole(final int port) {
@@ -90,15 +94,18 @@ class OutputTabAdapter extends ProcessAdapter {
         final long s = System.currentTimeMillis();
         final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port);
 
+        myStartedProcess.notifyTextAvailable("Connecting to XSLT runner on " + endpoint + "\n", ProcessOutputTypes.SYSTEM);
+
         int tries = 0;
         IOException ex;
         do {
             final int d = (int)(System.currentTimeMillis() - s);
             try {
+                @SuppressWarnings({"SocketOpenedButNotSafelyClosed"})
                 final Socket socket = new Socket();
-                socket.connect(endpoint, Math.max(5000 - d, 100));
+                socket.connect(endpoint, Math.max(CONNECT_TIMEOUT - d, 100));
 
-                myStartedProcess.notifyTextAvailable("Connected to XSLT runner on " + endpoint + "\n", ProcessOutputTypes.SYSTEM);
+                myStartedProcess.notifyTextAvailable("Connected to XSLT runner." + "\n", ProcessOutputTypes.SYSTEM);
                 return socket.getInputStream();
             } catch (ConnectException e) {
                 ex = e;

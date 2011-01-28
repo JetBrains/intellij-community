@@ -177,13 +177,13 @@ public class TagNameReference implements PsiReference {
   }
 
   @NotNull
-  public Object[] getVariants(){
+  public LookupElement[] getVariants(){
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
         return new LookupElement[]{createClosingTagLookupElement((XmlTag)element, false)};
       }
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
     return getTagNameVariants((XmlTag)element, ((XmlTag)element).getNamespacePrefix());
   }

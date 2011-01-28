@@ -67,7 +67,7 @@ public class TemplateInvocationInspection extends XsltInspection {
         };
     }
 
-    private void checkTemplateInvocation(XsltTemplateInvocation call, ProblemsHolder holder, boolean onTheFly) {
+    private static void checkTemplateInvocation(XsltTemplateInvocation call, ProblemsHolder holder, boolean onTheFly) {
         final XsltWithParam[] arguments = call.getArguments();
 
         final Map<String, XsltWithParam> argNames = new HashMap<String, XsltWithParam>();

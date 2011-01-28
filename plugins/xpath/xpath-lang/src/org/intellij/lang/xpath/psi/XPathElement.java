@@ -17,11 +17,17 @@ package org.intellij.lang.xpath.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({ "NullableProblems" })
+@SuppressWarnings({"NullableProblems"})
 public interface XPathElement extends PsiElement {
 
-    @NotNull
-    public ASTNode getNode();
+  @NotNull
+  ASTNode getNode();
+
+  ContextProvider getXPathContext();
+
+  XPathVersion getXPathVersion();
 }

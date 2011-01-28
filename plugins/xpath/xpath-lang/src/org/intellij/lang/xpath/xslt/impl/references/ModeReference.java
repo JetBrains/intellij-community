@@ -50,8 +50,9 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
             myIsDeclaration = true;
         } else {
             final PsiFile file = attribute.getContainingFile();
-            if (file != null && XsltSupport.getXsltSupportLevel(file) == XsltChecker.SupportLevel.PARTIAL) {
-                myIsDeclaration = "#current".equals(attribute.getValue());
+            if (file != null && XsltSupport.getXsltLanguageLevel(file) == XsltChecker.LanguageLevel.V2) {
+              final String value = attribute.getValue();
+              myIsDeclaration = "#current".equals(value) || "#default".equals(value);
             } else {
                 myIsDeclaration = false;
             }
@@ -71,7 +72,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
             final List<Object> l = new ArrayList<Object>();
             if (!myImplicitModeElement.hasPrefix()) {
-              final Object[] prefixes = PrefixReference.getPrefixCompletions(myAttribute);
+              final Object[] prefixes = getPrefixCompletions(myAttribute);
               ContainerUtil.addAll(l, prefixes);
             }
 
@@ -129,69 +130,34 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         if (p == -1) {
             return new PsiReference[]{ new ModeReference(attribute, isDeclaration) };
         } else if (p == value.length() - 1) {
-            return new PsiReference[]{ new PrefixReference(attribute) };
+            return new PsiReference[]{new MyPrefixReference(attribute)};
         } else {
             return new PsiReference[]{
-                    new PrefixReference(attribute),
+                    new MyPrefixReference(attribute),
                     new ModeReference(attribute, isDeclaration)
             };
         }
     }
 
-    static class PrefixReference extends SimpleAttributeReference implements EmptyResolveMessageProvider, QuickFixProvider<PrefixReference> {
-        public PrefixReference(XmlAttribute attribute) {
-            super(attribute);
-        }
+  static Object[] getPrefixCompletions(XmlAttribute attribute) {
+    final ModeReference.MyModeMatcher matcher = new ModeReference.MyModeMatcher(attribute, QNameUtil.ANY);
+    final PsiElement[] modes = ResolveUtil.collect(matcher);
+    final Collection<String> prefixes = XsltNamespaceContext.getPrefixes(attribute);
+    final Set<NamespaceLookup> lookups = new HashSet<NamespaceLookup>(prefixes.size());
 
-        @NotNull
-        public Object[] getVariants() {
-            return getPrefixCompletions(myAttribute);
-        }
+    for (PsiElement mode : modes) {
+      final QName qName = ((ImplicitModeElement)mode).getQName();
+      if (qName == null) continue;
+      final String prefix = qName.getPrefix();
+      if (!prefixes.contains(prefix)) continue;
 
-        static Object[] getPrefixCompletions(XmlAttribute attribute) {
-            final MyModeMatcher matcher = new MyModeMatcher(attribute, QNameUtil.ANY);
-            final PsiElement[] modes = ResolveUtil.collect(matcher);
-            final Collection<String> prefixes = XsltNamespaceContext.getPrefixes(attribute);
-            final Set<NamespaceLookup> lookups = new HashSet<NamespaceLookup>(prefixes.size());
-
-            for (PsiElement mode : modes) {
-                final QName qName = ((ImplicitModeElement)mode).getQName();
-                if (qName == null) continue;
-                final String prefix = qName.getPrefix();
-                if (!prefixes.contains(prefix)) continue;
-
-                lookups.add(new NamespaceLookup(prefix));
-            }
-
-          return ArrayUtil.toObjectArray(lookups);
-        }
-
-        public void registerQuickfix(HighlightInfo highlightInfo, PrefixReference psiReference) {
-            // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
-        }
-
-        public boolean isSoft() {
-            return false;
-        }
-
-        @Override
-        @NotNull
-        protected TextRange getTextRange() {
-            return ImplicitModeElement.getPrefixRange(myAttribute);
-        }
-
-        @Override
-        @Nullable
-        public PsiElement resolveImpl() {
-            return XsltNamespaceContext.resolvePrefix(getCanonicalText(), myAttribute);
-        }
-
-        public String getUnresolvedMessagePattern() {
-            return "Undeclared namespace prefix ''{0}''";
-        }
+      lookups.add(new NamespaceLookup(prefix));
     }
 
-    private static class MyModeMatcher extends MatchTemplateMatcher {
+    return ArrayUtil.toObjectArray(lookups);
+  }
+
+  private static class MyModeMatcher extends MatchTemplateMatcher {
         public MyModeMatcher(XmlDocument document, QName mode) {
             super(document, mode);
         }
@@ -229,4 +195,20 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
             return "Undefined mode ''{0}''";
         }
     }
+
+  private static class MyPrefixReference extends PrefixReference implements QuickFixProvider<PrefixReference> {
+    public MyPrefixReference(XmlAttribute attribute) {
+      super(attribute);
+    }
+
+    public void registerQuickfix(HighlightInfo highlightInfo, PrefixReference psiReference) {
+      // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return getPrefixCompletions(myAttribute);
+    }
+  }
 }

@@ -28,54 +28,62 @@ import org.jetbrains.annotations.Nullable;
 
 class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
 
-    public PrefixReferenceImpl(QNameElement element, ASTNode nameNode) {
-        super(element, nameNode);
+  public PrefixReferenceImpl(QNameElement element, ASTNode nameNode) {
+    super(element, nameNode);
+  }
+
+  @Nullable
+  public PsiElement resolve() {
+    final ContextProvider provider = getElement().getXPathContext();
+    final NamespaceContext namespaceContext = provider.getNamespaceContext();
+    if (namespaceContext != null) {
+      return namespaceContext.resolve(getCanonicalText(), provider.getContextElement());
+    } else {
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"ConstantConditions"})
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final XPathNodeTest expr =
+            (XPathNodeTest)XPathChangeUtil.createExpression(getElement(), newElementName + ":x").getFirstChild().getChildren()[1];
+    final ASTNode nameNode = getNameNode();
+    nameNode.getTreeParent().replaceChild(nameNode, ((PrefixedNameImpl)expr.getQName()).getPrefixNode());
+    return getElement();
+  }
+
+  @NotNull
+  public Object[] getVariants() {
+    // handled in XPathCompletionData
+    return EMPTY_ARRAY;
+  }
+
+  public boolean isSoft() {
+    return !canResolve();
+  }
+
+  public String getPrefix() {
+    return getCanonicalText();
+  }
+
+  public boolean isUnresolved() {
+    if (!canResolve()) return true;
+
+    if (resolve() != null) {
+      return false;
     }
 
-    @Nullable
-    public PsiElement resolve() {
-        final ContextProvider myProvider = ContextProvider.getContextProvider(getElement());
-        final NamespaceContext namespaceContext = myProvider.getNamespaceContext();
-        if (namespaceContext != null) {
-            return namespaceContext.resolve(getCanonicalText(), myProvider.getContextElement());
-        } else {
-            return null;
-        }
-    }
+    final ContextProvider provider = getElement().getXPathContext();
+    final NamespaceContext namespaceContext = provider.getNamespaceContext();
+    assert namespaceContext != null;
 
-    @SuppressWarnings({"ConstantConditions"})
-    @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      final XPathNodeTest expr =
-        (XPathNodeTest)XPathChangeUtil.createExpression(getElement(), newElementName + ":x").getFirstChild().getChildren()[1];
-      final ASTNode nameNode = getNameNode();
-      nameNode.getTreeParent().replaceChild(nameNode, ((PrefixedNameImpl)expr.getQName()).getPrefixNode());
-      return getElement();
-    }
+    final String prefix = getCanonicalText();
+    return !namespaceContext.getKnownPrefixes(provider.getContextElement()).contains(prefix);
+  }
 
-    @NotNull
-    public Object[] getVariants() {
-        // handled in XPathCompletionData
-        return EMPTY_ARRAY;
-    }
-
-    public boolean isSoft() {
-        return !isUnresolved();
-    }
-
-    public String getPrefix() {
-        return getCanonicalText();
-    }
-
-    public boolean isUnresolved() {
-        final ContextProvider myProvider = ContextProvider.getContextProvider(getElement());
-        final NamespaceContext namespaceContext = myProvider.getNamespaceContext();
-        final boolean b = "xml".equals(getCanonicalText()) || namespaceContext == null;
-        if (b) return false;
-        if (resolve() != null) {
-            return false;
-        }
-        final String prefix = getCanonicalText();
-        return !namespaceContext.getKnownPrefixes(myProvider.getContextElement()).contains(prefix);
-    }
+  private boolean canResolve() {
+    final NamespaceContext namespaceContext = getElement().getXPathContext().getNamespaceContext();
+    return namespaceContext != null && !"xml".equals(getCanonicalText());
+  }
 }

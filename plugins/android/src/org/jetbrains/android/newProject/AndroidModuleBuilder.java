@@ -90,7 +90,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
-      final AndroidFacet facet = addAndroidFacetAndLibrary(rootModel);
+      final AndroidFacet facet = addAndroidFacetAndLibrary(rootModel, contentRoot);
       final Project project = rootModel.getProject();
       final VirtualFile sourceRoot = findSourceRoot(rootModel);
 
@@ -392,12 +392,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   }
 
   @NotNull
-  private AndroidFacet addAndroidFacetAndLibrary(ModifiableRootModel rootModel) {
+  private AndroidFacet addAndroidFacetAndLibrary(ModifiableRootModel rootModel, VirtualFile contentRoot) {
     Module module = rootModel.getModule();
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
     AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
     AndroidFacetConfiguration configuration = facet.getConfiguration();
+    configuration.init(module, contentRoot);
     configuration.setAndroidPlatform(myPlatform);
     if (myProjectType == ProjectType.LIBRARY) {
       configuration.LIBRARY_PROJECT = true;

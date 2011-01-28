@@ -18,6 +18,8 @@ package org.intellij.lang.xpath.validation.inspections;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.Language;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
@@ -44,7 +46,11 @@ public class IndexZeroPredicate extends XPathInspection {
         return true;
     }
 
-    final static class MyVisitor extends Visitor {
+  protected boolean acceptsLanguage(Language language) {
+    return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
+  }
+
+  final static class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }
@@ -88,7 +94,7 @@ public class IndexZeroPredicate extends XPathInspection {
             }
         }
 
-        private boolean isPosition(XPathExpression expression) {
+        private static boolean isPosition(XPathExpression expression) {
             expression = ExpectedTypeUtil.unparenthesize(expression);
 
             if (!(expression instanceof XPathFunctionCall)) {

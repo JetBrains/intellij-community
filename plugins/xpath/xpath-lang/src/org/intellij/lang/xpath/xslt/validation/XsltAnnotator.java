@@ -23,29 +23,29 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathToken;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.context.XsltContextProvider;
+import org.intellij.lang.xpath.xslt.context.XsltContextProviderBase;
 import org.intellij.lang.xpath.xslt.quickfix.ConvertToEntityFix;
 import org.intellij.lang.xpath.xslt.quickfix.FlipOperandsFix;
+import org.jetbrains.annotations.NotNull;
 
 public class XsltAnnotator implements Annotator {
 
-    public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
         if (psiElement instanceof XPathElement) {
-            final boolean isXslt = ContextProvider.getContextProvider(psiElement).getContextType() == XsltContextProvider.TYPE;
+            final boolean isXslt = ContextProvider.getContextProvider(psiElement) instanceof XsltContextProviderBase;
             if (isXslt) {
                 annotateXPathElement(((XPathElement)psiElement), holder);
             }
         }
     }
 
-    public void annotateXPathFile(PsiFile file, AnnotationHolder holder) {
+    public static void annotateXPathFile(PsiFile file, AnnotationHolder holder) {
         final XmlAttribute context = PsiTreeUtil.getContextOfType(file, XmlAttribute.class, true);
         if (context != null) {
             if (XsltSupport.isPatternAttribute(context)) {
@@ -60,7 +60,7 @@ public class XsltAnnotator implements Annotator {
         }
     }
 
-    private void annotateXPathElement(XPathElement psiElement, AnnotationHolder holder) {
+    private static void annotateXPathElement(XPathElement psiElement, AnnotationHolder holder) {
         if (psiElement instanceof XPathFile) {
             annotateXPathFile((PsiFile)psiElement, holder);
         } else {

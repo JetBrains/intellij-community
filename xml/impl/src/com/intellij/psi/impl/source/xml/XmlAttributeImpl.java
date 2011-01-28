@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -435,7 +434,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     @NotNull
     public Object[] getVariants() {
-      final List<MutableLookupElement<String>> variants = new ArrayList<MutableLookupElement<String>>();
+      final List<LookupElement> variants = new ArrayList<LookupElement>();
 
       final XmlTag declarationTag = getParent();
       LOG.assertTrue(declarationTag.isValid());
@@ -451,12 +450,15 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return variants.toArray();
     }
 
-    private void addVariants(final Collection<MutableLookupElement<String>> variants,
+    private void addVariants(final Collection<LookupElement> variants,
                              final XmlAttribute[] attributes,
                              final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
       final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
       final String prefix = getName().contains(":") && getRealLocalName().length() > 0 ? getNamespacePrefix() + ":" : null;
+
+      CompletionData completionData = CompletionUtil.getCompletionDataByElement(XmlAttributeImpl.this, getContainingFile().getOriginalFile());
+      boolean caseSensitive = !(completionData instanceof HtmlCompletionData) || ((HtmlCompletionData)completionData).isCaseSensitive();
 
       for (XmlAttributeDescriptor descriptor : descriptors) {
         if (isValidVariant(descriptor, attributes, extension)) {
@@ -465,16 +467,15 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
             if (prefix != null && name.length() > prefix.length()) {
               name = descriptor.getName(tag).substring(prefix.length());
             }
-            final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(name);
+            LookupElementBuilder element = LookupElementBuilder.create(name);
             if (descriptor instanceof PsiPresentableMetaData) {
-              element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+              element = element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
             }
             final int separator = name.indexOf(':');
             if (separator > 0) {
-              element.addLookupStrings(name.substring(separator + 1));
+              element = element.addLookupString(name.substring(separator + 1));
             }
-            element.setInsertHandler(XmlAttributeInsertHandler.INSTANCE);
-            variants.add(element);
+            variants.add(element.setCaseSensitive(caseSensitive).setInsertHandler(XmlAttributeInsertHandler.INSTANCE));
           }
         }
       }

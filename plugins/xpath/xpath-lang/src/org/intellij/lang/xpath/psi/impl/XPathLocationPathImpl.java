@@ -15,13 +15,9 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import org.intellij.lang.xpath.XPathElementTypes;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathLocationPath;
-import org.intellij.lang.xpath.psi.XPathStep;
-import org.intellij.lang.xpath.psi.XPathType;
-
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.context.XPathVersion;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,22 +28,24 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
 
     @NotNull
     public XPathType getType() {
-        return XPathType.NODESET;
+      final XPathStep step = getFirstStep();
+      if (step != null) {
+        final XPathExpression expr = step.getStep();
+        if (expr != null) {
+          return expr.getType();
+        }
+      }
+      return getXPathVersion() == XPathVersion.V1 ?
+                XPathType.NODESET : XPath2Type.SEQUENCE;
     }
 
-
     @Nullable
-    public XPathExpression getPathExpression() {
-        final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.STEPS);
-        assert nodes.length <= 1;
-        if (nodes.length > 0) {
-            return (XPathExpression)nodes[0].getPsi();
-        }
-        return null;
+    public XPathStep getFirstStep() {
+      return findChildByClass(XPathStep.class);
     }
 
     public boolean isAbsolute() {
-        final XPathExpression pathExpression = getPathExpression();
+        final XPathExpression pathExpression = getFirstStep();
         return pathExpression instanceof XPathStep && ((XPathStep)pathExpression).isAbsolute();
     }
 }

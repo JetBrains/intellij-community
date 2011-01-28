@@ -24,6 +24,8 @@ import javax.swing.*;
 
 /**
  * @author peter
+ * @deprecated
+ * @see Presentation
  */
 public abstract class DomIconProvider extends PomIconProvider {
   public Icon getIcon(@NotNull PomTarget target, int flags) {

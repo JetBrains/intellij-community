@@ -33,7 +33,7 @@ public class XsltHighlightingTest extends TestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        myFixture.enableInspections(new XsltStuffProvider(null).getInspectionClasses());
+        myFixture.enableInspections(XsltStuffProvider.INSPECTION_CLASSES);
     }
 
     public void xtestBackwardIncludedVariable() throws Throwable {
@@ -45,10 +45,6 @@ public class XsltHighlightingTest extends TestBase {
     }
 
     public void testUnknownMode() throws Throwable {
-        doXsltHighlighting();
-    }
-
-    public void testCurrentModeXslt2() throws Throwable {
         doXsltHighlighting();
     }
 
@@ -65,6 +61,10 @@ public class XsltHighlightingTest extends TestBase {
     }
 
     public void testShadowedVariable() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testShadowedVariable2() throws Throwable {
         doXsltHighlighting();
     }
 
@@ -89,6 +89,10 @@ public class XsltHighlightingTest extends TestBase {
     }
 
     public void testInvalidPattern5() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testInvalidPattern6() throws Throwable {
         doXsltHighlighting();
     }
 

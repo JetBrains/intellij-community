@@ -15,17 +15,19 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.DomFileDescription;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+
+import javax.swing.*;
 
 /**
  * @author mike
  */
 public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> {
+
+  private static final Icon ICON = IconLoader.getIcon("/plugin.png");
+
   public PluginXmlDomFileDescription() {
     super(IdeaPlugin.class, "idea-plugin");
   }
@@ -35,7 +37,8 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
     registerImplementation(IdeaPlugin.class, IdeaPluginImpl.class);
   }
 
-  public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
-    return super.isMyFile(file, module);
+  @Override
+  public Icon getFileIcon(int flags) {
+    return ICON;
   }
 }

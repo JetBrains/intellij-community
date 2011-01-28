@@ -25,13 +25,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -77,10 +79,10 @@ public class AndroidRootUtil {
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
 
-    if (contentRoots.length == 1) {
+    /*if (contentRoots.length == 1) {
       String absPath = FileUtil.toSystemIndependentName(contentRoots[0].getPath() + relativePath);
       return LocalFileSystem.getInstance().findFileByPath(absPath);
-    }
+    }*/
 
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
     if (moduleDirPath != null) {
@@ -243,11 +245,11 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getModuleDirPath(Module module) {
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    /*VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
 
     if (contentRoots.length == 1) {
       return contentRoots[0].getPath();
-    }
+    }*/
 
     String moduleFilePath = module.getModuleFilePath();
     String moduleDirPath = new File(moduleFilePath).getParent();

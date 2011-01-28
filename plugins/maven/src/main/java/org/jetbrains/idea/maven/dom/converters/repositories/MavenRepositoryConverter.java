@@ -16,8 +16,7 @@
 package org.jetbrains.idea.maven.dom.converters.repositories;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,11 +54,9 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
 
     @Override
     public LookupElement createLookupElement(String s) {
-      MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(s, s)
+      return LookupElementBuilder.create(s)
         .setIcon(MavenIcons.REPOSITORY_ICON)
         .setTailText(" (" + MavenRepositoriesProvider.getInstance().getRepositoryUrl(s) + ")", true);
-
-      return element;
     }
   }
 

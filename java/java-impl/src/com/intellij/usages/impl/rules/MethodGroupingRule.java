@@ -20,12 +20,14 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -68,16 +70,19 @@ public class MethodGroupingRule implements UsageGroupingRule {
     private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
     private final String myName;
     private Icon myIcon;
+    private final Project myProject;
 
     public MethodUsageGroup(PsiMethod psiMethod) {
       myName = PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY,
-          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_TYPE
+          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+          PsiFormatUtilBase.SHOW_TYPE
         );
-      myMethodPointer = SmartPointerManager.getInstance(psiMethod.getProject()).createLazyPointer(psiMethod);
-      update();
+      myProject = psiMethod.getProject();
+      myMethodPointer = SmartPointerManager.getInstance(myProject).createLazyPointer(psiMethod);
+
+      myIcon = getIconImpl(psiMethod);
     }
 
     public void update() {
@@ -148,7 +153,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       MethodUsageGroup other = (MethodUsageGroup)usageGroup;
       PsiMethod myMethod = myMethodPointer.getElement();
       PsiMethod otherMethod = other.myMethodPointer.getElement();
-      if (myMethod != null && otherMethod != null && myMethod != otherMethod && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+      if (myMethod != null && otherMethod != null && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
         return myMethod.getTextOffset() < otherMethod.getTextOffset() ? -1 : 1;
       }
 

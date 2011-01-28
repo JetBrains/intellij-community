@@ -823,6 +823,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
   public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
 
+  public void testCommaAfterVariable() throws Throwable { doTest(',') }
+
   public void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;
       public class Bar {

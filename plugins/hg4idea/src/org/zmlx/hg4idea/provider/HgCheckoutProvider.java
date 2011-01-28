@@ -130,7 +130,17 @@ public class HgCheckoutProvider implements CheckoutProvider {
             parseLine = parseLine.substring(eqIdx+1).trim();  // getting value of paths.default
             try {
               final URI uri = new URI(parseLine);
-              final String urlWithoutAuthData = uri.toString().replace(uri.getUserInfo() + "@", "");
+              final String userInfo = uri.getUserInfo();
+              if (userInfo == null) { // no user info => OK
+                writer.println(line);
+                continue;
+              }
+              int colonIdx = userInfo.indexOf(':');
+              if (colonIdx == -1) {  // no password given => OK
+                writer.println(line);
+                continue;
+              }
+              final String urlWithoutAuthData = uri.toString().replace(userInfo, userInfo.substring(0, colonIdx)); // remove password, leave username
               writer.println("default = " + urlWithoutAuthData);
             } catch (Throwable t) { // not URI => no sensitive data
               writer.println(line);
@@ -139,11 +149,18 @@ public class HgCheckoutProvider implements CheckoutProvider {
             writer.println(line);
           }
         }
+        reader.close();
+        writer.close();
 
         // substituting files
-        if (!tempFile.renameTo(hgrc)) { // this may fail in case of different FSs
+        try {
+          if (!tempFile.renameTo(hgrc)) { // this may fail in case of different FSs
+            FileUtil.copy(tempFile, hgrc);
+            FileUtil.delete(tempFile);
+          }
+        } catch (Throwable e) {
           FileUtil.copy(tempFile, hgrc);
-          tempFile.delete();
+          FileUtil.delete(tempFile);
         }
         return;
       } catch (IOException e) {
@@ -153,7 +170,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
           try {
             reader.close();
           } catch (IOException e) {
-            continue;
           }
         }
         if (writer != null) {

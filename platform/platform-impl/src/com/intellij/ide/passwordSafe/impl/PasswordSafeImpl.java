@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
@@ -24,6 +22,8 @@ import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordS
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
 import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 
 /**
  * The implementation of password safe service
@@ -122,5 +122,9 @@ public class PasswordSafeImpl extends PasswordSafe {
    */
   public MasterKeyPasswordSafe getMasterKeyProvider() {
     return myMasterKeyProvider;
+  }
+
+  public MemoryPasswordSafe getMemoryProvider() {
+    return myMemoryProvider;
   }
 }

@@ -75,7 +75,7 @@ class XPathInsertHandler implements InsertHandler {
         return charsSequence.length() > offset ? charsSequence.charAt(offset) : 0;
     }
 
-    public void handleInsertImpl(InsertionContext context, LookupElement item, char c) {
+    public static void handleInsertImpl(InsertionContext context, LookupElement item, char c) {
 //        final int selectionLength = (context.getSelectionEndOffset() - context.getStartOffset());
 //        context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - selectionLength);
 
@@ -84,7 +84,7 @@ class XPathInsertHandler implements InsertHandler {
         final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
         final boolean isOverwrite = c != 0
                 ? c == com.intellij.codeInsight.lookup.Lookup.REPLACE_SELECT_CHAR
-                : ((LookupItem)item).getUserData(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+                : item.getUserData(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
         if (idEndOffset != context.getSelectionEndOffset() && isOverwrite) {
             context.getEditor().getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
         }

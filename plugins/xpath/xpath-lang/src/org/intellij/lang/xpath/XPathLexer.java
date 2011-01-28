@@ -16,11 +16,26 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.lexer.FlexAdapter;
+import com.intellij.psi.tree.IElementType;
 
-import java.io.Reader;
+import java.io.IOException;
 
 public final class XPathLexer extends FlexAdapter {
-    public XPathLexer() {
-        super(new _XPathLexer((Reader)null));
+    public XPathLexer(boolean xpath2Syntax) {
+        super(new _XPathLexer(xpath2Syntax) {
+          @Override
+          protected void readComment() throws IOException {
+            int state = yystate();
+            int start = getTokenStart();
+            while (true) {
+              IElementType type = advance();
+              if (type == null || type == XPath2TokenTypes.END_COMMENT) {
+                break;
+              }
+            }
+            setStart(start);
+            yybegin(state);
+          }
+        });
     }
 }

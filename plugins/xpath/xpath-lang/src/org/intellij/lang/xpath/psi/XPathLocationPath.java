@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface XPathLocationPath extends XPathExpression {
     @Nullable
-    XPathExpression getPathExpression();
+    XPathStep getFirstStep();
 
     boolean isAbsolute();
 }

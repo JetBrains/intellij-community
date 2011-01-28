@@ -15,12 +15,13 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import org.intellij.lang.xpath.XPathElementTypes;
+import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.XPath2ElementTypes;
+import org.intellij.lang.xpath.XPathElementType;
+import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathPrefixExpression;
 import org.intellij.lang.xpath.psi.XPathType;
-
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +32,23 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
 
     @NotNull
     public XPathType getType() {
+      // +/-: isn't this always a number?
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
     @Nullable
     public XPathExpression getExpression() {
-        final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.EXPRESSIONS);
+        final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
+
+  @NotNull
+  @Override
+  public XPathElementType getOperator() {
+    final ASTNode node = getNode().findChildByType(XPathTokenTypes.ADD_OPS);
+    final XPathElementType elementType = (XPathElementType)(node != null ? node.getElementType() : null);
+    assert elementType != null;
+    return elementType;
+  }
 }

@@ -491,4 +491,13 @@ class A {
 
   }
 
+  public void testParenthesesInMethodCompletion() {
+    myFixture.configureByText "a.groovy", """
+def foo(def a) {2}
+return fo<caret>"""
+    myFixture.completeBasic()
+    myFixture.checkResult """
+def foo(def a) {2}
+return foo()"""
+  }
 }

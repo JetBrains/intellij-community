@@ -6,6 +6,9 @@
     <extensionPoint name="dom.implementation"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
 
+    <extensionPoint name="dom.converter"
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP"/>
 
@@ -66,6 +69,7 @@
     <pom.declarationSearcher implementation="com.intellij.util.xml.impl.DomDeclarationSearcher"/>
     <elementDescriptionProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetDescriptionProvider" id="domDefault" order="last, before pomDefault"/>
     <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
+    <iconProvider implementation="com.intellij.util.xml.DomFileIconProvider" id="domFileDefault" order="last"/>
 
     <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
   </extensions>

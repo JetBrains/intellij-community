@@ -42,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
 
@@ -72,7 +75,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
     final String[] supported = getSupportedExtensions();
     if (supported != null) {
       if (file.isDirectory()) {
-        for (VirtualFile child : file.getChildren()) {
+        for (VirtualFile child : getFileChildren(file)) {
           if (canOpenFile(child, supported)) return true;
         }
         return false;
@@ -80,6 +83,14 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       if (canOpenFile(file, supported)) return true;
     }
     return false;
+  }
+
+  private static Collection<VirtualFile> getFileChildren(VirtualFile file) {
+    if (file instanceof NewVirtualFile) {
+      return ((NewVirtualFile)file).getCachedChildren();
+    }
+
+    return Arrays.asList(file.getChildren());
   }
 
   protected static boolean canOpenFile(VirtualFile file, String[] supported) {
@@ -109,7 +120,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       final WizardContext wizardContext = new WizardContext(null);
       if (virtualFile.isDirectory()) {
         final String[] supported = getSupportedExtensions();
-        for (VirtualFile file : virtualFile.getChildren()) {
+        for (VirtualFile file : getFileChildren(virtualFile)) {
           if (canOpenFile(file, supported)) {
             virtualFile = file;
             break;

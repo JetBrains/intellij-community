@@ -18,7 +18,9 @@ package org.intellij.lang.xpath.validation.inspections;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.Language;
 import com.intellij.psi.xml.XmlElement;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.PrefixedName;
@@ -54,6 +56,10 @@ public class CheckNodeTest extends XPathInspection {
         return true;
     }
 
+    protected boolean acceptsLanguage(Language language) {
+      return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
+    }
+
     final static class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
@@ -75,7 +81,7 @@ public class CheckNodeTest extends XPathInspection {
                         final Set<QName> elementNames = contextProvider.getElements(true);
                         if (elementNames != null) {
                             found = false;
-                            for (javax.xml.namespace.QName pair : elementNames) {
+                            for (QName pair : elementNames) {
                                 if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode)) {
                                     found = true;
                                     break;
@@ -86,10 +92,10 @@ public class CheckNodeTest extends XPathInspection {
                             }
                         }
                     } else if (nodeTest.getPrincipalType() == XPathNodeTest.PrincipalType.ATTRIBUTE) {
-                        final Set<javax.xml.namespace.QName> attributeNames = contextProvider.getAttributes(true);
+                        final Set<QName> attributeNames = contextProvider.getAttributes(true);
                         if (attributeNames != null) {
                             found = false;
-                            for (javax.xml.namespace.QName pair : attributeNames) {
+                            for (QName pair : attributeNames) {
                                 if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode)) {
                                     found = true;
                                     break;
@@ -129,7 +135,7 @@ public class CheckNodeTest extends XPathInspection {
             if (prefixedName.getPrefix() != null) {
                 b = b && element.getNamespaceURI().equals(namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context));
             } else {
-                b = b && element.getNamespaceURI().equals("");
+                b = b && element.getNamespaceURI().length() == 0;
             }
             return b;
         }

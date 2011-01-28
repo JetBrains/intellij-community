@@ -180,7 +180,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             final List<XPathVariableReference> references = RefactoringUtil.collectVariableReferences(e);
             for (XPathVariableReference reference : references) {
                 final XPathVariable variable = reference.resolve();
-                if (variable != null) {
+                if (variable instanceof XsltVariable) {
                     final XmlTag var = ((XsltVariable)variable).getTag();
                     if (var.getTextRange().getStartOffset() < startOffset) {
                         // don't pass through global parameters and variables
@@ -188,7 +188,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                             vars.add(variable.getName());
                         }
                     }
-                } else {
+                } else if (variable == null) {
                     // TODO just copy unresolved refs or fail?
                     vars.add(reference.getReferencedName());
                 }

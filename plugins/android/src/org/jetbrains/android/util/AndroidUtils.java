@@ -95,6 +95,7 @@ public class AndroidUtils {
 
   public static final Icon ANDROID_ICON = IconLoader.getIcon("/icons/android.png");
   public static final Icon DDMS_ICON = IconLoader.getIcon("/icons/ddms.png");
+  public static final Icon RESTART_LOGCAT_ICON = IconLoader.getIcon("/icons/restartLogcat.png");
   public static final String NAMESPACE_KEY = "android";
   public static final String SYSTEM_RESOURCE_PACKAGE = "android";
   public static final String R_JAVA_FILENAME = "R.java";
@@ -119,7 +120,7 @@ public class AndroidUtils {
   public static final String EXT_NATIVE_LIB = "so";
   @NonNls public static final String RES_OVERLAY_DIR_NAME = "res-overlay";
 
-  public static final int TIMEOUT = 30000;
+  public static final int TIMEOUT = 60000;
 
   private AndroidUtils() {
   }
