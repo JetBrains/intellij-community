@@ -12,6 +12,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: conf/global_settings.py:44
 msgid "Arabic"
@@ -1357,8 +1358,8 @@ msgid ""
 "Use '[algo]$[salt]$[hexdigest]' or use the <a href=\"password/\">change "
 "password form</a>."
 msgstr ""
-"Нууц үгийнхээ хэлбэр </a>-ийг өөрчлөхдөө '[algo]$[salt]$[hexdigest]' буюу <a "
-"href=\"password/\"> хэрэглэнэ үү."
+"Нууц үгийнхээ хэлбэр-ийг өөрчлөхдөө '[algo]$[salt]$[hexdigest]' буюу <a "
+"href=\"password/\">хэрэглэнэ үү</a>."
 
 #: contrib/auth/models.py:201
 msgid "staff status"

@@ -2,6 +2,7 @@
 Code to manage the creation and SQL rendering of 'where' constraints.
 """
 import datetime
+from itertools import repeat
 
 from django.utils import tree
 from django.db.models.fields import Field
@@ -36,10 +37,10 @@ class WhereNode(tree.Node):
     def add(self, data, connector):
         """
         Add a node to the where-tree. If the data is a list or tuple, it is
-        expected to be of the form (alias, col_name, field_obj, lookup_type,
-        value), which is then slightly munged before being stored (to avoid
-        storing any reference to field objects). Otherwise, the 'data' is
-        stored unchanged and can be anything with an 'as_sql()' method.
+        expected to be of the form (obj, lookup_type, value), where obj is
+        a Constraint object, and is then slightly munged before being stored
+        (to avoid storing any reference to field objects). Otherwise, the 'data'
+        is stored unchanged and can be any class with an 'as_sql()' method.
         """
         if not isinstance(data, (list, tuple)):
             super(WhereNode, self).add(data, connector)
@@ -178,8 +179,24 @@ class WhereNode(tree.Node):
                 raise EmptyResultSet
             if extra:
                 return ('%s IN %s' % (field_sql, extra), params)
-            return ('%s IN (%s)' % (field_sql, ', '.join(['%s'] * len(params))),
-                    params)
+            max_in_list_size = connection.ops.max_in_list_size()
+            if max_in_list_size and len(params) > max_in_list_size:
+                # Break up the params list into an OR of manageable chunks.
+                in_clause_elements = ['(']
+                for offset in xrange(0, len(params), max_in_list_size):
+                    if offset > 0:
+                        in_clause_elements.append(' OR ')
+                    in_clause_elements.append('%s IN (' % field_sql)
+                    group_size = min(len(params) - offset, max_in_list_size)
+                    param_group = ', '.join(repeat('%s', group_size))
+                    in_clause_elements.append(param_group)
+                    in_clause_elements.append(')')
+                in_clause_elements.append(')')
+                return ''.join(in_clause_elements), params
+            else:
+                return ('%s IN (%s)' % (field_sql,
+                                        ', '.join(repeat('%s', len(params)))),
+                        params)
         elif lookup_type in ('range', 'year'):
             return ('%s BETWEEN %%s and %%s' % field_sql, params)
         elif lookup_type in ('month', 'day', 'week_day'):

@@ -19,7 +19,10 @@ class SQLEvaluator(object):
 
     def relabel_aliases(self, change_map):
         for node, col in self.cols.items():
-            self.cols[node] = (change_map.get(col[0], col[0]), col[1])
+            if hasattr(col, "relabel_aliases"):
+                col.relabel_aliases(change_map)
+            else:
+                self.cols[node] = (change_map.get(col[0], col[0]), col[1])
 
     #####################################################
     # Vistor methods for initial expression preparation #
@@ -82,3 +85,13 @@ class SQLEvaluator(object):
             return col.as_sql(qn, connection), ()
         else:
             return '%s.%s' % (qn(col[0]), qn(col[1])), ()
+
+    def evaluate_date_modifier_node(self, node, qn, connection):
+        timedelta = node.children.pop()
+        sql, params = self.evaluate_node(node, qn, connection)
+
+        if timedelta.days == 0 and timedelta.seconds == 0 and \
+                timedelta.microseconds == 0:
+            return sql, params
+
+        return connection.ops.date_interval_sql(sql, node.connector, timedelta), params

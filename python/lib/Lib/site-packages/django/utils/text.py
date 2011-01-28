@@ -1,7 +1,7 @@
 import re
 from django.utils.encoding import force_unicode
 from django.utils.functional import allow_lazy
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from htmlentitydefs import name2codepoint
 
 # Capitalizes the first letter of a string.
@@ -39,7 +39,10 @@ wrap = allow_lazy(wrap, unicode)
 def truncate_words(s, num, end_text='...'):
     """Truncates a string after a certain number of words. Takes an optional
     argument of what should be used to notify that the string has been
-    truncated, defaults to ellipsis (...)"""
+    truncated, defaulting to ellipsis (...)
+
+    Newlines in the string will be stripped.
+    """
     s = force_unicode(s)
     length = int(num)
     words = s.split()
@@ -51,10 +54,13 @@ def truncate_words(s, num, end_text='...'):
 truncate_words = allow_lazy(truncate_words, unicode)
 
 def truncate_html_words(s, num, end_text='...'):
-    """Truncates html to a certain number of words (not counting tags and
+    """Truncates HTML to a certain number of words (not counting tags and
     comments). Closes opened tags if they were correctly closed in the given
     html. Takes an optional argument of what should be used to notify that the
-    string has been truncated, defaults to ellipsis (...)."""
+    string has been truncated, defaulting to ellipsis (...).
+
+    Newlines in the HTML are preserved.
+    """
     s = force_unicode(s)
     length = int(num)
     if length <= 0:
@@ -142,7 +148,10 @@ def get_text_list(list_, last_word=ugettext_lazy(u'or')):
     """
     if len(list_) == 0: return u''
     if len(list_) == 1: return force_unicode(list_[0])
-    return u'%s %s %s' % (', '.join([force_unicode(i) for i in list_][:-1]), force_unicode(last_word), force_unicode(list_[-1]))
+    return u'%s %s %s' % (
+        # Translators: This string is used as a separator between list elements
+        _(', ').join([force_unicode(i) for i in list_][:-1]),
+        force_unicode(last_word), force_unicode(list_[-1]))
 get_text_list = allow_lazy(get_text_list, unicode)
 
 def normalize_newlines(text):

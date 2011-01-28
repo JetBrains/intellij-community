@@ -1,10 +1,11 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
+from django.db.models.fields import FieldDoesNotExist
 from django.forms.models import (BaseModelForm, BaseModelFormSet, fields_for_model,
     _get_foreign_key)
+from django.contrib.admin.util import get_fields_from_path, NotRelationField
 from django.contrib.admin.options import flatten_fieldsets, BaseModelAdmin
 from django.contrib.admin.options import HORIZONTAL, VERTICAL
-from django.contrib.admin.util import lookup_field
 
 
 __all__ = ['validate']
@@ -54,8 +55,15 @@ def validate(cls, model):
     # list_filter
     if hasattr(cls, 'list_filter'):
         check_isseq(cls, 'list_filter', cls.list_filter)
-        for idx, field in enumerate(cls.list_filter):
-            get_field(cls, model, opts, 'list_filter[%d]' % idx, field)
+        for idx, fpath in enumerate(cls.list_filter):
+            try:
+                get_fields_from_path(model, fpath)
+            except (NotRelationField, FieldDoesNotExist), e:
+                raise ImproperlyConfigured(
+                    "'%s.list_filter[%d]' refers to '%s' which does not refer to a Field." % (
+                        cls.__name__, idx, fpath
+                    )
+                )
 
     # list_per_page = 100
     if hasattr(cls, 'list_per_page') and not isinstance(cls.list_per_page, int):
@@ -170,7 +178,7 @@ def validate_inline(cls, parent, parent_model):
     fk = _get_foreign_key(parent_model, cls.model, fk_name=cls.fk_name, can_fail=True)
 
     # extra = 3
-    if not isinstance(getattr(cls, 'extra'), int):
+    if not isinstance(cls.extra, int):
         raise ImproperlyConfigured("'%s.extra' should be a integer."
                 % cls.__name__)
 

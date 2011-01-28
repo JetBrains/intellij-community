@@ -267,4 +267,12 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testNoIdentifiersInImport() {
     doTest();
   }
+  
+  public void testSuperClassAttributes() {
+    doTest();
+  }
+
+  public void testSuperClassAttributesNoCompletionInFunc() {
+    doTest();
+  }
 }

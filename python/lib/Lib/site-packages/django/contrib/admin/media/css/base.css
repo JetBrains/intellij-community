@@ -376,6 +376,12 @@ input[type=text], input[type=password], textarea, select, .vTextField {
     background-position: top;
 }
 
+.button[disabled], input[type=submit][disabled], input[type=button][disabled] {
+	background-image: url(../img/admin/nav-bg.gif);
+	background-position: bottom;
+	opacity: 0.4;
+}
+
 .button.default, input[type=submit].default, .submit-row input.default {
     border: 2px solid #5b80b2;
     background: #7CA0C7 url(../img/admin/default-bg.gif) bottom repeat-x;
@@ -388,6 +394,13 @@ input[type=text], input[type=password], textarea, select, .vTextField {
     background-image: url(../img/admin/default-bg-reverse.gif);
     background-position: top;
 }
+
+.button[disabled].default, input[type=submit][disabled].default, input[type=button][disabled].default {
+	background-image: url(../img/admin/default-bg.gif);
+	background-position: bottom;
+	opacity: 0.4;
+}
+
 
 /* MODULES */
 
@@ -445,6 +458,14 @@ ul.messagelist li {
     background: #ffc url(../img/admin/icon_success.gif) 5px .3em no-repeat;
 }
 
+ul.messagelist li.warning{
+    background-image: url(../img/admin/icon_alert.gif);
+}
+
+ul.messagelist li.error{
+    background-image: url(../img/admin/icon_error.gif);
+}
+
 .errornote {
     font-size: 12px !important;
     display: block;
@@ -470,6 +491,11 @@ ul.errorlist {
     background: red url(../img/admin/icon_alert.gif) 5px .3em no-repeat;
 }
 
+.errorlist li a {
+ 	color: white;
+    text-decoration: underline;
+}
+
 td ul.errorlist {
     margin: 0 !important;
     padding: 0 !important;
@@ -483,7 +509,7 @@ td ul.errorlist li {
     background: #ffc;
 }
 
-.errors input, .errors select {
+.errors input, .errors select, .errors textarea {
     border: 1px solid red;
 }
 

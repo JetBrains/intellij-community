@@ -195,8 +195,9 @@ class Query(object):
         Unpickling support.
         """
         # Rebuild list of field instances
+        opts = obj_dict['model']._meta
         obj_dict['select_fields'] = [
-            name is not None and obj_dict['model']._meta.get_field(name) or None
+            name is not None and opts.get_field(name) or None
             for name in obj_dict['select_fields']
         ]
 
@@ -337,7 +338,7 @@ class Query(object):
         # information but retrieves only the first row. Aggregate
         # over the subquery instead.
         if self.group_by is not None:
-            from subqueries import AggregateQuery
+            from django.db.models.sql.subqueries import AggregateQuery
             query = AggregateQuery(self.model)
 
             obj = self.clone()
@@ -349,7 +350,13 @@ class Query(object):
                     query.aggregate_select[alias] = aggregate
                     del obj.aggregate_select[alias]
 
-            query.add_subquery(obj, using)
+            try:
+                query.add_subquery(obj, using)
+            except EmptyResultSet:
+                return dict(
+                    (alias, None)
+                    for alias in query.aggregate_select
+                )
         else:
             query = self
             self.select = []
@@ -382,13 +389,19 @@ class Query(object):
             # If a select clause exists, then the query has already started to
             # specify the columns that are to be returned.
             # In this case, we need to use a subquery to evaluate the count.
-            from subqueries import AggregateQuery
+            from django.db.models.sql.subqueries import AggregateQuery
             subquery = obj
             subquery.clear_ordering(True)
             subquery.clear_limits()
 
             obj = AggregateQuery(obj.model)
-            obj.add_subquery(subquery, using=using)
+            try:
+                obj.add_subquery(subquery, using=using)
+            except EmptyResultSet:
+                # add_subquery evaluates the query, if it's an EmptyResultSet
+                # then there are can be no results, and therefore there the
+                # count is obviously 0
+                return 0
 
         obj.add_count_column()
         number = obj.get_aggregation(using=using)[None]
@@ -695,11 +708,18 @@ class Query(object):
         # "group by", "where" and "having".
         self.where.relabel_aliases(change_map)
         self.having.relabel_aliases(change_map)
-        for columns in (self.select, self.aggregates.values(), self.group_by or []):
+        for columns in [self.select, self.group_by or []]:
             for pos, col in enumerate(columns):
                 if isinstance(col, (list, tuple)):
                     old_alias = col[0]
                     columns[pos] = (change_map.get(old_alias, old_alias), col[1])
+                else:
+                    col.relabel_aliases(change_map)
+        for mapping in [self.aggregates]:
+            for key, col in mapping.items():
+                if isinstance(col, (list, tuple)):
+                    old_alias = col[0]
+                    mapping[key] = (change_map.get(old_alias, old_alias), col[1])
                 else:
                     col.relabel_aliases(change_map)
 
@@ -909,8 +929,7 @@ class Query(object):
         """
         opts = model._meta
         field_list = aggregate.lookup.split(LOOKUP_SEP)
-        if (len(field_list) == 1 and
-            aggregate.lookup in self.aggregates.keys()):
+        if len(field_list) == 1 and aggregate.lookup in self.aggregates:
             # Aggregate is over an annotation
             field_name = field_list[0]
             col = field_name
@@ -1064,6 +1083,8 @@ class Query(object):
 
 
         if having_clause:
+            if (alias, col) not in self.group_by:
+                self.group_by.append((alias, col))
             self.having.add((Constraint(alias, col, field), lookup_type, value),
                 connector)
         else:
@@ -1078,11 +1099,14 @@ class Query(object):
                         if self.alias_map[alias][JOIN_TYPE] == self.LOUTER:
                             j_col = self.alias_map[alias][RHS_JOIN_COL]
                             entry = self.where_class()
-                            entry.add((Constraint(alias, j_col, None), 'isnull', True), AND)
+                            entry.add(
+                                (Constraint(alias, j_col, None), 'isnull', True),
+                                AND
+                            )
                             entry.negate()
                             self.where.add(entry, AND)
                             break
-                elif not (lookup_type == 'in'
+                if not (lookup_type == 'in'
                             and not hasattr(value, 'as_sql')
                             and not hasattr(value, '_as_sql')
                             and not value) and field.null:
@@ -1090,10 +1114,7 @@ class Query(object):
                     # exclude the "foo__in=[]" case from this handling, because
                     # it's short-circuited in the Where class.
                     # We also need to handle the case where a subquery is provided
-                    entry = self.where_class()
-                    entry.add((Constraint(alias, col, None), 'isnull', True), AND)
-                    entry.negate()
-                    self.where.add(entry, AND)
+                    self.where.add((Constraint(alias, col, None), 'isnull', False), AND)
 
         if can_reuse is not None:
             can_reuse.update(join_list)

@@ -44,6 +44,10 @@ class GeographyTest(TestCase):
         # `@` operator not available.
         self.assertRaises(ValueError, City.objects.filter(point__contained=z.poly).count)
 
+        # Regression test for #14060, `~=` was never really implemented for PostGIS.
+        htown = City.objects.get(name='Houston')
+        self.assertRaises(ValueError, City.objects.get, point__exact=htown.point)
+
     def test05_geography_layermapping(self):
         "Testing LayerMapping support on models with geography fields."
         # There is a similar test in `layermap` that uses the same data set,
@@ -72,3 +76,12 @@ class GeographyTest(TestCase):
             self.assertEqual(num_poly, len(c.mpoly))
             self.assertEqual(name, c.name)
             self.assertEqual(state, c.state)
+
+    def test06_geography_area(self):
+        "Testing that Area calculations work on geography columns."
+        from django.contrib.gis.measure import A
+        # SELECT ST_Area(poly) FROM geogapp_zipcode WHERE code='77002';
+        ref_area = 5439084.70637573
+        tol = 5
+        z = Zipcode.objects.area().get(code='77002')
+        self.assertAlmostEqual(z.area.sq_m, ref_area, tol)

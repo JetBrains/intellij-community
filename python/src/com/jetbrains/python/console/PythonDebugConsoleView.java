@@ -6,6 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,10 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl {
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getPythonLanguageConsole().setConsoleCommunication(communication);
+  }
+
+  public void requestFocus() {
+    IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   private PythonLanguageConsole getPythonLanguageConsole() {
@@ -49,7 +54,6 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl {
     protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
       myPythonDebugConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
       super.appendToHistoryDocument(history, text);
-
     }
   }
 

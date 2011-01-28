@@ -9,6 +9,7 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.hashcompat import md5_constructor
+from django.utils.crypto import constant_time_compare
 from django.contrib.formtools.utils import security_hash
 
 AUTO_ID = 'formtools_%s' # Each form here uses this as its auto_id parameter.
@@ -50,36 +51,77 @@ class FormPreview(object):
 
     def preview_get(self, request):
         "Displays the form"
-        f = self.form(auto_id=AUTO_ID)
+        f = self.form(auto_id=self.get_auto_id(), initial=self.get_initial(request))
         return render_to_response(self.form_template,
-            {'form': f, 'stage_field': self.unused_name('stage'), 'state': self.state},
+            self.get_context(request, f),
             context_instance=RequestContext(request))
 
     def preview_post(self, request):
         "Validates the POST data. If valid, displays the preview page. Else, redisplays form."
-        f = self.form(request.POST, auto_id=AUTO_ID)
-        context = {'form': f, 'stage_field': self.unused_name('stage'), 'state': self.state}
+        f = self.form(request.POST, auto_id=self.get_auto_id())
+        context = self.get_context(request, f)
         if f.is_valid():
-            self.process_preview(request, f, context) 
+            self.process_preview(request, f, context)
             context['hash_field'] = self.unused_name('hash')
             context['hash_value'] = self.security_hash(request, f)
             return render_to_response(self.preview_template, context, context_instance=RequestContext(request))
         else:
             return render_to_response(self.form_template, context, context_instance=RequestContext(request))
 
+    def _check_security_hash(self, token, request, form):
+        expected = self.security_hash(request, form)
+        if constant_time_compare(token, expected):
+            return True
+        else:
+            # Fall back to Django 1.2 method, for compatibility with forms that
+            # are in the middle of being used when the upgrade occurs. However,
+            # we don't want to do this fallback if a subclass has provided their
+            # own security_hash method - because they might have implemented a
+            # more secure method, and this would punch a hole in that.
+
+            # PendingDeprecationWarning <- left here to remind us that this
+            # compatibility fallback should be removed in Django 1.5
+            FormPreview_expected = FormPreview.security_hash(self, request, form)
+            if expected == FormPreview_expected:
+                # They didn't override security_hash, do the fallback:
+                old_expected = security_hash(request, form)
+                return constant_time_compare(token, old_expected)
+            else:
+                return False
+
     def post_post(self, request):
         "Validates the POST data. If valid, calls done(). Else, redisplays form."
-        f = self.form(request.POST, auto_id=AUTO_ID)
+        f = self.form(request.POST, auto_id=self.get_auto_id())
         if f.is_valid():
-            if self.security_hash(request, f) != request.POST.get(self.unused_name('hash')):
+            if not self._check_security_hash(request.POST.get(self.unused_name('hash'), ''),
+                                             request, f):
                 return self.failed_hash(request) # Security hash failed.
             return self.done(request, f.cleaned_data)
         else:
             return render_to_response(self.form_template,
-                {'form': f, 'stage_field': self.unused_name('stage'), 'state': self.state},
+                self.get_context(request, f),
                 context_instance=RequestContext(request))
 
     # METHODS SUBCLASSES MIGHT OVERRIDE IF APPROPRIATE ########################
+
+    def get_auto_id(self):
+        """
+        Hook to override the ``auto_id`` kwarg for the form. Needed when
+        rendering two form previews in the same template.
+        """
+        return AUTO_ID
+
+    def get_initial(self, request):
+        """
+        Takes a request argument and returns a dictionary to pass to the form's
+        ``initial`` kwarg when the form is being created from an HTTP get.
+        """
+        return {}
+
+    def get_context(self, request, form):
+        "Context for template rendering."
+        return {'form': form, 'stage_field': self.unused_name('stage'), 'state': self.state}
+
 
     def parse_params(self, *args, **kwargs):
         """

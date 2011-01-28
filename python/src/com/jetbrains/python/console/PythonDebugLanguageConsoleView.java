@@ -69,6 +69,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   public void showDebugConsole(boolean flag) {
     if (flag) {
       doShowConsole(PYDEV_CONSOLE_PANEL);
+      myPydevConsoleView.requestFocus();
     }
     else {
       doShowConsole(TEXT_CONSOLE_PANEL);

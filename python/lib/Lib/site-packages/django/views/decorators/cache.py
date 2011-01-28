@@ -1,16 +1,3 @@
-"""
-Decorator for views that tries getting the page from the cache and
-populates the cache if the page isn't in the cache yet.
-
-The cache is keyed by the URL and some data from the headers. Additionally
-there is the key prefix that is used to distinguish different cache areas
-in a multi-site setup. You could use the sites.get_current().domain, for
-example, as that is unique across a Django project.
-
-Additionally, all headers from the response's Vary header will be taken into
-account on caching -- just like the middleware does.
-"""
-
 try:
     from functools import wraps
 except ImportError:
@@ -22,6 +9,19 @@ from django.middleware.cache import CacheMiddleware
 
 
 def cache_page(*args, **kwargs):
+    """
+    Decorator for views that tries getting the page from the cache and
+    populates the cache if the page isn't in the cache yet.
+
+    The cache is keyed by the URL and some data from the headers.
+    Additionally there is the key prefix that is used to distinguish different
+    cache areas in a multi-site setup. You could use the
+    sites.get_current().domain, for example, as that is unique across a Django
+    project.
+
+    Additionally, all headers from the response's Vary header will be taken
+    into account on caching -- just like the middleware does.
+    """
     # We need backwards compatibility with code which spells it this way:
     #   def my_view(): pass
     #   my_view = cache_page(my_view, 123)
@@ -33,21 +33,31 @@ def cache_page(*args, **kwargs):
     #   my_view = cache_page(123, key_prefix="foo")(my_view)
     # and possibly this way (?):
     #   my_view = cache_page(123, my_view)
+    # and also this way:
+    #   my_view = cache_page(my_view)
+    # and also this way:
+    #   my_view = cache_page()(my_view)
 
     # We also add some asserts to give better error messages in case people are
     # using other ways to call cache_page that no longer work.
+    cache_alias = kwargs.pop('cache', None)
     key_prefix = kwargs.pop('key_prefix', None)
-    assert not kwargs, "The only keyword argument accepted is key_prefix"
+    assert not kwargs, "The only keyword arguments are cache and key_prefix"
     if len(args) > 1:
         assert len(args) == 2, "cache_page accepts at most 2 arguments"
         if callable(args[0]):
-            return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[1], key_prefix=key_prefix)(args[0])
+            return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[1], cache_alias=cache_alias, key_prefix=key_prefix)(args[0])
         elif callable(args[1]):
-            return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[0], key_prefix=key_prefix)(args[1])
+            return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[0], cache_alias=cache_alias, key_prefix=key_prefix)(args[1])
         else:
-            assert False, "cache_page must be passed either a single argument (timeout) or a view function and a timeout"
+            assert False, "cache_page must be passed a view function if called with two arguments"
+    elif len(args) == 1:
+        if callable(args[0]):
+            return decorator_from_middleware_with_args(CacheMiddleware)(cache_alias=cache_alias, key_prefix=key_prefix)(args[0])
+        else:
+            return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[0], cache_alias=cache_alias, key_prefix=key_prefix)
     else:
-        return decorator_from_middleware_with_args(CacheMiddleware)(cache_timeout=args[0], key_prefix=key_prefix)
+        return decorator_from_middleware_with_args(CacheMiddleware)(cache_alias=cache_alias, key_prefix=key_prefix)
 
 
 def cache_control(**kwargs):

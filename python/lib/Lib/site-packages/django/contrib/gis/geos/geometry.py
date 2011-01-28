@@ -4,6 +4,7 @@
 """
 # Python, ctypes and types dependencies.
 import re
+import warnings
 from ctypes import addressof, byref, c_double, c_size_t
 
 # super-class for mutable list behavior
@@ -275,6 +276,15 @@ class GEOSGeometry(GEOSBase, ListMixin):
         "This property tests the validity of this Geometry."
         return capi.geos_isvalid(self.ptr)
 
+    @property
+    def valid_reason(self):
+        """
+        Returns a string containing the reason for any invalidity.
+        """
+        if not GEOS_PREPARE:
+            raise GEOSException('Upgrade GEOS to 3.1 to get validity reason.')
+        return capi.geos_isvalidreason(self.ptr)
+
     #### Binary predicates. ####
     def contains(self, other):
         "Returns true if other.within(this) returns true."
@@ -376,7 +386,7 @@ class GEOSGeometry(GEOSBase, ListMixin):
         """
         Returns the WKB of this Geometry in hexadecimal form.  Please note
         that the SRID and Z values are not included in this representation
-        because it is not a part of the OGC specification (use the `hexewkb` 
+        because it is not a part of the OGC specification (use the `hexewkb`
         property instead).
         """
         # A possible faster, all-python, implementation:
@@ -386,14 +396,14 @@ class GEOSGeometry(GEOSBase, ListMixin):
     @property
     def hexewkb(self):
         """
-        Returns the EWKB of this Geometry in hexadecimal form.  This is an 
-        extension of the WKB specification that includes SRID and Z values 
+        Returns the EWKB of this Geometry in hexadecimal form.  This is an
+        extension of the WKB specification that includes SRID and Z values
         that are a part of this geometry.
         """
         if self.hasz:
             if not GEOS_PREPARE:
                 # See: http://trac.osgeo.org/geos/ticket/216
-                raise GEOSException('Upgrade GEOS to 3.1 to get valid 3D HEXEWKB.')               
+                raise GEOSException('Upgrade GEOS to 3.1 to get valid 3D HEXEWKB.')
             return ewkb_w3d().write_hex(self)
         else:
             return ewkb_w().write_hex(self)
@@ -489,23 +499,40 @@ class GEOSGeometry(GEOSBase, ListMixin):
         instead.
         """
         srid = self.srid
-        if gdal.HAS_GDAL and srid:
-            # Creating an OGR Geometry, which is then transformed.
-            g = gdal.OGRGeometry(self.wkb, srid)
-            g.transform(ct)
-            # Getting a new GEOS pointer
-            ptr = wkb_r().read(g.wkb)
+
+        if ct == srid:
+            # short-circuit where source & dest SRIDs match
             if clone:
-                # User wants a cloned transformed geometry returned.
-                return GEOSGeometry(ptr, srid=g.srid)
-            if ptr:
-                # Reassigning pointer, and performing post-initialization setup
-                # again due to the reassignment.
-                capi.destroy_geom(self.ptr)
-                self.ptr = ptr
-                self._post_init(g.srid)
+                return self.clone()
             else:
-                raise GEOSException('Transformed WKB was invalid.')
+                return
+
+        if (srid is None) or (srid < 0):
+            warnings.warn("Calling transform() with no SRID set does no transformation!",
+                          stacklevel=2)
+            warnings.warn("Calling transform() with no SRID will raise GEOSException in v1.5",
+                          FutureWarning, stacklevel=2)
+            return
+
+        if not gdal.HAS_GDAL:
+            raise GEOSException("GDAL library is not available to transform() geometry.")
+
+        # Creating an OGR Geometry, which is then transformed.
+        g = gdal.OGRGeometry(self.wkb, srid)
+        g.transform(ct)
+        # Getting a new GEOS pointer
+        ptr = wkb_r().read(g.wkb)
+        if clone:
+            # User wants a cloned transformed geometry returned.
+            return GEOSGeometry(ptr, srid=g.srid)
+        if ptr:
+            # Reassigning pointer, and performing post-initialization setup
+            # again due to the reassignment.
+            capi.destroy_geom(self.ptr)
+            self.ptr = ptr
+            self._post_init(g.srid)
+        else:
+            raise GEOSException('Transformed WKB was invalid.')
 
     #### Topology Routines ####
     def _topology(self, gptr):

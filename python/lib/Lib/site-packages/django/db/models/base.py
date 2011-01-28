@@ -1,22 +1,24 @@
 import types
 import sys
-import os
 from itertools import izip
 import django.db.models.manager     # Imported to register signal handler.
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, FieldError, ValidationError, NON_FIELD_ERRORS
 from django.core import validators
 from django.db.models.fields import AutoField, FieldDoesNotExist
-from django.db.models.fields.related import OneToOneRel, ManyToOneRel, OneToOneField
-from django.db.models.query import delete_objects, Q
-from django.db.models.query_utils import CollectedObjects, DeferredAttribute
+from django.db.models.fields.related import (OneToOneRel, ManyToOneRel,
+    OneToOneField, add_lazy_relation)
+from django.db.models.query import Q
+from django.db.models.query_utils import DeferredAttribute
+from django.db.models.deletion import Collector
 from django.db.models.options import Options
-from django.db import connections, router, transaction, DatabaseError, DEFAULT_DB_ALIAS
+from django.db import (connections, router, transaction, DatabaseError,
+    DEFAULT_DB_ALIAS)
 from django.db.models import signals
 from django.db.models.loading import register_models, get_model
 from django.utils.translation import ugettext_lazy as _
 import django.utils.copycompat as copy
 from django.utils.functional import curry, update_wrapper
-from django.utils.encoding import smart_str, force_unicode, smart_unicode
+from django.utils.encoding import smart_str, force_unicode
 from django.utils.text import get_text_list, capfirst
 from django.conf import settings
 
@@ -224,8 +226,25 @@ class ModelBase(type):
         if opts.order_with_respect_to:
             cls.get_next_in_order = curry(cls._get_next_or_previous_in_order, is_next=True)
             cls.get_previous_in_order = curry(cls._get_next_or_previous_in_order, is_next=False)
-            setattr(opts.order_with_respect_to.rel.to, 'get_%s_order' % cls.__name__.lower(), curry(method_get_order, cls))
-            setattr(opts.order_with_respect_to.rel.to, 'set_%s_order' % cls.__name__.lower(), curry(method_set_order, cls))
+            # defer creating accessors on the foreign class until we are
+            # certain it has been created
+            def make_foreign_order_accessors(field, model, cls):
+                setattr(
+                    field.rel.to,
+                    'get_%s_order' % cls.__name__.lower(),
+                    curry(method_get_order, cls)
+                )
+                setattr(
+                    field.rel.to,
+                    'set_%s_order' % cls.__name__.lower(),
+                    curry(method_set_order, cls)
+                )
+            add_lazy_relation(
+                cls,
+                opts.order_with_respect_to,
+                opts.order_with_respect_to.rel.to,
+                make_foreign_order_accessors
+            )
 
         # Give the class a docstring -- its definition.
         if cls.__doc__ is None:
@@ -243,6 +262,10 @@ class ModelState(object):
     """
     def __init__(self, db=None):
         self.db = db
+        # If true, uniqueness validation checks will consider this a new, as-yet-unsaved object.
+        # Necessary for correct validation of new instances of objects with explicit (non-auto) PKs.
+        # This impacts validation only; it has no effect on the actual save.
+        self.adding = True
 
 class Model(object):
     __metaclass__ = ModelBase
@@ -456,7 +479,7 @@ class Model(object):
             meta = cls._meta
 
         if origin and not meta.auto_created:
-            signals.pre_save.send(sender=origin, instance=self, raw=raw)
+            signals.pre_save.send(sender=origin, instance=self, raw=raw, using=using)
 
         # If we are in a raw save, save the object exactly as presented.
         # That means that we don't try to be smart about saving attributes
@@ -509,7 +532,7 @@ class Model(object):
                     # autopopulate the _order field
                     field = meta.order_with_respect_to
                     order_value = manager.using(using).filter(**{field.name: getattr(self, field.attname)}).count()
-                    setattr(self, '_order', order_value)
+                    self._order = order_value
 
                 if not pk_set:
                     if force_update:
@@ -536,107 +559,24 @@ class Model(object):
 
         # Store the database on which the object was saved
         self._state.db = using
+        # Once saved, this is no longer a to-be-added instance.
+        self._state.adding = False
 
         # Signal that the save is complete
         if origin and not meta.auto_created:
             signals.post_save.send(sender=origin, instance=self,
-                created=(not record_exists), raw=raw)
+                created=(not record_exists), raw=raw, using=using)
+
 
     save_base.alters_data = True
-
-    def _collect_sub_objects(self, seen_objs, parent=None, nullable=False):
-        """
-        Recursively populates seen_objs with all objects related to this
-        object.
-
-        When done, seen_objs.items() will be in the format:
-            [(model_class, {pk_val: obj, pk_val: obj, ...}),
-             (model_class, {pk_val: obj, pk_val: obj, ...}), ...]
-        """
-        pk_val = self._get_pk_val()
-        if seen_objs.add(self.__class__, pk_val, self,
-                         type(parent), parent, nullable):
-            return
-
-        for related in self._meta.get_all_related_objects():
-            rel_opts_name = related.get_accessor_name()
-            if not related.field.rel.multiple:
-                try:
-                    sub_obj = getattr(self, rel_opts_name)
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                    sub_obj._collect_sub_objects(seen_objs, self, related.field.null)
-            else:
-                # To make sure we can access all elements, we can't use the
-                # normal manager on the related object. So we work directly
-                # with the descriptor object.
-                for cls in self.__class__.mro():
-                    if rel_opts_name in cls.__dict__:
-                        rel_descriptor = cls.__dict__[rel_opts_name]
-                        break
-                else:
-                    # in the case of a hidden fkey just skip it, it'll get
-                    # processed as an m2m
-                    if not related.field.rel.is_hidden():
-                        raise AssertionError("Should never get here.")
-                    else:
-                        continue
-                delete_qs = rel_descriptor.delete_manager(self).all()
-                for sub_obj in delete_qs:
-                    sub_obj._collect_sub_objects(seen_objs, self, related.field.null)
-
-        for related in self._meta.get_all_related_many_to_many_objects():
-            if related.field.rel.through:
-                db = router.db_for_write(related.field.rel.through.__class__, instance=self)
-                opts = related.field.rel.through._meta
-                reverse_field_name = related.field.m2m_reverse_field_name()
-                nullable = opts.get_field(reverse_field_name).null
-                filters = {reverse_field_name: self}
-                for sub_obj in related.field.rel.through._base_manager.using(db).filter(**filters):
-                    sub_obj._collect_sub_objects(seen_objs, self, nullable)
-
-        for f in self._meta.many_to_many:
-            if f.rel.through:
-                db = router.db_for_write(f.rel.through.__class__, instance=self)
-                opts = f.rel.through._meta
-                field_name = f.m2m_field_name()
-                nullable = opts.get_field(field_name).null
-                filters = {field_name: self}
-                for sub_obj in f.rel.through._base_manager.using(db).filter(**filters):
-                    sub_obj._collect_sub_objects(seen_objs, self, nullable)
-            else:
-                # m2m-ish but with no through table? GenericRelation: cascade delete
-                for sub_obj in f.value_from_object(self).all():
-                    # Generic relations not enforced by db constraints, thus we can set
-                    # nullable=True, order does not matter
-                    sub_obj._collect_sub_objects(seen_objs, self, True)
-
-        # Handle any ancestors (for the model-inheritance case). We do this by
-        # traversing to the most remote parent classes -- those with no parents
-        # themselves -- and then adding those instances to the collection. That
-        # will include all the child instances down to "self".
-        parent_stack = [p for p in self._meta.parents.values() if p is not None]
-        while parent_stack:
-            link = parent_stack.pop()
-            parent_obj = getattr(self, link.name)
-            if parent_obj._meta.parents:
-                parent_stack.extend(parent_obj._meta.parents.values())
-                continue
-            # At this point, parent_obj is base class (no ancestor models). So
-            # delete it and all its descendents.
-            parent_obj._collect_sub_objects(seen_objs)
 
     def delete(self, using=None):
         using = using or router.db_for_write(self.__class__, instance=self)
         assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
 
-        # Find all the objects than need to be deleted.
-        seen_objs = CollectedObjects()
-        self._collect_sub_objects(seen_objs)
-
-        # Actually delete the objects.
-        delete_objects(seen_objs, using)
+        collector = Collector(using=using)
+        collector.collect([self])
+        collector.delete()
 
     delete.alters_data = True
 
@@ -645,6 +585,8 @@ class Model(object):
         return force_unicode(dict(field.flatchoices).get(value, value), strings_only=True)
 
     def _get_next_or_previous_by_FIELD(self, field, is_next, **kwargs):
+        if not self.pk:
+            raise ValueError("get_next/get_previous cannot be used on unsaved objects.")
         op = is_next and 'gt' or 'lt'
         order = not is_next and '-' or ''
         param = smart_str(getattr(self, field.attname))
@@ -744,11 +686,11 @@ class Model(object):
                     continue
                 if f.unique:
                     unique_checks.append((model_class, (name,)))
-                if f.unique_for_date:
+                if f.unique_for_date and f.unique_for_date not in exclude:
                     date_checks.append((model_class, 'date', name, f.unique_for_date))
-                if f.unique_for_year:
+                if f.unique_for_year and f.unique_for_year not in exclude:
                     date_checks.append((model_class, 'year', name, f.unique_for_year))
-                if f.unique_for_month:
+                if f.unique_for_month and f.unique_for_month not in exclude:
                     date_checks.append((model_class, 'month', name, f.unique_for_month))
         return unique_checks, date_checks
 
@@ -766,7 +708,7 @@ class Model(object):
                 if lookup_value is None:
                     # no value, skip the lookup
                     continue
-                if f.primary_key and not getattr(self, '_adding', False):
+                if f.primary_key and not self._state.adding:
                     # no need to check for unique primary key when editing
                     continue
                 lookup_kwargs[str(field_name)] = lookup_value
@@ -779,7 +721,7 @@ class Model(object):
 
             # Exclude the current object from the query if we are editing an
             # instance (as opposed to creating a new one)
-            if not getattr(self, '_adding', False) and self.pk is not None:
+            if not self._state.adding and self.pk is not None:
                 qs = qs.exclude(pk=self.pk)
 
             if qs.exists():
@@ -809,7 +751,7 @@ class Model(object):
             qs = model_class._default_manager.filter(**lookup_kwargs)
             # Exclude the current object from the query if we are editing an
             # instance (as opposed to creating a new one)
-            if not getattr(self, '_adding', False) and self.pk is not None:
+            if not self._state.adding and self.pk is not None:
                 qs = qs.exclude(pk=self.pk)
 
             if qs.exists():
