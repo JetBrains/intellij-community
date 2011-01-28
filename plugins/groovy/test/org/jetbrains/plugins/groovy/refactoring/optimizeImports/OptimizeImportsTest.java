@@ -22,7 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -109,6 +111,8 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testJavaUtilString() throws Throwable { doTest(); }
+
   public void testSamePackage() throws Throwable {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
@@ -150,12 +154,18 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     try {
       myFixture.configureByFile(getTestName(false) + ".groovy");
+      final String oldText = myFixture.getEditor().getDocument().getText();
 
       doOptimizeImports();
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       ((DocumentEx)myFixture.getEditor().getDocument()).stripTrailingSpaces(false);
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
 
+      final String newText = myFixture.getEditor().getDocument().getText();
+      if (oldText.equals(newText)) {
+        myFixture.doHighlighting();
+        assertEmpty(GroovyImportsTracker.getInstance(getProject()).getUnusedImportStatements((GroovyFile)myFixture.getFile()));
+      }
     }
     finally {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
