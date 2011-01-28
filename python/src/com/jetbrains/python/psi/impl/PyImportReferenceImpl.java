@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,6 +80,15 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   @NotNull
   @Override
   public Object[] getVariants() {
+    // no completion in invalid import statements
+    PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
+    if (importElement != null) {
+      PsiErrorElement prevError = PsiTreeUtil.getPrevSiblingOfType(importElement, PsiErrorElement.class);
+      if (prevError != null) {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+    }
+
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete

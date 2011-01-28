@@ -1,13 +1,22 @@
+import warnings
+
 from django import http
 from django.test import TestCase
 from django.conf import settings
 from django.utils.translation import ugettext_lazy
+from django.utils.unittest import skipIf
 from django.contrib.messages import constants, utils, get_level, set_level
 from django.contrib.messages.api import MessageFailure
 from django.contrib.messages.storage import default_storage, base
 from django.contrib.messages.storage.base import Message
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
+
+
+def skipUnlessAuthIsInstalled(func):
+    return skipIf(
+        'django.contrib.auth' not in settings.INSTALLED_APPS,
+        "django.contrib.auth isn't installed")(func)
 
 
 def add_level_messages(storage):
@@ -49,6 +58,9 @@ class BaseTest(TestCase):
         self._message_storage = settings.MESSAGE_STORAGE
         settings.MESSAGE_STORAGE = '%s.%s' % (self.storage_class.__module__,
                                               self.storage_class.__name__)
+        self.save_warnings_state()
+        warnings.filterwarnings('ignore', category=DeprecationWarning,
+                                module='django.contrib.auth.models')
 
     def tearDown(self):
         for setting in self.restore_settings:
@@ -59,6 +71,7 @@ class BaseTest(TestCase):
            self._template_context_processors
         settings.INSTALLED_APPS = self._installed_apps
         settings.MESSAGE_STORAGE = self._message_storage
+        self.restore_warnings_state()
 
     def restore_setting(self, setting):
         if setting in self._remembered_settings:
@@ -90,7 +103,7 @@ class BaseTest(TestCase):
         storage = self.get_storage()
         self.assertFalse(storage.added_new)
         storage.add(constants.INFO, 'Test message 1')
-        self.assert_(storage.added_new)
+        self.assertTrue(storage.added_new)
         storage.add(constants.INFO, 'Test message 2', extra_tags='tag')
         self.assertEqual(len(storage), 2)
 
@@ -167,6 +180,26 @@ class BaseTest(TestCase):
             for msg in data['messages']:
                 self.assertContains(response, msg)
 
+    def test_with_template_response(self):
+        settings.MESSAGE_LEVEL = constants.DEBUG
+        data = {
+            'messages': ['Test message %d' % x for x in xrange(10)],
+        }
+        show_url = reverse('django.contrib.messages.tests.urls.show_template_response')
+        for level in self.levels.keys():
+            add_url = reverse('django.contrib.messages.tests.urls.add_template_response',
+                              args=(level,))
+            response = self.client.post(add_url, data, follow=True)
+            self.assertRedirects(response, show_url)
+            self.assertTrue('messages' in response.context)
+            for msg in data['messages']:
+                self.assertContains(response, msg)
+
+            # there shouldn't be any messages on second GET request
+            response = self.client.get(show_url)
+            for msg in data['messages']:
+                self.assertNotContains(response, msg)
+
     def test_multiple_posts(self):
         """
         Tests that messages persist properly when multiple POSTs are made
@@ -190,6 +223,7 @@ class BaseTest(TestCase):
         for msg in data['messages']:
             self.assertContains(response, msg)
 
+    @skipUnlessAuthIsInstalled
     def test_middleware_disabled_auth_user(self):
         """
         Tests that the messages API successfully falls back to using

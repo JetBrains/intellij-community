@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import java.util.regex.Pattern;
 
 
@@ -80,10 +79,9 @@ public class PythonUnitTestUtil {
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls, Set<String> testQualifiedNames) {
-    for (PyClass ancestor : cls.iterateAncestors()) {
-      if (ancestor == null) continue;
-
+    for (PyClassRef ancestor : cls.iterateAncestors()) {
       String qName = ancestor.getQualifiedName();
+      if (qName == null) continue;
       if (testQualifiedNames.contains(qName)) {
         return true;
       }

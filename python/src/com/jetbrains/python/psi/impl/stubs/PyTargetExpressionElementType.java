@@ -13,7 +13,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
+import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 
 import java.io.IOException;
 
@@ -115,6 +117,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
   @Override
   public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {
+    if (stub.getParentStub() instanceof PyFileStub) {
+      String name = stub.getName();
+      if (name != null && PyUtil.getInitialUnderscores(name) == 0) {
+        sink.occurrence(PyVariableNameIndex.KEY, name);
+      }
+    }
     for (CustomTargetExpressionStubType stubType : getCustomStubTypes()) {
       stubType.indexStub(stub, sink);
     }

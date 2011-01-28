@@ -1,8 +1,8 @@
 import re
 from django import http, template
-from django.contrib.admin import ModelAdmin
-from django.contrib.admin import actions
-from django.contrib.auth import authenticate, login
+from django.contrib.admin import ModelAdmin, actions
+from django.contrib.admin.forms import AdminAuthenticationForm, ERROR_MESSAGE
+from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login
 from django.views.decorators.csrf import csrf_protect
 from django.db.models.base import ModelBase
 from django.core.exceptions import ImproperlyConfigured
@@ -15,7 +15,6 @@ from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.cache import never_cache
 from django.conf import settings
 
-ERROR_MESSAGE = ugettext_lazy("Please enter a correct username and password. Note that both fields are case-sensitive.")
 LOGIN_FORM_KEY = 'this_is_the_login_form'
 
 class AlreadyRegistered(Exception):
@@ -28,10 +27,11 @@ class AdminSite(object):
     """
     An AdminSite object encapsulates an instance of the Django admin application, ready
     to be hooked in to your URLconf. Models are registered with the AdminSite using the
-    register() method, and the root() method can then be used as a Django view function
-    that presents a full admin interface for the collection of registered models.
+    register() method, and the get_urls() method can then be used to access Django view
+    functions that present a full admin interface for the collection of registered
+    models.
     """
-
+    login_form = None
     index_template = None
     app_index_template = None
     login_template = None
@@ -126,12 +126,12 @@ class AdminSite(object):
         """
         return self._global_actions[name]
 
+    @property
     def actions(self):
         """
         Get all the enabled actions as an iterable of (name, func).
         """
         return self._actions.iteritems()
-    actions = property(actions)
 
     def has_permission(self, request):
         """
@@ -239,9 +239,9 @@ class AdminSite(object):
             )
         return urlpatterns
 
+    @property
     def urls(self):
         return self.get_urls(), self.app_name, self.name
-    urls = property(urls)
 
     def password_change(self, request):
         """
@@ -253,18 +253,22 @@ class AdminSite(object):
         else:
             url = reverse('admin:password_change_done', current_app=self.name)
         defaults = {
+            'current_app': self.name,
             'post_change_redirect': url
         }
         if self.password_change_template is not None:
             defaults['template_name'] = self.password_change_template
         return password_change(request, **defaults)
 
-    def password_change_done(self, request):
+    def password_change_done(self, request, extra_context=None):
         """
         Displays the "success" page after a password change.
         """
         from django.contrib.auth.views import password_change_done
-        defaults = {}
+        defaults = {
+            'current_app': self.name,
+            'extra_context': extra_context or {},
+        }
         if self.password_change_done_template is not None:
             defaults['template_name'] = self.password_change_done_template
         return password_change_done(request, **defaults)
@@ -282,69 +286,44 @@ class AdminSite(object):
             from django.views.i18n import null_javascript_catalog as javascript_catalog
         return javascript_catalog(request, packages='django.conf')
 
-    def logout(self, request):
+    @never_cache
+    def logout(self, request, extra_context=None):
         """
         Logs out the user for the given HttpRequest.
 
         This should *not* assume the user is already logged in.
         """
         from django.contrib.auth.views import logout
-        defaults = {}
+        defaults = {
+            'current_app': self.name,
+            'extra_context': extra_context or {},
+        }
         if self.logout_template is not None:
             defaults['template_name'] = self.logout_template
         return logout(request, **defaults)
-    logout = never_cache(logout)
 
-    def login(self, request):
+    @never_cache
+    def login(self, request, extra_context=None):
         """
         Displays the login form for the given HttpRequest.
         """
-        from django.contrib.auth.models import User
+        from django.contrib.auth.views import login
+        context = {
+            'title': _('Log in'),
+            'root_path': self.root_path,
+            'app_path': request.get_full_path(),
+            REDIRECT_FIELD_NAME: request.get_full_path(),
+        }
+        context.update(extra_context or {})
+        defaults = {
+            'extra_context': context,
+            'current_app': self.name,
+            'authentication_form': self.login_form or AdminAuthenticationForm,
+            'template_name': self.login_template or 'admin/login.html',
+        }
+        return login(request, **defaults)
 
-        # If this isn't already the login page, display it.
-        if not request.POST.has_key(LOGIN_FORM_KEY):
-            if request.POST:
-                message = _("Please log in again, because your session has expired.")
-            else:
-                message = ""
-            return self.display_login_form(request, message)
-
-        # Check that the user accepts cookies.
-        if not request.session.test_cookie_worked():
-            message = _("Looks like your browser isn't configured to accept cookies. Please enable cookies, reload this page, and try again.")
-            return self.display_login_form(request, message)
-        else:
-            request.session.delete_test_cookie()
-
-        # Check the password.
-        username = request.POST.get('username', None)
-        password = request.POST.get('password', None)
-        user = authenticate(username=username, password=password)
-        if user is None:
-            message = ERROR_MESSAGE
-            if username is not None and u'@' in username:
-                # Mistakenly entered e-mail address instead of username? Look it up.
-                try:
-                    user = User.objects.get(email=username)
-                except (User.DoesNotExist, User.MultipleObjectsReturned):
-                    message = _("Usernames cannot contain the '@' character.")
-                else:
-                    if user.check_password(password):
-                        message = _("Your e-mail address is not your username."
-                                    " Try '%s' instead.") % user.username
-                    else:
-                        message = _("Usernames cannot contain the '@' character.")
-            return self.display_login_form(request, message)
-
-        # The user data is correct; log in the user in and continue.
-        else:
-            if user.is_active and user.is_staff:
-                login(request, user)
-                return http.HttpResponseRedirect(request.get_full_path())
-            else:
-                return self.display_login_form(request, ERROR_MESSAGE)
-    login = never_cache(login)
-
+    @never_cache
     def index(self, request, extra_context=None):
         """
         Displays the main admin index page, which lists all of the installed
@@ -379,11 +358,11 @@ class AdminSite(object):
 
         # Sort the apps alphabetically.
         app_list = app_dict.values()
-        app_list.sort(lambda x, y: cmp(x['name'], y['name']))
+        app_list.sort(key=lambda x: x['name'])
 
         # Sort the models alphabetically within each app.
         for app in app_list:
-            app['models'].sort(lambda x, y: cmp(x['name'], y['name']))
+            app['models'].sort(key=lambda x: x['name'])
 
         context = {
             'title': _('Site administration'),
@@ -393,21 +372,6 @@ class AdminSite(object):
         context.update(extra_context or {})
         context_instance = template.RequestContext(request, current_app=self.name)
         return render_to_response(self.index_template or 'admin/index.html', context,
-            context_instance=context_instance
-        )
-    index = never_cache(index)
-
-    def display_login_form(self, request, error_message='', extra_context=None):
-        request.session.set_test_cookie()
-        context = {
-            'title': _('Log in'),
-            'app_path': request.get_full_path(),
-            'error_message': error_message,
-            'root_path': self.root_path,
-        }
-        context.update(extra_context or {})
-        context_instance = template.RequestContext(request, current_app=self.name)
-        return render_to_response(self.login_template or 'admin/login.html', context,
             context_instance=context_instance
         )
 
@@ -443,7 +407,7 @@ class AdminSite(object):
         if not app_dict:
             raise http.Http404('The requested admin page does not exist.')
         # Sort the models alphabetically within each app.
-        app_dict['models'].sort(lambda x, y: cmp(x['name'], y['name']))
+        app_dict['models'].sort(key=lambda x: x['name'])
         context = {
             'title': _('%s administration') % capfirst(app_label),
             'app_list': [app_dict],
@@ -455,81 +419,6 @@ class AdminSite(object):
             'admin/app_index.html'), context,
             context_instance=context_instance
         )
-
-    def root(self, request, url):
-        """
-        DEPRECATED. This function is the old way of handling URL resolution, and
-        is deprecated in favor of real URL resolution -- see ``get_urls()``.
-
-        This function still exists for backwards-compatibility; it will be
-        removed in Django 1.3.
-        """
-        import warnings
-        warnings.warn(
-            "AdminSite.root() is deprecated; use include(admin.site.urls) instead.",
-            DeprecationWarning
-        )
-
-        #
-        # Again, remember that the following only exists for
-        # backwards-compatibility. Any new URLs, changes to existing URLs, or
-        # whatever need to be done up in get_urls(), above!
-        #
-
-        if request.method == 'GET' and not request.path.endswith('/'):
-            return http.HttpResponseRedirect(request.path + '/')
-
-        if settings.DEBUG:
-            self.check_dependencies()
-
-        # Figure out the admin base URL path and stash it for later use
-        self.root_path = re.sub(re.escape(url) + '$', '', request.path)
-
-        url = url.rstrip('/') # Trim trailing slash, if it exists.
-
-        # The 'logout' view doesn't require that the person is logged in.
-        if url == 'logout':
-            return self.logout(request)
-
-        # Check permission to continue or display login form.
-        if not self.has_permission(request):
-            return self.login(request)
-
-        if url == '':
-            return self.index(request)
-        elif url == 'password_change':
-            return self.password_change(request)
-        elif url == 'password_change/done':
-            return self.password_change_done(request)
-        elif url == 'jsi18n':
-            return self.i18n_javascript(request)
-        # URLs starting with 'r/' are for the "View on site" links.
-        elif url.startswith('r/'):
-            from django.contrib.contenttypes.views import shortcut
-            return shortcut(request, *url.split('/')[1:])
-        else:
-            if '/' in url:
-                return self.model_page(request, *url.split('/', 2))
-            else:
-                return self.app_index(request, url)
-
-        raise http.Http404('The requested admin page does not exist.')
-
-    def model_page(self, request, app_label, model_name, rest_of_url=None):
-        """
-        DEPRECATED. This is the old way of handling a model view on the admin
-        site; the new views should use get_urls(), above.
-        """
-        from django.db import models
-        model = models.get_model(app_label, model_name)
-        if model is None:
-            raise http.Http404("App %r, model %r, not found." % (app_label, model_name))
-        try:
-            admin_obj = self._registry[model]
-        except KeyError:
-            raise http.Http404("This model exists but has not been registered with the admin site.")
-        return admin_obj(request, rest_of_url)
-    model_page = never_cache(model_page)
 
 # This global object represents the default admin site, for the common case.
 # You can instantiate AdminSite in your own code to create a custom admin site.

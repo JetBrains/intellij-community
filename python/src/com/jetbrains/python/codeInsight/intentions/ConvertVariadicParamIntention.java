@@ -6,14 +6,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +33,6 @@ import java.util.List;
  *
  */
 public class ConvertVariadicParamIntention extends BaseIntentionAction {
-  private PyFunction myFunction;
-  private String myKeywordContainerName;
-  private boolean canRemove = true;
-  private PyParameter myKeywordContainer;
-  private List <PySubscriptionExpression> myElements;
-  private List <PyCallExpression> myCallElements;
-
   @NotNull
   public String getText() {
     return PyBundle.message("INTN.convert.variadic.param");
@@ -52,128 +44,145 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myFunction =
+    PyFunction function =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
-    if (myFunction != null) {
-      PyParameter[] parameterList = myFunction.getParameterList().getParameters();
+    if (function != null) {
+      PyParameter[] parameterList = function.getParameterList().getParameters();
       for (PyParameter parameter : parameterList) {
         if (parameter instanceof PyNamedParameter) {
           if (((PyNamedParameter)parameter).isKeywordContainer()) {
-            myKeywordContainerName = parameter.getName();
-            myKeywordContainer = parameter;
-            fillSubscriptions();
-            if ((myElements.size() + myCallElements.size()) != 0 && canRemove)
+            List <PySubscriptionExpression> subscriptions = fillSubscriptions(function);
+            List <PyCallExpression> callElements = fillCallExpressions(function);
+            if ((subscriptions.size() + callElements.size()) != 0)
               return true;
           }
         }
       }
     }
-    canRemove = true;
     return false;
+  }
+
+  @Nullable
+  private static PyParameter getKeywordContainer(PyFunction function) {
+    if (function != null) {
+      PyParameter[] parameterList = function.getParameterList().getParameters();
+      for (PyParameter parameter : parameterList) {
+        if (parameter instanceof PyNamedParameter) {
+          if (((PyNamedParameter)parameter).isKeywordContainer()) {
+            return parameter;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PyFunction function =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
+    replaceSubscriptions(function, project);
+    replaceCallElements(function, project);
   }
 
   /**
    * finds subscriptions of keyword container, adds them to mySubscriptions
+   * @param function
+   * @param elements
    */
-  private void fillSubscriptions() {
-    PyStatementList statementList = myFunction.getStatementList();
-    myElements = new ArrayList<PySubscriptionExpression>();
-    myCallElements = new ArrayList<PyCallExpression>();
+  private static List<PySubscriptionExpression> fillSubscriptions(PyFunction function) {
+    List<PySubscriptionExpression> subscriptions = new ArrayList<PySubscriptionExpression>();
+    PyStatementList statementList = function.getStatementList();
     Stack<PsiElement> stack = new Stack<PsiElement>();
-    for (PyStatement st : statementList.getStatements()) {
-      stack.push(st);
-      while (!stack.isEmpty()) {
-        PsiElement e = stack.pop();
-        if (e instanceof PySubscriptionExpression) {
-          if (((PySubscriptionExpression)e).getOperand().getText().equals(myKeywordContainerName)) {
-            myElements.add((PySubscriptionExpression)e);
+    PyParameter keywordContainer = getKeywordContainer(function);
+    if (keywordContainer != null && statementList != null) {
+      String keywordContainerName = keywordContainer.getName();
+      for (PyStatement st : statementList.getStatements()) {
+        stack.push(st);
+        while (!stack.isEmpty()) {
+          PsiElement e = stack.pop();
+          if (e instanceof PySubscriptionExpression) {
+            if (((PySubscriptionExpression)e).getOperand().getText().equals(keywordContainerName)) {
+              subscriptions.add((PySubscriptionExpression)e);
+            }
           }
-        }
-        else {
-          if (!(e instanceof PyCallExpression)) {
-            if (e.getText().equals(myKeywordContainerName))
-              canRemove = false;
+          else {
             for (PsiElement psiElement : e.getChildren()) {
               stack.push(psiElement);
             }
           }
-          else {
-            PyExpression callee = ((PyCallExpression)e).getCallee();
-            if (callee instanceof PyQualifiedExpression) {
-              PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-              if (qualifier != null && qualifier.getText().equals(myKeywordContainerName)
+        }
+      }
+    }
+    return subscriptions;
+  }
+
+  private static boolean isCallElement(PyExpression callee, String keywordContainerName) {
+    PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+    return (qualifier != null && qualifier.getText().equals(keywordContainerName)
                                       && ("get".equals(((PyQualifiedExpression)callee).getReferencedName())
-                                          || "__getitem__".equals(((PyQualifiedExpression)callee).getReferencedName()) )) {
-                myCallElements.add((PyCallExpression)e);
-              }
-              else {
-                if (e.getText().equals(myKeywordContainerName))
-                  canRemove = false;
-                for (PsiElement psiElement : e.getChildren()) {
-                  stack.push(psiElement);
-                }
+                                          || "__getitem__".equals(((PyQualifiedExpression)callee).getReferencedName()) ));
+  }
+
+  private static List<PyCallExpression> fillCallExpressions(PyFunction function) {
+    List<PyCallExpression> callElements = new ArrayList<PyCallExpression>();
+    PyStatementList statementList = function.getStatementList();
+    Stack<PsiElement> stack = new Stack<PsiElement>();
+    PyParameter keywordContainer = getKeywordContainer(function);
+    if (keywordContainer != null && statementList != null) {
+      String keywordContainerName = keywordContainer.getName();
+      for (PyStatement st : statementList.getStatements()) {
+        stack.push(st);
+        while (!stack.isEmpty()) {
+          PsiElement e = stack.pop();
+          if (!(e instanceof PySubscriptionExpression)) {
+            if (e instanceof PyCallExpression && ((PyCallExpression)e).getCallee() instanceof PyQualifiedExpression
+                    && isCallElement(((PyCallExpression)e).getCallee(), keywordContainerName)) {
+              callElements.add((PyCallExpression)e);
+            }
+            else {
+              for (PsiElement psiElement : e.getChildren()) {
+                stack.push(psiElement);
               }
             }
           }
         }
       }
     }
+    return callElements;
   }
 
-  private void replaceSubscriptions(Project project) {
+  private static void replaceSubscriptions(PyFunction function, Project project) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    int size = myElements.size();
+    List <PySubscriptionExpression> subscriptions = fillSubscriptions(function);
+    int size = subscriptions.size();
     for (int i = 0; i != size; ++i) {
-      PySubscriptionExpression subscriptionExpression = myElements.get(i);
+      PySubscriptionExpression subscriptionExpression = subscriptions.get(i);
       PyExpression indexExpression = subscriptionExpression.getIndexExpression();
       if (indexExpression instanceof PyStringLiteralExpression) {
         PyExpression p = elementGenerator.createExpressionFromText(((PyStringLiteralExpression)indexExpression).getStringValue());
         ASTNode comma = elementGenerator.createComma();
-        PyClass containingClass = myFunction.getContainingClass();
+        PyClass containingClass = function.getContainingClass();
 
         if (containingClass == null) {
-          myFunction.getParameterList().addBefore(p, myFunction.getParameterList().getParameters()[0]);
-          myFunction.getParameterList().addBefore((PsiElement)comma, myFunction.getParameterList().getParameters()[0]);
+          function.getParameterList().addBefore(p, function.getParameterList().getParameters()[0]);
+          function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[0]);
         }
         else {
-          myFunction.getParameterList().addBefore(p, myFunction.getParameterList().getParameters()[1]);
-          myFunction.getParameterList().addBefore((PsiElement)comma, myFunction.getParameterList().getParameters()[1]);
+          function.getParameterList().addBefore(p, function.getParameterList().getParameters()[1]);
+          function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[1]);
         }
         subscriptionExpression.replace(p);
       }
     }
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    replaceSubscriptions(project);
-    replaceCallElements(project);
-    /*if (canRemove) {
-      removeKwarg();
-    }*/
-    canRemove = true;
-  }
-
-  private void removeKwarg() {
-    PsiElement prev = myKeywordContainer.getPrevSibling();
-    if (prev instanceof PsiWhiteSpace) {
-      PsiElement comma = prev.getPrevSibling();
-      if (comma != null && comma.getNode().getElementType() == PyTokenTypes.COMMA) {
-        comma.delete();
-      }
-    }
-    else {
-      if (prev != null && prev.getNode().getElementType() == PyTokenTypes.COMMA)
-        prev.delete();
-    }
-    myKeywordContainer.delete();
-  }
-
-
-  private void replaceCallElements(Project project) {
+  private static void replaceCallElements(PyFunction function, Project project) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    int size = myCallElements.size();
+    List <PyCallExpression> callElements = fillCallExpressions(function);
+
+    int size = callElements.size();
     for (int i = 0; i != size; ++i) {
-      PyCallExpression callExpression = myCallElements.get(i);
+      PyCallExpression callExpression = callElements.get(i);
       PyExpression indexExpression = callExpression.getArguments()[0];
 
       if (indexExpression instanceof PyStringLiteralExpression) {
@@ -192,12 +201,14 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
         PyExpression p = elementGenerator.createExpressionFromText(((PyStringLiteralExpression)indexExpression).getStringValue());
         ASTNode comma = elementGenerator.createComma();
 
-        if (defaultValue != null)
-          myFunction.getParameterList().addBefore(defaultValue, myKeywordContainer);
-        else
-          myFunction.getParameterList().addBefore(p, myKeywordContainer);
+        PyParameter keywordContainer = getKeywordContainer(function);
 
-        myFunction.getParameterList().addBefore((PsiElement)comma, myKeywordContainer);
+        if (defaultValue != null)
+          function.getParameterList().addBefore(defaultValue, keywordContainer);
+        else
+          function.getParameterList().addBefore(p, keywordContainer);
+
+        function.getParameterList().addBefore((PsiElement)comma, keywordContainer);
 
         callExpression.replace(p);
       }

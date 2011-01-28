@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,6 +45,10 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
                                 DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     if (!(file instanceof PyFile)) {
+      return Result.Continue;
+    }
+    final Boolean isSplitLine = DataManager.getInstance().loadFromDataContext(dataContext, SplitLineAction.SPLIT_LINE_KEY);
+    if (isSplitLine != null) {
       return Result.Continue;
     }
     Document doc = editor.getDocument();

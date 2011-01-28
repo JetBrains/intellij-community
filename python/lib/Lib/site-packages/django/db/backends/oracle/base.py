@@ -6,16 +6,38 @@ Requires cx_Oracle: http://cx-oracle.sourceforge.net/
 
 
 import datetime
-import os
 import sys
 import time
 from decimal import Decimal
 
-# Oracle takes client-side character set encoding from the environment.
-os.environ['NLS_LANG'] = '.UTF8'
-# This prevents unicode from getting mangled by getting encoded into the
-# potentially non-unicode database character set.
-os.environ['ORA_NCHAR_LITERAL_REPLACE'] = 'TRUE'
+
+def _setup_environment(environ):
+    import platform
+    # Cygwin requires some special voodoo to set the environment variables
+    # properly so that Oracle will see them.
+    if platform.system().upper().startswith('CYGWIN'):
+        try:
+            import ctypes
+        except ImportError, e:
+            from django.core.exceptions import ImproperlyConfigured
+            raise ImproperlyConfigured("Error loading ctypes: %s; "
+                                       "the Oracle backend requires ctypes to "
+                                       "operate correctly under Cygwin." % e)
+        kernel32 = ctypes.CDLL('kernel32')
+        for name, value in environ:
+            kernel32.SetEnvironmentVariableA(name, value)
+    else:
+        import os
+        os.environ.update(environ)
+
+_setup_environment([
+    # Oracle takes client-side character set encoding from the environment.
+    ('NLS_LANG', '.UTF8'),
+    # This prevents unicode from getting mangled by getting encoded into the
+    # potentially non-unicode database character set.
+    ('ORA_NCHAR_LITERAL_REPLACE', 'TRUE'),
+])
+
 
 try:
     import cx_Oracle as Database
@@ -50,7 +72,10 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     uses_savepoints = True
     can_return_id_from_insert = True
     allow_sliced_subqueries = False
-
+    supports_subqueries_in_group_by = False
+    supports_timezones = False
+    supports_bitwise_or = False
+    can_defer_constraint_checks = True
 
 class DatabaseOperations(BaseDatabaseOperations):
     compiler_module = "django.db.backends.oracle.compiler"
@@ -92,6 +117,20 @@ WHEN (new.%(col_name)s IS NULL)
             return "TO_CHAR(%s, 'D')" % field_name
         else:
             return "EXTRACT(%s FROM %s)" % (lookup_type, field_name)
+
+    def date_interval_sql(self, sql, connector, timedelta):
+        """
+        Implements the interval functionality for expressions
+        format for Oracle:
+        (datefield + INTERVAL '3 00:03:20.000000' DAY(1) TO SECOND(6))
+        """
+        minutes, seconds = divmod(timedelta.seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        days = str(timedelta.days)
+        day_precision = len(days)
+        fmt = "(%s %s INTERVAL '%s %02d:%02d:%02d.%06d' DAY(%d) TO SECOND(6))"
+        return fmt % (sql, connector, days, hours, minutes, seconds,
+                timedelta.microseconds, day_precision)
 
     def date_trunc_sql(self, lookup_type, field_name):
         # Oracle uses TRUNC() for both dates and numbers.
@@ -177,6 +216,9 @@ WHEN (new.%(col_name)s IS NULL)
         if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith'):
             return "UPPER(%s)"
         return "%s"
+
+    def max_in_list_size(self):
+        return 1000
 
     def max_name_length(self):
         return 30
@@ -286,11 +328,24 @@ WHEN (new.%(col_name)s IS NULL)
         return "%sTABLESPACE %s" % ((inline and "USING INDEX " or ""),
             self.quote_name(tablespace))
 
+    def value_to_db_datetime(self, value):
+        # Oracle doesn't support tz-aware datetimes
+        if getattr(value, 'tzinfo', None) is not None:
+            raise ValueError("Oracle backend does not support timezone-aware datetimes.")
+
+        return super(DatabaseOperations, self).value_to_db_datetime(value)
+
     def value_to_db_time(self, value):
         if value is None:
             return None
+
         if isinstance(value, basestring):
             return datetime.datetime(*(time.strptime(value, '%H:%M:%S')[:6]))
+
+        # Oracle doesn't support tz-aware datetimes
+        if value.tzinfo is not None:
+            raise ValueError("Oracle backend does not support timezone-aware datetimes.")
+
         return datetime.datetime(1900, 1, 1, value.hour, value.minute,
                                  value.second, value.microsecond)
 
@@ -311,7 +366,7 @@ WHEN (new.%(col_name)s IS NULL)
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
-
+    vendor = 'oracle'
     operators = {
         'exact': '= %s',
         'iexact': '= UPPER(%s)',
@@ -326,12 +381,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'istartswith': "LIKE UPPER(TRANSLATE(%s USING NCHAR_CS)) ESCAPE TRANSLATE('\\' USING NCHAR_CS)",
         'iendswith': "LIKE UPPER(TRANSLATE(%s USING NCHAR_CS)) ESCAPE TRANSLATE('\\' USING NCHAR_CS)",
     }
-    oracle_version = None
 
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
-        self.features = DatabaseFeatures()
+        self.oracle_version = None
+        self.features = DatabaseFeatures(self)
+        use_returning_into = self.settings_dict["OPTIONS"].get('use_returning_into', True)
+        self.features.can_return_id_from_insert = use_returning_into
         self.ops = DatabaseOperations()
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
@@ -343,9 +400,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def _connect_string(self):
         settings_dict = self.settings_dict
-        if len(settings_dict['HOST'].strip()) == 0:
+        if not settings_dict['HOST'].strip():
             settings_dict['HOST'] = 'localhost'
-        if len(settings_dict['PORT'].strip()) != 0:
+        if settings_dict['PORT'].strip():
             dsn = Database.makedsn(settings_dict['HOST'],
                                    int(settings_dict['PORT']),
                                    settings_dict['NAME'])
@@ -358,7 +415,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         cursor = None
         if not self._valid_connection():
             conn_string = convert_unicode(self._connect_string())
-            self.connection = Database.connect(conn_string, **self.settings_dict['OPTIONS'])
+            conn_params = self.settings_dict['OPTIONS'].copy()
+            if 'use_returning_into' in conn_params:
+                del conn_params['use_returning_into']
+            self.connection = Database.connect(conn_string, **conn_params)
             cursor = FormatStylePlaceholderCursor(self.connection)
             # Set oracle date to ansi date format.  This only needs to execute
             # once when we create a new connection. We also set the Territory
@@ -384,7 +444,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 # Django docs specify cx_Oracle version 4.3.1 or higher, but
                 # stmtcachesize is available only in 4.3.2 and up.
                 pass
-            connection_created.send(sender=self.__class__)
+            connection_created.send(sender=self.__class__, connection=self)
         if not cursor:
             cursor = FormatStylePlaceholderCursor(self.connection)
         return cursor
@@ -392,6 +452,28 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     # Oracle doesn't support savepoint commits.  Ignore them.
     def _savepoint_commit(self, sid):
         pass
+
+    def _commit(self):
+        if self.connection is not None:
+            try:
+                return self.connection.commit()
+            except Database.IntegrityError, e:
+                # In case cx_Oracle implements (now or in a future version)
+                # raising this specific exception
+                raise utils.IntegrityError, utils.IntegrityError(*tuple(e)), sys.exc_info()[2]
+            except Database.DatabaseError, e:
+                # cx_Oracle 5.0.4 raises a cx_Oracle.DatabaseError exception
+                # with the following attributes and values:
+                #  code = 2091
+                #  message = 'ORA-02091: transaction rolled back
+                #            'ORA-02291: integrity constraint (TEST_DJANGOTEST.SYS
+                #               _C00102056) violated - parent key not found'
+                # We convert that particular case to our IntegrityError exception
+                x = e.args[0]
+                if hasattr(x, 'code') and hasattr(x, 'message') \
+                   and x.code == 2091 and 'ORA-02291' in x.message:
+                    raise utils.IntegrityError, utils.IntegrityError(*tuple(e)), sys.exc_info()[2]
+                raise utils.DatabaseError, utils.DatabaseError(*tuple(e)), sys.exc_info()[2]
 
 
 class OracleParam(object):
@@ -641,19 +723,15 @@ def _get_sequence_reset_sql():
     # TODO: colorize this SQL code with style.SQL_KEYWORD(), etc.
     return """
 DECLARE
-    startvalue integer;
-    cval integer;
+    table_value integer;
+    seq_value integer;
 BEGIN
-    LOCK TABLE %(table)s IN SHARE MODE;
-    SELECT NVL(MAX(%(column)s), 0) INTO startvalue FROM %(table)s;
-    SELECT "%(sequence)s".nextval INTO cval FROM dual;
-    cval := startvalue - cval;
-    IF cval != 0 THEN
-        EXECUTE IMMEDIATE 'ALTER SEQUENCE "%(sequence)s" MINVALUE 0 INCREMENT BY '||cval;
-        SELECT "%(sequence)s".nextval INTO cval FROM dual;
-        EXECUTE IMMEDIATE 'ALTER SEQUENCE "%(sequence)s" INCREMENT BY 1';
-    END IF;
-    COMMIT;
+    SELECT NVL(MAX(%(column)s), 0) INTO table_value FROM %(table)s;
+    SELECT NVL(last_number - cache_size, 0) INTO seq_value FROM user_sequences
+           WHERE sequence_name = '%(sequence)s';
+    WHILE table_value > seq_value LOOP
+        SELECT "%(sequence)s".nextval INTO seq_value FROM dual;
+    END LOOP;
 END;
 /"""
 

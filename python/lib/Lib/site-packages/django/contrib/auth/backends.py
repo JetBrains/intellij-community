@@ -8,6 +8,7 @@ class ModelBackend(object):
     """
     supports_object_permissions = False
     supports_anonymous_user = True
+    supports_inactive_user = True
 
     # TODO: Model, login attribute name and password attribute name should be
     # configurable.
@@ -25,9 +26,11 @@ class ModelBackend(object):
         groups.
         """
         if not hasattr(user_obj, '_group_perm_cache'):
-            perms = Permission.objects.filter(group__user=user_obj
-                ).values_list('content_type__app_label', 'codename'
-                ).order_by()
+            if user_obj.is_superuser:
+                perms = Permission.objects.all()
+            else:
+                perms = Permission.objects.filter(group__user=user_obj)
+            perms = perms.values_list('content_type__app_label', 'codename').order_by()
             user_obj._group_perm_cache = set(["%s.%s" % (ct, name) for ct, name in perms])
         return user_obj._group_perm_cache
 
@@ -40,12 +43,16 @@ class ModelBackend(object):
         return user_obj._perm_cache
 
     def has_perm(self, user_obj, perm):
+        if not user_obj.is_active:
+            return False
         return perm in self.get_all_permissions(user_obj)
 
     def has_module_perms(self, user_obj, app_label):
         """
         Returns True if user_obj has any permissions in the given app_label.
         """
+        if not user_obj.is_active:
+            return False
         for perm in self.get_all_permissions(user_obj):
             if perm[:perm.index('.')] == app_label:
                 return True

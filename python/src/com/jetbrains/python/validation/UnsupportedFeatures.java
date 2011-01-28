@@ -13,6 +13,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.intentions.RemoveTrailingLIntention;
 import com.jetbrains.python.psi.*;
@@ -20,6 +21,7 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Stack;
 
 /**
  * @author Alexey.Ivanov
@@ -159,7 +161,7 @@ public class UnsupportedFeatures extends PyAnnotator {
         PsiElement resolved = reference.resolve();
         if (resolved == null) {
           final String name = callee.getText();
-          if (UnsupportedFeaturesUtil.BUILTINS.get(getLanguageLevel(callee)).contains(name)) {
+          if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(getLanguageLevel(callee)).contains(name)) {
             getHolder().createWarningAnnotation(callee, PyBundle.message("ANN.method.$0.removed", name));
           }
         }
@@ -270,7 +272,10 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
     final LanguageLevel languageLevel = getLanguageLevel(node);
-    if (!languageLevel.supportsSetLiterals()) {
+    if (languageLevel == LanguageLevel.PYTHON24) {
+      getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+    }
+    else if (!languageLevel.supportsSetLiterals()) {
       final PyWithItem[] items = node.getWithItems();
       if (items.length > 1) {
         for (int i = 1; i < items.length; i++) {
@@ -279,6 +284,7 @@ public class UnsupportedFeatures extends PyAnnotator {
       }
     }
   }
+
   @Override
   public void visitPyClass(PyClass node) {  //PY-2719
     if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
@@ -293,9 +299,57 @@ public class UnsupportedFeatures extends PyAnnotator {
     PsiElement[] arguments = node.getChildren();
     if (getLanguageLevel(node).isPy3K()) {
       for (PsiElement element : arguments) {
-        if (!(element instanceof PyParenthesizedExpression))
+        if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression)))
           getHolder().createWarningAnnotation(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
       }
+    }
+  }
+
+  @Override
+  public void visitPyFromImportStatement(PyFromImportStatement node) {
+    PyReferenceExpression importSource  = node.getImportSource();
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      if (importSource == null)
+        getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+      else {
+        PsiElement prev = importSource.getPrevSibling();
+        if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT)
+          getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+      }
+    }
+  }
+
+  @Override
+  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      PyExpression assignedValue = node.getAssignedValue();
+      if (assignedValue instanceof PyConditionalExpression)              // PY-2792
+        getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
+
+      Stack<PsiElement> st = new Stack<PsiElement>();       // PY-2796
+      st.push(assignedValue);
+      while (!st.isEmpty()) {
+        PsiElement el = st.pop();
+        if (el instanceof PyYieldExpression)
+          getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax. " +
+                                                    "In Python <= 2.4, yield was a statement; it didn't return any value.");
+        else {
+          for (PsiElement e : el.getChildren())
+            st.push(e);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitPyTryExceptStatement(PyTryExceptStatement node) {   // PY-2795
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      PyExceptPart[] excepts =  node.getExceptParts();
+      PyFinallyPart finallyPart = node.getFinallyPart();
+      if (excepts.length != 0 && finallyPart != null)
+        getHolder().createWarningAnnotation(node,
+                                            "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
+                                            "that code is always executed, or one or more except blocks to catch specific exceptions.");
     }
   }
 }

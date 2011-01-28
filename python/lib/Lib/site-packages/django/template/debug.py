@@ -1,4 +1,5 @@
-from django.template import Lexer, Parser, tag_re, NodeList, VariableNode, TemplateSyntaxError
+from django.conf import settings
+from django.template.base import Lexer, Parser, tag_re, NodeList, VariableNode, TemplateSyntaxError
 from django.utils.encoding import force_unicode
 from django.utils.html import escape
 from django.utils.safestring import SafeData, EscapeData
@@ -87,7 +88,7 @@ class DebugVariableNode(VariableNode):
     def render(self, context):
         try:
             output = self.filter_expression.resolve(context)
-            output = localize(output)
+            output = localize(output, use_l10n=context.use_l10n)
             output = force_unicode(output)
         except TemplateSyntaxError, e:
             if not hasattr(e, 'source'):

@@ -1,115 +1,139 @@
-import sys
+from django.conf import settings
+from django.test.simple import build_suite, DjangoTestSuiteRunner
+from django.utils import unittest
 
 def run_tests(*args, **kwargs):
     from django.test.simple import run_tests as base_run_tests
     return base_run_tests(*args, **kwargs)
 
-def geo_suite():
+
+def run_gis_tests(test_labels, verbosity=1, interactive=True, failfast=False, extra_tests=None):
+    import warnings
+    warnings.warn(
+        'The run_gis_tests() test runner has been deprecated in favor of GeoDjangoTestSuiteRunner.',
+        DeprecationWarning
+    )
+    test_runner = GeoDjangoTestSuiteRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
+    return test_runner.run_tests(test_labels, extra_tests=extra_tests)
+
+
+def geo_apps(namespace=True, runtests=False):
     """
-    Builds a test suite for the GIS package.  This is not named
-    `suite` so it will not interfere with the Django test suite (since
-    spatial database tables are required to execute these tests on
-    some backends).
+    Returns a list of GeoDjango test applications that reside in
+    `django.contrib.gis.tests` that can be used with the current
+    database and the spatial libraries that are installed.
     """
-    from django.conf import settings
+    from django.db import connection
     from django.contrib.gis.geos import GEOS_PREPARE
     from django.contrib.gis.gdal import HAS_GDAL
-    from django.contrib.gis.utils import HAS_GEOIP
-    from django.contrib.gis.tests.utils import postgis, mysql
-    from django.db import connection
-    from django.utils.importlib import import_module
 
-    gis_tests = []
+    apps = ['geoapp', 'relatedapp']
+
+    # No distance queries on MySQL.
+    if not connection.ops.mysql:
+        apps.append('distapp')
+
+    # Test geography support with PostGIS 1.5+.
+    if connection.ops.postgis and connection.ops.geography:
+        apps.append('geogapp')
+
+    # The following GeoDjango test apps depend on GDAL support.
+    if HAS_GDAL:
+        # 3D apps use LayerMapping, which uses GDAL.
+        if connection.ops.postgis and GEOS_PREPARE:
+            apps.append('geo3d')
+
+        apps.append('layermap')
+
+    if runtests:
+        return [('django.contrib.gis.tests', app) for app in apps]
+    elif namespace:
+        return ['django.contrib.gis.tests.%s' % app
+                for app in apps]
+    else:
+        return apps
+
+
+def geodjango_suite(apps=True):
+    """
+    Returns a TestSuite consisting only of GeoDjango tests that can be run.
+    """
+    import sys
+    from django.db.models import get_app
+
+    suite = unittest.TestSuite()
 
     # Adding the GEOS tests.
     from django.contrib.gis.geos import tests as geos_tests
-    gis_tests.append(geos_tests.suite())
+    suite.addTest(geos_tests.suite())
 
-    # Tests that require use of a spatial database (e.g., creation of models)
-    test_apps = ['geoapp', 'relatedapp']
-    if postgis and connection.ops.geography:
-        # Test geography support with PostGIS 1.5+.
-        test_apps.append('geogapp')
+    # Adding the measurment tests.
+    from django.contrib.gis.tests import test_measure
+    suite.addTest(test_measure.suite())
 
-    # Tests that do not require setting up and tearing down a spatial database.
-    test_suite_names = [
-        'test_measure',
-        ]
-
+    # Adding GDAL tests, and any test suite that depends on GDAL, to the
+    # suite if GDAL is available.
+    from django.contrib.gis.gdal import HAS_GDAL
     if HAS_GDAL:
-        # These tests require GDAL.
-        if not mysql:
-            test_apps.append('distapp')
-
-        # Only PostGIS using GEOS 3.1+ can support 3D so far.
-        if postgis and GEOS_PREPARE:
-            test_apps.append('geo3d')
-
-        test_suite_names.extend(['test_spatialrefsys', 'test_geoforms'])
-        test_apps.append('layermap')
-        
-        # Adding the GDAL tests.
         from django.contrib.gis.gdal import tests as gdal_tests
-        gis_tests.append(gdal_tests.suite())
+        suite.addTest(gdal_tests.suite())
+
+        from django.contrib.gis.tests import test_spatialrefsys, test_geoforms
+        suite.addTest(test_spatialrefsys.suite())
+        suite.addTest(test_geoforms.suite())
     else:
-        print >>sys.stderr, "GDAL not available - no tests requiring GDAL will be run."
+        sys.stderr.write('GDAL not available - no tests requiring GDAL will be run.\n')
 
+    # Add GeoIP tests to the suite, if the library and data is available.
+    from django.contrib.gis.utils import HAS_GEOIP
     if HAS_GEOIP and hasattr(settings, 'GEOIP_PATH'):
-        test_suite_names.append('test_geoip')
+        from django.contrib.gis.tests import test_geoip
+        suite.addTest(test_geoip.suite())
 
-    # Adding the rest of the suites from the modules specified
-    # in the `test_suite_names`.
-    for suite_name in test_suite_names:
-        tsuite = import_module('django.contrib.gis.tests.' + suite_name)
-        gis_tests.append(tsuite.suite())
+    # Finally, adding the suites for each of the GeoDjango test apps.
+    if apps:
+        for app_name in geo_apps(namespace=False):
+            suite.addTest(build_suite(get_app(app_name)))
 
-    return gis_tests, test_apps
+    return suite
 
-def run_gis_tests(test_labels, **kwargs):
-    """
-    Use this routine as the TEST_RUNNER in your settings in order to run the
-    GeoDjango test suite.  This must be done as a database superuser for
-    PostGIS, so read the docstring in `run_test()` below for more details.
-    """
-    from django.conf import settings
-    from django.db.models import loading
-    from django.contrib.gis.tests.utils import mysql
 
-    # Getting initial values.
-    old_installed = settings.INSTALLED_APPS
-    old_root_urlconf = settings.ROOT_URLCONF
+class GeoDjangoTestSuiteRunner(DjangoTestSuiteRunner):
 
-    # Overridding the INSTALLED_APPS with only what we need,
-    # to prevent unnecessary database table creation.
-    new_installed =  ['django.contrib.sites',
-                      'django.contrib.sitemaps',
-                      'django.contrib.gis',
-                      ]
+    def setup_test_environment(self, **kwargs):
+        super(GeoDjangoTestSuiteRunner, self).setup_test_environment(**kwargs)
 
-    # Setting the URLs.
-    settings.ROOT_URLCONF = 'django.contrib.gis.tests.urls'
+        # Saving original values of INSTALLED_APPS, ROOT_URLCONF, and SITE_ID.
+        self.old_installed = getattr(settings, 'INSTALLED_APPS', None)
+        self.old_root_urlconf = getattr(settings, 'ROOT_URLCONF', '')
+        self.old_site_id = getattr(settings, 'SITE_ID', None)
 
-    # Creating the test suite, adding the test models to INSTALLED_APPS
-    # so they will be tested.
-    gis_tests, test_apps = geo_suite()
-    for test_model in test_apps:
-        module_name = 'django.contrib.gis.tests.%s' % test_model
-        new_installed.append(module_name)
+        # Constructing the new INSTALLED_APPS, and including applications
+        # within the GeoDjango test namespace.
+        new_installed =  ['django.contrib.sites',
+                          'django.contrib.sitemaps',
+                          'django.contrib.gis',
+                          ]
 
-    # Resetting the loaded flag to take into account what we appended to
-    # the INSTALLED_APPS (since this routine is invoked through
-    # django/core/management, it caches the apps; this ensures that syncdb
-    # will see our appended models)
-    settings.INSTALLED_APPS = new_installed
-    loading.cache.loaded = False
+        # Calling out to `geo_apps` to get GeoDjango applications supported
+        # for testing.
+        new_installed.extend(geo_apps())
+        settings.INSTALLED_APPS = new_installed
 
-    kwargs['extra_tests'] = gis_tests
+        # SITE_ID needs to be set
+        settings.SITE_ID = 1
 
-    # Running the tests using the GIS test runner.
-    result = run_tests(test_labels, **kwargs)
+        # ROOT_URLCONF needs to be set, else `AttributeErrors` are raised
+        # when TestCases are torn down that have `urls` defined.
+        settings.ROOT_URLCONF = ''
 
-    # Restoring modified settings.
-    settings.INSTALLED_APPS = old_installed
-    settings.ROOT_URLCONF = old_root_urlconf
 
-    return result
+    def teardown_test_environment(self, **kwargs):
+        super(GeoDjangoTestSuiteRunner, self).teardown_test_environment(**kwargs)
+        settings.INSTALLED_APPS = self.old_installed
+        settings.ROOT_URLCONF = self.old_root_urlconf
+        settings.SITE_ID = self.old_site_id
+
+
+    def build_suite(self, test_labels, extra_tests=None, **kwargs):
+        return geodjango_suite()

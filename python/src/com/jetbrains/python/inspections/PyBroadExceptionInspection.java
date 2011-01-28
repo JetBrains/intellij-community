@@ -1,7 +1,10 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -43,6 +46,9 @@ public class PyBroadExceptionInspection extends PyInspection {
         registerProblem(node.getFirstChild(), "Too broad exception clause");
       }
       else if ("Exception".equals(exceptClass.getName())) {
+        PyExpression target = node.getTarget();
+        if (target != null && isExceptionUsed(node, target.getText()))
+          return;
         if (exceptClass instanceof PyReferenceExpression) {
           PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
           PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
@@ -63,6 +69,33 @@ public class PyBroadExceptionInspection extends PyInspection {
       for (PyStatement st : node.getStatementList().getStatements()) {
         if (st instanceof PyRaiseStatement)
           return true;
+      }
+      return false;
+    }
+
+    private static boolean isExceptionUsed(PyExceptPart node, String text) {
+      Stack<PsiElement> stack = new Stack<PsiElement>();
+      PyStatementList statementList = node.getStatementList();
+      if (statementList != null) {
+        for (PyStatement st : statementList.getStatements()) {
+          stack.push(st);
+          while (!stack.isEmpty()) {
+            PsiElement e = stack.pop();
+            if (e instanceof PyReferenceExpression) {
+              PsiReference reference = e.getReference();
+              if (reference != null) {
+                PsiElement resolved = reference.resolve();
+                if (resolved != null) {
+                  if (resolved.getText().equals(text))
+                    return true;
+                }
+              }
+            }
+            for (PsiElement psiElement : e.getChildren()) {
+              stack.push(psiElement);
+            }
+          }
+        }
       }
       return false;
     }

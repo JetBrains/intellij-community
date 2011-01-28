@@ -36,6 +36,10 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
     doTestSuggestions(PyCallExpression.class, "my_class");
   }
 
+  public void testSuggestStringConstantValue() { // PY-1276
+    doTestSuggestions(PyExpression.class, "foo_bar");
+  }
+
   private void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
     myFixture.configureByFile("/refactoring/introduceVariable/" + getTestName(true) + ".py");
     VariableIntroduceHandler handler = new VariableIntroduceHandler();

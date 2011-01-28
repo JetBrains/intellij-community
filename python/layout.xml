@@ -26,6 +26,7 @@
         </dir>
         <dir name="helpers">
           <fileset dir="${project.home}/python/helpers" includes="**/*.py"/>
+          <fileset dir="${project.home}/python/helpers" includes="**/versions.xml"/>
         </dir>
       </dir>
     </layout>

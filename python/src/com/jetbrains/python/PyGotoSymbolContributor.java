@@ -4,13 +4,16 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -20,6 +23,7 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
     Set<String> symbols = new HashSet<String>();
     symbols.addAll(PyClassNameIndex.allKeys(project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(PyVariableNameIndex.KEY, project));
     return ArrayUtil.toStringArray(symbols);
   }
 
@@ -31,6 +35,7 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
     symbols.addAll(PyClassNameIndex.find(name, project, scope));
     symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
+    symbols.addAll(PyVariableNameIndex.find(name, project, scope));
 
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }

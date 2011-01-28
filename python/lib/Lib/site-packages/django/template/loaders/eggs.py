@@ -5,7 +5,7 @@ try:
 except ImportError:
     resource_string = None
 
-from django.template import TemplateDoesNotExist
+from django.template.base import TemplateDoesNotExist
 from django.template.loader import BaseLoader
 from django.conf import settings
 
@@ -33,7 +33,7 @@ def load_template_source(template_name, template_dirs=None):
     import warnings
     warnings.warn(
         "'django.template.loaders.eggs.load_template_source' is deprecated; use 'django.template.loaders.eggs.Loader' instead.",
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     return _loader.load_template_source(template_name, template_dirs)
 load_template_source.is_usable = resource_string is not None

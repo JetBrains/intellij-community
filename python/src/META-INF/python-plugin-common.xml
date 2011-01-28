@@ -24,6 +24,7 @@
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
+    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
@@ -54,6 +55,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
@@ -340,6 +342,8 @@
 
     <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
 
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
@@ -407,6 +411,7 @@
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.PyStdlibTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibModuleMembersProvider"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>

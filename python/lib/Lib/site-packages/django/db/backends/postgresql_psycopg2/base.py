@@ -67,6 +67,9 @@ class CursorWrapper(object):
 class DatabaseFeatures(BaseDatabaseFeatures):
     needs_datetime_string_cast = False
     can_return_id_from_insert = False
+    requires_rollback_on_dirty_transaction = True
+    has_real_datatype = True
+    can_defer_constraint_checks = True
 
 class DatabaseOperations(PostgresqlDatabaseOperations):
     def last_executed_query(self, cursor, sql, params):
@@ -79,6 +82,7 @@ class DatabaseOperations(PostgresqlDatabaseOperations):
         return "RETURNING %s", ()
 
 class DatabaseWrapper(BaseDatabaseWrapper):
+    vendor = 'postgresql'
     operators = {
         'exact': '= %s',
         'iexact': '= UPPER(%s)',
@@ -99,7 +103,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
-        self.features = DatabaseFeatures()
+        self.features = DatabaseFeatures(self)
         autocommit = self.settings_dict["OPTIONS"].get('autocommit', False)
         self.features.uses_autocommit = autocommit
         self._set_isolation_level(int(not autocommit))
@@ -136,7 +140,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection = Database.connect(**conn_params)
             self.connection.set_client_encoding('UTF8')
             self.connection.set_isolation_level(self.isolation_level)
-            connection_created.send(sender=self.__class__)
+            connection_created.send(sender=self.__class__, connection=self)
         cursor = self.connection.cursor()
         cursor.tzinfo_factory = None
         if new_connection:
@@ -189,3 +193,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         finally:
             self.isolation_level = level
             self.features.uses_savepoints = bool(level)
+
+    def _commit(self):
+        if self.connection is not None:
+            try:
+                return self.connection.commit()
+            except Database.IntegrityError, e:
+                raise utils.IntegrityError, utils.IntegrityError(*tuple(e)), sys.exc_info()[2]

@@ -24,7 +24,7 @@ def auth(request):
         "The context processor at `django.core.context_processors.auth` is " \
         "deprecated; use the path `django.contrib.auth.context_processors.auth` " \
         "instead.",
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     from django.contrib.auth.context_processors import auth as auth_context_processor
     return auth_context_processor(request)
@@ -65,6 +65,13 @@ def i18n(request):
     context_extras['LANGUAGE_BIDI'] = translation.get_language_bidi()
 
     return context_extras
+
+def static(request):
+    """
+    Adds static-related context variables to the context.
+
+    """
+    return {'STATIC_URL': settings.STATIC_URL}
 
 def media(request):
     """

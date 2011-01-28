@@ -2,6 +2,7 @@ import os
 import errno
 import urlparse
 import itertools
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
@@ -116,7 +117,28 @@ class Storage(object):
     def url(self, name):
         """
         Returns an absolute URL where the file's contents can be accessed
-        directly by a web browser.
+        directly by a Web browser.
+        """
+        raise NotImplementedError()
+
+    def accessed_time(self, name):
+        """
+        Returns the last accessed time (as datetime object) of the file
+        specified by name.
+        """
+        raise NotImplementedError()
+
+    def created_time(self, name):
+        """
+        Returns the creation time (as datetime object) of the file
+        specified by name.
+        """
+        raise NotImplementedError()
+
+    def modified_time(self, name):
+        """
+        Returns the last modified time (as datetime object) of the file
+        specified by name.
         """
         raise NotImplementedError()
 
@@ -219,6 +241,15 @@ class FileSystemStorage(Storage):
         if self.base_url is None:
             raise ValueError("This file is not accessible via a URL.")
         return urlparse.urljoin(self.base_url, name).replace('\\', '/')
+
+    def accessed_time(self, name):
+        return datetime.fromtimestamp(os.path.getatime(self.path(name)))
+
+    def created_time(self, name):
+        return datetime.fromtimestamp(os.path.getctime(self.path(name)))
+
+    def modified_time(self, name):
+        return datetime.fromtimestamp(os.path.getmtime(self.path(name)))
 
 def get_storage_class(import_path=None):
     if import_path is None:

@@ -80,8 +80,12 @@ class UnicodeCursorWrapper(object):
 
 class DatabaseFeatures(BaseDatabaseFeatures):
     uses_savepoints = True
+    requires_rollback_on_dirty_transaction = True
+    has_real_datatype = True
+    can_defer_constraint_checks = True
 
 class DatabaseWrapper(BaseDatabaseWrapper):
+    vendor = 'postgresql'
     operators = {
         'exact': '= %s',
         'iexact': '= UPPER(%s)',
@@ -105,10 +109,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         import warnings
         warnings.warn(
             'The "postgresql" backend has been deprecated. Use "postgresql_psycopg2" instead.',
-            PendingDeprecationWarning
+            DeprecationWarning
         )
 
-        self.features = DatabaseFeatures()
+        self.features = DatabaseFeatures(self)
         self.ops = DatabaseOperations(self)
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
@@ -135,8 +139,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             if settings_dict['PORT']:
                 conn_string += " port=%s" % settings_dict['PORT']
             self.connection = Database.connect(conn_string, **settings_dict['OPTIONS'])
-            self.connection.set_isolation_level(1) # make transactions transparent to all cursors
-            connection_created.send(sender=self.__class__)
+            # make transactions transparent to all cursors
+            self.connection.set_isolation_level(1)
+            connection_created.send(sender=self.__class__, connection=self)
         cursor = self.connection.cursor()
         if new_connection:
             if set_tz:
@@ -148,6 +153,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 self.features.uses_savepoints = False
             cursor.execute("SET client_encoding to 'UNICODE'")
         return UnicodeCursorWrapper(cursor, 'utf-8')
+
+    def _commit(self):
+        if self.connection is not None:
+            try:
+                return self.connection.commit()
+            except Database.IntegrityError, e:
+                raise utils.IntegrityError, utils.IntegrityError(*tuple(e)), sys.exc_info()[2]
 
 def typecast_string(s):
     """

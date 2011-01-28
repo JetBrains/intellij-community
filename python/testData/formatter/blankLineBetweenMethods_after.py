@@ -1,8 +1,6 @@
 class C:
-    pass
+    def foo(self):
+        pass
 
-def foo():
-    pass
-
-def bar():
-    pass
+    def bar(self):
+        pass

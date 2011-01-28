@@ -45,13 +45,13 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     else {
       PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
       if (pyClass != null) {
-        PyClass[] superClasses = PyUtil.getAllSuperClasses(pyClass);
-        if (superClasses.length != 0) {
-          if (superClasses.length == 1) {
-            superClasses[0].navigate(true);
+        List<PyClass> superClasses = PyUtil.getAllSuperClasses(pyClass);
+        if (superClasses.size() != 0) {
+          if (superClasses.size() == 1) {
+            superClasses.get(0).navigate(true);
           }
           else {
-            NavigationUtil.getPsiElementPopup(superClasses, CodeInsightBundle.message("goto.super.class.chooser.title"))
+            NavigationUtil.getPsiElementPopup(superClasses.toArray(new PyClass[superClasses.size()]), CodeInsightBundle.message("goto.super.class.chooser.title"))
               .showInBestPositionFor(editor);
           }
         }
@@ -66,7 +66,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
       return Collections.emptyList();
     }
     final List<PyFunction> result = new ArrayList<PyFunction>();
-    for (PyClass aClass: pyClass.iterateAncestors()) {
+    for (PyClass aClass: pyClass.iterateAncestorClasses()) {
       final PyFunction byName = aClass.findMethodByName(name, false);
       if (byName != null) {
         result.add(byName);

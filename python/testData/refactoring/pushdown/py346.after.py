@@ -1,6 +1,7 @@
 class A:
     pass
 
+
 class B(A):
     def meth_b1(self):
         pass
@@ -12,6 +13,7 @@ class B(A):
 
     def meth_a2(self):
         pass
+
 
 class D(A):
     def meth_d1(self):

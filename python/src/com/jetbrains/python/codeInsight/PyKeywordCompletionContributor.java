@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * Python keyword completion contributor.
@@ -230,8 +230,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> IN_STRING_LITERAL =
     psiElement().inside(PyStringLiteralExpression.class);
 
-  private static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
-    psiElement().afterLeaf(".");
+  public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
+    psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
 
   private static final FilterPattern FIRST_ON_LINE = new FilterPattern(new StartOfLineFilter());
 
@@ -239,10 +239,11 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     psiElement()
       .afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyImportElement.class));
 
-  private static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
+  public static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
     psiElement().afterLeaf(
-      psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyFromImportStatement.class)
-    ).inside(PyFromImportStatement.class);
+      or(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class),
+         psiElement().withElementType(PyTokenTypes.DOT))
+      ).inside(PyFromImportStatement.class);
 
   private static final PsiElementPattern.Capture<PsiElement> IN_WITH_AFTER_REF =
     psiElement().afterLeaf(psiElement()

@@ -52,6 +52,9 @@ class SQLCompiler(object):
         If 'with_limits' is False, any limit/offset information is not included
         in the query.
         """
+        if with_limits and self.query.low_mark == self.query.high_mark:
+            return '', ()
+
         self.pre_sql_setup()
         out_cols = self.get_columns(with_col_aliases)
         ordering, ordering_group_by = self.get_ordering()
@@ -466,9 +469,11 @@ class SQLCompiler(object):
         qn = self.quote_name_unless_alias
         result, params = [], []
         if self.query.group_by is not None:
-            if len(self.query.model._meta.fields) == len(self.query.select) and \
-                self.connection.features.allows_group_by_pk:
-                self.query.group_by = [(self.query.model._meta.db_table, self.query.model._meta.pk.column)]
+            if (len(self.query.model._meta.fields) == len(self.query.select) and
+                self.connection.features.allows_group_by_pk):
+                self.query.group_by = [
+                    (self.query.model._meta.db_table, self.query.model._meta.pk.column)
+                ]
 
             group_by = self.query.group_by or []
 
@@ -476,11 +481,13 @@ class SQLCompiler(object):
             for extra_select, extra_params in self.query.extra_select.itervalues():
                 extra_selects.append(extra_select)
                 params.extend(extra_params)
-            for col in group_by + self.query.related_select_cols + extra_selects:
+            cols = (group_by + self.query.select +
+                self.query.related_select_cols + extra_selects)
+            for col in cols:
                 if isinstance(col, (list, tuple)):
                     result.append('%s.%s' % (qn(col[0]), qn(col[1])))
                 elif hasattr(col, 'as_sql'):
-                    result.append(col.as_sql(qn))
+                    result.append(col.as_sql(qn, self.connection))
                 else:
                     result.append('(%s)' % str(col))
         return result, params
@@ -669,6 +676,7 @@ class SQLCompiler(object):
         """
         resolve_columns = hasattr(self, 'resolve_columns')
         fields = None
+        has_aggregate_select = bool(self.query.aggregate_select)
         for rows in self.execute_sql(MULTI):
             for row in rows:
                 if resolve_columns:
@@ -689,7 +697,7 @@ class SQLCompiler(object):
                                       f.column in only_load[db_table]]
                     row = self.resolve_columns(row, fields)
 
-                if self.query.aggregate_select:
+                if has_aggregate_select:
                     aggregate_start = len(self.query.extra_select.keys()) + len(self.query.select)
                     aggregate_end = aggregate_start + len(self.query.aggregate_select)
                     row = tuple(row[:aggregate_start]) + tuple([

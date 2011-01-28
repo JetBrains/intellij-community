@@ -7,15 +7,17 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Alexey.Ivanov
  */
 public class PyTypeHierarchyTreeStructure extends PySubTypesHierarchyTreeStructure {
   private static PyTypeHierarchyNodeDescriptor buildHierarchyElement(@NotNull final PyClass cl) {
     PyTypeHierarchyNodeDescriptor descriptor = null;
-    PyClass[] superClasses = PyUtil.getAllSuperClasses(cl);
-    for (int i = superClasses.length - 1; i >= 0; --i) {
-      final PyClass superClass = superClasses[i];
+    List<PyClass> superClasses = PyUtil.getAllSuperClasses(cl);
+    for (int i = superClasses.size() - 1; i >= 0; --i) {
+      final PyClass superClass = superClasses.get(i);
       final PyTypeHierarchyNodeDescriptor newDescriptor = new PyTypeHierarchyNodeDescriptor(descriptor, superClass, false);
       if (descriptor != null) {
         descriptor.setCachedChildren(new PyTypeHierarchyNodeDescriptor[]{newDescriptor});

@@ -9,7 +9,8 @@ from django.utils.datastructures import SortedDict
 from django.utils.text import get_text_list, capfirst
 from django.utils.translation import ugettext_lazy as _, ugettext
 
-from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS, \
+                                   FieldError
 from django.core.validators import EMPTY_VALUES
 from util import ErrorList
 from forms import BaseForm, get_declared_fields
@@ -39,7 +40,7 @@ def construct_instance(form, instance, fields=None, exclude=None):
         if not f.editable or isinstance(f, models.AutoField) \
                 or not f.name in cleaned_data:
             continue
-        if fields and f.name not in fields:
+        if fields is not None and f.name not in fields:
             continue
         if exclude and f.name in exclude:
             continue
@@ -150,7 +151,7 @@ def model_to_dict(instance, fields=None, exclude=None):
             data[f.name] = f.value_from_object(instance)
     return data
 
-def fields_for_model(model, fields=None, exclude=None, widgets=None, formfield_callback=lambda f, **kwargs: f.formfield(**kwargs)):
+def fields_for_model(model, fields=None, exclude=None, widgets=None, formfield_callback=None):
     """
     Returns a ``SortedDict`` containing form fields for the given model.
 
@@ -167,7 +168,7 @@ def fields_for_model(model, fields=None, exclude=None, widgets=None, formfield_c
     for f in opts.fields + opts.many_to_many:
         if not f.editable:
             continue
-        if fields and not f.name in fields:
+        if fields is not None and not f.name in fields:
             continue
         if exclude and f.name in exclude:
             continue
@@ -175,7 +176,14 @@ def fields_for_model(model, fields=None, exclude=None, widgets=None, formfield_c
             kwargs = {'widget': widgets[f.name]}
         else:
             kwargs = {}
-        formfield = formfield_callback(f, **kwargs)
+
+        if formfield_callback is None:
+            formfield = f.formfield(**kwargs)
+        elif not callable(formfield_callback):
+            raise TypeError('formfield_callback must be a function or callable')
+        else:
+            formfield = formfield_callback(f, **kwargs)
+
         if formfield:
             field_list.append((f.name, formfield))
         else:
@@ -198,8 +206,7 @@ class ModelFormOptions(object):
 
 class ModelFormMetaclass(type):
     def __new__(cls, name, bases, attrs):
-        formfield_callback = attrs.pop('formfield_callback',
-                lambda f, **kwargs: f.formfield(**kwargs))
+        formfield_callback = attrs.pop('formfield_callback', None)
         try:
             parents = [b for b in bases if issubclass(b, ModelForm)]
         except NameError:
@@ -218,6 +225,15 @@ class ModelFormMetaclass(type):
             # If a model is defined, extract form fields from it.
             fields = fields_for_model(opts.model, opts.fields,
                                       opts.exclude, opts.widgets, formfield_callback)
+            # make sure opts.fields doesn't specify an invalid field
+            none_model_fields = [k for k, v in fields.iteritems() if not v]
+            missing_fields = set(none_model_fields) - \
+                             set(declared_fields.keys())
+            if missing_fields:
+                message = 'Unknown field(s) (%s) specified for %s'
+                message = message % (', '.join(missing_fields),
+                                     opts.model.__name__)
+                raise FieldError(message)
             # Override default model fields with any custom declared ones
             # (plus, include all the other declared fields).
             fields.update(declared_fields)
@@ -238,10 +254,8 @@ class BaseModelForm(BaseForm):
             # if we didn't get an instance, instantiate a new one
             self.instance = opts.model()
             object_data = {}
-            self.instance._adding = True
         else:
             self.instance = instance
-            self.instance._adding = False
             object_data = model_to_dict(instance, opts.fields, opts.exclude)
         # if initial was provided, it should override the values from instance
         if initial is not None:
@@ -376,7 +390,7 @@ class ModelForm(BaseModelForm):
     __metaclass__ = ModelFormMetaclass
 
 def modelform_factory(model, form=ModelForm, fields=None, exclude=None,
-                       formfield_callback=lambda f: f.formfield()):
+                       formfield_callback=None):
     # Create the inner Meta class. FIXME: ideally, we should be able to
     # construct a ModelForm without creating and passing in a temporary
     # inner class.
@@ -510,10 +524,9 @@ class BaseModelFormSet(BaseFormSet):
                 # it's already invalid
                 if not hasattr(form, "cleaned_data"):
                     continue
-                # get each of the fields for which we have data on this form
-                if [f for f in unique_check if f in form.cleaned_data and form.cleaned_data[f] is not None]:
-                    # get the data itself
-                    row_data = tuple([form.cleaned_data[field] for field in unique_check])
+                # get data for each field of each of unique_check
+                row_data = tuple([form.cleaned_data[field] for field in unique_check if field in form.cleaned_data])
+                if row_data and not None in row_data:
                     # if we've aready seen it then we have a uniqueness failure
                     if row_data in seen_data:
                         # poke error messages into the right places and mark
@@ -658,7 +671,7 @@ class BaseModelFormSet(BaseFormSet):
             form.fields[self._pk_field.name] = ModelChoiceField(qs, initial=pk_value, required=False, widget=HiddenInput)
         super(BaseModelFormSet, self).add_fields(form, index)
 
-def modelformset_factory(model, form=ModelForm, formfield_callback=lambda f: f.formfield(),
+def modelformset_factory(model, form=ModelForm, formfield_callback=None,
                          formset=BaseModelFormSet,
                          extra=1, can_delete=False, can_order=False,
                          max_num=None, fields=None, exclude=None):
@@ -813,7 +826,7 @@ def inlineformset_factory(parent_model, model, form=ModelForm,
                           formset=BaseInlineFormSet, fk_name=None,
                           fields=None, exclude=None,
                           extra=3, can_order=False, can_delete=True, max_num=None,
-                          formfield_callback=lambda f: f.formfield()):
+                          formfield_callback=None):
     """
     Returns an ``InlineFormSet`` for the given kwargs.
 
@@ -906,12 +919,7 @@ class ModelChoiceIterator(object):
         return len(self.queryset)
 
     def choice(self, obj):
-        if self.field.to_field_name:
-            key = obj.serializable_value(self.field.to_field_name)
-        else:
-            key = obj.pk
-        return (key, self.field.label_from_instance(obj))
-
+        return (self.field.prepare_value(obj), self.field.label_from_instance(obj))
 
 class ModelChoiceField(ChoiceField):
     """A ChoiceField whose choices are a model QuerySet."""
@@ -971,8 +979,8 @@ class ModelChoiceField(ChoiceField):
             return self._choices
 
         # Otherwise, execute the QuerySet in self.queryset to determine the
-        # choices dynamically. Return a fresh QuerySetIterator that has not been
-        # consumed. Note that we're instantiating a new QuerySetIterator *each*
+        # choices dynamically. Return a fresh ModelChoiceIterator that has not been
+        # consumed. Note that we're instantiating a new ModelChoiceIterator *each*
         # time _get_choices() is called (and, thus, each time self.choices is
         # accessed) so that we can ensure the QuerySet has not been consumed. This
         # construct might look complicated but it allows for lazy evaluation of
@@ -981,13 +989,21 @@ class ModelChoiceField(ChoiceField):
 
     choices = property(_get_choices, ChoiceField._set_choices)
 
+    def prepare_value(self, value):
+        if hasattr(value, '_meta'):
+            if self.to_field_name:
+                return value.serializable_value(self.to_field_name)
+            else:
+                return value.pk
+        return super(ModelChoiceField, self).prepare_value(value)
+
     def to_python(self, value):
         if value in EMPTY_VALUES:
             return None
         try:
             key = self.to_field_name or 'pk'
             value = self.queryset.get(**{key: value})
-        except self.queryset.model.DoesNotExist:
+        except (ValueError, self.queryset.model.DoesNotExist):
             raise ValidationError(self.error_messages['invalid_choice'])
         return value
 
@@ -1029,4 +1045,12 @@ class ModelMultipleChoiceField(ModelChoiceField):
         for val in value:
             if force_unicode(val) not in pks:
                 raise ValidationError(self.error_messages['invalid_choice'] % val)
+        # Since this overrides the inherited ModelChoiceField.clean
+        # we run custom validators here
+        self.run_validators(value)
         return qs
+
+    def prepare_value(self, value):
+        if hasattr(value, '__iter__'):
+            return [super(ModelMultipleChoiceField, self).prepare_value(v) for v in value]
+        return super(ModelMultipleChoiceField, self).prepare_value(value)

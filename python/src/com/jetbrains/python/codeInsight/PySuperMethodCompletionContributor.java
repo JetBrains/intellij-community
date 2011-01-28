@@ -41,7 +41,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                for (PyFunction function : containingClass.getMethods()) {
                  seenNames.add(function.getName());
                }
-               for (PyClass ancestor : containingClass.iterateAncestors()) {
+               for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      result.addElement(LookupElementBuilder.create(superMethod.getName() + superMethod.getParameterList().getText() + ":"));
