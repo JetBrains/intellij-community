@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -50,14 +51,8 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
       if (libTable != null) {
         for (Library lib : libTable.getLibraries()) {
           if (lib instanceof LibraryEx && libType.equals(((LibraryEx)lib).getType())) {
-            for (VirtualFile libFile : lib.getFiles(OrderRootType.SOURCES)) {
-              libFile.putUserData(getIndexKey(), "");
-              libFiles.add(libFile);
-            }
-            for (VirtualFile libFile : lib.getFiles(OrderRootType.CLASSES)) {
-              libFile.putUserData(getIndexKey(), "");
-              libFiles.add(libFile);
-            }
+            libFiles.addAll(Arrays.asList(lib.getFiles(OrderRootType.SOURCES)));
+            libFiles.addAll(Arrays.asList(lib.getFiles(OrderRootType.CLASSES)));
           }
         }
       }
