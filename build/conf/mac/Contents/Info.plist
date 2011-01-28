@@ -39,12 +39,14 @@
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
     <string>@@build@@</string>
+
     <key>LSArchitecturePriority</key>
     <array>
-      <string>i386</string>
       <string>x86_64</string>
-      <string>ppc</string>
+      <string>i386</string>
     </array>
+    <key>LSRequiresNativeExecution</key>
+    <string>YES</string>
 
     <key>Java</key>
    <dict>
