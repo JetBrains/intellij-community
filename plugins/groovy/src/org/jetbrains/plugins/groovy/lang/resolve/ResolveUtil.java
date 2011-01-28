@@ -585,7 +585,7 @@ public class ResolveUtil {
   public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
                                                           @Nullable String methodName,
                                                           @NotNull GroovyPsiElement place,
-                                                          @Nullable PsiType[] argumentTypes) {
+                                                          @Nullable PsiType... argumentTypes) {
     if (methodName != null) {
       MethodResolverProcessor processor =
         new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
