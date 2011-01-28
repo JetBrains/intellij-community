@@ -12,10 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -28,7 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -271,4 +280,15 @@ public abstract class HgUtil {
     }
     return map;
   }
+
+  /**
+   * Displays an error notification.
+   */
+  public static void notifyError(Project project, String title, String description) {
+    if (StringUtil.isEmptyOrSpaces(description)) {
+      description = title;
+    }
+    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
+  }
+
 }

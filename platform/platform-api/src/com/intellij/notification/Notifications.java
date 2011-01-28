@@ -49,19 +49,36 @@ public interface Notifications {
     }
 
     public static void notify(@NotNull final Notification notification, @NotNull final NotificationDisplayType defaultDisplayType, @Nullable final Project project) {
-      if (project != null && !project.isInitialized()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-           public void run() {
-             project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-           }
-         });
+      if (project != null && !project.isDisposed()) {
+        if (!project.isInitialized()) {
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            public void run() {
+              project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+            }
+          });
+        }
+        else {
+          if (EventQueue.isDispatchThread()) {
+            project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+          }
+          else {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+              }
+            });
+          }
+        }
+
         return;
       }
 
       FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
         @Override
         public void run() {
-          final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : (project.isDisposed() ? null : project.getMessageBus());
+          final MessageBus bus =
+            project == null ? ApplicationManager.getApplication().getMessageBus() : (project.isDisposed() ? null : project.getMessageBus());
           if (bus != null) {
             if (EventQueue.isDispatchThread()) {
               bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);

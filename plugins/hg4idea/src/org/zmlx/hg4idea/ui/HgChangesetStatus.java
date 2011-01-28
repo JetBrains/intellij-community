@@ -21,8 +21,11 @@ import javax.swing.*;
 
 public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
 
-  public HgChangesetStatus(Icon icon) {
+  private final String myName;
+
+  public HgChangesetStatus(Icon icon, String name) {
     super(icon, SwingConstants.TRAILING);
+    myName = name;
     setVisible(false);
   }
 
@@ -38,6 +41,10 @@ public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
         setVisible(true);
       }
     });
+  }
+
+  public String getStatusName() {
+    return myName;
   }
 
   public interface ChangesetWriter {

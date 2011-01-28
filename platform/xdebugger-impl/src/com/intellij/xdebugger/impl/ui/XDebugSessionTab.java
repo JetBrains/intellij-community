@@ -21,8 +21,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -35,7 +33,10 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
@@ -44,7 +45,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebugViewBase;
 import com.intellij.xdebugger.impl.frame.XFramesView;
@@ -145,11 +145,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static ExecutionResult createExecutionResult(@NotNull final XDebugSession session) {
     final XDebugProcess debugProcess = session.getDebugProcess();
     ProcessHandler processHandler = debugProcess.getProcessHandler();
-    processHandler.addProcessListener(new ProcessAdapter() {
-      public void processTerminated(final ProcessEvent event) {
-        ((XDebugSessionImpl)session).stopImpl();
-      }
-    });
     return new DefaultExecutionResult(debugProcess.createConsole(), processHandler);
   }
 

@@ -137,6 +137,10 @@ public class PathMacroTable extends Table {
   }
 
   private boolean hasMacroWithName(String name) {
+    if (PathMacros.getInstance().getSystemMacroNames().contains(name)) {
+      return true;
+    }
+
     for (Pair<String, String> macro : myMacros) {
       if (name.equals(macro.getFirst())) {
         return true;
@@ -264,6 +268,8 @@ public class PathMacroTable extends Table {
   private static class EditValidator implements PathMacroEditor.Validator {
     public boolean checkName(String name) {
       if (name.length() == 0) return false;
+      if (PathMacros.getInstance().getSystemMacroNames().contains(name)) return false;
+
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 

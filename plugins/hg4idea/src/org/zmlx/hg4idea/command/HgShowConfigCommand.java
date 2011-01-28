@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class HgShowConfigCommand {
     }
 
     HgCommandResult result =
-      HgCommandService.getInstance(project).execute(repo, "showconfig", null);
+      HgCommandService.getInstance(project).execute(repo, HgCommandService.DEFAULT_OPTIONS, "showconfig", null, Charset.defaultCharset(), true);
 
     if (result == null) {
       return Collections.emptyMap();

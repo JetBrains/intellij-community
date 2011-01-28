@@ -31,5 +31,9 @@ public class HgIncomingCommand extends HgChangesetsCommand {
   protected boolean isSilentCommand() {
     return true;
   }
-  
+
+  @Override
+  protected boolean isAuthenticationNeeded() {
+    return true;
+  }
 }

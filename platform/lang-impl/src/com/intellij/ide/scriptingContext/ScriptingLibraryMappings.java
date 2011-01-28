@@ -375,6 +375,24 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       myLibraries.clear();
       myLibraries.putAll(myOldLibraries);
     }
+
+    @Override
+    public Set<VirtualFile> getSourceFiles() {
+      Set<VirtualFile> sourceFiles = new HashSet<VirtualFile>();
+      for (ScriptingLibraryTable.LibraryModel libModel : myLibraries.values()) {
+        sourceFiles.addAll(libModel.getSourceFiles());
+      }
+      return sourceFiles;
+    }
+
+    @Override
+    public Set<VirtualFile> getCompactFiles() {
+      Set<VirtualFile> compactFiles = new HashSet<VirtualFile>();
+      for (ScriptingLibraryTable.LibraryModel libModel : myLibraries.values()) {
+        compactFiles.addAll(libModel.getCompactFiles());
+      }
+      return compactFiles;
+    }
   }
 
   /**
@@ -400,6 +418,21 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
     return isApplicable(libFile, srcFile.getParent());
   }
-
+  
+  public Set<VirtualFile> getLibraryFilesFor(VirtualFile srcFile) {
+    Set<VirtualFile> libFiles = new HashSet<VirtualFile>();
+    collectLibraryFilesFor(srcFile, libFiles);
+    return libFiles;
+  }
+  
+  private void collectLibraryFilesFor(VirtualFile file, Set<VirtualFile> libFiles) {
+    if (file == null) return;
+    ScriptingLibraryTable.LibraryModel libraryModel = getMapping(file);
+    if (libraryModel != null) {
+      libFiles.addAll(libraryModel.getCompactFiles());
+      libFiles.addAll(libraryModel.getSourceFiles());
+    }
+    collectLibraryFilesFor(file.getParent(), libFiles);
+  }
 
 }

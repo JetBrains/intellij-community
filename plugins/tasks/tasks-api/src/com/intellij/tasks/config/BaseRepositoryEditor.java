@@ -34,6 +34,7 @@ import java.awt.event.ActionListener;
  */
 public class BaseRepositoryEditor<T extends BaseRepository> extends TaskRepositoryEditor {
 
+  protected JLabel myUrlLabel;
   protected JTextField myURLText;
   protected JTextField myUserNameText;
   protected JLabel myUsernameLabel;  

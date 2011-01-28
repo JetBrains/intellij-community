@@ -103,7 +103,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     });
 
     myProject = project;
-    myLoadQueue = new ZipperUpdater(500);
+    myLoadQueue = new ZipperUpdater(500, getDisposable());
     myPatches = new LinkedList<FilePatchInProgress>();
     myRecentPathFileChange = new AtomicReference<FilePresentation>();
     myChangesTreeList = new MyChangeTreeList(project, Collections.<FilePatchInProgress.PatchChange>emptyList(),

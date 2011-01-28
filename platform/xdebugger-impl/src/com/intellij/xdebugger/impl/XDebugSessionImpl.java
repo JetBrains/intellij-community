@@ -15,9 +15,13 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -74,27 +78,30 @@ public class XDebugSessionImpl implements XDebugSession {
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private String mySessionName;
   private XDebugSessionTab mySessionTab;
+  private XDebugSessionData mySessionData;
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private Project myProject;
   private @Nullable ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
+  private boolean myShowTabOnSuspend;
 
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env,
                            final @NotNull ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager) {
-    this(env, runner, debuggerManager, env.getRunProfile().getName());
+    this(env, runner, debuggerManager, env.getRunProfile().getName(), false);
   }
 
   public XDebugSessionImpl(final @Nullable ExecutionEnvironment env,
                            final @Nullable ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager,
-                           final @NotNull String sessionName) {
+                           final @NotNull String sessionName, final boolean showTabOnSuspend) {
     myEnvironment = env;
     myRunner = runner;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
+    myShowTabOnSuspend = showTabOnSuspend;
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
   }
@@ -106,8 +113,17 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @NotNull
   public RunContentDescriptor getRunContentDescriptor() {
-    LOG.assertTrue(mySessionTab != null, "Call init() first!");
+    assertSessionTabInitialized();
     return mySessionTab.getRunContentDescriptor();
+  }
+
+  private void assertSessionTabInitialized() {
+    if (myShowTabOnSuspend) {
+      LOG.error("Debug tool window isn't shown yet because debug process isn't suspended");
+    }
+    else {
+      LOG.assertTrue(mySessionTab != null, "Debug tool window not initialized yet!");
+    }
   }
 
   public void setPauseActionSupported(final boolean isSupported) {
@@ -115,7 +131,9 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void rebuildViews() {
-    mySessionTab.rebuildViews();
+    if (!myShowTabOnSuspend) {
+      mySessionTab.rebuildViews();
+    }
   }
 
   @Nullable
@@ -162,6 +180,7 @@ public class XDebugSessionImpl implements XDebugSession {
   public XDebugSessionTab init(final XDebugProcess process, @NotNull final XDebugSessionData sessionData) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
+    mySessionData = sessionData;
 
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
@@ -173,8 +192,14 @@ public class XDebugSessionImpl implements XDebugSession {
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
 
-    initSessionTab(sessionData);
-    process.sessionInitialized();
+    myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+      public void processTerminated(final ProcessEvent event) {
+        stopImpl();
+      }
+    });
+    if (!myShowTabOnSuspend) {
+      initSessionTab();
+    }
 
     return mySessionTab;
   }
@@ -183,13 +208,14 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
-  private void initSessionTab(@NotNull XDebugSessionData sessionData) {
+  private void initSessionTab() {
     mySessionTab = new XDebugSessionTab(myProject, mySessionName);
     if (myEnvironment != null) {
       mySessionTab.setEnvironment(myEnvironment);
     }
     Disposer.register(myProject, mySessionTab);
-    mySessionTab.attachToSession(this, myRunner, myEnvironment, sessionData);
+    mySessionTab.attachToSession(this, myRunner, myEnvironment, mySessionData);
+    myDebugProcess.sessionInitialized();
   }
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
@@ -203,6 +229,11 @@ public class XDebugSessionImpl implements XDebugSession {
         myDisabledSlaveBreakpoints.add(slaveBreakpoint);
       }
     }
+  }
+
+  public void showSessionTab() {
+    RunContentDescriptor descriptor = getRunContentDescriptor();
+    ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
   private static <B extends XBreakpoint<?>> XBreakpointType<?, ?> getBreakpointTypeClass(final XBreakpointHandler<B> handler) {
@@ -483,9 +514,10 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void printMessage(final String message, final String hyperLinkText, @Nullable final HyperlinkInfo info) {
+    assertSessionTabInitialized();
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
-        final ConsoleView consoleView = getConsoleView();
+        final ConsoleView consoleView = (ConsoleView)mySessionTab.getConsole();
         consoleView.print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
         if (info != null) {
           consoleView.printHyperlink(hyperLinkText, info);
@@ -496,10 +528,6 @@ public class XDebugSessionImpl implements XDebugSession {
         consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
       }
     });
-  }
-
-  private ConsoleView getConsoleView() {
-    return (ConsoleView)mySessionTab.getConsole();
   }
 
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
@@ -515,6 +543,11 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
+        if (myShowTabOnSuspend) {
+          myShowTabOnSuspend = false;
+          initSessionTab();
+          showSessionTab();
+        }
         mySessionTab.toFront();
       }
     });
@@ -536,7 +569,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myStopped;
   }
 
-  public void stopImpl() {
+  private void stopImpl() {
     if (myStopped) return;
 
     myDebugProcess.stop();

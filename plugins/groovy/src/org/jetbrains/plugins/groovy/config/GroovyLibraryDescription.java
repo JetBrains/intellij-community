@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfigura
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,12 +44,13 @@ import java.util.Set;
 * @author nik
 */
 public class GroovyLibraryDescription extends CustomLibraryDescription {
+  private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
   private final Condition<List<VirtualFile>> myCondition;
   private String myEnvVariable;
   private final String myFrameworkName;
 
   public GroovyLibraryDescription() {
-    this("GROOVY_HOME", getAllGroovyKinds());
+    this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
   }
 
   private static Set<? extends LibraryKind<?>> getAllGroovyKinds() {
@@ -63,10 +65,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   public GroovyLibraryDescription(@NotNull String envVariable, @NotNull LibraryKind<?> libraryKind, String frameworkName) {
     this(envVariable, Collections.singleton(libraryKind), frameworkName);
-  }
-
-  public GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds) {
-    this(envVariable, libraryKinds, "Groovy");
   }
 
   private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds, String frameworkName) {
@@ -111,10 +109,9 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    final String envHome = System.getenv(myEnvVariable);
-    VirtualFile initial = null;
-    if (envHome != null && envHome.length() > 0) {
-      initial = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(envHome));
+    VirtualFile initial = findFile(System.getenv(myEnvVariable));
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
+      initial = findFile("/usr/share/groovy");
     }
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -149,6 +146,14 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         provider.fillLibrary(path, editor);
       }
     };
+  }
+
+  @Nullable
+  private VirtualFile findFile(String path) {
+    if (path != null && path.length() > 0) {
+      return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+    }
+    return null;
   }
 
   @NotNull
