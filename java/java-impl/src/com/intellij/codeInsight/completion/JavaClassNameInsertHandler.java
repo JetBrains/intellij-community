@@ -71,6 +71,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
           new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
         }
       });
+    } else if (c == '.' && PsiTreeUtil.getParentOfType(position, PsiParameterList.class) == null) {
+      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
 
     if (position != null) {

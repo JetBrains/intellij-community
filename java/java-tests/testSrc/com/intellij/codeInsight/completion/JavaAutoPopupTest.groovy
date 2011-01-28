@@ -366,4 +366,26 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup
   }
 
+  public void testDotAfterClassName() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { <caret> }
+    }
+    """)
+    type 'FilInpStr.'
+    assert myFixture.file.text.contains("FileInputStream.")
+    assert lookup
+  }
+
+  public void testDotAfterClassNameInParameter() {
+    myFixture.configureByText("a.java", """
+    class A {
+      void foo(<caret>) {}
+    }
+    """)
+    type 'FilInpStr...'
+    assert myFixture.editor.document.text.contains("FileInputStream...")
+    assert !lookup
+  }
+
 }
