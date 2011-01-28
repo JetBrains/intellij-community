@@ -1,13 +1,8 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeInsight.CharTailType;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyIcons;
@@ -19,6 +14,8 @@ import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * Completes predefined method names like __str__
