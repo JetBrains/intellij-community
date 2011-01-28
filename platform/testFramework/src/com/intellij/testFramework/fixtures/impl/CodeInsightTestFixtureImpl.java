@@ -67,6 +67,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -1143,6 +1144,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           final File tempFile = FileUtil.createTempFile(new File(getTempDirPath()), prefix, "." + StringUtil.getShortName(fileName), true);
           vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
         }
+        final Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+        if (document != null) {
+          FileDocumentManager.getInstance().saveDocument(document);
+        }
+
         VfsUtil.saveText(vFile, text);
         configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
       }

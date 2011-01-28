@@ -16,9 +16,10 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.ui.UISettings
 
 /**
  * @author peter
@@ -386,6 +387,50 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type 'FilInpStr...'
     assert myFixture.editor.document.text.contains("FileInputStream...")
     assert !lookup
+  }
+
+  void testArrow(boolean up, boolean cycleScrolling, boolean lookupAbove, int index) {
+    myFixture.configureByText("a.java", """
+    class A {
+      { ArrayIndexOutOfBoundsException <caret> }
+    }
+    """)
+
+    type 'o'
+    assert lookup
+    assert !lookup.focused
+    assert lookup.items.size() == 2
+
+    UISettings.instance.CYCLE_SCROLLING = cycleScrolling
+
+    try {
+      edt { myFixture.performEditorAction(up ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+      if (lookup) {
+        assert lookup.focused
+        assert index >= 0
+        assert lookup.items[index] == lookup.currentItem
+        edt { lookup.hide() }
+      } else {
+        assert index == -1
+      }
+      type '\b'
+    }
+    finally {
+      UISettings.instance.CYCLE_SCROLLING = true
+    }
+
+  }
+
+  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, indexUp) {
+    testArrow true, cycleScrolling, lookupAbove, indexUp
+    testArrow false, cycleScrolling, lookupAbove, indexDown
+  }
+
+  public void testVerticalArrows() {
+    testArrows false, false, 0, -1
+    testArrows false, true, 0, -1
+    testArrows true, false, 0, 1
+    testArrows true, true, 0, 1
   }
 
 }
