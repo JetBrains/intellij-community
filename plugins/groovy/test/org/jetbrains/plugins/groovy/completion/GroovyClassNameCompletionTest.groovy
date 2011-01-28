@@ -198,5 +198,11 @@ new Fxoo()<caret>\n"""
     myFixture.checkResult "try {} catch (AbcdException<caret>"
   }
 
+  public void testClassNameInMultilineString() {
+    myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
+  }
+
 
 }

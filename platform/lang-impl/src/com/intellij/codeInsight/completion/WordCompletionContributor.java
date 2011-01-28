@@ -50,7 +50,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
   public static void addWordCompletionVariants(CompletionResultSet result, CompletionParameters parameters, Set<String> excludes) {
     int startOffset = parameters.getOffset();
     PsiElement insertedElement = parameters.getPosition();
-    final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(insertedElement, startOffset));
+    final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters));
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findIdentifierPrefix(insertedElement,
                                                                                                             startOffset,
                                                                                                             character().javaIdentifierPart().andNot(character().equalTo('$')),
