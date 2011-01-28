@@ -108,11 +108,11 @@ class ProjectBuilder {
   }
 
   def makeModule(Module module) {
-    return makeModuleWithDependencies(module, false);
+    makeModuleWithDependencies(module, false);
   }
 
   def makeModuleTests(Module module) {
-    return makeModuleWithDependencies(module, true);
+    makeModuleWithDependencies(module, true);
   }
 
   def deleteTempFiles() {

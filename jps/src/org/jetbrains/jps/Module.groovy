@@ -85,7 +85,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   }
 
   def getOutput() {
-    make()
+    return outputPath
   }
 
   List<String> runtimeClasspath() {
