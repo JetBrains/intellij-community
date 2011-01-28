@@ -37,7 +37,7 @@ import java.util.List;
  */
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
-  private final MyTimedReference<T> myData = new MyTimedReference<T>();
+  private volatile SoftReference<Data<T>> myData = null;
 
   protected Data<T> computeData(T value, Object[] dependencies) {
     if (dependencies == null) {
@@ -52,8 +52,7 @@ public abstract class CachedValueBase<T> {
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
-    myData.setData(computeData(value == null ? (T)ObjectUtils.NULL : value, getDependencies(result)));
-    myData.setIsLocked(result != null && result.isLockValue());
+    myData = new SoftReference<Data<T>>(computeData(value == null ? (T)ObjectUtils.NULL : value, getDependencies(result)));
   }
 
   @Nullable
@@ -74,11 +73,10 @@ public abstract class CachedValueBase<T> {
   }
 
   public void clear() {
-    myData.set(null);
+    myData = null;
   }
 
   public void setDataLocked(boolean value) {
-    myData.setIsLocked(value);
   }
 
   public boolean hasUpToDateValue() {
@@ -87,7 +85,8 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private T getUpToDateOrNull(boolean dispose) {
-    final Data<T> data = myData.getData();
+    final SoftReference<Data<T>> ref = myData;
+    final Data<T> data = ref == null ? null : ref.get();
 
     if (data != null) {
       T value = data.myValue;
@@ -195,29 +194,4 @@ public abstract class CachedValueBase<T> {
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
 
-  private static class MyTimedReference<T> extends TimedReference<SoftReference<Data<T>>> {
-    private boolean myIsLocked;
-
-    public MyTimedReference() {
-      super(null);
-    }
-
-    public synchronized void setIsLocked(final boolean isLocked) {
-      myIsLocked = isLocked;
-    }
-
-    protected synchronized boolean isLocked() {
-      return super.isLocked() || myIsLocked;
-    }
-
-    public void setData(final Data<T> data) {
-      set(new SoftReference<Data<T>>(data));
-    }
-
-    @Nullable
-    public Data<T> getData() {
-      final SoftReference<Data<T>> ref = get();
-      return ref != null ? ref.get() : null;
-    }
-  }
 }
