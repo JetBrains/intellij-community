@@ -160,6 +160,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return false;
   }
 
+  @Override
+  public boolean isSubclass(String superClassQName) {
+    if (getQualifiedName().equals(superClassQName)) return true;
+    for (PyClassRef superclass : iterateAncestors()) {
+      if (superClassQName.equals(superclass.getQualifiedName())) return true;
+    }
+    return false;
+  }
+
   public PyDecoratorList getDecoratorList() {
     return childToPsi(PyElementTypes.DECORATOR_LIST);
   }
