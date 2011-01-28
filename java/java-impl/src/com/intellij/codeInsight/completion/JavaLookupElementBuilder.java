@@ -74,6 +74,17 @@ public class JavaLookupElementBuilder {
 
   public static LookupElementBuilder forClass(@NotNull PsiClass psiClass,
                                               final String lookupString) {
-    return LookupElementBuilder.create(psiClass, lookupString).setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    return forClass(psiClass, lookupString, false);
+  }
+
+  public static LookupElementBuilder forClass(@NotNull PsiClass psiClass,
+                                              final String lookupString,
+                                              final boolean withLocation) {
+    final LookupElementBuilder builder =
+      LookupElementBuilder.create(psiClass, lookupString).setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    if (withLocation) {
+      return builder.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
+    }
+    return builder;
   }
 }

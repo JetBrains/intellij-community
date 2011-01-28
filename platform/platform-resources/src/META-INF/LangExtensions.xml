@@ -12,8 +12,6 @@
 
   <applicationService serviceInterface="com.intellij.codeInsight.intention.IntentionManager"
                       serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl"/>
-  <applicationService serviceInterface="com.intellij.codeInsight.lookup.LookupElementFactory"
-                      serviceImplementation="com.intellij.codeInsight.lookup.LookupElementFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 

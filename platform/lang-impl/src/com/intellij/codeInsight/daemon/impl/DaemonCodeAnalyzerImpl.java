@@ -172,6 +172,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
                                        @Nullable Runnable callbackWhileWaiting) {
+    assert isInitialized();
+    assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     assert !application.isWriteAccessAllowed();
@@ -198,18 +200,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     try {
       while (progress.isRunning()) {
         try {
-        if (progress.isCanceled() && progress.isRunning()) {
-          // write action sneaked in the AWT. restart
-          waitForTermination();
+          if (progress.isCanceled() && progress.isRunning()) {
+            // write action sneaked in the AWT. restart
+            waitForTermination();
+            Throwable savedException = PassExecutorService.getSavedException(progress);
+            if (savedException != null) throw savedException;
+            return runPasses(file, document, textEditor, toIgnore, canChangeDocument, callbackWhileWaiting);
+          }
+          if (callbackWhileWaiting != null) {
+            callbackWhileWaiting.run();
+          }
+          progress.waitFor(100);
+          UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
-          return runPasses(file, document, textEditor, toIgnore, canChangeDocument,callbackWhileWaiting);
-        }
-        if (callbackWhileWaiting != null) {
-          callbackWhileWaiting.run();
-        }
-        progress.waitFor(100);
-          UIUtil.dispatchAllInvocationEvents();
         }
         catch (RuntimeException e) {
           e.printStackTrace();
