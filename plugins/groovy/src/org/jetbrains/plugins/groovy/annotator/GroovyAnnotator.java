@@ -709,11 +709,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitClosure(GrClosableBlock closure) {
     super.visitClosure(closure);
     if (!closure.hasParametersSection()) {
-      final PsiElement parent = closure.getParent();
-      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile) {
+      if (!checkClosureForAmbiguous(closure)) {
         myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
       }
     }
+  }
+
+  private static boolean checkClosureForAmbiguous(GrClosableBlock closure) {
+    PsiElement place;
+    PsiElement parent = closure;
+    do {
+      place = parent;
+      parent = place.getParent();
+    }
+    while (!(parent instanceof GrContinueStatement || parent instanceof GrCodeBlock || parent instanceof GroovyFile));
+    while (place != null) {
+      if (place == closure) return false;
+      place = place.getFirstChild();
+    }
+    return true;
   }
 
   @Override

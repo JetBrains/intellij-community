@@ -254,6 +254,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testPutIncorrectValueToMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testAmbiguousCodeBlock() throws Exception {doTest();}
+  public void testAmbiguousCodeBlockInMethodCall() throws Exception {doTest();}
   public void testNotAmbiguousClosableBlock() throws Exception {doTest();}
   public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
 
