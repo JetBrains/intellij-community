@@ -522,9 +522,9 @@ class FindDialog extends DialogWrapper {
       return new ValidationInfo("String to find is empty", myInputComboBox);
     }
 
-    if (myCbRegularExpressions != null && myCbRegularExpressions.isEnabled()) {
+    if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {
       try {
-        boolean isCaseSensitive = myCbCaseSensitive != null && myCbCaseSensitive.isEnabled();
+        boolean isCaseSensitive = myCbCaseSensitive != null && myCbCaseSensitive.isSelected() && myCbCaseSensitive.isEnabled();
         Pattern pattern =
           Pattern.compile(toFind, isCaseSensitive ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {

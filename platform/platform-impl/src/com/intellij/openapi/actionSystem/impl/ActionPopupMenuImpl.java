@@ -33,8 +33,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 /**
  * @author Anton Katilin
@@ -89,14 +87,6 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
       if (getComponentCount() == 0) {
         return;
       }
-      myMenu.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            System.out.println("Enter");
-          }
-        }
-      });
       Dimension preferredSize = getPreferredSize();
 
       // Translate (x,y) into screen coordinate syetem
