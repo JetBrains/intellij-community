@@ -44,6 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.ddms.AdbManager;
@@ -89,9 +90,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final Object myDebugLock = new Object();
 
   @NotNull
-  private volatile String[] myTargetDeviceSerialNumbers;
-
-  private volatile IDevice myTargetDevice = null;
+  private volatile IDevice[] myTargetDevices;
 
   private volatile String myAvdName;
   private volatile boolean myDebugMode;
@@ -104,7 +103,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private volatile ProcessHandler myProcessHandler;
   private final Object myLock = new Object();
 
-  private boolean myDeploy = true;
+  private volatile boolean myDeploy = true;
 
   private volatile boolean myApplicationDeployed = false;
 
@@ -238,7 +237,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public AndroidRunningState(@NotNull ExecutionEnvironment environment,
                              @NotNull AndroidFacet facet,
-                             @NotNull String[] targetDeviceSerialNumbers,
+                             @NotNull IDevice[] targetDevices,
                              @Nullable String avdName,
                              @NotNull String commandLine,
                              @NotNull String packageName,
@@ -246,14 +245,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              Map<AndroidFacet, String> additionalFacet2PackageName) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
-    myTargetDeviceSerialNumbers = targetDeviceSerialNumbers;
+    myTargetDevices = targetDevices;
     myAvdName = avdName;
     myEnv = environment;
     myApplicationLauncher = applicationLauncher;
-    /*final Manifest manifest = facet.getManifest();
-    if (manifest == null) {
-      throw new ExecutionException("Can't start application");
-    }*/
     myPackageName = packageName;
     myTargetPackageName = packageName;
     myAdditionalFacet2PackageName = additionalFacet2PackageName;
@@ -269,9 +264,12 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
   }
 
-  private void chooseDeviceAutomaticaly() throws AdbNotRespondingException {
+  @Nullable
+  private IDevice chooseDeviceAutomaticaly() throws AdbNotRespondingException {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
-    if (bridge == null) return;
+    if (bridge == null) {
+      return null;
+    }
     IDevice[] devices = AdbManager.compute(new Computable<IDevice[]>() {
       public IDevice[] compute() {
         return bridge.getDevices();
@@ -280,7 +278,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     boolean exactlyCompatible = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
-      Boolean compatible = isMyCompatibleDevice(device);
+      Boolean compatible = isCompatibleDevice(device);
       if (compatible == Boolean.FALSE) {
         continue;
       }
@@ -291,12 +289,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         targetDevice = device;
       }
     }
-    if (targetDevice != null) {
-      // it may be, device doesn't have proper serial number
-      myTargetDevice = targetDevice;
-
-      myTargetDeviceSerialNumbers = new String[]{targetDevice.getSerialNumber()};
-    }
+    return targetDevice;
   }
 
   private void chooseAvd() {
@@ -342,25 +335,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private void start() throws AdbNotRespondingException {
-    getProcessHandler().notifyTextAvailable("Waiting for device.\n", STDOUT);
-    if (myTargetDeviceSerialNumbers.length == 0) {
-      chooseDeviceAutomaticaly();
-      if (myTargetDeviceSerialNumbers.length == 0) {
-        if (isAndroidSdk15OrHigher()) {
-          if (myAvdName == null) {
-            chooseAvd();
-          }
-          if (myAvdName != null) {
-            myFacet.launchEmulator(myAvdName, myCommandLine, myProcessHandler);
-          }
-          else if (getProcessHandler().isStartNotified()) {
-            getProcessHandler().destroyProcess();
-          }
-        }
-        else {
-          myFacet.launchEmulator(myAvdName, myCommandLine, myProcessHandler);
-        }
-      }
+    message("Waiting for device.", STDOUT);
+    if (myTargetDevices.length == 0) {
+      chooseOrLaunchDevice();
     }
     if (myDebugMode) {
       AdbManager.run(new Runnable() {
@@ -397,6 +374,33 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     deviceListener[0] = prepareAndStartAppWhenDeviceIsOnline();
   }
 
+  private void chooseOrLaunchDevice() throws AdbNotRespondingException {
+    IDevice targetDevice = chooseDeviceAutomaticaly();
+    if (targetDevice != null) {
+      myTargetDevices = new IDevice[] {targetDevice};
+    }
+    else {
+      if (isAndroidSdk15OrHigher()) {
+        if (myAvdName == null) {
+          chooseAvd();
+        }
+        if (myAvdName != null) {
+          myFacet.launchEmulator(myAvdName, myCommandLine, myProcessHandler);
+        }
+        else if (getProcessHandler().isStartNotified()) {
+          getProcessHandler().destroyProcess();
+        }
+      }
+      else {
+        myFacet.launchEmulator(myAvdName, myCommandLine, myProcessHandler);
+      }
+    }
+  }
+
+  private void message(@NotNull String message, @NotNull Key outputKey) {
+    getProcessHandler().notifyTextAvailable(message + '\n', outputKey);
+  }
+
   private boolean isAndroidSdk15OrHigher() {
     return myFacet.getConfiguration().getAndroidSdk() instanceof AndroidSdkImpl;
   }
@@ -411,8 +415,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       IDevice device = client.getDevice();
       if (isMyDevice(device) && device.isOnline()) {
-        if (myTargetDeviceSerialNumbers.length == 0) {
-          myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
+        if (myTargetDevices.length == 0) {
+          myTargetDevices = new IDevice[]{device};
         }
         ClientData data = client.getClientData();
         if (myDebugLauncher != null && isToLaunchDebug(data)) {
@@ -439,13 +443,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     myDebugLauncher = null;
   }
 
-  private Boolean isMyCompatibleDevice(@NotNull IDevice device) {
-    if (myTargetDevice != null) {
-      return device == myTargetDevice;
-    }
-    if (myTargetDeviceSerialNumbers.length > 0) {
-      return ArrayUtil.find(myTargetDeviceSerialNumbers, device.getSerialNumber()) >= 0;
-    }
+  private Boolean isCompatibleDevice(@NotNull IDevice device) {
     if (!isAndroidSdk15OrHigher()) {
       return true;
     }
@@ -457,60 +455,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean isMyDevice(@NotNull IDevice device) {
-    Boolean compatible = isMyCompatibleDevice(device);
+    if (myTargetDevices.length > 0) {
+      return ArrayUtil.find(myTargetDevices, device) >= 0;
+    }
+    Boolean compatible = isCompatibleDevice(device);
     return compatible != null ? compatible.booleanValue() : true;
-  }
-
-  /*@Nullable
-  private AvdManager.AvdInfo getAvdByName(String avdName) {
-    avdName = StringUtil.capitalize(avdName);
-    AvdManager.AvdInfo result = null;
-    for (AvdManager.AvdInfo info : myFacet.getAllAvds()) {
-      String name = StringUtil.capitalize(info.getName());
-      if (avdName.equals(name)) {
-        result = info;
-      }
-    }
-    return result;
-  }*/
-
-  @Nullable
-  private IDevice getDeviceBySerialNumber(@NotNull String serialNumber) throws AdbNotRespondingException {
-    final AndroidDebugBridge bridge = myFacet.getDebugBridge();
-    if (bridge == null) return null;
-    IDevice[] devices = AdbManager.compute(new Computable<IDevice[]>() {
-      public IDevice[] compute() {
-        return bridge.getDevices();
-      }
-    }, true);
-    for (IDevice device : devices) {
-      if (device.getSerialNumber().equals(serialNumber)) {
-        return device;
-      }
-    }
-    return null;
   }
 
   @Nullable
   private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() throws AdbNotRespondingException {
-    if (myTargetDeviceSerialNumbers.length > 0) {
-      if (myTargetDevice != null) {
-        if (myTargetDevice.isOnline()) {
-          if (!prepareAndStartApp(myTargetDevice) && !myStopped) {
+    if (myTargetDevices.length > 0) {
+      for (IDevice targetDevice : myTargetDevices) {
+        if (targetDevice.isOnline()) {
+          if (!prepareAndStartApp(targetDevice) && !myStopped) {
+            // todo: check: it may be we don't need to assign it directly
             myStopped = true;
             getProcessHandler().destroyProcess();
-          }
-        }
-      }
-      else {
-        for (String serialNumber : myTargetDeviceSerialNumbers) {
-          IDevice targetDevice = getDeviceBySerialNumber(serialNumber);
-          if (targetDevice != null && targetDevice.isOnline()) {
-            if (!prepareAndStartApp(targetDevice) && !myStopped) {
-              myStopped = true;
-              getProcessHandler().destroyProcess();
-              break;
-            }
+            break;
           }
         }
       }
@@ -524,13 +485,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
       public void deviceConnected(IDevice device) {
         if (device.getAvdName() == null || isMyDevice(device)) {
-          getProcessHandler().notifyTextAvailable("Device connected: " + device.getSerialNumber() + '\n', STDOUT);
+          message("Device connected: " + device.getSerialNumber(), STDOUT);
         }
       }
 
       public void deviceDisconnected(IDevice device) {
         if (isMyDevice(device)) {
-          getProcessHandler().notifyTextAvailable("Device disconnected: " + device.getSerialNumber() + "\n", STDOUT);
+          message("Device disconnected: " + device.getSerialNumber(), STDOUT);
         }
       }
 
@@ -538,10 +499,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             if (!installed && isMyDevice(device) && device.isOnline()) {
-              if (myTargetDeviceSerialNumbers.length == 0) {
-                myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
+              if (myTargetDevices.length == 0) {
+                myTargetDevices = new IDevice[]{device};
               }
-              getProcessHandler().notifyTextAvailable("Device is online: " + device.getSerialNumber() + "\n", STDOUT);
+              message("Device is online: " + device.getSerialNumber(), STDOUT);
               installed = true;
               if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
                 getProcessHandler().destroyProcess();
@@ -568,13 +529,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean prepareAndStartApp(IDevice device) {
-    StringBuilder deviceMessageBuilder = new StringBuilder("Target device: ");
-    deviceMessageBuilder.append(device.getSerialNumber());
-    if (device.getAvdName() != null) {
-      deviceMessageBuilder.append(" (").append(device.getAvdName()).append(')');
-    }
-    deviceMessageBuilder.append('\n');
-    getProcessHandler().notifyTextAvailable(deviceMessageBuilder.toString(), STDOUT);
+    message("Target device: " + getDevicePresentableName(device), STDOUT);
     try {
       if (myDeploy) {
         if (!uploadAndInstall(device, myPackageName, myFacet)) return false;
@@ -598,26 +553,35 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
     catch (TimeoutException e) {
       LOG.info(e);
-      getProcessHandler().notifyTextAvailable("Error: Connection to ADB failed with a timeout\n", STDERR);
+      message("Error: Connection to ADB failed with a timeout", STDERR);
       return false;
     }
     catch (AdbCommandRejectedException e) {
       LOG.info(e);
-      getProcessHandler().notifyTextAvailable("Error: Adb refused a command\n", STDERR);
+      message("Error: Adb refused a command", STDERR);
       return false;
     }
     catch (IOException e) {
       LOG.info(e);
       String message = e.getMessage();
-      getProcessHandler().notifyTextAvailable("I/O Error" + (message != null ? ": " + message : "") + '\n', STDERR);
+      message("I/O Error" + (message != null ? ": " + message : ""), STDERR);
       return false;
     }
   }
 
+  @NotNull
+  private static String getDevicePresentableName(IDevice device) {
+    StringBuilder deviceMessageBuilder = new StringBuilder();
+    deviceMessageBuilder.append(device.getSerialNumber());
+    if (device.getAvdName() != null) {
+      deviceMessageBuilder.append(" (").append(device.getAvdName()).append(')');
+    }
+    return deviceMessageBuilder.toString();
+  }
+
   private boolean checkDdms() {
     if (myDebugMode && AndroidRunConfigurationBase.isDdmsCorrupted(myFacet)) {
-      getProcessHandler()
-        .notifyTextAvailable("Debug info is not available. Please close other application using ADB: DDMS, Eclipse\n", STDERR);
+      message("Debug info is not available. Please close other application using ADB: DDMS, Eclipse", STDERR);
       return false;
     }
     return true;
@@ -637,7 +601,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     String remotePath = "/data/local/tmp/" + packageName;
     String localPath = facet.getApkPath();
     if (localPath == null) {
-      getProcessHandler().notifyTextAvailable("ERROR: APK path is not specified for module \"" + facet.getModule().getName() + '"', STDERR);
+      message("ERROR: APK path is not specified for module \"" + facet.getModule().getName() + '"', STDERR);
       return false;
     }
     if (!uploadApp(device, remotePath, localPath)) return false;
@@ -670,10 +634,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean uploadApp(IDevice device, String remotePath, String localPath) throws IOException {
     if (myStopped) return false;
-    getProcessHandler().notifyTextAvailable("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath + '\n', STDOUT);
+    message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
     SyncService service = device.getSyncService();
     if (service == null) {
-      getProcessHandler().notifyTextAvailable("Can't upload file: device is not available.\n", STDERR);
+      message("Can't upload file: device is not available.", STDERR);
       return false;
     }
     SyncService.SyncResult result = service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
@@ -724,8 +688,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       default:
         errorMessage = "Can't upload file";
     }
-    getProcessHandler()
-      .notifyTextAvailable(errorMessage + (result.getMessage() != null ? "\n" + result.getMessage() + "\n" : "\n"), STDERR);
+    message(errorMessage + (result.getMessage() != null ? "\n" + result.getMessage() : ""), STDERR);
     return false;
   }
 
@@ -734,7 +697,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                                                                                                                            TimeoutException,
                                                                                                                            AdbCommandRejectedException,
                                                                                                                            ShellCommandUnresponsiveException {
-    getProcessHandler().notifyTextAvailable("DEVICE SHELL COMMAND: " + command + "\n", STDOUT);
+    message("DEVICE SHELL COMMAND: " + command, STDOUT);
     AndroidUtils.executeCommand(device, command, receiver, false);
   }
 
@@ -743,7 +706,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean installApp(IDevice device, String remotePath, @NotNull String packageName) throws IOException {
-    getProcessHandler().notifyTextAvailable("Installing " + packageName + ".\n", STDOUT);
+    message("Installing " + packageName, STDOUT);
     MyReceiver receiver = new MyReceiver();
     while (true) {
       if (myStopped) return false;
@@ -758,7 +721,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (!deviceNotResponding && receiver.errorType != 1 && receiver.errorType != UNTYPED_ERROR) {
         break;
       }
-      getProcessHandler().notifyTextAvailable("Device is not ready. Waiting for " + WAITING_TIME + " sec.\n", STDOUT);
+      message("Device is not ready. Waiting for " + WAITING_TIME + " sec.", STDOUT);
       synchronized (myLock) {
         try {
           myLock.wait(WAITING_TIME * 1000);
@@ -784,7 +747,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myStopped) return false;
     }*/
     boolean success = isSuccess(receiver);
-    getProcessHandler().notifyTextAvailable(receiver.output.toString(), success ? STDOUT : STDERR);
+    message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;
   }
 }
