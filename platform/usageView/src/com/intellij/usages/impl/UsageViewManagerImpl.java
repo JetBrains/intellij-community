@@ -53,7 +53,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -204,11 +205,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
-  public synchronized void setCurrentSearchCancelled(boolean flag) {
+  public void setCurrentSearchCancelled(boolean flag) {
     mySearchHasBeenCancelled = flag;
   }
 
-  public synchronized boolean searchHasBeenCancelled() {
+  public boolean searchHasBeenCancelled() {
     return mySearchHasBeenCancelled;
   }
 
@@ -228,11 +229,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     private final UsageViewStateListener myListener;
 
     private SearchForUsagesRunnable(@NotNull final AtomicReference<UsageViewImpl> usageView,
-                                   @NotNull final UsageViewPresentation presentation,
-                                   @NotNull final UsageTarget[] searchFor,
-                                   @NotNull final Factory<UsageSearcher> searcherFactory,
-                                   @NotNull FindUsagesProcessPresentation processPresentation,
-                                   final UsageViewStateListener listener) {
+                                    @NotNull final UsageViewPresentation presentation,
+                                    @NotNull final UsageTarget[] searchFor,
+                                    @NotNull final Factory<UsageSearcher> searcherFactory,
+                                    @NotNull FindUsagesProcessPresentation processPresentation,
+                                    final UsageViewStateListener listener) {
       myUsageViewRef = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;
@@ -282,11 +283,20 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     private void searchUsages() {
       UsageSearcher usageSearcher = mySearcherFactory.create();
-      final AtomicBoolean warningShown = new AtomicBoolean();
+      final AtomicInteger tooManyUsages = new AtomicInteger();
+      // 0: ok, 1:warning dialog shown; 2:user closed dialog
+      final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
+          if (tooManyUsages.get() == 1) {
+            try {
+              waitWhileUserClick.await(1, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException ignored) {
+            }
+          }
 
           boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
@@ -295,7 +305,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
             if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
               myFirstUsage.compareAndSet(null, usage);
             }
-            if (usageCount > UsageLimitUtil.USAGES_LIMIT && !warningShown.get() && warningShown.compareAndSet(false, true)) {
+            if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
                 public void run() {
@@ -305,6 +315,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                   if (ret != 0) {
                     setCurrentSearchCancelled(true);
                   }
+                  waitWhileUserClick.countDown();
                 }
               });
             }
@@ -312,6 +323,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
             if (usageView != null) {
               usageView.appendUsageLater(usage);
             }
+
+            if (usageCount % 100 == 0) System.out.println("usageCount = " + usageCount);
           }
           return indicator == null || !indicator.isCanceled();
         }
