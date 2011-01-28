@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.PsiSubstitutor;
@@ -41,5 +42,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
     }
+    else if (context.getCompletionChar() == '.') {
+      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+    }
+
   }
 }

@@ -344,6 +344,26 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert 'Thread' in myFixture.lookupElementStrings
   }
 
+  public void testDotAfterVariable() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { Object ooo; <caret> }
+    }
+    """)
+    type 'o.'
+    assert myFixture.file.text.contains("ooo.")
+    assert lookup
+  }
 
+  public void testDotAfterCall() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { <caret> }
+    }
+    """)
+    type 'tos.'
+    assert myFixture.file.text.contains("toString().")
+    assert lookup
+  }
 
 }
