@@ -108,8 +108,15 @@ public class PyUtil {
     return ArrayUtil.toObjectArray(result, aClass);
   }
 
+  public static PyExpression flattenParens(PyExpression expr) {
+    while (expr instanceof PyParenthesizedExpression) {
+      expr = ((PyParenthesizedExpression) expr).getContainedExpression();
+    }
+    return expr;
+  }
+
   /**
-   * @see PyUtil#flattenedParens
+   * @see PyUtil#flattenedParensAndTuples
    */
   protected static List<PyExpression> _unfoldParenExprs(PyExpression[] targets, List<PyExpression> receiver,
                                                         boolean unfoldListLiterals, boolean unfoldStarExpressions) {
@@ -142,13 +149,13 @@ public class PyUtil {
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
-   * Typical usage: <code>flattenedParens(some_tuple.getExpressions())</code>.
+   * Typical usage: <code>flattenedParensAndTuples(some_tuple.getExpressions())</code>.
    *
    * @param targets target elements.
    * @return the list of flattened expressions.
    */
   @NotNull
-  public static List<PyExpression> flattenedParens(PyExpression... targets) {
+  public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
     return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, false);
   }
 
