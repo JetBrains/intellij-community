@@ -42,9 +42,9 @@ public class FileWatcher {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
-  @NonNls private static final String GIVEUP_COMMAND = "GIVEUP";
+  @NonNls private static final String GIVE_UP_COMMAND = "GIVEUP";
   @NonNls private static final String RESET_COMMAND = "RESET";
-  @NonNls private static final String UNWATCHEABLE_COMMAND = "UNWATCHEABLE";
+  @NonNls private static final String UNWATCHABLE_COMMAND = "UNWATCHEABLE";
   @NonNls private static final String ROOTS_COMMAND = "ROOTS";
   @NonNls private static final String REMAP_COMMAND = "REMAP";
   @NonNls private static final String EXIT_COMMAND = "EXIT";
@@ -75,7 +75,7 @@ public class FileWatcher {
   }
 
   private FileWatcher() {
-    // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in filewatcher thread
+    // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in FileWatcher thread
     myManagingFS = ManagingFS.getInstance();
     try {
       if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
@@ -87,6 +87,7 @@ public class FileWatcher {
 
     if (notifierProcess != null) {
       LOG.info("Native file watcher is operational.");
+      //noinspection CallToThreadStartDuringObjectConstruction
       new WatchForChangesThread().start();
 
       Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -141,9 +142,9 @@ public class FileWatcher {
         myFlatWatchRoots = flat;
 
         if (isAlive()) {
-          writeLine(ROOTS_COMMAND);
           myMapping.clear();
 
+          writeLine(ROOTS_COMMAND);
           for (String path : recursive) {
             writeLine(path);
           }
@@ -178,6 +179,7 @@ public class FileWatcher {
     }
   }
 
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void startupProcess() throws IOException {
     if (isShuttingDown) return;
 
@@ -203,7 +205,7 @@ public class FileWatcher {
     if (!new File(pathToExecutable).canExecute()) return;
 
     notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
-    
+
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
   }
@@ -247,8 +249,8 @@ public class FileWatcher {
             continue;
           }
 
-          if (GIVEUP_COMMAND.equals(command)) {
-            LOG.info("Filewatcher gives up to operate on this platform");
+          if (GIVE_UP_COMMAND.equals(command)) {
+            LOG.info("FileWatcher gives up to operate on this platform");
             shutdownProcess();
             return;
           }
@@ -256,7 +258,7 @@ public class FileWatcher {
           if (RESET_COMMAND.equals(command)) {
             reset();
           }
-          else if (UNWATCHEABLE_COMMAND.equals(command)) {
+          else if (UNWATCHABLE_COMMAND.equals(command)) {
             List<String> roots = new ArrayList<String>();
             do {
               final String path = readLine();
@@ -298,7 +300,7 @@ public class FileWatcher {
               continue;
             }
 
-            if (isWatcheable(path)) {
+            if (isWatchable(path)) {
               try {
                 onPathChange(ChangeKind.valueOf(command), path);
               }
@@ -307,7 +309,7 @@ public class FileWatcher {
               }
             }
             else if (LOG.isDebugEnabled()) {
-              LOG.debug("not watcheable, filtered: " + path);
+              LOG.debug("Not watchable, filtered: " + path);
             }
           }
         }
@@ -359,7 +361,7 @@ public class FileWatcher {
     return line;
   }
 
-  private boolean isWatcheable(final String path) {
+  private boolean isWatchable(final String path) {
     if (path == null) return false;
 
     synchronized (LOCK) {
