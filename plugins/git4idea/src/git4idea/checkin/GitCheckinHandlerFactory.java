@@ -19,8 +19,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.util.PairConsumer;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +30,14 @@ import org.jetbrains.annotations.Nullable;
  * Prohibits commiting with an empty messages.
  * @author Kirill Likhodedov
 */
-public class GitCheckinHandlerFactory extends CheckinHandlerFactory {
+public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
+  public GitCheckinHandlerFactory() {
+    super(GitVcs.getKey());
+  }
+
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+  protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
       @Override
       public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {

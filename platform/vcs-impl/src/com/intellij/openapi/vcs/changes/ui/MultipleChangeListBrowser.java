@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
@@ -356,14 +357,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public List<AbstractVcs> getAffectedVcses() {
-      Set<AbstractVcs> result = new HashSet<AbstractVcs>();
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final Set<AbstractVcs> vcses = new HashSet<AbstractVcs>(Arrays.asList(vcsManager.getAllActiveVcss()));
+      final List<AbstractVcs> result = new ArrayList<AbstractVcs>();
       for (Change change : myBrowser.myAllChanges) {
+        if (vcses.isEmpty()) break;
         final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);
         if (vcs != null) {
           result.add(vcs);
+          vcses.remove(vcs);
         }
       }
-      return new ArrayList<AbstractVcs>(result);
+      return result;
     }
 
     public List<Change> getCurrentIncludedChanges() {
