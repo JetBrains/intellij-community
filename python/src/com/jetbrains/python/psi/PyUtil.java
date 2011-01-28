@@ -693,6 +693,11 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static String strValue(@Nullable PyExpression expression) {
+    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression) expression).getStringValue() : null;
+  }
+
   /**
    * @param what thing to search for
    * @param variants things to search among
@@ -737,17 +742,11 @@ public class PyUtil {
 
   @Nullable
   public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
-    PyExpression argument = getKeywordArgument(expr, keyword);
-    return argument instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)argument).getStringValue() : null;
+    return strValue(getKeywordArgument(expr, keyword));
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {
-    for (PyClassRef c: pyClass.iterateAncestors()) {
-      if ("BaseException".equals(c.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
+    return pyClass.isSubclass("BaseException");
   }
 
   public static class MethodFlags {
