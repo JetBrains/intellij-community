@@ -207,15 +207,13 @@ public class ExpectedHighlightingData {
     int pos = 0;
     final Ref<Integer> textOffset = Ref.create(0);
     while (matcher.find(pos)) {
-      textOffset.set(textOffset.get() + (matcher.start() - pos));
+      textOffset.set(textOffset.get() + matcher.start() - pos);
       pos = extractExpectedHighlight(matcher, text, document, textOffset);
     }
   }
 
   private int extractExpectedHighlight(final Matcher matcher, final String text, final Document document, final Ref<Integer> textOffset) {
-    final int toContinueFrom;
-
-    document.deleteString(textOffset.get(), textOffset.get() + (matcher.end() - matcher.start()));
+    document.deleteString(textOffset.get(), textOffset.get() + matcher.end() - matcher.start());
 
     int groupIdx = 1;
     final String marker = matcher.group(groupIdx++);
@@ -256,6 +254,7 @@ public class ExpectedHighlightingData {
     }
 
     final int rangeStart = textOffset.get();
+    final int toContinueFrom;
     if (closed) {
       toContinueFrom = matcher.end();
     }
@@ -264,18 +263,18 @@ public class ExpectedHighlightingData {
       final Matcher closingTagMatcher = Pattern.compile("</" + marker + ">").matcher(text);
       while (true) {
         if (!closingTagMatcher.find(pos)) {
-          LOG.assertTrue(closingTagMatcher.matches(), "Cannot find closing </" + marker + ">");
+          LOG.error("Cannot find closing </" + marker + "> in position " + pos);
         }
 
         final int nextTagStart = matcher.find(pos) ? matcher.start() : text.length();
         if (closingTagMatcher.start() < nextTagStart) {
-          textOffset.set(textOffset.get() + (closingTagMatcher.start() - pos));
-          document.deleteString(textOffset.get(), textOffset.get() + (closingTagMatcher.end() - closingTagMatcher.start()));
+          textOffset.set(textOffset.get() + closingTagMatcher.start() - pos);
+          document.deleteString(textOffset.get(), textOffset.get() + closingTagMatcher.end() - closingTagMatcher.start());
           toContinueFrom = closingTagMatcher.end();
           break;
         }
 
-        textOffset.set(textOffset.get() + (nextTagStart - pos));
+        textOffset.set(textOffset.get() + nextTagStart - pos);
         pos = extractExpectedHighlight(matcher, text, document, textOffset);
       }
     }
@@ -346,7 +345,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) Assert.assertTrue(failMessage, false);
+    if (failMessage.length() > 0) Assert.fail(failMessage);
   }
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
@@ -453,7 +452,7 @@ public class ExpectedHighlightingData {
                               info.endOffset >= prev.endOffset);
 
             int offset = prevSeverity.length()*2 + 14 + (prev.description != null ? prev.description.length() : 4) + // open and closing tags
-                         (prev.endOffset - prev.startOffset) + (info.endOffset - prev.endOffset);
+                         prev.endOffset - prev.startOffset + info.endOffset - prev.endOffset;
             sb.insert(offset, "</" + severity + ">");
             sb.insert(0, text.substring(info.startOffset, prev.startOffset));
             sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">");
