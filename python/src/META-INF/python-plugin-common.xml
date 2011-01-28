@@ -92,6 +92,8 @@
     <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
     <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
 
+    <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
       <category>Python</category>
