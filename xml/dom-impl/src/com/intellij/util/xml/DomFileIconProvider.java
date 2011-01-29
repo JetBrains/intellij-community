@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,24 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.pom.PomIconProvider;
-import com.intellij.pom.PomTarget;
+import com.intellij.ide.IconProvider;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * @author peter
- * @deprecated
- * @see Presentation
+ * @author Dmitry Avdeev
  */
-public abstract class DomIconProvider extends PomIconProvider {
-  public Icon getIcon(@NotNull PomTarget target, int flags) {
-    if (target instanceof DomTarget) {
-      return getIcon(((DomTarget)target).getDomElement(), flags);
+public class DomFileIconProvider extends IconProvider implements DumbAware {
+  @Override
+  public Icon getIcon(@NotNull PsiElement element, int flags) {
+    if (element instanceof XmlFile) {
+      DomFileDescription<?> description = DomManager.getDomManager(element.getProject()).getDomFileDescription((XmlFile)element);
+      return description == null ? null : description.getFileIcon(flags);
     }
     return null;
   }
-
-  @Nullable
-  public abstract Icon getIcon(@NotNull DomElement element, int flags);
 }

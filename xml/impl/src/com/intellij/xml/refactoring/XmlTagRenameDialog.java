@@ -22,7 +22,6 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -51,8 +51,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class XmlTagRenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameDialog");
@@ -121,15 +119,9 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private void completeVariable(final Editor editor) {
     String prefix = myNameSuggestionsField.getEnteredName();
 
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final PsiReference reference = myTag.getReference();
-    if (reference != null) {
-      final Object[] variants = reference.getVariants();
-      for (Object variant : variants) {
-        set.add(new SimpleLookupItem(variant));
-      }
-
-      LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
+    if (reference instanceof TagNameReference) {
+      LookupElement[] lookupItems = ((TagNameReference)reference).getVariants();
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix);

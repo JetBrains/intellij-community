@@ -39,16 +39,17 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     }
   };
 
-  private final NullableLazyValue<NullableFunction<DomElement, String>> myNamer = new NullableLazyValue<NullableFunction<DomElement, String>>() {
+  private final NullableLazyValue<NullableFunction<DomElement, String>> myNamer = new MyLazyValue<String>() {
     @Override
-    protected NullableFunction<DomElement, String> compute() {
-      if (StringUtil.isEmpty(myPresentation.namerClass())) return null;
-      try {
-        return (NullableFunction<DomElement, String>)Class.forName(myPresentation.namerClass(), true, myClass.getClassLoader()).newInstance();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    String getClassName() {
+      return myPresentation.namerClass();
+    }
+  };
+
+  private final NullableLazyValue<NullableFunction<DomElement, Icon>> myIconProvider = new MyLazyValue<Icon>() {
+    @Override
+    String getClassName() {
+      return myPresentation.iconProviderClass();
     }
   };
 
@@ -68,13 +69,32 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
       @Override
       public String getTypeName() {
+        if (StringUtil.isNotEmpty(myPresentation.typeName())) return myPresentation.typeName();
         return ElementPresentationManager.getTypeNameForObject(element);
       }
 
       @Override
       public Icon getIcon() {
-        return myIcon.getValue();
+        NullableFunction<DomElement, Icon> iconProvider = myIconProvider.getValue();
+        return iconProvider == null ? myIcon.getValue() : iconProvider.fun(element);
       }
     };
+  }
+
+  private abstract class MyLazyValue<T> extends NullableLazyValue<NullableFunction<DomElement, T>> {
+    @Override
+    protected NullableFunction<DomElement, T> compute() {
+      String className = getClassName();
+      if (StringUtil.isEmpty(className)) return null;
+      try {
+        //noinspection unchecked
+        return (NullableFunction<DomElement, T>)Class.forName(className, true, myClass.getClassLoader()).newInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    abstract String getClassName();
   }
 }

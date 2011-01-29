@@ -17,14 +17,13 @@
 
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class DaemonCodeAnalyzer implements ProjectComponent {
+public abstract class DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzer getInstance(Project project) {
     return project.getComponent(DaemonCodeAnalyzer.class);
   }

@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;

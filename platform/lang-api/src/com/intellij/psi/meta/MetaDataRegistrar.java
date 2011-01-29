@@ -28,7 +28,7 @@ public abstract class MetaDataRegistrar {
    * Associates elements matching given filter with metadata class.
    * @param filter on element for finding metadata matches
    * @param metadataDescriptorClass class of metadata, should be instantiable without parameters
-   * @Deprecated use {@link #registerMetaData(com.intellij.patterns.ElementPattern, Class)}
+   * @deprecated use {@link #registerMetaData(com.intellij.patterns.ElementPattern, Class)}
    */
   public abstract <T extends PsiMetaData> void registerMetaData(
     ElementFilter filter, Class<T> metadataDescriptorClass);

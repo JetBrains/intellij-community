@@ -76,7 +76,7 @@ public abstract class UsageViewManager {
     if (element == null) return false;
 
     boolean selfUsage = false;
-    for(UsageTarget ut:searchForTarget) {
+    for (UsageTarget ut : searchForTarget) {
       if (ut instanceof PsiElementUsageTarget) {
         if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
           selfUsage = true;

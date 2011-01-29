@@ -15,16 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringOptions;
@@ -78,9 +75,9 @@ public class Xslt2RefactoringTest extends TestBase {
       }
     };
 
-    final PsiFile file = (PsiFile)myFixture.getElementAtCaret();
-    final Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(file);
-    final Editor editorWindow = EditorWindow.create((DocumentWindowImpl)document, (EditorImpl)editor, file);
+    final PsiFile file = InjectedLanguageUtil.findInjectedPsiNoCommit(myFixture.getFile(), editor.getCaretModel().getOffset());
+    final Editor editorWindow = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, file);
+    assertTrue(editorWindow instanceof EditorWindow);
 
     action.invoke(myFixture.getProject(), editorWindow, file, null);
 

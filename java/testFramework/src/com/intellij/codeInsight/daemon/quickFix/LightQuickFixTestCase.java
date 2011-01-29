@@ -58,15 +58,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   private static void doTestFor(final String testName, final QuickFixTestCase quickFixTestCase) {
+    final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
+    final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
+    final File testFile = new File(testFullPath);
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
-        final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
-        final File ioFile = new File(testFullPath);
         try {
-          String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)));
-          quickFixTestCase.configureFromFileText(ioFile.getName(), contents);
+          String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(testFile, CharsetToolkit.UTF8)));
+          quickFixTestCase.configureFromFileText(testFile.getName(), contents);
           quickFixTestCase.bringRealEditorBack();
           final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
           final String text = pair.getFirst();
@@ -89,7 +89,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         }
       }
     }, "", "");
-    System.out.print(testName + " ");
+    System.out.println(testFile.getPath());
   }
 
   protected void afterActionCompleted(final String testName, final String contents) {

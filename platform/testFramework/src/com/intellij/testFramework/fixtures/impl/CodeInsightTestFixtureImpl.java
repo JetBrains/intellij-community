@@ -29,7 +29,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -147,6 +147,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
+  private boolean toInitializeDaemon;
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -526,7 +527,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) {
     assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
-    UsefulTestCase.assertNotNull(result);
+    Assert.assertNotNull(result);
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 
@@ -966,10 +967,51 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
 
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).prepareForTest(false);
+    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
+    daemonCodeAnalyzer.prepareForTest(toInitializeDaemon);
 
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     ensureIndexesUpToDate(getProject());
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    if (SwingUtilities.isEventDispatchThread()) {
+      LookupManager.getInstance(getProject()).hideActiveLookup();
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          LookupManager.getInstance(getProject()).hideActiveLookup();
+        }
+      }, ModalityState.NON_MODAL);
+      UIUtil.pump();
+    }
+
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+    VirtualFile[] openFiles = editorManager.getOpenFiles();
+    for (VirtualFile openFile : openFiles) {
+      editorManager.closeFile(openFile);
+    }
+    if (toInitializeDaemon) {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).projectClosed();
+    }
+
+    myEditor = null;
+    myFile = null;
+    myPsiManager = null;
+    myInspections = null;
+    myAvailableLocalTools.clear();
+    myAvailableTools.clear();
+    myFileContext = null;
+
+    myProjectFixture.tearDown();
+    myTempDirFixture.tearDown();
+
+    super.tearDown();
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool) {
@@ -1041,42 +1083,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    if (SwingUtilities.isEventDispatchThread()) {
-      LookupManager.getInstance(getProject()).hideActiveLookup();
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          LookupManager.getInstance(getProject()).hideActiveLookup();
-        }
-      }, ModalityState.NON_MODAL);
-      UIUtil.pump();
-    }
-
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
-    }
-
-    myEditor = null;
-    myFile = null;
-    myPsiManager = null;
-    myInspections = null;
-    myAvailableLocalTools.clear();
-    myAvailableTools.clear();
-    myFileContext = null;
-
-    myProjectFixture.tearDown();
-    myTempDirFixture.tearDown();
-
-    super.tearDown();
   }
 
   private void configureByFilesInner(@NonNls String... filePaths) {
@@ -1608,7 +1614,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
                                        boolean doCheckCollapseStatus) {
     configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myEditor);
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
 
     final FoldingModel model = myEditor.getFoldingModel();
     final FoldRegion[] foldingRegions = model.getAllFoldRegions();
@@ -1622,18 +1628,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
-      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? ("<fold text=\'" + border.getText() + "\'" +
-                                                                          (doCheckCollapseStatus ? (" expand=\'" +
+      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? "<fold text=\'" + border.getText() + "\'" +
+                                                                         (doCheckCollapseStatus ? " expand=\'" +
                                                                                                     border.isExpanded() +
-                                                                                                    "\'") : "") +
-                                                                          ">") : END_FOLD);
+                                                                                                    "\'" : "") +
+                                                                          ">" : END_FOLD);
     }
 
     return result.toString();
   }
 
   private void testFoldingRegions(final String verificationFileName, boolean doCheckCollapseStatus) {
-    String expectedContent = null;
+    String expectedContent;
     try {
       expectedContent = new String(FileUtil.loadFileText(new File(verificationFileName)));
     }

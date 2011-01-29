@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -320,9 +321,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     boolean afterVisible = false;
     Box beforeBox = Box.createVerticalBox();
     Box afterBox = Box.createVerticalBox();
-    final List<CheckinHandlerFactory> handlerFactories = ProjectLevelVcsManager.getInstance(project).getRegisteredCheckinHandlerFactories();
-    for (CheckinHandlerFactory factory : handlerFactories) {
+    final List<BaseCheckinHandlerFactory> handlerFactories = CheckinHandlersManager.getInstance(myProject).getRegisteredCheckinHandlerFactories();
+    for (BaseCheckinHandlerFactory factory : handlerFactories) {
       final CheckinHandler handler = factory.createHandler(this);
+      if (CheckinHandler.DUMMY.equals(handler)) continue;
+
       myHandlers.add(handler);
       final RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
       if (beforePanel != null) {

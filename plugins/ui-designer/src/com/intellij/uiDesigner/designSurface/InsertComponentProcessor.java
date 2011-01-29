@@ -132,7 +132,13 @@ public final class InsertComponentProcessor extends EventProcessor {
         }
       }
       else {
-        myLastLocation = moveDropLocation(myEditor, myLastLocation, new ComponentItemDragObject(getComponentToInsert()), e);
+        ComponentItem componentToInsert = getComponentToInsert();
+        if (componentToInsert == null) {
+          cancelOperation();
+        }
+        else {
+          myLastLocation = moveDropLocation(myEditor, myLastLocation, new ComponentItemDragObject(componentToInsert), e);
+        }
       }
     }
   }

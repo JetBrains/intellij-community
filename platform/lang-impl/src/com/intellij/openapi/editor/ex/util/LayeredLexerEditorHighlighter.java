@@ -35,6 +35,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -349,8 +350,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       doc.replaceString(start, end, tokenText);
 
       final int newEnd = start + tokenText.length();
-      if (oldMapping.range.getStartOffset() != start ||
-          oldMapping.range.getEndOffset() != newEnd) {
+      if (oldMapping.range.getStartOffset() != start || oldMapping.range.getEndOffset() != newEnd) {
+        assert oldMapping.range.getDocument() == doc;
         oldMapping.range.dispose();
         oldMapping.range = doc.createRangeMarker(start, newEnd);
       }
@@ -392,6 +393,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (rangeMarker.isValid()) {
         final int start = rangeMarker.getStartOffset();
         final int end = rangeMarker.getEndOffset();
+        assert doc == rangeMarker.getDocument();
         doc.deleteString(start - mySeparator.length(), end);
         rangeMarker.dispose();
       }
@@ -399,14 +401,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   private static class MappedRange {
-    RangeMarker range;
-    final Mapper mapper;
-    final IElementType outerToken;
+    private RangeMarker range;
+    private final Mapper mapper;
+    private final IElementType outerToken;
 
-    MappedRange(final Mapper mapper, final RangeMarker range, final IElementType outerToken) {
+    MappedRange(@NotNull Mapper mapper, @NotNull RangeMarker range, @NotNull IElementType outerToken) {
       this.mapper = mapper;
       this.range = range;
       this.outerToken = outerToken;
+      assert mapper.doc == range.getDocument();
     }
   }
 

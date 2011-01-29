@@ -43,7 +43,7 @@ public class UsageLimitUtil {
     return showMessage(project, message, UsageViewBundle.message("find.excessive.usages.title"), buttons);
   }
 
-  private static int invokeAndWait(final Computable<Integer> f) {
+  private static int runOrInvokeAndWait(final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
       GuiUtils.runOrInvokeAndWait(new Runnable() {
@@ -60,7 +60,7 @@ public class UsageLimitUtil {
   }
 
   private static int showMessage(final Project project, final String message, final String title, final String[] buttons) {
-    return invokeAndWait(new Computable<Integer>() {
+    return runOrInvokeAndWait(new Computable<Integer>() {
       public Integer compute() {
         return Messages.showDialog(project, message, title, buttons, 0, Messages.getWarningIcon());
       }

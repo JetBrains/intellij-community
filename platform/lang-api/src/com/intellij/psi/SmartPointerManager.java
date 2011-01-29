@@ -34,7 +34,7 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element);
+  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI
@@ -43,5 +43,5 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(E element);
+  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element);
 }
