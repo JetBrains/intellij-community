@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
@@ -50,7 +51,7 @@ public class PyNestedDecoratorsInspection extends PyInspection {
           for (int i = decos.length - 1; i >= 1; i -= 1) {
             PyDecorator deco = decos[i];
             String deconame = deco.getName();
-            if (("classmethod".equals(deconame) || "staticmethod".equals(deconame)) && deco.isBuiltin()) {
+            if ((PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) && deco.isBuiltin()) {
               registerProblem(
                 decos[i-1],
                 PyBundle.message("INSP.decorator.receives.unexpected.builtin"), 

@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -77,7 +78,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
         }
         if (! made_instance) { // class, first arg absent or of different type: classmethod
           builder.parameter("cls"); // NOTE: might use a name other than 'cls', according to code style.
-          deco_name = "classmethod";
+          deco_name = PyNames.CLASSMETHOD;
         }
       }
       else { // instance method
