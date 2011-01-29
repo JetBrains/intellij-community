@@ -55,7 +55,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
       Joiner[] joiners = { // these are featherweight, will create and gc instantly
         new OpenBracketJoiner(), new CloseBracketJoiner(),
-        new StmtJoiner(), new StringLiteralJoiner(),
+        new StringLiteralJoiner(), new StmtJoiner(), // strings before stmts to let doc strings join
         new BinaryExprJoiner(), new ListLikeExprJoiner()
       };
       
@@ -243,8 +243,10 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     public Result join(Request req) {
       if (req.leftElem() != req.rightElem()) {
         final PsiElement parent = req.rightElem().getParent();
-        if (req.leftElem().getParent() == parent && parent instanceof PyStringLiteralExpression) {
-          // two quoted strings of same literal
+        if ((req.leftElem().getParent() == parent && parent instanceof PyStringLiteralExpression) ||
+            (req.leftExpr() instanceof PyStringLiteralExpression && req.rightExpr() instanceof PyStringLiteralExpression)
+        ) {
+          // two quoted strings close by
           CharSequence text = req.document().getCharsSequence();
           StrMod left_mod = new StrMod(text, req.leftElem().getTextRange());
           StrMod right_mod = new StrMod(text, req.rightElem().getTextRange());
@@ -255,17 +257,15 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
             }
             else if (left_mod.compatibleTo(right_mod) && lquo.length() == 1 && right_mod.quote().length() == 1) {
               // maybe fit one literal's quotes to match other's
-              if (! containsChar(text, left_mod.getInnerRange(), right_mod.quote().charAt(0))) {
+              if (! containsChar(text, right_mod.getInnerRange(), left_mod.quote().charAt(0))) {
+                int quote_pos = right_mod.getInnerRange().getEndOffset();
+                req.document().replaceString(quote_pos, quote_pos+1, left_mod.quote());
+                return new Result("", 0, left_mod.quote().length(), right_mod.getStartPadding());
+              }
+              else if (! containsChar(text, left_mod.getInnerRange(), right_mod.quote().charAt(0))) {
                 int quote_pos = left_mod.getInnerRange().getStartOffset()-1;
                 req.document().replaceString(quote_pos, quote_pos+1, right_mod.quote());
                 return new Result("", 0, left_mod.quote().length(), right_mod.getStartPadding());
-              }
-              else {
-                if (! containsChar(text, right_mod.getInnerRange(), left_mod.quote().charAt(0))) {
-                  int quote_pos = right_mod.getInnerRange().getStartOffset()-1;
-                  req.document().replaceString(quote_pos, quote_pos+1, left_mod.quote());
-                  return new Result("", 0, left_mod.quote().length(), right_mod.getStartPadding());
-                }
               }
             }
           }
