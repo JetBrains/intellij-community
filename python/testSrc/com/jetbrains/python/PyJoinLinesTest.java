@@ -60,5 +60,6 @@ public class PyJoinLinesTest extends PyLightFixtureTestCase {
   public void testTupleLPar() { doTest(); }
   public void testTuple() { doTest(); }
   public void testTupleRPar() { doTest(); }
+  public void testTwoComments() { doTest(); }
   public void testTwoStatements() { doTest(); }
 }

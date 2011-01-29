@@ -4,6 +4,7 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
@@ -11,8 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Joins lines sanely.
@@ -49,14 +48,15 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     PsiElement right_element = file.findElementAt(end);
     if (left_element != null && right_element != null) {
       PyExpression left_expr = PsiTreeUtil.getParentOfType(left_element, PyExpression.class);
-      if (left_expr instanceof PsiFile) return CANNOT_JOIN;
+      if (left_expr instanceof PsiFile) left_expr = null;
       PyExpression right_expr = PsiTreeUtil.getParentOfType(right_element, PyExpression.class);
-      if (right_expr instanceof PsiFile) return CANNOT_JOIN;
+      if (right_expr instanceof PsiFile) right_expr = null;
 
       Joiner[] joiners = { // these are featherweight, will create and gc instantly
         new OpenBracketJoiner(), new CloseBracketJoiner(),
         new StringLiteralJoiner(), new StmtJoiner(), // strings before stmts to let doc strings join
-        new BinaryExprJoiner(), new ListLikeExprJoiner()
+        new BinaryExprJoiner(), new ListLikeExprJoiner(),
+        new CommentJoiner(),
       };
       
       Request request = new Request(document, left_element, left_expr, right_element, right_expr); 
@@ -387,61 +387,26 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   }
 
 
-
-  @Nullable
-  private static Result joinBinaryExpressions(PyExpression leftExpr, PyExpression rightExpr, int start, int end) {
-    return null; // XXX remove
-  }
-
-  @Nullable
-  private static Result joinListLikeExpressions(PyExpression leftExpr, PyExpression rightExpr, int start, int end) {
-    return null; // XXX remove
-  }
-
-  /**
-   Joins a pair of lines,
-   */
-  private static int[] joinPair(Document document, PsiFile file, int start) {
-    final int[] NONE = new int[]{0, 0};
-    int[] ret = new int[2];
-    PsiElement elt = file.findElementAt(start);
-    final PyStringLiteralExpression string_parent = PsiTreeUtil.getParentOfType(elt, PyStringLiteralExpression.class);
-    if (string_parent != null) {
-      final List<ASTNode> string_nodes = string_parent.getStringNodes();
-      // we're inside a string which may consist of a number of string constants
-      for (ASTNode node : string_nodes) {
-        final TextRange range = node.getTextRange();
-        if (range.contains(start) && range.getLength() > 2) {
-          final CharSequence text = document.getCharsSequence();
-          int first = range.getStartOffset();
-          int last = range.getEndOffset();
-          boolean is_raw = false;
-          if ("Uu".indexOf(text.charAt(first)) > -1 || "Bb".indexOf(text.charAt(first)) > -1) first +=1;
-          if ("Rr".indexOf(text.charAt(first)) > -1) {
-            is_raw = true;
-            first +=1;
-          }
-          if (last - first >= 6) {
-            final char first_char = text.charAt(first); // first_char is a quote, else we'd not have parsed as a string
-            if (first_char == text.charAt(first+1)) {
-              // we're inside a triple-quoted constant, its min length is 6 and only it can have two quotes at start
-              final int our_line_number = document.getLineNumber(first);
-              int eol = document.getLineEndOffset(our_line_number);
-              if (document.getLineCount() == our_line_number+1) return NONE; // can't join, but it's OK
-              if (text.charAt(eol-1) == '\\' &&  is_raw) { // TODO: check true escape
-                // convert quoted EOL marker to \n
-
-              }
-              else {
-                // compress spaces to one
-                // TODO
-              }
-            }
-          }
-        }
+  private static class CommentJoiner extends Joiner {
+    @Override
+    public Result join(Request req) {
+      if (req.leftElem() instanceof PsiComment && req.rightElem() instanceof PsiComment) {
+        CharSequence text = req.document().getCharsSequence();
+        final TextRange right_range = req.rightElem().getTextRange();
+        int initial_pos = right_range.getStartOffset() + 1;
+        int pos = initial_pos; // cut '#'
+        int last = right_range.getEndOffset();
+        while (pos < last && " \t".indexOf(text.charAt(pos)) >= 0) pos += 1;
+        int right = pos - initial_pos + 1; // account for the '#'
+        initial_pos = req.leftElem().getTextRange().getEndOffset() - 1;
+        pos = initial_pos;
+        while (" \t".indexOf(text.charAt(pos)) >= 0) pos -=1; // we'll end up at '#' if nothing else
+        int left = initial_pos - pos;
+        return new Result(" ", 0, left, right);
       }
-      // not inside any constant but within string expr -> between constants
+      return null;
     }
-    return ret;
   }
+
+
 }
