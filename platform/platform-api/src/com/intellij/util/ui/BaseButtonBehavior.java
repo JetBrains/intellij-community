@@ -33,8 +33,9 @@ public abstract class BaseButtonBehavior {
   private boolean myPressedByMouse;
   private boolean mySelected;
 
-
   private TimedDeadzone myMouseDeadzone;
+
+  private int myActionTrigger;
 
   public BaseButtonBehavior(JComponent component) {
     this(component, TimedDeadzone.DEFAULT);
@@ -45,6 +46,12 @@ public abstract class BaseButtonBehavior {
     myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime, Alarm.ThreadToUse.SWING_THREAD);
     myComponent.addMouseListener(new MyMouseListener());
     myComponent.addMouseMotionListener(new MyMouseMotionListener());
+    setActionTrigger(MouseEvent.MOUSE_RELEASED);
+  }
+
+  public void setActionTrigger(int trigger) {
+    assert trigger == MouseEvent.MOUSE_PRESSED || trigger == MouseEvent.MOUSE_RELEASED;
+    myActionTrigger = trigger;
   }
 
   public final boolean isHovered() {
@@ -111,7 +118,11 @@ public abstract class BaseButtonBehavior {
 
       setPressedByMouse(true);
 
-      repaintComponent();
+      if (myActionTrigger == MouseEvent.MOUSE_PRESSED) {
+        if (execute(e)) return;
+      } else {
+        repaintComponent();
+      }
     }
 
 
@@ -121,21 +132,30 @@ public abstract class BaseButtonBehavior {
 
         setPressedByMouse(false);
 
-        Point point = e.getPoint();
-        if (point.x < 0 || point.x > myComponent.getWidth()) return;
-        if (point.y < 0 || point.y > myComponent.getHeight()) return;
-
-        repaintComponent();
-
-        execute(e);
+        if (myActionTrigger == MouseEvent.MOUSE_RELEASED) {
+          if (execute(e)) return;
+        } else {
+          repaintComponent();
+        }
       }
       finally {
         myWasPressedOnFocusTransfer = false;
       }
     }
 
+    private boolean execute(MouseEvent e) {
+      Point point = e.getPoint();
+      if (point.x < 0 || point.x > myComponent.getWidth()) return true;
+      if (point.y < 0 || point.y > myComponent.getHeight()) return true;
+
+      repaintComponent();
+
+      BaseButtonBehavior.this.execute(e);
+      return false;
+    }
+
     private boolean passIfNeeded(final MouseEvent e, boolean considerDeadzone) {
-      final boolean actionClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED);
+      final boolean actionClick = UIUtil.isActionClick(e, myActionTrigger);
 
       if (!actionClick || (considerDeadzone && myMouseDeadzone.isWithin())) {
         pass(e);

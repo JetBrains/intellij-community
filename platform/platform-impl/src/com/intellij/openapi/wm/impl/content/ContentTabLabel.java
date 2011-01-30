@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.TimedDeadzone;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -44,7 +45,8 @@ class ContentTabLabel extends BaseLabel {
         }
       }
     };
-
+    myBehavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    myBehavior.setMouseDeadzone(TimedDeadzone.NULL);
   }
 
   public void update() {

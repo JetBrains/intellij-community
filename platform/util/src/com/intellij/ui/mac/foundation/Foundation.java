@@ -85,6 +85,10 @@ public class Foundation {
     return myFoundationLibrary.objc_getClass(clazz);
   }
 
+  public static String fullUserName() {
+    return toStringViaUTF8(myFoundationLibrary.NSFullUserName());
+  }
+
   /**
    * Return a CFString as an ID, toll-free bridged to NSString.
    * <p/>

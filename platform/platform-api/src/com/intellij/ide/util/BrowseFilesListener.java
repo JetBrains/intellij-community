@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -60,6 +61,10 @@ public class BrowseFilesListener implements ActionListener {
     return null;
   }
 
+  protected void doSetText(@NotNull final String path) {
+    myTextField.setText(path);
+  }
+
   public void actionPerformed( ActionEvent e ) {
     final VirtualFile fileToSelect = getFileToSelect();
     myChooserDescriptor.setTitle(myTitle); // important to set title and description here because a shared descriptor instance can be used
@@ -69,7 +74,7 @@ public class BrowseFilesListener implements ActionListener {
         @Override
         public void consume(final VirtualFile[] files) {
           if (files != null && files.length > 0) {
-            myTextField.setText(files[0].getPath().replace('/', File.separatorChar));
+            doSetText(files[0].getPath().replace('/', File.separatorChar));
           }
         }
       });
