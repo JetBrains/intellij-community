@@ -2,11 +2,22 @@ package org.jetbrains.jps.builders
 
 import org.jetbrains.jps.*
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
+import org.jetbrains.ether.dependencyView.Callbacks
 
 /**
  * @author max
  */
 class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
+  Callbacks.Backend callback
+
+  JavacBuilder () {
+    callback = null
+  }
+
+  JavacBuilder (Callbacks.Backend c) {
+    callback = c
+  }
+
   def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     doBuildModule(moduleChunk, state)
   }
@@ -23,8 +34,8 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     String customArgs = module["javac_args"]
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
-      if ( true ) { // */ sourceLevel == null || version.startsWith(sourceLevel)) {
-        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
+      if ( true ) {
+        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs, callback)) {
           return
         }
       }
@@ -41,6 +52,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     params.memoryMaximumSize = "512m"
     params.fork = "true"
     params.debug = "on"
+    params.verbose = "true"
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
@@ -48,6 +60,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     }
 
     def ant = module.project.binding.ant
+
     ant.javac(params) {
       if (customArgs) {
         compilerarg(line: customArgs)
@@ -137,7 +150,7 @@ class GroovycBuilder implements ModuleBuilder {
     }
 
     // unfortunately we have to disable fork here because of a bug in Groovyc task: it creates too long command line if classpath is large
-    ant.groovyc(destdir: destDir/*, fork: "true"*/) {
+    ant.groovyc(destdir: destDir, verbose: true /*, fork: "true"*/) {
       state.sourceRoots.each {
         src(path: it)
       }

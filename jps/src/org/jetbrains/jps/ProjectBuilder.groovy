@@ -8,6 +8,7 @@ import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
 import org.jetbrains.ether.Reporter
+import org.jetbrains.ether.dependencyView.Callbacks
 
 /**
  * @author max
@@ -38,12 +39,12 @@ class ProjectBuilder {
 
   private final TempFileContainer tempFileContainer
 
-  def ProjectBuilder(GantBinding binding, Project project) {
+  def ProjectBuilder(GantBinding binding, Project project, Callbacks.Backend callback) {
     this.project = project
     this.binding = binding
     tempFileContainer = new TempFileContainer(project, "__build_temp__")
     sourceGeneratingBuilders << new GroovyStubGenerator(project)
-    translatingBuilders << new JavacBuilder()
+    translatingBuilders << new JavacBuilder(callback)
     translatingBuilders << new GroovycBuilder(project)
     translatingBuilders << new ResourceCopier()
     weavingBuilders << new JetBrainsInstrumentations(project)

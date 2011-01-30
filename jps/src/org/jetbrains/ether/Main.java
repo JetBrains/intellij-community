@@ -3,6 +3,9 @@ package org.jetbrains.ether;
 import com.sun.corba.se.spi.ior.MakeImmutable;
 import org.apache.tools.ant.types.Description;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 
 /**

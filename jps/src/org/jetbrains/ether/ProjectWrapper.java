@@ -1,6 +1,8 @@
 package org.jetbrains.ether;
 
 import org.codehaus.gant.GantBinding;
+import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.ether.dependencyView.SourceToClass;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.resolvers.PathEntry;
@@ -34,169 +36,6 @@ public class ProjectWrapper {
             f.mkdir();
     }
 
-    private static <T> List<T> sort(final Collection<T> coll, final Comparator<? super T> comp) {
-        List<T> list = new ArrayList<T>();
-
-        for (T elem : coll) {
-            if (elem != null) {
-                list.add(elem);
-            }
-        }
-
-        Collections.sort(list, comp);
-
-        return list;
-    }
-
-    private static <T extends Comparable<? super T>> List<T> sort(final Collection<T> coll) {
-        return sort(coll, new Comparator<T>() {
-            public int compare(T a, T b) {
-                return a.compareTo(b);
-            }
-        });
-    }
-
-    private interface Writable extends Comparable {
-        public void write(BufferedWriter w);
-    }
-
-    private static void writeln(final BufferedWriter w, final Collection<String> c, final String desc) {
-        writeln(w, Integer.toString(c.size()));
-
-        if (c instanceof List) {
-            for (String e : c) {
-                writeln(w, e);
-            }
-        } else {
-            final List<String> sorted = sort(c);
-
-            for (String e : sorted) {
-                writeln(w, e);
-            }
-        }
-    }
-
-    private static void writeln(final BufferedWriter w, final Collection<? extends Writable> c) {
-        writeln(w, Integer.toString(c.size()));
-
-        if (c instanceof List) {
-            for (Writable e : c) {
-                e.write(w);
-            }
-        } else {
-            final List<? extends Writable> sorted = sort(c);
-
-            for (Writable e : sorted) {
-                e.write(w);
-            }
-        }
-    }
-
-    private static void writeln(final BufferedWriter w, final String s) {
-        try {
-            w.write(s);
-            w.newLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private interface Constructor<T> {
-        public T read(BufferedReader r);
-    }
-
-    private static Constructor<String> myStringConstructor = new Constructor<String>() {
-        public String read(final BufferedReader r) {
-            try {
-                return r.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-    };
-
-    private static <T> Collection<T> readMany(final BufferedReader r, final Constructor<T> c, final Collection<T> acc) {
-        final int size = readInt(r);
-
-        for (int i = 0; i < size; i++) {
-            acc.add(c.read(r));
-        }
-
-        return acc;
-    }
-
-    private static String lookString(final BufferedReader r) {
-        try {
-            r.mark(256);
-            final String s = r.readLine();
-            r.reset();
-
-            return s;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static void readTag(final BufferedReader r, final String tag) {
-        try {
-            final String s = r.readLine();
-
-            if (!s.equals(tag))
-                System.err.println("Parsing error: expected \"" + tag + "\", but found \"" + s + "\"");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static String readString(final BufferedReader r) {
-        try {
-            return r.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static long readLong(final BufferedReader r) {
-        final String s = readString(r);
-
-        try {
-            return Long.parseLong(s);
-        } catch (Exception n) {
-            System.err.println("Parsing error: expected long, but found \"" + s + "\"");
-            return 0;
-        }
-    }
-
-    private static int readInt(final BufferedReader r) {
-        final String s = readString(r);
-
-        try {
-            return Integer.parseInt(s);
-        } catch (Exception n) {
-            System.err.println("Parsing error: expected integer, but found \"" + s + "\"");
-            return 0;
-        }
-    }
-
-    private static String readStringAttribute(final BufferedReader r, final String tag) {
-        try {
-            final String s = r.readLine();
-
-            if (s.startsWith(tag))
-                return s.substring(tag.length());
-
-            System.err.println("Parsing error: expected \"" + tag + "\", but found \"" + s + "\"");
-
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     // File separator replacement
     private static final char myFileSeparatorReplacement = '.';
 
@@ -209,12 +48,12 @@ public class ProjectWrapper {
     // Project snapshot file name
     private final String myProjectSnapshot;
 
-    public interface ClasspathItemWrapper extends Writable {
+    public interface ClasspathItemWrapper extends RW.Writable {
         public List<String> getClassPath(ClasspathKind kind);
     }
 
-    public final Constructor<LibraryWrapper> myLibraryWrapperConstructor =
-            new Constructor<LibraryWrapper>() {
+    private final RW.Constructor<LibraryWrapper> myLibraryWrapperConstructor =
+            new RW.Constructor<LibraryWrapper>() {
                 public LibraryWrapper read(final BufferedReader r) {
                     return new LibraryWrapper(r);
                 }
@@ -225,16 +64,16 @@ public class ProjectWrapper {
         final List<String> myClassPath;
 
         public void write(final BufferedWriter w) {
-            writeln(w, "Library:" + myName);
-            writeln(w, "Classpath:");
-            writeln(w, myClassPath, null);
+            RW.writeln(w, "Library:" + myName);
+            RW.writeln(w, "Classpath:");
+            RW.writeln(w, myClassPath, null);
         }
 
         public LibraryWrapper(final BufferedReader r) {
-            myName = readStringAttribute(r, "Library:");
+            myName = RW.readStringAttribute(r, "Library:");
 
-            readTag(r, "Classpath:");
-            myClassPath = (List<String>) readMany(r, myStringConstructor, new ArrayList<String>());
+            RW.readTag(r, "Classpath:");
+            myClassPath = (List<String>) RW.readMany(r, RW.myStringConstructor, new ArrayList<String>());
         }
 
         public LibraryWrapper(final Library lib) {
@@ -256,15 +95,15 @@ public class ProjectWrapper {
         }
     }
 
-    public final Constructor<ClasspathItemWrapper> myWeakClasspathItemWrapperConstructor =
-            new Constructor<ClasspathItemWrapper>() {
+    private final RW.Constructor<ClasspathItemWrapper> myWeakClasspathItemWrapperConstructor =
+            new RW.Constructor<ClasspathItemWrapper>() {
                 public ClasspathItemWrapper read(final BufferedReader r) {
-                    final String s = lookString(r);
+                    final String s = RW.lookString(r);
                     if (s.startsWith("Library:")) {
-                        return new WeakClasspathItemWrapper(readStringAttribute(r, "Library:"), "Library");
+                        return new WeakClasspathItemWrapper(RW.readStringAttribute(r, "Library:"), "Library");
                     }
                     if (s.startsWith("Module:")) {
-                        return new WeakClasspathItemWrapper(readStringAttribute(r, "Module:"), "Module");
+                        return new WeakClasspathItemWrapper(RW.readStringAttribute(r, "Module:"), "Module");
                     } else {
                         return new GenericClasspathItemWrapper(r);
                     }
@@ -307,7 +146,7 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            writeln(w, myType + ":" + getName());
+            RW.writeln(w, myType + ":" + getName());
         }
     }
 
@@ -329,10 +168,10 @@ public class ProjectWrapper {
         }
 
         public GenericClasspathItemWrapper(final BufferedReader r) {
-            myType = readString(r);
+            myType = RW.readString(r);
 
-            readTag(r, "Classpath:");
-            myClassPath = (List<String>) readMany(r, myStringConstructor, new ArrayList<String>());
+            RW.readTag(r, "Classpath:");
+            myClassPath = (List<String>) RW.readMany(r, RW.myStringConstructor, new ArrayList<String>());
         }
 
         public String getType() {
@@ -344,9 +183,9 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            writeln(w, myType);
-            writeln(w, "Classpath:");
-            writeln(w, myClassPath, "");
+            RW.writeln(w, myType);
+            RW.writeln(w, "Classpath:");
+            RW.writeln(w, myClassPath, "");
         }
 
         public int compareTo(Object o) {
@@ -376,14 +215,14 @@ public class ProjectWrapper {
         }
     }
 
-    public final Constructor<FileWrapper> myFileWrapperConstructor =
-            new Constructor<FileWrapper>() {
+    private final RW.Constructor<FileWrapper> myFileWrapperConstructor =
+            new RW.Constructor<FileWrapper>() {
                 public FileWrapper read(final BufferedReader r) {
                     return new FileWrapper(r);
                 }
             };
 
-    public class FileWrapper implements Writable {
+    public class FileWrapper implements RW.Writable {
         final String myName;
         final long myModificationTime;
 
@@ -398,8 +237,14 @@ public class ProjectWrapper {
         }
 
         FileWrapper(final BufferedReader r) {
-            myName = readString(r);
+            myName = RW.readString(r);
             myModificationTime = 0; // readLong(r);
+
+            final Set<String> classes = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String> ());
+
+            for (String c : classes) {
+                myClassToSourceCallback.associate(c, myName);
+            }
         }
 
         public String getName() {
@@ -411,7 +256,8 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            writeln(w, getName());
+            RW.writeln(w, getName());
+            RW.writeln(w, mySourceToClass.getClasses (getName()), "");
             // writeln(w, Long.toString(getStamp()));
         }
 
@@ -428,8 +274,8 @@ public class ProjectWrapper {
         }
     }
 
-    public final Constructor<ModuleWrapper> myModuleWrapperConstructor =
-            new Constructor<ModuleWrapper>() {
+    private final RW.Constructor<ModuleWrapper> myModuleWrapperConstructor =
+            new RW.Constructor<ModuleWrapper>() {
                 public ModuleWrapper read(final BufferedReader r) {
                     return new ModuleWrapper(r);
                 }
@@ -437,8 +283,7 @@ public class ProjectWrapper {
 
     public class ModuleWrapper implements ClasspathItemWrapper {
 
-        private class Properties implements Writable {
-
+        private class Properties implements RW.Writable {
             final Set<String> myRoots;
             final Set<FileWrapper> mySources;
 
@@ -452,16 +297,16 @@ public class ProjectWrapper {
             long myEarliestOutput;
 
             public void write(final BufferedWriter w) {
-                writeln(w, "Roots:");
-                writeln(w, myRoots, null);
+                RW.writeln(w, "Roots:");
+                RW.writeln(w, myRoots, null);
 
-                writeln(w, "Sources:");
-                writeln(w, mySources);
+                RW.writeln(w, "Sources:");
+                RW.writeln(w, mySources);
 
-                writeln(w, "Output:");
-                writeln(w, myOutput == null ? "" : myOutput);
+                RW.writeln(w, "Output:");
+                RW.writeln(w, myOutput == null ? "" : myOutput);
 
-                writeln(w, "OutputStatus:" + myOutputStatus);
+                RW.writeln(w, "OutputStatus:" + myOutputStatus);
 
                 //writeln(w, "EarliestSource:");
                 //writeln(w, Long.toString(myEarliestSource));
@@ -477,17 +322,17 @@ public class ProjectWrapper {
             }
 
             public Properties(final BufferedReader r) {
-                readTag(r, "Roots:");
-                myRoots = (Set<String>) readMany(r, myStringConstructor, new HashSet<String>());
+                RW.readTag(r, "Roots:");
+                myRoots = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String>());
 
-                readTag(r, "Sources:");
-                mySources = (Set<FileWrapper>) readMany(r, myFileWrapperConstructor, new HashSet<FileWrapper>());
+                RW.readTag(r, "Sources:");
+                mySources = (Set<FileWrapper>) RW.readMany(r, myFileWrapperConstructor, new HashSet<FileWrapper>());
 
-                readTag(r, "Output:");
-                final String s = readString(r);
+                RW.readTag(r, "Output:");
+                final String s = RW.readString(r);
                 myOutput = s.equals("") ? null : s;
 
-                myOutputStatus = readStringAttribute(r, "OutputStatus:");
+                myOutputStatus = RW.readStringAttribute(r, "OutputStatus:");
 
                 //readTag(r, "EarliestSource:");
                 myEarliestSource = 0;//readLong(r);
@@ -606,21 +451,21 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            writeln(w, "Module:" + myName);
+            RW.writeln(w, "Module:" + myName);
 
-            writeln(w, "SourceProperties:");
+            RW.writeln(w, "SourceProperties:");
             mySource.write(w);
 
-            writeln(w, "TestProperties:");
+            RW.writeln(w, "TestProperties:");
             myTest.write(w);
 
-            writeln(w, "Excludes:");
-            writeln(w, myExcludes, null);
+            RW.writeln(w, "Excludes:");
+            RW.writeln(w, myExcludes, null);
 
-            writeln(w, "Libraries:");
-            writeln(w, myLibraries);
+            RW.writeln(w, "Libraries:");
+            RW.writeln(w, myLibraries);
 
-            writeln(w, "Dependencies:");
+            RW.writeln(w, "Dependencies:");
 
             final List<ClasspathItemWrapper> weakened = new ArrayList<ClasspathItemWrapper>();
 
@@ -628,27 +473,27 @@ public class ProjectWrapper {
                 weakened.add(weaken(cpiw));
             }
 
-            writeln(w, weakened);
+            RW.writeln(w, weakened);
         }
 
         public ModuleWrapper(final BufferedReader r) {
             myModule = null;
-            myName = readStringAttribute(r, "Module:");
+            myName = RW.readStringAttribute(r, "Module:");
 
-            readTag(r, "SourceProperties:");
+            RW.readTag(r, "SourceProperties:");
             mySource = new Properties(r);
 
-            readTag(r, "TestProperties:");
+            RW.readTag(r, "TestProperties:");
             myTest = new Properties(r);
 
-            readTag(r, "Excludes:");
-            myExcludes = (Set<String>) readMany(r, myStringConstructor, new HashSet<String>());
+            RW.readTag(r, "Excludes:");
+            myExcludes = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String>());
 
-            readTag(r, "Libraries:");
-            myLibraries = (Set<LibraryWrapper>) readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
+            RW.readTag(r, "Libraries:");
+            myLibraries = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
 
-            readTag(r, "Dependencies:");
-            myDependsOn = (List<ClasspathItemWrapper>) readMany(r, myWeakClasspathItemWrapperConstructor, new ArrayList<ClasspathItemWrapper>());
+            RW.readTag(r, "Dependencies:");
+            myDependsOn = (List<ClasspathItemWrapper>) RW.readMany(r, myWeakClasspathItemWrapperConstructor, new ArrayList<ClasspathItemWrapper>());
         }
 
         public ModuleWrapper(final Module m) {
@@ -701,9 +546,9 @@ public class ProjectWrapper {
 
             myDependsOn = new ArrayList<ClasspathItemWrapper>();
 
-            for (Module.ModuleDependency dep : myModule.getDependencies()) {
-                final ClasspathItem cpi = dep.getItem();
+            final ClasspathKind kind = myProject.getCompileClasspathKind(true);
 
+            for (ClasspathItem cpi : myModule.getClasspath(kind)) {
                 if (cpi instanceof Module) {
                     myDependsOn.add(getModule(((Module) cpi).getName()));
                 } else if (cpi instanceof Library) {
@@ -763,6 +608,9 @@ public class ProjectWrapper {
         }
 
         public boolean isOutdated(final boolean tests, final ProjectWrapper history) {
+            if (history == null)
+                return true;
+
             final ModuleWrapper past = history.getModule(myName);
             final boolean isNewModule = past == null;
             final boolean outputChanged = !isNewModule && !safeEquals(past.getOutputPath(), getOutputPath());
@@ -809,6 +657,8 @@ public class ProjectWrapper {
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
     final ProjectWrapper myHistory;
+    final SourceToClass mySourceToClass = new SourceToClass (this);
+    final Callbacks.Backend myClassToSourceCallback = mySourceToClass.getCallback();
 
     private void rescan() {
         for (ModuleWrapper m : myModules.values()) {
@@ -833,7 +683,7 @@ public class ProjectWrapper {
     }
 
     private ProjectWrapper(final String prjDir, final String setupScript) {
-        myProject = new Project(new GantBinding());
+        myProject = new Project(new GantBinding(), mySourceToClass.getCallback());
         myRoot = new File(prjDir).getAbsolutePath();
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
@@ -848,6 +698,9 @@ public class ProjectWrapper {
         }
 
         myHistory = loadSnapshot();
+
+        if (myHistory != null)
+            mySourceToClass.inherit (myHistory.mySourceToClass);
     }
 
     public String getAbsolutePath(final String relative) {
@@ -897,18 +750,18 @@ public class ProjectWrapper {
         myProject = null;
         myHistory = null;
 
-        myRoot = readStringAttribute(r, "Root:");
+        myRoot = RW.readStringAttribute(r, "Root:");
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-        readTag(r, "Libraries:");
-        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
+        RW.readTag(r, "Libraries:");
+        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
 
         for (LibraryWrapper l : libs) {
             myLibraries.put(l.getName(), l);
         }
 
-        readTag(r, "Modules:");
-        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) readMany(r, myModuleWrapperConstructor, new HashSet<ModuleWrapper>());
+        RW.readTag(r, "Modules:");
+        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) RW.readMany(r, myModuleWrapperConstructor, new HashSet<ModuleWrapper>());
 
         for (ModuleWrapper m : mods) {
             myModules.put(m.getName(), m);
@@ -916,13 +769,13 @@ public class ProjectWrapper {
     }
 
     public void write(final BufferedWriter w) {
-        writeln(w, "Root:" + myRoot);
+        RW.writeln(w, "Root:" + myRoot);
 
-        writeln(w, "Libraries:");
-        writeln(w, getLibraries());
+        RW.writeln(w, "Libraries:");
+        RW.writeln(w, getLibraries());
 
-        writeln(w, "Modules:");
-        writeln(w, getModules());
+        RW.writeln(w, "Modules:");
+        RW.writeln(w, getModules());
     }
 
     private String getProjectSnapshotFileName() {
@@ -975,49 +828,6 @@ public class ProjectWrapper {
         }
     }
 
-    private boolean structureChanged() {
-        return false;
-
-        /*if (myHistory == null)
-            return true;
-
-        try {
-            final StringWriter my = new StringWriter();
-            final StringWriter history = new StringWriter();
-
-            final BufferedWriter bmy = new BufferedWriter(my);
-            final BufferedWriter bhistory = new BufferedWriter(history);
-
-            myHistory.write(bmy);
-            write(new BufferedWriter(bhistory));
-
-            bmy.flush();
-            bhistory.flush();
-
-            my.close();
-            history.close();
-
-            final String myString = my.getBuffer().toString();
-            final String hisString = history.getBuffer().toString();
-
-
-            FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
-            FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
-
-            f1.write(myString);
-            f2.write(hisString);
-
-            f1.close();
-            f2.close();
-
-
-            return !myString.equals(hisString);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return true;
-        }*/
-    }
-
     public void report() {
         boolean moduleReport = true;
 
@@ -1025,11 +835,6 @@ public class ProjectWrapper {
 
         if (myHistory == null) {
             System.out.println("   no project history found");
-        } else {
-            if (structureChanged()) {
-                System.out.println("   project structure change detected, rebuild required");
-                moduleReport = false;
-            }
         }
 
         if (moduleReport) {
@@ -1055,13 +860,6 @@ public class ProjectWrapper {
     }
 
     public void make(final boolean force, final boolean tests) {
-        if (structureChanged() && !force) {
-            System.out.println("Project \"" + myRoot + "\" structure changed, building all modules.");
-            clean();
-            makeModules(myProject.getModules().values(), tests, true);
-            return;
-        }
-
         final List<Module> modules = new ArrayList<Module>();
 
         for (Map.Entry<String, ModuleWrapper> entry : myModules.entrySet()) {
@@ -1153,7 +951,7 @@ public class ProjectWrapper {
 
         DotPrinter.footer();
 
-        // Traverse "upper" subgraph and collect outdated modules and their descendants
+        // Traversing "upper" subgraph and collecting outdated modules and their descendants
         new Object() {
             public void run(final Collection<Module> initial, final boolean force) {
                 if (initial == null)
@@ -1196,12 +994,6 @@ public class ProjectWrapper {
 
         if (module == null) {
             System.err.println("Module \"" + modName + "\" not found in project \"" + myRoot + "\"");
-            return;
-        }
-
-        if (structureChanged() && !force) {
-            System.out.println("Project \"" + myRoot + "\" structure changed, performing rebuild.");
-            rebuild();
             return;
         }
 

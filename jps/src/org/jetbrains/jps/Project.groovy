@@ -9,6 +9,8 @@ import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
 
+import org.jetbrains.ether.dependencyView.Callbacks
+
 /**
  * @author max
  */
@@ -32,9 +34,9 @@ class Project {
 
   boolean dryRun = false
 
-  def Project(GantBinding binding) {
+  def Project(GantBinding binding, Callbacks.Backend callback) {
     this.binding = binding
-    builder = new ProjectBuilder(binding, this)
+    builder = new ProjectBuilder(binding, this, callback)
     artifactBuilder = new ArtifactBuilder(this)
 
     resolvers << new ModuleResolver(project: this)

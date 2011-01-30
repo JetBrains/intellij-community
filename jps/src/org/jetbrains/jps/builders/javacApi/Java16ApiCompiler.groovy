@@ -8,24 +8,28 @@ import org.jetbrains.jps.Sdk
 import org.jetbrains.jps.builders.JavaFileCollector
 import javax.tools.*
 
- /**
+import org.jetbrains.ether.dependencyView.Callbacks
+
+/**
  * @author nik
  */
 class Java16ApiCompiler {
   private static instance
   private StandardJavaFileManager fileManager
   private JavaCompiler compiler
+  private Callbacks.Backend callback
 
-  static Java16ApiCompiler getInstance() {
+  static Java16ApiCompiler getInstance(Callbacks.Backend callback) {
     if (instance == null) {
-      instance = new Java16ApiCompiler()
+      instance = new Java16ApiCompiler(callback)
     }
     return instance
   }
 
-  def Java16ApiCompiler() {
+  def Java16ApiCompiler(Callbacks.Backend c) {
     compiler = ToolProvider.getSystemJavaCompiler()
-    fileManager = new OptimizedFileManager();
+    fileManager = new OptimizedFileManager(c);
+    callback = c
   }
 
   def compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
@@ -45,9 +49,7 @@ class Java16ApiCompiler {
     }
     options << "-g"
     options << "-nowarn"
-//    options << "-verbose"
 
-    chunk.getSdk()
     List<File> filesToCompile = []
     Set<File> excluded = state.excludes.collect { new File(it.toString()) }
     state.sourceRoots.each {
@@ -74,6 +76,9 @@ class Java16ApiCompiler {
       Project project = chunk.project
       StringWriter out = new StringWriter()
       CompilationTask task = compiler.getTask(new PrintWriter(out), fileManager, null, options, null, toCompile)
+
+      callback.begin()
+
       if (!task.call()) {
         project.builder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
         project.error("Compilation failed")
@@ -83,6 +88,7 @@ class Java16ApiCompiler {
       }
       project.builder.listeners*.onJavaFilesCompiled(chunk, filesToCompile.size())
       fileManager.flush()
+      callback.end()
     }
     else {
       chunk.project.info("No java source files found in '${chunk.name}', skipping compilation")
