@@ -187,6 +187,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testtypecast$una4() throws Throwable { doTest(); }
   public void testtypecast$una5() throws Throwable { doTest(); }
   public void testtypecast$una6() throws Throwable { doTest(); }
+  public void testtypecast$elvis() throws Throwable { doTest(); }
+  public void testtypecast$conditional() throws Throwable { doTest(); }
 
   public void testAtHang() throws Throwable { doTest(); }
   public void testDollar() throws Throwable { doTest(); }
