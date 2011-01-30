@@ -348,6 +348,7 @@ public class FileUtil {
     return file;
   }
 
+  @NotNull
   public static File createTempFile(@NonNls String prefix, @NonNls String suffix) throws IOException{
     File file = doCreateTempFile(prefix, suffix);
     file.delete();

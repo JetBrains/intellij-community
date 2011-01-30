@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner.designSurface;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -70,6 +72,7 @@ public abstract class EventProcessor {
            keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_PAGE_DOWN;
   }
 
+  @Nullable
   protected static ComponentDropLocation moveDropLocation(final GuiEditor editor, final ComponentDropLocation location,
                                                  final ComponentDragObject dragObject, final KeyEvent e) {
     ComponentDropLocation.Direction dir = directionFromKey(e.getKeyCode());

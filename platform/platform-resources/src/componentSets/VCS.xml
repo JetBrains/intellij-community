@@ -24,6 +24,12 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vcs.impl.CheckinHandlersManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.openapi.vcs.impl.Dummy</headless-implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
       <skipForDefaultProject/>
     </component>

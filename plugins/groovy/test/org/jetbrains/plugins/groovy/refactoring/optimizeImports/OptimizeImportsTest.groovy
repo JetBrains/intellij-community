@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -43,12 +42,10 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
   @Override protected void setUp() {
     super.setUp()
     CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = true
-    DaemonCodeAnalyzer.getInstance(project).projectOpened()
     ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true)
   }
 
   @Override protected void tearDown() {
-    DaemonCodeAnalyzer.getInstance(project).projectClosed()
     CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = false
     super.tearDown()
   }
