@@ -139,7 +139,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          @Nullable GrExpression initializer,
                                                          @Nullable PsiType type,
                                                          String... identifiers) {
-    StringBuffer text = writeModifiers(modifiers);
+    StringBuilder text = writeModifiers(modifiers);
     if (modifiers == null || modifiers.length == 0) {
       text.append("def ");
     }
@@ -209,8 +209,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrVariableDeclaration)psiClass.getFields()[0].getParent();
   }
 
-  private StringBuffer writeModifiers(String[] modifiers) {
-    StringBuffer text = new StringBuffer();
+  private static StringBuilder writeModifiers(String[] modifiers) {
+    StringBuilder text = new StringBuilder();
     if (!(modifiers == null || modifiers.length == 0)) {
       for (String modifier : modifiers) {
         text.append(modifier);
@@ -220,7 +220,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return text;
   }
 
-  private String getTypeText(PsiType type) {
+  private static String getTypeText(PsiType type) {
     if (!(type instanceof PsiArrayType)) {
       final String canonical = type.getCanonicalText();
       return canonical != null ? canonical : type.getPresentableText();
@@ -430,11 +430,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     String text = length <= 1 ? "\n" : "";
     if (length > 1) {
-      StringBuffer buffer = new StringBuffer();
-      for (; length > 0; length--) {
-        buffer.append("\n");
-      }
-      text = buffer.toString();
+      text = StringUtil.repeatSymbol('\n', length);
     }
 
     PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
@@ -445,7 +441,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrArgumentList createExpressionArgumentList(GrExpression... expressions) {
-    StringBuffer text = new StringBuffer();
+    StringBuilder text = new StringBuilder();
     text.append("ven (");
     for (GrExpression expression : expressions) {
       text.append(expression.getText()).append(", ");
@@ -453,16 +449,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (expressions.length > 0) {
       text.delete(text.length() - 2, text.length());
     }
-    text.append(")");
+    text.append(')');
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
   }
 
   public GrNamedArgument createNamedArgument(@NotNull final String name, final GrExpression expression) {
-    StringBuffer text = new StringBuffer();
-    text.append("foo (").append(name).append(":").append(expression.getText()).append(")");
-    PsiFile file = createGroovyFile(text.toString());
+    PsiFile file = createGroovyFile("foo (" + name + ":" + expression.getText() + ")");
     assert file.getChildren()[0] != null;
     GrCall call = (GrCall)file.getChildren()[0];
     return call.getArgumentList().getNamedArguments()[0];
@@ -475,7 +469,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrBlockStatement createBlockStatement(@NonNls GrStatement... statements) {
-    StringBuffer text = new StringBuffer();
+    StringBuilder text = new StringBuilder();
     text.append("while (true) { \n");
     for (GrStatement statement : statements) {
       text.append(statement.getText()).append("\n");
@@ -487,7 +481,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrMethodCallExpression createMethodCallByAppCall(GrApplicationStatement callExpr) {
-    StringBuffer text = new StringBuffer();
+    StringBuilder text = new StringBuilder();
     text.append(callExpr.getInvokedExpression().getText());
     text.append("(");
     final GrCommandArgumentList argumentList = callExpr.getArgumentList();
@@ -617,7 +611,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrCatchClause createCatchClause(PsiClassType type, String parameterName) {
-    StringBuffer buffer = new StringBuffer("try{} catch(");
+    StringBuilder buffer = new StringBuilder("try{} catch(");
     if (type == null) {
       buffer.append("Throwable ");
     }
