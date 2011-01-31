@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.intellij.testFramework.LightPlatformTestCase;
+
+import junit.framework.TestCase;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
  * @author max
  */
-public class _FirstInSuiteTest extends LightPlatformTestCase {
+public class _FirstInSuiteTest extends TestCase {
   public void testNothing() throws Exception {
 
   }
