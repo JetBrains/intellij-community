@@ -83,8 +83,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   }
 
   public static MessageTreeNode createEllipsisNode(XDebuggerTree tree, XDebuggerTreeNode parent, final int remaining) {
-    String message = remaining == -1 ? "..." : XDebuggerBundle.message("node.text.ellipsis.0.more.nodes.double.click.to.show", remaining);
-    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, null, true, null);
+    String message = remaining == -1 ? XDebuggerBundle.message("node.text.ellipsis.0.unknown.more.nodes.double.click.to.show")
+                                     : XDebuggerBundle.message("node.text.ellipsis.0.more.nodes.double.click.to.show", remaining);
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.GRAYED_ATTRIBUTES, null, true, null);
   }
 
   public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {
@@ -92,11 +93,13 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   }
 
   public static MessageTreeNode createLoadingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.COLLECTING_DATA_MESSAGE,
+                               XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
   }
 
   public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE, XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE,
+                               XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
   }
 
   public static List<MessageTreeNode> createErrorMessages(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String errorMessage,
@@ -111,6 +114,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   }
 
   public static MessageTreeNode createInfoMessage(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String message) {
-    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                               XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
   }
 }
