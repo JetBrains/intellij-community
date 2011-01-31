@@ -434,4 +434,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     testArrows true, true, -1, 1
   }
 
+  public void testHideOnOnePrefixVariant() {
+    myFixture.configureByText("a.java", """
+    class A {
+      Object foo() { return nu<caret> }
+    }
+    """)
+    type 'll'
+    assert !lookup
+  }
+
 }

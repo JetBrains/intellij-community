@@ -450,15 +450,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean hideAutopopupIfMeaningless() {
-    if (isAutopopupCompletion() && !myLookup.isSelectionTouched()) {
+    if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
-      final List<LookupElement> items = myLookup.getItems();
-      if (items.isEmpty() && !myLookup.isCalculating()) {
-        myLookup.hideLookup(false);
-        LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
-        return true;
+      for (LookupElement item : myLookup.getItems()) {
+        if (!(item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+          return false;
+        }
       }
+
+      myLookup.hideLookup(false);
+      LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
+      return true;
     }
     return false;
   }
