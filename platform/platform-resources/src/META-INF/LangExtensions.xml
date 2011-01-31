@@ -495,7 +495,6 @@
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
   <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.lookup.impl.DeleteToWordStartHandler"/>
-  <editorActionHandler action="EditorRight" implementationClass="com.intellij.codeInsight.lookup.impl.ShowLookupActionsHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.TypedHandler"/>
 
   <!-- TemplateManagerActions -->

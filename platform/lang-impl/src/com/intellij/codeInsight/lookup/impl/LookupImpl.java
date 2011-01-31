@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -25,15 +26,20 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +52,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
-import com.intellij.ui.popup.PopupIcons;
+import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
@@ -58,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -108,6 +115,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myReused;
   private boolean myChangeGuard;
   private LookupModel myModel = new LookupModel();
+  private LookupHint myElementHint = null;
+  private Alarm myHintAlarm = new Alarm();
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -669,10 +678,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       private LookupElement oldItem = null;
 
       public void valueChanged(ListSelectionEvent e){
-        LookupElement item = getCurrentItem();
+        myHintAlarm.cancelAllRequests();
+
+        final LookupElement item = getCurrentItem();
         if (oldItem != item) {
           mySelectionInvariant = item == null ? null : myModel.getItemPresentationInvariant(item);
           fireCurrentItemChanged(item);
+        }
+        if (item != null) {
+          updateHint(item);
         }
         oldItem = item;
       }
@@ -685,15 +699,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
-        if (i >= 0) {
-          final LookupElement selected = (LookupElement)myList.getModel().getElementAt(i);
-          if (selected != null &&
-              e.getClickCount() == 1 &&
-              point.x >= myList.getCellBounds(i, i).width - PopupIcons.EMPTY_ICON.getIconWidth() &&
-              ShowLookupActionsHandler.showItemActions(LookupImpl.this, selected)) {
-            return;
-          }
-        }
 
         if (e.getClickCount() == 2){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -704,6 +709,36 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         }
       }
     });
+  }
+
+  private void updateHint(@NotNull final LookupElement item) {
+    if (myElementHint != null) {
+      final JRootPane rootPane = getComponent().getRootPane();
+      if (rootPane != null) {
+        rootPane.getLayeredPane().remove(myElementHint);
+        rootPane.revalidate();
+        rootPane.repaint();
+      }
+      myElementHint = null;
+    }
+    final Collection<LookupElementAction> actions = myModel.getActionsFor(item);
+    if (!actions.isEmpty()) {
+      myHintAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          assert !myDisposed;
+          final JRootPane rootPane = getComponent().getRootPane();
+          if (rootPane == null) return;
+
+          myElementHint = new LookupHint();
+          final JLayeredPane layeredPane = rootPane.getLayeredPane();
+          layeredPane.add(myElementHint, 0, 0);
+          final Rectangle bounds = getCurrentItemBounds();
+          myElementHint.setSize(myElementHint.getPreferredSize());
+          myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth(), bounds.y));
+        }
+      }, 500);
+    }
   }
 
   private int calcLookupStart() {
@@ -990,6 +1025,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert !myDisposed : disposeTrace;
 
     Disposer.dispose(myProcessIcon);
+    Disposer.dispose(myHintAlarm);
 
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace();
@@ -1053,5 +1089,56 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final Rectangle bounds = getCurrentItemBounds();
     hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width,
                                                                  bounds.y)));
+  }
+
+  @Override
+  public boolean showElementActions() {
+    if (!isVisible()) return false;
+
+    final LookupElement element = getCurrentItem();
+    if (element == null) {
+      return false;
+    }
+
+    final Collection<LookupElementAction> actions = getActionsFor(element);
+    if (actions.isEmpty()) {
+      return false;
+    }
+
+    showItemPopup(JBPopupFactory.getInstance().createListPopup(new LookupActionsStep(actions, this, element)));
+    return true;
+  }
+
+  private class LookupHint extends JLabel {
+    private final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);
+    private final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(3, 3, 3, 3));
+    private LookupHint() {
+      setOpaque(false);
+      setBorder(INACTIVE_BORDER);
+      setIcon(IconLoader.findIcon("/actions/intentionBulb.png"));
+      String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
+              ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+      if (acceleratorsText.length() > 0) {
+        setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
+      }
+
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          setBorder(ACTIVE_BORDER);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          setBorder(INACTIVE_BORDER);
+        }
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
+            showElementActions();
+          }
+        }
+      });
+    }
   }
 }
