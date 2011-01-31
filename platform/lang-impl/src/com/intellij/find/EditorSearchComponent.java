@@ -463,7 +463,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         int newOffset = result.getEndOffset();
         if (offset == newOffset) {
           ++offset;
-          if (offset == charsSequence.length()) break;
+          if (offset >= charsSequence.length()) break;
         }
         else {
           offset = newOffset;
