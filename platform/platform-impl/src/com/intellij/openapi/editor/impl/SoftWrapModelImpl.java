@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +50,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener {
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener, PropertyChangeListener {
 
   /**
    * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
@@ -155,6 +157,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     EditorSettings settings = myEditor.getSettings();
     myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
     myUseSoftWraps = settings.isUseSoftWraps();
+    
+    editor.addPropertyChangeListener(this);
   }
 
   /**
@@ -580,6 +584,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return;
     }
     executeSafely(myFoldProcessingEndTask);
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (EditorEx.PROP_FONT_SIZE.equals(evt.getPropertyName())) {
+      myDirty = true;
+    }
   }
 
   @Override

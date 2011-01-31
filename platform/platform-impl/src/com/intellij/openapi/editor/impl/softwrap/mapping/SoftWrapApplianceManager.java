@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -834,6 +835,12 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       indentInColumns = 0;
       indentInPixels = 0;
     }
+    
+    public void reset() {
+      indentInColumns = 0;
+      indentInPixels = 0;
+      endLineOffset = 0;
+    }
   }
 
   public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
@@ -993,6 +1000,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       fontType = 0;
       notifyListenersOnLineStartPosition = false;
       skipToLineEnd = false;
+      fontType2spaceWidth.reset();
+      logicalLineData.reset();
     }
 
     public int getSpaceWidth() {
@@ -1148,6 +1157,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         index = 0;
       }
       myData[index] = value;
+    }
+    
+    public void reset() {
+      myShift = 0;
+      Arrays.fill(myData, 0);
     }
   }
 }
