@@ -21,6 +21,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -152,9 +153,10 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     if (SystemInfo.isMac && SystemInfo.is64Bit && "10.6".compareTo(SystemInfo.OS_VERSION) <= 0) {
       if (Registry.is("ide.firstStartup")) {
+        String productName = ApplicationNamesInfo.getInstance().getProductName();
         Notification n =
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "64-bit System Information", "You IntelliJ IDEA now running in 64-bit mode.<br>" +
-                                                                                               "You may reduce memory, used by IntelliJ IDEA, by running it in 32-bit mode. " +
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Optimization Hint", productName + " is now running in 64-bit mode.<br>" +
+                                                                                               "You may reduce memory consumption by running it in 32-bit mode. " +
                                                                                                "<a href=\"http://devnet.jetbrains.net/docs/DOC-1232\">Click for details</a>", NotificationType.INFORMATION, new NotificationListener() {
             @Override
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
