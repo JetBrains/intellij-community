@@ -3353,7 +3353,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void requestFocus() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myEditorComponent, true);
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+    if (focusManager.getFocusOwner() != myEditorComponent) { //IDEA-64501
+      focusManager.requestFocus(myEditorComponent, true);
+    }
   }
 
   private void validateMousePointer(MouseEvent e) {
