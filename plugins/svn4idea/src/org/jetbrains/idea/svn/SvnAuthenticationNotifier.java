@@ -269,6 +269,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         return false;
       }
       LOG.info("some other exc", e);
+      return false; /// !!!! any exception means user should be notified that authorization failed
     }
     if (! checkWrite) {
       return true;
