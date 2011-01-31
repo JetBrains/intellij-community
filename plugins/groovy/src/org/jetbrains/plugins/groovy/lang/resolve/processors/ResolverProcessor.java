@@ -90,7 +90,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext);
       addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
-      return !isAccessible;
+      return !isAccessible || !isStaticsOK;
     }
 
     return true;
