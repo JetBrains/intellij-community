@@ -204,6 +204,7 @@ public class ResolveUtil {
                     if (processor instanceof ResolveProcessor) {
                         return ((ResolveProcessor)processor).getResult();
                     }
+                    return null;
                 }
             }
 

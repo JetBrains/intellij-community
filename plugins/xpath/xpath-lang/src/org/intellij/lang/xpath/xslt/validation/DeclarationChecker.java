@@ -24,6 +24,9 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import gnu.trove.THashMap;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.util.ElementProcessor;
 
 import java.util.HashMap;
@@ -155,12 +158,40 @@ public final class DeclarationChecker extends ElementProcessor<XmlTag> implement
       return myVariableDeclarations == myLocalVariables;
     }
 
-    public void processVariable(String name, XmlTag tag) {
-      XmlTag var = myVariableDeclarations.get(name);
-      if (var != null) {
-        myDuplications.put(tag, var);
-      } else if (insideTemplate()) {
-        var = myTopLevelVariables.get(name);
+    public void processVariable(final String name, XmlTag tag) {
+      ResolveUtil.treeWalkUp(new ElementProcessor<XmlTag>(tag) {
+        boolean myContinue = true;
+
+        @Override
+        protected void processTemplate(XmlTag tag) {
+          myContinue = false;
+        }
+
+        @Override
+        protected void processVarOrParam(XmlTag tag) {
+          if (tag != myRoot && name.equals(tag.getAttributeValue("name"))) {
+            assert myContinue;
+            if (XsltSupport.getXsltLanguageLevel(tag.getContainingFile()) == XsltChecker.LanguageLevel.V2) {
+              myShadows.put(myRoot, tag);
+            } else {
+              myDuplications.put(myRoot, tag);
+            }
+          }
+        }
+
+        @Override
+        protected boolean shouldContinue() {
+          return myContinue;
+        }
+
+        @Override
+        protected boolean followImport() {
+          return false;
+        }
+      }, tag);
+
+      if (insideTemplate()) {
+        XmlTag var = myTopLevelVariables.get(name);
 
         if (var != null) {
           myShadows.put(tag, var);
