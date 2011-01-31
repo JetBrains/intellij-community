@@ -160,7 +160,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1]);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
-    if (outputInfos.length > 1 ||
+    if (/*outputInfos.length > 1 ||*/
         outputInfos.length == 1 && returnStatements.size() > 0) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
       showErrorMessage(message, project, editor);
@@ -187,10 +187,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    VariableInfo outputInfo = outputInfos.length == 0 ? null : outputInfos[0];
     boolean canBeStatic = ExtractMethodUtil.canBeStatic(statement0);
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, owner, canBeStatic, returnStatements);
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfos, elements, statements, owner, canBeStatic, returnStatements);
 
     final String methodName;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -230,11 +229,15 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
           if (declarationOwner != null && !ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
             // Replace set of statements
-            final GrStatement newStatement = ExtractMethodUtil.createResultStatement(helper, methodName);
+            final GrStatement[] newStatement = ExtractMethodUtil.createResultStatement(helper, methodName);
             // add call statement
             final GrStatement[] statements = helper.getStatements();
             assert statements.length > 0;
-            realStatement = declarationOwner.addStatementBefore(newStatement, statements[0]);
+            realStatement = null;
+            for (GrStatement statement : newStatement) {
+              realStatement = declarationOwner.addStatementBefore(statement, statements[0]);
+            }
+            assert realStatement != null;
             // remove old statements
             ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
             PsiImplUtil.removeNewLineAfter(realStatement);

@@ -1,0 +1,25 @@
+def a = 5
+
+<begin>print a
+int b = 6;
+int c = 7
+print a+b<end>
+
+print a+b+c
+-----
+def a = 5
+
+int b, c
+(b, c) = testMethod(a)
+
+private List testMethod(int a) {
+  print a
+  int b = 6;
+  int c = 7
+  print a + b
+  return [b, c]
+}
+
+
+
+print a+b+c

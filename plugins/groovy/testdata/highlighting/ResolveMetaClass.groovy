@@ -3,4 +3,4 @@ class MyClass {
 }
 
 print MyClass.metaClass.getMethods()
-print MyClass.field
+print MyClass.<warning descr="Access to 'field' exceeds its access rights">field</warning>

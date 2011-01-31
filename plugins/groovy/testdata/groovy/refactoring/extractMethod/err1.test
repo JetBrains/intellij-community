@@ -12,4 +12,24 @@ www = kkk + 3
 println(yyy)
 println(www)
 -----
-FAILED: There are multiple output values for the selected code fragment
+iii = 6
+int kkk = 5
+def vv = 6
+def gg = 7
+
+
+int www, yyy
+(yyy, www) = testMethod(kkk, vv, gg)
+
+private List testMethod(int kkk, int vv, int gg) {
+  println(kkk + iii + (vv + gg))
+  yyy = kkk + 2
+  www = kkk + 3
+  return [yyy, www]
+}
+
+
+
+
+println(yyy)
+println(www)

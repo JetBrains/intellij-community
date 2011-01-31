@@ -18,12 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -40,7 +37,7 @@ import java.util.*;
 public class ExtractMethodInfoHelper {
 
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
-  private final String myOutputName;
+  private final VariableInfo[] myOutputNames;
   private final PsiType myOutputType;
   private final GrMemberOwner myTargetClass;
   private final boolean myIsStatic;
@@ -52,7 +49,7 @@ public class ExtractMethodInfoHelper {
   private final GrStatement[] myStatements;
 
   public ExtractMethodInfoHelper(VariableInfo[] inputInfos,
-                                 VariableInfo outputInfo,
+                                 VariableInfo[] outputInfos,
                                  PsiElement[] innerElements,
                                  GrStatement[] statements,
                                  GrMemberOwner targetClass,
@@ -80,19 +77,22 @@ public class ExtractMethodInfoHelper {
     }
 
     PsiType outputType = PsiType.VOID;
-    if (outputInfo != null) {
-      myOutputName = outputInfo.getName();
-      outputType = outputInfo.getType();
+    myOutputNames = outputInfos;
+    if (outputInfos.length > 0) {
+      if (outputInfos.length == 1) {
+        outputType = outputInfos[0].getType();
+      }
+      else {
+        outputType = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, myTargetClass);
+      }
     }
     else if (ExtractMethodUtil.isSingleExpression(statements)) {
       final GrStatement lastExpr = statements[statements.length - 1];
       if (!(lastExpr.getParent() instanceof GrCodeBlock)) {
         outputType = ((GrExpression)lastExpr).getType();
       }
-      myOutputName = null;
     }
     else {
-      myOutputName = null;
       if (myIsReturnStatement) {
         assert returnStatements.size() > 0;
         List<PsiType> types = new ArrayList<PsiType>(returnStatements.size());
@@ -103,7 +103,7 @@ public class ExtractMethodInfoHelper {
               types.add(returnValue.getType());
             }
           }
-          else if (statement instanceof GrExpression){
+          else if (statement instanceof GrExpression) {
             types.add(((GrExpression)statement).getType());
           }
         }
@@ -130,9 +130,9 @@ public class ExtractMethodInfoHelper {
     return infos;
   }
 
-  @Nullable
-  public String getOutputName() {
-    return myOutputName;
+  @NotNull
+  public VariableInfo[] getOutputNames() {
+    return myOutputNames;
   }
 
   /**
