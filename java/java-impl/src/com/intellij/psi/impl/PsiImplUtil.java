@@ -142,14 +142,14 @@ public class PsiImplUtil {
         break;
       }
     }
-    String message = parameter + " not found among parameters: " + Arrays.asList(parameters) + "." +
+    String message = parameter + ":"+parameter.getClass()+" not found among parameters: " + Arrays.asList(parameters) + "." +
                      " parameterList' parent: " + parameterList.getParent() + ";" +
                      " parameter.getParent()==paramList: " + (parameter.getParent() == parameterList) + ";" +
                      " " + parameterList.getClass() + ";" +
                      " parameter.isValid()=" + parameter.isValid() + ";" +
                      " parameterList.isValid()= " + parameterList.isValid() + ";" +
                      " parameter stub: "+(parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameter).getStub() : "---") + ";" +
-                     " suspect: " + suspect +" (index="+i+"); " +
+                     " suspect: " + suspect +" (index="+i+"); " + (suspect==null?null:suspect.getClass()) +
                      " suspect stub: "+(suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement)suspect).getStub() : suspect == null ? "-null-" : "---"+suspect.getClass()) + ";" +
                      "."
       ;
