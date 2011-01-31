@@ -472,8 +472,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         return i;
       }
     }
-    assert end > 0;
-    return end - 1;
+    return end;
   }
 
   private static int calculateWidthInColumns(char c, int widthInPixels, int spaceWithInPixels) {

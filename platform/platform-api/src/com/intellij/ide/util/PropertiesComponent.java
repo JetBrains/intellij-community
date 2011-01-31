@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class PropertiesComponent {
   public abstract void unsetValue(String name);
@@ -41,6 +42,11 @@ public abstract class PropertiesComponent {
   public abstract boolean isValueSet(String name);
 
   public abstract String getValue(@NonNls String name);
+
+  @NotNull
+  public String getValue(@NonNls String name, @NotNull String defaultValue) {
+    return isValueSet(name) ? getValue(name) : defaultValue;
+  }
 
   public String getOrInit(@NonNls String name, String defaultValue) {
     if (!isValueSet(name)) {

@@ -66,6 +66,12 @@ binding.setVariable("guessHome", {
 
 binding.setVariable("loadProject", {
   requireProperty("jdkHome", requireProperty("jdk16.home", guessJdk()))
+  def mac = isMac()
+  jdk("IDEA jdk", jdkHome) {
+    if (!mac) {
+      classpath "$jdkHome/lib/tools.jar"
+    }
+  }
   IdeaProjectLoader.loadFromPath(project, "${home}")
 
   binding.ant.patternset(id: "idea.compiler.resources") {
@@ -77,12 +83,6 @@ binding.setVariable("loadProject", {
   }
 
   project["compiler.resources.id"] = "idea.compiler.resources"
-
-  if (!isMac()) {
-    project.modules.values().each {
-      it.classpath << project.resolve("$jdkHome/lib/tools.jar")
-    }
-  }
 })
 
 requireProperty("home", guessHome())

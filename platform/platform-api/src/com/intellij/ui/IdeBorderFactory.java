@@ -27,6 +27,9 @@ import java.awt.*;
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
 
+  private IdeBorderFactory() {
+  }
+
   public static Border createBorder() {
     return createBorder(SideBorder.ALL);
   }

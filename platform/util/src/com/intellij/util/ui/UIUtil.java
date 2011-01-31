@@ -1762,5 +1762,21 @@ public class UIUtil {
     return null;
   }
 
+  public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final int selectedIndex = list.getSelectedIndex();
+        if (selectedIndex >= 0) {
+          final Rectangle visibleRect = list.getVisibleRect();
+          final Rectangle cellBounds = list.getCellBounds(selectedIndex, selectedIndex);
+          if (!visibleRect.contains(cellBounds)) {
+            list.scrollRectToVisible(cellBounds);
+          }
+        }
+      }
+    });
+  }
+
 }
 

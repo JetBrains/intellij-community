@@ -25,6 +25,8 @@ import com.sun.jna.Pointer;
 public interface FoundationLibrary extends Library {
   void NSLog(Pointer pString, Object thing);
 
+  ID NSFullUserName();
+
   ID objc_allocateClassPair(ID supercls, String name, int extraBytes);
   void objc_registerClassPair(ID cls);
 
