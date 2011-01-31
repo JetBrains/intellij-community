@@ -164,7 +164,7 @@ public class LazyParseableElement extends CompositeElement {
     }
 
     if (TreeUtil.getFileElement(this) == null) {
-      LOG.error("Chameleons must not be parsed till they're in file tree");
+      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
     }
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -174,9 +174,9 @@ public class LazyParseableElement extends CompositeElement {
 
     if (parsedNode == null && myText.length() > 0) {
       if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error("No parse for a non-empty string: " + myText + "; type=" + getElementType());
+        LOG.error("No parse for a non-empty string: " + myText + "; type=" + type + " (" + type.getClass().getName() + ")");
       } else {
-        LOG.error("No parse for a non-empty string: type=" + getElementType());
+        LOG.error("No parse for a non-empty string: type=" + type + " (" + type.getClass().getName() + ")");
       }
     }
 
