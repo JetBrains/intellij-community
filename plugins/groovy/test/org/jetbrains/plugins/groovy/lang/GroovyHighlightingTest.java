@@ -330,7 +330,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testMethodImplementedByDelegateField() {
+  public void testMethodImplementedByDelegate() {
     doTest();
   }
 }
