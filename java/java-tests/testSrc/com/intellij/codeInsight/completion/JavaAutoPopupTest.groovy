@@ -42,12 +42,15 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assert !lookup
-    //assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
-    //assertEquals 'iter', lookup.currentItem.lookupString
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertEquals 'iter', lookup.currentItem.lookupString
+    assert !lookup.focused
+
+    type 'a'
+    assert lookup.focused
   }
 
-  public void _testRecalculateItemsOnBackspace() {
+  public void testRecalculateItemsOnBackspace() {
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(String iterable) {
@@ -59,13 +62,10 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
 
-    println "b1"
     type '\b'
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
 
-    println "b2"
     type '\b'
-    println "typed backspace"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
     type "a"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa"
@@ -74,7 +74,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type "e"
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
 
-    println "typing r"
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
   }
@@ -200,7 +199,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-  public void testHideAutopopupIfItContainsExactMatch() {
+  public void _testHideAutopopupIfItContainsExactMatch() {
     myFixture.configureByText("a.java", """
       class Foo {
         String foo() {
@@ -401,10 +400,12 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup.focused
     assert lookup.items.size() == 2
 
+    lookup.positionedAbove = lookupAbove
     UISettings.instance.CYCLE_SCROLLING = cycleScrolling
 
+    def action = up ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
     try {
-      edt { myFixture.performEditorAction(up ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+      edt { myFixture.performEditorAction(action) }
       if (lookup) {
         assert lookup.focused
         assert index >= 0
@@ -428,9 +429,9 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testVerticalArrows() {
     testArrows false, false, 0, -1
-    testArrows false, true, 0, -1
-    testArrows true, false, 0, 1
-    testArrows true, true, 0, 1
+    testArrows false, true, -1, 1
+    testArrows true, false, 0, -1
+    testArrows true, true, -1, 1
   }
 
 }

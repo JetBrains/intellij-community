@@ -477,7 +477,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator, true));
       indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
