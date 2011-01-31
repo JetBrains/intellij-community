@@ -246,13 +246,13 @@ public class GroovyToJavaGenerator {
 
       final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
       Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
-      for (PsiClass aClass : collectDelegateTypes(typeDefinition)) {
+      /*for (PsiClass aClass : collectDelegateTypes(typeDefinition)) {
         if (aClass.isInterface()) {
           implementsTypes.add(JavaPsiFacade.getElementFactory(myProject).createType(aClass));
         } else {
           Collections.addAll(implementsTypes, aClass.getImplementsListTypes());
         }
-      }
+      }*/
 
       if (!implementsTypes.isEmpty()) {
         text.append(isInterface ? "extends " : "implements ");
