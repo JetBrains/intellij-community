@@ -46,6 +46,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
           ExternalResourceManagerImpl.Resource dir = new ExternalResourceManagerImpl.Resource();
           int i = resource.file.lastIndexOf("/");
           dir.file = i > 0 ? resource.file.substring(0, i) : resource.file;
+          dir.clazz = resource.clazz;
           dirs.add(dir);
         }
       }
