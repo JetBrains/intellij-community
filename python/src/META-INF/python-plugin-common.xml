@@ -343,6 +343,11 @@
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoAsViewArgsCompletionContributor"/>
 
+    <intentionAction>
+      <className>com.jetbrains.django.ref.DjangoClassViewMigrationIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
