@@ -59,7 +59,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
     maxPreferredOffsetToUse = maxPreferredOffsetToUse < startOffset ? startOffset : maxPreferredOffsetToUse;
 
     // Try to find out wrap position before preferred offset.
-    for (int i = maxPreferredOffsetToUse; i > startOffset; i--) {
+    for (int i = Math.min(maxPreferredOffsetToUse, text.length() - 1); i > startOffset; i--) {
       char c = text.charAt(i);
       if (c == '\n') {
         return i + 1;
@@ -99,7 +99,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
     // Try to find target offset that is beyond preferred offset.
     // Note that we don't consider symbol weights here and just break on the first appropriate position.
-    if (!allowToBeyondMaxPreferredOffset) {
+    if (!allowToBeyondMaxPreferredOffset || maxPreferredOffset >= text.length() - 1) {
       return maxPreferredOffset;
     }
     for (int i = maxPreferredOffsetToUse + 1; i < endOffset; i++) {
