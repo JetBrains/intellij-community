@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
@@ -222,6 +223,20 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    // comment\n" +
       "    //This is another comment\n" +
       "}"
+    );
+  }
+  
+  public void testWrapMethodAnnotationBeforeParams() throws Exception {
+    // Inspired by IDEA-59536
+    getSettings().RIGHT_MARGIN = 90;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    
+    doClassTest(
+      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
+      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
+      "public void doSomething(int x, int y) {" +
+      "\n}"
     );
   }
 }
