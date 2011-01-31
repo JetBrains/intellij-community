@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -41,7 +42,7 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
     if (builder.getTokenType() == mLPAREN) {
       final ReferenceElement.ReferenceElementResult result = parseTypeCast(builder);
       if (result != fail) {
-        if (UnaryExpression.parse(builder, parser) || result == ReferenceElement.ReferenceElementResult.mustBeType) {
+        if (ConditionalExpression.parse(builder, parser) || result == ReferenceElement.ReferenceElementResult.mustBeType) {
           marker.done(CAST_EXPRESSION);
           return true;
         } else {
