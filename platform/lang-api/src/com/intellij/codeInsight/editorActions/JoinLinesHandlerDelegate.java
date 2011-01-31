@@ -25,8 +25,7 @@ import com.intellij.psi.PsiFile;
  */
 public interface JoinLinesHandlerDelegate {
   ExtensionPointName<JoinLinesHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.joinLinesHandler");
-  int CANNOT_JOIN = -1;
-  
+
   /**
    * Tries to join lines at the specified position of the specified file.
    * Method is called on a document where part of whitespace between lines is already stripped,
