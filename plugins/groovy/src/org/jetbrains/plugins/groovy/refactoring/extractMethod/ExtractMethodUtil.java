@@ -22,6 +22,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -53,10 +56,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -91,21 +91,84 @@ public class ExtractMethodUtil {
   }
 
   @NotNull
-  static GrStatement createResultStatement(ExtractMethodInfoHelper helper, @NotNull String methodName) {
-    String name = helper.getOutputName();
+  static GrStatement[] createResultStatement(ExtractMethodInfoHelper helper, @NotNull String methodName) {
+    VariableInfo[] outputVars = helper.getOutputNames();
+
     PsiType type = helper.getOutputType();
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
-    if ((name == null || PsiType.VOID.equals(type)) && !helper.isReturnStatement()) return callExpression;
+
+    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.isReturnStatement()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.isReturnStatement()) {
-      return factory.createStatementFromText("return " + callExpression.getText());
-    } else if (name != null && mustAddVariableDeclaration(statements, name)) {
-      return factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression,
-                                               type.equalsToText("java.lang.Object") ? null : type, name);
-    } else {
-      return factory.createExpressionFromText(name + "= " + callExpression.getText());
+      return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
     }
+
+    assert outputVars.length > 0;
+
+    final List<VariableInfo> mustAdd = mustAddVariableDeclaration(statements, outputVars);
+    if (mustAdd.size() == 0) {
+      return new GrStatement[]{createAssignment(outputVars, callExpression, helper)};
+    }
+    if (mustAdd.size() == outputVars.length && outputVars.length == 1) {
+      final GrVariableDeclaration decl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression,
+                                                                           outputVars[0].getType(), outputVars[0].getName());
+      return new GrVariableDeclaration[]{decl};
+    }
+    List<GrStatement> result = generateVarDeclarations(mustAdd, helper.getProject(), null);
+    result.add(createAssignment(outputVars, callExpression, helper));
+
+    return result.toArray(new GrStatement[result.size()]);
+  }
+
+  private static List<GrStatement> generateVarDeclarations(List<VariableInfo> varInfos,
+                                                           Project project,
+                                                           @Nullable GrExpression initializer) {
+    List<GrStatement> result = new ArrayList<GrStatement>();
+    if (varInfos.size() == 0) return result;
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    boolean distinctDeclaration = haveDifferentTypes(varInfos);
+
+    if (distinctDeclaration) {
+      for (VariableInfo info : varInfos) {
+        result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, info.getType(), info.getName()));
+      }
+    }
+    else {
+      String[] names = new String[varInfos.size()];
+      for (int i = 0, mustAddLength = varInfos.size(); i < mustAddLength; i++) {
+        names[i] = varInfos.get(i).getName();
+      }
+      result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, initializer, varInfos.get(0).getType(), names));
+    }
+    return result;
+  }
+
+  private static boolean haveDifferentTypes(List<VariableInfo> varInfos) {
+    if (varInfos.size() < 2) return true;
+    Set<String> diffTypes = new com.intellij.util.containers.hash.HashSet<String>();
+    for (VariableInfo info : varInfos) {
+      final PsiType t = info.getType();
+      diffTypes.add(t == null ? null : TypesUtil.unboxPrimitiveTypeWrapper(t).getCanonicalText());
+    }
+    return diffTypes.size() > 1;
+  }
+
+  private static GrStatement createAssignment(VariableInfo[] infos, GrMethodCallExpression callExpression, ExtractMethodInfoHelper helper) {
+    StringBuilder text = new StringBuilder();
+    if (infos.length > 1) text.append('(');
+    for (VariableInfo info : infos) {
+      text.append(info.getName()).append(", ");
+    }
+    if (infos.length > 1) {
+      text.replace(text.length() - 2, text.length(), ") =");
+    }
+    else {
+      text.replace(text.length() - 2, text.length(), " = ");
+    }
+    text.append(callExpression.getText());
+    return GroovyPsiElementFactory.getInstance(helper.getProject()).createExpressionFromText(text.toString());
   }
 
   static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
@@ -154,16 +217,31 @@ public class ExtractMethodUtil {
   /*
   To declare or not a variable to which method call result will be assigned.
    */
-  private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+  private static List<VariableInfo> mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull VariableInfo[] vars) {
+    Map<String, VariableInfo> names = new HashMap<String, VariableInfo>();
+    for (VariableInfo var : vars) {
+      names.put(var.getName(), var);
+    }
+    List<VariableInfo> result = new ArrayList<VariableInfo>();
+
     for (GrStatement statement : statements) {
       if (statement instanceof GrVariableDeclaration) {
-        GrVariableDeclaration declaration = (GrVariableDeclaration) statement;
+        GrVariableDeclaration declaration = (GrVariableDeclaration)statement;
         for (GrVariable variable : declaration.getVariables()) {
-          if (varName.equals(variable.getName())) return true;
+          final VariableInfo removed = names.remove(variable.getName());
+          if (removed != null) {
+            result.add(removed);
+          }
         }
       }
     }
-    return ResolveUtil.resolveProperty(statements[0], varName) == null;
+    for (String varName : names.keySet()) {
+      if (ResolveUtil.resolveProperty(statements[0], varName) == null) {
+        result.add(names.get(varName));
+      }
+    }
+
+    return result;
   }
 
   private static boolean containVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
@@ -226,33 +304,50 @@ public class ExtractMethodUtil {
     buffer.append(") { \n");
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    String outputName = helper.getOutputName();
+    VariableInfo[] outputInfos = helper.getOutputNames();
 
     ParameterInfo[] infos = helper.getParameterInfos();
-    boolean outputIsParameter = false;
-    if (outputName != null) {
-      for (ParameterInfo info : infos) {
-        if (outputName.equals(info.getOldName())) {
-          outputIsParameter = true;
+    boolean[] outputIsParameter = new boolean[outputInfos.length];
+    for (VariableInfo outputName : outputInfos) {
+      for (int i = 0; i < infos.length; i++) {
+        if (outputName.getName().equals(infos[i].getOldName())) {
+          outputIsParameter[i] = true;
         }
       }
     }
-    if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
-        !mustAddVariableDeclaration(helper.getStatements(), outputName) &&
-        !containVariableDeclaration(helper.getStatements(), outputName)) {
-      GrVariableDeclaration decl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, outputName);
-      buffer.append(decl.getText()).append("\n");
+
+    final Set<VariableInfo> mustAdd = new HashSet<VariableInfo>(mustAddVariableDeclaration(helper.getStatements(), outputInfos));
+
+    List<VariableInfo> genDecl = new ArrayList<VariableInfo>();
+    for (int i = 0; i < outputInfos.length; i++) {
+      VariableInfo info = outputInfos[i];
+      if (type != PsiType.VOID && !outputIsParameter[i] &&
+          !mustAdd.contains(info) &&
+          !containVariableDeclaration(helper.getStatements(), info.getName())) {
+        genDecl.add(info);
+      }
     }
-    if (!ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
+    final List<GrStatement> statements = generateVarDeclarations(genDecl, helper.getProject(), null);
+    for (GrStatement statement : statements) {
+      buffer.append(statement.getText()).append('\n');
+    }
+
+    if (!isSingleExpression(helper.getStatements())) {
       for (PsiElement element : helper.getInnerElements()) {
         buffer.append(element.getText());
       }
       //append return statement
-      if (type != PsiType.VOID && outputName != null) {
+      if (type != PsiType.VOID && outputInfos.length > 0) {
         buffer.append("\n return ");
-        buffer.append(outputName);
+        if (outputInfos.length > 1) buffer.append('[');
+        for (VariableInfo info : outputInfos) {
+          buffer.append(info.getName()).append(", ");
+        }
+        buffer.delete(buffer.length() - 2, buffer.length());
+        if (outputInfos.length > 1) buffer.append(']');
       }
-    } else {
+    }
+    else {
       GrExpression expr = (GrExpression)PsiUtil.skipParentheses((GrExpression)helper.getStatements()[0], false);
       buffer.append(PsiType.VOID.equals(type) ? "" : "return ").append(expr != null ? expr.getText() : "");
     }

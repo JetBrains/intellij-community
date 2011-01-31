@@ -97,7 +97,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
-    presentation.setItemText(getName(psiClass, item));
+    final boolean forceLookupString = item.getAttribute(LookupItem.FORCE_LOOKUP_STRING) != null;
+    presentation.setItemText(forceLookupString ? item.getLookupString() : getName(psiClass, item));
     presentation.setStrikeout(strikeout);
     presentation.setItemTextBold(bold);
 
@@ -108,7 +109,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
         (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
       tailText = "{...}" + tailText;
     }
-    if (substitutor == null && psiClass.getTypeParameters().length > 0) {
+    if (substitutor == null && !forceLookupString && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
         public String fun(PsiTypeParameter psiTypeParameter) {
           return psiTypeParameter.getName();

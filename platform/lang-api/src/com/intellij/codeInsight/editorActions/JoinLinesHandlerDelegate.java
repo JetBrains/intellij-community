@@ -25,17 +25,21 @@ import com.intellij.psi.PsiFile;
  */
 public interface JoinLinesHandlerDelegate {
   ExtensionPointName<JoinLinesHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.joinLinesHandler");
-  int CANNOT_JOIN = -1;
-  
+
   /**
    * Tries to join lines at the specified position of the specified file.
+   * Method is called on a document where part of whitespace between lines is already stripped,
+   * and it has a chance to smooth out the join point.
    *
-   * @param document
-   * @param file
-   * @param start
-   * @param end
+   * @param document where the lines are
+   * @param file where the lines are
+   * @param start offset where the whitespace between lines starts
+   * @param end offset where the whitespace between lines ends
    * @return the position to place the caret after the operation, or -1 if this handler was not able
    *         to perform the operation.
    */
   int tryJoinLines(Document document, PsiFile file, int start, final int end);
+
+  /** Return this from {@link #tryJoinLines} if it could not join the lines. */
+  int CANNOT_JOIN = -1;
 }

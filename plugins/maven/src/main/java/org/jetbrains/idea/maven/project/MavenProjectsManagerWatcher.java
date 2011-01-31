@@ -161,33 +161,39 @@ public class MavenProjectsManagerWatcher {
   private void updateSettingsFilePointers() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchedRoots);
     mySettingsFilesPointers.clear();
-    addFilePointer(myGeneralSettings.getEffectiveUserSettingsIoFile());
-    addFilePointer(myGeneralSettings.getEffectiveGlobalSettingsIoFile());
+    addFilePointer(myGeneralSettings.getEffectiveUserSettingsIoFile(),
+                   myGeneralSettings.getEffectiveGlobalSettingsIoFile());
   }
 
-  private void addFilePointer(File settingsFile) {
-    if (settingsFile == null) return;
+  private void addFilePointer(File... settingsFiles) {
+    Collection<String> pathsToWatch = new ArrayList<String>(settingsFiles.length);
 
-    File parentFile = settingsFile.getParentFile();
-    if (parentFile != null) {
-      String path = getNormalizedPath(parentFile);
+    for (File settingsFile : settingsFiles) {
+      if (settingsFile == null) continue;
+
+      File parentFile = settingsFile.getParentFile();
+      if (parentFile != null) {
+        String path = getNormalizedPath(parentFile);
+        if (path != null) {
+          pathsToWatch.add(path);
+        }
+      }
+
+      String path = getNormalizedPath(settingsFile);
       if (path != null) {
-        myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(path, false));
+        String url = VfsUtil.pathToUrl(path);
+        mySettingsFilesPointers.add(
+          VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
+            public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+            }
+
+            public void validityChanged(VirtualFilePointer[] pointers) {
+            }
+          }));
       }
     }
 
-    String path = getNormalizedPath(settingsFile);
-    if (path != null) {
-      String url = VfsUtil.pathToUrl(path);
-      mySettingsFilesPointers.add(
-        VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
-          public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-          }
-
-          public void validityChanged(VirtualFilePointer[] pointers) {
-          }
-        }));
-    }
+    myWatchedRoots.addAll(LocalFileSystem.getInstance().addRootsToWatch(pathsToWatch, false));
   }
 
   @Nullable

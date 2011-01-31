@@ -99,6 +99,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     if (myCachedHighlighters == null) {
+      if (myHighlighterTree.size() == 0) return RangeHighlighter.EMPTY_ARRAY;
       List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
       myHighlighterTree.process(new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
@@ -117,9 +118,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     RangeHighlighterEx highlighter = isPersistent
                                      ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
                                      : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
-
-    RangeMarkerImpl marker = (RangeMarkerImpl)highlighter;
-    marker.registerInDocument();
 
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
@@ -144,8 +142,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  void addRangeHighlighter(RangeHighlighterEx marker) {
-    myHighlighterTree.add(marker);
+  void addRangeHighlighter(RangeHighlighterEx marker, int start, int end, RangeHighlighterData data) {
+    myHighlighterTree.addInterval(marker, start, end, data);
   }
 
   @NotNull
@@ -163,7 +161,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     fireBeforeRemoved((RangeHighlighterEx)segmentHighlighter);
 
-    boolean removed = myHighlighterTree.remove((RangeHighlighterEx)segmentHighlighter);
+    boolean removed = myHighlighterTree.removeInterval((RangeHighlighterEx)segmentHighlighter);
     LOG.assertTrue(removed);
   }
 

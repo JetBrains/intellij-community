@@ -23,6 +23,7 @@ binlog
 bool
 btree
 calc
+callee
 cancelable
 cancellable
 capath
@@ -250,6 +251,8 @@ subpartition
 subpartitions
 substring
 sysdate
+symlink
+symlinks
 systimestamp
 tablespace
 taglib

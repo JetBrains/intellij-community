@@ -76,18 +76,10 @@ public abstract class CompletionPhase implements Disposable {
   }
   public static class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
+    volatile boolean focusLookupWhenDone = false;
 
     public BgCalculation(CompletionProgressIndicator indicator) {
       super(indicator);
-    }
-
-    void focusLookupWhenDone() {
-      Disposer.register(this, new Disposable() {
-        @Override
-        public void dispose() {
-          indicator.getLookup().setFocused(true);
-        }
-      });
     }
 
     @Override
@@ -97,8 +89,11 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
   public static class ItemsCalculated extends CompletionPhase {
-    public ItemsCalculated(CompletionProgressIndicator indicator) {
+    public final boolean focusLookup;
+
+    public ItemsCalculated(CompletionProgressIndicator indicator, boolean focusLookup) {
       super(indicator);
+      this.focusLookup = focusLookup;
     }
 
     @Override

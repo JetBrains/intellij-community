@@ -458,7 +458,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
-    region.registerInDocument();
     LOG.assertTrue(region.isValid());
     return region;
   }

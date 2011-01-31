@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,14 +51,14 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
-  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
@@ -73,7 +74,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private volatile MarkupModelEx myMarkupModel;
   private DocumentListener[] myCachedDocumentListeners;
-  private final List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
+  private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createEmptyCOWList();
 
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
@@ -209,12 +210,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    return myRangeMarkers.remove(rangeMarker);
+    return myRangeMarkers.removeInterval(rangeMarker);
   }
 
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    myRangeMarkers.add(rangeMarker);
+    myRangeMarkers.addInterval(rangeMarker, start, end, null);
   }
 
   @TestOnly
@@ -293,11 +294,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
       LOG.error("Incorrect offsets startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
-    RangeMarkerImpl rangeMarker = surviveOnExternalChange
-                                  ? new PersistentRangeMarker(this, startOffset, endOffset)
-                                  : new RangeMarkerImpl(this, startOffset, endOffset);
-    rangeMarker.registerInDocument();
-    return rangeMarker;
+    return surviveOnExternalChange
+           ? new PersistentRangeMarker(this, startOffset, endOffset,true)
+           : new RangeMarkerImpl(this, startOffset, endOffset,true);
   }
 
   public long getModificationStamp() {
@@ -607,8 +606,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private DocumentListener[] getCachedListeners() {
     if (myCachedDocumentListeners == null) {
-      Collections.sort(myDocumentListeners, PrioritizedDocumentListener.COMPARATOR);
-      myCachedDocumentListeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
+      myCachedDocumentListeners = listeners;
     }
 
     return myCachedDocumentListeners;
@@ -616,9 +616,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void fireReadOnlyModificationAttempt() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    EditReadOnlyListener[] listeners = myReadOnlyListeners.toArray(
-      new EditReadOnlyListener[myReadOnlyListeners.size()]);
-    for (EditReadOnlyListener listener : listeners) {
+    for (EditReadOnlyListener listener : myReadOnlyListeners) {
       listener.readOnlyModificationAttempt(this);
     }
   }

@@ -321,4 +321,16 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testResolveMetaClass() {
     doTest(new GroovyAccessibilityInspection());
   }
+
+  public void testSOFInDelegate() {
+    doTest();
+  }
+
+  public void testInheritInterfaceInDelegate() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
+  public void testMethodImplementedByDelegate() {
+    doTest();
+  }
 }

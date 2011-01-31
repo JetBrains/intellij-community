@@ -466,5 +466,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     public int hashCode() {
       return file.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return file + " for " + clazz;
+    }
   }
 }

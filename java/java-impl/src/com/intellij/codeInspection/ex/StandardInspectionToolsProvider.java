@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.LossyEncodingInspection;
-import com.intellij.codeInspection.NumericOverflowInspection;
-import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.concurrencyAnnotations.*;
@@ -118,7 +115,9 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       NonFinalFieldInImmutableInspection.class,
       NonFinalGuardInspection.class,
       StaticGuardedByInstanceInspection.class,
-      UnknownGuardInspection.class
+      UnknownGuardInspection.class,
+
+      ExplicitTypeCanBeDiamondInspection.class
     };
   }
 }

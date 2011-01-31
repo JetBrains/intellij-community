@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-contributor(ctype:hasField(hasAnnotation("groovy.lang.Delegate"))) {
-  for (f in psiClass?.fields) {
-    delegatesTo(f.classType)
-  }
+package com.intellij.util.xml;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Marks a {@link GenericValue} getter as documentation text source.
+ * Element interface should be annotated with {@link Presentation}
+ *
+ * @author Dmitry Avdeev
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Documentation {
 }

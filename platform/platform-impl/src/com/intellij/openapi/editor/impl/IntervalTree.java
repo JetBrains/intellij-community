@@ -26,7 +26,6 @@ public interface IntervalTree<T extends Interval> extends Iterable<T> {
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor);
 
-  Object add(@NotNull T interval);
-  boolean remove(@NotNull T interval);
-
+  Object addInterval(@NotNull T interval, int start, int end, Object data);
+  boolean removeInterval(@NotNull T interval);
 }

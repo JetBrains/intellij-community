@@ -32,4 +32,7 @@ public abstract class ElementPresentation {
 
   @Nullable
   public abstract Icon getIcon();
+
+  @Nullable
+  public String getDocumentation() { return null;}
 }

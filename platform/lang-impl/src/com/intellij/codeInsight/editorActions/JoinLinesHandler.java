@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -44,12 +45,20 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
+import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
+
 public class JoinLinesHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JoinLinesHandler");
   private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
+  }
+
+  private static TextRange findStartAndEnd(CharSequence text, int start, int end, int maxoffset) {
+    while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
+    while (end < maxoffset && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+    return new TextRange(start, end);
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
@@ -79,6 +88,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
 
     int caretRestoreOffset = -1;
+    // joining lines, several times if selection is multiline
     for (int i = startLine; i < endLine; i++) {
       if (i >= doc.getLineCount() - 1) break;
       int lineEndOffset = doc.getLineEndOffset(startLine);
@@ -101,50 +111,64 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       PsiElement elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
       boolean isStartLineEndsWithComment = isCommentElement(elementAtStartLineEnd);
 
-      if (lastNonSpaceOffsetInStartLine == doc.getLineStartOffset(startLine)) {
-        doc.deleteString(doc.getLineStartOffset(startLine), firstNonSpaceOffsetInNextLine);
-
-        int indent = -1;
-        try {
-          docManager.commitDocument(doc);
-          indent = CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, startLine == 0 ? 0 : doc.getLineStartOffset(startLine));
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-
-        if (caretRestoreOffset == -1) {
-          caretRestoreOffset = indent;
-        }
-
-        continue;
-      }
-
-      doc.deleteString(lineEndOffset, lineEndOffset + doc.getLineSeparatorLength(startLine));
-
-      text = doc.getCharsSequence();
-      int start = lineEndOffset - 1;
-      int end = lineEndOffset;
-      while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
-      while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-
-      // Check if we're joining splitted string literal.
-      docManager.commitDocument(doc);
-
-
       int rc = -1;
-      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
-        rc = delegate.tryJoinLines(doc, psiFile, start, end);
-        if (rc != -1) break;
+      int start;
+      int end;
+      TextRange limits = findStartAndEnd(text, lastNonSpaceOffsetInStartLine, firstNonSpaceOffsetInNextLine, doc.getTextLength());
+      start = limits.getStartOffset(); end = limits.getEndOffset();
+      // run raw joiners
+      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinRawLinesHandlerDelegate.EP_NAME)) {
+        if (delegate instanceof JoinRawLinesHandlerDelegate) {
+          rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
+          if (rc != CANNOT_JOIN) {
+            caretRestoreOffset = rc;
+            break;
+          }
+        }
+      }
+      if (rc == CANNOT_JOIN) { // remove indents and newline, run non-raw joiners
+        if (lastNonSpaceOffsetInStartLine == doc.getLineStartOffset(startLine)) {
+          doc.deleteString(doc.getLineStartOffset(startLine), firstNonSpaceOffsetInNextLine);
+
+          int indent = -1;
+          try {
+            docManager.commitDocument(doc);
+            indent = CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, startLine == 0 ? 0 : doc.getLineStartOffset(startLine));
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+
+          if (caretRestoreOffset == CANNOT_JOIN) {
+            caretRestoreOffset = indent;
+          }
+
+          continue;
+        }
+
+        doc.deleteString(lineEndOffset, lineEndOffset + doc.getLineSeparatorLength(startLine));
+
+        text = doc.getCharsSequence();
+        limits = findStartAndEnd(text, lineEndOffset - 1, lineEndOffset, doc.getTextLength());
+        start = limits.getStartOffset(); end = limits.getEndOffset();
+
+        // Check if we're joining splitted string literal.
+        docManager.commitDocument(doc);
+
+        for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
+          rc = delegate.tryJoinLines(doc, psiFile, start, end);
+          if (rc != CANNOT_JOIN) break;
+        }
       }
       docManager.doPostponedOperationsAndUnblockDocument(doc);
 
-      if (rc != -1) {
-        if (caretRestoreOffset == -1) caretRestoreOffset = rc;
+      if (rc != CANNOT_JOIN) {
+        if (caretRestoreOffset == CANNOT_JOIN) caretRestoreOffset = rc;
         continue;
       }
 
-      if (caretRestoreOffset == -1) caretRestoreOffset = start == lineEndOffset ? start : start + 1;
+
+      if (caretRestoreOffset == CANNOT_JOIN) caretRestoreOffset = start == lineEndOffset ? start : start + 1;
 
 
       if (isStartLineEndsWithComment && isNextLineStartsWithComment) {
@@ -199,11 +223,12 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
       docManager.commitDocument(doc);
     }
+    docManager.commitDocument(doc); // cheap on an already-committed doc
 
     if (editor.getSelectionModel().hasSelection()) {
       editor.getCaretModel().moveToOffset(editor.getSelectionModel().getSelectionEnd());
     }
-    else if (caretRestoreOffset != -1) {
+    else if (caretRestoreOffset != CANNOT_JOIN) {
       editor.getCaretModel().moveToOffset(caretRestoreOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();

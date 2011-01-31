@@ -1782,7 +1782,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (softWrap != null) {
       softWrapsToSkip.add(softWrap.getStart());
       Color color = null;
-      if (!backColor.equals(defaultBackground)) {
+      if (backColor != null && !backColor.equals(defaultBackground)) {
         color = backColor;
       }
 
@@ -4542,7 +4542,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myCommandProcessor != null) {
         Runnable runnable = new Runnable() {
           public void run() {
-            if (processMousePressed(e)) {
+            if (processMousePressed(e) && myProject != null) {
               IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
             }
           }

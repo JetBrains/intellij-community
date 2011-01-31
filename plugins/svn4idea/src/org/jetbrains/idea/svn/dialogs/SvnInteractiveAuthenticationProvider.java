@@ -22,6 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -33,6 +36,8 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
@@ -179,9 +184,43 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     return result[0];
   }
 
-  public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-    // do-not-need-it-here
-    return ISVNAuthenticationProvider.REJECTED;
+  public int acceptServerAuthentication(final SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
+    final int[] result = new int[1];
+    Runnable command;
+    if (certificate instanceof X509Certificate) {
+      command = new Runnable() {
+        public void run() {
+          ServerSSLDialog dialog = new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored);
+          dialog.show();
+          result[0] = dialog.getResult();
+        }
+      };
+    } else if (certificate instanceof byte[]) {
+      final String sshKeyAlgorithm = myManager.getSSHKeyAlgorithm();
+      command = new Runnable() {
+        @Override
+        public void run() {
+          final ServerSSHDialog serverSSHDialog =
+            new ServerSSHDialog(myProject, resultMayBeStored, url.toDecodedString(), sshKeyAlgorithm, (byte[])certificate);
+          serverSSHDialog.show();
+          result[0] = serverSSHDialog.getResult();
+        }
+      };
+    } else {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Subversion: unknown certificate type from " + url.toDecodedString(),
+                                                    MessageType.ERROR);
+      return REJECTED;
+    }
+    try {
+      GuiUtils.runOrInvokeAndWait(command);
+    }
+    catch (InterruptedException e) {
+      //
+    }
+    catch (InvocationTargetException e) {
+      //
+    }
+    return result[0];
   }
 
   private void log(final String s) {

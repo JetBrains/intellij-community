@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -26,6 +27,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -124,7 +126,20 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
       return null;
     }
 
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), parameters.getPosition());
+    PsiType psiType = JavaCompletionUtil.eliminateWildcards(type);
+    if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
+        PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+      if (psiClass.hasTypeParameters() && !((PsiClassType)type).isRaw()) {
+        final String canonicalText = TypeConversionUtil.erasure(psiType).getCanonicalText();
+        final PsiStatement statement = elementFactory
+          .createStatementFromText(psiType.getCanonicalText() + " v = new " + canonicalText + "<>()", parameters.getOriginalFile());
+        final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+        final PsiExpression initializer = declaredVar.getInitializer();
+        psiType = initializer.getType();
+      }
+    }
+    final LookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
     JavaCompletionUtil.setShowFQN(item);
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
@@ -64,11 +65,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private EventDispatcher<SvnAuthenticationListener> myListener;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private final ThreadLocalSavePermissions mySavePermissions;
+  private final Map<Thread, String> myKeyAlgorithm;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
     myProject = project;
     myConfigDirectory = configDirectory;
+    myKeyAlgorithm = new HashMap<Thread, String>();
     ensureListenerCreated();
     mySavePermissions = new ThreadLocalSavePermissions();
     myConfig = SvnConfiguration.getInstance(myProject);
@@ -260,6 +263,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         }
       }
     }
+  }
+
+  @Override
+  public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
+    myKeyAlgorithm.put(Thread.currentThread(), keyAlgorithm);
+    try {
+      super.verifyHostKey(hostName, port, keyAlgorithm, hostKey);
+    } finally {
+      myKeyAlgorithm.remove(Thread.currentThread());
+    }
+  }
+
+  @Nullable
+  public String getSSHKeyAlgorithm() {
+    return myKeyAlgorithm.get(Thread.currentThread());
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {

@@ -63,7 +63,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testClos_em() throws Throwable { doTest(); }
   public void testEm1() throws Throwable { doTest(); }
   public void testEnum1() throws Throwable { doTest(); }
-  public void testErr1() throws Throwable { doAntiTest("There are multiple output values for the selected code fragment"); }
+  public void testErr1() throws Throwable { doTest(); }
   public void testExpr1() throws Throwable { doTest(); }
   public void testExpr2() throws Throwable { doTest(); }
   public void testExpr3() throws Throwable { doTest(); }
@@ -89,5 +89,11 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   
   public void testClosureIt() throws Throwable { doTest(); }
   public void testImplicitReturn() {doTest();}
+
+  public void testMultiOutput1() {doTest();}
+  public void testMultiOutput2() {doTest();}
+  public void testMultiOutput3() {doTest();}
+  public void testMultiOutput4() {doTest();}
+  public void testMultiOutput5() {doTest();}
 
 }

@@ -1,24 +1,32 @@
 <component>
   <keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
     <action id="ForceRunToCursor">
-      <keyboard-shortcut first-keystroke="control alt 9" />
+      <keyboard-shortcut first-keystroke="control alt 9"/>
     </action>
     <action id="QuickEvaluateExpression">
-      <keyboard-shortcut first-keystroke="control alt 8" />
+      <keyboard-shortcut first-keystroke="control alt 8"/>
       <mouse-shortcut keystroke="alt button1"/>
     </action>
     <action id="ShowUsages">
-      <keyboard-shortcut first-keystroke="control alt 7" />
+      <keyboard-shortcut first-keystroke="control alt 7"/>
     </action>
     <action id="ShowUsagesSettings">
       <keyboard-shortcut first-keystroke="control shift alt 7"/>
     </action>
     <action id="SwitchCoverage">
-      <keyboard-shortcut first-keystroke="control alt 6" />
+      <keyboard-shortcut first-keystroke="control alt 6"/>
     </action>
-  </keymap>
+    <action id="Images.EditExternaly">
+      <keyboard-shortcut first-keystroke="control alt 4"/>
+    </action>
+    <action id="ShowFilePath">
+      <keyboard-shortcut first-keystroke="control alt shift 2"/>
+    </action>
+    <action id="RunAPT">
+      <keyboard-shortcut first-keystroke="control alt shift 9"/>
+    </action>
 
-  <action id="Images.EditExternaly">
-    <keyboard-shortcut first-keystroke="control alt 4" />
-  </action>
+    <action id="Console.Hibernate.Close"/>
+    <action id="Console.Jpa.Close"/>
+  </keymap>
 </component>

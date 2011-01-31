@@ -16,9 +16,10 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.ui.UISettings
 
 /**
  * @author peter
@@ -41,12 +42,15 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assert !lookup
-    //assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
-    //assertEquals 'iter', lookup.currentItem.lookupString
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertEquals 'iter', lookup.currentItem.lookupString
+    assert !lookup.focused
+
+    type 'a'
+    assert lookup.focused
   }
 
-  public void _testRecalculateItemsOnBackspace() {
+  public void testRecalculateItemsOnBackspace() {
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(String iterable) {
@@ -58,13 +62,10 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
 
-    println "b1"
     type '\b'
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
 
-    println "b2"
     type '\b'
-    println "typed backspace"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
     type "a"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa"
@@ -73,7 +74,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type "e"
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
 
-    println "typing r"
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
   }
@@ -199,7 +199,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-  public void testHideAutopopupIfItContainsExactMatch() {
+  public void _testHideAutopopupIfItContainsExactMatch() {
     myFixture.configureByText("a.java", """
       class Foo {
         String foo() {
@@ -344,6 +344,104 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert 'Thread' in myFixture.lookupElementStrings
   }
 
+  public void testDotAfterVariable() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { Object ooo; <caret> }
+    }
+    """)
+    type 'o.'
+    assert myFixture.file.text.contains("ooo.")
+    assert lookup
+  }
 
+  public void testDotAfterCall() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { <caret> }
+    }
+    """)
+    type 'tos.'
+    assert myFixture.file.text.contains("toString().")
+    assert lookup
+  }
+
+  public void testDotAfterClassName() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { <caret> }
+    }
+    """)
+    type 'FilInpStr.'
+    assert myFixture.file.text.contains("FileInputStream.")
+    assert lookup
+  }
+
+  public void testDotAfterClassNameInParameter() {
+    myFixture.configureByText("a.java", """
+    class A {
+      void foo(<caret>) {}
+    }
+    """)
+    type 'FilInpStr...'
+    assert myFixture.editor.document.text.contains("FileInputStream...")
+    assert !lookup
+  }
+
+  void testArrow(boolean up, boolean cycleScrolling, boolean lookupAbove, int index) {
+    myFixture.configureByText("a.java", """
+    class A {
+      { ArrayIndexOutOfBoundsException <caret> }
+    }
+    """)
+
+    type 'o'
+    assert lookup
+    assert !lookup.focused
+    assert lookup.items.size() == 2
+
+    lookup.positionedAbove = lookupAbove
+    UISettings.instance.CYCLE_SCROLLING = cycleScrolling
+
+    def action = up ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
+    try {
+      edt { myFixture.performEditorAction(action) }
+      if (lookup) {
+        assert lookup.focused
+        assert index >= 0
+        assert lookup.items[index] == lookup.currentItem
+        edt { lookup.hide() }
+      } else {
+        assert index == -1
+      }
+      type '\b'
+    }
+    finally {
+      UISettings.instance.CYCLE_SCROLLING = true
+    }
+
+  }
+
+  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, indexUp) {
+    testArrow true, cycleScrolling, lookupAbove, indexUp
+    testArrow false, cycleScrolling, lookupAbove, indexDown
+  }
+
+  public void testVerticalArrows() {
+    testArrows false, false, 0, -1
+    testArrows false, true, -1, 1
+    testArrows true, false, 0, -1
+    testArrows true, true, -1, 1
+  }
+
+  public void testHideOnOnePrefixVariant() {
+    myFixture.configureByText("a.java", """
+    class A {
+      Object foo() { return nu<caret> }
+    }
+    """)
+    type 'll'
+    assert !lookup
+  }
 
 }

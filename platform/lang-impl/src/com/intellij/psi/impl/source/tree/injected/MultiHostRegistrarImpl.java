@@ -417,6 +417,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     TextRange newRange = InjectedLanguageUtil.toTextRange(newMarker);
     for (int i = 0; i < injectedRegions.size(); i++) {
       RangeMarker stored = injectedRegions.get(i);
+      if (!stored.isValid()) continue;
       TextRange storedRange = InjectedLanguageUtil.toTextRange(stored);
       if (storedRange.intersects(newRange)) {
         injectedRegions.set(i, newMarker);

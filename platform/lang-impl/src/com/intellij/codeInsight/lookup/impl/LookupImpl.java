@@ -458,6 +458,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
+  public boolean isFrozen(@NotNull LookupElement element) {
+    return myFrozenItems.contains(element);
+  }
+
   private boolean addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<LookupElement> elements) {
     List<LookupElement> sorted = new SortedList<LookupElement>(new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
@@ -517,7 +521,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
     int shiftHigh = layeredPanePoint.y - dim.height;
     if (!isPositionedAboveCaret()) {
-      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
+      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh;
     }
     if (isPositionedAboveCaret()) {
       layeredPanePoint.y -= dim.height + myEditor.getLineHeight();
@@ -925,6 +929,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @TestOnly
+  public void setPositionedAbove(boolean positionedAbove) {
+    myPositionedAbove = positionedAbove;
   }
 
   public boolean isPositionedAboveCaret(){

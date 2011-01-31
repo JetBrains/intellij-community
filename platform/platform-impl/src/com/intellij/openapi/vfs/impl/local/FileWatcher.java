@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,32 +29,47 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+/*
+ * @author max
+ */
 public class FileWatcher {
   @NonNls public static final String PROPERTY_WATCHER_DISABLED = "filewatcher.disabled";
   @NonNls private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
-  @NonNls private static final String GIVEUP_COMMAND = "GIVEUP";
+  @NonNls private static final String GIVE_UP_COMMAND = "GIVEUP";
   @NonNls private static final String RESET_COMMAND = "RESET";
-  @NonNls private static final String UNWATCHEABLE_COMMAND = "UNWATCHEABLE";
+  @NonNls private static final String UNWATCHABLE_COMMAND = "UNWATCHEABLE";
   @NonNls private static final String ROOTS_COMMAND = "ROOTS";
   @NonNls private static final String REMAP_COMMAND = "REMAP";
   @NonNls private static final String EXIT_COMMAND = "EXIT";
   @NonNls private static final String MESSAGE_COMMAND = "MESSAGE";
 
+  private static final PairFunction<String,String,Boolean> PATH_COMPARATOR = new PairFunction<String, String, Boolean>() {
+    @Override
+    public Boolean fun(final String s1, final String s2) {
+      return SystemInfo.isFileSystemCaseSensitive ? s1.equals(s2) : s1.equalsIgnoreCase(s2);
+    }
+  };
+
   private final Object LOCK = new Object();
+  private final Lock SET_ROOTS_LOCK = new ReentrantLock(true);
   private List<String> myDirtyPaths = new ArrayList<String>();
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
   private List<String> myDirtyDirs = new ArrayList<String>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
   private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
+  private List<Pair<String, String>> myCanonicalMapping = new ArrayList<Pair<String, String>>();
 
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
@@ -75,7 +89,7 @@ public class FileWatcher {
   }
 
   private FileWatcher() {
-    // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in filewatcher thread
+    // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in FileWatcher thread
     myManagingFS = ManagingFS.getInstance();
     try {
       if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
@@ -87,6 +101,7 @@ public class FileWatcher {
 
     if (notifierProcess != null) {
       LOG.info("Native file watcher is operational.");
+      //noinspection CallToThreadStartDuringObjectConstruction
       new WatchForChangesThread().start();
 
       Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -132,30 +147,72 @@ public class FileWatcher {
     }
   }
 
-  public void setWatchRoots(List<String> recursive, List<String> flat) {
-    synchronized (LOCK) {
-      try {
+  public void setWatchRoots(final List<String> recursive, final List<String> flat) {
+    SET_ROOTS_LOCK.lock();
+    try {
+      synchronized (LOCK) {
         if (myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) return;
+      }
 
-        myRecursiveWatchRoots = recursive;
-        myFlatWatchRoots = flat;
+      final List<Pair<String, String>> mapping = new ArrayList<Pair<String, String>>();
+      long t = System.nanoTime();
+      final List<String> checkedRecursive = checkPaths(recursive, mapping);
+      final List<String> checkedFlat = checkPaths(flat, mapping);
+      t = (System.nanoTime() - t) / 1000;
+      LOG.info((recursive.size() + flat.size()) + " paths checked, " + mapping.size() + " mapped, " + t + " mks");
 
-        if (isAlive()) {
-          writeLine(ROOTS_COMMAND);
-          myMapping.clear();
+      synchronized (LOCK) {
+        try {
+          myRecursiveWatchRoots = recursive;
+          myFlatWatchRoots = flat;
+          myCanonicalMapping.clear();
 
-          for (String path : recursive) {
-            writeLine(path);
+          if (isAlive()) {
+            myMapping.clear();
+            myCanonicalMapping = mapping;
+
+            writeLine(ROOTS_COMMAND);
+            for (String path : checkedRecursive) {
+              writeLine(path);
+            }
+            for (String path : checkedFlat) {
+              writeLine("|" + path);
+            }
+            writeLine("#");
           }
-          for (String path : flat) {
-            writeLine("|" + path);
-          }
-          writeLine("#");
+        }
+        catch (IOException e) {
+          LOG.error(e);
         }
       }
-      catch (IOException e) {
-        LOG.error(e);
+    }
+    finally {
+      SET_ROOTS_LOCK.unlock();
+    }
+  }
+
+  private static List<String> checkPaths(final List<String> paths, final List<Pair<String, String>> mapping) {
+    if (!SystemInfo.areSymLinksSupported) return paths;
+
+    final List<String> checkedPaths = new ArrayList<String>(paths.size());
+    for (String path : paths) {
+      String watched = path;
+      final String canonical = getCanonicalPath(path);
+      if (!PATH_COMPARATOR.fun(path, canonical)) {
+        mapping.add(Pair.create((watched = canonical), path));
       }
+      checkedPaths.add(watched);
+    }
+    return checkedPaths;
+  }
+
+  private static String getCanonicalPath(final String path) {
+    try {
+      return new File(path).getCanonicalPath();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return path;
     }
   }
 
@@ -178,6 +235,7 @@ public class FileWatcher {
     }
   }
 
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void startupProcess() throws IOException {
     if (isShuttingDown) return;
 
@@ -203,7 +261,7 @@ public class FileWatcher {
     if (!new File(pathToExecutable).canExecute()) return;
 
     notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
-    
+
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
   }
@@ -247,8 +305,8 @@ public class FileWatcher {
             continue;
           }
 
-          if (GIVEUP_COMMAND.equals(command)) {
-            LOG.info("Filewatcher gives up to operate on this platform");
+          if (GIVE_UP_COMMAND.equals(command)) {
+            LOG.info("FileWatcher gives up to operate on this platform");
             shutdownProcess();
             return;
           }
@@ -256,7 +314,7 @@ public class FileWatcher {
           if (RESET_COMMAND.equals(command)) {
             reset();
           }
-          else if (UNWATCHEABLE_COMMAND.equals(command)) {
+          else if (UNWATCHABLE_COMMAND.equals(command)) {
             List<String> roots = new ArrayList<String>();
             do {
               final String path = readLine();
@@ -291,23 +349,24 @@ public class FileWatcher {
             myMapping.addAll(pairs);
           }
           else {
-            String path = readLine();
+            final String path = readLine();
             if (path == null) {
               // Unexpected process exit, relaunch attempt
               startupProcess();
               continue;
             }
 
-            if (isWatcheable(path)) {
+            final String watchedPath = checkWatchable(path);
+            if (watchedPath != null) {
               try {
-                onPathChange(ChangeKind.valueOf(command), path);
+                onPathChange(ChangeKind.valueOf(command), watchedPath);
               }
               catch (IllegalArgumentException e) {
                 LOG.error("Illegal watcher command: " + command);
               }
             }
             else if (LOG.isDebugEnabled()) {
-              LOG.debug("not watcheable, filtered: " + path);
+              LOG.debug("Not watchable, filtered: " + path);
             }
           }
         }
@@ -359,28 +418,36 @@ public class FileWatcher {
     return line;
   }
 
-  private boolean isWatcheable(final String path) {
-    if (path == null) return false;
+  @Nullable
+  private String checkWatchable(String path) {
+    if (path == null) return null;
 
     synchronized (LOCK) {
+      for (Pair<String, String> mapping : myCanonicalMapping) {
+        if (path.startsWith(mapping.first)) {
+          path = mapping.second + path.substring(mapping.first.length());
+          break;
+        }
+      }
+
       for (String root : myRecursiveWatchRoots) {
         if (FileUtil.startsWith(path, root)) {
-          return true;
+          return path;
         }
       }
 
       for (String root : myFlatWatchRoots) {
         if (FileUtil.pathsEqual(path, root)) {
-          return true;
+          return path;
         }
         final File parentFile = new File(path).getParentFile();
         if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
-          return true;
+          return path;
         }
       }
     }
 
-    return false;
+    return null;
   }
 
   private void onPathChange(final ChangeKind changeKind, final String path) {

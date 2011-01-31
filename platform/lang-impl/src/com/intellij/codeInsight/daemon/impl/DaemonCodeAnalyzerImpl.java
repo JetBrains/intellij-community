@@ -109,6 +109,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private int myModificationCount = 0;
 
   private volatile boolean allowToInterrupt = true;
+  private StatusBarUpdater myStatusBarUpdater;
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
@@ -249,6 +250,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     waitForTermination();
   }
 
+  @TestOnly
+  public void cleanupAfterTest(boolean forceDispose) {
+    projectClosed();
+    if (forceDispose) {
+      Disposer.dispose(myStatusBarUpdater);
+      myStatusBarUpdater = null;
+      Disposer.dispose(myDaemonListeners);
+      myDaemonListeners = null;
+    }
+    setUpdateByTimerEnabled(false);
+    waitForTermination();
+  }
+
   private void waitForTermination() {
     myPassExecutorService.cancelAll(true);
   }
@@ -267,8 +281,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @Override
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
-    StatusBarUpdater statusBarUpdater = new StatusBarUpdater(myProject);
-    Disposer.register(myProject, statusBarUpdater);
+    myStatusBarUpdater = new StatusBarUpdater(myProject);
+    Disposer.register(myProject, myStatusBarUpdater);
 
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     Disposer.register(myProject, myDaemonListeners);

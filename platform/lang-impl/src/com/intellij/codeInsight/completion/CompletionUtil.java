@@ -138,6 +138,10 @@ public class CompletionUtil {
     return false;
   }
 
+  public static String findJavaIdentifierPrefix(CompletionParameters parameters) {
+    return findJavaIdentifierPrefix(parameters.getPosition(), parameters.getOffset());
+  }
+
   public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
     return findIdentifierPrefix(insertedElement, offset, character().javaIdentifierPart(), character().javaIdentifierStart());
   }

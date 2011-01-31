@@ -28,7 +28,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.ContentManager;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.Comparator;
 
 /**
@@ -91,6 +90,12 @@ public class PlatformDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
   public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
   public static final DataKey<Boolean> SOURCE_NAVIGATION_LOCKED = DataKey.create("sourceNavigationLocked");
+
+  /**
+   * Returns java.awt.Point to guess where to show context menu invoked by key.
+   * This point should be relative to the currently focused component
+   */
+  public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
 
   /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current

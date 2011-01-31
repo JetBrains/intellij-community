@@ -17,42 +17,23 @@ package com.intellij.openapi.editor.impl;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-
 
 /**
  * User: cdr
  */
-public class RedBlackTree<K> {
-  public static final boolean VERIFY = false;
+public abstract class RedBlackTree<K> {
+  public static boolean VERIFY = false;
   private static final int INDENT_STEP = 4;
   protected int size;
   protected int modCount;
-  public Node<K> root;
+  protected Node<K> root;
 
-  private final Comparator<K> comparator;
-
-  public RedBlackTree(Comparator<K> comparator) {
-    this.comparator = comparator;
+  public RedBlackTree() {
     root = null;
     verifyProperties();
   }
 
-  protected Node<K> lookupNode(K key, Node<K> root) {
-    while (root != null) {
-      int compResult = comparator.compare(key, root.key);
-      if (compResult < 0) {
-        root = root.getLeft();
-      }
-      else if (compResult > 0) {
-        root = root.getRight();
-      }
-      else {
-        return root;
-      }
-    }
-    return root;
-  }
+  protected abstract Node<K> lookupNode(@NotNull K key, Node<K> root);
 
   protected void rotateLeft(Node<K> n) {
     Node<K> r = n.getRight();
@@ -97,49 +78,7 @@ public class RedBlackTree<K> {
     //oldn.right = null;
   }
 
-  protected Node<K> createNewNode(K key) {
-    return new Node<K>(key);
-  }
-
-  public Node<K> insert(Node<K> newNode) {
-    modCount++;
-    newNode.color = Color.RED;
-    K key = newNode.key;
-
-    if (root == null) {
-      root = newNode;
-    }
-    else {
-      Node<K> n = root;
-      loop:
-      while (true) {
-        int compResult = comparator.compare(key, n.key);
-        if (compResult < 0) {
-          if (n.getLeft() == null) {
-            n.setLeft(newNode);
-            break loop;
-          }
-          n = n.getLeft();
-        }
-        else if (compResult > 0) {
-          if (n.getRight() == null) {
-            n.setRight(newNode);
-            break loop;
-          }
-          n = n.getRight();
-        }
-        else {
-          assert false : "already inserted";
-          return root;
-        }
-      }
-      newNode.setParent(n);
-    }
-    size++;
-    insertCase1(newNode);
-    verifyProperties();
-    return newNode;
-  }
+  protected abstract Node<K> createNewNode(K key, int start, int end, Object data);
 
   protected void insertCase1(Node<K> n) {
     if (n.getParent() == null) {
@@ -157,7 +96,7 @@ public class RedBlackTree<K> {
     // Tree is still valid
   }
 
-  void insertCase3(Node<K> n) {
+  private void insertCase3(Node<K> n) {
     if (nodeColor(n.uncle()) == Color.RED) {
       n.getParent().color = Color.BLACK;
       n.uncle().color = Color.BLACK;
@@ -169,7 +108,7 @@ public class RedBlackTree<K> {
     }
   }
 
-  void insertCase4(Node<K> n) {
+  private void insertCase4(Node<K> n) {
     if (n == n.getParent().getRight() && n.getParent() == n.grandparent().getLeft()) {
       rotateLeft(n.getParent());
       n = n.getLeft();
@@ -181,7 +120,7 @@ public class RedBlackTree<K> {
     insertCase5(n);
   }
 
-  void insertCase5(Node<K> n) {
+  private void insertCase5(Node<K> n) {
     n.getParent().color = Color.BLACK;
     n.grandparent().color = Color.RED;
     if (n == n.getParent().getLeft() && n.getParent() == n.grandparent().getLeft()) {
@@ -198,16 +137,20 @@ public class RedBlackTree<K> {
     assert node1 == null || node1.getParent() == null || node1.getParent().getLeft() == node1 || node1.getParent().getRight() == node1;
   }
 
-  //returns parent of deleted node
-  public Node<K> delete(K key) {
-    modCount++;
+  public Node<K> delete(@NotNull K key) {
     Node<K> n = lookupNode(key, root);
     deleteNode(n);
     return n;
   }
 
   protected void deleteNode(Node<K> n) {
+    modCount++;
     if (n == null) return;  // Key not found, do nothing
+
+    Node<K> e = n;
+    while (e.getParent() != null) e = e.getParent();
+    assert e == root; // assert the node belongs to our tree
+
     if (n.getLeft() != null && n.getRight() != null) {
       // Copy key/value from predecessor and then delete it instead
       Node<K> pred = maximumNode(n.getLeft());
@@ -236,11 +179,7 @@ public class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected Node<K> swapWithMaxPred(Node<K> nowAscendant, Node<K> nowDescendant) {
-    nowAscendant.key = nowDescendant.key;
-    //nowAscendant.value = nowDescendant.value;
-    return nowDescendant;
-  }
+  protected abstract Node<K> swapWithMaxPred(Node<K> nowAscendant, Node<K> nowDescendant);
 
   protected Node<K> maximumNode(Node<K> n) {
     assert n != null;
@@ -347,93 +286,23 @@ public class RedBlackTree<K> {
       System.err.print(" ");
     }
     if (n.color == Color.BLACK) {
-      System.err.println(n.key);
+      System.err.println(n.getKey());
     }
     else {
-      System.err.println("<" + n.key + ">");
+      System.err.println("<" + n.getKey() + ">");
     }
     if (n.getLeft() != null) {
       printHelper(n.getLeft(), indent + INDENT_STEP);
     }
   }
 
-  /*
-  private static void test (int... keys) {
-    testDel(keys,keys);
-  }
-  private static void testDel (int[] adds, int[] dels) {
-    RedBlackTree<Integer> t = new RedBlackTree<Integer>();
-    for (int i = 0; i < adds.length; i++) {
-      int key = adds[i];
-      Node<Integer> node = t.createNewNode(key);
-      node.value = i;
-      t.insert(node);
-    }
-    for (int key : dels) {
-      t.delete(key);
-    }
-  }
-
-  public static void main(String[] args) {
-    test(0, 2, 1, 2);
-    test(4, 2, 0, 9, 6, 1, 3, 7);
-    testDel(new int[] {7, 2, 5, 0, 4}, new int[]{2,7});
-
-
-
-
-    //t.insert(0, 0);
-    //t.insert(2, 1); //assert t.lookup(1).equals(1) : t.lookup(1);
-    //t.insert(1, 0); //assert t.lookup(0).equals(0) : t.lookup(0);
-    //t.insert(2, 1); //assert t.lookup(1).equals(1) : t.lookup(1);
-
-    Random gen = new Random();
-
-    while (true) {
-      RedBlackTree<Integer> t = new RedBlackTree<Integer>();
-      List<Integer> adds = new ArrayList<Integer>();
-      List<Integer> dels = new ArrayList<Integer>();
-      assert t.size() == 0 : t.size();
-      try {
-        for (int i = 0; i < 500; i++) {
-          int x = gen.nextInt(500);
-          if (adds.contains(x)) continue;
-          adds.add(x);
-          Node<Integer> node = t.createNewNode(x);
-          node.value = x;
-          t.insert(node);
-          Integer lookup = t.lookupNode(x).value;
-          assert lookup.equals(i) : lookup;
-        }
-        List<Integer> candidates = new ArrayList<Integer>(adds);
-        for (int i = 0; i < candidates.size(); i++) {
-          int x = gen.nextInt(candidates.size());
-          Integer r = candidates.get(x);
-          candidates.remove((Object)r);
-          dels.add(r);
-          t.delete(r);
-        }
-      }
-      catch (AssertionError e) {
-        System.err.println("adds = " + adds);
-        System.err.println("dels = " + dels);
-        throw e;
-      }
-    }
-  }
-  */
-
-  public static class Node<K> {
-    K key;
+  public abstract static class Node<K> {
     private Node<K> left;
     private Node<K> right;
-    private Node<K> parent;
-    protected Color color;
+    private Node<K> parent = null;
+    protected Color color = Color.RED;
 
-    public Node(K key) {
-      this.key = key;
-      color = Color.RED;
-      setParent(null);
+    public Node() {
     }
 
     public Node<K> grandparent() {
@@ -477,6 +346,8 @@ public class RedBlackTree<K> {
     public void setParent(Node<K> parent) {
       this.parent = parent;
     }
+
+    public abstract K getKey();
   }
 
   protected static enum Color {

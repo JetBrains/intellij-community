@@ -48,9 +48,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    codeAnalyzer.projectClosed();
-
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(true); // has to cleanup by hand since light project does not get disposed any time soon
     super.tearDown();
   }
 

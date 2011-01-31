@@ -345,6 +345,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
 
     List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
+    result.addAll(GrClassImplUtil.getDelegatedMethods(this));
     return result.toArray(new PsiMethod[result.size()]);
   }
 

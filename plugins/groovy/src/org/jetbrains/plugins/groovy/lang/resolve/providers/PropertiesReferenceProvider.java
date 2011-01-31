@@ -15,18 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.providers;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author ven
@@ -56,9 +51,8 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
       }*/
     }
 
-    if (value instanceof String) {
-      PsiReference reference = new PropertyReference((String) value, element, null, true);
-      return new PsiReference[]{reference};
+    if (value instanceof String && !((String)value).contains("\n")) {
+      return new PsiReference[]{new PropertyReference((String) value, element, null, true)};
     }
     return PsiReference.EMPTY_ARRAY;
   }

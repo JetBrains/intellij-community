@@ -104,8 +104,10 @@ public class UsersFilterAction extends BasePopupAction {
         myEditorField.setText(myCurrentText);
         final JComponent content = myPopup.getContent();
         mySelectOkAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, content);
-        myPopup.showInScreenCoordinates(myLabel, new Point(0,0));
-        //myPopup.showInCenterOf(myLabel);
+        final Point point = new Point(0, 0);
+        SwingUtilities.convertPointToScreen(point, myLabel);
+        myPopup.setMinimumSize(new Dimension(200, 90));
+        myPopup.showInScreenCoordinates(myLabel, point);
       }
     };
     myLabel.setText(ALL);
@@ -120,7 +122,7 @@ public class UsersFilterAction extends BasePopupAction {
     myEditorField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), myEditorField.getBorder()));
     myEditorField.setText("s");
     myEditorField.setText(myCurrentText);
-    myEditorField.setPreferredSize(new Dimension(200, 70));
+    myEditorField.setOneLineMode(false);
     panel.add(myEditorField, BorderLayout.CENTER);
 
     final TextFieldCompletionProvider textFieldCompletionProvider = new TextFieldCompletionProvider() {
@@ -148,8 +150,7 @@ public class UsersFilterAction extends BasePopupAction {
     textFieldCompletionProvider.apply(myEditorField);
 
     myComponentPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myEditorField)
-      .setCancelOnClickOutside(true).setDimensionServiceKey(myProject,
-                                                            "git4idea.history.wholeTree.UsersFilterAction.Select", false)
+      .setCancelOnClickOutside(true)
       .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
       .setTitle("Specify user names, comma separated")
       .setMovable(true)

@@ -181,7 +181,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void setFocusLookupWhenDone(boolean focusLookup) {
     LOG.assertTrue(isAutopopupCompletion());
     if (focusLookup) {
-      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone();
+      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone = true;
     } else {
       myLookup.setAdvertisementText("Press " +
                                     CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
@@ -336,6 +336,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
+    updateFocus();
   }
 
   final boolean isInsideIdentifier() {
@@ -440,34 +441,50 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           }
         }
         else {
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this, ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone));
+          updateFocus();
           updateLookup();
         }
       }
     }, myQueue.getModalityState());
   }
 
-  public boolean hideAutopopupIfMeaningless() {
-    if (isAutopopupCompletion() && !myLookup.isSelectionTouched()) {
+  private boolean hideAutopopupIfMeaningless() {
+    if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
-      final List<LookupElement> items = myLookup.getItems();
-      if (items.isEmpty() && !myLookup.isCalculating()) {
-        myLookup.hideLookup(false);
-        LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
-        return true;
-      }
-
-      for (LookupElement item : items) {
-        if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
-          myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
-          LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.PossiblyDisturbingAutoPopup(this));
-          return true;
+      for (LookupElement item : myLookup.getItems()) {
+        if (!(item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+          return false;
         }
       }
+
+      myLookup.hideLookup(false);
+      LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
+      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
+      return true;
     }
     return false;
+  }
+
+  private void updateFocus() {
+    if (myLookup.isSelectionTouched()) {
+      return;
+    }
+
+    if (!isAutopopupCompletion()) {
+      myLookup.setFocused(true);
+      return;
+    }
+
+    for (LookupElement item : myLookup.getItems()) {
+      if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+        myLookup.setFocused(false);
+        return;
+      }
+    }
+
+    final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+    myLookup.setFocused(phase instanceof CompletionPhase.ItemsCalculated && ((CompletionPhase.ItemsCalculated)phase).focusLookup);
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
@@ -551,6 +568,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     hideAutopopupIfMeaningless();
+    updateFocus();
   }
 
   public void scheduleRestart() {

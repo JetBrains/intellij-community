@@ -16,6 +16,9 @@
 package com.intellij.util.xml;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.DelegatePsiTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 
@@ -34,9 +37,23 @@ public class DomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+    if (element instanceof PomTargetPsiElement) {
+      PomTarget target = ((PomTargetPsiElement)element).getTarget();
+      if (target instanceof DelegatePsiTarget) {
+        element = ((DelegatePsiTarget)target).getNavigationElement();
+      }
+    }
     final DomElement domElement = DomUtil.getDomElement(element);
-    return domElement == null ? null : ElementPresentationManagerImpl.getDocumentationForElement(domElement);
+    if (domElement == null) {
+      return null;
+    }
+    ElementPresentationTemplate template = domElement.getChildDescription().getPresentationTemplate();
+    if (template != null) {
+      String documentation = template.createPresentation(domElement).getDocumentation();
+      if (documentation != null) return documentation;
+    }
+    return ElementPresentationManagerImpl.getDocumentationForElement(domElement);
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {

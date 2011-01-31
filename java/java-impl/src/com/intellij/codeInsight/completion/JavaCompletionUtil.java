@@ -985,6 +985,10 @@ public class JavaCompletionUtil {
         }
       }
       toInsert.processTail(editor, context.getTailOffset());
+
+      if (context.getCompletionChar() == '.') {
+        AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      }
     }
   }
 

@@ -17,7 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
@@ -47,7 +47,7 @@ public class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
-
+  public static final boolean areSymLinksSupported = isUnix;
 
   public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
   public static final boolean is64Bit = !is32Bit;

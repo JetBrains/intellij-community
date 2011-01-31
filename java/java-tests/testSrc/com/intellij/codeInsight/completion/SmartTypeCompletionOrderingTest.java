@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.statistics.StatisticsManager;
 
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
@@ -12,6 +13,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public SmartTypeCompletionOrderingTest() {
     super(CompletionType.SMART);
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
   }
 
   public void testJComponentAdd() throws Throwable {
