@@ -317,4 +317,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testRangeType() {
     doTest(new GroovyRangeTypeCheckInspection());
   }
+
+  public void testResolveMetaClass() {
+    doTest(new GroovyAccessibilityInspection());
+  }
 }
