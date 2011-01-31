@@ -23,6 +23,7 @@ binlog
 bool
 btree
 calc
+callee
 cancelable
 cancellable
 capath
