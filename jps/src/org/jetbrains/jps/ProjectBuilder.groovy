@@ -128,6 +128,7 @@ class ProjectBuilder {
     Set<Module> dependencies = new HashSet<Module>()
     chunk.modules.each {
       collectModulesFromClasspath(it, getCompileClasspathKind(includeTests), dependencies)
+      collectModulesFromClasspath(it, getRuntimeClasspathKind(includeTests), dependencies)
     }
 
     buildModules(dependencies, includeTests)
