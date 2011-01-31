@@ -74,7 +74,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Incompatible Types Assignments Inspection";
+    return "Incompatible type assignments";
   }
 
   @Override
