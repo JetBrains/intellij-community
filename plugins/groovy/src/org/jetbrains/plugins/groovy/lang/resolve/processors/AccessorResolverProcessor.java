@@ -63,7 +63,7 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     boolean isStaticsOK = isStaticsOK(method, resolveContext);
     addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, myIsPropertyInvoked));
-    return !isAccessible;
+    return !isAccessible || !isStaticsOK;
   }
 
   private static boolean usedInCategory(GroovyPsiElement resolveContext) {

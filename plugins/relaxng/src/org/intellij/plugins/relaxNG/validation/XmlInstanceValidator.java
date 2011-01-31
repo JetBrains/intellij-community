@@ -30,6 +30,7 @@ import com.thaiopensource.util.PropertyMapBuilder;
 import com.thaiopensource.validate.Schema;
 import com.thaiopensource.validate.ValidateProperty;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -41,7 +42,10 @@ import org.xml.sax.SAXParseException;
  * Date: 30.07.2007
  */
 public class XmlInstanceValidator {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
+  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.relaxNG.validation.XmlInstanceValidator");
+
+  private XmlInstanceValidator() {
+  }
 
   public static void doValidation(@NotNull final XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
     try {
@@ -63,7 +67,7 @@ public class XmlInstanceValidator {
       doc.accept(new Psi2SaxAdapter(handler));
 
     } catch (ProcessCanceledException e) {
-      LOG.error(e);
+      throw e;
     } catch (RuntimeException e) {
       LOG.error(e);
     } catch (Exception e) {
@@ -106,6 +110,7 @@ public class XmlInstanceValidator {
       });
     }
 
+    @Nullable
     public static ErrorHandler create(XmlDocument doc, Validator.ValidationHost host) {
       final XmlTag rootTag = doc.getRootTag();
       if (rootTag == null) {
