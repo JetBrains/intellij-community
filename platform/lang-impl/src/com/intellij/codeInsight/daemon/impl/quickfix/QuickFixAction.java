@@ -41,8 +41,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction {
-  private QuickFixAction() {
-  }
+  private QuickFixAction() { }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
@@ -54,10 +53,10 @@ public final class QuickFixAction {
 
   @Deprecated
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
-    doregister(info, action, options, displayName, null, null);
+    doRegister(info, action, options, displayName, null, null);
   }
 
-  private static void doregister(HighlightInfo info,
+  private static void doRegister(HighlightInfo info,
                                  IntentionAction action,
                                  List<IntentionAction> options,
                                  String displayName,
@@ -78,7 +77,7 @@ public final class QuickFixAction {
   }
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
-    doregister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+    doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
   public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {
