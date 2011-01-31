@@ -288,7 +288,7 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end) {
   }
 
   @Override

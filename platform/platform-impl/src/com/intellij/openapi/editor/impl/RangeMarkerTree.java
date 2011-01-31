@@ -20,12 +20,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * User: cdr
@@ -33,14 +36,18 @@ import java.util.*;
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
-
-  private static final EqualStartIntervalComparator<RangeMarkerEx> RANGEMARKER_COMPARATOR = new EqualStartIntervalComparator<RangeMarkerEx>() {
-    public int compare(RangeMarkerEx o1, RangeMarkerEx o2) {
+  private final EqualStartIntervalComparator<IntervalNode> myEqualStartIntervalComparator = new EqualStartIntervalComparator<IntervalNode>() {
+    @Override
+    public int compare(IntervalNode i1, IntervalNode i2) {
+      RMNode o1 = (RMNode)i1;
+      RMNode o2 = (RMNode)i2;
       boolean greedyL1 = o1.isGreedyToLeft();
       boolean greedyL2 = o2.isGreedyToLeft();
       if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
 
-      int d = o1.intervalEnd() - o1.intervalStart() - (o2.intervalEnd() - o2.intervalStart());
+      int o1Length = o1.intervalEnd() - o1.intervalStart();
+      int o2Length = o2.intervalEnd() - o2.intervalStart();
+      int d = o1Length - o2Length;
       if (d != 0) return d;
 
       boolean greedyR1 = o1.isGreedyToRight();
@@ -53,9 +60,13 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
   };
 
-  protected RangeMarkerTree(Document document, EqualStartIntervalComparator<T> comparator) {
-    super(comparator);
+  @Override
+  protected EqualStartIntervalComparator<IntervalNode> getComparator() {
+    return myEqualStartIntervalComparator;
+  }
 
+
+  protected RangeMarkerTree(Document document) {
     myDocument = document;
     myListener = new PrioritizedDocumentListener() {
       public int getPriority() {
@@ -72,41 +83,70 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     document.addDocumentListener(myListener);
   }
 
-  public RangeMarkerTree(Document document) {
-    this(document, (EqualStartIntervalComparator<T>)RANGEMARKER_COMPARATOR);
-  }
-
   public void dispose() {
     myDocument.removeDocumentListener(myListener);
   }
 
   @Override
-  protected Trinity<Integer, Integer, Integer> checkMax(MyNode root, int deltaUpToRootExclusive, boolean assertInvalid) {
+  protected Trinity<Integer, Integer, Integer> checkMax(IntervalNode root,
+                                                        int deltaUpToRootExclusive,
+                                                        boolean assertInvalid,
+                                                        Ref<Boolean> allValid, AtomicInteger counter) {
     if (root != null) {
-      RangeMarkerImpl r = (RangeMarkerImpl)root.key;
-      assert r.myNode == null || r.myNode == root;
+      RangeMarkerImpl r = (RangeMarkerImpl)root.getKey();
+      if (r != null) {
+        assert /*r.myNode == null || */r.myNode == root;
+        assert r.myNode.getTree() == this;
+      }
     }
-    return super.checkMax(root, deltaUpToRootExclusive, assertInvalid);
+    return super.checkMax(root, deltaUpToRootExclusive, assertInvalid, allValid, counter);
   }
 
   @Override
-  public MyNode add(@NotNull T interval) {
-    try {
-      l.writeLock().lock();
-      checkMax(true);
-      RangeMarkerImpl marker = (RangeMarkerImpl)interval;
-      marker.setValid(true);
+  public IntervalNode addInterval(@NotNull T interval, int start, int end, Object data) {
+    RangeMarkerImpl marker = (RangeMarkerImpl)interval;
+    marker.setValid(true);
+    return super.addInterval(interval, start, end, data);
+  }
 
-      modCount++;
-      MyNode newNode = createNewNode(interval);
-      insert(newNode);
+  @Override
+  protected RMNode createNewNode(T key, int start, int end, Object data) {
+    RMNode node = new RMNode(key, start, end);
+    ((RangeMarkerImpl)key).myNode = node;
+    return node;
+  }
 
-      marker.myNode = (IntervalTreeImpl.MyNode)newNode;
-      checkMax(true); // myNode already assigned
-      return newNode;
+  //private static long counter;
+  private static final AtomicLong counter = new AtomicLong();
+  public class RMNode extends MyNode {
+    private boolean isExpandToLeft = false;
+    private boolean isExpandToRight = false;
+    private final long myId;
+
+    public RMNode(@NotNull T key, int start, int end) {
+      super(key, start, end);
+      myId = counter.getAndIncrement();
+    //myId = counter++;
     }
-    finally {
-      l.writeLock().unlock();
+
+    public void setGreedyToLeft(boolean greedy) {
+      isExpandToLeft = greedy;
+    }
+
+    public void setGreedyToRight(boolean greedy) {
+      isExpandToRight = greedy;
+    }
+
+    public boolean isGreedyToLeft() {
+      return isExpandToLeft;
+    }
+
+    public boolean isGreedyToRight() {
+      return isExpandToRight;
+    }
+
+    public long getId() {
+      return myId;
     }
   }
 
@@ -117,59 +157,66 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       normalized = false;
 
       modCount++;
-      List<MyNode> affected = new ArrayList<MyNode>();
+      List<IntervalNode> affected = new ArrayList<IntervalNode>();
       updateMarkersOnChange(getRoot(), e, affected);
       checkMax(false);
 
-      for (MyNode node : affected) {
-        // assumption: interval.getEndOffset() will never be accessed during remove()
-        RangeMarkerEx marker = node.key;
-        int startOffset = marker.getStartOffset();
-        int endOffset = marker.getEndOffset();
-        deleteNode(node);
-        node.delta = 0;
-        node.setParent(null);
-        node.setLeft(null);
-        node.setRight(null);
-        assert marker.intervalStart() == startOffset;
-        assert marker.intervalEnd() == endOffset;
-        //marker.setIntervalStart(startOffset);
-        //marker.setIntervalEnd(endOffset); //might have been changed by delete
-      }
-      checkMax(true);
-      for (MyNode node : affected) {
-        RangeMarkerImpl marker = (RangeMarkerImpl)node.key;
-        marker.setValid(true);
-        marker.myNode = null;
-        marker.documentChanged(e);
-        if (marker.isValid()) {
-          marker.registerInDocument();
+      if (!affected.isEmpty()) {
+        for (IntervalNode node : affected) {
+          // assumption: interval.getEndOffset() will never be accessed during remove()
+          int startOffset = node.intervalStart();
+          int endOffset = node.intervalEnd();
+          removeNode(node);
+          node.delta = 0;
+          node.setParent(null);
+          node.setLeft(null);
+          node.setRight(null);
+          assert node.intervalStart() == startOffset;
+          assert node.intervalEnd() == endOffset;
         }
+        checkMax(true);
+        for (IntervalNode node : affected) {
+          RangeMarkerImpl marker = (RangeMarkerImpl)node.getKey();
+          if (marker == null) continue; // collected
+          marker.setValid(true);
+          //marker.myNode = null;
+          marker.documentChanged(e);
+          if (marker.isValid()) {
+            insert(node);
+          }
+        }
+        checkMax(true);
       }
-      checkMax(true);
+
+      IntervalNode root = getRoot();
+      assert root == null || root.maxEnd + root.delta <= myDocument.getTextLength();
     }
     finally {
       l.writeLock().unlock();
     }
   }
 
-  private void updateMarkersOnChange(MyNode root,
-                                     DocumentEvent e,
-                                     List<MyNode> affected) {
+  private static void updateMarkersOnChange(IntervalNode root,
+                                            @NotNull DocumentEvent e,
+                                            @NotNull List<IntervalNode> affected) {
     if (root == null) return;
     pushDelta(root);
 
     int maxEnd = root.maxEnd;
-    RangeMarkerEx interval = root.key;
-    assert interval.isValid();
+    assert root.isValid();
 
     int offset = e.getOffset();
     int affectedEndOffset = offset + e.getOldLength();
-    int lengthDelta = e.getNewLength() - e.getOldLength();
+    Object key = root.getKey();
+    if (key == null) {
+      // marker was garbage collected
+      affected.add(root);
+    }
     if (offset > maxEnd) {
 
     }
-    else if (affectedEndOffset < interval.intervalStart()) {
+    else if (affectedEndOffset < root.intervalStart()) {
+      int lengthDelta = e.getNewLength() - e.getOldLength();
       root.delta += lengthDelta;
       if (root.getLeft() != null) {
         root.getLeft().delta -= lengthDelta;
@@ -179,10 +226,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       correctMax(root, 0);
     }
     else {
-      if (offset <= interval.getEndOffset()) {
+      if (offset <= root.intervalEnd()) {
         // unlucky enough so that change affects the interval
-        affected.add(root);
-        root.key.setValid(false);  //make invisible
+        if (key != null) affected.add(root); // otherwise we've already added it
+        root.setValid(false);  //make invisible
       }
 
       updateMarkersOnChange(root.getLeft(), e, affected);

@@ -27,7 +27,7 @@ import java.awt.*;
 /**
  * User: cdr
  */
-class RangeHighlighterData {
+abstract class RangeHighlighterData {
   private final MarkupModel myModel;
   private final int myLayer;
   private final HighlighterTargetArea myTargetArea;
@@ -42,14 +42,12 @@ class RangeHighlighterData {
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
-  private final RangeHighlighterEx rangeHighlighter;
+  int myLine; // for PersistentRangeHighlighterImpl only
 
   RangeHighlighterData(@NotNull MarkupModel model,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes,
-                       @NotNull RangeHighlighterEx rangeHighlighter) {
-    this.rangeHighlighter = rangeHighlighter;
+                       TextAttributes textAttributes) {
     myTextAttributes = textAttributes;
     myTargetArea = target;
     myLayer = layer;
@@ -58,6 +56,9 @@ class RangeHighlighterData {
       myErrorStripeColor = textAttributes.getErrorStripeColor();
     }
   }
+
+  @NotNull
+  public abstract RangeHighlighterEx getRangeHighlighter();
 
   public TextAttributes getTextAttributes() {
     return myTextAttributes;
@@ -198,32 +199,32 @@ class RangeHighlighterData {
         changed = true;
       }
       else {
-        ((MarkupModelImpl)myModel).fireAttributesChanged(rangeHighlighter);
+        ((MarkupModelImpl)myModel).fireAttributesChanged(getRangeHighlighter());
       }
     }
   }
 
   public int getAffectedAreaStartOffset() {
-    int startOffset = rangeHighlighter.getStartOffset();
+    int startOffset = getRangeHighlighter().getStartOffset();
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return startOffset;
     if (startOffset == myModel.getDocument().getTextLength()) return startOffset;
     return myModel.getDocument().getLineStartOffset(myModel.getDocument().getLineNumber(startOffset));
   }
 
   public int getAffectedAreaEndOffset() {
-    int endOffset = rangeHighlighter.getEndOffset();
+    int endOffset = getRangeHighlighter().getEndOffset();
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return endOffset;
     int textLength = myModel.getDocument().getTextLength();
     if (endOffset == textLength) return endOffset;
     return Math.min(textLength, myModel.getDocument().getLineEndOffset(myModel.getDocument().getLineNumber(endOffset)) + 1);
   }
 
-  public void registerMe() {
-    ((MarkupModelImpl)myModel).addRangeHighlighter(rangeHighlighter);
+  public void registerMe(int start, int end) {
+    ((MarkupModelImpl)myModel).addRangeHighlighter(getRangeHighlighter(), start, end,this);
   }
 
   public void unregisterMe() {
-    myModel.removeHighlighter(rangeHighlighter);
+    myModel.removeHighlighter(getRangeHighlighter());
   }
 
   // returns true if change was detected
@@ -231,7 +232,7 @@ class RangeHighlighterData {
     inBatchChange = true;
     boolean result;
     try {
-      change.consume(rangeHighlighter);
+      change.consume(getRangeHighlighter());
     }
     finally {
       inBatchChange = false;

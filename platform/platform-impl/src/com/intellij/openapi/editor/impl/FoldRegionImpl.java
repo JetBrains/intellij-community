@@ -44,7 +44,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
                  @NotNull String placeholder,
                  FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super((DocumentEx)editor.getDocument(), startOffset, endOffset);
+    super((DocumentEx)editor.getDocument(), startOffset, endOffset,true);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
@@ -77,7 +77,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   public boolean isValid() {
-    return super.isValid() && myStart + 1 < myEnd;
+    return super.isValid() && intervalStart() + 1 < intervalEnd();
   }
 
   public void setExpandedInternal(boolean toExpand) {

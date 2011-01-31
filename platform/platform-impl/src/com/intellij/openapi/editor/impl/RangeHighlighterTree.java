@@ -17,19 +17,19 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: cdr
  */
 public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
-  public RangeHighlighterTree(Document document) {
-    super(document, COMPARATOR);
-  }
-
-  private static final EqualStartIntervalComparator<RangeHighlighterEx> COMPARATOR = new EqualStartIntervalComparator<RangeHighlighterEx>() {
-    public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
-      if (o1.getLayer() != o2.getLayer()) {
-        return o2.getLayer() - o1.getLayer();
+  private final EqualStartIntervalComparator<IntervalNode> myComparator = new EqualStartIntervalComparator<IntervalNode>() {
+    @Override
+    public int compare(IntervalNode i1, IntervalNode i2) {
+      RHNode o1 = (RHNode)i1;
+      RHNode o2 = (RHNode)i2;
+      if (o1.data.getLayer() != o2.data.getLayer()) {
+        return o2.data.getLayer() - o1.data.getLayer();
       }
       boolean greedyL1 = o1.isGreedyToLeft();
       boolean greedyL2 = o2.isGreedyToLeft();
@@ -47,5 +47,29 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
       return d;
     }
   };
+
+  public RangeHighlighterTree(Document document) {
+    super(document);
+  }
+
+  @Override
+  protected EqualStartIntervalComparator<IntervalNode> getComparator() {
+    return myComparator;
+  }
+
+  @Override
+  protected RHNode createNewNode(RangeHighlighterEx key, int start, int end, Object data) {
+    RHNode node = new RHNode(key, start, end, (RangeHighlighterData)data);
+    ((RangeMarkerImpl)key).myNode = node;
+    return node;
+  }
+
+  class RHNode extends RMNode {
+    final RangeHighlighterData data;
+    public RHNode(@NotNull final RangeHighlighterEx key, int start, int end, RangeHighlighterData data) {
+      super(key, start, end);
+      this.data = data;
+    }
+  }
 
 }

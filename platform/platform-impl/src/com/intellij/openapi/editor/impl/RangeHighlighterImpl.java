@@ -29,140 +29,149 @@ import java.awt.*;
  * @author max
  */
 class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
-  private final RangeHighlighterData data;
   RangeHighlighterImpl(@NotNull MarkupModel model,
                        int start,
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
                        TextAttributes textAttributes) {
-    super((DocumentEx)model.getDocument(), start, end);
-    data = new RangeHighlighterData(model, layer, target, textAttributes, this);
+    super((DocumentEx)model.getDocument(), start, end,false);
+
+    RangeHighlighterData data = new RangeHighlighterData(model, layer, target, textAttributes) {
+      @NotNull
+      @Override
+      public RangeHighlighterEx getRangeHighlighter() {
+        return RangeHighlighterImpl.this;
+      }
+    };
+    data.registerMe(start, end);
+  }
+
+  protected RangeHighlighterData getData() {
+    return ((RangeHighlighterTree.RHNode)myNode).data;
   }
 
   @Override
-  protected void registerInDocument() {
+  protected void registerInDocument(int start, int end) {
     // we store highlighters in MarkupModel
-    data.registerMe();
   }
 
   @Override
   protected boolean unregisterInDocument() {
     // we store highlighters in MarkupModel
-    data.unregisterMe();
+    getData().unregisterMe();
     myNode = null;
     return true;
   }
 
   // delegates
-
   public TextAttributes getTextAttributes() {
-    return data.getTextAttributes();
+    return getData().getTextAttributes();
   }
 
   public void setTextAttributes(TextAttributes textAttributes) {
-    data.setTextAttributes(textAttributes);
+    getData().setTextAttributes(textAttributes);
   }
 
   boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
-    return data.changeAttributesInBatch(change);
+    return getData().changeAttributesInBatch(change);
   }
 
   public int getLayer() {
-    return data.getLayer();
+    return getData().getLayer();
   }
 
   public HighlighterTargetArea getTargetArea() {
-    return data.getTargetArea();
+    return getData().getTargetArea();
   }
 
   public LineMarkerRenderer getLineMarkerRenderer() {
-    return data.getLineMarkerRenderer();
+    return getData().getLineMarkerRenderer();
   }
 
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
-    data.setLineMarkerRenderer(renderer);
+    getData().setLineMarkerRenderer(renderer);
   }
 
   public CustomHighlighterRenderer getCustomRenderer() {
-    return data.getCustomRenderer();
+    return getData().getCustomRenderer();
   }
 
   public void setCustomRenderer(CustomHighlighterRenderer renderer) {
-    data.setCustomRenderer(renderer);
+    getData().setCustomRenderer(renderer);
   }
 
   public GutterIconRenderer getGutterIconRenderer() {
-    return data.getGutterIconRenderer();
+    return getData().getGutterIconRenderer();
   }
 
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    data.setGutterIconRenderer(renderer);
+    getData().setGutterIconRenderer(renderer);
   }
 
   public Color getErrorStripeMarkColor() {
-    return data.getErrorStripeMarkColor();
+    return getData().getErrorStripeMarkColor();
   }
 
   public void setErrorStripeMarkColor(Color color) {
-    data.setErrorStripeMarkColor(color);
+    getData().setErrorStripeMarkColor(color);
   }
 
   public Object getErrorStripeTooltip() {
-    return data.getErrorStripeTooltip();
+    return getData().getErrorStripeTooltip();
   }
 
   public void setErrorStripeTooltip(Object tooltipObject) {
-    data.setErrorStripeTooltip(tooltipObject);
+    getData().setErrorStripeTooltip(tooltipObject);
   }
 
   public boolean isThinErrorStripeMark() {
-    return data.isThinErrorStripeMark();
+    return getData().isThinErrorStripeMark();
   }
 
   public void setThinErrorStripeMark(boolean value) {
-    data.setThinErrorStripeMark(value);
+    getData().setThinErrorStripeMark(value);
   }
 
   public Color getLineSeparatorColor() {
-    return data.getLineSeparatorColor();
+    return getData().getLineSeparatorColor();
   }
 
   public void setLineSeparatorColor(Color color) {
-    data.setLineSeparatorColor(color);
+    getData().setLineSeparatorColor(color);
   }
 
   public SeparatorPlacement getLineSeparatorPlacement() {
-    return data.getLineSeparatorPlacement();
+    return getData().getLineSeparatorPlacement();
   }
 
   public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
-    data.setLineSeparatorPlacement(placement);
+    getData().setLineSeparatorPlacement(placement);
   }
 
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
-    data.setEditorFilter(filter);
+    getData().setEditorFilter(filter);
   }
 
   @NotNull
   public MarkupEditorFilter getEditorFilter() {
-    return data.getEditorFilter();
+    return getData().getEditorFilter();
   }
 
   public boolean isAfterEndOfLine() {
-    return data.isAfterEndOfLine();
+    return getData().isAfterEndOfLine();
   }
 
   public void setAfterEndOfLine(boolean afterEndOfLine) {
-    data.setAfterEndOfLine(afterEndOfLine);
+    getData().setAfterEndOfLine(afterEndOfLine);
   }
 
   public int getAffectedAreaStartOffset() {
-    return data.getAffectedAreaStartOffset();
+    return getData().getAffectedAreaStartOffset();
   }
 
   public int getAffectedAreaEndOffset() {
-    return data.getAffectedAreaEndOffset();
+    return getData().getAffectedAreaEndOffset();
   }
 
   @Override

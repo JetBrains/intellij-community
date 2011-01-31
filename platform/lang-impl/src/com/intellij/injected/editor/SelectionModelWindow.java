@@ -152,11 +152,13 @@ public class SelectionModelWindow implements SelectionModel {
   }
 
   public LogicalPosition getBlockStart() {
-    return myInjectedEditor.hostToInjected(myHostModel.getBlockStart());
+    LogicalPosition hostBlock = myHostModel.getBlockStart();
+    return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
   }
 
   public LogicalPosition getBlockEnd() {
-    return myInjectedEditor.hostToInjected(myHostModel.getBlockEnd());
+    LogicalPosition hostBlock = myHostModel.getBlockEnd();
+    return hostBlock == null ? null : myInjectedEditor.hostToInjected(hostBlock);
   }
 
   public boolean isBlockSelectionGuarded() {

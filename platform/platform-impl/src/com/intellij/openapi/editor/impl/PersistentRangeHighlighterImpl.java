@@ -15,153 +15,69 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 /**
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-public class PersistentRangeHighlighterImpl extends PersistentLineMarker implements RangeHighlighterEx {
-  private final RangeHighlighterData data;
+class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements RangeHighlighterEx {
   PersistentRangeHighlighterImpl(@NotNull MarkupModel model,
-                                 int start,
+                                 int offset,
                                  int layer,
                                  @NotNull HighlighterTargetArea target,
-                                 TextAttributes textAttributes
-  ) {
-    super((DocumentEx)model.getDocument(), start);
-    data = new RangeHighlighterData(model, layer, target, textAttributes, this);
+                                 TextAttributes textAttributes) {
+    super(model, model.getDocument().getLineStartOffset(model.getDocument().getLineNumber(offset)), model.getDocument().getLineEndOffset(model.getDocument().getLineNumber(offset)),layer, target, textAttributes);
+    setLine(model.getDocument().getLineNumber(offset));
   }
 
   @Override
-  protected void registerInDocument() {
-    // we store highlighters in MarkupModel
-    data.registerMe();
+  protected void changedUpdateImpl(DocumentEvent e) {
+    DocumentEventImpl event = (DocumentEventImpl)e;
+    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)) {
+      setLine(event.translateLineViaDiff(getLine()));
+      if (getLine() < 0 || getLine() >= getDocument().getLineCount()) {
+        invalidate();
+      }
+      else {
+        DocumentEx document = getDocument();
+        setIntervalStart(document.getLineStartOffset(getLine()));
+        setIntervalEnd(document.getLineEndOffset(getLine()));
+      }
+    }
+    else {
+      super.changedUpdateImpl(e);
+      if (isValid()) {
+        setLine(getDocument().getLineNumber(getStartOffset()));
+        int endLine = getDocument().getLineNumber(getEndOffset());
+        if (endLine != getLine()) {
+          setIntervalEnd(getDocument().getLineEndOffset(getLine()));
+        }
+      }
+    }
   }
 
   @Override
-  protected boolean unregisterInDocument() {
-    // we store highlighters in MarkupModel
-    data.unregisterMe();
-    myNode = null;
-    return true;
+  public String toString() {
+    return "PersistentRangeHighlighter" +
+           (isGreedyToLeft() ? "[" : "(") +
+           (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + " - " + getLine() +
+           (isGreedyToRight() ? "]" : ")");
   }
 
   // delegates
-
-  public TextAttributes getTextAttributes() {
-    return data.getTextAttributes();
+  public int getLine() {
+    return getData().myLine;
   }
 
-  public void setTextAttributes(TextAttributes textAttributes) {
-    data.setTextAttributes(textAttributes);
-  }
-
-  boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
-    return data.changeAttributesInBatch(change);
-  }
-
-  public int getLayer() {
-    return data.getLayer();
-  }
-
-  public HighlighterTargetArea getTargetArea() {
-    return data.getTargetArea();
-  }
-
-  public LineMarkerRenderer getLineMarkerRenderer() {
-    return data.getLineMarkerRenderer();
-  }
-
-  public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
-    data.setLineMarkerRenderer(renderer);
-  }
-
-  public CustomHighlighterRenderer getCustomRenderer() {
-    return data.getCustomRenderer();
-  }
-
-  public void setCustomRenderer(CustomHighlighterRenderer renderer) {
-    data.setCustomRenderer(renderer);
-  }
-
-  public GutterIconRenderer getGutterIconRenderer() {
-    return data.getGutterIconRenderer();
-  }
-
-  public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    data.setGutterIconRenderer(renderer);
-  }
-
-  public Color getErrorStripeMarkColor() {
-    return data.getErrorStripeMarkColor();
-  }
-
-  public void setErrorStripeMarkColor(Color color) {
-    data.setErrorStripeMarkColor(color);
-  }
-
-  public Object getErrorStripeTooltip() {
-    return data.getErrorStripeTooltip();
-  }
-
-  public void setErrorStripeTooltip(Object tooltipObject) {
-    data.setErrorStripeTooltip(tooltipObject);
-  }
-
-  public boolean isThinErrorStripeMark() {
-    return data.isThinErrorStripeMark();
-  }
-
-  public void setThinErrorStripeMark(boolean value) {
-    data.setThinErrorStripeMark(value);
-  }
-
-  public Color getLineSeparatorColor() {
-    return data.getLineSeparatorColor();
-  }
-
-  public void setLineSeparatorColor(Color color) {
-    data.setLineSeparatorColor(color);
-  }
-
-  public SeparatorPlacement getLineSeparatorPlacement() {
-    return data.getLineSeparatorPlacement();
-  }
-
-  public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
-    data.setLineSeparatorPlacement(placement);
-  }
-
-  public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
-    data.setEditorFilter(filter);
-  }
-
-  @NotNull
-  public MarkupEditorFilter getEditorFilter() {
-    return data.getEditorFilter();
-  }
-
-  public boolean isAfterEndOfLine() {
-    return data.isAfterEndOfLine();
-  }
-
-  public void setAfterEndOfLine(boolean afterEndOfLine) {
-    data.setAfterEndOfLine(afterEndOfLine);
-  }
-
-  public int getAffectedAreaStartOffset() {
-    return data.getAffectedAreaStartOffset();
-  }
-
-  public int getAffectedAreaEndOffset() {
-    return data.getAffectedAreaEndOffset();
+  public void setLine(int line) {
+    getData().myLine = line;
   }
 }
