@@ -16,6 +16,7 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -23,5 +24,5 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 public interface CompilerFactory {
   ExtensionPointName<CompilerFactory> EP_NAME = ExtensionPointName.create("com.intellij.compilerFactory");
   
-  Compiler[] createCompilers(final CompilerManager compilerManager);
+  Compiler[] createCompilers(@NotNull CompilerManager compilerManager);
 }
