@@ -138,4 +138,5 @@
   <tip file="Switcher.html"/>
   <tip file="DragToOpen.html"/>
   <tip file="EnterDirectoryInGotoFile.html"/>
+  <tip file="GotoLineInFile.html"/>
 </tips>
