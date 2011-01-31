@@ -407,6 +407,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final String indent = "    ";
     try {
       int idx = 0;
+      int hits = 0;
       if (lineData.getJumps() != null) {
         for (Object o : lineData.getJumps()) {
           final JumpData jumpData = (JumpData)o;
@@ -417,6 +418,7 @@ public class JavaCoverageEngine extends CoverageEngine {
             buf.append(indent).append(expression.getText()).append("\n");
             buf.append(indent).append(indent).append("true hits: ").append(reverse ? jumpData.getFalseHits() : jumpData.getTrueHits()).append("\n");
             buf.append(indent).append(indent).append("false hits: ").append(reverse ? jumpData.getTrueHits() : jumpData.getFalseHits()).append("\n");
+            hits += jumpData.getTrueHits() + jumpData.getFalseHits();
           }
         }
       }
@@ -428,12 +430,18 @@ public class JavaCoverageEngine extends CoverageEngine {
           buf.append(indent).append(conditionExpression.getText()).append("\n");
           if (hasDefaultLabel(conditionExpression)) {
             buf.append(indent).append(indent).append("Default hits: ").append(switchData.getDefaultHits()).append("\n");
+            hits += switchData.getDefaultHits();
           }
           int i = 0;
           for (int key : switchData.getKeys()) {
-            buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchData.getHits()[i++]).append("\n");
+            final int switchHits = switchData.getHits()[i++];
+            buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchHits).append("\n");
+            hits += switchHits;
           }
         }
+      }
+      if (lineData.getHits() > hits) {
+        buf.append("Unknown outcome: ").append(lineData.getHits() - hits);
       }
     }
     catch (Exception e) {
