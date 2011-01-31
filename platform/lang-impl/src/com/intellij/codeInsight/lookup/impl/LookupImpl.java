@@ -458,6 +458,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
+  public boolean isFrozen(@NotNull LookupElement element) {
+    return myFrozenItems.contains(element);
+  }
+
   private boolean addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<LookupElement> elements) {
     List<LookupElement> sorted = new SortedList<LookupElement>(new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
