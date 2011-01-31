@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -26,6 +27,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -61,18 +64,18 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
-  private final AtomicNotNullLazyValue<Map<String, Map<String, String>>> myStdResources = new AtomicNotNullLazyValue<Map<String, Map<String, String>>>() {
+  private final AtomicNotNullLazyValue<Map<String, Map<String, Resource>>> myStdResources = new AtomicNotNullLazyValue<Map<String, Map<String, Resource>>>() {
         
     @NotNull
     @Override
-    protected Map<String, Map<String, String>> compute() {
+    protected Map<String, Map<String, Resource>> compute() {
       return computeStdResources();
     }
   };
 
   private String myDefaultHtmlDoctype = XmlUtil.XHTML_URI;
 
-  protected Map<String, Map<String, String>> computeStdResources() {
+  protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
     for (StandardResourceProvider provider : Extensions.getExtensions(StandardResourceProvider.EP_NAME)) {
       provider.registerResources(registrar);
@@ -128,7 +131,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public String getResourceLocation(@NonNls String url, String version) {
-    String result = getUserResourse(url, version);
+    String result = getUserResource(url, version);
     if (result == null) {
       result = getStdResource(url, version);
     }
@@ -141,19 +144,25 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @Override
   @Nullable
   public String getUserResourse(Project project, String url, String version) {
-    String resourse = getProjectResources(project).getUserResourse(url, version);
-    return resourse == null ? getUserResourse(url, version) : resourse;
+    String resourse = getProjectResources(project).getUserResource(url, version);
+    return resourse == null ? getUserResource(url, version) : resourse;
   }
 
   @Override
   @Nullable
   public String getStdResource(String url, String version) {
-    Map<String, String> map = getMap(myStdResources.getValue(), version, false);
-    return map != null ? map.get(url) : null;
+    Map<String, Resource> map = getMap(myStdResources.getValue(), version, false);
+    if (map != null) {
+      Resource resource = map.get(url);
+      return resource == null ? null : resource.getResourceUrl();
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
-  private String getUserResourse(String url, String version) {
+  private String getUserResource(String url, String version) {
     Map<String, String> map = getMap(myResources, version, false);
     return map != null ? map.get(url) : null;
   }
@@ -184,39 +193,21 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public String[] getResourceUrls(@Nullable final FileType fileType, @NonNls final String version, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
-    addResourcesFromMap(fileType, result, version, myResources);
+    addResourcesFromMap(result, version, myResources);
 
     if (includeStandard) {
-      addResourcesFromMap(fileType, result, version, myStdResources.getValue());
+      addResourcesFromMap(result, version, myStdResources.getValue());
     }
 
     return ArrayUtil.toStringArray(result);
   }
 
-  private static void addResourcesFromMap(@Nullable final FileType fileType,
-                                          final List<String> result,
+  private static <T> void addResourcesFromMap(final List<String> result,
                                           String version,
-                                          Map<String, Map<String, String>> resourcesMap) {
-    Map<String, String> resources = getMap(resourcesMap, version, false);
+                                          Map<String, Map<String, T>> resourcesMap) {
+    Map<String, T> resources = getMap(resourcesMap, version, false);
     if (resources == null) return;
-    final Set<String> keySet = resources.keySet();
-
-    for (String key : keySet) {
-      String resource = resources.get(key);
-
-      if (fileType != null) {
-        String defaultExtension = fileType.getDefaultExtension();
-
-        if (resource.endsWith(defaultExtension) &&
-            resource.length() > defaultExtension.length() &&
-            resource.charAt(resource.length() - defaultExtension.length() - 1) == '.') {
-          result.add(key);
-        }
-      }
-      else {
-        result.add(key);
-      }
-    }
+    result.addAll(resources.keySet());
   }
 
   public void addResource(String url, String location) {
@@ -399,14 +390,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   }
 
-  public List<String> getStandardResources() {
-    ArrayList<String> strings = new ArrayList<String>();
-    Collection<Map<String, String>> maps = myStdResources.getValue().values();
-    for (Map<String, String> map : maps) {
-      strings.addAll(map.values());
-    }
-    return strings;
+  Collection<Map<String, Resource>> getStandardResources() {
+    return myStdResources.getValue().values();
   }
+
 
   private final static NotNullLazyKey<ProjectResources, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ProjectResources.class);
 
@@ -431,5 +418,53 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     fireExternalResourceChanged();
   }
 
+  static class Resource {
+    String file;
+    Class clazz;
 
+    @Nullable
+    String getResourceUrl() {
+
+      if (clazz == null) return file;
+
+      final URL resource = clazz.getResource(file);
+      clazz = null;
+      if (resource == null) {
+        String message = "Cannot find standard resource. filename:" + file + " class=" + clazz;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error(message);
+        }
+        else {
+          LOG.warn(message);
+        }
+
+        return null;
+      }
+
+      String path = FileUtil.unquote(resource.toString());
+      // this is done by FileUtil for windows
+      path = path.replace('\\','/');
+      file = path;
+      return path;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Resource resource = (Resource)o;
+
+      if (clazz != resource.clazz) return false;
+      if (file != null ? !file.equals(resource.file) : resource.file != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return file.hashCode();
+    }
+  }
 }

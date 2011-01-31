@@ -16,15 +16,9 @@
 
 package com.intellij.javaee;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +28,8 @@ import java.util.Map;
  */
 public class ResourceRegistrarImpl implements ResourceRegistrar {
 
-  private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
+  private final Map<String, Map<String, ExternalResourceManagerImpl.Resource>> myResources = new HashMap<String, Map<String, ExternalResourceManagerImpl.Resource>>();
   private final List<String> myIgnored = new ArrayList<String>();
-  private final Map<ClassLoader, Map<String, VirtualFile>> myCache = CollectionFactory.hashMap();
 
   public void addStdResource(@NonNls String resource, @NonNls String fileName) {
     addStdResource(resource, null, fileName, getClass());
@@ -47,22 +40,12 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
-    final String file = getFile(fileName, klass);
-    if (file != null) {
-      //saveCache(fileName, klass, file);
-      final Map<String, String> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
-      assert map != null;
-      map.put(resource, file);
-    }
-    else {
-      String message = "Cannot find standard resource. filename:" + fileName + " klass=" + klass;
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        ExternalResourceManagerImpl.LOG.error(message);
-      }
-      else {
-        ExternalResourceManagerImpl.LOG.warn(message);
-      }
-    }
+    final Map<String, ExternalResourceManagerImpl.Resource> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
+    assert map != null;
+    ExternalResourceManagerImpl.Resource res = new ExternalResourceManagerImpl.Resource();
+    res.file = fileName;
+    res.clazz = klass == null ? ExternalResourceManagerImpl.class : klass;
+    map.put(resource, res);
   }
 
   public void addIgnoredResource(@NonNls String url) {
@@ -85,77 +68,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, version, ExternalResourceManagerImpl.STANDARD_SCHEMAS + fileName, clazz);
   }
 
-  @Nullable
-  private String getFile(String name, Class klass) {
-    /*
-    VirtualFile file = findUsingCache(name, klass);
-    if (file != null) {
-      return file;
-    }
-    */
-
-    final URL resource = klass.getResource(name);
-    if (resource == null) return null;
-
-    String path = FileUtil.unquote(resource.toString());
-    // this is done by FileUtil for windows
-    path = path.replace('\\','/');
-
-    return path;//VfsUtil.findRelativeFile(path, null);
-  }
-
-  @Nullable
-  private VirtualFile findUsingCache(String name, Class klass) {
-    if (!name.startsWith("/")) return null;
-
-    final Map<String, VirtualFile> cache = myCache.get(klass.getClassLoader());
-    if (cache == null) return null;
-
-    int end = name.length();
-    while (true) {
-      final int i = name.lastIndexOf('/', end);
-      if (i < 0) break;
-
-      final VirtualFile existing = cache.get(name.substring(0, i));
-      if (existing != null) {
-        final VirtualFile guess = existing.findFileByRelativePath(name.substring(i + 1));
-        if (guess != null) {
-          return guess;
-        }
-      }
-
-      end = i - 1;
-    }
-
-    return null;
-  }
-
-  private void saveCache(String name, Class klass, VirtualFile file) {
-    if (!name.startsWith("/")) return;
-
-    final ClassLoader loader = klass.getClassLoader();
-    Map<String, VirtualFile> cache = myCache.get(loader);
-    if (cache == null) {
-      myCache.put(loader, cache = CollectionFactory.hashMap());
-    }
-
-    String parent = name;
-    VirtualFile current = file;
-    while (true) {
-      if (current.equals(cache.get(parent))) break;
-
-      cache.put(parent, current);
-      final int i = parent.lastIndexOf('/');
-      if (i <= 0) break;
-      if (!parent.substring(i + 1).equals(current.getName())) {
-        break;
-      }
-      parent = parent.substring(0, i);
-      current = current.getParent();
-    }
-  }
-
-  public Map<String, Map<String, String>> getResources() {
+  public Map<String, Map<String, ExternalResourceManagerImpl.Resource>> getResources() {
     return myResources;
   }
 
