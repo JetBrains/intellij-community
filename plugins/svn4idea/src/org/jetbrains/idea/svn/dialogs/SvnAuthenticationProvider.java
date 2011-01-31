@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -28,9 +27,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-
-import java.lang.reflect.InvocationTargetException;
-import java.security.cert.X509Certificate;
 
 /**
  * @author alex
@@ -74,27 +70,6 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   }
 
   public int acceptServerAuthentication(SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
-    if (!(certificate instanceof X509Certificate)) {
-      return ACCEPTED;
-    }
-    final int[] result = new int[1];
-    Runnable command = new Runnable() {
-      public void run() {
-        ServerSSLDialog dialog = new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored);
-        dialog.show();
-        result[0] = dialog.getResult();
-
-      }
-    };
-    try {
-      GuiUtils.runOrInvokeAndWait(command);
-    }
-    catch (InterruptedException e) {
-      //
-    }
-    catch (InvocationTargetException e) {
-      //
-    }
-    return result[0];
+    return mySvnInteractiveAuthenticationProvider.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
   }
 }
