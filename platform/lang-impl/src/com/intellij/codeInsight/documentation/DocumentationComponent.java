@@ -35,11 +35,8 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -50,6 +47,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -65,6 +64,13 @@ import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable {
 
+  private static final DataContext EMPTY_DATA_CONTEXT = new DataContext() {
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+  };
+  
   private static final int MAX_WIDTH = 500;
   private static final int MAX_HEIGHT = 300;
   private static final int MIN_HEIGHT = 45;
@@ -78,9 +84,10 @@ public class DocumentationComponent extends JPanel implements Disposable {
   private boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
-  private JBPopup mySettingsPopup;
   private Style myFontSizeStyle;
   private JSlider myFontSizeSlider;
+  private JComponent mySettingsPanel;
+  private MyShowSettingsButton myShowSettingsButton;
   private boolean myIgnoreFontSizeSliderChange;
 
   private static class Context {
@@ -197,6 +204,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         myManager.requestFocus();
+        myShowSettingsButton.hideSettings();
       }
     };
     myEditorPane.addMouseListener(mouseAdapter);
@@ -224,7 +232,29 @@ public class DocumentationComponent extends JPanel implements Disposable {
     });
 
     setLayout(new BorderLayout());
-    add(myScrollPane, BorderLayout.CENTER);
+    JLayeredPane layeredPane = new JLayeredPane() {
+      @Override
+      public void doLayout() {
+        final Rectangle r = getBounds();
+        for (Component component : getComponents()) {
+          if (component instanceof JScrollPane) {
+            component.setBounds(0, 0, r.width, r.height);
+          }
+          else {
+            Dimension d = component.getPreferredSize();
+            component.setBounds(r.width - d.width, 2, d.width, d.height);
+          }
+        }
+      }
+    };
+    layeredPane.add(myScrollPane);
+    layeredPane.setLayer(myScrollPane, 0);
+    
+    mySettingsPanel = createSettingsPanel();
+    layeredPane.add(mySettingsPanel);
+    layeredPane.setLayer(mySettingsPanel, JLayeredPane.POPUP_LAYER);
+    add(layeredPane, BorderLayout.CENTER);
+    setOpaque(true);
     myScrollPane.setViewportBorder(JBScrollPane.createIndentBorder());
 
     final DefaultActionGroup actions = new DefaultActionGroup();
@@ -254,7 +284,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
     myControlPanel.add(dummyPanel, BorderLayout.CENTER);
-    myControlPanel.add(createSettingsButton(), BorderLayout.EAST);
+    myControlPanel.add(myShowSettingsButton = new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     final HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -287,15 +317,16 @@ public class DocumentationComponent extends JPanel implements Disposable {
     this(manager, null);
   }
 
-  private JComponent createSettingsButton() {
-    String tooltipText = ApplicationBundle.message("quickdoc.tooltip.font.size.by.wheel");
-    final JPanel fontSizePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    fontSizePanel.add(new JLabel(ApplicationBundle.message("label.font.size")));
+  private JComponent createSettingsPanel() {
+    JPanel result = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
+    result.add(new JLabel(ApplicationBundle.message("label.font.size")));
     myFontSizeSlider = new JSlider(JSlider.HORIZONTAL, 0, FontSize.values().length - 1, 3);
     myFontSizeSlider.setMinorTickSpacing(1);
     myFontSizeSlider.setPaintTicks(true);
+    myFontSizeSlider.setPaintTrack(true);
     myFontSizeSlider.setSnapToTicks(true);
-    fontSizePanel.add(myFontSizeSlider);
+    UIUtil.setSliderIsFilled(myFontSizeSlider, true);
+    result.add(myFontSizeSlider);
 
     myFontSizeSlider.addChangeListener(new ChangeListener() {
       @Override
@@ -309,35 +340,14 @@ public class DocumentationComponent extends JPanel implements Disposable {
         applyFontSize();
       }
     });
-    Presentation presentation = new Presentation();
-    presentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
-    final Ref<JComponent> ref = new Ref<JComponent>();
-    ActionButton result = new ActionButton(
-      new AnAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-          EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-          setFontSizeSliderSize(scheme.getQuickDocFontSize());
-          mySettingsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(fontSizePanel, DocumentationComponent.this)
-            .setFocusable(false).setBelongsToGlobalPopupStack(false).setCancelCallback(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                mySettingsPopup = null;
-                return true;
-              }
-            }).createPopup();
-          mySettingsPopup.showUnderneathOf(ref.get());
-        }
-      },
-      presentation,
-      ActionPlaces.JAVADOC_INPLACE_SETTINGS,
-      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-    );
-    ref.set(result);
-    
-    fontSizePanel.setToolTipText(tooltipText);
+
+    String tooltipText = ApplicationBundle.message("quickdoc.tooltip.font.size.by.wheel");
+    result.setToolTipText(tooltipText);
     myFontSizeSlider.setToolTipText(tooltipText);
+    result.setBorder(IdeBorderFactory.createRoundedBorder());
+    result.setVisible(false);
+    result.setOpaque(true);
+    myFontSizeSlider.setOpaque(true);
     return result;
   }
   
@@ -694,10 +704,45 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myManager = null;
     myHint = null;
     myNavigateCallback = null;
-    
-    if (mySettingsPopup != null) {
-      Disposer.dispose(mySettingsPopup);
-      mySettingsPopup = null;
+  }
+  
+  private class MyShowSettingsButton extends ActionButton {
+
+    MyShowSettingsButton() {
+      this(new MyShowSettingsAction(), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    }
+
+    MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+      super(action, presentation, place, minimumSize);
+      myPresentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
+    }
+
+    public void hideSettings() {
+      AnActionEvent event = new AnActionEvent(
+        null, EMPTY_DATA_CONTEXT, ActionPlaces.JAVADOC_INPLACE_SETTINGS, myPresentation, ActionManager.getInstance(), 0
+      );
+      myAction.actionPerformed(event);
+    }
+  }
+  
+  private class MyShowSettingsAction extends ToggleAction {
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return mySettingsPanel.isVisible();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (!state) {
+        mySettingsPanel.setVisible(false);
+        return;
+      }
+      
+      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+      EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+      setFontSizeSliderSize(scheme.getQuickDocFontSize());
+      mySettingsPanel.setVisible(true);
     }
   }
 }
