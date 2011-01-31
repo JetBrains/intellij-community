@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
@@ -253,6 +254,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testPutIncorrectValueToMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testAmbiguousCodeBlock() throws Exception {doTest();}
+  public void testAmbiguousCodeBlockInMethodCall() throws Exception {doTest();}
   public void testNotAmbiguousClosableBlock() throws Exception {doTest();}
   public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
 
@@ -311,4 +313,12 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testMapParamWithNoArgs() {doTest(new GroovyAssignabilityCheckInspection());}
+
+  public void testRangeType() {
+    doTest(new GroovyRangeTypeCheckInspection());
+  }
+
+  public void testResolveMetaClass() {
+    doTest(new GroovyAccessibilityInspection());
+  }
 }

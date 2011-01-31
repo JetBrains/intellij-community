@@ -474,7 +474,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
 
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
-        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+        final Wrap wrap;
+        Wrap reservedWrap = getReservedWrap(JavaElementType.MODIFIER_LIST);
+        // There is a possible case that particular annotated method definition is too long. We may wrap either after annotation
+        // or after opening lbrace then. Our strategy is to wrap after annotation whenever possible.
+        if (reservedWrap == null) {
+          wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+        }
+        else {
+          wrap = Wrap.createChildWrap(reservedWrap, getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+        }
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS);
@@ -531,6 +540,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
             javaBlock.setReservedWrap(myAnnotationWrap, JavaElementType.MODIFIER_LIST);
             if (!lastChildIsAnnotation(child)) {
               myAnnotationWrap = null;
+            }
+          }
+          else if (childType == JavaElementType.PARAMETER_LIST && nodeType == JavaElementType.METHOD) {
+            // We prefer wrapping after method annotation to wrapping method parameter list, hence, deliver target wrap object
+            // to child block if necessary.
+            if (!result.isEmpty()) {
+              Block firstChildBlock = result.get(0);
+              if (firstChildBlock instanceof AbstractJavaBlock) {
+                AbstractJavaBlock childJavaBlock = (AbstractJavaBlock)firstChildBlock;
+                if (firstChildIsAnnotation(childJavaBlock.getNode())) {
+                  javaBlock.setReservedWrap(childJavaBlock.getReservedWrap(JavaElementType.MODIFIER_LIST), JavaElementType.MODIFIER_LIST);
+                }
+              }
             }
           }
         }
@@ -747,6 +769,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
+  private static boolean firstChildIsAnnotation(final ASTNode child) {
+    ASTNode current = child.getFirstChildNode();
+    while (current != null && current.getElementType() == TokenType.WHITE_SPACE) {
+      current = current.getTreeNext();
+    }
+    return current != null && current.getElementType() == JavaElementType.ANNOTATION;
+  }
+  
   private static boolean lastChildIsAnnotation(final ASTNode child) {
     ASTNode current = child.getLastChildNode();
     while (current != null && current.getElementType() == TokenType.WHITE_SPACE) {
