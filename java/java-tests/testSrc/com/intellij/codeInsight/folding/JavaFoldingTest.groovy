@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.folding;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 
 /**
  * @author Denis Zhdanov
@@ -25,12 +27,26 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 public class JavaFoldingTest extends CodeInsightFixtureTestCase {
   
   public void testEndOfLineComments() {
-    doTest();
+    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
-  
-  private void doTest() {
-    StringBuilder path = new StringBuilder(PathManagerEx.getTestDataPath()).append("/codeInsight/folding/")
-      .append(getTestName(false)).append(".java");
-    myFixture.testFolding(path.toString());
+
+  public void testEditingImports() {
+    myFixture.configureByText "a.java", """\
+import java.util.List;
+import java.util.Map;
+<caret>
+
+class Foo { List a; Map b; }
+"""
+
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    myFixture.doHighlighting()
+    assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+
+    myFixture.type 'import '
+    myFixture.doHighlighting()
+    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
   }
+
+
 }

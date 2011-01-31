@@ -149,11 +149,18 @@ public class HgCheckoutProvider implements CheckoutProvider {
             writer.println(line);
           }
         }
+        reader.close();
+        writer.close();
 
         // substituting files
-        if (!tempFile.renameTo(hgrc)) { // this may fail in case of different FSs
+        try {
+          if (!tempFile.renameTo(hgrc)) { // this may fail in case of different FSs
+            FileUtil.copy(tempFile, hgrc);
+            FileUtil.delete(tempFile);
+          }
+        } catch (Throwable e) {
           FileUtil.copy(tempFile, hgrc);
-          tempFile.delete();
+          FileUtil.delete(tempFile);
         }
         return;
       } catch (IOException e) {
@@ -163,7 +170,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
           try {
             reader.close();
           } catch (IOException e) {
-            continue;
           }
         }
         if (writer != null) {

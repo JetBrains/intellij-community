@@ -18,6 +18,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -124,7 +125,12 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    boolean caretInside = FoldingUtil.caretInsideRange(myEditor, range);
+    final Document document = myEditor.getDocument();
+    final int firstLine = document.getLineNumber(range.getStartOffset());
+    final int lastLine = document.getLineNumber(range.getEndOffset());
+    final int currentLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+    boolean caretInside = firstLine <= currentLine && currentLine <= lastLine;
+
     if (myApplyDefaultState) {
       return caretInside || !FoldingPolicy.isCollapseByDefault(element);
     }
