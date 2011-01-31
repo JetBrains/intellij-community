@@ -53,6 +53,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Key<Object> OVERWRITE_ON_AUTOCOMPLETE_ATTR = Key.create("OVERWRITE_ON_AUTOCOMPLETE_ATTR");
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
+  public static final Object FORCE_LOOKUP_STRING = Key.create("FORCE_LOOKUP_STRING");
   public static final Object TYPE = Key.create("TYPE");
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
   public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");

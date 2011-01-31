@@ -15,11 +15,15 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -29,6 +33,7 @@ public class PsiDiamondType extends PsiType {
   private static final PsiType[] NULL_TYPES = new PsiType[]{NULL};
   private PsiManager myManager;
   private final PsiTypeElement myTypeElement;
+  private static final Logger LOG = Logger.getInstance("#" + PsiDiamondType.class.getName());
 
   public PsiDiamondType(PsiManager manager, PsiTypeElement psiTypeElement) {
     super(PsiAnnotation.EMPTY_ARRAY);
@@ -82,7 +87,7 @@ public class PsiDiamondType extends PsiType {
     if (declarationStatement != null) {
       final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiVariable) {
-        return getComponentTypes(((PsiVariable)declaredElements[0]).getType());
+        return getComponentTypes((PsiVariable)declaredElements[0]);
       }
     }
 
@@ -92,7 +97,7 @@ public class PsiDiamondType extends PsiType {
       if (lExpression instanceof PsiReferenceExpression) {
         final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
         if (resolved instanceof PsiVariable) {
-          return getComponentTypes(((PsiVariable)resolved).getType());
+          return getComponentTypes(((PsiVariable)resolved));
         }
       }
     }
@@ -124,10 +129,73 @@ public class PsiDiamondType extends PsiType {
           }
         }
       } else if (parent instanceof PsiVariable) {
-        return getComponentTypes(((PsiVariable)parent).getType());
+        return getComponentTypes((PsiVariable)parent);
       }
     }
     return NULL_TYPES;
+  }
+
+  private static PsiType[] getComponentTypes(PsiVariable declaredElement) {
+    PsiType lType = declaredElement.getType();
+    final PsiExpression initializer = declaredElement.getInitializer();
+    if (initializer instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+      if (classReference != null) {
+        final String text = classReference.getReferenceName();
+        if (text != null) {
+          final PsiClass psiClass =
+            JavaPsiFacade.getInstance(declaredElement.getProject()).getResolveHelper().resolveReferencedClass(text, initializer);
+          final PsiType substitute = substitute(psiClass, lType);
+          if (substitute != null) {
+            lType = substitute;
+          }
+        }
+      }
+    }
+    return getComponentTypes(lType);
+  }
+
+  @Nullable
+  private static PsiType substitute(PsiClass inheritor,  PsiType baseType) {
+    if (inheritor == null) return null;
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(inheritor.getProject());
+    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(baseType);
+    final PsiClass baseClass = resolveResult.getElement();
+    if (baseClass == null) return null;
+
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
+    if (superSubstitutor == null) return null;
+
+    final PsiSubstitutor baseSubstitutor = resolveResult.getSubstitutor();
+
+    PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
+      for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
+        final PsiType substituted = superSubstitutor.substitute(baseParameter);
+        PsiType arg = baseSubstitutor.substitute(baseParameter);
+        if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getExtendsBound();
+        PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
+                                                                             substituted,
+                                                                             arg,
+                                                                             true,
+                                                                             PsiUtil.getLanguageLevel(inheritor));
+        if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
+        if (substitution == null) {
+          continue;
+        }
+        inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
+        break;
+      }
+    }
+
+    PsiType toAdd = facade.getElementFactory().createType(inheritor, inheritorSubstitutor);
+    if (baseType.isAssignableFrom(toAdd)) {
+      return toAdd;
+    }
+
+    return null;
   }
 
   private static PsiType[] getComponentTypes(PsiType type) {
