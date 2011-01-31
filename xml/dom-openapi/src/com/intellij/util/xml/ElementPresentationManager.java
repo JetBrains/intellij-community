@@ -107,6 +107,11 @@ public abstract class ElementPresentationManager {
    * @see com.intellij.util.xml.Presentation#namerClass()
    */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
+
+  /**
+   * @deprecated
+   * @see Documentation
+   */
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 

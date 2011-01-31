@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,18 @@
  */
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @author peter
- * @see com.intellij.util.xml.DomElement#getPresentation()
- * @see ElementPresentationTemplate
+ * Marks a {@link GenericValue} getter as documentation text source.
+ * Element interface should be annotated with {@link Presentation}
+ *
+ * @author Dmitry Avdeev
  */
-public abstract class ElementPresentation {
-  @Nullable
-  public abstract String getElementName();
-
-  public abstract String getTypeName();
-
-  @Nullable
-  public abstract Icon getIcon();
-
-  @Nullable
-  public String getDocumentation() { return null;}
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Documentation {
 }
