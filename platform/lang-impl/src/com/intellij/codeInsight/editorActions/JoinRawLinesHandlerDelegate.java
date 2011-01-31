@@ -27,8 +27,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 
-public interface JoinRawLinesHandlerDelegate {
-  int CANNOT_JOIN = -1;
-  int tryJoinLines(Document document, PsiFile file, int start, int end);
+public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
   int tryJoinRawLines(Document document, PsiFile file, int start, int end);
 }
