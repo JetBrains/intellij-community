@@ -802,6 +802,9 @@
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
 
-
+    <group text="Lang internal actions" internal="true">
+      <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
   </actions>
 </component>

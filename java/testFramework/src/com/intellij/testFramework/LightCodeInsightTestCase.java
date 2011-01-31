@@ -41,7 +41,11 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
   protected void setUp() throws Exception {
     super.setUp();
     myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
-    setLanguageLevel(LanguageLevel.HIGHEST);
+    setLanguageLevel(getLanguageLevel());
+  }
+
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.HIGHEST;
   }
 
   @Override

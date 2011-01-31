@@ -82,7 +82,10 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
       for (String s : toExclude) {
         weight = StringUtil.replace(weight, s, "", false);
       }
-      final String s = item.getLookupString() + weight;
+      while (weight.contains(", ,")) {
+        weight = weight.replaceAll(", ,", ",");
+      }
+      final String s = item.getLookupString() + (lookup.isFrozen(item) ? "\t_first_\t" : "\t") + weight;
       System.out.println(s);
       LOG.info(s);
       if (i == count - 1) {

@@ -73,6 +73,22 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
   };
+  public static final LightProjectDescriptor JAVA_1_6 = new DefaultLightProjectDescriptor() {
+    @Override
+    public ModuleType getModuleType() {
+      return StdModuleTypes.JAVA;
+    }
+
+    @Override
+    public Sdk getSdk() {
+      return JavaSdkImpl.getMockJdk17("java 1.6");
+    }
+
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_6);
+    }
+  };
   public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();
 
 

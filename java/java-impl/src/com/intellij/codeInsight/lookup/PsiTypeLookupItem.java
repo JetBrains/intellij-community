@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +83,19 @@ public class PsiTypeLookupItem extends LookupItem {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
+      if (type instanceof PsiClassReferenceType && psiClass != null) {
+        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
+        final PsiReferenceParameterList parameterList = reference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+            final String lookupString = psiClass.getName() + "<>";
+            final PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString);
+            item.setAttribute(FORCE_LOOKUP_STRING, lookupString);
+            return item;
+          }
+        }
+      }
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
       String text = type.getCanonicalText();
       if (text == null) {

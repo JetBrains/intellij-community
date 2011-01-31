@@ -32,6 +32,11 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
+  }
+
+  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
