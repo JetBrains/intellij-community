@@ -277,7 +277,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
 
-  public String getQualifiedName(@NotNull final VirtualFile outputFile, @NotNull final PsiFile sourceFile, @NotNull CoverageSuitesBundle suite) {
+  public String getQualifiedName(@NotNull final VirtualFile outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
     return StringUtil.getQualifiedName(packageFQName, outputFile.getNameWithoutExtension());
   }
@@ -292,12 +292,20 @@ public class JavaCoverageEngine extends CoverageEngine {
     });
     final Set<String> qNames = new HashSet<String>();
     for (final PsiClass aClass : classes) {
-      qNames.add(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      final String qName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Nullable
         public String compute() {
           return aClass.getQualifiedName();
         }
-      }));
+      });
+      if (qName == null) continue;
+      qNames.add(qName);
+    }
+    if (qNames.isEmpty()) {
+      final VirtualFile virtualFile = sourceFile.getVirtualFile();
+      if (virtualFile != null) {
+        qNames.add(getQualifiedName(virtualFile, sourceFile));
+      }
     }
     return qNames;
   }
