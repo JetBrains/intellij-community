@@ -998,7 +998,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       editorManager.closeFile(openFile);
     }
     if (toInitializeDaemon) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).projectClosed();
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(false);
     }
 
     myEditor = null;

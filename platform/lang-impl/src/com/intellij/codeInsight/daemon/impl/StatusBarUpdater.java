@@ -51,14 +51,14 @@ public class StatusBarUpdater implements Disposable {
     };
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(caretListener, this);
 
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         updateLater();
       }
     });
 
-    project.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished() {
         updateLater();
@@ -68,11 +68,11 @@ public class StatusBarUpdater implements Disposable {
 
   private void updateLater() {
     final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      application.invokeLater(myUpdateStatusRunnable);
+    if (application.isUnitTestMode()) {
+      myUpdateStatusRunnable.run();
     }
     else {
-      myUpdateStatusRunnable.run();
+      application.invokeLater(myUpdateStatusRunnable);
     }
   }
 
