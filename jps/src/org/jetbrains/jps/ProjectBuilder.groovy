@@ -126,10 +126,12 @@ class ProjectBuilder {
   private def makeModuleWithDependencies(Module module, boolean includeTests) {
     def chunk = chunkForModule(module, includeTests)
     Set<Module> dependencies = new HashSet<Module>()
+    Set<Module> runtimeDependencies = new HashSet<Module>()
     chunk.modules.each {
       collectModulesFromClasspath(it, getCompileClasspathKind(includeTests), dependencies)
-      collectModulesFromClasspath(it, getRuntimeClasspathKind(includeTests), dependencies)
+      collectModulesFromClasspath(it, getRuntimeClasspathKind(includeTests), runtimeDependencies)
     }
+    dependencies.addAll(runtimeDependencies)
 
     buildModules(dependencies, includeTests)
   }
