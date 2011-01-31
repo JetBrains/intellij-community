@@ -1736,8 +1736,13 @@ public class CompileDriver {
               LOG.assertTrue(outputPath.exists());
             }
             if (!deleteFile(outputPath)) {
-              if (isTestMode && outputPath.exists()) {
-                LOG.error("Was not able to delete output file: " + outputPath.getPath());
+              if (isTestMode) {
+                if (outputPath.exists()) {
+                  LOG.error("Was not able to delete output file: " + outputPath.getPath());
+                }
+                else {
+                  CompilerManagerImpl.addDeletedPath(outputPath.getPath());
+                }
               }
               continue;
             }

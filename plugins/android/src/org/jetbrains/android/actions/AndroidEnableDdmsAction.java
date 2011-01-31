@@ -36,6 +36,7 @@ import javax.swing.*;
 public class AndroidEnableDdmsAction extends ToggleAction {
   private static final String ENABLE_DDMS_PROPERTY_NAME = "AndroidEnableDdms";
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public AndroidEnableDdmsAction() {
     this(null);
   }

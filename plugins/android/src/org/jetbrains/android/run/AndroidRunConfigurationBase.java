@@ -41,7 +41,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -220,7 +219,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
       if (platform.getSdk().getDebugBridge(project) == null) return null;
-      String[] deviceSerialNumbers = ArrayUtil.EMPTY_STRING_ARRAY;
+      IDevice[] targetDevices = new IDevice[0];
       if (CHOOSE_DEVICE_MANUALLY) {
         IDevice[] devices = chooseDevicesManually(facet);
         if (devices.length > 0) {
@@ -229,17 +228,14 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
               return null;
             }
           }
-          deviceSerialNumbers = new String[devices.length];
-          for (int i = 0; i < devices.length; i++) {
-            deviceSerialNumbers[i] = devices[i].getSerialNumber();
-            PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(deviceSerialNumbers));
-          }
+          targetDevices = devices;
+          PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(targetDevices));
         }
-        if (deviceSerialNumbers.length == 0) return null;
+        if (targetDevices.length == 0) return null;
       }
       AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
       if (applicationLauncher != null) {
-        return new AndroidRunningState(env, facet, deviceSerialNumbers, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
+        return new AndroidRunningState(env, facet, targetDevices, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
                                        computeCommandLine(), aPackage, applicationLauncher, depModule2PackageName) {
 
           @NotNull
@@ -363,10 +359,10 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
   protected abstract boolean supportMultipleDevices();
 
-  private static String toString(String[] strs) {
+  private static String toString(IDevice[] devices) {
     StringBuilder builder = new StringBuilder();
-    for (int i = 0, n = strs.length; i < n; i++) {
-      builder.append(strs[i]);
+    for (int i = 0, n = devices.length; i < n; i++) {
+      builder.append(devices[i].getSerialNumber());
       if (i < n - 1) {
         builder.append(' ');
       }

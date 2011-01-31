@@ -37,7 +37,7 @@
     <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
                serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
 
-    <checkinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
     <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
     <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>

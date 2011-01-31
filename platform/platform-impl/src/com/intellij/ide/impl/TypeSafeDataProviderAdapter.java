@@ -39,14 +39,14 @@ public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
   }
 
   @Nullable
-  synchronized public Object getData(@NonNls String dataId) {
+  public synchronized Object getData(@NonNls String dataId) {
     myValue = null;
     myLastKey = DataKey.create(dataId);
     myProvider.calcData(myLastKey, this);
     return myValue;
   }
 
-  synchronized public <T> void put(DataKey<T> key, T data) {
+  public synchronized <T> void put(DataKey<T> key, T data) {
     if (key == myLastKey) {
       myValue = data;
     }

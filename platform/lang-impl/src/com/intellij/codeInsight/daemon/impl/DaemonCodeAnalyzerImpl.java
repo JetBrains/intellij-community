@@ -31,6 +31,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -77,7 +78,7 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable {
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
@@ -172,6 +173,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
                                        @Nullable Runnable callbackWhileWaiting) {
+    assert isInitialized();
+    assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     assert !application.isWriteAccessAllowed();
@@ -198,18 +201,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     try {
       while (progress.isRunning()) {
         try {
-        if (progress.isCanceled() && progress.isRunning()) {
-          // write action sneaked in the AWT. restart
-          waitForTermination();
+          if (progress.isCanceled() && progress.isRunning()) {
+            // write action sneaked in the AWT. restart
+            waitForTermination();
+            Throwable savedException = PassExecutorService.getSavedException(progress);
+            if (savedException != null) throw savedException;
+            return runPasses(file, document, textEditor, toIgnore, canChangeDocument, callbackWhileWaiting);
+          }
+          if (callbackWhileWaiting != null) {
+            callbackWhileWaiting.run();
+          }
+          progress.waitFor(100);
+          UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
-          return runPasses(file, document, textEditor, toIgnore, canChangeDocument,callbackWhileWaiting);
-        }
-        if (callbackWhileWaiting != null) {
-          callbackWhileWaiting.run();
-        }
-        progress.waitFor(100);
-          UIUtil.dispatchAllInvocationEvents();
         }
         catch (RuntimeException e) {
           e.printStackTrace();
@@ -259,6 +264,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void disposeComponent() {
   }
 
+  @Override
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
     StatusBarUpdater statusBarUpdater = new StatusBarUpdater(myProject);

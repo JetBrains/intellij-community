@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,18 +29,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
 */
-class CvsCheckinHandlerFactory extends CheckinHandlerFactory {
+class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
+  CvsCheckinHandlerFactory() {
+    super(CvsVcs2.getKey());
+  }
+
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+  @Override
+  protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
       @Nullable
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
-        if (panel.vcsIsAffected("CVS")) {
-          return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(panel.getProject()));
-        }
-        else {
-          return null;
-        }
+        return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(panel.getProject()));
       }
     };
   }

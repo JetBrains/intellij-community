@@ -83,14 +83,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
 
-  private DocumentImpl() {
-    setCyclicBufferSize(0);
-    setModificationStamp(LocalTimeCounter.currentTime());
-    myAssertWriteAccess = true;
-  }
-
   public DocumentImpl(String text) {
     this((CharSequence)text);
+  }
+
+  public DocumentImpl(CharSequence chars) {
+    this();
+    assertValidSeparators(chars);
+    myText.setText(this, chars);
+    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
+    myLineSet.documentCreated(event);
+  }
+
+  private DocumentImpl() {
+    this(false);
   }
 
   public DocumentImpl(boolean forUseInNonAWTThread) {
@@ -106,14 +112,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     finally {
       myAcceptSlashR = accept;
     }
-  }
-
-  public DocumentImpl(CharSequence chars) {
-    this();
-    assertValidSeparators(chars);
-    myText.setText(this, chars);
-    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
-    myLineSet.documentCreated(event);
   }
 
   public char[] getRawChars() {

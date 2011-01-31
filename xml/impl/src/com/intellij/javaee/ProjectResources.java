@@ -39,7 +39,7 @@ public class ProjectResources extends ExternalResourceManagerImpl implements Per
   }
 
   @Override
-  protected Map<String, Map<String, String>> computeStdResources() {
+  protected Map<String, Map<String, Resource>> computeStdResources() {
     return Collections.emptyMap();   
   }
 

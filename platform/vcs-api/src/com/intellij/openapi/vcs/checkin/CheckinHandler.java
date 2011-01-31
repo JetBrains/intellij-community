@@ -35,6 +35,11 @@ import java.util.List;
  * @see CodeAnalysisBeforeCheckinHandler
  */
 public abstract class CheckinHandler {
+  /**
+   * you can return this handler if your handler shouldn't be created (for instance, your VCS is not active)
+   */
+  public static final CheckinHandler DUMMY = new CheckinHandler() {
+  };
 
   public enum ReturnResult {
     COMMIT, CANCEL, CLOSE_WINDOW

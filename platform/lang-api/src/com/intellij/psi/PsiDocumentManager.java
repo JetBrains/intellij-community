@@ -158,7 +158,7 @@ public abstract class PsiDocumentManager {
      * @param document the document for which the file was created.
      * @see PsiDocumentManager#getDocument(PsiFile)
      */
-    void fileCreated(PsiFile file, Document document);
+    void fileCreated(@NotNull PsiFile file, @NotNull Document document);
   }
 
   /**

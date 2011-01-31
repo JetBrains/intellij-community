@@ -115,7 +115,7 @@ public class FieldConflictsResolver {
                                                         @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
-    while ((methodCallExpression) != null) {
+    while (methodCallExpression != null) {
       if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
         return referenceExpression;
       }

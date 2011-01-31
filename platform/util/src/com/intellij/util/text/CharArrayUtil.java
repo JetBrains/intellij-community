@@ -155,8 +155,7 @@ public class CharArrayUtil {
   }
 
   private static boolean isSuitable(final String chars, final char c) {
-    int i;
-    for (i = 0; i < chars.length(); i++) {
+    for (int i = 0; i < chars.length(); i++) {
       if (c == chars.charAt(i)) return true;
     }
     return false;
@@ -468,7 +467,7 @@ public class CharArrayUtil {
         if(isWhitespace){
           continue;
         }
-        else lastTextFound = result.size();
+        lastTextFound = result.size();
         whitespaceEnd = -1;
       }
       else if(isWhitespace){

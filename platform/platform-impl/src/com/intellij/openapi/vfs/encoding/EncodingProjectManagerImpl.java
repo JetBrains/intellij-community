@@ -76,7 +76,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
         }
       }
 
-      public void fileCreated(PsiFile file, Document document) {
+      public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
   }
