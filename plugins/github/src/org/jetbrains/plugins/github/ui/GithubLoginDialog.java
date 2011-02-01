@@ -57,6 +57,7 @@ public class GithubLoginDialog extends DialogWrapper {
       final GithubSettings settings = GithubSettings.getInstance();
       settings.setLogin(login);
       settings.setPassword(password);
+      settings.setHost(host);
       super.doOKAction();
     } else {
       setErrorText("Cannot login with given credentials");
