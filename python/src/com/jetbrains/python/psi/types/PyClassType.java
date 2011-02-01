@@ -123,13 +123,13 @@ public class PyClassType extends UserDataHolderBase implements PyType {
         }
       }
 
-      final PsiElement classMember = resolveClassMember(myClass, name, location);
+      final PsiElement classMember = resolveClassMember(this, name, location);
       if (classMember != null) {
         return new SmartList<PsiElement>(classMember);
       }
 
       for (PyClass superClass : myClass.iterateAncestorClasses()) {
-        PsiElement superMember = resolveClassMember(superClass, name, null);
+        PsiElement superMember = resolveClassMember(new PyClassType(superClass, isDefinition()), name, null);
         if (superMember != null) {
           return new SmartList<PsiElement>(superMember);
         }
@@ -142,8 +142,8 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(PyClass aClass, String name, @Nullable PyExpression location) {
-    PsiElement result = resolveInner(aClass, name, location);
+  private static PsiElement resolveClassMember(PyClassType aClass, String name, @Nullable PyExpression location) {
+    PsiElement result = resolveInner(aClass.getPyClass(), name, location);
     if (result != null) {
       return result;
     }
@@ -186,7 +186,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     List<Object> ret = new ArrayList<Object>();
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(myClass)) {
+      for (PyDynamicMember member : provider.getMembers(this)) {
         final String name = member.getName();
         ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
       }

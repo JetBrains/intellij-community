@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
+import com.jetbrains.python.psi.types.PyClassType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +20,11 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private Key<List<PyDynamicMember>> mySocketMembersKey = Key.create("socket.members");
 
   @Override
-  public Collection<PyDynamicMember> getMembers(PyClass clazz) {
+  public Collection<PyDynamicMember> getMembers(PyClassType classType) {
+    PyClass clazz = classType.getPyClass();
+    if (clazz == null) {
+      return Collections.emptyList();
+    }
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {
       final PyFile socketFile = (PyFile)clazz.getContainingFile();
