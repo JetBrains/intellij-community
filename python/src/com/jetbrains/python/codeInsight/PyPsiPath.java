@@ -63,12 +63,33 @@ public abstract class PyPsiPath {
       if (parent instanceof PyFile) {
         return ((PyFile) parent).findTopLevelClass(myClassName);
       }
-      for (PsiElement element : parent.getChildren()) {
-        if (element instanceof PyClass && myClassName.equals(((PyClass)element).getName())) {
-          return element;
+      if (parent instanceof PyClass) {
+        for (PsiElement element : parent.getChildren()) {
+          if (element instanceof PyClass && myClassName.equals(((PyClass)element).getName())) {
+            return element;
+          }
         }
       }
-      return parent;
+      ClassFinder finder = new ClassFinder(myClassName);
+      parent.acceptChildren(finder);
+      return finder.myResult != null ? finder.myResult : parent;
+    }
+  }
+
+  private static class ClassFinder extends PyRecursiveElementVisitor {
+    private final String myName;
+    private PyClass myResult;
+
+    public ClassFinder(String name) {
+      myName = name;
+    }
+
+    @Override
+    public void visitPyClass(PyClass node) {
+      super.visitPyClass(node);
+      if (myName.equals(node.getName())) {
+        myResult = node;
+      }
     }
   }
 
