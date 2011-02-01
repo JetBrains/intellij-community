@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.inspections.PyArgumentListInspectionTest;
 import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
@@ -35,6 +36,7 @@ public class PythonAllTestsSuite {
     PyDecoratorTest.class,
     PyQuickDocTest.class,
     PythonInspectionsTest.class,
+    PyArgumentListInspectionTest.class,
     PythonDemorganLawIntentionTest.class,
     PyQuickFixTest.class,
     PyIntentionTest.class,
