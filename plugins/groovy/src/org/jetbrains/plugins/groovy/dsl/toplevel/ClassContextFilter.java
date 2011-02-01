@@ -66,6 +66,7 @@ public class ClassContextFilter implements ContextFilter {
         PsiFile place = p.second;
         //PsiType myType = JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(typeText, place);
         PsiType myType = getCachedType(typeText, place);
+        if (p.first == PsiType.NULL) return myType == PsiType.NULL;
         return TypesUtil.isAssignable(myType, p.first, place.getManager(), place.getResolveScope(), false);
       }
     });
