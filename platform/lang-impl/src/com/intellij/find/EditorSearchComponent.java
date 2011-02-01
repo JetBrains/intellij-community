@@ -456,11 +456,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       VirtualFile virtualFile = FindUtil.getVirtualFile(myEditor);
       ArrayList<FindResult> results = new ArrayList<FindResult>();
 
+      CharSequence charsSequence = myEditor.getDocument().getCharsSequence();
       while (true) {
-        FindResult result = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, virtualFile);
+        FindResult result = findManager.findString(charsSequence, offset, model, virtualFile);
         if (!result.isStringFound()) break;
         int newOffset = result.getEndOffset();
-        if (offset == newOffset) break;
+        if (offset == newOffset) { // we allow matches of 0 size
+          ++newOffset;
+          if (newOffset >= charsSequence.length()) break;
+        }
+
         offset = newOffset;
         results.add(result);
 

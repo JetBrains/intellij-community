@@ -55,7 +55,9 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   @Override
   public void reset() {
     resetMappings();
-    super.reset();
+    if (getTreeView() != null) {
+      super.reset();
+    }
   }
 
   @Override

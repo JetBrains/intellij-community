@@ -64,7 +64,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
       public void run() {
         myLibManager.commitChanges();
         myPanel.resetTable();
-        myContextsConfigurable.resetMappings();
+        myContextsConfigurable.reset();
       }
     });
   }
