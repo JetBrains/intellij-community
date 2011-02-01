@@ -320,11 +320,18 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       location = myPopup.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, c);
     } else {
-      location = SwingUtilities.convertPoint(
-        myComponent.getParent(),
-        myComponent.getLocation(),
-        c
-      );
+      if (myCurrentIdeTooltip != null) {
+        Point tipPoint = myCurrentIdeTooltip.getPoint();
+        Component tipComponent = myCurrentIdeTooltip.getComponent();
+        return SwingUtilities.convertPoint(tipComponent, tipPoint, c);
+
+      } else {
+        location = SwingUtilities.convertPoint(
+          myComponent.getParent(),
+          myComponent.getLocation(),
+          c
+        );
+      }
     }
 
     return location;
