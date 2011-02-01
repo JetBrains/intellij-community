@@ -32,6 +32,22 @@ public abstract class LookupArranger {
     }
 
   };
+  public static final LookupArranger LEXICOGRAPHIC = new LookupArranger() {
+    @Override
+    public Comparable getRelevance(LookupElement element) {
+      return 0;
+    }
+
+    @Override
+    public Comparator<LookupElement> getItemComparator() {
+      return new Comparator<LookupElement>() {
+        @Override
+        public int compare(LookupElement o1, LookupElement o2) {
+          return o1.getLookupString().compareTo(o2.getLookupString());
+        }
+      };
+    }
+  };
 
   public abstract Comparable getRelevance(LookupElement element);
 
