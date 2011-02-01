@@ -461,14 +461,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         FindResult result = findManager.findString(charsSequence, offset, model, virtualFile);
         if (!result.isStringFound()) break;
         int newOffset = result.getEndOffset();
-        if (offset == newOffset) {
-          ++offset;
-          if (offset >= charsSequence.length()) break;
+        if (offset == newOffset) { // we allow matches of 0 size
+          ++newOffset;
+          if (newOffset >= charsSequence.length()) break;
         }
-        else {
-          offset = newOffset;
-          results.add(result);
-        }
+
+        offset = newOffset;
+        results.add(result);
 
         if (results.size() > myMatchesLimit) break;
       }
