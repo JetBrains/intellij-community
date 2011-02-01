@@ -1,6 +1,6 @@
 def a
 def b
-[a, b] = [0, 1]
+(a, b) = [0, 1]
 -----
 0(1) element: null
 1(2) WRITE a
