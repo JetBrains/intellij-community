@@ -588,10 +588,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
-        if (client != null &&
-            myDebugLauncher != null &&
-            myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
-          launchDebug(client);
+        if (myDebugLauncher != null) {
+          if (client != null &&
+              myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
+            launchDebug(client);
+          }
+          else {
+            getProcessHandler().notifyTextAvailable("Waiting for process: " + myTargetPackageName + "\n", STDOUT);
+          }
         }
       }
       return true;
