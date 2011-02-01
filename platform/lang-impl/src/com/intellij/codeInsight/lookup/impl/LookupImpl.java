@@ -175,8 +175,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void updateSorting() {
-    mySortingLabel.setIcon(UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY ? lexiSortIcon : relevanceSortIcon);
+    final boolean lexi = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+    mySortingLabel.setIcon(lexi ? lexiSortIcon : relevanceSortIcon);
+    mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
     myModel.setArranger(getActualArranger());
+
     resort();
   }
 
