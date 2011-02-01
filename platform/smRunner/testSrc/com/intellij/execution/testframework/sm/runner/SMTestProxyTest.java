@@ -177,6 +177,25 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
+
+  public void testTestFailed_ComparisionAssertion() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestComparisonFailed("", "", "", "");
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+
+    mySimpleTest.setFinished();
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+  }
+
   public void testTestFailed_InSuite() {
     mySuite.setStarted();
     mySuite.addChild(mySimpleTest);

@@ -298,6 +298,15 @@ public class SMTestProxy extends AbstractTestProxy {
     fireOnNewPrintable(myState);
   }
 
+  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+                                      @Nullable final String stackTrace,
+                                      @NotNull final String actualText,
+                                      @NotNull final String expectedText) {
+    myState = new TestComparisionFailedState(localizedMessage, stackTrace,
+                                             actualText, expectedText);
+    fireOnNewPrintable(myState);
+  }
+
   public void setTestIgnored(@NotNull final String ignoreComment,
                              @Nullable final String stackTrace) {
     myState = new TestIgnoredState(ignoreComment, stackTrace);
