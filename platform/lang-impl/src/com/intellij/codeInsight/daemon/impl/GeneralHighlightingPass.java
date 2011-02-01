@@ -93,6 +93,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   };
   private Runnable myApplyCommand;
   private final EditorColorsScheme myGlobalScheme;
+  private boolean myFailFastOnAcquireReadAction = true;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -381,7 +382,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         return true;
       }
-    }, true, progress);
+    }, myFailFastOnAcquireReadAction, progress);
   }
 
   private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
@@ -745,5 +746,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   public String toString() {
     return super.toString() + " updateAll="+myUpdateAll+" range=("+myStartOffset+","+myEndOffset+")";
+  }
+
+  public void setFailFastOnAcquireReadAction(boolean failFastOnAcquireReadAction) {
+    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 }

@@ -48,6 +48,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
+  @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";
   @NonNls public static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
@@ -120,6 +121,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
       if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN).length > 0) {
+        return true;
+      }
+      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN_NOVERSION).length > 0) {
         return true;
       }
       if (GroovyUtils.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0) {

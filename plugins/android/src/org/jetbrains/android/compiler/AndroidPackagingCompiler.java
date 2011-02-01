@@ -86,7 +86,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
   }
 
   @NotNull
-  private static VirtualFile[] getSourceRootsForModuleAndDependencies(@NotNull Module module) {
+  public static VirtualFile[] getSourceRootsForModuleAndDependencies(@NotNull Module module) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
     fillSourceRoots(module, new HashSet<Module>(), result);
     return VfsUtil.toVirtualFileArray(result);

@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
@@ -50,7 +51,7 @@ public class GroovyImportsTracker {
     Set<GrImportStatement> unused = myUnusedImportStatements.get(file);
     if (unused == null) {
       Set<GrImportStatement> used = myUsedImportStatements.get(file);
-      unused = new HashSet<GrImportStatement>(Arrays.asList(file.getImportStatements()));
+      unused = new HashSet<GrImportStatement>(GroovyImportOptimizer.getValidImportStatements(file));
       if (used != null && used.size() > 0) {
         unused.removeAll(used);
       }

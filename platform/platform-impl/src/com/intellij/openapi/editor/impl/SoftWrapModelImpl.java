@@ -244,7 +244,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @Override
   @NotNull
   public List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() || documentLine < 0) {
       return Collections.emptyList();
     }
     Document document = myEditor.getDocument();

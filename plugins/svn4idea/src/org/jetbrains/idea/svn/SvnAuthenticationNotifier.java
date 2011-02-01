@@ -21,9 +21,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -269,7 +271,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         return false;
       }
       LOG.info("some other exc", e);
+      VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR);
+      return false; /// !!!! any exception means user should be notified that authorization failed
     }
+
     if (! checkWrite) {
       return true;
     }
@@ -286,14 +291,12 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
-      /*try {
+      try {
         configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
       }
       catch (SVNException e) {
         LOG.info(e);
-        // acknowledge at least in runtime
-        configuration.acknowledge(kind, realm, svnAuthentication);
-      }*/
+      }
       return true;
     }
     return false;
