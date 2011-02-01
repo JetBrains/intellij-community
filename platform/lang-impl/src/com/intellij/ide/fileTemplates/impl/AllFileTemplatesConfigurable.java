@@ -390,7 +390,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     }
     if (myEditor.getTemplate() != template) {
       myEditor.setTemplate(template, defDesc);
-      final boolean isInternal = isInternalTemplate(template.getName(), myCurrentTab.getTitle());
+      final boolean isInternal = template != null && isInternalTemplate(template.getName(), myCurrentTab.getTitle());
       myEditor.setShowInternalMessage(isInternal ? " " : null);
       myEditor.setShowAdjustCheckBox(myTemplatesList == myCurrentTab);
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,9 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
       addExcludes(consumer, clazz, clazz.getQualifiedName());
     } else if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
-      addExcludes(consumer, method, StaticImportMethodFix.getMethodQualifiedName(method));
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        addExcludes(consumer, method, StaticImportMethodFix.getMethodQualifiedName(method));
+      }
     }
   }
 

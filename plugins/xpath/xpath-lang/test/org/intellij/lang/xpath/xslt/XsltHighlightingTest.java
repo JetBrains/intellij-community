@@ -44,6 +44,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testDuplicateTemplate() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void testUnknownMode() throws Throwable {
         doXsltHighlighting();
     }
@@ -57,6 +61,14 @@ public class XsltHighlightingTest extends TestBase {
     }
 
     public void testUnusedVariable() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testDuplicateVariable() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testNonDuplicateVariable() throws Throwable {
         doXsltHighlighting();
     }
 

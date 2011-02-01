@@ -27,8 +27,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -60,7 +60,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
 
-  @NonNls private static final String DEFAULT_FONT_NAME = useMenloAsDefaultFont() ? "Menlo" : "Monospaced";
+  @NonNls private static final String DEFAULT_FONT_NAME = SystemInfo.isMac ? "Menlo" : "Monospaced";
   @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
   @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
@@ -86,10 +86,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   public AbstractColorsScheme(DefaultColorSchemesManager defaultColorSchemesManager) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
-  }
-
-  private static boolean useMenloAsDefaultFont() {
-    return PlatformUtils.isCidr();
   }
 
   public Color getDefaultBackground() {

@@ -29,6 +29,11 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     setEnabledInModalContext(true);
   }
 
+  @Override
+  protected boolean isValidForLookup() {
+    return true;
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return new ShowIntentionActionsHandler();
   }

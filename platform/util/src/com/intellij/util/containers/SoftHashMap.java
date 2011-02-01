@@ -58,6 +58,11 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
     public int hashCode() {
       return myHash;
     }
+
+    @Override
+    public String toString() {
+      return "SoftHashMap.SoftKey(" + get() + ")";
+    }
   }
 
   private static class HardKey<T> implements Key<T>{
@@ -89,6 +94,11 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
 
     public int hashCode() {
       return myHash;
+    }
+
+    @Override
+    public String toString() {
+      return "SoftHashMap.HardKey(" + get() + ")";
     }
   }
 

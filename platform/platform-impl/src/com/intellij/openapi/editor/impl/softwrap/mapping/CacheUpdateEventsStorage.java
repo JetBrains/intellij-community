@@ -66,7 +66,14 @@ public class CacheUpdateEventsStorage {
     boolean shouldAdd = true;
     if (i > 0) {
       IncrementalCacheUpdateEvent previous = myEvents.get(i - 1);
-      if (previous.getExactOffsetsDiff() == 0 && previous.getOldEndOffset() == event.getOldStartOffset() - 1) {
+      if (contains(previous, event)) {
+        return;
+      }
+      else if (contains(event, previous)) {
+        myEvents.set(i - 1, event);
+        shouldAdd = false;
+      }
+      else if (previous.getExactOffsetsDiff() == 0 && previous.getOldEndOffset() == event.getOldStartOffset() - 1) {
         myEvents.set(i - 1, new IncrementalCacheUpdateEvent(document, previous.getOldStartOffset(), event.getOldEndOffset()));
         shouldAdd = false;
       }
@@ -114,6 +121,21 @@ public class CacheUpdateEventsStorage {
     }
 
     return -(start + 1);
+  }
+
+  /**
+   * Checks if given <code>'larger'</code> event contains given <code>'smaller'</code> event, i.e. offsets of the later event
+   * are completely covered by the former one.
+   * 
+   * @param larger    <code>'larger'</code> event candidate
+   * @param smaller   <code>'smaller'</code> event candidate
+   * @return          <code>true</code> if given <code>'larger'</code> event contains given <code>'smaller'</code> event; false otherwise
+   */
+  private static boolean contains(@NotNull IncrementalCacheUpdateEvent larger, @NotNull IncrementalCacheUpdateEvent smaller) {
+    if (larger.getExactOffsetsDiff() != 0 || smaller.getExactOffsetsDiff() != 0) {
+      return false;
+    }
+    return larger.getOldStartOffset() <= smaller.getOldStartOffset() && larger.getOldEndOffset() >= smaller.getOldEndOffset();
   }
   
   /**

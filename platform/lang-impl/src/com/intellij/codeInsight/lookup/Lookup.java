@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
@@ -59,9 +60,11 @@ public interface Lookup extends UserDataHolder{
 
   boolean isCompletion();
 
-  java.util.List<LookupElement> getItems();
+  List<LookupElement> getItems();
 
   boolean isFocused();
 
   void showItemPopup(JBPopup hint);
+
+  boolean showElementActions();
 }

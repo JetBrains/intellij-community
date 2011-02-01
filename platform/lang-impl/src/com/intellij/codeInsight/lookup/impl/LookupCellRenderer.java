@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +64,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final SimpleColoredComponent myNameComponent;
   private final SimpleColoredComponent myTailComponent;
   private final SimpleColoredComponent myTypeLabel;
-  private final JLabel myArrowLabel; // actions' substep
   private final JPanel myPanel;
 
   public static final Color PREFERRED_BACKGROUND_COLOR = new Color(220, 245, 220);
@@ -88,18 +86,13 @@ public class LookupCellRenderer implements ListCellRenderer {
     myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
     myTypeLabel.setFont(NORMAL_FONT);
 
-    myArrowLabel = new JLabel("");
-    myArrowLabel.setOpaque(true);
-
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
     myPanel.add(myTailComponent, BorderLayout.CENTER);
     myTailComponent.setBorder(new EmptyBorder(0, 0, 0, 10));
 
-    LookupPanel eastPanel = new LookupPanel();
-    eastPanel.add(myTypeLabel, BorderLayout.WEST);
-    eastPanel.add(myArrowLabel, BorderLayout.EAST);
-    myPanel.add(eastPanel, BorderLayout.EAST);
+    myPanel.add(myTypeLabel, BorderLayout.EAST);
+    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, 6));
 
     myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(NORMAL_FONT);
     myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(BOLD_FONT);
@@ -143,10 +136,6 @@ public class LookupCellRenderer implements ListCellRenderer {
     if (allowedWidth >= 0) {
       setTailTextLabel(isSelected, presentation, foreground, allowedWidth);
     }
-
-    myArrowLabel.setIcon(myLookup.getActionsFor(item).isEmpty() ? PopupIcons.EMPTY_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
-    myArrowLabel.setBackground(background);
-    myArrowLabel.setForeground(foreground);
 
     return myPanel;
   }
@@ -325,8 +314,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private int getCommonGapsWidth() {
-    return PopupIcons.HAS_NEXT_ICON_GRAYED.getIconWidth() //actions
-           + myNormalMetrics.stringWidth("W"); //tail-type separation
+    return 2 * myNormalMetrics.stringWidth("W"); //tail-type separation and a space after type
   }
 
   public int getIconIndent() {

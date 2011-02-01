@@ -77,7 +77,7 @@ public class VariableShadowingInspection extends XsltInspection {
             assert token != null;
 
             holder.registerProblem(token,
-                    innerKind + " '" + name.getValue() + "' shadows " + outerKind + " in outer scope",
+                    innerKind + " '" + name.getValue() + "' shadows " + outerKind,
                     AbstractFix.createFixes(fix1, fix2));
           }
         }

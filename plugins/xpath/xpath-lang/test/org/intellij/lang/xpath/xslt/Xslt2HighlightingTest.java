@@ -41,6 +41,10 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  public void testNonDuplicateVariable() throws Throwable {
+    doXsltHighlighting();
+  }
+
   public void testTypeResolving() throws Throwable {
     doXsltHighlighting();
   }
