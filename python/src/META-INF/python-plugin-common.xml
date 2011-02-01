@@ -301,8 +301,8 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
 
-    <projectService serviceInterface="com.jetbrains.django.model.DjangoElementGenerator"
-                    serviceImplementation="com.jetbrains.django.model.DjangoElementGenerator"/>
+    <projectService serviceInterface="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"
+                    serviceImplementation="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"/>
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
