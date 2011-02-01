@@ -25,21 +25,25 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String PASSWORD = "Password";
+  private static final String HOST = "Host";
+  private static final String GITHUB = "github.com";
 
   private String myLogin;
   private String myPassword;
+  private String myHost;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
 
   public Element getState() {
-    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword)) {
+    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && StringUtil.isEmptyOrSpaces(myHost)) {
       return null;
     }
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(PASSWORD, getEncodedPassword());
+    element.setAttribute(HOST, getHost());
     return element;
   }
 
@@ -60,6 +64,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setEncodedPassword(element.getAttributeValue(PASSWORD));
+      setHost(element.getAttributeValue(HOST));
     }
     catch (Exception e) {
       // ignore
@@ -76,6 +81,10 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     return myPassword != null ? myPassword : "";
   }
 
+  public String getHost() {
+    return myHost != null ? myHost : GITHUB;
+  }
+
   public void setLogin(final String login) {
     myLogin = login != null ? login : "";
   }
@@ -83,4 +92,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   public void setPassword(final String password) {
     myPassword = password != null ? password : "";
   }
+
+  public void setHost(final String host) {
+    myHost = host != null ? host : GITHUB;
+  }
+
 }
