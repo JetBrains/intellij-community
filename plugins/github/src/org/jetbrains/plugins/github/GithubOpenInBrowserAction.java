@@ -100,7 +100,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     final String pushUrl = githubRemote.pushUrl();
     int index = -1;
-    if (pushUrl.startsWith(GithubUtil.GITHUB_HOST)) {
+    if (pushUrl.startsWith(GithubUtil.getHttpsUrl())) {
       index = pushUrl.lastIndexOf('/');
       if (index == -1) {
         Messages.showErrorDialog(project, "Cannot extract info about repository name: " + pushUrl, CANNOT_OPEN_IN_BROWSER);

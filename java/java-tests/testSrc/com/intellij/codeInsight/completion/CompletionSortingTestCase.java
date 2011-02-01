@@ -90,6 +90,7 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
       item.putUserData(CompletionLookupArranger.WEIGHT, null);
       item.putUserData(CompletionLookupArranger.RELEVANCE_KEY, null);
     }
+    lookup.setSelectionTouched(false);
     lookup.resort();
   }
 

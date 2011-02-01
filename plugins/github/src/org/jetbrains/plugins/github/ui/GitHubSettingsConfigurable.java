@@ -42,13 +42,15 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
 
   public boolean isModified() {
     return mySettingsPane == null || !mySettings.getLogin().equals(mySettingsPane.getLogin()) ||
-           !mySettings.getPassword().equals(mySettingsPane.getPassword());
+           !mySettings.getPassword().equals(mySettingsPane.getPassword()) ||
+           !mySettings.getHost().equals(mySettingsPane.getHost());
   }
 
   public void apply() throws ConfigurationException {
     if (mySettingsPane != null) {
       mySettings.setLogin(mySettingsPane.getLogin());
       mySettings.setPassword(mySettingsPane.getPassword());
+      mySettings.setHost(mySettingsPane.getHost());
     }
   }
 
@@ -56,6 +58,7 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
     if (mySettingsPane != null) {
       mySettingsPane.setLogin(mySettings.getLogin());
       mySettingsPane.setPassword(mySettings.getPassword());
+      mySettingsPane.setHost(mySettings.getHost());
     }
   }
 

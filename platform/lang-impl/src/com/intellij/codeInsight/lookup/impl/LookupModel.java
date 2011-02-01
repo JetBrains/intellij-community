@@ -27,7 +27,6 @@ import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -50,9 +49,10 @@ public class LookupModel {
   private TreeMap<Comparable, SortedList<LookupElement>> myRelevanceGroups;
   private LookupArranger myArranger;
 
-  @TestOnly
   public List<LookupElement> getItems() {
-    return new ArrayList<LookupElement>(myItems);
+    synchronized (lock) {
+      return new ArrayList<LookupElement>(myItems);
+    }
   }
 
   public void clearItems() {
