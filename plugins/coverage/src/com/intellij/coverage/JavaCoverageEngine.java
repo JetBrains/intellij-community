@@ -448,7 +448,7 @@ public class JavaCoverageEngine extends CoverageEngine {
           }
         }
       }
-      if (lineData.getHits() > hits) {
+      if (lineData.getHits() > hits && hits > 0) {
         buf.append("Unknown outcome: ").append(lineData.getHits() - hits);
       }
     }
