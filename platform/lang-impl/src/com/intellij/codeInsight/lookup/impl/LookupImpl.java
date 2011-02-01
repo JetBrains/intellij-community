@@ -233,8 +233,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (final LookupElement item : items) {
       addItem(item);
     }
+    checkReused();
     updateList();
-    ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 0);
+    ensureSelectionVisible();
   }
 
   public void addItem(LookupElement item) {
@@ -302,7 +303,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void appendPrefix(char c) {
     checkReused();
-    setAdditionalPrefix(myAdditionalPrefix + c);
+    myAdditionalPrefix += c;
+    myInitialPrefix = null;
+    myFrozenItems.clear();
+    refreshUi();
+    ensureSelectionVisible();
+  }
+
+  private void ensureSelectionVisible() {
+    ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
   public boolean truncatePrefix() {
@@ -316,25 +325,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myFrozenItems.clear();
     if (!myReused) {
       refreshUi();
+      ensureSelectionVisible();
     }
 
     return true;
-  }
-
-  @Deprecated
-  public void setAdditionalPrefix(final String additionalPrefix) {
-    myAdditionalPrefix = additionalPrefix;
-    myInitialPrefix = null;
-    myFrozenItems.clear();
-    refreshUi();
   }
 
   private void updateList() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-
-    checkReused();
 
     final Pair<LinkedHashSet<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
     final LinkedHashSet<LookupElement> items = snapshot.first;
@@ -376,18 +376,20 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         restoreSelection(oldSelected, hasPreselectedItem, oldInvariant);
       }
       else {
-        ListScrollingUtil.selectItem(myList, 0);
+        myList.setSelectedIndex(0);
       }
     }
   }
 
-  private void checkReused() {
+  private boolean checkReused() {
     if (myReused) {
       myAdditionalPrefix = "";
       myFrozenItems.clear();
       myModel.collectGarbage();
       myReused = false;
+      return true;
     }
+    return false;
   }
 
   private void checkMinPrefixLengthChanges(Collection<LookupElement> items) {
@@ -413,8 +415,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       if (oldInvariant != null) {
         for (LookupElement element : getItems()) {
-          if (oldInvariant.equals(myModel.getItemPresentationInvariant(element)) && ListScrollingUtil.selectItem(myList, element)) {
-            return;
+          if (oldInvariant.equals(myModel.getItemPresentationInvariant(element))) {
+            myList.setSelectedValue(element, false);
+            if (myList.getSelectedValue() == element) {
+              return;
+            }
           }
         }
       }
@@ -423,7 +428,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (choosePreselectedItem) {
       myList.setSelectedValue(myPreselectedItem, false);
     } else {
-      selectMostPreferableItem();
+      myList.setSelectedIndex(doSelectMostPreferableItem(getItems()));
     }
 
     if (myPreselectedItem != null) {
@@ -789,19 +794,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
   }
 
-  private void selectMostPreferableItem() {
-    final List<LookupElement> sortedItems = getItems();
-    final int index = doSelectMostPreferableItem(sortedItems);
-    myList.setSelectedIndex(index);
-
-    if (index >= 0 && index < myList.getModel().getSize()){
-      ListScrollingUtil.selectItem(myList, index);
-    }
-    else if (!sortedItems.isEmpty()) {
-      ListScrollingUtil.selectItem(myList, 0);
-    }
-  }
-
   @Nullable
   public LookupElement getCurrentItem(){
     LookupElement item = (LookupElement)myList.getSelectedValue();
@@ -810,7 +802,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void setCurrentItem(LookupElement item){
     markSelectionTouched();
-    ListScrollingUtil.selectItem(myList, item);
+    myList.setSelectedValue(item, false);
   }
 
   public void addLookupListener(LookupListener listener){
@@ -1094,6 +1086,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void refreshUi() {
+    final boolean reused = checkReused();
+
     updateList();
 
     if (isVisible()) {
@@ -1106,6 +1100,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       updateScrollbarVisibility();
       HintManagerImpl.adjustEditorHintPosition(this, myEditor, calculatePosition());
       layoutStatusIcons();
+
+      if (reused) {
+        ensureSelectionVisible();
+      }
     }
   }
 
