@@ -103,8 +103,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    return RefactoringListeners.
+    final RefactoringElementListener listener = RefactoringListeners.
       getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
+    return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
   @Nullable

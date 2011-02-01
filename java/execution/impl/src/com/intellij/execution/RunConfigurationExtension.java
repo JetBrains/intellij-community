@@ -31,6 +31,8 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.ui.LayeredIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +59,21 @@ public abstract class RunConfigurationExtension {
   protected abstract void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException;
   public abstract void patchConfiguration(RunConfigurationBase runJavaConfiguration);
   public abstract void checkConfiguration(RunConfigurationBase runJavaConfiguration) throws RuntimeConfigurationException;
+
+  public RefactoringElementListener wrapElementListener(PsiElement element,
+                                                        RunConfigurationBase runJavaConfiguration,
+                                                        RefactoringElementListener listener) {
+    return listener;
+  }
+
+  public static RefactoringElementListener wrapRefactoringElementListener(PsiElement element,
+                                                                          RunConfigurationBase runConfigurationBase,
+                                                                          RefactoringElementListener listener) {
+    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+      listener = extension.wrapElementListener(element, runConfigurationBase, listener);
+    }
+    return listener;
+  }
 
   public static  void appendEditors(RunConfigurationBase configuration, SettingsEditorGroup group) {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
