@@ -181,7 +181,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void setFocusLookupWhenDone(boolean focusLookup) {
     LOG.assertTrue(isAutopopupCompletion());
     if (focusLookup) {
-      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone = true;
+      final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      if (!(phase instanceof CompletionPhase.Restarted)) {
+        ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone = true;
+      }
     } else {
       myLookup.setAdvertisementText("Press " +
                                     CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
