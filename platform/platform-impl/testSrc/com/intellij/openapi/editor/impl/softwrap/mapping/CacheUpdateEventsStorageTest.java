@@ -28,8 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
@@ -200,6 +199,18 @@ public class CacheUpdateEventsStorageTest {
     IncrementalCacheUpdateEvent event = myStorage.getEvents().get(0);
     assertEquals(0, event.getOldStartOffset());
     assertEquals(myDocument.getLineEndOffset(2), event.getOldEndOffset());
+  }
+  
+  @Test
+  public void skipAddingNestedEvent() {
+    int offset = myDocument.getLineStartOffset(2) + 2;
+    change(offset, "1234567");
+    assertEquals(1, myStorage.getEvents().size());
+    
+    IncrementalCacheUpdateEvent event = myStorage.getEvents().get(0);
+    change(offset + 2, "ABC");
+    assertEquals(1, myStorage.getEvents().size());
+    assertSame(event, myStorage.getEvents().get(0));
   }
   
   private void checkOrder() {
