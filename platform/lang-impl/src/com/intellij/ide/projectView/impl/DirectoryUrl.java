@@ -16,15 +16,18 @@
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -42,16 +45,27 @@ public class DirectoryUrl extends AbstractUrl {
     return new DirectoryUrl(virtualFile.getUrl(), module != null ? module.getName() : null);
   }
 
-  public Object[] createPath(Project project) {
+  public Object[] createPath(final Project project) {
     if (moduleName != null) {
-
-      final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+      final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+        @Nullable
+        @Override
+        public Module compute() {
+          return ModuleManager.getInstance(project).findModuleByName(moduleName);
+        }
+      });
       if (module == null) return null;
     }
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    VirtualFile file = virtualFileManager.findFileByUrl(url);
+    final VirtualFile file = virtualFileManager.findFileByUrl(url);
     if (file == null) return null;
-    final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(file);
+    final PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+      @Nullable
+      @Override
+      public PsiDirectory compute() {
+        return PsiManager.getInstance(project).findDirectory(file);
+      }
+    });
     if (directory == null) return null;
     return new Object[]{directory};
   }
