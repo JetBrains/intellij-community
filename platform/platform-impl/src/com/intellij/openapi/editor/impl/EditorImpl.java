@@ -222,6 +222,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myIsColumnMode = false;
   private Color myForcedBackground = null;
   private Dimension myPreferredSize;
+  private int myVirtualPageHeight;
   private Runnable myGutterSizeUpdater = null;
   private boolean myGutterNeedsUpdate = false;
   private Alarm myAppleRepaintAlarm;
@@ -2903,7 +2904,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isOneLineMode()) return new Dimension(size.width, getLineHeight());
     if (mySettings.isAdditionalPageAtBottom()) {
       int lineHeight = getLineHeight();
-      return new Dimension(size.width, size.height + Math.max(getScrollingModel().getVisibleArea().height - 2 * lineHeight, lineHeight));
+      int visibleAreaHeight = getScrollingModel().getVisibleArea().height;
+      int virtualPageHeight;
+      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
+      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
+      // correct view size then because viewport position is set to the end of the original text otherwise.
+      if (visibleAreaHeight <= 0 && myVirtualPageHeight > 0) {
+        virtualPageHeight = myVirtualPageHeight;
+      }
+      else {
+        myVirtualPageHeight = virtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
+      }
+      
+      if (myVirtualPageHeight > 0) {
+        return new Dimension(size.width, size.height + virtualPageHeight);
+      }
+      else {
+        return size;
+      }
     }
 
     return getContentSize();
