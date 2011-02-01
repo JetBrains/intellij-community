@@ -401,6 +401,15 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Override
+  @Nullable
+  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+    if (myState instanceof AssertEqualsDiffViewerProvider) {
+      return (AssertEqualsDiffViewerProvider)myState;
+    }
+    return null;
+  }
+
+  @Override
   public String toString() {
     return getPresentableName();
   }

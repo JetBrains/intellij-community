@@ -20,6 +20,7 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -92,5 +93,6 @@ public abstract class TestTreeView extends Tree implements DataProvider {
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    ViewAssertEqualsDiffAction.registerShortcut(this);
   }
 }

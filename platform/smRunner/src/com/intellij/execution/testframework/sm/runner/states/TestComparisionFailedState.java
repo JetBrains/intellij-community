@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman.Chernyatchik
  */
-public class TestComparisionFailedState extends TestFailedState {
+public class TestComparisionFailedState extends TestFailedState implements AbstractTestProxy.AssertEqualsDiffViewerProvider {
   private final String myErrorMsgPresentation;
   private final String myStacktracePresentation;
   private DiffHyperlink myHyperlink;
@@ -66,5 +67,19 @@ public class TestComparisionFailedState extends TestFailedState {
       printer.print(myStacktracePresentation, ConsoleViewContentType.ERROR_OUTPUT);
       printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     }
+  }
+
+  public void openDiff(final Project project) {
+    myHyperlink.openDiff(project);
+  }
+
+  @Override
+  public String getExpecteed() {
+    return myHyperlink.getLeft();
+  }
+
+  @Override
+  public String getActual() {
+    return myHyperlink.getRight();
   }
 }
