@@ -38,7 +38,7 @@
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperAttributesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperClassAttributesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -343,6 +343,12 @@
     <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoAsViewArgsCompletionContributor"/>
+
+    <intentionAction>
+      <className>com.jetbrains.django.ref.DjangoClassViewMigrationIntention</className>
+      <category>Python</category>
+    </intentionAction>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>

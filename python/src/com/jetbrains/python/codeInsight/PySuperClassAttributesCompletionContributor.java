@@ -15,10 +15,11 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PySuperAttributesCompletionContributor extends CompletionContributor {
-  public PySuperAttributesCompletionContributor() {
+public class PySuperClassAttributesCompletionContributor extends CompletionContributor {
+  public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,
-           PlatformPatterns.psiElement().withParents(PyReferenceExpression.class, PyExpressionStatement.class, PyStatementList.class, PyClass.class),
+           PlatformPatterns.psiElement()
+             .withParents(PyReferenceExpression.class, PyExpressionStatement.class, PyStatementList.class, PyClass.class),
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -30,20 +31,28 @@ public class PySuperAttributesCompletionContributor extends CompletionContributo
                if (containingClass == null) {
                  return;
                }
-
-               List<String> seenNames = Lists.newArrayList();
-               for (PyTargetExpression expr : containingClass.getClassAttributes()) {
-                 seenNames.add(expr.getName());
-               }
-               for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
-                 for (PyTargetExpression expr : ancestor.getClassAttributes()) {
-                   if (!seenNames.contains(expr.getName())) {
-                     result.addElement(LookupElementBuilder.create(expr, expr.getName() + " = "));
-                     seenNames.add(expr.getName());
-                   }
-                 }
+               for (PyTargetExpression expr : getSuperClassAttributes(containingClass)) {
+                 result.addElement(LookupElementBuilder.create(expr, expr.getName() + " = "));
                }
              }
-           });
+           }
+    );
+  }
+
+  public static List<PyTargetExpression> getSuperClassAttributes(@NotNull PyClass cls) {
+    List<PyTargetExpression> attrs = Lists.newArrayList();
+    List<String> seenNames = Lists.newArrayList();
+    for (PyTargetExpression expr : cls.getClassAttributes()) {
+      seenNames.add(expr.getName());
+    }
+    for (PyClass ancestor : cls.iterateAncestorClasses()) {
+      for (PyTargetExpression expr : ancestor.getClassAttributes()) {
+        if (!seenNames.contains(expr.getName())) {
+          seenNames.add(expr.getName());
+          attrs.add(expr);
+        }
+      }
+    }
+    return attrs;
   }
 }
