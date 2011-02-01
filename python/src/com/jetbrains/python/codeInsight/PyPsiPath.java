@@ -102,6 +102,25 @@ public abstract class PyPsiPath {
     }
   }
 
+  public static class ToClassAttribute extends PyPsiPath {
+    private final PyPsiPath myParent;
+    private final String myAttributeName;
+
+    public ToClassAttribute(PyPsiPath parent, String attributeName) {
+      myAttributeName = attributeName;
+      myParent = parent;
+    }
+
+    @Override
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
+      if (!(parent instanceof PyClass)) {
+        return null;
+      }
+      return ((PyClass)parent).findClassAttribute(myAttributeName, true);
+    }
+  }
+
   public static class ToCall extends PyPsiPath {
     private final PyPsiPath myParent;
     private final String myCallName;

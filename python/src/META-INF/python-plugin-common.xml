@@ -94,6 +94,8 @@
     <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
     <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
 
+    <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
       <category>Python</category>
@@ -401,6 +403,7 @@
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
     <extensionPoint qualifiedName="Pythonid.unusedLocalFilter" interface="com.jetbrains.python.inspections.UnusedLocalFilter"/>
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType" interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
+    <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -424,6 +427,7 @@
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
     <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
+    <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>

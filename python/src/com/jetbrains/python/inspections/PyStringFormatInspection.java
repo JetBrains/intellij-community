@@ -8,7 +8,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PySubscriptableType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +116,7 @@ public class PyStringFormatInspection extends PyInspection {
                 if (returnStatement.getExpression() instanceof PyCallExpression) {
                   return -1;
                 }
-                List<PyExpression> expressionList = PyUtil.flattenedParens(returnStatement.getExpression());
+                List<PyExpression> expressionList = PyUtil.flattenedParensAndTuples(returnStatement.getExpression());
                 if (expressionsSize < 0) {
                   expressionsSize = expressionList.size();
                 }

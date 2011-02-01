@@ -21,7 +21,9 @@ public abstract class PyModuleMembersProvider {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
       final String qName = ResolveImportUtil.findShortestImportableName(module, vFile);
-      return getMembersByQName(module, qName, point);
+      if (qName != null) {
+        return getMembersByQName(module, qName, point);
+      }
     }
     return Collections.emptyList();
   }

@@ -7,10 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -261,6 +258,7 @@ public class PyCallExpressionHelper {
         }
       }
       // TODO: handle UnionType
+      else if (qtype instanceof PyModuleType) return false; // qualified by module, not instance.
     }
     return true; // NOTE. best guess: unknown qualifier is more probably an instance.
   }

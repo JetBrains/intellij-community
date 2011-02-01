@@ -1,11 +1,9 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
@@ -91,7 +89,7 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
         PyExpression target = node.getTarget();
         if (target instanceof PyQualifiedExpression) handleTarget((PyQualifiedExpression)target, first_param_name);
         else if (target instanceof PyTupleExpression) {
-          for (PyExpression elt : PyUtil.flattenedParens(((PyTupleExpression)target).getElements())) {
+          for (PyExpression elt : PyUtil.flattenedParensAndTuples(((PyTupleExpression)target).getElements())) {
             if (elt instanceof PyQualifiedExpression) handleTarget((PyQualifiedExpression)elt, first_param_name);
           }
         }

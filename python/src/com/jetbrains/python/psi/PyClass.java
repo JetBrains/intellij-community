@@ -123,6 +123,8 @@ public interface PyClass extends
    */
   boolean isSubclass(PyClass parent);
 
+  boolean isSubclass(String superClassQName);
+
 
   String getQualifiedName();
 
