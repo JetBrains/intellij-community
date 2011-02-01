@@ -37,6 +37,7 @@ public class GithubSettingsPanel {
   private JTextPane mySignupTextField;
   private JPanel myPane;
   private JButton myTestButton;
+  private JTextField myHostTextField;
 
   public GithubSettingsPanel() {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
@@ -46,14 +47,14 @@ public class GithubSettingsPanel {
       }
     });
     mySignupTextField.setText(
-      "<html>Do not have an account? <a href=\"" + GithubUtil.GITHUB_HOST + "\">" + "Sign up" + "</a></html>");
+      "<html>Do not have an account at github.com? <a href=\"https://github.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final boolean result = GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getLogin(), getPassword());
-        Messages.showInfoMessage(result ? "Connection successful" : "Cannot login using given credentials", result ? "Success" : "Fail");
+        final boolean result = GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword());
+        Messages.showInfoMessage(result ? "Connection successful" : "Cannot login to the " + getHost() + " using given credentials", result ? "Success" : "Failure");
       }
     });
   }
@@ -71,11 +72,19 @@ public class GithubSettingsPanel {
   }
 
   public String getLogin() {
-    return myLoginTextField.getText();
+    return myLoginTextField.getText().trim();
   }
 
   public String getPassword() {
     return String.valueOf(myPasswordField.getPassword());
+  }
+
+  public void setHost(final String host) {
+    myHostTextField.setText(host);
+  }
+
+  public String getHost() {
+    return myHostTextField.getText().trim();
   }
 }
 
