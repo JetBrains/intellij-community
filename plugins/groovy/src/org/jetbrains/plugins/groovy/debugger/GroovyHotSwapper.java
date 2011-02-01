@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
@@ -100,7 +101,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
 
   @Nullable
   private static String handleSpacesInPath(String agentPath) {
-    if (agentPath.contains(" ")) {
+    if (agentPath.contains(" ") && !SystemInfo.isWindows) {
       final File dir = new File(PathManager.getSystemPath(), "groovyHotSwap");
       if (dir.getAbsolutePath().contains(" ")) {
         LOG.info("Groovy hot-swap not used since the agent path contains spaces: " + agentPath + "\n" +
