@@ -32,12 +32,12 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
     try {
-      final File tempFile = FileUtil.createTempFile("coverage", "args");
+      final File tempFile = createTempFile();
       tempFile.deleteOnExit();
       write2file(tempFile, sessionDataFilePath);
       write2file(tempFile, String.valueOf(collectLineInfo));
-      write2file(tempFile, Boolean.FALSE.toString());
-      write2file(tempFile, Boolean.FALSE.toString());
+      write2file(tempFile, Boolean.FALSE.toString()); //append unloaded
+      write2file(tempFile, Boolean.FALSE.toString());//merge with existing
       write2file(tempFile, String.valueOf(isSampling));
       for (String coveragePattern : patterns) {
         coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");

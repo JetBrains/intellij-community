@@ -62,7 +62,21 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     return agentPath;
   }
 
-  protected static void write2file(File tempFile, String arg) throws IOException {
-    FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(), true);
+   protected static void write2file(File tempFile, String arg) throws IOException {
+    FileUtil.writeToFile(tempFile, (arg + "\n").getBytes("UTF-8"), true);
+  }
+
+  protected static File createTempFile() throws IOException {
+    File tempFile = FileUtil.createTempFile("coverage", "args");
+    if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
+      tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
+      if (tempFile.getAbsolutePath().contains(" ")) {
+        final String userDefined = System.getProperty(COVERAGE_AGENT_PATH);
+        if (userDefined != null && new File(userDefined).isDirectory()) {
+          tempFile = FileUtil.createTempFile(new File(userDefined), "coverage", "args", true);
+        }
+      }
+    }
+    return tempFile;
   }
 }
