@@ -414,6 +414,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.finishCompletionProcess();
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
+    } else {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
   }
 
