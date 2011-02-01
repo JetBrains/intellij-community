@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -654,4 +655,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return clause;
   }
 
+  @Override
+  public GrLiteral createLiteralFromValue(@Nullable Object value) {
+    if (value instanceof String) {
+      return (GrLiteral)createStringLiteral((String)value);
+    }
+
+    if (value == null) {
+      return (GrLiteral)createExpressionFromText("null");
+    }
+
+    if (value instanceof Boolean) {
+      return (GrLiteral)createExpressionFromText(value.toString());
+    }
+
+    throw new IncorrectOperationException("Can not create literal from type: " + value.getClass().getName());
+  }
 }

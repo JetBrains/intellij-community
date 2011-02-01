@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -1056,5 +1057,9 @@ public class PsiUtil {
       String modifier = visibilityModifiers[index];
       owner.getModifierList().setModifierProperty(modifier, true);
     }
+  }
+
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
+    return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
   }
 }
