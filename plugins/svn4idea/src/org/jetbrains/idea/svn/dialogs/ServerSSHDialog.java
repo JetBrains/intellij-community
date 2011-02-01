@@ -50,8 +50,8 @@ public class ServerSSHDialog extends DialogWrapper {
     setOKButtonText(SvnBundle.message("button.text.ssh.accept"));
     setCancelButtonText(SvnBundle.message("button.text.ssh.reject"));
     setTitle(SvnBundle.message("dialog.title.ssh.examine.server.fingerprints"));
-    setResizable(true);
     init();
+    setResizable(false);
   }
 
   public boolean shouldCloseOnCross() {
@@ -91,6 +91,7 @@ public class ServerSSHDialog extends DialogWrapper {
     final JLabel label2 = new JLabel(SvnBundle.message("label.ssh.server.provided.fingerprints2", myAlgorithm));
     wrapper.add(label2);
     final JTextField textField = new JTextField(myFingerprints);
+    textField.setEditable(false);
     textField.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
     wrapper.add(textField);
     final JLabel label3 = new JLabel(SvnBundle.message("label.ssh.server.provided.fingerprints3"));

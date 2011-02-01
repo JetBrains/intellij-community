@@ -94,7 +94,7 @@ public class GithubShareAction extends DumbAwareAction {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return GithubUtil.isPrivateRepoAllowed(settings.getLogin(), settings.getPassword());
+          return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), settings.getPassword());
         }
       });
     }
@@ -112,7 +112,7 @@ public class GithubShareAction extends DumbAwareAction {
     final String description = shareDialog.getDescription();
     try {
       LOG.info("Creating GitHub repository");
-      GithubUtil.doREST(settings.getLogin(), settings.getPassword(),
+      GithubUtil.doREST(settings.getHost(), settings.getLogin(), settings.getPassword(),
                         "/repos/create?name=" + name + "&description=" + description + "&public=" + (isPrivate ? "0" : "1"), true);
       LOG.info("Successfully created GitHub repository");
     }

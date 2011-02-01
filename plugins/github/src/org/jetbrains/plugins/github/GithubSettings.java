@@ -25,24 +25,25 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String PASSWORD = "Password";
-  private static final String CLONE_PATH = "ClonePath";
+  private static final String HOST = "Host";
+  private static final String GITHUB = "github.com";
 
   private String myLogin;
   private String myPassword;
-  private String myClonePath;
+  private String myHost;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
 
   public Element getState() {
-    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && StringUtil.isEmpty(myClonePath)) {
+    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && StringUtil.isEmptyOrSpaces(myHost)) {
       return null;
     }
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(PASSWORD, getEncodedPassword());
-    element.setAttribute(CLONE_PATH, getClonePath());
+    element.setAttribute(HOST, getHost());
     return element;
   }
 
@@ -63,7 +64,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setEncodedPassword(element.getAttributeValue(PASSWORD));
-      setClonePath(element.getAttributeValue(CLONE_PATH));
+      setHost(element.getAttributeValue(HOST));
     }
     catch (Exception e) {
       // ignore
@@ -80,9 +81,8 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     return myPassword != null ? myPassword : "";
   }
 
-  @NotNull
-  public String getClonePath() {
-    return myClonePath != null ? myClonePath : "";
+  public String getHost() {
+    return myHost != null ? myHost : GITHUB;
   }
 
   public void setLogin(final String login) {
@@ -93,7 +93,8 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     myPassword = password != null ? password : "";
   }
 
-  public void setClonePath(final String clonePath) {
-    myClonePath = clonePath != null ? clonePath : "";
+  public void setHost(final String host) {
+    myHost = host != null ? host : GITHUB;
   }
+
 }

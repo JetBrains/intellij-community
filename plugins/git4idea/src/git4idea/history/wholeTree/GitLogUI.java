@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -303,7 +304,7 @@ public class GitLogUI implements Disposable {
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (! myDataBeingAdded) {
+        if (! myDataBeingAdded && (! e.getValueIsAdjusting())) {
           selectionChanged();
         }
       }
@@ -385,10 +386,7 @@ public class GitLogUI implements Disposable {
                   myDetails.putBranches(gitCommit, branches);
                 }
               }
-            }, myProject.getDisposed());
-            if (!branches.isEmpty()) {
-
-            }
+            }, ModalityState.NON_MODAL, myProject.getDisposed());
           }
           catch (VcsException e) {
             LOG.info(e);
@@ -1067,10 +1065,8 @@ public class GitLogUI implements Disposable {
     }
 
     public void putBranches(final GitCommit commit, final List<String> branches) {
-      myMissingBranchesInfo = false;
-      if (! branches.isEmpty()) {
-        myJEditorPane.setText(parseDetails(commit, branches));
-      }
+      myMissingBranchesInfo = branches == null;
+      myJEditorPane.setText(parseDetails(commit, branches));
     }
 
     public boolean isMissingBranchesInfo() {
@@ -1136,6 +1132,8 @@ public class GitLogUI implements Disposable {
             sb.append(", ");
           }
         }
+      } else if (branches != null && branches.isEmpty()) {
+        sb.append("<font color=gray>&lt;no branches&gt;</font>");
       } else {
         sb.append("<font color=gray>Loading...</font>");
       }

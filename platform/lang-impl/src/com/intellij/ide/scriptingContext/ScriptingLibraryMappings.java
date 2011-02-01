@@ -76,19 +76,24 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   private void updateMappings() {
     myLibraryManager.reset();
     Map<VirtualFile,ScriptingLibraryTable.LibraryModel> map = getMappings();
-    for (ScriptingLibraryTable.LibraryModel value : map.values()) {
+    for (VirtualFile file : map.keySet()) {
+      ScriptingLibraryTable.LibraryModel value = getImmediateMapping(file);
       if (value instanceof CompoundLibrary) {
         CompoundLibrary container = (CompoundLibrary) value;
         ScriptingLibraryTable.LibraryModel[] libModels =
-          container.getLibraries().toArray(new ScriptingLibraryTable.LibraryModel[container.getLibraryCount()]); 
+          container.getLibraries().toArray(new ScriptingLibraryTable.LibraryModel[container.getLibraryCount()]);
+        CompoundLibrary newContainer = new CompoundLibrary();
         for (ScriptingLibraryTable.LibraryModel libraryModel : libModels) {
-          String libName = libraryModel.getName(); 
-          if (myLibraryManager.getLibraryByName(libName) == null) {
-            container.removeLibrary(libName); 
+          String libName = libraryModel.getName();
+          if (myLibraryManager.getLibraryByName(libName) != null) {
+            newContainer.addLibrary(libraryModel);
           }
         }
+        newContainer.applyChanges();
+        setMapping(file, newContainer.isEmpty() ? null : newContainer);
       }
     }
+    
   }
 
   @Override
@@ -313,8 +318,9 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       myLibraries.put(libName, library);
     }
     
-    private void removeLibrary(@NotNull String libName) {
-      myLibraries.remove(libName);
+    private void addLibrary(@NotNull ScriptingLibraryTable.LibraryModel library) {
+      final String libName = library.getName();
+      myLibraries.put(libName, library);
     }
 
     public boolean containsLibrary(String libName) {

@@ -55,7 +55,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     Presentation presentation = e.getPresentation();
     VcsContext context = CvsContextWrapper.createInstance(e);
     boolean projectExists = context.getProject() != null;
-    presentation.setVisible(true);
+    presentation.setVisible(projectExists);
     presentation.setEnabled(projectExists);
   }
 

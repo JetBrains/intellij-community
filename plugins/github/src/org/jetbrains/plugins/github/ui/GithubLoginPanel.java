@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
-import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,6 +33,7 @@ public class GithubLoginPanel {
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JPanel myPane;
+  private JTextField myHostTextField;
 
   public GithubLoginPanel(final GithubLoginDialog dialog) {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
@@ -43,7 +43,7 @@ public class GithubLoginPanel {
       }
     });
     mySignupTextField.setText(
-      "<html>Do not have an account? <a href=\"" + GithubUtil.GITHUB_HOST + "\">" + "Sign up" + "</a></html>");
+      "<html>Do not have an account at github.com? <a href=\"https://github.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -64,6 +64,10 @@ public class GithubLoginPanel {
     return myPane;
   }
 
+  public void setHost(final String host) {
+    myHostTextField.setText(host);
+  }
+
   public void setLogin(final String login) {
     myLoginTextField.setText(login);
   }
@@ -72,8 +76,12 @@ public class GithubLoginPanel {
     myPasswordField.setText(password);
   }
 
+  public String getHost() {
+    return myHostTextField.getText().trim();
+  }
+
   public String getLogin() {
-    return myLoginTextField.getText();
+    return myLoginTextField.getText().trim();
   }
 
   public String getPassword() {

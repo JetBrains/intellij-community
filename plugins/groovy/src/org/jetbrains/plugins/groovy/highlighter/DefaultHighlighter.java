@@ -122,7 +122,7 @@ public class DefaultHighlighter {
     KEYWORD_ATTRIBUTES.setFontType(Font.BOLD);
   }
 
-  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID, KEYWORD_ATTRIBUTES);
+  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("GROOVY_" + KEYWORD_ID.toUpperCase(), KEYWORD_ATTRIBUTES);
 
   public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
       SyntaxHighlighterColors.NUMBER.getDefaultAttributes());

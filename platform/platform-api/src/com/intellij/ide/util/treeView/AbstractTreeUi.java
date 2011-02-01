@@ -4045,7 +4045,8 @@ public class AbstractTreeUi {
             "Not a valid tree structure, walking up the structure gives many entries for element=" +
             eachElement +
             ", root=" +
-            getTreeStructure().getRootElement();
+            getTreeStructure().getRootElement() +
+            ", structure=" + getTreeStructure();
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;

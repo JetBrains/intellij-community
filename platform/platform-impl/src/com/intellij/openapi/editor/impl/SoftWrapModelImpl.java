@@ -572,6 +572,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       myDirty = true;
       return;
     }
+    
+    // There is a possible case that given fold region is contained inside another collapsed fold region. We don't want to process
+    // such nested region then.
+    FoldRegion outerRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(region.getStartOffset());
+    if (outerRegion != null && outerRegion != region && outerRegion.getStartOffset() <= region.getStartOffset()
+        && outerRegion.getEndOffset() >= region.getEndOffset()) 
+    {
+      return;
+    }
+
     for (FoldingListener listener : myFoldListeners) {
       listener.onFoldRegionStateChange(region);
     }

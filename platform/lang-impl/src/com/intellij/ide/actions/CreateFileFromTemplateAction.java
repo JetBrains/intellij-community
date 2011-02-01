@@ -20,12 +20,14 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.apache.velocity.runtime.parser.TemplateParseException;
 
 import javax.swing.*;
 
@@ -55,6 +57,10 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
         }
         return psiFile;
       }
+    }
+    catch (TemplateParseException e) {
+      Messages.showErrorDialog(dir.getProject(), "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
+      return null;
     }
     catch (IncorrectOperationException e) {
       throw e;
