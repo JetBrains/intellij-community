@@ -304,9 +304,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
 
     tool.inspectionStarted(session);
-    for (PsiElement element : elements) {
-      indicator.checkCanceled();
-      element.accept(visitor);
+    int size = elements.size();
+    for (int i = 0; i < size; ++i) {
+      elements.get(i).accept(visitor);
+      if (i % 5 == 0) indicator.checkCanceled();
     }
     return visitor;
   }
