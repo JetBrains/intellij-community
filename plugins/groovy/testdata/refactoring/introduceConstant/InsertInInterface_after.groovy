@@ -1,7 +1,7 @@
-<caret>interface MyInterface {
+interface MyInterface {
     protected CONST = 45 + 6
 
     def foo(String s);
 }
 
-def a = MyInterface.CONST;
+def a = MyInterface.<selection>CONST</selection>;
