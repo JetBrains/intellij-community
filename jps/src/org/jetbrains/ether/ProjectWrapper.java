@@ -2,7 +2,9 @@ package org.jetbrains.ether;
 
 import org.codehaus.gant.GantBinding;
 import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.ether.dependencyView.ClassRepr;
 import org.jetbrains.ether.dependencyView.SourceToClass;
+import org.jetbrains.ether.dependencyView.Usage;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.resolvers.PathEntry;
@@ -66,7 +68,7 @@ public class ProjectWrapper {
         public void write(final BufferedWriter w) {
             RW.writeln(w, "Library:" + myName);
             RW.writeln(w, "Classpath:");
-            RW.writeln(w, myClassPath, null);
+            RW.writeln(w, myClassPath, RW.fromString);
         }
 
         public LibraryWrapper(final BufferedReader r) {
@@ -185,7 +187,7 @@ public class ProjectWrapper {
         public void write(final BufferedWriter w) {
             RW.writeln(w, myType);
             RW.writeln(w, "Classpath:");
-            RW.writeln(w, myClassPath, "");
+            RW.writeln(w, myClassPath, RW.fromString);
         }
 
         public int compareTo(Object o) {
@@ -240,11 +242,10 @@ public class ProjectWrapper {
             myName = RW.readString(r);
             myModificationTime = 0; // readLong(r);
 
-            final Set<String> classes = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String> ());
+            final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.constructor, new HashSet<ClassRepr> ());
+            final Set<Usage> usages = (Set<Usage>) RW.readMany(r, Usage.constructor, new HashSet<Usage> ());
 
-            for (String c : classes) {
-                myClassToSourceCallback.associate(c, myName);
-            }
+            myClassToSourceCallback.associate(classes, usages, myName);
         }
 
         public String getName() {
@@ -256,8 +257,11 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            RW.writeln(w, getName());
-            RW.writeln(w, mySourceToClass.getClasses (getName()), "");
+            final String name = getName();
+
+            RW.writeln(w, name);
+            RW.writeln(w, mySourceToClass.getClasses(name));
+            RW.writeln(w, mySourceToClass.getUsages(name));
             // writeln(w, Long.toString(getStamp()));
         }
 
@@ -298,7 +302,7 @@ public class ProjectWrapper {
 
             public void write(final BufferedWriter w) {
                 RW.writeln(w, "Roots:");
-                RW.writeln(w, myRoots, null);
+                RW.writeln(w, myRoots, RW.fromString);
 
                 RW.writeln(w, "Sources:");
                 RW.writeln(w, mySources);
@@ -460,7 +464,7 @@ public class ProjectWrapper {
             myTest.write(w);
 
             RW.writeln(w, "Excludes:");
-            RW.writeln(w, myExcludes, null);
+            RW.writeln(w, myExcludes, RW.fromString);
 
             RW.writeln(w, "Libraries:");
             RW.writeln(w, myLibraries);
@@ -657,7 +661,7 @@ public class ProjectWrapper {
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
     final ProjectWrapper myHistory;
-    final SourceToClass mySourceToClass = new SourceToClass (this);
+    final SourceToClass mySourceToClass = new SourceToClass(this);
     final Callbacks.Backend myClassToSourceCallback = mySourceToClass.getCallback();
 
     private void rescan() {
@@ -700,7 +704,7 @@ public class ProjectWrapper {
         myHistory = loadSnapshot();
 
         if (myHistory != null)
-            mySourceToClass.inherit (myHistory.mySourceToClass);
+            mySourceToClass.inherit(myHistory.mySourceToClass);
     }
 
     public String getAbsolutePath(final String relative) {
@@ -863,7 +867,7 @@ public class ProjectWrapper {
         final List<Module> modules = new ArrayList<Module>();
 
         for (Map.Entry<String, ModuleWrapper> entry : myModules.entrySet()) {
-            if (entry.getValue().isOutdated(tests, myHistory))
+            if (force || entry.getValue().isOutdated(tests, myHistory))
                 modules.add(myProject.getModules().get(entry.getKey()));
         }
 
@@ -894,11 +898,11 @@ public class ProjectWrapper {
 
         for (Module m : myProject.getModules().values()) {
 
-            DotPrinter.node (m.getName());
+            DotPrinter.node(m.getName());
 
             for (ClasspathItem cpi : m.getClasspath(kind)) {
                 if (cpi instanceof Module) {
-                    DotPrinter.edge (((Module) cpi).getName(), m.getName());
+                    DotPrinter.edge(((Module) cpi).getName(), m.getName());
 
                     Set<Module> sm = reversedDependencies.get(cpi);
 
@@ -927,13 +931,13 @@ public class ProjectWrapper {
                     if (marked.contains(module))
                         continue;
 
-                    DotPrinter.node (module.getName());
+                    DotPrinter.node(module.getName());
 
                     final List<Module> dep = new ArrayList<Module>();
 
                     for (ClasspathItem cpi : module.getClasspath(kind)) {
                         if (cpi instanceof Module) {
-                            DotPrinter.edge (((Module) cpi).getName (), module.getName ());
+                            DotPrinter.edge(((Module) cpi).getName(), module.getName());
                             dep.add((Module) cpi);
                         }
                     }
@@ -970,7 +974,7 @@ public class ProjectWrapper {
                             run(reversedDependencies.get(module), true);
                         } else {
                             if (property == null) {
-                                visited.put (module, false);
+                                visited.put(module, false);
                             }
                             run(reversedDependencies.get(module), false);
                         }

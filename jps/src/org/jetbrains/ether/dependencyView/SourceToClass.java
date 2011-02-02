@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.sun.tools.javac.util.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 
@@ -17,90 +18,98 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class SourceToClass {
-    private Map<String, Set<String>> mapping = new HashMap<String, Set<String>>();
+    private Map<String, Set<ClassRepr>> mapping = new HashMap<String, Set<ClassRepr>>();
+    private Map<String, Set<Usage>> usages = new HashMap<String, Set<Usage>>();
 
-    public void inherit (final SourceToClass c) {
+    public void inherit(final SourceToClass c) {
         mapping = c.mapping;
+        usages = c.usages;
     }
 
-    public Callbacks.Backend getCallback () {
+    public Callbacks.Backend getCallback() {
         return new Callbacks.Backend() {
-            private final Set<String> affected = new HashSet<String> ();
+            private final Set<String> affected = new HashSet<String>();
 
-            public void processClassfile(final String classFileName, final ClassReader c) {
-                ClassfileAnalyzer.analyze(c);
-            }
-
-            public Set<String> getAffectedFiles () {
+            public Set<String> getAffectedFiles() {
                 return affected;
             }
 
-            public void begin () {
+            public void begin() {
                 affected.clear();
             }
 
-            public void end () {
+            public void end() {
 
             }
 
-            public void associate(String classFileName, String sourceFileName) {
+            public void associate(String classFileName, String sourceFileName, ClassReader cr) {
                 classFileName = project.getRelativePath(classFileName);
                 sourceFileName = project.getRelativePath(sourceFileName);
 
-                Set<String> classes = mapping.get(sourceFileName);
+                Set<ClassRepr> classes = mapping.get(sourceFileName);
 
-                if (classes == null) {
-                    classes = new HashSet<String> ();
-                    classes.add(classFileName);
-                    mapping.put(sourceFileName, classes);
-                }
-                else {
-                    if (affected.contains(sourceFileName)) {
-                        classes.add(classFileName);
+                final Pair<ClassRepr, Set<Usage>> result = ClassfileAnalyzer.analyze(classFileName, cr);
+                final ClassRepr repr = result.fst;
+                final Set<Usage> localUsages = result.snd;
+
+                if (repr != null) {
+                    if (classes == null) {
+                        classes = new HashSet<ClassRepr>();
+                        classes.add(repr);
+                        mapping.put(sourceFileName, classes);
+                    } else {
+                        if (affected.contains(sourceFileName)) {
+                            classes.add(repr);
+                        } else {
+                            classes.clear();
+                            classes.add(repr);
+                            affected.add(sourceFileName);
+                        }
                     }
-                    else {
-                        classes.clear();
-                        classes.add(classFileName);
-                        affected.add(sourceFileName);
-                    }
                 }
+
+                Set<Usage> u = usages.get(sourceFileName);
+
+                if (u == null) {
+                    u = new HashSet<Usage> ();
+                }
+
+                u.addAll(localUsages);
+                usages.put(sourceFileName, u);
+
+                //System.out.println("Filename: " + sourceFileName + ", number of usages: " + u.size());
+                //System.out.flush();
+            }
+
+            public void associate(final Set<ClassRepr> classes, final Set<Usage> u, final String sourceFileName) {
+                mapping.put(sourceFileName, classes);
+                usages.put(sourceFileName, u);
             }
         };
     }
 
     private final ProjectWrapper project;
 
-    public SourceToClass (final ProjectWrapper p) {
+    public SourceToClass(final ProjectWrapper p) {
         project = p;
     }
 
-    public void clear () {
+    public void clear() {
         mapping.clear();
     }
 
-    public void clearClasses (final String sourceFileName) {
-        final Set<String> classes = mapping.get(sourceFileName);
+    public void clearClasses(final String sourceFileName) {
+        final Set<ClassRepr> classes = mapping.get(sourceFileName);
 
         if (classes != null)
             classes.clear();
     }
 
-    public Set<String> getClasses (final String sourceFileName) {
+    public Set<ClassRepr> getClasses(final String sourceFileName) {
         return mapping.get(sourceFileName);
     }
 
-    public void println (final PrintStream s) {
-        for (String source : mapping.keySet()) {
-            s.println("Source: " + source);
-            s.println("Classes: ");
-
-            final Set<String> classes = mapping.get(source);
-
-            if (classes != null) {
-                for (String c : classes) {
-                    s.println ("  " + c);
-                }
-            }
-        }
+    public Set<Usage> getUsages(final String sourceFileName) {
+        return usages.get(sourceFileName);
     }
 }

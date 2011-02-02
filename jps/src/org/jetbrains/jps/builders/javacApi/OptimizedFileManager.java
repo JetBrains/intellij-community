@@ -158,13 +158,10 @@ public class OptimizedFileManager extends DefaultFileManager {
     }
 
     @Override
-    public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject fileObject) throws IOException {
+    public JavaFileObject getJavaFileForOutput(Location location, String className, final JavaFileObject.Kind kind, FileObject fileObject) throws IOException {
         final JavaFileObject result = super.getJavaFileForOutput(location, className, kind, fileObject);
         final String classFileName = result.toUri().toString();
-
-        if (kind.equals(JavaFileObject.Kind.CLASS) && callback != null) {
-            callback.associate(classFileName, fileObject.toUri().toString());
-        }
+        final String sourceFileName = fileObject.toUri().toString();
 
         return new ForwardingJavaFileObject<JavaFileObject>(result) {
             @Override
@@ -190,8 +187,8 @@ public class OptimizedFileManager extends DefaultFileManager {
                     }
 
                     public void write(byte[] b, int off, int len) throws IOException {
-                        if (callback != null) {
-                            callback.processClassfile(classFileName, new ClassReader (b, off, len));
+                        if (kind.equals(JavaFileObject.Kind.CLASS) && callback != null) {
+                            callback.associate(classFileName, sourceFileName, new ClassReader(b, off, len));
                         }
                         result.write(b, off, len);
                     }

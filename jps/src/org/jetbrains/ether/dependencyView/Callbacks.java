@@ -15,8 +15,8 @@ public class Callbacks {
     public interface Backend {
         public void begin ();
         public void end ();
-        public void associate (String classFileName, String sourceFileName);
+        public void associate (String classFileName, String sourceFileName, ClassReader cr);
+        public void associate (Set<ClassRepr> classes, Set<Usage> usages, String sourceFileName);
         public Set<String> getAffectedFiles ();
-        public void processClassfile(String classFileName, ClassReader cw);
     }
 }

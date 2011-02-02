@@ -39,31 +39,31 @@ public class RW {
         public void write(BufferedWriter w);
     }
 
-    public static void writeln(final BufferedWriter w, final Collection<String> c, final String desc) {
+    public static <T extends Comparable> void writeln(final BufferedWriter w, final Collection<T> c, final ToWritable<T> t) {
         if (c == null) {
-            writeln (w, "0");
+            writeln(w, "0");
             return;
         }
 
         writeln(w, Integer.toString(c.size()));
 
         if (c instanceof List) {
-            for (String e : c) {
-                writeln(w, e);
+            for (T e : c) {
+                t.convert(e).write(w);
             }
         } else {
-            final List<String> sorted = sort(c);
+            final List<T> sorted = sort(c);
 
-            for (String e : sorted) {
-                writeln(w, e);
+            for (T e : sorted) {
+                t.convert(e).write(w);
             }
         }
     }
 
     public static void writeln(final BufferedWriter w, final Collection<? extends Writable> c) {
         if (c == null) {
-                    writeln (w, "0");
-                    return;
+            writeln(w, "0");
+            return;
         }
 
         writeln(w, Integer.toString(c.size()));
@@ -81,9 +81,29 @@ public class RW {
         }
     }
 
+    public interface ToWritable<T> {
+        public Writable convert(T x);
+    }
+
+    public static <T> void writeln(final BufferedWriter w, final T[] c, final ToWritable<T> t) {
+        if (c == null) {
+            writeln(w, "0");
+            return;
+        }
+
+        writeln(w, Integer.toString(c.length));
+
+        for (int i = 0; i < c.length; i++) {
+            t.convert(c[i]).write(w);
+        }
+    }
+
     public static void writeln(final BufferedWriter w, final String s) {
         try {
-            w.write(s);
+            if (s == null)
+                w.write("");
+            else
+                w.write(s);
             w.newLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -93,6 +113,26 @@ public class RW {
     public interface Constructor<T> {
         public T read(BufferedReader r);
     }
+
+    public static ToWritable<String> fromString = new ToWritable<String>() {
+        public Writable convert(final String s) {
+            return new Writable() {
+                public void write(BufferedWriter w) {
+                    writeln(w, s);
+                }
+
+                public int compareTo(Object o) {
+                    return 0;
+                }
+            };
+        }
+    };
+
+    public static ToWritable<Writable> fromWritable = new ToWritable<Writable>() {
+        public Writable convert(final Writable w) {
+            return w;
+        }
+    };
 
     public static Constructor<String> myStringConstructor = new Constructor<String>() {
         public String read(final BufferedReader r) {
