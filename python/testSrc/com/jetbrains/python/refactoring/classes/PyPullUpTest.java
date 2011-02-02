@@ -31,9 +31,19 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   }
 
   public void testMultiFile() {   // PY-2810
-    myFixture.copyDirectoryToProject("refactoring/pullup/multiFile/", "");
+    doMultiFileTest();
+  }
+
+  public void testDuplicateImport() {  // PY-2810
+    doMultiFileTest();
+  }
+
+  private void doMultiFileTest() {
+    String baseName = "refactoring/pullup/" + getTestName(true) + "/";
+    myFixture.copyFileToProject(baseName + "Class.py", "Class.py");
+    myFixture.copyFileToProject(baseName + "SuperClass.py", "SuperClass.py");
     doPullUp("AnyClass", ".this_should_be_in_super", "SuperClass");
-    myFixture.checkResultByFile("SuperClass.py", "/refactoring/pullup/multiFile/SuperClass.after.py", true);
+    myFixture.checkResultByFile("SuperClass.py", "/" + baseName + "/SuperClass.after.py", true);
   }
 
   private void doHelperTest(final String className, final String memberName, final String superClassName) {
