@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -49,7 +50,16 @@ import java.awt.*;
 import java.util.List;
 
 public class CodeFormatterFacade {
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
+
+  /**
+   * This key is used as a flag that indicates if <code>'wrap long line during formatting'</code> activity is performed now.
+   *
+   * @see CodeStyleSettings#WRAP_LONG_LINES
+   */
+  public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY 
+    = new Key<Boolean>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
   private final CodeStyleSettings mySettings;
 
@@ -367,7 +377,14 @@ public class CodeFormatterFacade {
         selectionModel.removeSelection();
       }
       int textLengthBeforeWrap = document.getTextLength();
-      EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+
+      DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
+      try {
+        EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+      }
+      finally {
+        DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, null);
+      }
       if (restoreSelection) {
         int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
         int newSelectionStart = startSelectionOffset;
