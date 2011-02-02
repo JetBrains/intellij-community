@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -51,11 +53,11 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    appendDescriptors(node.getPsi(), descriptors);
+    appendDescriptors(node.getPsi(), descriptors, new HashSet<PsiElement>());
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private static void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors) {
+  private static void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
     ASTNode node = element.getNode();
     if (node == null) return;
     IElementType type = node.getElementType();
@@ -72,13 +74,33 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
+    if (type.equals(mSL_COMMENT) && !usedComments.contains(element)) {
+      usedComments.add(element);
+      PsiElement end = null;
+      for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
+        IElementType elementType = current.getNode().getElementType();
+        if (elementType == mSL_COMMENT) {
+          end = current;
+          usedComments.add(current);
+          continue;
+        }
+        if (WHITE_SPACES_SET.contains(elementType)) {
+          continue;
+        }
+        break;
+      }
+      if (end != null) {
+        descriptors
+          .add(new FoldingDescriptor(element, new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())));
+      }
+    }
+
     //multiline strings
     addFoldingForStrings(descriptors, node);
 
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      appendDescriptors(child, descriptors);
-      child = child.getNextSibling();
+    Set<PsiElement> newUsedComments = new HashSet<PsiElement>();
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      appendDescriptors(child, descriptors, newUsedComments);
     }
 
     if (element instanceof GroovyFile) {
@@ -252,6 +274,9 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       }
     }
 
+    if (node.getElementType() == mSL_COMMENT) {
+      return settings.isCollapseEndOfLineComments();
+    }
 
     return false;
   }
