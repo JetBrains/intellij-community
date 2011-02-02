@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,6 +45,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 
 public class EditLibraryDialog extends DialogWrapper {
@@ -280,7 +282,12 @@ public class EditLibraryDialog extends DialogWrapper {
       return super.isCellEditable(rowIndex, columnIndex);
     }
 
-    private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    private SortedList<VirtualFile> myFiles = new SortedList<VirtualFile>(new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return file1.getName().compareTo(file2.getName());
+      }
+    });
     private HashSet<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
 
     public void addFile(VirtualFile file) {
