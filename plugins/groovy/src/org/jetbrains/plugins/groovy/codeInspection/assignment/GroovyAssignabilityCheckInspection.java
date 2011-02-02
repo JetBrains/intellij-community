@@ -334,7 +334,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final String typesString = buildArgTypesList(argumentTypes);
         String message = GroovyBundle.message("cannot.apply.method.or.closure", place.getText(), typesString);
         PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
-        if (elementToHighlight == null) elementToHighlight = place;
+        if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) elementToHighlight = place;
         registerError(elementToHighlight, message);
         return false;
       }
