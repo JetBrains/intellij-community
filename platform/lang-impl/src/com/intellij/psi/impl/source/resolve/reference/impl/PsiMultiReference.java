@@ -147,7 +147,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();
-    List<ResolveResult> result = new ArrayList<ResolveResult>(refs.length);
+    Collection<ResolveResult> result = new LinkedHashSet<ResolveResult>(refs.length);
     PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
