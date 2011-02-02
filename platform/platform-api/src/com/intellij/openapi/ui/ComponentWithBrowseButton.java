@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -149,7 +150,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * Do not use this class directly it is public just to hack other implementation of controls similar to TextFieldWithBrowseButton.
    */
-  public static final class MyDoClickAction extends AnAction{
+  public static final class MyDoClickAction extends DumbAwareAction {
     private final FixedSizeButton myBrowseButton;
     public MyDoClickAction(FixedSizeButton browseButton) {
       myBrowseButton = browseButton;
