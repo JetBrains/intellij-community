@@ -1,4 +1,4 @@
-def cl = <begin>qwerty<end>({int x -> return x + 1})
+def cl = <selection>qwerty</selection>({int x -> return x + 1})
 
 def qwerty(Closure cl){
         def call = cl.call()

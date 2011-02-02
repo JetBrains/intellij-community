@@ -6,7 +6,7 @@ class X {
     }
 
     {
-        <begin>foo<end>(a);
+        <selection>foo</selection>(a);
     }
 }
 -----

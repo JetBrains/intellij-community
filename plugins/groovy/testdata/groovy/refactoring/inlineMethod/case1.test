@@ -5,7 +5,7 @@ int fact(int n) {
 
 def foo(int i) {
         switch (i) {
-                case 42: return <begin>fact<end>(5)
+                case 42: return <selection>fact</selection>(5)
                 default:
                         return fact(7)
         }

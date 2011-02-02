@@ -4,7 +4,7 @@ def tail(int jjj) {
         if (true)
                 return fact(jjj)
         else
-                return <begin>fact<end>(jjj)
+                return <selection>fact</selection>(jjj)
 }
 
 

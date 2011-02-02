@@ -1,7 +1,7 @@
 def tail(int jjj) {
         println jjj
 
-        println (<begin>fact<end>(jjj))
+        println (<selection>fact</selection>(jjj))
 }
 
 int fact(int n) {

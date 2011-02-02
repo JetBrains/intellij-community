@@ -4,7 +4,7 @@ def foo(def x) {
 }
 
 int i = 5;
-<begin>foo<end>(i);
+<selection>foo</selection>(i);
 i++;
 -----
 def foo(def x) {

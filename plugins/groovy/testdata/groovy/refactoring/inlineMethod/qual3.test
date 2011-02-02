@@ -1,6 +1,6 @@
 def getGeneratedFileNames() {
         if (true) {
-                return <begin>new QQQ().test<end>()
+                return <selection>new QQQ().test</selection>()
         }
         else 42
 }

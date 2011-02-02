@@ -1,6 +1,6 @@
 def result = 26
 
-def bar(int h = <begin>foo<end>(42, 239)) {}
+def bar(int h = <selection>foo</selection>(42, 239)) {}
 
 def foo(int i, def j) {
         if (i > 42) {

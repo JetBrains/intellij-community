@@ -5,7 +5,7 @@ class X {
     }
 
     int x(final int x, int y) {
-        return <begin>foo<end>(x + y);
+        return <selection>foo</selection>(x + y);
     }
 }
 -----

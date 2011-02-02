@@ -2,7 +2,7 @@ def foo(int x) {
     return "foo(x = $x)";
 }
 
-print "foo(2) = ${<begin>foo<end>(2)}";
+print "foo(2) = ${<selection>foo</selection>(2)}";
 -----
 def foo(int x) {
     return "foo(x = $x)";

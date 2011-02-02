@@ -8,7 +8,7 @@ class Child {
 
 class User {
     void meth() {
-        <begin>new Child().doSmth<end>()
+        <selection>new Child().doSmth</selection>()
     }
 }
 -----

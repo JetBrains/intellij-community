@@ -6,7 +6,7 @@ class X {
 
     {
         int x = 6, y = 3;
-        return foo(foo(x) + <begin>foo<end>(y))
+        return foo(foo(x) + <selection>foo</selection>(y))
     }
 }
 -----

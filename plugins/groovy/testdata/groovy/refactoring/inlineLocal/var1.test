@@ -1,4 +1,4 @@
 def var = 1
-<begin>var<end>
+<selection>var</selection>
 -----
 1<caret>

@@ -2,7 +2,7 @@ def tail(int jjj) {
         println jjj
         if (true)
                 return 1 + fact(jjj)
-        else 1 + <begin>fact<end>(jjj)
+        else 1 + <selection>fact</selection>(jjj)
 }
 
 int fact(int n) {

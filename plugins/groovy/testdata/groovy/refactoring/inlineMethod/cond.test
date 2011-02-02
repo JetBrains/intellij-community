@@ -1,6 +1,6 @@
 def cond = true
 
-if (<begin>qqqqq<end>(cond)) {
+if (<selection>qqqqq</selection>(cond)) {
         println "a"
 } else {
         println ("b")
