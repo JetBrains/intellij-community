@@ -7,11 +7,11 @@
 6(7,8) element: PyIfStatement
 7(10) element: PyStatementList. Condition: 2:true
 8(9,10) element: PyIfPartElif. Condition: 2:false
-9(10) element: PyIfPartIf. Condition: 3:true
+9(10) element: PyIfPartElif. Condition: 3:true
 10(11,12) element: PyIfStatement
 11(16) element: PyStatementList. Condition: 4:true
 12(13,14) element: PyIfPartElif. Condition: 4:false
-13(16) element: PyIfPartIf. Condition: 5:true
+13(16) element: PyIfPartElif. Condition: 5:true
 14(15) element: PyElsePart. Condition: 5:false
 15(16) element: PyExpressionStatement
 16() element: null

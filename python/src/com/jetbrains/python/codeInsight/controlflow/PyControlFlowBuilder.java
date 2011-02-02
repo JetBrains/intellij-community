@@ -224,7 +224,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    for (PyIfPart part : node.getElifParts()) {
+    for (final PyIfPart part : node.getElifParts()) {
       // Set the head as the false branch
       myBuilder.prevInstruction = lastBranchingPoint;
       myBuilder.startConditionalNode(part, lastCondition, false);
@@ -236,14 +236,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
       // Set the head as the last instruction of condition
       myBuilder.prevInstruction = getPrevInstruction(lastCondition);
-      myBuilder.startConditionalNode(ifPart, lastCondition, true);
+      myBuilder.startConditionalNode(part, lastCondition, true);
       final PyStatementList statementList = part.getStatementList();
       if (statementList != null) {
         statementList.accept(this);
       }
       myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
         public void process(final PsiElement pendingScope, final Instruction instruction) {
-          if (pendingScope != null && PsiTreeUtil.isAncestor(ifPart, pendingScope, false)) {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(part, pendingScope, false)) {
             myBuilder.addPendingEdge(node, instruction);
           }
           else {

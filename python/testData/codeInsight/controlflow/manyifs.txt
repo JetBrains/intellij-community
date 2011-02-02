@@ -10,15 +10,15 @@
 9(10,21) element: PyIfPartElif. Condition: a == b:false
 10(11) READ ACCESS: aa
 11(12) READ ACCESS: bb
-12(13) element: PyIfPartIf. Condition: aa == bb:true
+12(13) element: PyIfPartElif. Condition: aa == bb:true
 13(14) element: PyAssignmentStatement
 14(15) READ ACCESS: same_changet_expression
 15(16) WRITE ACCESS: bbb
 16(17) element: PyIfStatement
-17(18,21) READ ACCESS: bbb
+17(18,24) READ ACCESS: bbb
 18(19) element: PyStatementList. Condition: bbb:true
 19(20) element: PyAssignmentStatement
-20(21,24) WRITE ACCESS: var
+20(24) WRITE ACCESS: var
 21(22) element: PyElsePart. Condition: aa == bb:false
 22(23) element: PyAssignmentStatement
 23(24) WRITE ACCESS: var
