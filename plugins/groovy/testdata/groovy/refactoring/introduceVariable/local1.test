@@ -1,15 +1,15 @@
 class A {
-  int preved = 1;
-  def foo() {
-    println preved
-    <begin>3<end>
-  }
+    int preved = 1;
+    def foo() {
+        println preved
+        <begin>3<end>
+    }
 }
 -----
 class A {
-  int preved = 1;
-  def foo() {
-    println this.preved
-    def preved = 3<caret>
-  }
+    int preved = 1;
+    def foo() {
+        println this.preved
+        def preved = 3<caret>
+    }
 }

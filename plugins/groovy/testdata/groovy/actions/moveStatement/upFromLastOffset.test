@@ -1,9 +1,9 @@
 def y() {
-  x*2 + it
+    x*2 + it
 }
 int x<caret>
 -----
 int x<caret>
 def y() {
-  x*2 + it
+    x*2 + it
 }

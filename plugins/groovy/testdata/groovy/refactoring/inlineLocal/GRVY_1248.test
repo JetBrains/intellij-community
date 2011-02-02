@@ -1,4 +1,4 @@
 New var = new New();
-<begin>var<end>.foo()
+<selection>var</selection>.foo()
 -----
 new New()<caret>.foo()

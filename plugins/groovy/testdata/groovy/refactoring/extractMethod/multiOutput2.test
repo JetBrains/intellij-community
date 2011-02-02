@@ -13,11 +13,11 @@ int b, c
 (b, c) = testMethod(a)
 
 private List testMethod(int a) {
-  print a
-  int b = 6;
-  int c = 7
-  print a + b
-  return [b, c]
+    print a
+    int b = 6;
+    int c = 7
+    print a + b
+    return [b, c]
 }
 
 

@@ -1,15 +1,15 @@
 import static Test.i;
 
 class Test {
-  static int i;
+    static int i;
 
-  void u() {
+    void u() {
 
-  }
+    }
 }
 
 class Test1 {
-  {
-    i = 0;
-  }
+    {
+        i = 0;
+    }
 }

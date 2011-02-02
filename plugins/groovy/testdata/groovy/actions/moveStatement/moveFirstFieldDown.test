@@ -1,15 +1,15 @@
 class FooBar {
-    def b<caret>ar2
+        def b<caret>ar2
 
-    def foo() {}
+        def foo() {}
 
-    def bar
+        def bar
 }
 -----
 class FooBar {
-  def foo() {}
+    def foo() {}
 
-  def b<caret>ar2
+    def b<caret>ar2
 
-    def bar
+        def bar
 }
