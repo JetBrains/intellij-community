@@ -1,11 +1,11 @@
 def foo(int x) {
-  return "foo(x = $x)";
+    return "foo(x = $x)";
 }
 
 print "foo(2) = ${<begin>foo<end>(2)}";
 -----
 def foo(int x) {
-  return "foo(x = $x)";
+    return "foo(x = $x)";
 }
 
 print "foo(2) = foo(x = 2)";

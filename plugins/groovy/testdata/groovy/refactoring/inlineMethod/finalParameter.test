@@ -1,14 +1,14 @@
 def foo(int x) {
-  x++;
-  return x + 2;
+    x++;
+    return x + 2;
 }
 
 final i = 5;
 print <begin>foo<end>(i);
 -----
 def foo(int x) {
-  x++;
-  return x + 2;
+    x++;
+    return x + 2;
 }
 
 final i = 5;

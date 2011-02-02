@@ -1,13 +1,13 @@
 def i = 6
 while (true) {
-    <begin>println "preved"
-    i = 42
-    if (i > 0) {
-        break;
-    } else {
-        i = 8
-        continue;
-    }<end>
+        <begin>println "preved"
+        i = 42
+        if (i > 0) {
+                break;
+        } else {
+                i = 8
+                continue;
+        }<end>
 }
 println i
 -----

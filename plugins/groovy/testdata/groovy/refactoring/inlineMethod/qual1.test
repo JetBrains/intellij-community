@@ -1,77 +1,77 @@
 def getGeneratedFileNames() {
-    if (true) {
-        return <begin>QasdWfsdEdfgh.foo().f.test<end>()
-    }
-    else 42
+        if (true) {
+                return <begin>QasdWfsdEdfgh.foo().f.test<end>()
+        }
+        else 42
 }
 
 class QasdWfsdEdfgh extends R {
 
-    static def test() {
-        foo = 42;
-        boo()
-        boo1()
-        def qual = 48
-        println(foo)
-        return foo
-    }
+        static def test() {
+                foo = 42;
+                boo()
+                boo1()
+                def qual = 48
+                println(foo)
+                return foo
+        }
 
-    QasdWfsdEdfgh f = this
+        QasdWfsdEdfgh f = this
 
-    static void boo() {
-        println "aaa"
-    }
+        static void boo() {
+                println "aaa"
+        }
 
-    static foo() {
-        return new QasdWfsdEdfgh()
-    }
+        static foo() {
+                return new QasdWfsdEdfgh()
+        }
 
 }
 
 class R {
-    void boo1() {
-        println "aaa"
-    }
+        void boo1() {
+                println "aaa"
+        }
 }
 -----
 def getGeneratedFileNames() {
-    if (true) {
-      def f = QasdWfsdEdfgh.foo().f
-      foo = 42
-      f.boo()
-      f.boo1()
-      def qual = 48
-      println(foo)
-      return foo
-    }
-    else 42
+        if (true) {
+            def f = QasdWfsdEdfgh.foo().f
+            foo = 42
+            f.boo()
+            f.boo1()
+            def qual = 48
+            println(foo)
+            return foo
+        }
+        else 42
 }
 
 class QasdWfsdEdfgh extends R {
 
-    static def test() {
-        foo = 42;
-        boo()
-        boo1()
-        def qual = 48
-        println(foo)
-        return foo
-    }
+        static def test() {
+                foo = 42;
+                boo()
+                boo1()
+                def qual = 48
+                println(foo)
+                return foo
+        }
 
-    QasdWfsdEdfgh f = this
+        QasdWfsdEdfgh f = this
 
-    static void boo() {
-        println "aaa"
-    }
+        static void boo() {
+                println "aaa"
+        }
 
-    static foo() {
-        return new QasdWfsdEdfgh()
-    }
+        static foo() {
+                return new QasdWfsdEdfgh()
+        }
 
 }
 
 class R {
-    void boo1() {
-        println "aaa"
-    }
+        void boo1() {
+                println "aaa"
+        }
 }

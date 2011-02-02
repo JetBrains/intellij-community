@@ -3,13 +3,13 @@ def result = 26
 def bar(int h = <begin>foo<end>(42, 239)) {}
 
 def foo(int i, def j) {
-    if (i > 42) {
-        println("preved!")
-        println("medved")
-    } else {
-        println "bugoga"
-    }
-    return 3
+        if (i > 42) {
+                println("preved!")
+                println("medved")
+        } else {
+                println "bugoga"
+        }
+        return 3
 }
 -----
 FAIL: Refactoring is not supported in parameter initializers

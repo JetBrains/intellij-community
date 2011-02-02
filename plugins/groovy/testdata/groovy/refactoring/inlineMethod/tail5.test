@@ -1,38 +1,38 @@
 def tail(int jjj) {
-    println jjj
+        println jjj
 
-    if (true) {
-      return <begin>fact<end>(jjj)
-    }
-    else {
-      return 42
-    }
+        if (true) {
+            return <begin>fact<end>(jjj)
+        }
+        else {
+            return 42
+        }
 }
 
 int fact(int n) {
-    if (n > 0) {
-        return n * fact(n - 1)
-    }
-    return 1
+        if (n > 0) {
+                return n * fact(n - 1)
+        }
+        return 1
 }
 -----
 def tail(int jjj) {
-    println jjj
+        println jjj
 
-    if (true) {
-      if (jjj > 0) {
-        return jjj * fact(jjj - 1)
-      }
-      return 1
-    }
-    else {
-      return 42
-    }
+        if (true) {
+            if (jjj > 0) {
+                return jjj * fact(jjj - 1)
+            }
+            return 1
+        }
+        else {
+            return 42
+        }
 }
 
 int fact(int n) {
-    if (n > 0) {
-        return n * fact(n - 1)
-    }
-    return 1
+        if (n > 0) {
+                return n * fact(n - 1)
+        }
+        return 1
 }

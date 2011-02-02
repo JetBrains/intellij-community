@@ -1,3 +1,3 @@
 public class B {
-  A.Inner i = new A.Inner();
+    A.Inner i = new A.Inner();
 }

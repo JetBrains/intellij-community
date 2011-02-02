@@ -1,14 +1,14 @@
 int fact(int n) {
-    if (n > 0) return n * <begin>fact<end>(n - 1);
-    else return 1;
+        if (n > 0) return n * <begin>fact<end>(n - 1);
+        else return 1;
 }
 -----
 int fact(int n) {
-    if (n > 0) {
-      int result
-      if (n - 1 > 0) result = (n - 1) * fact(n - 1 - 1);
-      else result = 1
-      return n * result
-    };
-    else return 1;
+        if (n > 0) {
+            int result
+            if (n - 1 > 0) result = (n - 1) * fact(n - 1 - 1);
+            else result = 1
+            return n * result
+        };
+        else return 1;
 }

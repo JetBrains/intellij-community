@@ -1,24 +1,24 @@
 class X {
-  int a;
-  def foo(def x) {
-    x++;
-    return x;
-  }
+    int a;
+    def foo(def x) {
+        x++;
+        return x;
+    }
 
-  {
-    <begin>foo<end>(a);
-  }
+    {
+        <begin>foo<end>(a);
+    }
 }
 -----
 class X {
-  int a;
-  def foo(def x) {
-    x++;
-    return x;
-  }
+    int a;
+    def foo(def x) {
+        x++;
+        return x;
+    }
 
-  {
-    def x1 = a
-    x1++;
-  }
+    {
+        def x1 = a
+        x1++;
+    }
 }
