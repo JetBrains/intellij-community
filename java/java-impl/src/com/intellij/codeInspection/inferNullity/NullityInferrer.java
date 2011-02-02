@@ -18,15 +18,8 @@ package com.intellij.codeInspection.inferNullity;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -43,16 +36,12 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class NullityInferrer {
-  private static final Logger LOG = Logger.getInstance("#" + NullityInferrer.class.getName());
-
   private static final int MAX_PASSES = 10;
   private int numAnnotationsAdded = 0;
-  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet =
-    new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet =
-    new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private boolean myAnnotateLocalVariables;
-  private SmartPointerManager myPointerManager;
+  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final boolean myAnnotateLocalVariables;
+  private final SmartPointerManager myPointerManager;
 
 
   public NullityInferrer(boolean annotateLocalVariables, Project project) {
@@ -260,11 +249,7 @@ public class NullityInferrer {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        neverNull = false;
-      } else {
-        neverNull = isNotNull(method);
-      }
+      neverNull = method != null && isNotNull(method);
     }
 
     private boolean isNeverNull() {
