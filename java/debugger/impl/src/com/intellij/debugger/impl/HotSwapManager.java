@@ -84,6 +84,9 @@ public class HotSwapManager extends AbstractProjectComponent {
         CompilerPathsEx.visitFiles(allDirs, new CompilerPathsEx.FileVisitor() {
 
           protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
+            if (progress.isCancelled()) {
+              return;
+            }
             progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
             if(file.getFileSystem() instanceof JarFileSystem && FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFile(file))) {
               if(file.getTimeStamp() > timeStamp) {
@@ -96,6 +99,9 @@ public class HotSwapManager extends AbstractProjectComponent {
           }
 
           protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
+            if (progress.isCancelled()) {
+              return;
+            }
             if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(fileTypeManager.getFileTypeByFile(file))) {
               //noinspection HardCodedStringLiteral
               if (SystemInfo.isFileSystemCaseSensitive? filePath.endsWith(CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {

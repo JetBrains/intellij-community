@@ -16,10 +16,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -47,13 +50,13 @@ public class LoadController implements Loader {
   public void loadSkeleton(final Mediator.Ticket ticket,
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
-                           final Collection<Collection<ChangesFilter.Filter>> filters,
-                           String[] possibleHashes,
+                           final GitLogFilters filters,
                            final LoadGrowthController loadGrowthController) {
     if (myPreviousAlgorithm != null) {
       myPreviousAlgorithm.stop();
     }
     final List<LoaderAndRefresher<CommitHashPlusParents>> list = new ArrayList<LoaderAndRefresher<CommitHashPlusParents>>();
+    final List<ByRootLoader> shortLoaders = new ArrayList<ByRootLoader>();
     final List<VirtualFile> roots = rootsHolder.getRoots();
     int i = 0;
     for (VirtualFile root : roots) {
@@ -61,49 +64,23 @@ public class LoadController implements Loader {
         new LoaderAndRefresherImpl.OneRootHolder(root) :
         new LoaderAndRefresherImpl.ManyCaseHolder(i, rootsHolder);
 
-      if (filters.isEmpty()) {
-        final LoaderAndRefresherImpl loaderAndRefresher =
-        new LoaderAndRefresherImpl(ticket, Collections.<ChangesFilter.Filter>emptyList(), myMediator, startingPoints, myDetailsCache,
-                                   myProject, rootHolder, myUsersIndex, loadGrowthController.getId());
-        list.add(loaderAndRefresher);
-      } else {
-        Collection<Collection<ChangesFilter.Filter>> reordered = new ArrayList<Collection<ChangesFilter.Filter>>();
-        final Iterator<Collection<ChangesFilter.Filter>> iterator = filters.iterator();
-        if (iterator.hasNext()) {
-          final Collection<ChangesFilter.Filter> first = iterator.next();
-          for (ChangesFilter.Filter filter : first) {
-            final ArrayList<ChangesFilter.Filter> newList = new ArrayList<ChangesFilter.Filter>();
-            newList.add(filter);
-            reordered.add(newList);
-          }
-        }
-        while (iterator.hasNext()) {
-          final Collection<ChangesFilter.Filter> next = iterator.next();
-          final Collection<Collection<ChangesFilter.Filter>> reorderedCopy = reordered;
-          reordered = new ArrayList<Collection<ChangesFilter.Filter>>();
-          for (ChangesFilter.Filter filter : next) {
-            for (Collection<ChangesFilter.Filter> filterCollection : reorderedCopy) {
-              final ArrayList<ChangesFilter.Filter> newList = new ArrayList<ChangesFilter.Filter>(filterCollection);
-              newList.add(filter);
-              reordered.add(newList);
-            }
-          }
-        }
-
-        for (Collection<ChangesFilter.Filter> filterCollection : reordered) {
+      filters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
+        @Override
+        public void consume(final List<ChangesFilter.Filter> filters) {
           final LoaderAndRefresherImpl loaderAndRefresher =
-          new LoaderAndRefresherImpl(ticket, filterCollection, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
+          new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
                                      loadGrowthController.getId());
           list.add(loaderAndRefresher);
         }
-      }
+      }, true);
+
+      shortLoaders.add(new ByRootLoader(myProject, rootHolder, myMediator, myDetailsCache, ticket, myUsersIndex, filters, startingPoints));
       ++ i;
     }
 
     myUsersComponent.acceptUpdate(myUsersIndex.getKeys());
 
-    //final List<String> abstractHashs = possibleHashes == null ? null : filterNumbers(possibleHashes);
-    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, possibleHashes == null ? null : Arrays.asList(possibleHashes));
+    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders);
     myPreviousAlgorithm.execute();
   }
 

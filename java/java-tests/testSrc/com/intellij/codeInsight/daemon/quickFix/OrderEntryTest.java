@@ -133,6 +133,10 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     doTest("A/src/x/DoTest4.java");
   }
 
+  public void testAddJunit4inJunit() throws Exception {
+    doTest("A/src/x/DoTest4junit.java");
+  }
+
   public void testExistingJunit() throws Exception {
     doTest("B/src/y/AddExistingJunit.java");
   }

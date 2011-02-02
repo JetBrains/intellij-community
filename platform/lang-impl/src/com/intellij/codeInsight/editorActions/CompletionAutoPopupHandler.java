@@ -86,6 +86,11 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
+    if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.NoCompletion.getClass())) {
+      return Result.CONTINUE;
+    }
+
+
     final CharSequence text = editor.getDocument().getCharsSequence();
     final int offset = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
     if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
@@ -134,11 +139,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         }
       }
     };
-    if (ourTestingAutopopup) {
-      ApplicationManager.getApplication().invokeLater(request);
-    } else {
-      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
-    }
+    AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
     return Result.STOP;
   }
 

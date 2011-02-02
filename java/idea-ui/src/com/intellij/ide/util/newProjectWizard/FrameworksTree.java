@@ -19,6 +19,7 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -90,6 +91,11 @@ public class FrameworksTree extends CheckboxTree {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      // Fix GTK background
+      if (UIUtil.isUnderGTKLookAndFeel()){
+        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        UIUtil.changeBackGround(this, background);
+      }
       if (value instanceof FrameworkSupportNode) {
         final FrameworkSupportNode node = (FrameworkSupportNode)value;
         getTextRenderer().append(node.getTitle());

@@ -181,7 +181,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void setFocusLookupWhenDone(boolean focusLookup) {
     LOG.assertTrue(isAutopopupCompletion());
     if (focusLookup) {
-      ((CompletionPhase.BgCalculation)CompletionServiceImpl.getCompletionPhase()).focusLookupWhenDone = true;
+      final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      if (!(phase instanceof CompletionPhase.Restarted)) {
+        ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone = true;
+      }
     } else {
       myLookup.setAdvertisementText("Press " +
                                     CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
@@ -378,10 +381,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void closeAndFinish(boolean hideLookup) {
-    LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+    final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    LOG.assertTrue(this == current, current);
 
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
-    LOG.assertTrue(lookup == myLookup);
+    LOG.assertTrue(lookup == myLookup, lookup);
     myLookup.removeLookupListener(myLookupListener);
     finishCompletionProcess();
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
@@ -410,6 +414,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.finishCompletionProcess();
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
+    } else {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
   }
 

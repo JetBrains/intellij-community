@@ -433,7 +433,7 @@ public class CreateFromUsageUtils {
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
-          if (expr.textMatches(expression)) {
+          if (expr.textMatches(expression) && expr.resolve() == null) {
             result.add(expr);
           }
         }

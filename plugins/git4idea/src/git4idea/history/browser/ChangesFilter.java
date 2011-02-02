@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,21 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class ChangesFilter {
+
+  public static void filtersToParameters(Collection<Filter> filters, List<String> parameters) {
+    for (Filter filter : filters) {
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
+    }
+  }
+
+  public static String[] filtersToParameterArray(Collection<Filter> filters) {
+    if (filters == null || filters.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
+    final ArrayList<String> strings = new ArrayList<String>();
+    for (Filter filter : filters) {
+      filter.getCommandParametersFilter().applyToCommandLine(strings);
+    }
+    return strings.toArray(new String[strings.size()]);
+  }
 
   public abstract static class Merger {
     private final Collection<MemoryFilter> myFilters;

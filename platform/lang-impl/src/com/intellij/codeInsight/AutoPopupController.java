@@ -110,7 +110,7 @@ public class AutoPopupController implements Disposable {
   }
 
   public void invokeAutoPopupRunnable(final Runnable request, final int delay) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) return;
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);

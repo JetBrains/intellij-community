@@ -126,6 +126,16 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
   }
 
   @Override
+  public void addJarDirectory(VirtualFile file, boolean recursive, OrderRootType rootType) {
+    getModel().addJarDirectory(file, recursive, rootType);
+  }
+
+  @Override
+  public void addJarDirectory(String url, boolean recursive, OrderRootType rootType) {
+    getModel().addJarDirectory(url, recursive, rootType);
+  }
+
+  @Override
   public void removeRoot(String url, OrderRootType rootType) {
     while (getModel().removeRoot(url, rootType)) ;
   }
@@ -156,13 +166,18 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
     }
     return myLibraryProperties != null && !myLibraryProperties.equals(getOriginalProperties());
   }
-  
+
   @Override
   public boolean isJarDirectory(String url) {
+    return isJarDirectory(url, OrderRootType.CLASSES);
+  }
+
+  @Override
+  public boolean isJarDirectory(String url, OrderRootType rootType) {
     if (myModel != null) {
-      return myModel.isJarDirectory(url);
+      return myModel.isJarDirectory(url, rootType);
     }
-    return myLibrary.isJarDirectory(url); 
+    return myLibrary.isJarDirectory(url, rootType);
   }
 
   @Override
@@ -170,6 +185,6 @@ public class ExistingLibraryEditor implements LibraryEditor, Disposable {
     if (myModel != null) {
       return myModel.isValid(url, orderRootType);
     }
-    return myLibrary.isValid(url, orderRootType); 
+    return myLibrary.isValid(url, orderRootType);
   }
 }

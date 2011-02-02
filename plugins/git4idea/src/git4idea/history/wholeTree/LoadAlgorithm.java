@@ -31,13 +31,13 @@ public class LoadAlgorithm {
 
   private final Project myProject;
   private final List<LoaderAndRefresher<CommitHashPlusParents>> myLoaders;
-  private final List<String> myAbstractHashs;
+  private final List<ByRootLoader> myShortLoaders;
   private final Continuation myContinuation;
 
-  public LoadAlgorithm(final Project project, final List<LoaderAndRefresher<CommitHashPlusParents>> loaders, final List<String> abstractHashs) {
+  public LoadAlgorithm(final Project project, final List<LoaderAndRefresher<CommitHashPlusParents>> loaders, final List<ByRootLoader> shortLoaders) {
     myProject = project;
     myLoaders = loaders;
-    myAbstractHashs = abstractHashs;
+    myShortLoaders = shortLoaders;
     myContinuation = new Continuation(myProject, false);
   }
 
@@ -45,13 +45,13 @@ public class LoadAlgorithm {
     final ContinuationContext.GatheringContinuationContext initContext =
       new ContinuationContext.GatheringContinuationContext();
 
-    if (myAbstractHashs != null) {
-      initContext.last(new TryHashes());
-    }
     for (LoaderAndRefresher<CommitHashPlusParents> loader : myLoaders) {
       final LoaderFactory factory = new LoaderFactory(loader);
       final State state = new State(factory);
       state.scheduleSelf(initContext);
+    }
+    for (ByRootLoader shortLoader : myShortLoaders) {
+      initContext.next(shortLoader);
     }
     myContinuation.run(initContext.getList());
   }
@@ -65,19 +65,6 @@ public class LoadAlgorithm {
 
   public void resume() {
     myContinuation.resume();
-  }
-
-  private class TryHashes extends TaskDescriptor {
-    private TryHashes() {
-      super("Try load by hashes", Where.POOLED);
-    }
-
-    @Override
-    public void run(ContinuationContext context) {
-      for (LoaderAndRefresher loader : myLoaders) {
-        loader.loadByHashesAside(myAbstractHashs);
-      }
-    }
   }
 
   private static class LoadTaskDescriptor extends TaskDescriptor {

@@ -32,6 +32,7 @@
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="commons-lang" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

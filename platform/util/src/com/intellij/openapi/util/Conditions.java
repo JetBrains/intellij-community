@@ -16,6 +16,10 @@
 
 package com.intellij.openapi.util;
 
+import com.intellij.reference.SoftReference;
+
+import java.util.HashMap;
+
 /**
  * @author max
  */
@@ -37,6 +41,9 @@ public class Conditions {
   }
   public static <T> Condition<T> or(Condition<T> c1, Condition<T> c2) {
     return new Or<T>(c1, c2);
+  }
+  public static <T> Condition<T> cached(Condition<T> c) {
+    return new SoftRefCache<T>(c);
   }
 
   private static class Not<T> implements Condition<T> {
@@ -87,4 +94,27 @@ public class Conditions {
       return false;
     }
   };
+
+  private static class SoftRefCache<T> implements Condition<T> {
+    private final HashMap<Integer, Pair<SoftReference<T>, Boolean>> myCache = new HashMap<Integer, Pair<SoftReference<T>, Boolean>>();
+    private final Condition<T> myCondition;
+
+    public SoftRefCache(Condition<T> condition) {
+      myCondition = condition;
+    }
+
+    @Override
+    public final boolean value(T object) {
+      final int key = object.hashCode();
+      final Pair<SoftReference<T>, Boolean> entry = myCache.get(key);
+      if (entry == null || entry.first.get() != object) {
+        boolean value = myCondition.value(object);
+        myCache.put(key, Pair.create(new SoftReference<T>(object), value));
+        return value;
+      }
+      else {
+        return entry.second;
+      }
+    }
+  }
 }

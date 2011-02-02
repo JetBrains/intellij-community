@@ -14,7 +14,6 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,16 +26,14 @@ import java.util.List;
 public interface Mediator {
   void reload(RootsHolder rootsHolder,
               final Collection<String> startingPoints,
-              final Collection<Collection<ChangesFilter.Filter>> filters,
-              @Nullable String[] possibleHashes);
+              @Nullable final GitLogFilters filters);
 
   /**
    * @return false -> ticket already changed
    */
   StepType appendResult(final Ticket ticket,
                         final List<CommitI> result,
-                        @Nullable final List<List<AbstractHash>> parents,
-                        LoadGrowthController.ID id);
+                        @Nullable final List<List<AbstractHash>> parents);
 
   void reportSymbolicRefs(final Ticket ticket, VirtualFile root, final SymbolicRefs symbolicRefs);
 

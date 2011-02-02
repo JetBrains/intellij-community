@@ -531,7 +531,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private LookupArranger getActualArranger() {
-    if (UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY) {
+    if (isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY) {
       return LookupArranger.LEXICOGRAPHIC;
     }
     return myCustomArranger;
@@ -1124,7 +1124,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void updateScrollbarVisibility() {
-    boolean showSorting = getList().getModel().getSize() >= 3;
+    boolean showSorting = isCompletion() && getList().getModel().getSize() >= 3;
     mySortingLabel.setVisible(showSorting);
     myScrollPane.setVerticalScrollBarPolicy(showSorting ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
   }

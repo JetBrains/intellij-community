@@ -125,7 +125,13 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public PsiElement getPsiElement() {
-    return myDirectory;
+    DirectoryNode dirNode = this;
+    while (dirNode.getCompactedDirNode() != null) {
+      dirNode = dirNode.getCompactedDirNode();
+      assert dirNode != null;
+    }
+
+    return dirNode.myDirectory;
   }
 
   public int getWeight() {

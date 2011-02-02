@@ -85,4 +85,14 @@ public class SessionDialog extends DialogWrapper {
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
   }
+
+  @Override
+  protected String getHelpId() {
+    try {
+      return mySession.getHelpId();
+    }
+    catch (AbstractMethodError e) {
+      return null;
+    }
+  }
 }

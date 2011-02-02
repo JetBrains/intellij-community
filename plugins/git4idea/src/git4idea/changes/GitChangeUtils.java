@@ -34,7 +34,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.CommitI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -301,10 +300,12 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference) {
+  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
+                                     final String... parameters) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
+    h.addParameters(parameters);
     h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", "\"" + anyReference + "\"", "--");
     try {
       final String output = h.run().trim();
@@ -313,6 +314,22 @@ public class GitChangeUtils {
     }
     catch (VcsException e) {
       return null;
+    }
+  }
+
+  public static boolean isAnyLevelChild(final Project project, final VirtualFile root, final SHAHash parent,
+                                        final String anyReferenceChild) {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("\"" + parent.getValue() + "\"","\"" + anyReferenceChild + "\"",  "--");
+    try {
+      final String output = h.run().trim();
+      if (StringUtil.isEmptyOrSpaces(output)) return false;
+      return parent.getValue().equals(output.trim());
+    }
+    catch (VcsException e) {
+      return false;
     }
   }
 
