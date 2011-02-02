@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubs;
+package com.intellij.openapi.diagnostic;
 
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+public class LogUtil {
+  private LogUtil() { }
 
-/*
- * @author max
- */
-public interface StubSerializer<T extends StubElement> {
-  @NonNls
-  String getExternalId();
-
-  void serialize(T stub, StubOutputStream dataStream) throws IOException;
-  T deserialize(StubInputStream dataStream, final StubElement parentStub) throws IOException;
-
-  void indexStub(T stub, IndexSink sink);
+  public static String objectAndClass(@Nullable final Object o) {
+    return o != null ? o + " (" + o.getClass().getName() + ")" : "null";
+  }
 }
