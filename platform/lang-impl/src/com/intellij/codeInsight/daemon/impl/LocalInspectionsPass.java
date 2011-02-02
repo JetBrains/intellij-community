@@ -75,6 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
+  private static final int NUM_ELEMENTS_PER_CHECK_CANCELLED = 5;
   private final int myStartOffset;
   private final int myEndOffset;
   private final TextRange myPriorityRange;
@@ -307,7 +308,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     int size = elements.size();
     for (int i = 0; i < size; ++i) {
       elements.get(i).accept(visitor);
-      if (i % 5 == 0) indicator.checkCanceled();
+      if (i % NUM_ELEMENTS_PER_CHECK_CANCELLED == 0) indicator.checkCanceled();
     }
     return visitor;
   }
@@ -332,9 +333,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           ProblemsHolder holder = trinity.second;
           PsiElementVisitor elementVisitor = trinity.third;
           for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-            PsiElement element = elements.get(i);
-            indicator.checkCanceled();
-            element.accept(elementVisitor);
+            elements.get(i).accept(elementVisitor);
+            if (i % NUM_ELEMENTS_PER_CHECK_CANCELLED == 0) indicator.checkCanceled();
           }
 
           advanceProgress(1);
