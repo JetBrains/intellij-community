@@ -77,7 +77,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     myLibraryManager.reset();
     Map<VirtualFile,ScriptingLibraryTable.LibraryModel> map = getMappings();
     myCompoundLibMap.clear();
-    myProjectLibs = null;
+    myProjectLibs = new CompoundLibrary();
     for (VirtualFile file : map.keySet().toArray(new VirtualFile[map.size()])) {
       ScriptingLibraryTable.LibraryModel value = getImmediateMapping(file);
       if (value instanceof CompoundLibrary) {
