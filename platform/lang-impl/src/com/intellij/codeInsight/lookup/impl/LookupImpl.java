@@ -146,7 +146,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(myScrollPane, BorderLayout.NORTH);
     myScrollPane.setBorder(null);
 
-    myAdComponent = HintUtil.createAdComponent(null);
+    myAdComponent = HintUtil.createAdComponent(null, new EmptyBorder(1, 2, 1, 2 + relevanceSortIcon.getIconWidth()));
     getComponent().add(myAdComponent, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
@@ -162,7 +162,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     addListeners();
 
     mySortingLabel = new JLabel();
-    mySortingLabel.setBorder(new LineBorder(Color.DARK_GRAY));
+    mySortingLabel.setBorder(new LineBorder(Color.LIGHT_GRAY));
     mySortingLabel.setOpaque(true);
     mySortingLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -1112,14 +1112,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private void layoutStatusIcons() {
     final JLayeredPane layeredPane = getComponent().getRootPane().getLayeredPane();
-    final int width = layeredPane.getWidth();
-    final int height = layeredPane.getHeight();
 
     final Dimension iconSize = myProcessIcon.getPreferredSize();
-    myIconPanel.setBounds(width - iconSize.width, 0, iconSize.width, iconSize.height);
+    myIconPanel.setBounds(layeredPane.getWidth() - iconSize.width, 0, iconSize.width, iconSize.height);
 
     final Dimension sortSize = mySortingLabel.getPreferredSize();
-    mySortingLabel.setBounds(width - sortSize.width, height - sortSize.height, sortSize.width, sortSize.height);
+    final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, layeredPane);
+
+    final int sortHeight = (StringUtil.isNotEmpty(myAdText) ? myAdComponent : mySortingLabel).getPreferredSize().height;
+    mySortingLabel.setBounds(sbLocation.x, layeredPane.getHeight() - sortHeight, sortSize.width, sortHeight);
 
   }
 
