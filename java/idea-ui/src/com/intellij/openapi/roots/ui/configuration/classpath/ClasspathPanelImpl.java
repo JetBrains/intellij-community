@@ -458,6 +458,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
+  public ModuleConfigurationState getModuleConfigurationState() {
+    return myState;
+  }
+
+  @Override
   public JComponent getComponent() {
     return this;
   }
