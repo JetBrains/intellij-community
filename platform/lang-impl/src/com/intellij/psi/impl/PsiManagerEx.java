@@ -46,8 +46,6 @@ public abstract class PsiManagerEx extends PsiManager {
    */
   public abstract void registerRunnableToRunOnChange(@NotNull Runnable runnable);
 
-  public abstract void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable);
-
   /**
    * @param runnable to be run before <b>physical</b> or <b>non-physical</b> PSI change
    */

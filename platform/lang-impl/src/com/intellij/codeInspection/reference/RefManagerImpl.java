@@ -373,6 +373,7 @@ public class RefManagerImpl extends RefManager {
         visitElement(viewProvider.getPsi(language));
       }
       myPsiManager.dropResolveCaches();
+      myPsiManager.dropFileCaches(file);
     }
   }
 

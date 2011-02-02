@@ -186,6 +186,10 @@ public class MockPsiManager extends PsiManagerEx {
 
   }
 
+  @Override
+  public void dropFileCaches(@NotNull PsiFile file) {
+  }
+
   public void postponeAutoFormattingInside(Runnable runnable) {
     PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
@@ -220,9 +224,6 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
-  }
-
-  public void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable) {
   }
 
   public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
