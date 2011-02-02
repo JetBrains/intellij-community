@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
@@ -375,7 +376,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
     group.add(actionManager.createCollapseAllAction(treeExpander, tree));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-    group.add(ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS));
     appendDependenciesAction(group);
     return group;
   }
@@ -432,7 +432,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private static class MyUserObject implements Navigatable{
+  private static class MyUserObject implements NavigatableWithText{
     private boolean myInCycle;
     private final Module myModule;
 
@@ -475,6 +475,11 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     public boolean canNavigateToSource() {
       return false;
+    }
+
+    @Override
+    public String getNavigateActionText(boolean focusEditor) {
+      return "Open Module Settings";
     }
   }
 
