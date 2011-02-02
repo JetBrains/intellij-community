@@ -43,6 +43,11 @@ public interface CommitSession {
 
     public void executionCanceled() {
     }
+
+    @Override
+    public String getHelpId() {
+      return null;
+    }
   };
 
   /**
@@ -57,4 +62,10 @@ public interface CommitSession {
   boolean canExecute(Collection<Change> changes, String commitMessage);
   void execute(Collection<Change> changes, String commitMessage);
   void executionCanceled();
+
+  /**
+   * @return the ID of the help topic to show for the dialog
+   * @since 10.5
+   */
+  String getHelpId();
 }
