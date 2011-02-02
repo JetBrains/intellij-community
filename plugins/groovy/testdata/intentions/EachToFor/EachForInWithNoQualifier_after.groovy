@@ -1,7 +1,7 @@
 class MyList extends ArrayList {
   def foo() {
-    for (x in this) {
-      print x;
-    }
+      fo<caret>r (x in this) {
+          print x;
+      }
   }
 }

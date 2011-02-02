@@ -1,10 +1,10 @@
-class A {
+<caret>class A {
   def foo() {
-    print Other.<selection>CONST</selection>
+    print Other.CONST
   }
 }
 
 class Other {
 
-  static final protected CONST = "abc"
+    static final protected CONST = "abc"
 }

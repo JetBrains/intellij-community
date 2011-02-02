@@ -1,11 +1,11 @@
 class Foo {
-  def Foo(int p) {}
+  def Fo<caret>o(int p) {}
 }
 
 class Bar extends Foo {
-  def Bar() {
-    super(5)
-  }
+    def Bar() {
+        super(5)
+    }
 
-  def get() {return "a"}
+    def get() {return "a"}
 }

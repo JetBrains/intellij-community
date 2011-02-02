@@ -1,7 +1,7 @@
-class Foo {
-  public static final String CONST = "text"
+<caret>class Foo {
+    public static final String CONST = "text"
 
-  def foo() {
-    print <selection>CONST</selection>;
+    def foo() {
+    print CONST;
   }
 }
