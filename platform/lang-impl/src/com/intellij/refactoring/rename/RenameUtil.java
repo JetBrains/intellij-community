@@ -54,7 +54,7 @@ public class RenameUtil {
 
   @NotNull
   public static UsageInfo[] findUsages(final PsiElement element,
-                                       String newName,
+                                       final String newName,
                                        boolean searchInStringsAndComments,
                                        boolean searchForTextOccurrences,
                                        Map<? extends PsiElement, String> allRenames) {
@@ -65,7 +65,7 @@ public class RenameUtil {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
 
     Collection<PsiReference> refs = processor.findReferences(element);
-    for (PsiReference ref : refs) {
+    for (final PsiReference ref : refs) {
       if (ref == null) {
         LOG.error("null reference from processor " + processor);
         continue;
@@ -74,6 +74,14 @@ public class RenameUtil {
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
                                          ref.resolve() == null));
+      if (!isValidName(element.getProject(), ref.getElement(), newName)) {
+        result.add(new UnresolvableCollisionUsageInfo(ref.getElement(), element) {
+          @Override
+          public String getDescription() {
+            return RefactoringBundle.message("0.is.not.an.identifier", newName, ref.getElement().getText());
+          }
+        });
+      }
     }
 
     processor.findCollisions(element, newName, allRenames, result);
