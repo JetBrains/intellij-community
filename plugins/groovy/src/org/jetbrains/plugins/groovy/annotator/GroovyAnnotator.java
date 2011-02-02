@@ -677,14 +677,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
-    final String name = labeledStatement.getLabelName();
-    if (ResolveUtil.resolveLabeledStatement(name, labeledStatement, true) != null) {
-      myHolder.createWarningAnnotation(labeledStatement.getLabel(), GroovyBundle.message("label.already.used", name));
-    }
-  }
-
-  @Override
   public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
     //todo: if reference isn't resolved it construct package definition
     final PsiFile file = packageDefinition.getContainingFile();
