@@ -375,8 +375,12 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       group.add(actionManager.createExpandAllAction(treeExpander, tree));
     }
     group.add(actionManager.createCollapseAllAction(treeExpander, tree));
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-    appendDependenciesAction(group);
+    final ActionManager globalActionManager = ActionManager.getInstance();
+    group.add(globalActionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.add(Separator.getInstance());
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_BACK_DEPENDENCIES));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
     return group;
   }
 
