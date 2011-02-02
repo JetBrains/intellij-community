@@ -22,23 +22,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
-import git4idea.config.GitConfigUtil;
+import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
+import git4idea.update.GitStashUtils;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +43,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -164,12 +158,12 @@ public class GitUnstashDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         final StashInfo stash = getSelectedStash();
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
-                                                     GitBundle.message("git.unstash.drop.confirmation.message", stash.myStash, stash.myMessage),
-                                                     GitBundle.message("git.unstash.drop.confirmation.title", stash.myStash), Messages.getQuestionIcon())) {
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.myStash, false) {
+                                                     GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
+                                                     GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              GitSimpleHandler h = dropHandler(stash.myStash);
+              GitSimpleHandler h = dropHandler(stash.getStash());
               try {
                 h.run();
                 h.unsilence();
@@ -178,7 +172,7 @@ public class GitUnstashDialog extends DialogWrapper {
                 try {
                   //noinspection HardCodedStringLiteral
                   if (ex.getMessage().startsWith("fatal: Needed a single revision")) {
-                    h = dropHandler(translateStash(stash.myStash));
+                    h = dropHandler(translateStash(stash.getStash()));
                     h.run();
                   }
                   else {
@@ -209,7 +203,7 @@ public class GitUnstashDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         final VirtualFile root = getGitRoot();
         String resolvedStash;
-        String selectedStash = getSelectedStash().myStash;
+        String selectedStash = getSelectedStash().getStash();
         try {
           resolvedStash = GitRevisionNumber.resolve(myProject, root, selectedStash).asString();
         }
@@ -312,22 +306,12 @@ public class GitUnstashDialog extends DialogWrapper {
   private void refreshStashList() {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
-    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
-    h.setSilent(true);
-    h.setNoSSH(true);
-    h.addParameters("list");
-    String out;
-    try {
-      h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(myProject, getGitRoot())));
-      out = h.run();
-    }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, h.printableCommandLine());
-      return;
-    }
-    for (StringScanner s = new StringScanner(out); s.hasMoreData();) {
-      listModel.addElement(new StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim()));
-    }
+    GitStashUtils.loadStashStack(myProject, getGitRoot(), new Consumer<StashInfo>() {
+      @Override
+      public void consume(StashInfo stashInfo) {
+        listModel.addElement(stashInfo);
+      }
+    });
     myBranches.clear();
     try {
       GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranches, null);
@@ -361,7 +345,7 @@ public class GitUnstashDialog extends DialogWrapper {
     else {
       h.addParameters("branch", branch);
     }
-    String selectedStash = getSelectedStash().myStash;
+    String selectedStash = getSelectedStash().getStash();
     if (escaped) {
       selectedStash = translateStash(selectedStash);
     } else if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) { // else if, because escaping {} also solves the issue
@@ -436,29 +420,6 @@ public class GitUnstashDialog extends DialogWrapper {
     }
     if (rc != 0) {
       GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
-    }
-  }
-
-  /**
-   * Information about one stash.
-   */
-  private static class StashInfo {
-    private final String myStash; // stash codename (stash@{1})
-    private final String myBranch;
-    private final String myMessage;
-    private final String myText; // The formatted text representation
-
-    public StashInfo(final String stash, final String branch, final String message) {
-      myStash = stash;
-      myBranch = branch;
-      myMessage = message;
-      myText =
-        GitBundle.message("unstash.stashes.item", StringUtil.escapeXml(stash), StringUtil.escapeXml(branch), StringUtil.escapeXml(message));
-    }
-
-    @Override
-    public String toString() {
-      return myText;
     }
   }
 }

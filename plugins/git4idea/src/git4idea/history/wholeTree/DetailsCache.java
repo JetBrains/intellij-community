@@ -20,26 +20,30 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
 import git4idea.history.browser.GitCommit;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author irengrig
  */
 public class DetailsCache {
   private final static int ourSize = 400;
-  private boolean mySomethingIsMissing;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit> myCache;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
   private final DetailsLoaderImpl myDetailsLoader;
   private final ModalityState myModalityState;
   private AbstractCalledLater myRefresh;
+  private final Map<VirtualFile, Map<AbstractHash, String>> myStash;
   private final Object myLock;
 
   public DetailsCache(final Project project, final UIRefresh uiRefresh, final DetailsLoaderImpl detailsLoader, final ModalityState modalityState) {
     myDetailsLoader = detailsLoader;
     myModalityState = modalityState;
+    myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
     myRefresh = new AbstractCalledLater(project, myModalityState) {
       @Override
       public void run() {
@@ -47,7 +51,6 @@ public class DetailsCache {
       }
     };
     myLock = new Object();
-    mySomethingIsMissing = false;
     myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 50);
     myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(10, 10);
   }
@@ -60,9 +63,6 @@ public class DetailsCache {
 
   public void acceptQuestion(final MultiMap<VirtualFile,AbstractHash> hashes) {
     if (hashes.isEmpty()) return;
-    synchronized (myLock) {
-      mySomethingIsMissing = ! hashes.isEmpty();
-    }
     myDetailsLoader.load(hashes);
   }
 
@@ -71,9 +71,6 @@ public class DetailsCache {
       for (GitCommit commit : commits) {
         myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
       }
-//      if (mySomethingIsMissing) {
-        mySomethingIsMissing = false;
-//      }
     }
     myRefresh.callMe();
   }
@@ -94,9 +91,25 @@ public class DetailsCache {
     }
   }
 
-  public void resetBranchesCache() {
+  public void resetAsideCaches() {
     synchronized (myLock) {
       myBranches.clear();
+      myStash.clear();
+      myCache.clear();
+    }
+  }
+
+  public void putStash(final VirtualFile root, final Map<AbstractHash, String> stash) {
+    synchronized (myLock) {
+      myStash.put(root, stash);
+    }
+  }
+
+  @Nullable
+  public String getStashName(final VirtualFile root, final AbstractHash hash) {
+    synchronized (myLock) {
+      final Map<AbstractHash, String> map = myStash.get(root);
+      return map == null ? null : map.get(hash);
     }
   }
 }

@@ -365,7 +365,7 @@ public class GitLogUI implements Disposable {
       if (gitCommit == null) return;
       final List<String> branches = myDetailsCache.getBranches(root, commit.getHash());
       if (branches != null) {
-        myDetails.putBranches(gitCommit, branches);
+        myDetails.putBranches(root, gitCommit, branches);
       }
       final Application application = ApplicationManager.getApplication();
       application.executeOnPooledThread(new Runnable() {
@@ -383,7 +383,7 @@ public class GitLogUI implements Disposable {
                 if (myDetails.isMissingBranchesInfo() && afterRows.length == 1 && afterRows[0] == rows[0]) {
                   final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
                   if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
-                  myDetails.putBranches(gitCommit, branches);
+                  myDetails.putBranches(root, gitCommit, branches);
                 }
               }
             }, ModalityState.NON_MODAL, myProject.getDisposed());
@@ -888,22 +888,27 @@ public class GitLogUI implements Disposable {
   }
 
   private Color getLogicBackground(final boolean isSelected, final int row) {
-    final Color bkgColor;
+    Color bkgColor;
     final CommitI commitAt = myTableModel.getCommitAt(row);
     GitCommit gitCommit = null;
+    VirtualFile root = null;
     if (commitAt != null & (! commitAt.holdsDecoration())) {
-      gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+      root = commitAt.selectRepository(myRootsUnderVcs);
+      gitCommit = myDetailsCache.convert(root, commitAt.getHash());
     }
 
     if (isSelected) {
       bkgColor = UIUtil.getTableSelectionBackground();
     } else {
-      if (gitCommit != null && gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
-        bkgColor = Colors.commonThisBranch;
-      } else if (gitCommit != null && gitCommit.isOnLocal()) {
-        bkgColor = Colors.ownThisBranch;
-      } else {
-        bkgColor = UIUtil.getTableBackground();
+      bkgColor = UIUtil.getTableBackground();
+      if (gitCommit != null) {
+        if (myDetailsCache.getStashName(root, gitCommit.getShortHash()) != null) {
+          bkgColor = Colors.stashed;
+        } else if (gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
+          bkgColor = Colors.commonThisBranch;
+        } else if (gitCommit.isOnLocal()) {
+          bkgColor = Colors.ownThisBranch;
+        }
       }
     }
     return bkgColor;
@@ -986,7 +991,7 @@ public class GitLogUI implements Disposable {
   private void reloadRequest() {
     myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
-    myDetailsCache.resetBranchesCache();
+    myDetailsCache.resetAsideCaches();
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
     myDescriptionRenderer.resetIcons();
     final boolean commentFilterEmpty = StringUtil.isEmptyOrSpaces(myPreviousFilter);
@@ -995,18 +1000,18 @@ public class GitLogUI implements Disposable {
 
     if (commentFilterEmpty && (myUserFilterI.myFilter == null)) {
       myUsersSearchContext.clear();
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, Collections.<Collection<ChangesFilter.Filter>>emptyList(), null);
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters());
     } else {
-      final List<Collection<ChangesFilter.Filter>> filters = new ArrayList<Collection<ChangesFilter.Filter>>();
-
+      ChangesFilter.Comment comment = null;
       if (! commentFilterEmpty) {
         final Pair<String, List<String>> preparse = preparse(myPreviousFilter);
         final String first = preparse.getFirst();
-        filters.add(Collections.<ChangesFilter.Filter>singletonList(new ChangesFilter.Comment(first)));
+        comment = new ChangesFilter.Comment(first);
       }
+      Set<ChangesFilter.Filter> userFilters = null;
       if (myUserFilterI.myFilter != null) {
         final String[] strings = myUserFilterI.myFilter.split(",");
-        final List<ChangesFilter.Filter> userFilters = new ArrayList<ChangesFilter.Filter>();
+        userFilters = new HashSet<ChangesFilter.Filter>();
         for (String string : strings) {
           string = string.trim();
           if (string.length() == 0) continue;
@@ -1014,10 +1019,11 @@ public class GitLogUI implements Disposable {
           final String regexp = StringUtil.escapeToRegexp(string);
           userFilters.add(new ChangesFilter.Committer(regexp));
         }
-        filters.add(userFilters);
       }
 
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, filters, commentFilterEmpty ? null : myPreviousFilter.split("[\\s]"));
+      final List<String> possibleReferencies = commentFilterEmpty ? null : Arrays.asList(myPreviousFilter.split("[\\s]"));
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, null,
+                                                                                            possibleReferencies));
     }
     updateMoreVisibility();
     selectionChanged();
@@ -1031,6 +1037,7 @@ public class GitLogUI implements Disposable {
     Color local = new Color(117,238,199);
     Color ownThisBranch = new Color(198,255,226);
     Color commonThisBranch = new Color(223,223,255);
+    Color stashed = new Color(225,225,225);
   }
 
   private class MySpecificDetails {
@@ -1064,9 +1071,9 @@ public class GitLogUI implements Disposable {
       return scrollPane;
     }
 
-    public void putBranches(final GitCommit commit, final List<String> branches) {
+    public void putBranches(VirtualFile root, final GitCommit commit, final List<String> branches) {
       myMissingBranchesInfo = branches == null;
-      myJEditorPane.setText(parseDetails(commit, branches));
+      myJEditorPane.setText(parseDetails(root, commit, branches));
     }
 
     public boolean isMissingBranchesInfo() {
@@ -1097,11 +1104,11 @@ public class GitLogUI implements Disposable {
                                            s.equals(currentBranch))));
         }
         myMarksPanel.repaint();
-        myJEditorPane.setText(parseDetails(commit, branches));
+        myJEditorPane.setText(parseDetails(root, commit, branches));
       }
     }
 
-    private String parseDetails(final GitCommit c, final List<String> branches) {
+    private String parseDetails(VirtualFile root, final GitCommit c, final List<String> branches) {
       final String hash = new HtmlHighlighter(c.getHash().getValue()).getResult();
       final String author = new HtmlHighlighter(c.getAuthor()).getResult();
       final String committer = new HtmlHighlighter(c.getCommitter()).getResult();
@@ -1114,14 +1121,19 @@ public class GitLogUI implements Disposable {
                                                                        });
 
       final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
-        .append("</head><body><table><tr valign=\"top\"><td><i>Hash:</i></td><td>").append(
-          hash).append("</td></tr>" + "<tr valign=\"top\"><td><i>Author:</i></td><td>")
+        .append("</head><body><table>");
+      final String stashName = myDetailsCache.getStashName(root, c.getShortHash());
+      if (! StringUtil.isEmptyOrSpaces(stashName)) {
+        sb.append("<tr valign=\"top\"><td><b>").append(stashName).append("</b></td><td></td></tr>");
+      }
+      sb.append("<tr valign=\"top\"><td><i>Hash:</i></td><td>").append(
+        hash).append("</td></tr>" + "<tr valign=\"top\"><td><i>Author:</i></td><td>")
         .append(author).append(" (").append(c.getAuthorEmail()).append(") <i>at</i> ")
         .append(DateFormatUtil.formatPrettyDateTime(c.getAuthorTime()))
         .append("</td></tr>" + "<tr valign=\"top\"><td><i>Commiter:</i></td><td>")
         .append(committer).append(" (").append(c.getComitterEmail()).append(") <i>at</i> ")
         .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
-          "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
+        "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
         .append(comment).append("</b></td></tr>");
       sb.append("<tr valign=\"top\"><td><i>Contained in branches:<i></td><td>");
       if (branches != null && (! branches.isEmpty())) {
@@ -1232,8 +1244,26 @@ public class GitLogUI implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      final boolean enabled = getSelectedCommitsAndCheck() != null;
-      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setEnabled(enabled());
+    }
+
+    private boolean enabled() {
+      final MultiMap<VirtualFile, GitCommit> commitsAndCheck = getSelectedCommitsAndCheck();
+      if (commitsAndCheck == null) return false;
+      for (VirtualFile root : commitsAndCheck.keySet()) {
+        final SymbolicRefs refs = myRefs.get(root);
+        final String currentBranch = refs == null ? null : (refs.getCurrent() == null ? null : refs.getCurrent().getName());
+        if (currentBranch == null) continue;
+        final Collection<GitCommit> commits = commitsAndCheck.get(root);
+        for (GitCommit commit : commits) {
+          if (commit.getParentsHashes().size() > 1) return false;
+          final List<String> branches = myDetailsCache.getBranches(root, commit.getShortHash());
+          if (branches != null && branches.contains(currentBranch)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
   }
 

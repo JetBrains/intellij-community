@@ -15,22 +15,9 @@
  */
 package git4idea.history;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.Convertor;
-import git4idea.GitContentRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.history.wholeTree.AbstractHash;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -80,8 +67,8 @@ class GitLogParser {
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
   enum GitLogOption {
-    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
-    SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d");
+    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
+    COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd");
 
     private String myPlaceholder;
     private GitLogOption(String placeholder) { myPlaceholder = placeholder; }
