@@ -15,8 +15,6 @@
  */
 package git4idea.history.wholeTree;
 
-import git4idea.history.browser.ChangesFilter;
-
 import java.util.Collection;
 
 /**
@@ -26,7 +24,7 @@ public interface Loader {
   void loadSkeleton(Mediator.Ticket ticket,
                     RootsHolder rootsHolder,
                     final Collection<String> startingPoints,
-                    final Collection<Collection<ChangesFilter.Filter>> filters, String[] possibleHashes, LoadGrowthController loadGrowthController);
+                    final GitLogFilters filters, LoadGrowthController loadGrowthController);
 
   void resume();
 }

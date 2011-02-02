@@ -84,7 +84,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     myProgressAnalog = new Getter<Boolean>() {
       @Override
       public Boolean get() {
-        return StepType.STOP.equals(myStepType);
+        return isInterrupted();
       }
     };
     myLowLevelAccess = new LowLevelAccessImpl(myProject, myRootHolder.getRoot());
@@ -105,7 +105,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
           }
         }
 
-        StepType stepType = myMediator.appendResult(myTicket, buffer, parents, id);
+        StepType stepType = myMediator.appendResult(myTicket, buffer, parents);
         if (! StepType.FINISHED.equals(myStepType)) {
           myStepType = stepType;
         }
@@ -267,7 +267,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       }
     }
     if (! result.isEmpty()) {
-      final StepType stepType = myMediator.appendResult(myTicket, result, parents, myId);
+      final StepType stepType = myMediator.appendResult(myTicket, result, parents);
       // here we react only on "stop", not on "pause"
       if (StepType.STOP.equals(stepType)) {
         myStepType = StepType.STOP;

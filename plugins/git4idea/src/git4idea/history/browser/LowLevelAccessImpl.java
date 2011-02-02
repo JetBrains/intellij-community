@@ -54,9 +54,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                                     final AsynchConsumer<CommitHashPlusParents> consumer,
                                     Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException {
     final List<String> parameters = new ArrayList<String>();
-    for (ChangesFilter.Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(parameters);
-    }
+    ChangesFilter.filtersToParameters(filters, parameters);
 
     if (! startingPoints.isEmpty()) {
       for (String startingPoint : startingPoints) {
@@ -110,6 +108,13 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
     }
     refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
+    // todo
+    /*GitStashUtils.loadStashStack(myProject, myRoot, new Consumer<StashInfo>() {
+      @Override
+      public void consume(StashInfo stashInfo) {
+
+      }
+    });*/
     return refs;
   }
 
@@ -125,10 +130,8 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("--max-count=" + useMaxCnt);
     }
 
-    for (ChangesFilter.Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(parameters);
-    }
-    
+    ChangesFilter.filtersToParameters(filters, parameters);
+
     if (! startingPoints.isEmpty()) {
       for (String startingPoint : startingPoints) {
         parameters.add(startingPoint);

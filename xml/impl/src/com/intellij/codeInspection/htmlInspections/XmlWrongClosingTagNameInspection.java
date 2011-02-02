@@ -18,6 +18,8 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -83,6 +85,17 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
                                       @NotNull final XmlTag tag,
                                       @Nullable final XmlToken start,
                                       @NotNull final XmlToken end) {
+    PsiElement context = tag.getContainingFile().getContext();
+    if (context != null) {
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
+      if (parserDefinition != null) {
+        ASTNode contextNode = context.getNode();
+        if (contextNode != null && contextNode.getChildren(parserDefinition.getStringLiteralElements()) != null) {
+          // TODO: we should check for concatenations here
+          return;
+        }
+      }
+    }
     final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
     final String endTokenText = (tag instanceof HtmlTag) ? end.getText().toLowerCase() : end.getText();
 
