@@ -245,6 +245,11 @@ public class TempFileSystem extends NewVirtualFileSystem {
     public String[] list() {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + ": " + myName;
+    }
   }
 
   private static class FSDir extends FSItem {
