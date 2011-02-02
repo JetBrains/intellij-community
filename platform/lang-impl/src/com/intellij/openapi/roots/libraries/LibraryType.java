@@ -16,11 +16,12 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +56,9 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   public abstract P createDefaultProperties();
 
   /**
-   * @return {@code true} if library of this type can be added as a dependency to a module of type {@code moduleType}
+   * @return {@code true} if library of this type can be added as a dependency to {@code module}
    */
-  public boolean isSuitableModuleType(@NotNull ModuleType moduleType) {
+  public boolean isSuitableModule(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
     return true;
   }
 
