@@ -36,7 +36,7 @@ public interface Library extends JDOMExternalizable, Disposable {
   @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
   /**
-   * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)! 
+   * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)!
    */
   @NotNull ModifiableModel getModifiableModel();
 
@@ -45,9 +45,11 @@ public interface Library extends JDOMExternalizable, Disposable {
   @NotNull RootProvider getRootProvider();
 
   boolean isJarDirectory(@NotNull String url);
-  
+
+  boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType);
+
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
-  
+
   interface ModifiableModel extends Disposable {
     @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 
@@ -56,12 +58,16 @@ public interface Library extends JDOMExternalizable, Disposable {
     String getName();
 
     void addRoot(@NonNls @NotNull String url, @NotNull OrderRootType rootType);
-    
+
     void addJarDirectory(@NotNull String url, boolean recursive);
 
+    void addJarDirectory(@NotNull String url, boolean recursive, @NotNull OrderRootType rootType);
+
     void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType);
-    
+
     void addJarDirectory(@NotNull VirtualFile file, boolean recursive);
+
+    void addJarDirectory(@NotNull VirtualFile file, boolean recursive, @NotNull OrderRootType rootType);
 
     void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType);
 
@@ -74,9 +80,11 @@ public interface Library extends JDOMExternalizable, Disposable {
     @NotNull VirtualFile[] getFiles(@NotNull OrderRootType rootType);
 
     boolean isChanged();
-    
+
     boolean isJarDirectory(@NotNull String url);
-    
+
+    boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType);
+
     boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
   }
 }

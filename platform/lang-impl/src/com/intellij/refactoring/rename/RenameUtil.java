@@ -74,14 +74,6 @@ public class RenameUtil {
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
                                          ref.resolve() == null));
-      if (!isValidName(element.getProject(), ref.getElement(), newName)) {
-        result.add(new UnresolvableCollisionUsageInfo(ref.getElement(), element) {
-          @Override
-          public String getDescription() {
-            return RefactoringBundle.message("0.is.not.an.identifier", newName, ref.getElement().getText());
-          }
-        });
-      }
     }
 
     processor.findCollisions(element, newName, allRenames, result);

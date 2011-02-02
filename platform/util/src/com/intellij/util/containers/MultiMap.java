@@ -206,4 +206,16 @@ public class MultiMap<K, V> {
   public static <K, V> MultiMap<K, V> emptyInstance() {
     return EMPTY;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MultiMap)) return false;
+    return myMap.equals(((MultiMap)o).myMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return myMap.hashCode();
+  }
 }

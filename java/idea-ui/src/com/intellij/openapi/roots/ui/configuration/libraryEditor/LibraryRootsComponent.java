@@ -325,7 +325,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           final LibraryEditor libraryEditor = getLibraryEditor();
           for (VirtualFile file : filesToAttach) {
             if (isJarDirectories) {
-              libraryEditor.addJarDirectory(file, false);
+              libraryEditor.addJarDirectory(file, false, rootType);
             }
             else {
               libraryEditor.addRoot(file, rootType);

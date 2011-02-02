@@ -77,7 +77,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
       for (String url : urls) {
-        items.add(new ItemElement(rootTypeElement, url, orderRootType, libraryEditor.isJarDirectory(url), libraryEditor.isValid(url, orderRootType)));
+        items.add(new ItemElement(rootTypeElement, url, orderRootType, libraryEditor.isJarDirectory(url, orderRootType), libraryEditor.isValid(url, orderRootType)));
       }
       return items.toArray();
     }
