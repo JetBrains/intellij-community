@@ -31,7 +31,13 @@ import java.util.Collection;
  */
 public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(final PsiElement element) {
-    return element instanceof PsiClass;
+    if (element instanceof PsiClass) {
+      final String qualifiedName = ((PsiClass)element).getQualifiedName();
+      if (qualifiedName != null) {
+        return !qualifiedName.endsWith("Test") && !qualifiedName.endsWith("TestCase");
+      }
+    }
+    return false;
   }
 
   public String getOptionName() {
