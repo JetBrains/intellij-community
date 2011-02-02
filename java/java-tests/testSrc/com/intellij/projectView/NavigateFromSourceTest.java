@@ -37,7 +37,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -56,16 +56,16 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
 
-    IdeaTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                 " -PsiDirectory: showClassMembers\n" +
-                                                 "  -PsiDirectory: src\n" +
-                                                 "   -PsiDirectory: com\n" +
-                                                 "    -PsiDirectory: package1\n" +
-                                                 "     [Class1]\n" +
-                                                 "     Class2\n" +
-                                                 getRootFiles() +
-                                                 " +External Libraries\n"
-                                                 , true);
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
+                                                     " -PsiDirectory: showClassMembers\n" +
+                                                     "  -PsiDirectory: src\n" +
+                                                     "   -PsiDirectory: com\n" +
+                                                     "    -PsiDirectory: package1\n" +
+                                                     "     [Class1]\n" +
+                                                     "     Class2\n" +
+                                                     getRootFiles() +
+                                                     " +External Libraries\n"
+      , true);
 
     changeClassTextAndTryToNavigate("class Class11 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
                                                                                            " -PsiDirectory: showClassMembers\n" +
@@ -102,19 +102,20 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     assertEquals(1, tree.getSelectionCount());
   }
 
-  private void changeClassTextAndTryToNavigate(final String newClassString,
-                                               PsiJavaFile psiFile,
-                                               final AbstractProjectViewPSIPane pane,
-                                               final String expected) throws IOException, InterruptedException {
+  private static void changeClassTextAndTryToNavigate(final String newClassString,
+                                                      PsiJavaFile psiFile,
+                                                      final AbstractProjectViewPSIPane pane,
+                                                      final String expected) throws IOException, InterruptedException {
     PsiClass psiClass = psiFile.getClasses()[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final JTree tree = pane.getTree();
     writeToFile(virtualFile, newClassString.getBytes());
 
-    IdeaTestUtil.waitForAlarm(600);
+    PlatformTestUtil.waitForAlarm(600);
 
+    psiClass = psiFile.getClasses()[0];
     pane.select(psiClass, virtualFile, true);
-    IdeaTestUtil.assertTreeEqual(tree, expected, true);
+    PlatformTestUtil.assertTreeEqual(tree, expected, true);
   }
 
   private static void writeToFile(final VirtualFile virtualFile, final byte[] b) throws IOException {
