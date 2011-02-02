@@ -46,8 +46,10 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @NotNull
   @Override
   public List<? extends AttachRootButtonDescriptor> createAttachButtons() {
-    return Arrays.asList(new AttachClassesDescriptor(), new AttachJarDirectoriesDescriptor(), new AttachSourcesDescriptor(),
-                         new AttachAnnotationsDescriptor(), new AttachJavadocDescriptor(), new AttachUrlJavadocDescriptor());
+    return Arrays.asList(new AttachClassesDescriptor(), new AttachJarDirectoriesDescriptor(),
+                         new AttachSourcesDescriptor(), new AttachJarSourcesDirectoriesDescriptor(),
+                         new AttachAnnotationsDescriptor(), new AttachJavadocDescriptor(),
+                         new AttachUrlJavadocDescriptor());
   }
 
   public static OrderRootTypePresentation getDefaultPresentation(OrderRootType type) {
@@ -102,6 +104,33 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
 
     public String getChooserDescription() {
       return ProjectBundle.message("library.attach.jar.directory.description");
+    }
+  }
+
+  private static class AttachJarSourcesDirectoriesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+    private AttachJarSourcesDirectoriesDescriptor() {
+      super(OrderRootType.SOURCES, ProjectBundle.message("module.libraries.attach.jar.sources.directories.button"));
+    }
+
+    public FileChooserDescriptor createChooserDescriptor() {
+      return new FileChooserDescriptor(false, true, false, false, false, true);
+    }
+
+    public boolean addAsJarDirectories() {
+      return true;
+    }
+
+    public String getChooserTitle(final String libraryName) {
+      if (StringUtil.isEmpty(libraryName)) {
+        return ProjectBundle.message("library.attach.jar.sources.directory.action");
+      }
+      else {
+        return ProjectBundle.message("library.attach.jar.sources.directory.to.library.action", libraryName);
+      }
+    }
+
+    public String getChooserDescription() {
+      return ProjectBundle.message("library.attach.jar.sources.directory.description");
     }
   }
 
