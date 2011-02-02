@@ -34,6 +34,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -606,5 +607,15 @@ public abstract class GroovyRefactoringUtil {
       return operandSign == GroovyTokenTypes.mDEC || operandSign == GroovyTokenTypes.mINC;
     }
     return false;
+  }
+
+  public static boolean isCorrectReferenceName(String newName, Project project) {
+    try {
+      GroovyPsiElementFactory.getInstance(project).createReferenceNameFromText(newName);
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
+    return !KEYWORDS.contains(newName);
   }
 }
