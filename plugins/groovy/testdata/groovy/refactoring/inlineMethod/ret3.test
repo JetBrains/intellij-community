@@ -3,6 +3,26 @@ def result = 26
 int i = <begin>foo<end>(42, 239)
 
 def foo(int i, def j) {
+        if (i > 42) {
+                println("preved!")
+                println("medved")
+        } else {
+                println "bugoga"
+        }
+        return 3
+}
+-----
+def result = 26
+
+if (42 > 42) {
+    println("preved!")
+    println("medved")
+} else {
+    println "bugoga"
+}
+int i = 3
+
+def foo(int i, def j) {
     if (i > 42) {
         println("preved!")
         println("medved")
@@ -10,24 +30,4 @@ def foo(int i, def j) {
         println "bugoga"
     }
     return 3
-}
------
-def result = 26
-
-if (42 > 42) {
-  println("preved!")
-  println("medved")
-} else {
-  println "bugoga"
-}
-int i = 3
-
-def foo(int i, def j) {
-  if (i > 42) {
-    println("preved!")
-    println("medved")
-  } else {
-    println "bugoga"
-  }
-  return 3
 }

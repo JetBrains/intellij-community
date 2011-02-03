@@ -2,6 +2,6 @@
 a - b</selection>
 -----
 with() {
-  a - b
-  a - b
+    a - b
+    a - b
 }

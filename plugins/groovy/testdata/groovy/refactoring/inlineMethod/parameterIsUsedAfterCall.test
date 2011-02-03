@@ -1,6 +1,6 @@
 def foo(def x) {
-  x++;
-  return x;
+    x++;
+    return x;
 }
 
 int i = 5;
@@ -8,8 +8,8 @@ int i = 5;
 i++;
 -----
 def foo(def x) {
-  x++;
-  return x;
+    x++;
+    return x;
 }
 
 int i = 5;

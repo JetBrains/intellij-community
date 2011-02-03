@@ -1,44 +1,44 @@
 def getGeneratedFileNames() {
-    def qqq = 239
-    if (true) {
-        def qqq1 = new QQQ()
-        return <begin>qqq1.test<end>()
-    }
-    else 42
+        def qqq = 239
+        if (true) {
+                def qqq1 = new QQQ()
+                return <begin>qqq1.test<end>()
+        }
+        else 42
 }
 
 class QQQ {
 
-    def test() {
-        println "boo!"
-        return boo()
-    }
+        def test() {
+                println "boo!"
+                return boo()
+        }
 
-    int boo() {
-        return 42
-    }
+        int boo() {
+                return 42
+        }
 
 }
 -----
 def getGeneratedFileNames() {
-    def qqq = 239
-    if (true) {
-      def qqq1 = new QQQ()
-      println "boo!"
-      return qqq1.boo()
-    }
-    else 42
+        def qqq = 239
+        if (true) {
+            def qqq1 = new QQQ()
+            println "boo!"
+            return qqq1.boo()
+        }
+        else 42
 }
 
 class QQQ {
 
-    def test() {
-        println "boo!"
-        return boo()
-    }
+        def test() {
+                println "boo!"
+                return boo()
+        }
 
-    int boo() {
-        return 42
-    }
+        int boo() {
+                return 42
+        }
 
 }

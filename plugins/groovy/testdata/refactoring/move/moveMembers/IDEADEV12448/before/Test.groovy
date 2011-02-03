@@ -1,10 +1,10 @@
 @interface SomeAnnotation {
-  String value();
+    String value();
 }
 
 @SomeAnnotation (B.CONST)
 interface A {}
 
 interface B {
-  String CONST = "42";
+    String CONST = "42";
 }

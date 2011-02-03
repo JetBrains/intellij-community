@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import junit.framework.Assert;
@@ -120,12 +121,11 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   }
 
   protected void doTest(InlineHandler handler) {
-    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", false, handler);
+    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", handler);
   }
 
   public static void doInlineTest(final JavaCodeInsightTestFixture fixture,
                                   final String testFile,
-                                  boolean withCaret,
                                   InlineHandler inlineHandler) {
     final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
@@ -138,10 +138,10 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
     final PsiFile file = fixture.getFile();
-    final Editor myEditor = fixture.getEditor();
+    final Editor editor = fixture.getEditor();
     setIndentationToNode(file.getNode());
-    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-    myEditor.getCaretModel().moveToOffset(endOffset);
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
+    editor.getCaretModel().moveToOffset(endOffset);
 
     GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
@@ -155,16 +155,14 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     PsiElement element = selectedArea instanceof GrExpression ? selectedArea.getReference().resolve() : selectedArea;
     Assert.assertNotNull("Cannot resolve selected reference expression", element);
 
-    // handling inline refactoring
-    GenericInlineHandler.invoke(element, myEditor, inlineHandler);
-    String result = myEditor.getDocument().getText();
-    String invokedResult = GroovyInlineMethodUtil.getInvokedResult();
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    result = "ok".equals(invokedResult) ?
-      (withCaret ? result.substring(0, caretOffset) + CARET_MARKER + result.substring(caretOffset) : result) :
-      "FAIL: " + invokedResult;
-
-    assertEquals(data.get(1), result);
+    try {
+      GenericInlineHandler.invoke(element, editor, inlineHandler);
+      editor.getSelectionModel().removeSelection();
+      fixture.checkResult(data.get(1), true);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals(data.get(1), "FAIL: " + e.getMessage());
+    }
   }
 
   private static void setIndentationToNode(ASTNode element){

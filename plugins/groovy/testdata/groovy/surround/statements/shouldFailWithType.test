@@ -2,6 +2,6 @@
 a - b</selection>
 -----
 shouldFail() {
-  a - b
-  a - b
+    a - b
+    a - b
 }

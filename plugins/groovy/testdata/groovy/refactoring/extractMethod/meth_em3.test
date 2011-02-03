@@ -1,17 +1,17 @@
 protected static def getGeneratedFileNames(String name, int boo) {
-  def names
-  <begin>names = new ArrayList<String>()<end>
-  names
+    def names
+    <begin>names = new ArrayList<String>()<end>
+    names
 }
 -----
 protected static def getGeneratedFileNames(String name, int boo) {
-  def names
-  names = <caret>testMethod()
-  names
+    def names
+    names = <caret>testMethod()
+    names
 }
 
 private static ArrayList<String> testMethod() {
-  ArrayList<String> names
-  names = new ArrayList<String>()
-  return names
+    ArrayList<String> names
+    names = new ArrayList<String>()
+    return names
 }

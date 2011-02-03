@@ -1,9 +1,9 @@
 def cl = <begin>qwerty<end>({int x -> return x + 1})
 
 def qwerty(Closure cl){
-    def call = cl.call()
-    println (call)
-    return call;
+        def call = cl.call()
+        println (call)
+        return call;
 }
 -----
 def call = {int x -> return x + 1}.call()
@@ -11,7 +11,7 @@ println(call)
 def cl = call
 
 def qwerty(Closure cl){
-  def call = cl.call()
-  println (call)
-  return call;
+    def call = cl.call()
+    println (call)
+    return call;
 }
