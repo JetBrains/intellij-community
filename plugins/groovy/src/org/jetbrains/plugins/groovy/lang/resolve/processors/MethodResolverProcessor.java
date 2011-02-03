@@ -26,9 +26,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -60,6 +63,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private final boolean myIsConstructor;
 
   private boolean myStopExecuting = false;
+  private final Set<GrStatement> myExitPoints = new HashSet<GrStatement>();
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
@@ -71,6 +75,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
     myAllVariants = allVariants;
+
+    final GrMethod method = PsiTreeUtil.getParentOfType(myPlace, GrMethod.class, true, GrClosableBlock.class);
+    if (method != null) {
+      myExitPoints.addAll(ControlFlowUtils.collectReturns(method.getBlock()));
+    }
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -216,10 +225,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   @Nullable
   private PsiType getContextType() {
-    final PsiElement parent = myPlace.getParent().getParent();
+    PsiElement call = myPlace.getParent();
+    final PsiElement parent = call.getParent();
     PsiType rType = null;
-    if (parent instanceof GrReturnStatement) {
-      final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
+    if (parent instanceof GrReturnStatement || myExitPoints.contains(call)) {
+      final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
       if (method != null) rType = method.getReturnType();
     }
     else if (parent instanceof GrAssignmentExpression && myPlace.getParent().equals(((GrAssignmentExpression)parent).getRValue())) {
