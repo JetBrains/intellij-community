@@ -27,6 +27,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
@@ -43,10 +44,12 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -59,15 +62,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 
-class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
+class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DnDTarget, DnDSource {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = 15;
   private static final int FREE_PAINTERS_AREA_WIDTH = 3;
@@ -86,16 +86,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<TextAnnotationGutterProvider, EditorGutterAction>();
   private static final int GAP_BETWEEN_ANNOTATIONS = 6;
   private Color myBackgroundColor = null;
-  private GutterDraggableObject myGutterDraggableObject;
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      new DropTarget(this, new MyDropTargetListener());
-      final DragSource dragSource = DragSource.getDefaultDragSource();
-      dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+      DnDManager.getInstance().registerSource(this, this);
+      DnDManager.getInstance().registerTarget(this, this);
     }
     setOpaque(true);
   }
@@ -340,6 +338,57 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     g2.setTransform(old);
+  }
+
+  @Override
+  public boolean update(DnDEvent aEvent) {
+    aEvent.setDropPossible(true, null);
+    return false;
+  }
+
+  @Override
+  public void drop(DnDEvent aEvent) {
+    final Object attachedObject = aEvent.getAttachedObject();
+    if (attachedObject instanceof GutterIconRenderer) {
+      final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+      if (draggableObject != null) {
+        final int line = convertPointToLineNumber(aEvent.getPoint());
+        if (line != -1) {
+          draggableObject.copy(line, myEditor.getVirtualFile());
+        }
+      }
+    }
+  }
+
+  @Override
+  public void cleanUpOnLeave() {
+  }
+
+  @Override
+  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+  }
+
+  @Override
+  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    return (action == DnDAction.MOVE || action == DnDAction.COPY) && getGutterRenderer(dragOrigin) != null;
+  }
+
+  @Override
+  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    return new DnDDragStartBean(getGutterRenderer(dragOrigin));
+  }
+
+  @Override
+  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+    return new Pair<Image, Point>(IconUtil.toImage(getGutterRenderer(dragOrigin).getIcon()), dragOrigin);
+  }
+
+  @Override
+  public void dragDropEnd() {
+  }
+
+  @Override
+  public void dropActionChanged(int gestureModifiers) {
   }
 
   private interface RangeHighlighterProcessor {
@@ -1264,25 +1313,30 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
   }
 
-  @Nullable
-  private GutterIconRenderer getGutterRenderer(final Point p) {
-    final int ex = convertX((int)p.getX());
+  private int convertPointToLineNumber(final Point p) {
     int line = myEditor.yPositionToLogicalLineNumber((int)p.getY());
 
-    if (line >= myEditor.getDocument().getLineCount()) return null;
+    if (line >= myEditor.getDocument().getLineCount()) return -1;
     int startOffset = myEditor.getDocument().getLineStartOffset(line);
     final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
     if (region != null) {
       line = myEditor.getDocument().getLineNumber(region.getEndOffset());
-      if (line >= myEditor.getDocument().getLineCount()) return null;
+      if (line >= myEditor.getDocument().getLineCount()) return -1;
     }
+    return line;
+  }
 
+  @Nullable
+  private GutterIconRenderer getGutterRenderer(final Point p) {
+    int line = convertPointToLineNumber(p);
+    if (line == -1) return null;
     ArrayList<GutterIconRenderer> renderers = myLineToGutterRenderers.get(line);
     if (renderers == null) return null;
 
     final GutterIconRenderer[] result = {null};
     processIconsRow(line, renderers, new LineGutterIconRendererProcessor() {
       public void process(int x, int y, GutterIconRenderer renderer) {
+        final int ex = convertX((int)p.getX());
         Icon icon = renderer.getIcon();
         if (x <= ex && ex <= x + icon.getIconWidth() &&
             y <= p.getY() && p.getY() <= y + icon.getIconHeight()) {
@@ -1309,115 +1363,5 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       gutterProvider.gutterClosed();
     }
     myProviderToListener.clear();
-  }
-
-  private static final DataFlavor[] FLAVORS;
-  static {
-    DataFlavor[] flavors;
-    try {
-      final Class<EditorGutterComponentImpl> aClass = EditorGutterComponentImpl.class;
-      //noinspection HardCodedStringLiteral
-      flavors = new DataFlavor[]{new DataFlavor(
-        DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(), "GutterTransferable", aClass.getClassLoader()
-      )};
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);  // should not happen
-      flavors = new DataFlavor[0];
-    }
-    FLAVORS = flavors;
-  }
-
-  private class MyDragGestureListener implements DragGestureListener {
-    public void dragGestureRecognized(DragGestureEvent dge) {
-      if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
-      final GutterIconRenderer renderer = getGutterRenderer(dge.getDragOrigin());
-      if (renderer != null) {
-        final GutterDraggableObject draggableObject = renderer.getDraggableObject();
-        if (draggableObject != null) {
-          try {
-            myGutterDraggableObject = draggableObject;
-            final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
-            dge.startDrag(DragSource.DefaultMoveNoDrop, new Transferable () {
-              public DataFlavor[] getTransferDataFlavors() {
-                return FLAVORS;
-              }
-
-              public boolean isDataFlavorSupported(DataFlavor flavor) {
-                DataFlavor[] flavors = getTransferDataFlavors();
-                for (DataFlavor flavor1 : flavors) {
-                  if (flavor.equals(flavor1)) {
-                    return true;
-                  }
-                }
-                return false;
-              }
-
-              public Object getTransferData(DataFlavor flavor) {
-                return null;
-              }
-            }, dragSourceListener);
-          }
-          catch (InvalidDnDOperationException e) {
-            // OK, can't dnd
-          }
-        }
-
-      }
-    }
-  }
-
-  private class MyDragSourceListener extends DragSourceAdapter {
-    public void dragEnter(DragSourceDragEvent e) {
-      updateCursor(e);
-    }
-
-    public void dragOver(DragSourceDragEvent e) {
-      updateCursor(e);
-    }
-
-    public void dropActionChanged(DragSourceDragEvent e) {
-      e.getDragSourceContext().setCursor(null);//setCursor (e.getDragSourceContext());
-    }
-
-    private void updateCursor(final DragSourceDragEvent e) {
-      final DragSourceContext context = e.getDragSourceContext();
-      final Point screenPoint = e.getLocation();
-      if (screenPoint != null) {
-        final Point gutterPoint = new Point(screenPoint);
-        SwingUtilities.convertPointFromScreen(gutterPoint, EditorGutterComponentImpl.this);
-        if (contains(gutterPoint)){
-          final Point editorPoint = new Point(screenPoint);
-          SwingUtilities.convertPointFromScreen(editorPoint, myEditor.getContentComponent());
-          int line = myEditor.yPositionToLogicalLineNumber((int)editorPoint.getY());
-          final Cursor cursor = myGutterDraggableObject.getCursor(line);
-          context.setCursor(cursor);
-          return;
-        }
-      }
-      context.setCursor(null);
-    }
-
-    public void dragDropEnd(DragSourceDropEvent e) {
-      if (!e.getDropSuccess()) return;
-
-      if (e.getDropAction() == DnDConstants.ACTION_MOVE) {
-        myGutterDraggableObject.removeSelf();
-      }
-    }
-  }
-
-  private class MyDropTargetListener extends DropTargetAdapter {
-    public void drop(DropTargetDropEvent e) {
-      if (myGutterDraggableObject != null) {
-        int dropAction = e.getDropAction();
-        if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
-          int line = myEditor.yPositionToLogicalLineNumber((int)e.getLocation().getY());
-          e.dropComplete(myGutterDraggableObject.copy(line));
-          return;
-        }
-      }
-      e.rejectDrop();
-    }
   }
 }

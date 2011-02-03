@@ -270,8 +270,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
-  private boolean canMoveTo(int line) {
-    final VirtualFile file = getFile();
+  private boolean canMoveTo(int line, VirtualFile file) {
     return file != null && myType.canPutAt(file, line, getProject());
   }
 
@@ -389,11 +388,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     @Override
     public GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
-        public void removeSelf() {
-        }
-
-        public boolean copy(int line) {
-          if (canMoveTo(line)) {
+        public boolean copy(int line, VirtualFile file) {
+          if (canMoveTo(line, file)) {
+            setFileUrl(file.getUrl());
             setLine(line);
             return true;
           }
@@ -401,7 +398,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         }
 
         public Cursor getCursor(int line) {
-          return canMoveTo(line) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
+          return canMoveTo(line, getFile()) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
         }
       };
     }
