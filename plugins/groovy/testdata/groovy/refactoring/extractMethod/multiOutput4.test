@@ -10,9 +10,9 @@ def a = 5
 int b = testMethod(a)
 
 private int testMethod(int a) {
-  def b = 6
-  print a + b
-  return b
+    def b = 6
+    print a + b
+    return b
 }
 
 

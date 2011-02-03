@@ -1,8 +1,8 @@
 aaaaa
 if <caret>(true){
-  boo
+    boo
 } else {
-  baa
+    baa
 }
 ccccc
 bbbbb
@@ -10,8 +10,8 @@ bbbbb
 aaaaa
 ccccc
 if <caret>(true){
-  boo
+    boo
 } else {
-  baa
+    baa
 }
 bbbbb

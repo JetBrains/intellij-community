@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -444,8 +445,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       return false;
     }
     final PsiFile psiFile = position.getFile();
+    final PsiFile oldFile = getSourcePosition().getFile();
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-    if (document == null) {
+    final Document oldDocument = PsiDocumentManager.getInstance(getProject()).getDocument(oldFile);
+    if (document == null || oldDocument == null) {
       return false;
     }
     final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
@@ -458,13 +461,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
     
     if(!isValid()) {
-      document.getMarkupModel(myProject).removeHighlighter(myHighlighter);
+      oldDocument.getMarkupModel(myProject).removeHighlighter(myHighlighter);
       myHighlighter = oldHighlighter;
       reload();
       return false;
     }
 
-    document.getMarkupModel(myProject).removeHighlighter(oldHighlighter);
+    oldDocument.getMarkupModel(myProject).removeHighlighter(oldHighlighter);
 
     DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
     updateUI();
@@ -666,11 +669,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     public GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
-        public void removeSelf() {
-        }
-
-        public boolean copy(int line) {
-          return moveTo(SourcePosition.createFromLine(getSourcePosition().getFile(), line));
+        public boolean copy(int line, VirtualFile file) {
+          final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+          return psiFile == null ? false : moveTo(SourcePosition.createFromLine(psiFile, line));
         }
 
         public Cursor getCursor(int line) {

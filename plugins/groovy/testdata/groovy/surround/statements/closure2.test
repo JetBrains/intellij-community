@@ -1,21 +1,21 @@
 def a() {
-    <selection>call()</selection>
+        <selection>call()</selection>
 }
 
 def call() {
-    print "in call"
+        print "in call"
 }
 
 a()
 -----
 def a() {
-  {->
-    owner.call()
-  }.call()
+    {->
+        owner.call()
+    }.call()
 }
 
 def call() {
-  print "in call"
+    print "in call"
 }
 
 a()

@@ -28,9 +28,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyIndentOptionsProvider implements FileTypeIndentOptionsProvider {
   public CodeStyleSettings.IndentOptions createIndentOptions() {
-    final CodeStyleSettings.IndentOptions indentOptions = new CodeStyleSettings.IndentOptions();
-    indentOptions.INDENT_SIZE = 2;
-    return indentOptions;
+    return new CodeStyleSettings.IndentOptions();
   }
 
   public FileType getFileType() {

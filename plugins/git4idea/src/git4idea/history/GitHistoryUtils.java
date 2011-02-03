@@ -37,13 +37,17 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.*;
 import git4idea.commands.*;
+import git4idea.config.GitConfigUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
+import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -532,6 +536,36 @@ public class GitHistoryUtils {
     }
     if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) return refs.getCurrent().getName();
     return null;
+  }
+
+  @Nullable
+  public static List<Pair<String, GitCommit>> loadStashStackAsCommits(@NotNull Project project, @NotNull VirtualFile root,
+                                                                      SymbolicRefs refs, final String... parameters) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SHORT_REF_LOG_SELECTOR, SUBJECT, BODY);
+    h.setSilent(true);
+    h.setNoSSH(true);
+    h.addParameters("list");
+    h.addParameters(parameters);
+    h.addParameters(parser.getPretty());
+    parser.parseStatusBeforeName(true);
+
+    String out;
+    try {
+      h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(project, root)));
+      out = h.run();
+    }
+    catch (VcsException e) {
+      GitUIUtil.showOperationError(project, e, h.printableCommandLine());
+      return null;
+    }
+    final List<GitLogRecord> gitLogRecords = parser.parse(out);
+    final List<Pair<String, GitCommit>> result = new ArrayList<Pair<String, GitCommit>>();
+    for (GitLogRecord gitLogRecord : gitLogRecords) {
+      final GitCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
+      result.add(new Pair<String, GitCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
+    }
+    return result;
   }
 
   public static List<GitCommit> commitsDetails(Project project,

@@ -184,15 +184,20 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFailure(final String testName, final String localizedMessage, final String stackTrace,
-                                 final boolean isTestError) {
+  private void fireOnTestFailure(final String testName,
+                                 final String localizedMessage, final String stackTrace,
+                                 final boolean isTestError,
+                                 @Nullable final String comparisionFailureActualText,
+                                 @Nullable final String comparisionFailureExpectedText) {
     assertNotNull(testName);
     assertNotNull(localizedMessage);
 
      // local variable is used to prevent concurrent modification
      final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onTestFailure(testName, localizedMessage, stackTrace, isTestError);
+      processor.onTestFailure(testName, localizedMessage, stackTrace, isTestError,
+                              comparisionFailureActualText,
+                              comparisionFailureExpectedText);
     }
   }
 
@@ -396,7 +401,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final boolean isTestError = testFailed.getAttributes().get(ATTR_KEY_TEST_ERROR) != null;
 
-      fireOnTestFailure(testFailed.getTestName(), testFailed.getFailureMessage(), testFailed.getStacktrace(), isTestError);
+      fireOnTestFailure(testFailed.getTestName(), 
+                        testFailed.getFailureMessage(), 
+                        testFailed.getStacktrace(), 
+                        isTestError,
+                        testFailed.getActual(),
+                        testFailed.getExpected());
     }
 
     public void visitPublishArtifacts(@NotNull final PublishArtifacts publishArtifacts) {

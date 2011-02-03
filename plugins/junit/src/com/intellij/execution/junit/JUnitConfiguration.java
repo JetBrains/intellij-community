@@ -93,7 +93,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    return myData.getTestObject(getProject(), this).getListener(element, this);
+    final RefactoringElementListener listener = myData.getTestObject(getProject(), this).getListener(element, this);
+    return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
   public String getGeneratedName() {

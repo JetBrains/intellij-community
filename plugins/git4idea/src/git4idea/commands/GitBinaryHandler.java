@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -178,7 +179,7 @@ public class GitBinaryHandler extends GitHandler {
           if (message.length() == 0) {
             //noinspection ThrowableResultOfMethodCallIgnored
             if (myException.get() != null) {
-              message = "Process finished with exit code " + exitCode;
+              message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }
             else {
               message = null;

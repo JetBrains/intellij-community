@@ -128,9 +128,11 @@ public class MultiMap<K, V> {
 
   public void removeValue(final K key, final V value) {
     final Collection<V> values = myMap.get(key);
-    values.remove(value);
-    if (values.isEmpty()) {
-      myMap.remove(key);
+    if (values != null) {
+      values.remove(value);
+      if (values.isEmpty()) {
+        myMap.remove(key);
+      }
     }
   }
 
@@ -205,5 +207,17 @@ public class MultiMap<K, V> {
 
   public static <K, V> MultiMap<K, V> emptyInstance() {
     return EMPTY;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MultiMap)) return false;
+    return myMap.equals(((MultiMap)o).myMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return myMap.hashCode();
   }
 }

@@ -31,12 +31,7 @@ import git4idea.GitUtil;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -90,6 +85,7 @@ class GitLogRecord {
   String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
   String getSubject() { return lookup(SUBJECT); }
   String getBody() { return lookup(BODY); }
+  String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
 
   // access methods with some formatting or conversion
 

@@ -61,6 +61,7 @@ public class UsersFilterAction extends BasePopupAction {
   private JBPopup myPopup;
   private ComponentPopupBuilder myComponentPopupBuilder;
   private AnAction mySelectOkAction;
+  private TextFieldCompletionProvider myTextFieldCompletionProvider;
 
   public UsersFilterAction(final Project project, final UserFilterI userFilterI) {
     super(project, USER);
@@ -101,6 +102,7 @@ public class UsersFilterAction extends BasePopupAction {
           mySelectOkAction.unregisterCustomShortcutSet(myPopup.getContent());
         }
         myPopup = myComponentPopupBuilder.createPopup();
+        myTextFieldCompletionProvider.apply(myEditorField);
         myEditorField.setText(myCurrentText);
         final JComponent content = myPopup.getContent();
         mySelectOkAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, content);
@@ -125,7 +127,7 @@ public class UsersFilterAction extends BasePopupAction {
     myEditorField.setOneLineMode(false);
     panel.add(myEditorField, BorderLayout.CENTER);
 
-    final TextFieldCompletionProvider textFieldCompletionProvider = new TextFieldCompletionProvider() {
+    myTextFieldCompletionProvider = new TextFieldCompletionProvider() {
       @NotNull
       @Override
       protected String getPrefix(@NotNull String currentTextPrefix) {
@@ -147,7 +149,6 @@ public class UsersFilterAction extends BasePopupAction {
         }
       }
     };
-    textFieldCompletionProvider.apply(myEditorField);
 
     myComponentPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myEditorField)
       .setCancelOnClickOutside(true)

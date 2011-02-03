@@ -241,8 +241,9 @@ public class DocumentationComponent extends JPanel implements Disposable {
             component.setBounds(0, 0, r.width, r.height);
           }
           else {
+            int insets = 2;
             Dimension d = component.getPreferredSize();
-            component.setBounds(r.width - d.width, 2, d.width, d.height);
+            component.setBounds(r.width - d.width - insets, insets, d.width, d.height);
           }
         }
       }

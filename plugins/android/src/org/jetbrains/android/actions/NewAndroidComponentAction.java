@@ -18,7 +18,6 @@ package org.jetbrains.android.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -64,12 +63,14 @@ public class NewAndroidComponentAction extends AnAction {
       return;
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+
+    if (module == null) return;
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    NewAndroidComponentDialog dialog = new NewAndroidComponentDialog(project, dir);
+    NewAndroidComponentDialog dialog = new NewAndroidComponentDialog(module, dir);
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;

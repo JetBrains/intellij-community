@@ -112,5 +112,10 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
 
     public void executionCanceled() {
     }
+
+    @Override
+    public String getHelpId() {
+      return null;
+    }
   }
 }

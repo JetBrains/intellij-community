@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
-import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -380,20 +379,23 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       if (!(element instanceof PsiPackage)) return null;
-      return RefactoringListeners.getListener((PsiPackage)element, myPackage);
+      final RefactoringElementListener listener = RefactoringListeners.getListener((PsiPackage)element, myPackage);
+      return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }
     else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       if (!(element instanceof PsiClass)) return null;
-      return RefactoringListeners.getClassOrPackageListener(element, myClass);
+      final RefactoringElementListener listener = RefactoringListeners.getClassOrPackageListener(element, myClass);
+      return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }
     else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       if (!(element instanceof PsiMethod)) {
-        return RefactoringListeners.getClassOrPackageListener(element, myClass);
+        final RefactoringElementListener listener = RefactoringListeners.getClassOrPackageListener(element, myClass);
+        return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
       }
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
-      return new RefactoringElementListener() {
+      final RefactoringElementListener listener = new RefactoringElementListener() {
         public void elementMoved(@NotNull final PsiElement newElement) {
           setMethod((PsiMethod)newElement);
         }
@@ -408,6 +410,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
           if (generatedName) setGeneratedName();
         }
       };
+      return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }
     return null;
   }

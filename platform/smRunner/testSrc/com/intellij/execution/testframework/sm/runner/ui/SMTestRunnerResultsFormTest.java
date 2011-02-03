@@ -231,7 +231,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myEventsProcessor.onTestStarted("test_failed", null);
     myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFailure("test_failed", "", "", false);
+    myEventsProcessor.onTestFailure("test_failed", "", "", false, null, null);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFinished("test_failed", 10);
     myResultsViewer.performUpdate();
@@ -258,7 +258,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myEventsProcessor.onTestStarted("test_failed", null);
     myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFailure("test_failed", "", "", false);
+    myEventsProcessor.onTestFailure("test_failed", "", "", false, null, null);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFinished("test_failed", 10);
     myResultsViewer.performUpdate();

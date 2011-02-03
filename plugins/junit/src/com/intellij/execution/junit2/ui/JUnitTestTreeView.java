@@ -17,7 +17,6 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestTreeView;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +40,5 @@ public class JUnitTestTreeView extends TestTreeView {
                                    final int row,
                                    final boolean hasFocus) {
     return Formatters.printTest(TestProxyClient.from(value));
-  }
-
-  protected void installHandlers() {
-    super.installHandlers();
-    ViewAssertEqualsDiffAction.registerShortcut(this);
   }
 }

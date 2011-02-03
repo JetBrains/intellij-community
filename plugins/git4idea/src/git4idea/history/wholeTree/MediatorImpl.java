@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -48,13 +47,12 @@ public class MediatorImpl implements Mediator {
 
   @CalledInBackground
   @Override
-  public StepType appendResult(final Ticket ticket, final List<CommitI> result,
-                               final @Nullable List<List<AbstractHash>> parents, LoadGrowthController.ID id) {
+  public StepType appendResult(final Ticket ticket, final List<CommitI> result, final @Nullable List<List<AbstractHash>> parents) {
     if (! myTicket.equals(ticket)) {
       return StepType.STOP;
     }
 
-    myTableWrapper.appendResult(ticket, id, result, parents);
+    myTableWrapper.appendResult(ticket, result, parents);
     if (myTableWrapper.isSuspend()) {
       return StepType.PAUSE;
     }
@@ -102,12 +100,11 @@ public class MediatorImpl implements Mediator {
   @Override
   public void reload(final RootsHolder rootsHolder,
                      final Collection<String> startingPoints,
-                     final Collection<Collection<ChangesFilter.Filter>> filters,
-                     String[] possibleHashes) {
+                     final GitLogFilters filters) {
     myTicket.increment();
     myTableWrapper.reset();
     myController.reset();
-    myLoader.loadSkeleton(myTicket.copy(), rootsHolder, startingPoints, filters, possibleHashes, myController);
+    myLoader.loadSkeleton(myTicket.copy(), rootsHolder, startingPoints, filters, myController);
   }
 
   public void setLoader(Loader loader) {
@@ -152,14 +149,13 @@ public class MediatorImpl implements Mediator {
     }
 
     @CalledInBackground
-    public void appendResult(final Ticket ticket, final LoadGrowthController.ID id, final List<CommitI> result,
+    public void appendResult(final Ticket ticket, final List<CommitI> result,
                              final @Nullable List<List<AbstractHash>> parents) {
       new AbstractCalledLater(myProject, myState) {
         @Override
         public void run() {
           if (! myTicket.equals(ticket)) return;
           myTableModel.appendData(result, parents);
-          //myController.registerTime(id, result.get(result.size() - 1).getTime());
           if (myController.isEmpty()) {
             myTableModel.restore();
             mySuspend = false;
@@ -173,7 +169,6 @@ public class MediatorImpl implements Mediator {
               }
             }
           }
-          //myUIRefresh.linesReloaded(myTableModel.isCut());
           myUIRefresh.linesReloaded(mySuspend);
           if (myController.isEmpty()) {
             myUIRefresh.finished();

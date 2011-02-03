@@ -26,10 +26,12 @@ import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,6 +46,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 
 public class EditLibraryDialog extends DialogWrapper {
@@ -84,6 +87,7 @@ public class EditLibraryDialog extends DialogWrapper {
     myFileTableModel = new FileTableModel();
     myFileTable.setRowHeight(myFileTable.getRowHeight() + 5);
     myFileTable.setModel(myFileTableModel);
+    new TableSpeedSearch(myFileTable);
 
     myRemoveFileButton.setEnabled(false);
     myRemoveFileButton.addActionListener(new ActionListener() {
@@ -166,7 +170,7 @@ public class EditLibraryDialog extends DialogWrapper {
       if (renderer instanceof JLabel) {
         VirtualFile file = myFileTableModel.getFileAt(row);
         if (file != null) {
-          ((JLabel)renderer).setToolTipText(file.getPath());
+          ((JLabel)renderer).setToolTipText(file.getPresentableUrl());
         }
       }
       return renderer;
@@ -219,7 +223,7 @@ public class EditLibraryDialog extends DialogWrapper {
           addRecursively(selectedFile);
         }
         else {
-          myFileTableModel.addFile(selectedFile);
+          addSingleFile(selectedFile, true);
         }
       }
     }
@@ -233,13 +237,35 @@ public class EditLibraryDialog extends DialogWrapper {
         }
         else {
           if (myProvider.acceptsExtension(file.getExtension())) {
-            myFileTableModel.addFile(file);
+            addSingleFile(file, false);
           }
         }
       }
     }
   }
-
+  
+  private void addSingleFile(VirtualFile file, boolean scrollToAdded) {
+    int index = myFileTableModel.addFile(file);
+    myFileTable.setRowSelectionInterval(index, index);
+    if (scrollToAdded) {
+      Component parent = myFileTable;
+      JScrollPane scrollPane = null;
+      while ((parent = parent.getParent()) != null) {
+        if (parent instanceof JScrollPane) {
+          scrollPane = (JScrollPane)parent;
+          break;
+        }
+      }
+      if (scrollPane != null) {
+        JViewport viewPort = scrollPane.getViewport();
+        Point p = viewPort.getViewPosition();
+        Rectangle r = myFileTable.getCellRect(index, 0, true);
+        r.setLocation(r.x - p.x, r.y - p.y + myFileTable.getRowHeight());  
+        viewPort.scrollRectToVisible(r);
+      }
+    }
+  }
+  
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
       super (true, true, false, true, false, false);
@@ -280,15 +306,21 @@ public class EditLibraryDialog extends DialogWrapper {
       return super.isCellEditable(rowIndex, columnIndex);
     }
 
-    private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    private SortedList<VirtualFile> myFiles = new SortedList<VirtualFile>(new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return file1.getName().compareTo(file2.getName());
+      }
+    });
     private HashSet<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
 
-    public void addFile(VirtualFile file) {
+    public int addFile(VirtualFile file) {
       myFiles.add(file);
       if (myProvider.isCompact(file)) {
         myCompactFiles.add(file);
       }
       fireTableDataChanged();
+      return myFiles.indexOf(file);
     }
 
     public void setFiles(Set<VirtualFile> sourceFiles, Set<VirtualFile> compactFiles) {

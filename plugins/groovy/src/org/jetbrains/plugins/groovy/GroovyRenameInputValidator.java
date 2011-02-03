@@ -31,6 +31,6 @@ public class GroovyRenameInputValidator implements RenameInputValidator {
   }
 
   public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-    return !GroovyRefactoringUtil.KEYWORDS.contains(newName);
+    return GroovyRefactoringUtil.isCorrectReferenceName(newName, element.getProject());
   }
 }

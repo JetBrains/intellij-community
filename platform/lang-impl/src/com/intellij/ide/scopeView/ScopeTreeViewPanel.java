@@ -314,6 +314,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
       return myDeletePSIElementProvider;
     }
+    if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null) {
+        final Object pathComponent = selectionPath.getLastPathComponent();
+        if (pathComponent instanceof DirectoryNode) {
+          return ((DirectoryNode)pathComponent).getTargetDirectory();
+        }
+      }
+    }
     return null;
   }
 

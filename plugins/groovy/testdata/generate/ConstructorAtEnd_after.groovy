@@ -4,6 +4,6 @@ class ConstructorAtEnd {
 
   }
 
-  <caret>ConstructorAtEnd() {
-  }
+    <caret>ConstructorAtEnd() {
+    }
 }

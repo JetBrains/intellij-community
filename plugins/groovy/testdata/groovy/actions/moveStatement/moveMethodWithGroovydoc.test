@@ -2,20 +2,20 @@ class Goo {
  /**
  * Ex<caret>ample
  */
-  public void example() {
-  }
+    public void example() {
+    }
 
-  public void example2() {
-  }
+    public void example2() {
+    }
 }
 -----
 class Goo {
-  public void example2() {
-  }
+    public void example2() {
+    }
 
-  /**
+    /**
  * Ex<caret>ample
  */
-  public void example() {
-  }
+    public void example() {
+    }
 }

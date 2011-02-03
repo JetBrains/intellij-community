@@ -82,6 +82,12 @@ public class EnterAfterJavadocTagHandlerTest {
     context = parse(text);
     assertEmpty(context);
   }
+  
+  @Test
+  public void emptyTag() {
+    EnterAfterJavadocTagHandler.Context context = parse("* <p/>");
+    assertEmpty(context);
+  }
 
   private static EnterAfterJavadocTagHandler.Context parse(String text) {
     return parse(text, text.length());

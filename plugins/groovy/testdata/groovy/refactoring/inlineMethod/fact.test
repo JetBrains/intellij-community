@@ -1,13 +1,13 @@
 int fact(int n) {
-    if (n > 0) return n * fact(n-1);
-    else return 1;
+        if (n > 0) return n * fact(n-1);
+        else return 1;
 }
 
-println(<begin>fact<end>(3))
+println(<selection>fact</selection>(3))
 -----
 int fact(int n) {
-  if (n > 0) return n * fact(n-1);
-  else return 1;
+    if (n > 0) return n * fact(n-1);
+    else return 1;
 }
 
 int result

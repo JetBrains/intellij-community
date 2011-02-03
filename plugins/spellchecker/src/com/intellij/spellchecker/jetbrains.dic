@@ -232,6 +232,8 @@ serializable
 serializer
 servererror
 servlet
+significand
+significands
 smallfile
 smallint
 soname

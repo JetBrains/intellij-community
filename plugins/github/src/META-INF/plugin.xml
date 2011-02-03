@@ -25,6 +25,7 @@
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
       <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
     </action>
     <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>

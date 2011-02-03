@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
+import com.intellij.util.io.DataExternalizer;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -37,7 +38,11 @@ import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -76,6 +81,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
+  private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
+  public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
+  public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
@@ -229,8 +237,24 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public SvnAuthenticationManager getPassiveAuthenticationManager() {
     if (myPassiveAuthManager == null) {
-        myPassiveAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
-        myPassiveAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+      myPassiveAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+      myPassiveAuthManager.setAuthenticationProvider(new ISVNAuthenticationProvider() {
+        @Override
+        public SVNAuthentication requestClientAuthentication(String kind,
+                                                             SVNURL url,
+                                                             String realm,
+                                                             SVNErrorMessage errorMessage,
+                                                             SVNAuthentication previousAuth,
+                                                             boolean authMayBeStored) {
+          return null;
+        }
+
+        @Override
+        public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
+          return REJECTED;
+        }
+      });
+      myPassiveAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myPassiveAuthManager;
   }

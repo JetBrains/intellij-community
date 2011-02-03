@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -88,11 +89,12 @@ public class PropertyRenameHandler implements RenameHandler {
       rename.run();
     }
 
+    @Override
     protected boolean areButtonsValid() {
       final String newName = getNewName();
-      return super.areButtonsValid() && !GroovyRefactoringUtil.KEYWORDS.contains(newName);
+      return JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(newName) &&
+             !GroovyRefactoringUtil.KEYWORDS.contains(newName);
     }
-
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {

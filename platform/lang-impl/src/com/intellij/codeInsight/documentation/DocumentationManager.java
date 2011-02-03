@@ -886,7 +886,7 @@ public class DocumentationManager {
 
   void showHint(final JBPopup hint) {
     final Lookup lookup = LookupManager.getActiveLookup(myEditor);
-    if (lookup != null) {
+    if (lookup != null && lookup.getCurrentItem() != null) {
       lookup.showItemPopup(hint);
       return;
     }

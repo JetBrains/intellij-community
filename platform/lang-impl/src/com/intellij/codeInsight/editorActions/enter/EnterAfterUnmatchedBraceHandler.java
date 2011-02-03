@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,7 +53,8 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
     CharSequence text = document.getCharsSequence();
     Project project = file.getProject();
     int caretOffset = caretOffsetRef.get().intValue();
-    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER || !isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
+    int unmatchedLBracesNumber = getUnmatchedLBracesNumberBefore(editor, caretOffset, file.getFileType());
+    if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER || unmatchedLBracesNumber <= 0) {
       return Result.Continue;
     }
     
@@ -81,7 +83,21 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
     // That is formatted incorrectly because line feed between 'else' and 'if' is not inserted yet (whole 'if' block is indent anchor
     // to 'if' code block('{}')). So, we insert temporary line feed between 'if' and 'else', correct indent and remove that temporary
     // line feed.
-    document.insertString(offset, "\n}");
+    int bracesToInsert = 0;
+    outer:
+    for (int i = caretOffset - 1; unmatchedLBracesNumber > 0 && i >= 0 && bracesToInsert < unmatchedLBracesNumber; i--) {
+      char c = text.charAt(i);
+      switch (c) {
+        case ' ':
+        case '\n':
+        case '\t':
+          continue;
+        case '{': bracesToInsert++; break;
+        default: break outer;
+      }
+    }
+    bracesToInsert = Math.max(bracesToInsert, 1);
+    document.insertString(offset, "\n" + StringUtil.repeatSymbol('}', bracesToInsert));
     document.insertString(caretOffset, "\n");
     PsiDocumentManager.getInstance(project).commitDocument(document);
     long stamp = document.getModificationStamp();
@@ -175,37 +191,69 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
   }
   
   public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {
-    if (offset == 0) return false;
+    return getUnmatchedLBracesNumberBefore(editor, offset, fileType) > 0;
+  }
+
+  /**
+   * Calculates number of unmatched left braces before the given offset.
+   * 
+   * @param editor    target editor
+   * @param offset    target offset
+   * @param fileType  target file type
+   * @return          number of unmatched braces before the given offset;
+   *                  negative value if it's not possible to perform the calculation or if there are no unmatched left braces before
+   *                  the given offset
+   */
+  private static int getUnmatchedLBracesNumberBefore(Editor editor, int offset, FileType fileType) {
+    if (offset == 0) {
+      return -1;
+    }
     CharSequence chars = editor.getDocument().getCharsSequence();
-    if (chars.charAt(offset - 1) != '{') return false;
+    if (chars.charAt(offset - 1) != '{') {
+      return -1;
+    }
 
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 
-    if (!braceMatcher.isLBraceToken(iterator, chars, fileType) ||
-        !braceMatcher.isStructuralBrace(iterator, chars, fileType)
-        ) {
-      return false;
+    if (!braceMatcher.isLBraceToken(iterator, chars, fileType) || !braceMatcher.isStructuralBrace(iterator, chars, fileType)) {
+      return -1;
     }
 
     Language language = iterator.getTokenType().getLanguage();
 
     iterator = highlighter.createIterator(0);
-    int balance = 0;
-    while (!iterator.atEnd()) {
+    int lBracesBeforeOffset = 0;
+    int lBracesAfterOffset = 0;
+    int rBracesBeforeOffset = 0;
+    int rBracesAfterOffset = 0;
+    for (; !iterator.atEnd(); iterator.advance()) {
       IElementType tokenType = iterator.getTokenType();
-      if (tokenType.getLanguage().equals(language)) {
-        if (braceMatcher.isStructuralBrace(iterator, chars, fileType)) {
-          if (braceMatcher.isLBraceToken(iterator, chars, fileType)) {
-            balance++;
-          } else if (braceMatcher.isRBraceToken(iterator, chars, fileType)) {
-            balance--;
-          }
+      if (!tokenType.getLanguage().equals(language) || !braceMatcher.isStructuralBrace(iterator, chars, fileType)) {
+        continue;
+      }
+
+      boolean beforeOffset = iterator.getStart() < offset;
+      
+      if (braceMatcher.isLBraceToken(iterator, chars, fileType)) {
+        if (beforeOffset) {
+          lBracesBeforeOffset++;
+        }
+        else {
+          lBracesAfterOffset++;
         }
       }
-      iterator.advance();
+      else if (braceMatcher.isRBraceToken(iterator, chars, fileType)) {
+        if (beforeOffset) {
+          rBracesBeforeOffset++;
+        }
+        else {
+          rBracesAfterOffset++;
+        }
+      }
     }
-    return balance > 0;
+    
+    return lBracesBeforeOffset - rBracesBeforeOffset - (rBracesAfterOffset - lBracesAfterOffset);
   }
 }

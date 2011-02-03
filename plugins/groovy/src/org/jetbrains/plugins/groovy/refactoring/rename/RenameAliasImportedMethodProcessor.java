@@ -17,11 +17,18 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -36,5 +43,26 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element), element);
+  }
+
+  @Override
+  public void findCollisions(PsiElement element,
+                             final String newName,
+                             Map<? extends PsiElement, String> allRenames,
+                             List<UsageInfo> result) {
+    final ListIterator<UsageInfo> iterator = result.listIterator();
+    while (iterator.hasNext()) {
+      final UsageInfo info = iterator.next();
+      final PsiElement ref = info.getElement();
+      if (ref == null) continue;
+      if (!RenameUtil.isValidName(element.getProject(), ref, newName)) {
+        iterator.add(new UnresolvableCollisionUsageInfo(ref, element) {
+          @Override
+          public String getDescription() {
+            return RefactoringBundle.message("0.is.not.an.identifier", newName, ref.getText());
+          }
+        });
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 def aa = """
 aaa
-  bbb
+    bbb
 """
 def x = "aaa"<caret>
 def z = ""
@@ -8,6 +8,6 @@ def z = ""
 def x = "aaa"<caret>
 def aa = """
 aaa
-  bbb
+    bbb
 """
 def z = ""

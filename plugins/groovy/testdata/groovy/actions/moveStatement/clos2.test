@@ -1,13 +1,13 @@
 def boo(){
-  42 + 239
-  dooo1<caret>{ x ->
+    42 + 239
+    dooo1<caret>{ x ->
 
-  }
+    }
 }
 -----
 def boo(){
-  dooo1<caret>{ x ->
+    dooo1<caret>{ x ->
 
-  }
-  42 + 239
+    }
+    42 + 239
 }

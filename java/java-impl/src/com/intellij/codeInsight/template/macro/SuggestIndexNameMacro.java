@@ -51,7 +51,7 @@ public class SuggestIndexNameMacro implements Macro{
     for(char letter = 'i'; letter <= 'z'; letter++){
       for (PsiVariable var : vars) {
         PsiIdentifier identifier = var.getNameIdentifier();
-        if (place.equals(identifier)) continue;
+        if (identifier == null || place.equals(identifier)) continue;
         if (var instanceof PsiLocalVariable) {
           PsiElement parent = var.getParent();
           if (parent instanceof PsiDeclarationStatement) {

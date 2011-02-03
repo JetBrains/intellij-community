@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
@@ -157,11 +158,11 @@ class A {
 
     String ndame;
     void foo() {
-      print name
+        print name
 
-      print getName()
+        print getName()
 
-      setName("a")
+        setName("a")
     }
   }
 }""")
@@ -176,11 +177,11 @@ class A {
 
     String ndame;
     void foo() {
-      print A.this.ndame
+        print A.this.ndame
 
-      print A.this.getNdame()
+        print A.this.getNdame()
 
-      A.this.setNdame("a")
+        A.this.setNdame("a")
     }
   }
 }"""
@@ -212,7 +213,7 @@ class SomeBean {
 """, file.text
   }
 
-  public void doTest() throws Throwable {
+  public void doTest() {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
     final List<String> list = TestUtils.readInput(TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/rename/" + testFile);
 
@@ -400,6 +401,26 @@ foo = 4"""
     myFixture.configureByText "Foo.gpp", "class Foo {}"
     myFixture.renameElement myFixture.findClass("Foo"), "Bar"
     assert "gpp", myFixture.file.virtualFile.extension
+  }
+
+  public void testRenameJavaUsageFail() {
+    myFixture.addFileToProject "Bar.java", """
+class Bar {
+  void bar() {
+    new Foo().foo();
+  }
+}"""
+    myFixture.configureByText "Foo.groovy", """
+class Foo {
+  def foo() {}
+}"""
+    try {
+      myFixture.renameElement myFixture.findClass("Foo").getMethods()[0], "'newName'"
+    } catch (ConflictsInTestsException e) {
+      assertEquals "<b><code>'newName'</code></b> is not a correct identifier to use in <b><code>new Foo().foo</code></b>", e.getMessage()
+      return;
+    }
+    assertTrue false
   }
 
   private def doInplaceRenameTest() {

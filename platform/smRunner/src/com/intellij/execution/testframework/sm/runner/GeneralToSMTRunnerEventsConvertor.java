@@ -240,7 +240,9 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   public void onTestFailure(@NotNull final String testName,
                             @NotNull final String localizedMessage,
                             @Nullable final String stackTrace,
-                            final boolean isTestError) {
+                            final boolean isTestError,
+                            @Nullable final String comparisionFailureActualText,
+                            @Nullable final String comparisionFailureExpectedText) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final boolean inDebugMode = SMTestRunnerConnectionUtil.isInDebugMode();
@@ -281,8 +283,20 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         if (testProxy == null) {
           return;
         }
-        testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
 
+        if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
+          testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
+                                            comparisionFailureActualText, comparisionFailureExpectedText);
+        } else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
+          testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
+        } else {
+          logProblem("Comparison failure actual and expected texts should be both null or not null.\n"
+                     + "Expected:\n"
+                     + comparisionFailureExpectedText + "\n"
+                     + "Actual:\n"
+                     + comparisionFailureActualText,
+                     inDebugMode);
+        }
 
         myFailedTestsSet.add(testProxy);
 

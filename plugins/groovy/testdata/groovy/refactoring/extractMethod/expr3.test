@@ -7,5 +7,5 @@ iii = null
 jjj = <caret>testMethod()
 
 private def testMethod() {
-  iii + 1
+    iii + 1
 }

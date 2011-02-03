@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/*
+ * @author max
+ */
 public class SerializationManagerImpl extends SerializationManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
@@ -213,7 +213,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   private int getClassId(final StubSerializer serializer) {
     final Integer idValue = mySerializerToId.get(serializer);
-    assert idValue != null: "No ID found for serializer " + serializer;
+    assert idValue != null: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
     return idValue.intValue();
   }
 
@@ -238,4 +238,3 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
   }
 }
-

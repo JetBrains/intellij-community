@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -35,7 +36,11 @@ import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersion;
+import git4idea.ui.GitUIUtil;
+import git4idea.ui.StashInfo;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -72,6 +78,30 @@ public class GitStashUtils {
     handler.addParameters("save", message);
     String output = handler.run();
     return !output.startsWith("No local changes to save");
+  }
+
+  public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, Consumer<StashInfo> consumer) {
+    loadStashStack(project, root, Charset.forName(GitConfigUtil.getLogEncoding(project, root)), consumer);
+  }
+
+  public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, final Charset charset,
+                                    final Consumer<StashInfo> consumer) {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    h.setSilent(true);
+    h.setNoSSH(true);
+    h.addParameters("list");
+    String out;
+    try {
+      h.setCharset(charset);
+      out = h.run();
+    }
+    catch (VcsException e) {
+      GitUIUtil.showOperationError(project, e, h.printableCommandLine());
+      return;
+    }
+    for (StringScanner s = new StringScanner(out); s.hasMoreData();) {
+      consumer.consume(new StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim()));
+    }
   }
 
   /**

@@ -113,8 +113,13 @@ public class LivePreviewController implements LivePreview.Delegate, UserActivity
     if (currentModel != null) {
       if (currentModel.isReplaceState()) {
         FindManager findManager = FindManager.getInstance(editor.getProject());
-        stringToReplace = findManager.getStringToReplace(foundString, currentModel,
-                                                         liveOccurrence.getPrimaryRange().getStartOffset(), documentText);
+        try {
+          stringToReplace = findManager.getStringToReplace(foundString, currentModel,
+                                                           liveOccurrence.getPrimaryRange().getStartOffset(), documentText);
+        }
+        catch (FindManager.MalformedReplacementStringException e) {
+          return null;
+        }
         if (stringToReplace != null && stringToReplace.isEmpty()) {
           stringToReplace = EMPTY_STRING_DISPLAY_TEXT;
         }

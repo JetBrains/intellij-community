@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 
 /**
  * @author yole
+ * @see ToolWindowEP
  */
 public interface ToolWindowFactory {
   void createToolWindowContent(Project project, ToolWindow toolWindow);

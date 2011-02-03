@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
@@ -184,7 +185,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testBreakOutside() throws Exception {doTest();}
   public void testUndefinedLabel() throws Exception {doTest();}
-  public void testUsedLabel() throws Exception {doTest();}
+  public void testUsedLabel() throws Exception {doTest(new GroovyLabeledStatementInspection());}
 
   public void testNestedMethods() throws Throwable {
     doTest();
@@ -336,5 +337,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testVarNotAssigned() {
     doTest(new UnassignedVariableAccessInspection());
+  }
+
+  public void testTestMarkupStubs() {
+    doTest();
   }
 }

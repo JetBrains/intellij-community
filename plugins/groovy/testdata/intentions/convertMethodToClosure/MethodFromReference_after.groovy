@@ -1,10 +1,10 @@
 class X{
   def a;
 
-  def foo = {def x, def y ->
-    print x + a;
-    print y;
-  }
+    def foo = {def x, def y ->
+        print x + a;
+        print y;
+    }
 }
 
-new X().foo(2, 3)
+new X().f<caret>oo(2, 3)

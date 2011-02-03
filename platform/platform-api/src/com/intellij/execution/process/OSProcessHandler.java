@@ -247,7 +247,7 @@ public class OSProcessHandler extends ProcessHandler {
         while (true) {
           final int rc = readAvailable();
           if (rc == DONE) break;
-          Thread.sleep(rc == READ_SOME ? 1L : 50L);
+          Thread.sleep(rc == READ_SOME ? 1 : 5); // give other threads a chance
         }
       }
       catch (InterruptedException ignore) {

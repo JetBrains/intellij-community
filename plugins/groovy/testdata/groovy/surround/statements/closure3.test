@@ -1,9 +1,9 @@
 {
-  <selection>call 0</selection>
+    <selection>call 0</selection>
 }
 -----
 {
-  {->
-    owner.call 0
-  }.call()
+    {->
+        owner.call 0
+    }.call()
 }

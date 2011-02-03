@@ -54,7 +54,7 @@ public class RenameUtil {
 
   @NotNull
   public static UsageInfo[] findUsages(final PsiElement element,
-                                       String newName,
+                                       final String newName,
                                        boolean searchInStringsAndComments,
                                        boolean searchForTextOccurrences,
                                        Map<? extends PsiElement, String> allRenames) {
@@ -65,7 +65,7 @@ public class RenameUtil {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
 
     Collection<PsiReference> refs = processor.findReferences(element);
-    for (PsiReference ref : refs) {
+    for (final PsiReference ref : refs) {
       if (ref == null) {
         LOG.error("null reference from processor " + processor);
         continue;

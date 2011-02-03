@@ -136,7 +136,7 @@ public class LibraryDefinitionsGeneratorFactory {
           libraryPath.add(new PathElement(path));
         }
         else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-          if (library.isJarDirectory(url)) {
+          if (library.isJarDirectory(url, OrderRootType.CLASSES)) {
             final FileSet fileSet = new FileSet(path);
             fileSet.add(new PatternSetRef(BuildProperties.PROPERTY_LIBRARIES_PATTERNS));
             libraryPath.add(fileSet);
