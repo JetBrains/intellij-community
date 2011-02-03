@@ -1,7 +1,7 @@
 def result = 26
 
 def cl = { int x ->
-        <begin>foo<end>(x, 239)
+        <selection>foo</selection>(x, 239)
 }
 
 def foo(int i, def j) {

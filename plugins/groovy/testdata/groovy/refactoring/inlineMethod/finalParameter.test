@@ -4,7 +4,7 @@ def foo(int x) {
 }
 
 final i = 5;
-print <begin>foo<end>(i);
+print <selection>foo</selection>(i);
 -----
 def foo(int x) {
     x++;

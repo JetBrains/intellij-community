@@ -1,6 +1,6 @@
 def getGeneratedFileNames() {
         if (true) {
-                return <begin>QasdWfsdEdfgh.foo().f.test<end>()
+                return <selection>QasdWfsdEdfgh.foo().f.test</selection>()
         }
         else 42
 }

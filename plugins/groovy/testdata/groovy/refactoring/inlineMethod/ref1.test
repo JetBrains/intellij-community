@@ -1,7 +1,7 @@
 protected static def getGeneratedFileNames() {
         def foo = 0
         while (true) {
-                foo = <begin>asd<end>()
+                foo = <selection>asd</selection>()
         }
 
         int t = foo

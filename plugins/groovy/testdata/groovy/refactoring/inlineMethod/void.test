@@ -1,4 +1,4 @@
-def foo = <begin>edronax<end>(32)
+def foo = <selection>edronax</selection>(32)
 
 void edronax(int g) {
         if (g > 40) {

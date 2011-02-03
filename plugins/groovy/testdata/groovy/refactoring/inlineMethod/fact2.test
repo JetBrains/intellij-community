@@ -1,5 +1,5 @@
 int fact(int n) {
-        if (n > 0) return n * <begin>fact<end>(n - 1);
+        if (n > 0) return n * <selection>fact</selection>(n - 1);
         else return 1;
 }
 -----

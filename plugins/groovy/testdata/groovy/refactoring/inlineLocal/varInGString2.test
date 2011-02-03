@@ -1,4 +1,4 @@
-def <begin>s<end>='abc"cde';
+def <selection>s</selection>='abc"cde';
 print "$s"
 -----
 <caret>print "abc\"cde"

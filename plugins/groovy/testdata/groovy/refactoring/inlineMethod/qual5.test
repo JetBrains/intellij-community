@@ -2,7 +2,7 @@ def getGeneratedFileNames() {
         def qqq = 239
         if (true) {
                 def qqq1 = new QQQ()
-                return <begin>qqq1.test<end>()
+                return <selection>qqq1.test</selection>()
         }
         else 42
 }

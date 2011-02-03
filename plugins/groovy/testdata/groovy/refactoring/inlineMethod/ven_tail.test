@@ -1,7 +1,7 @@
 class DC {
         def r() {
                 String s1 = ""
-                return <begin>getBytes<end>(s1)
+                return <selection>getBytes</selection>(s1)
         }
 
         private byte[] getBytes(String s1) {

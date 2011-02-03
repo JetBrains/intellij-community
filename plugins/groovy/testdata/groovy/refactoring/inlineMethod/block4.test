@@ -1,6 +1,6 @@
 def baal(int jjj) {
         while (true)
-                println(<begin>fact<end>(jjj))
+                println(<selection>fact</selection>(jjj))
 }
 
 

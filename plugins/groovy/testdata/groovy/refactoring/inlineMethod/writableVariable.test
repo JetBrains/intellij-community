@@ -9,7 +9,7 @@ class X {
     {
         int i = 5;
         i++;
-        print <begin>foo<end>(i);
+        print <selection>foo</selection>(i);
     }
 }
 -----

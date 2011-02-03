@@ -1,6 +1,6 @@
 def result = 26
 
-int i = <begin>foo<end>(42, 239)
+int i = <selection>foo</selection>(42, 239)
 
 def foo(int i, def j) {
         if (i > 42) {

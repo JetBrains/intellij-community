@@ -3,7 +3,7 @@ abstract class A{
     abstract def foo()
 
     def boo() {
-        <begin>foo<end>()
+        <selection>foo</selection>()
     }
 
 }

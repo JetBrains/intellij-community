@@ -42,9 +42,6 @@ import java.util.List;
  * @author ilyas
  */
 public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
-  public static final String CARET_MARKER = "<caret>";
-  public static final String BEGIN_MARKER = "<begin>";
-  public static final String END_MARKER = "<end>";
 
   @Override
   protected String getBasePath() {
@@ -130,17 +127,13 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     final List<String> data = TestUtils.readInput(testFile);
     String fileText = data.get(0);
 
-    int startOffset = fileText.indexOf(BEGIN_MARKER);
-    fileText = TestUtils.removeBeginMarker(fileText);
-    int endOffset = fileText.indexOf(END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText);
-
     fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
     final PsiFile file = fixture.getFile();
     final Editor editor = fixture.getEditor();
     setIndentationToNode(file.getNode());
-    editor.getSelectionModel().setSelection(startOffset, endOffset);
+    int startOffset = editor.getSelectionModel().getSelectionStart();
+    int endOffset = editor.getSelectionModel().getSelectionEnd();
     editor.getCaretModel().moveToOffset(endOffset);
 
     GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrReferenceExpression.class);
