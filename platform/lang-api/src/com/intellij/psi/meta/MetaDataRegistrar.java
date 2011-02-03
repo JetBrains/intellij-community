@@ -22,6 +22,7 @@ import com.intellij.psi.filters.ElementFilter;
 
 /**
  * Provides association for elements matching given filter with metadata class.
+ * @see MetaDataContributor
  */
 public abstract class MetaDataRegistrar {
   /**

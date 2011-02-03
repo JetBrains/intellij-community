@@ -24,6 +24,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -52,6 +53,8 @@ import java.util.List;
 public class CodeFormatterFacade {
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
+  
+  private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
    * This key is used as a flag that indicates if <code>'wrap long line during formatting'</code> activity is performed now.
@@ -262,7 +265,7 @@ public class CodeFormatterFacade {
     }
   }
 
-  private void doWrapLongLinesIfNecessary(@NotNull Editor editor, @NotNull Document document, int startOffset, int endOffset) {
+  private void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull Document document, int startOffset, int endOffset) {
     // Normalization.
     int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
     int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
@@ -365,7 +368,7 @@ public class CodeFormatterFacade {
         text, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse), preferredWrapPosition, false
       );
       editor.getCaretModel().moveToOffset(wrapOffset);
-      DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+      final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
 
       SelectionModel selectionModel = editor.getSelectionModel();
       int startSelectionOffset = 0;
@@ -379,8 +382,20 @@ public class CodeFormatterFacade {
       int textLengthBeforeWrap = document.getTextLength();
 
       DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
       try {
-        EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+        Runnable command = new Runnable() {
+          @Override
+          public void run() {
+            EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+          }
+        };
+        if (commandProcessor.getCurrentCommand() == null) {
+          commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
+        }
+        else {
+          command.run();
+        }
       }
       finally {
         DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, null);

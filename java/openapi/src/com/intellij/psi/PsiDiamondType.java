@@ -130,14 +130,30 @@ public class PsiDiamondType extends PsiType {
         }
       } else if (parent instanceof PsiVariable) {
         return getComponentTypes((PsiVariable)parent);
+      } else if (parent instanceof PsiReturnStatement) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (containingMethod != null) {
+          final PsiType returnType = containingMethod.getReturnType();
+          if (returnType != null) {
+            final PsiExpression returnValue = ((PsiReturnStatement)parent).getReturnValue();
+            if (returnValue instanceof PsiNewExpression) {
+              return getComponentTypes(returnType, returnValue);
+            }
+            return getComponentTypes(returnType);
+          }
+        }
       }
     }
     return NULL_TYPES;
   }
 
   private static PsiType[] getComponentTypes(PsiVariable declaredElement) {
-    PsiType lType = declaredElement.getType();
+    final PsiType lType = declaredElement.getType();
     final PsiExpression initializer = declaredElement.getInitializer();
+    return getComponentTypes(lType, initializer);
+  }
+
+  private static PsiType[] getComponentTypes(PsiType lType, PsiExpression initializer) {
     if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
       final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
@@ -145,7 +161,7 @@ public class PsiDiamondType extends PsiType {
         final String text = classReference.getReferenceName();
         if (text != null) {
           final PsiClass psiClass =
-            JavaPsiFacade.getInstance(declaredElement.getProject()).getResolveHelper().resolveReferencedClass(text, initializer);
+            JavaPsiFacade.getInstance(initializer.getProject()).getResolveHelper().resolveReferencedClass(text, initializer);
           final PsiType substitute = substitute(psiClass, lType);
           if (substitute != null) {
             lType = substitute;

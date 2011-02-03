@@ -83,25 +83,12 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
-        VirtualFile root = getSourceRoot();
-        if (path.length() == 0) return root;
-        String trimPath = StringUtil.trimStart(path, "/");
-        final List<String> dirs = StringUtil.split(trimPath, "/");
-        for (String dirName : dirs) {
-          VirtualFile dir = root.findChild(dirName);
-          if (dir != null) {
-            root = dir;
-          }
-          else {
-            try {
-              root = root.createChildDirectory(this, dirName);
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
+        try {
+          return findOrCreateChildDir(getSourceRoot(), path);
         }
-        return root;
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     });
   }
@@ -135,21 +122,32 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   private VirtualFile findOrCreateChildDir(VirtualFile root, String relativePath) throws IOException {
-    String thisLevel = relativePath;
-    String nextLevel = null;
-    final int pos = relativePath.indexOf('/');
-    if (pos > 0) {
-      thisLevel = relativePath.substring(0, pos);
-      nextLevel = relativePath.substring(pos+1);
+    if (relativePath.length() == 0) return root;
+    String trimPath = StringUtil.trimStart(relativePath, "/");
+    final List<String> dirs = StringUtil.split(trimPath, "/");
+    for (String dirName : dirs) {
+      if (dirName.equals(".")) continue;
+
+      if (dirName.equals("..")) {
+        root = root.getParent();
+        if (root == null) throw new IllegalArgumentException("Invalid path: " + relativePath);
+        continue;
+      }
+
+      VirtualFile dir = root.findChild(dirName);
+      if (dir != null) {
+        root = dir;
+      }
+      else {
+        try {
+          root = root.createChildDirectory(this, dirName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
-    VirtualFile child = root.findChild(thisLevel);
-    if (child == null) {
-      child = root.createChildDirectory(this, thisLevel);
-    }
-    if (nextLevel != null && nextLevel.length() > 0) {
-      return findOrCreateChildDir(child, nextLevel);
-    }
-    return child;
+    return root;
   }
 
   @Override

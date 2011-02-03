@@ -13,11 +13,11 @@ int b
 (a, b) = testMethod(a)
 
 private List testMethod(int a) {
-  print a
-  def b = 6;
-  a++
-  print a + b
-  return [a, b]
+    print a
+    def b = 6;
+    a++
+    print a + b
+    return [a, b]
 }
 
 

@@ -1,13 +1,13 @@
 class X {
-  def foo(def it = null) {print it}
+    def fo<caret>o(def it = null) {print it}
 
   def bar() {
     foo(2)
 
     this.foo(2)
 
-    foo(2)
-    foo()
+      foo(2)
+      foo()
 
     print this.&foo
   }

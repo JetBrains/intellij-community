@@ -1,7 +1,7 @@
 interface MyInterface {
-  protected CONST = 45 + 6
+    protected CONST = 45 + 6
 
-  def foo(String s);
+    def foo(String s);
 }
 
 def a = MyInterface.<selection>CONST</selection>;

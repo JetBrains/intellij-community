@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.compiler.ModuleCompilerUtil;
@@ -95,7 +96,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return null;
 
-    if ("TestCase".equals(referenceName) || isAnnotation(psiElement) && isJunitAnnotationName(referenceName)) {
+    if ("TestCase".equals(referenceName) || isAnnotation(psiElement) && isJunitAnnotationName(referenceName, psiElement)) {
       final boolean isJunit4 = !referenceName.equals("TestCase");
       @NonNls final String className = isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase";
       PsiClass found =
@@ -259,14 +260,27 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   private static boolean isAnnotation(final PsiElement psiElement) {
-    return psiElement.getParent() instanceof PsiAnnotation && PsiUtil.isLanguageLevel5OrHigher(psiElement);
+    return PsiTreeUtil.getParentOfType(psiElement, PsiAnnotation.class) != null && PsiUtil.isLanguageLevel5OrHigher(psiElement);
   }
 
-  private static boolean isJunitAnnotationName(@NonNls final String referenceName) {
-    return "Test".equals(referenceName) || "Ignore".equals(referenceName) || "RunWith".equals(referenceName) ||
-           "Before".equals(referenceName) || "BeforeClass".equals(referenceName) ||
-           "After".equals(referenceName) || "AfterClass".equals(referenceName);
-
+  private static boolean isJunitAnnotationName(@NonNls final String referenceName, @NotNull final PsiElement psiElement) {
+    if ("Test".equals(referenceName) || "Ignore".equals(referenceName) || "RunWith".equals(referenceName) ||
+        "Before".equals(referenceName) || "BeforeClass".equals(referenceName) ||
+        "After".equals(referenceName) || "AfterClass".equals(referenceName)) {
+      return true;
+    }
+    final PsiElement parent = psiElement.getParent();
+    if (parent != null && !(parent instanceof PsiAnnotation)) {
+      final PsiReference reference = parent.getReference();
+      if (reference != null) {
+        final String referenceText = parent.getText();
+        if (isJunitAnnotationName(reference.getRangeInElement().substring(referenceText), parent)) {
+          final int lastDot = referenceText.lastIndexOf('.');
+          return lastDot > -1 && referenceText.substring(0, lastDot).equals("org.junit");
+        }
+      }
+    }
+    return false;
   }
 
   public static void addBundledJarToRoots(final Project project,

@@ -45,6 +45,9 @@ public abstract class FileTypeManager{
     return ourInstance;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.fileTypes.FileTypeFactory} instead
+   */
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
 
   /**
@@ -53,6 +56,7 @@ public abstract class FileTypeManager{
    * @param type                        The file type to register.
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
+   * @deprecated use {@link com.intellij.openapi.fileTypes.FileTypeFactory} instead
    */
   public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<FileNameMatcher>();

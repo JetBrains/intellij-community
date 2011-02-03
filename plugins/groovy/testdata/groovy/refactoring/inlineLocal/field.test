@@ -1,5 +1,5 @@
 class Foo {
-  final def <begin>foo<end> = 2+2
+  final def <selection>foo</selection> = 2+2
 
   def a() {
     print foo.intValue()

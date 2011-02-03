@@ -786,6 +786,11 @@
       <reference ref="CompareClipboardWithSelection"/>
     </group>
 
+    <group>
+      <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
+      <separator/>
+      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
     <!-- SM Test Runner Actions -->
     <group id="SMTestRunnerTestsTree">
       <separator/>

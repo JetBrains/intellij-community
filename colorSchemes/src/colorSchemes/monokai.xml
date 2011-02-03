@@ -1049,5 +1049,45 @@
         <option name="BACKGROUND" value="F92672" />
       </value>
     </option>
+    <option name="GHERKIN_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="GHERKIN_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="GHERKIN_TAG">
+      <value/>
+    </option>
+    <option name="GHERKIN_PYSTRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="GHERKIN_TABLE_HEADER_CELL">
+      <value>
+        <option name="FOREGROUND" value="FD971F" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="GHERKIN_TABLE_CELL">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="GHERKIN_OUTLINE_PARAMETER_SUBSTITUTION">
+      <value>
+        <option name="FOREGROUND" value="FD971F" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="GHERKIN_REGEXP_PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
   </attributes>
 </scheme>

@@ -610,12 +610,25 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean isCorrectReferenceName(String newName, Project project) {
+    if (newName.startsWith("'''") || newName.startsWith("\"\"\"")) {
+      if (newName.length() < 6 || !newName.endsWith("'''")) {
+        return false;
+      }
+    }
+    else if (newName.startsWith("'") || newName.startsWith("\"")) {
+      if (newName.length() < 2 || !newName.endsWith("'")) {
+        return false;
+      }
+    }
+    if (KEYWORDS.contains(newName)) {
+      return false;
+    }
     try {
       GroovyPsiElementFactory.getInstance(project).createReferenceNameFromText(newName);
     }
     catch (IncorrectOperationException e) {
       return false;
     }
-    return !KEYWORDS.contains(newName);
+    return true;
   }
 }

@@ -1,17 +1,17 @@
 def tail(int jjj) {
-    println jjj
+        println jjj
 
-    if (true) {
-      return <begin>fact<end>(jjj)
-    }
-    return 42
+        if (true) {
+            return <selection>fact</selection>(jjj)
+        }
+        return 42
 }
 
 int fact(int n) {
-    if (n > 0) {
-        return n * fact(n - 1)
-    }
-    return 1
+        if (n > 0) {
+                return n * fact(n - 1)
+        }
+        return 1
 }
 -----
 FAIL: Refactoring is not supported when return statement interrupts the execution flow

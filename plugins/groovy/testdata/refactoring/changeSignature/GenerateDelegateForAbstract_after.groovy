@@ -1,9 +1,9 @@
 abstract class X {
-  abstract def foo(String s, int a)
+  abstract def foo<caret>(String s, int a)
 
-  def foo(String s) {
-    return foo(s, 5);
-  }
+    def foo(String s) {
+        return foo(s, 5);
+    }
 }
 
 class Y extends X {

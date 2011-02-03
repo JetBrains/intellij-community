@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
-import com.intellij.util.Function;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +92,7 @@ public class FormatTextRanges {
      *                            <code>false</code> otherwise
      */
     public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
-      if (myRange.getStartOffset() >= range.getEndOffset() && rootIsRightBlock) {
+      if (myRange == null || myRange.getStartOffset() >= range.getEndOffset() && rootIsRightBlock) {
         return false;
       }
 

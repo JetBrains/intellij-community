@@ -1105,7 +1105,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return result;
     }
     int line = calcLogicalLineNumber(offset);
-    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int lineStartOffset;
+    if (line >= myDocument.getLineCount()) {
+      lineStartOffset = myDocument.getTextLength();
+    }
+    else {
+      lineStartOffset = myDocument.getLineStartOffset(line);
+    }
+    
     int result = logicalToVisualLine(line);
     
     // There is a possible case that logical line that contains target offset is soft-wrapped (represented in more than one visual

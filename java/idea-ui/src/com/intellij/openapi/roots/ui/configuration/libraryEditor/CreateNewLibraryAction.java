@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,12 +79,7 @@ public class CreateNewLibraryAction extends AnAction {
   }
 
   private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
-    final List<Module> modules = new ArrayList<Module>();
-    for (Module module : rootConfigurable.getModules()) {
-      if (myType == null || myType.isSuitableModuleType(module.getModuleType())) {
-        modules.add(module);
-      }
-    }
+    final List<Module> modules = getSuitableModules(rootConfigurable, myType);
     if (modules.isEmpty()) return;
     final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                             modules, ProjectBundle.message("choose.modules.dialog.title"),
@@ -97,14 +94,37 @@ public class CreateNewLibraryAction extends AnAction {
     }
   }
 
+  private static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable, final @Nullable LibraryType type) {
+    final List<Module> modules = new ArrayList<Module>();
+    for (Module module : rootConfigurable.getModules()) {
+      if (type == null || type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
+        modules.add(module);
+      }
+    }
+    return modules;
+  }
+
   public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @Nullable Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
-    if (extensions.length == 0) {
+    List<LibraryType<?>> suitableTypes = new ArrayList<LibraryType<?>>();
+    if (project != null && librariesConfigurable instanceof ProjectLibrariesConfigurable) {
+      final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
+      for (LibraryType<?> extension : extensions) {
+        if (!getSuitableModules(configurable, extension).isEmpty()) {
+          suitableTypes.add(extension);
+        }
+      }
+    }
+    else {
+      Collections.addAll(suitableTypes, extensions);
+    }
+
+    if (suitableTypes.isEmpty()) {
       return new AnAction[]{new CreateNewLibraryAction(text, Icons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
     List<AnAction> actions = new ArrayList<AnAction>();
     actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), Icons.LIBRARY_ICON, null, librariesConfigurable, project));
-    for (LibraryType<?> type : extensions) {
+    for (LibraryType<?> type : suitableTypes) {
       actions.add(new CreateNewLibraryAction(type.getCreateActionName(), type.getIcon(), type, librariesConfigurable, project));
     }
     return actions.toArray(new AnAction[actions.size()]);

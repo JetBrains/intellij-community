@@ -47,14 +47,13 @@ public class EclipseProjectFinder implements EclipseXml {
     if (project != null) {
       paths.add(rootPath);
     }
-    else {
-      final File root = new File(rootPath);
-      if (root.isDirectory()) {
-        final File[] files = root.listFiles();
-        if (files != null) {
-          for (File file : files) {
-            findModuleRoots(paths, file.getPath());
-          }
+
+    final File root = new File(rootPath);
+    if (root.isDirectory()) {
+      final File[] files = root.listFiles();
+      if (files != null) {
+        for (File file : files) {
+          findModuleRoots(paths, file.getPath());
         }
       }
     }

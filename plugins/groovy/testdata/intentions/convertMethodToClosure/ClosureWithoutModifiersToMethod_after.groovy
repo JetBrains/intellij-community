@@ -1,3 +1,3 @@
 class C {
-  def clos(def it = null) {/* do smth */}
+    def clos(de<caret>f it = null) {/* do smth */}
 }

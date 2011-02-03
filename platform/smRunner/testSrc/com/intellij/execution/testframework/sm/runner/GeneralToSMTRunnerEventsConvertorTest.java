@@ -125,7 +125,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestFailure() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", false);
+    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
+
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertTrue(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
+  }
+
+  public void testOnTestComparisionFailure() {
+    onTestStarted("some_test");
+    myEventsProcessor.onTestFailure("some_test", "", "", false, "actual", "expected");
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -136,8 +147,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestFailure_Twice() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", false);
-    myEventsProcessor.onTestFailure("some_test", "", "", false);
+    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
+    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(1, myEventsProcessor.getFailedTestsSet().size());
@@ -145,7 +156,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
    public void testOnTestError() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", true);
+    myEventsProcessor.onTestFailure("some_test", "", "", true, null, null);
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -213,7 +224,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
-    myEventsProcessor.onTestFailure("test", "", "", false);
+    myEventsProcessor.onTestFailure("test", "", "", false, null, null);
     myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 
@@ -229,7 +240,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
-    myEventsProcessor.onTestFailure("test", "", "", true);
+    myEventsProcessor.onTestFailure("test", "", "", true, null, null);
     myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 

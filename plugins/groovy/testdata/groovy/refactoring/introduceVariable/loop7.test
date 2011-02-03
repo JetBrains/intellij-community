@@ -1,8 +1,8 @@
 while (<all>true<end>) {
-  true
+    true
 }
 -----
 def preved = true
 while (preved<caret>) {
-  true
+    true
 }

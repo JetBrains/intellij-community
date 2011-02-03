@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -182,6 +183,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
+    checkStringNameIdentifier(referenceExpression);
     GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
     for (GroovyResolveResult result : results) {
@@ -259,6 +261,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       registerReferenceFixes(referenceExpression, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
+  }
+
+  private void checkStringNameIdentifier(GrReferenceExpression ref) {
+    final PsiElement nameElement = ref.getReferenceNameElement();
+    if (nameElement == null) return;
+    if (!GroovyElementTypes.mSTRING_LITERAL.equals(nameElement.getNode().getElementType())) return;
+    final String text = nameElement.getText();
+    checkStringLiteral(nameElement, text);
   }
 
   /*
@@ -677,14 +687,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
-    final String name = labeledStatement.getLabelName();
-    if (ResolveUtil.resolveLabeledStatement(name, labeledStatement, true) != null) {
-      myHolder.createWarningAnnotation(labeledStatement.getLabel(), GroovyBundle.message("label.already.used", name));
-    }
-  }
-
-  @Override
   public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
     //todo: if reference isn't resolved it construct package definition
     final PsiFile file = packageDefinition.getContainingFile();
@@ -743,6 +745,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitLiteralExpression(GrLiteral literal) {
     String text = literal.getText();
+    checkStringLiteral(literal, text);
+  }
+
+  private void checkStringLiteral(PsiElement literal, String text) {
     if (text.startsWith("'''")) {
       if (text.length() < 6 || !text.endsWith("'''")) {
         myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));

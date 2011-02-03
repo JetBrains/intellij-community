@@ -2,5 +2,5 @@ while (true)
 <begin>foo()<end>
 -----
 while (true) {
-  def preved = foo()<caret>
+    def preved = foo()<caret>
 }

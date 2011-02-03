@@ -17,13 +17,14 @@
 package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.junit2.segments.ObjectReader;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
-public class ComparisonFailureState extends FaultyState {
+public class ComparisonFailureState extends FaultyState implements AbstractTestProxy.AssertEqualsDiffViewerProvider {
   private DiffHyperlink myHyperlink;
   @NonNls
   protected static final String EXPECTED_VALUE_MESSAGE_TEXT = "expected:<";

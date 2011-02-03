@@ -1,11 +1,11 @@
 def list=[1, 2, 3]
-for (final int x in list) {
-  print x;
-  {
-    soSomething();
-  }
+for (fi<caret>nal int x in list) {
+    print x;
+    {
+        soSomething();
+    }
 
-  //sadhsjd
+    //sadhsjd
 
-  //sdfshj
+    //sdfshj
 }

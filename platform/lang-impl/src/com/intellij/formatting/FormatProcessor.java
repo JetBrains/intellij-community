@@ -1128,8 +1128,9 @@ class FormatProcessor {
   }
 
   private static int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
-    if (!(parent instanceof CompositeBlockWrapper)) return 0;
-    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)parent).getChildren();
+    AbstractBlockWrapper parentBlockToUse = getLastNestedCompositeBlockForSameRange(parent);
+    if (!(parentBlockToUse instanceof CompositeBlockWrapper)) return 0;
+    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)parentBlockToUse).getChildren();
     //noinspection ConstantConditions
     if (subBlocks != null) {
       for (int i = 0; i < subBlocks.size(); i++) {
@@ -1159,7 +1160,7 @@ class FormatProcessor {
   private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
     AbstractBlockWrapper previous = getPreviousIncompleteBlock(block, offset);
     if (previous != null) {
-      return previous;
+      return getLastNestedCompositeBlockForSameRange(previous);
     }
     else {
       return getParentFor(offset, (AbstractBlockWrapper)block);
@@ -1215,10 +1216,45 @@ class FormatProcessor {
 
   @Nullable
   private static AbstractBlockWrapper getLastChildOf(final AbstractBlockWrapper currentResult) {
-    if (!(currentResult instanceof CompositeBlockWrapper)) return null;
-    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)currentResult).getChildren();
+    AbstractBlockWrapper parentBlockToUse = getLastNestedCompositeBlockForSameRange(currentResult);
+    if (!(parentBlockToUse instanceof CompositeBlockWrapper)) return null;
+    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)parentBlockToUse).getChildren();
     if (subBlocks.isEmpty()) return null;
     return subBlocks.get(subBlocks.size() - 1);
+  }
+
+  /**
+   * There is a possible case that particular block is a composite block that contains number of nested composite blocks
+   * that all target the same text range. This method allows to derive the most nested block that shares the same range (if any).
+   * 
+   * @param block   block to check
+   * @return        the most nested block of the given one that shares the same text range if any; given block otherwise
+   */
+  @NotNull
+  private static AbstractBlockWrapper getLastNestedCompositeBlockForSameRange(@NotNull final AbstractBlockWrapper block) {
+    if (!(block instanceof CompositeBlockWrapper)) {
+      return block;
+    }
+    
+    AbstractBlockWrapper result = block;
+    AbstractBlockWrapper candidate = block;
+    while (true) {
+      List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)candidate).getChildren();
+      if (subBlocks == null || subBlocks.size() != 1) {
+        break;
+      }
+
+      candidate = subBlocks.get(0);
+      if (candidate.getStartOffset() == block.getStartOffset() && candidate.getEndOffset() == block.getEndOffset()
+          && candidate instanceof CompositeBlockWrapper)
+      {
+        result = candidate;
+      }
+      else {
+        break;
+      }
+    }
+    return result;
   }
 
   private void processBlocksBefore(final int offset) {

@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 public abstract class HotSwapProgress {
   private final Project myProject;
   private Runnable myCancelWorker;
-  private boolean myIsCancelled;
+  private volatile boolean myIsCancelled;
 
   public HotSwapProgress(Project project) {
     myProject = project;

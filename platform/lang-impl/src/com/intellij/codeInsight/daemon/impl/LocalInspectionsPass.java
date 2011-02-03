@@ -55,6 +55,7 @@ import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -75,6 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
+  private static final int NUM_ELEMENTS_PER_CHECK_CANCELLED = 5;
   private final int myStartOffset;
   private final int myEndOffset;
   private final TextRange myPriorityRange;
@@ -104,8 +106,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
-    InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
-    myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
+    InspectionProfileWrapper profileToUse = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
+
+    Function<InspectionProfileWrapper,InspectionProfileWrapper> customizationStrategy
+      = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    if (customizationStrategy != null) {
+      profileToUse = customizationStrategy.fun(profileToUse);
+    }
+    
+    myProfileWrapper = profileToUse;
     mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
     LOG.assertTrue(mySeverityRegistrar != null);
 
@@ -304,9 +313,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
 
     tool.inspectionStarted(session);
-    for (PsiElement element : elements) {
-      indicator.checkCanceled();
-      element.accept(visitor);
+    int size = elements.size();
+    for (int i = 0; i < size; ++i) {
+      elements.get(i).accept(visitor);
+      if (i % NUM_ELEMENTS_PER_CHECK_CANCELLED == 0) indicator.checkCanceled();
     }
     return visitor;
   }
@@ -331,9 +341,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           ProblemsHolder holder = trinity.second;
           PsiElementVisitor elementVisitor = trinity.third;
           for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-            PsiElement element = elements.get(i);
-            indicator.checkCanceled();
-            element.accept(elementVisitor);
+            elements.get(i).accept(elementVisitor);
+            if (i % NUM_ELEMENTS_PER_CHECK_CANCELLED == 0) indicator.checkCanceled();
           }
 
           advanceProgress(1);

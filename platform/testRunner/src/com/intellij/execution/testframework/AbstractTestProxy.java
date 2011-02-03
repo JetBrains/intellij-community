@@ -124,5 +124,14 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return myExceptionMark;
   }
 
+  @Nullable
+  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+    return null;
+  }
 
+  public interface AssertEqualsDiffViewerProvider {
+    void openDiff(final Project project);
+    String getExpecteed();
+    String getActual();
+  }
 }

@@ -198,5 +198,10 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
 
     public void executionCanceled() {
     }
+
+    @Override
+    public String getHelpId() {
+      return null;
+    }
   }
 }

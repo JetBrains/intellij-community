@@ -1,8 +1,8 @@
 def foo(s) {
-  a(a,<caret>
+    a(a,<caret>
 }
 -----
 def foo(s) {
-  a(a,)
-  <caret>
+    a(a,)
+    <caret>
 }

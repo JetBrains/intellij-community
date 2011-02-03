@@ -1,14 +1,14 @@
 class Test {
 
 
-  void u() {
+    void u() {
 
-  }
+    }
 }
 
 class Test1 {
-  {
-    i = 0;
-  }
-  static int i
+    {
+        i = 0;
+    }
+    static int i
 }
