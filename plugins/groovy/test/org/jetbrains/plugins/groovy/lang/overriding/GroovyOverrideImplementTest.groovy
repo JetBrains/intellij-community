@@ -59,7 +59,8 @@ class Test {<caret>}
     generateImplementation(findMethod("Foo", "foo"))
     myFixture.checkResult """
 class Test {
-    @Override def foo() {
+    @Override
+    def foo() {
         return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
     }
 }
@@ -78,7 +79,8 @@ class Test<T> extends Base<T> {<caret>}
     generateImplementation(findMethod("Base", "toArray"))
     myFixture.checkResult """
 class Test<T> extends Base<T> {
-    @Override def <T> T[] toArray(T[] t) {
+    @Override
+    def <T> T[] toArray(T[] t) {
         return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
     }
 }
