@@ -988,6 +988,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     markTokenTypeChecked();
     balanceWhiteSpaces();
 
+    LOG.assertTrue(myProduction.size() > 0, "Parser produced no markers. Text:\n" + myText);
+
     final StartMarker rootMarker = (StartMarker)myProduction.get(0);
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
@@ -1025,6 +1027,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (myCurrentLexeme < myLexemeCount) {
       final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, myCurrentLexeme, myLexemeCount);
       LOG.error("Tokens " + missed + " were not inserted into the tree. Text:\n" + myText);
+    }
+
+    if (rootMarker.myDoneMarker.myLexemeIndex < myLexemeCount) {
+      final List<IElementType> missed = CollectionFactory.arrayList(myLexTypes, rootMarker.myDoneMarker.myLexemeIndex, myLexemeCount);
+      LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\". Text:\n" + myText);
     }
 
     if (myLexStarts.length <= myCurrentLexeme + 1) {
