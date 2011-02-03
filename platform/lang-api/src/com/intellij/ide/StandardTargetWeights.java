@@ -28,5 +28,6 @@ public interface StandardTargetWeights {
   float SCOPE_WEIGHT = 6.5f;
   float NAV_BAR = 8;
   float CHANGES_VIEW = 9;
+  float OS_FILE_MANAGER = 9.5f;
   float PROJECT_SETTINGS_WEIGHT = 10;
 }
