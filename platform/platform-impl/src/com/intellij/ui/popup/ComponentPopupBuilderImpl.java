@@ -23,9 +23,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.InplaceButton;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.ui.InplaceButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myResizable;
   private boolean myMovable;
   private final JComponent myComponent;
-  private final JComponent myPrefferedFocusedComponent;
+  private final JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
   private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
@@ -52,7 +52,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
-  private boolean myUseDimSevriceForXYLocation;
+  private boolean myUseDimServiceForXYLocation;
 
   private IconButton myCancelButton;
   private MouseChecker myCancelOnMouseOutCallback;
@@ -81,9 +81,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myMayBeParent;
 
   public ComponentPopupBuilderImpl(final JComponent component,
-                                   final JComponent prefferedFocusedComponent) {
+                                   final JComponent preferredFocusedComponent) {
     myComponent = component;
-    myPrefferedFocusedComponent = prefferedFocusedComponent;
+    myPreferredFocusedComponent = preferredFocusedComponent;
   }
 
   @NotNull
@@ -149,7 +149,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setDimensionServiceKey(final Project project, final String dimensionServiceKey, final boolean useForXYLocation) {
     myDimensionServiceKey = dimensionServiceKey;
-    myUseDimSevriceForXYLocation = useForXYLocation;
+    myUseDimServiceForXYLocation = useForXYLocation;
     myProject = project;
     return this;
   }
@@ -203,9 +203,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   public JBPopup createPopup() {
-    final AbstractPopup popup = new AbstractPopup().init(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
+    final AbstractPopup popup = new AbstractPopup().init(myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myForceHeavyweight,
                                               myMovable, myDimensionServiceKey, myResizable, myTitle,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCommandButton,
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
