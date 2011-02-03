@@ -71,7 +71,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
               final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
               if (typeElements.length > 0) {
                 if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return;
-                holder.registerProblem(parameterList, "Can be replaced",
+                holder.registerProblem(parameterList, "Redundant type argument #ref #loc",
                                        new LocalQuickFix() {
                   @NotNull
                   @Override
