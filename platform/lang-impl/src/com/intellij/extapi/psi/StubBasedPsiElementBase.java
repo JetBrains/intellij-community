@@ -184,6 +184,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @NotNull
   public IStubElementType getElementType() {
+    if (!(myElementType instanceof IStubElementType)) {
+      throw new AssertionError("Not a stub type: " + myElementType + " in " + getClass());
+    }
     return (IStubElementType)myElementType;
   }
 
