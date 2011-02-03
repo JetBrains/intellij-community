@@ -127,6 +127,8 @@ public abstract class ChooseByNameBase {
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 
+  private boolean myClosedByShiftEnter = false;
+
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
 
@@ -173,6 +175,10 @@ public abstract class ChooseByNameBase {
 
   public void setSearchInAnyPlace(boolean searchInAnyPlace) {
     mySearchInAnyPlace = searchInAnyPlace;
+  }
+
+  public boolean isClosedByShiftEnter() {
+    return myClosedByShiftEnter;
   }
 
   /**
@@ -419,6 +425,10 @@ public abstract class ChooseByNameBase {
 
     myTextField.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+          myClosedByShiftEnter = true;
+          close(true);
+        }
         if (!myListScrollPane.isVisible()) {
           return;
         }
