@@ -171,7 +171,7 @@ public class GithubUtil {
       }
       final Element plan = element.getChild("plan");
       assert plan != null : "Authentification failed";
-      final String privateRepos = plan.getChildText("private_repos");
+      final String privateRepos = plan.getChildText("private-repos");
       return privateRepos != null && Integer.valueOf(privateRepos) > 0;
     }
     catch (Exception e) {
