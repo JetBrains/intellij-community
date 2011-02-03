@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
+import com.intellij.util.io.DataExternalizer;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -80,6 +81,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
+  private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
+  public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
+  public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
