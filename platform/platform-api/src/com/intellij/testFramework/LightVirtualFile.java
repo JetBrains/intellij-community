@@ -42,6 +42,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private Language myLanguage;
+  private VirtualFile myOriginalFile;
 
   public LightVirtualFile() {
     this("");
@@ -109,6 +110,14 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   private void setContent(CharSequence content) {
     //StringUtil.assertValidSeparators(content);
     myContent = content;
+  }
+
+  public VirtualFile getOriginalFile() {
+    return myOriginalFile;
+  }
+
+  public void setOriginalFile(VirtualFile originalFile) {
+    myOriginalFile = originalFile;
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {

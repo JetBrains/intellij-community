@@ -148,6 +148,11 @@ public class CompleteReferenceExpression {
     }
   }
 
+  @NotNull
+  public static LookupElementBuilder createPropertyLookupElement(@NotNull String name, @NotNull PsiType type) {
+    return LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setTypeText(type.getPresentableText());
+  }
+
   @Nullable
   public static LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor, @Nullable GroovyResolveResult resolveResult) {
     String propName;

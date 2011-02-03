@@ -28,9 +28,12 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 
 public class IconUtil {
@@ -177,5 +180,21 @@ public class IconUtil {
 
   private static FileIconPatcher[] getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
+  }
+
+  public static Image toImage(@NotNull Icon icon) {
+    if (icon instanceof ImageIcon) {
+      return ((ImageIcon)icon).getImage();
+    }
+    else {
+      final int w = icon.getIconWidth();
+      final int h = icon.getIconHeight();
+      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Color.TRANSLUCENT);
+      final Graphics2D g = image.createGraphics();
+      icon.paintIcon(null, g, 0, 0);
+      g.dispose();
+      return image;
+    }
   }
 }

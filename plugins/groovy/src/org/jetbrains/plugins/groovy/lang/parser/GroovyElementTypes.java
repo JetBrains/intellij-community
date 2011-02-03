@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -356,7 +357,17 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
-  GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
+  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new EmptyStubElementType<GrVariableDeclaration>("variable definitions with errors", GroovyFileType.GROOVY_LANGUAGE) {
+    @Override
+    public boolean shouldCreateStub(ASTNode node) {
+      return false;
+    }
+
+    @Override
+    public GrVariableDeclaration createPsi(EmptyStub stub) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  };
   EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
     new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
