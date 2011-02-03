@@ -19,6 +19,8 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import org.jetbrains.annotations.NotNull;
@@ -84,13 +86,36 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   public String toString() {
-    final ASTNode treeNode = ((AbstractBlock)mySubBlocks.get(0)).getNode();
+    ASTNode treeNode = null;
+    Block child = mySubBlocks.get(0);
+    while (treeNode == null) {
+      if (child instanceof AbstractBlock) {
+        treeNode = ((AbstractBlock)child).getNode();
+      }
+      else if (child instanceof SyntheticCodeBlock) {
+        child = ((SyntheticCodeBlock)child).mySubBlocks.get(0);
+      }
+      else {
+        break;
+      }
+    }
     final TextRange textRange = getTextRange();
-    return treeNode.getPsi().getContainingFile().getText().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
+    if (treeNode != null) {
+      PsiElement psi = treeNode.getPsi();
+      if (psi != null) {
+        PsiFile file = psi.getContainingFile();
+        if (file != null) {
+          return file.getText().subSequence(textRange.getStartOffset(), textRange.getEndOffset()) + " " + textRange;
+        }
+      }
+    }
+    return getClass().getName() + ": " + textRange;
   }
 
   public ASTNode getFirstTreeNode() {
-    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
+    ASTNode result = AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
+    assert result != null;
+    return result;
   }
 
   public void setChildAttributes(final ChildAttributes childAttributes) {

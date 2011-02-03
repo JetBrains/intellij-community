@@ -83,7 +83,6 @@ binding.setVariable("loadProject", {
   }
 
   project["compiler.resources.id"] = "idea.compiler.resources"
-  project.builder.compressJars = false
 })
 
 requireProperty("home", guessHome())
