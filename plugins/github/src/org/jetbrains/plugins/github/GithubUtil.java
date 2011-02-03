@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -94,7 +93,7 @@ public class GithubUtil {
   public static HttpMethod doREST(final String url, final String login, final String password, final String request, final boolean post) throws Exception {
     final HttpClient client = getHttpClient(login, password);
     client.getParams().setContentCharset("UTF-8");
-    final String uri = JDOMUtil.escapeText("https://" + getHostByUrl(url) + API_URL + request, true, true);
+    final String uri = "https://" + getHostByUrl(url) + API_URL + request;
     final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     client.executeMethod(method);
     return method;
