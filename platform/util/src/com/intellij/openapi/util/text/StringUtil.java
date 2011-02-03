@@ -1842,4 +1842,16 @@ public class StringUtil {
     }
     return true;
   }
+
+  public static String cleanString(@NotNull final String original, final String charsToRemove) {
+    if (original.length() == 0) return original;
+
+    final StringBuilder builder = new StringBuilder(original.length());
+    for (int i = 0; i < original.length(); i++) {
+      final char ch = original.charAt(i);
+      if (charsToRemove.indexOf(ch) < 0) builder.append(ch);
+    }
+
+    return builder.toString();
+  }
 }

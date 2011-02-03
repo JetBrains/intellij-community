@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -49,6 +50,12 @@ public final class QuickFixAction {
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
     registerQuickFixAction(info, null, action, null);
+  }
+
+  public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
+    for (IntentionAction action : actions) {
+      registerQuickFixAction(info, action);
+    }
   }
 
   @Deprecated
