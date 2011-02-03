@@ -55,6 +55,7 @@ import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -105,8 +106,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
-    InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
-    myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
+    InspectionProfileWrapper profileToUse = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
+
+    Function<InspectionProfileWrapper,InspectionProfileWrapper> customizationStrategy
+      = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    if (customizationStrategy != null) {
+      profileToUse = customizationStrategy.fun(profileToUse);
+    }
+    
+    myProfileWrapper = profileToUse;
     mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
     LOG.assertTrue(mySeverityRegistrar != null);
 
