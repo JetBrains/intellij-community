@@ -1,5 +1,9 @@
 package org.jetbrains.plugins.github;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -113,7 +118,7 @@ public class GithubShareAction extends DumbAwareAction {
     try {
       LOG.info("Creating GitHub repository");
       GithubUtil.doREST(settings.getHost(), settings.getLogin(), settings.getPassword(),
-                        "/repos/create?name=" + name + "&description=" + description + "&public=" + (isPrivate ? "0" : "1"), true);
+                        "/repos/create?name=" + name + "&public=" + (isPrivate ? "0" : "1") + "&description=" + JDOMUtil.escapeText(description, true, true), true);
       LOG.info("Successfully created GitHub repository");
     }
     catch (final Exception e1) {
@@ -121,6 +126,8 @@ public class GithubShareAction extends DumbAwareAction {
       return;
     }
     bindToGithub(project, root, gitDetected, settings.getLogin(), name);
+    Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
+                                              NotificationType.INFORMATION), NotificationDisplayType.BALLOON_ONLY, null);
   }
 
   private void bindToGithub(final Project project, final VirtualFile root, final boolean gitDetected, final String login, final String name) {
