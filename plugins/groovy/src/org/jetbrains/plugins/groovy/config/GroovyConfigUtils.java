@@ -70,16 +70,16 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
-    if (groovyJarVersion != null) {
-      return groovyJarVersion;
+    if (groovyJarVersion == null) {
+      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN_NOVERSION, MANIFEST_PATH);
     }
-
-    groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
-    if (groovyJarVersion != null) {
-      return groovyJarVersion;
+    if (groovyJarVersion == null) {
+      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
-    
-    return UNDEFINED_VERSION;
+    if (groovyJarVersion == null) {
+      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+    }
+    return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
 
   public boolean isSDKLibrary(Library library) {
