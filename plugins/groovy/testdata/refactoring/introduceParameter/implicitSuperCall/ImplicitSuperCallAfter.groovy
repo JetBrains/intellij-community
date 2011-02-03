@@ -2,8 +2,8 @@ class B extends A {
   int k;
 
   public B() {
-    super(27)
-    k = 10;
+      super(27)
+      k = 10;
   }
 }
 

@@ -1480,8 +1480,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    final String fileText = originalFile.getText();
+    final String path = getTestDataPath() + "/" + expectedFile;
+
+    /*final VirtualFile result = LocalFileSystem.getInstance().findFileByPath(path);
+    final int caret = myEditor.getCaretModel().getOffset();
+    final String newText = myFile == originalFile ? fileText.substring(0, caret) + "<caret>" + fileText.substring(caret) : fileText;
+    VfsUtil.saveText(result, newText);*/
+
     checkResult(expectedFile, stripTrailingSpaces,
-                SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
+                SelectionAndCaretMarkupLoader.fromFile(path, getProject()), fileText);
+
   }
 
   private void checkResult(final String expectedFile,

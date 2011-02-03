@@ -1,8 +1,8 @@
-class A {
-  public static final String CONST = "a"
+<caret>class A {
+    public static final String CONST = "a"
 
-  def foo() {
-    print <selection>CONST</selection>
+    def foo() {
+    print CONST
   }
 
   def bar() {
