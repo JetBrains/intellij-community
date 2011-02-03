@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
@@ -37,10 +38,13 @@ public class InspectionProfileWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
 
   /**
-   * Generic-purpose key object that is intended to be used for customizing inspection profile wrapper retrieval
-   * via {@link com.intellij.openapi.util.UserDataHolder} API.
+   * Key that is assumed to hold strategy that customizes {@link InspectionProfileWrapper} object to use.
+   * <p/>
+   * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns 
+   * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<InspectionProfileWrapper> KEY = Key.create("Inspection Profile Wrapper");
+  public static final Key<Function<InspectionProfileWrapper, InspectionProfileWrapper>> CUSTOMIZATION_KEY
+    = Key.create("Inspection Profile Wrapper Customization");
   private final InspectionProfileImpl myProfile;
 
   public InspectionProfileWrapper(final InspectionProfile profile) {

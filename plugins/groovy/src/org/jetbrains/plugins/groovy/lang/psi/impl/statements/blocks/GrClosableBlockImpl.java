@@ -97,7 +97,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 
-      if (place instanceof GroovyPsiElement && !ResolveUtil.processNonCodeMethods(GrClosureType.create(this), processor, (GroovyPsiElement)place, state)) return false;
+      if (place instanceof GroovyPsiElement &&
+          !ResolveUtil
+            .processNonCodeMethods(GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/), processor,
+                                   (GroovyPsiElement)place, state)) {
+        return false;
+      }
     }
 
     return true;
@@ -150,7 +155,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public PsiType getType() {
-    return GrClosureType.create(this);
+    return GrClosureType.create(this, true);
   }
 
   @Nullable
@@ -184,7 +189,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         type = factory.createType((PsiClass)context);
       }
       else if (context instanceof GrClosableBlock) {
-        type = GrClosureType.create((GrClosableBlock)context);
+        type = GrClosureType.create((GrClosableBlock)context, true);
       }
       else if (context instanceof GroovyFile) {
         final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();

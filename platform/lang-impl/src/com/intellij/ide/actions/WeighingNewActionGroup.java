@@ -33,6 +33,11 @@ public class WeighingNewActionGroup extends WeighingActionGroup {
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(getTemplatePresentation().getText());

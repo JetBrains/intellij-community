@@ -339,7 +339,7 @@ public class EnterHandler extends BaseEnterHandler {
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           
-          if (!StringUtil.isEmpty(indentInsideJavadoc)) {
+          if (!StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
             myOffset += indentInsideJavadoc.length();
             docIndentApplied = true;
@@ -347,7 +347,6 @@ public class EnterHandler extends BaseEnterHandler {
 
           if (myForceIndent && indentInsideJavadoc != null) {
             int indentSize = CodeStyleSettingsManager.getSettings(myProject).getIndentSize(myFile.getFileType());
-            //TODO den check tabs
             myDocument.insertString(myOffset + 1, StringUtil.repeatSymbol(' ', indentSize));
             myCaretAdvance += indentSize;
           }

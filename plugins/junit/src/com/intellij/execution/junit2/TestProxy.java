@@ -21,12 +21,14 @@ import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -268,4 +270,12 @@ public class TestProxy extends AbstractTestProxy {
     return false;
   }
 
+  @Override
+  @Nullable
+  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+    if (myState instanceof AssertEqualsDiffViewerProvider) {
+      return (AssertEqualsDiffViewerProvider)myState;
+    }
+    return null;
+  }
 }

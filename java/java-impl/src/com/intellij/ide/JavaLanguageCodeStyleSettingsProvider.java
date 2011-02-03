@@ -184,6 +184,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      "    int\n" +
                                                      "i = 0;\n" +
                                                      "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
+                                                     "    int var1 = 1; int var2 = 2;\n" +
                                                      "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);\n" +
                                                      "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
                                                      "    String s1, s2, s3;\n" +

@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierF
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -272,12 +273,24 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   public GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    GrAnnotation annotation;
     if (psiClass != null && psiClass.isAnnotationType()) {
-      final GrAnnotation annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@xxx"), null);
+      annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@xxx"), null);
       annotation.getClassReference().bindToElement(psiClass);
-      return annotation;
+    }
+    else {
+      annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@" + qualifiedName), null);
     }
 
-    return (GrAnnotation)addAfter(factory.createModifierFromText("@" + qualifiedName), null);
+    final PsiElement parent = getParent();
+    if (!(parent instanceof GrParameter)) {
+      final ASTNode node = annotation.getNode();
+      final ASTNode treeNext = node.getTreeNext();
+      if (treeNext != null) {
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", treeNext);
+      }
+    }
+
+    return annotation;
   }
 }

@@ -101,6 +101,7 @@ public class AndroidUtils {
   public static final String R_JAVA_FILENAME = "R.java";
   public static final String ANDROID_PACKAGE = "android";
   public static final String VIEW_CLASS_NAME = ANDROID_PACKAGE + ".view.View";
+  public static final String APPLICATION_CLASS_NAME = "android.app.Application";
   public static final String PREFERENCE_CLASS_NAME = ANDROID_PACKAGE + ".preference.Preference";
   public static final String ANIMATION_PACKAGE = "android.view.animation";
   public static final String INTERPOLATOR_CLASS_NAME = ANIMATION_PACKAGE + ".Interpolator";

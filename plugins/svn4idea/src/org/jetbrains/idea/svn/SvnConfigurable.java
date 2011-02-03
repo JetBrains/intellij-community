@@ -58,6 +58,8 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myShowMergeSourceInAnnotate;
   private JSpinner myNumRevsInAnnotations;
   private JCheckBox myMaximumNumberOfRevisionsCheckBox;
+  private JSpinner mySSHConnectionTimeout;
+  private JSpinner mySSHReadTimeout;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -128,7 +130,7 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-  }
+ }
 
   private FileChooserDescriptor createFileDescriptor() {
     final FileChooserDescriptor descriptor =  new FileChooserDescriptor(false, true, false, false, false, false);
@@ -192,6 +194,12 @@ public class SvnConfigurable implements Configurable {
         return true;
       }
     }
+    if (configuration.mySSHConnectionTimeout != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
+      return true;
+    }
+    if (configuration.mySSHReadTimeout != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -213,6 +221,8 @@ public class SvnConfigurable implements Configurable {
     } else {
       configuration.setMaxAnnotateRevisions(((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue());
     }
+    configuration.mySSHConnectionTimeout = ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000;
+    configuration.mySSHReadTimeout = ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000;
   }
 
   public void reset() {
@@ -243,6 +253,8 @@ public class SvnConfigurable implements Configurable {
       myNumRevsInAnnotations.setValue(annotateRevisions);
     }
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
+    mySSHConnectionTimeout.setValue(configuration.mySSHConnectionTimeout / 1000);
+    mySSHReadTimeout.setValue(configuration.mySSHReadTimeout / 1000);
   }
 
   public void disposeUIResources() {
@@ -264,6 +276,12 @@ public class SvnConfigurable implements Configurable {
     int value = configuration.getMaxAnnotateRevisions();
     value = (value == -1) ? SvnConfiguration.ourMaxAnnotateRevisionsDefault : value; 
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
+
+    final int maximum = 30 * 60 * 1000;
+    final long connection = configuration.mySSHConnectionTimeout <= maximum ? configuration.mySSHConnectionTimeout : maximum;
+    final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
+    mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(connection / 1000, 0, maximum, 10));
+    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(read / 1000, 0, maximum, 10));
   }
 }
 

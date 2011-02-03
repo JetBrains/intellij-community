@@ -244,18 +244,20 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public static boolean passiveValidation(final Project project, final SVNURL url) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
-    return validationImpl(project, url, configuration, passiveManager, false, null, null);
+    return validationImpl(project, url, configuration, passiveManager, false, null, null, false);
   }
 
   public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final SvnAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
-    return validationImpl(project, url, configuration, passiveManager, true, realm, kind);
+    return validationImpl(project, url, configuration, passiveManager, true, realm, kind, true);
   }
 
   private static boolean validationImpl(final Project project, final SVNURL url,
                                         final SvnConfiguration configuration, final SvnAuthenticationManager manager,
-                                        final boolean checkWrite, final String realm, final String kind/*, final boolean passive*/) {
+                                        final boolean checkWrite,
+                                        final String realm,
+                                        final String kind, boolean interactive) {
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
       new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
@@ -271,7 +273,9 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         return false;
       }
       LOG.info("some other exc", e);
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR);
+      if (interactive) {
+        VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR);
+      }
       return false; /// !!!! any exception means user should be notified that authorization failed
     }
 

@@ -1,6 +1,6 @@
 {
   int a = 1
-  <begin>a<end> + b
+  <selection>a</selection> + b
 }
 -----
 {

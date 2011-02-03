@@ -1,19 +1,19 @@
 def boo() {
 aaaaa
 if <caret>(true){
-  boo
+    boo
 } else {
-  baa
+    baa
 }
 bbbbb
 }
 -----
 def boo() {
-  if <caret>(true){
-  boo
+    if <caret>(true){
+    boo
 } else {
-  baa
+    baa
 }
-  aaaaa
-  bbbbb
+    aaaaa
+    bbbbb
 }

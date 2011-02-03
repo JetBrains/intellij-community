@@ -56,6 +56,9 @@ import java.util.*;
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class.getName());
+  public static final String SVN_SSH = "svn+ssh";
+  public static final String HTTP = "http";
+  public static final String HTTPS = "https";
   private final Project myProject;
   private File myConfigDirectory;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
@@ -400,7 +403,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   @Override
   public int getReadTimeout(final SVNRepository repository) {
     String protocol = repository.getLocation().getProtocol();
-    if ("http".equals(protocol) || "https".equals(protocol)) {
+    if (HTTP.equals(protocol) || HTTPS.equals(protocol)) {
         String host = repository.getLocation().getHost();
         String timeout = getServersPropertyIdea(host, "http-timeout");
         if (timeout != null) {
@@ -412,7 +415,23 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         }
         return DEFAULT_READ_TIMEOUT;
     }
+    if (SVN_SSH.equals(protocol)) {
+      return (int) myConfig.mySSHReadTimeout;
+    }
     return 0;
+  }
+
+  @Override
+  public int getConnectTimeout(SVNRepository repository) {
+    String protocol = repository.getLocation().getProtocol();
+    if (SVN_SSH.equals(protocol)) {
+      return (int) myConfig.mySSHConnectionTimeout;
+    }
+    final int connectTimeout = super.getConnectTimeout(repository);
+    if ((HTTP.equals(protocol) || HTTPS.equals(protocol)) && (connectTimeout <= 0)) {
+      return DEFAULT_READ_TIMEOUT;
+    }
+    return connectTimeout;
   }
 
   // taken from default manager as is

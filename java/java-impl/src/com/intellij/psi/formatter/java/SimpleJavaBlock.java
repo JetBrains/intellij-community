@@ -24,11 +24,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
 
@@ -102,7 +106,11 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       } else {
         return super.getChildAttributes(newChildIndex);
       }
-    } else {
+    }
+    else if (myNode.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
+    else {
       return super.getChildAttributes(newChildIndex);
     }
   }

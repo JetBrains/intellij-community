@@ -49,9 +49,9 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     if (!isAndExpression && !isOrExpression) return false;
 
     while (expression.getParent() instanceof PsiBinaryExpression) {
+      expression = (PsiBinaryExpression)expression.getParent();
       if (isAndExpression && expression.getOperationSign().getTokenType() != JavaTokenType.ANDAND) return false;
       if (isOrExpression && expression.getOperationSign().getTokenType() != JavaTokenType.OROR) return false;
-      expression = (PsiBinaryExpression)expression.getParent();
     }
 
     if (!(expression.getParent() instanceof PsiIfStatement)) return false;

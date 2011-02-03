@@ -42,6 +42,7 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
   @NonNls public static final String RESOURCE_FILE_TEMPLATE = "resourceFile.xml";
   @NonNls public static final String LAYOUT_RESOURCE_FILE_TEMPLATE = "layoutResourceFile.xml";
   @NonNls public static final String ACTIVITY = "Activity.java";
+  @NonNls public static final String APPLICATION = "Application.java";
   @NonNls public static final String SERVICE = "Service.java";
   @NonNls public static final String BROADCAST_RECEIVER = "Broadcast Receiver.java";
 
@@ -52,6 +53,7 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
     group.addTemplate(new FileTemplateDescriptor(RESOURCE_FILE_TEMPLATE, StdFileTypes.XML.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(LAYOUT_RESOURCE_FILE_TEMPLATE, StdFileTypes.XML.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(ACTIVITY, StdFileTypes.JAVA.getIcon()));
+    group.addTemplate(new FileTemplateDescriptor(APPLICATION, StdFileTypes.JAVA.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(SERVICE, StdFileTypes.JAVA.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(BROADCAST_RECEIVER, StdFileTypes.JAVA.getIcon()));
     group.addTemplate(new FileTemplateDescriptor(REMOTE_INTERFACE_TEMPLATE, AndroidIdlFileType.ourFileType.getIcon()));

@@ -1,8 +1,8 @@
 class Foo {
-  def foo
+  def fo<caret>o
 
   def Foo(def foo) {
 
-    this.foo = foo
+      this.foo = foo
   }
 }

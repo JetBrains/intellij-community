@@ -1,19 +1,19 @@
 void aaa(Map map) {
-  for (Map.Entry<String, String> versionEntry in map.entrySet()) {
-    <begin>String name = versionEntry.getKey();
-    System.out.println(name);<end>
-  }
+    for (Map.Entry<String, String> versionEntry in map.entrySet()) {
+        <begin>String name = versionEntry.getKey();
+        System.out.println(name);<end>
+    }
 }
 -----
 import java.util.Map.Entry
 
 void aaa(Map map) {
-  for (Map.Entry<String, String> versionEntry in map.entrySet()) {
-    testMethod(versionEntry);
-  }
+    for (Map.Entry<String, String> versionEntry in map.entrySet()) {
+        testMethod(versionEntry);
+    }
 }
 
 private def testMethod(Entry<String, String> versionEntry) {
-  String name = versionEntry.getKey();
-  System.out.println(name)
+    String name = versionEntry.getKey();
+    System.out.println(name)
 }

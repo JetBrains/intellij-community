@@ -1430,10 +1430,10 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private int generateLink(StringBuilder buffer, String refText, String label, PsiElement context, boolean plainLink) {
+  private static int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink) {
     if (label == null) {
-      PsiManager manager = PsiManager.getInstance(myProject);
-      label = JavaDocUtil.getLabelText(myProject, manager, refText, context);
+      final PsiManager manager = context.getManager();
+      label = JavaDocUtil.getLabelText(manager.getProject(), manager, refText, context);
     }
 
     LOG.assertTrue(refText != null, "refText appears to be null.");
@@ -1448,7 +1448,7 @@ public class JavaDocInfoGenerator {
     }
 
 
-    DocumentationManager.createHyperlink(buffer, JavaDocUtil.getReferenceText(myProject, target), label, plainLink);
+    DocumentationManager.createHyperlink(buffer, JavaDocUtil.getReferenceText(context.getProject(), target), label, plainLink);
     return label.length();
   }
 
@@ -1456,7 +1456,7 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private int generateType(StringBuilder buffer, PsiType type, PsiElement context) {
+  public static int generateType(StringBuilder buffer, PsiType type, PsiElement context) {
     if (type instanceof PsiPrimitiveType) {
       String text = type.getCanonicalText();
       buffer.append(text);

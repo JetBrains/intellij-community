@@ -1,4 +1,4 @@
-def <begin>s<end>="$x+$y"
+def <selection>s</selection>="$x+$y"
 print "${s}wow+$s"
 -----
 <caret>print "$x+${y}wow+$x+$y"

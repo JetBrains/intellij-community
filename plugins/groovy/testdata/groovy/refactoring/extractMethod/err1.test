@@ -22,10 +22,10 @@ int www, yyy
 (yyy, www) = testMethod(kkk, vv, gg)
 
 private List testMethod(int kkk, int vv, int gg) {
-  println(kkk + iii + (vv + gg))
-  yyy = kkk + 2
-  www = kkk + 3
-  return [yyy, www]
+    println(kkk + iii + (vv + gg))
+    yyy = kkk + 2
+    www = kkk + 3
+    return [yyy, www]
 }
 
 

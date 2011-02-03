@@ -392,10 +392,11 @@ public abstract class DebuggerUtils {
           }
         }
         else if (psiElement instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)psiElement;
-          if (!isSimpleGetter(method)) {
-            rv.set(Boolean.TRUE);
-          }
+          rv.set(Boolean.TRUE);
+          //final PsiMethod method = (PsiMethod)psiElement;
+          //if (!isSimpleGetter(method)) {
+          //  rv.set(Boolean.TRUE);
+          //}
         }
         if (!rv.get().booleanValue()) {
           super.visitReferenceExpression(expression);
@@ -420,13 +421,14 @@ public abstract class DebuggerUtils {
 
       @Override 
       public void visitCallExpression(final PsiCallExpression callExpression) {
-        final PsiMethod method = callExpression.resolveMethod();
-        if (method == null || !isSimpleGetter(method)) {
-          rv.set(Boolean.TRUE);
-        }
-        else {
-          super.visitCallExpression(callExpression);
-        }
+        rv.set(Boolean.TRUE);
+        //final PsiMethod method = callExpression.resolveMethod();
+        //if (method == null || !isSimpleGetter(method)) {
+        //  rv.set(Boolean.TRUE);
+        //}
+        //else {
+        //  super.visitCallExpression(callExpression);
+        //}
       }
     });
     return rv.get().booleanValue();

@@ -1,11 +1,11 @@
 class Foo {
-  def Foo(String s, int a) {
+  def F<caret>oo(String s, int a) {
 
   }
 
-  def Foo(String s) {
-    this(s, 5);
-  }
+    def Foo(String s) {
+        this(s, 5);
+    }
 
   def Foo() {
     this("a")

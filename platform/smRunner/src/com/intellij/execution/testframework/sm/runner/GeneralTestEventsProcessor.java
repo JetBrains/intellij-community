@@ -37,10 +37,12 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onTestFinished(@NotNull final String testName,
                       final int duration);
 
-  void onTestFailure(@NotNull final String testName, 
+  void onTestFailure(@NotNull final String testName,
                      @NotNull final String localizedMessage,
                      @Nullable final String stackTrace,
-                     final boolean testError);
+                     final boolean testError,
+                     @Nullable final String comparisionFailureActualText,
+                     @Nullable final String comparisionFailureExpectedText);
 
   void onTestIgnored(@NotNull final String testName,
                      @NotNull final String ignoreComment,

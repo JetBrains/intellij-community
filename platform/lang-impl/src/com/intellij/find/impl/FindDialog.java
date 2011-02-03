@@ -19,6 +19,7 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;

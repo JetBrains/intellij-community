@@ -723,14 +723,20 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           .createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
-    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT && myChild2.getElementType() ==
-                                                                                    JavaElementType
-                                                                                      .BLOCK_STATEMENT) {
+    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT 
+             && myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) 
+    {
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE, null, false, true);
 
     }
     else if (myRole1 == ChildRole.STATEMENT_IN_BLOCK && myRole2 == ChildRole.STATEMENT_IN_BLOCK) {
-      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      int minSpaces = 0;
+      int minLineFeeds = 1;
+      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE) {
+        minSpaces = 1;
+        minLineFeeds = 0;
+      }
+      myResult = Spacing.createSpacing(minSpaces, 0, minLineFeeds, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
 

@@ -570,7 +570,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           flushDeferredUserInput();
         }
       }
-      if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
+      if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = USE_CYCLIC_BUFFER && myDeferredOutputLength > CYCLIC_BUFFER_SIZE;
         myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow ? 0 : FLUSH_DELAY, getStateForUpdate());
       }

@@ -1,27 +1,27 @@
 class Child {
-  void foo() {}
+    void foo() {}
 
-  void doSmth() {
-    foo()
-  }
+    void doSmth() {
+        foo()
+    }
 }
 
 class User {
-  void meth() {
-    <begin>new Child().doSmth<end>()
-  }
+    void meth() {
+        <selection>new Child().doSmth</selection>()
+    }
 }
 -----
 class Child {
-  void foo() {}
+    void foo() {}
 
-  void doSmth() {
-    foo()
-  }
+    void doSmth() {
+        foo()
+    }
 }
 
 class User {
-  void meth() {
-    new Child().foo()
-  }
+    void meth() {
+        new Child().foo()
+    }
 }

@@ -50,7 +50,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -512,7 +511,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return pattern == null ? null : pattern.matcher(text);
   }
 
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) {
+  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException {
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
       return getStringToReplaceByRegexp0(foundString, model);
@@ -524,7 +523,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model, int startOffset, @NotNull String documentText) {
+  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
+                                   int startOffset, @NotNull String documentText) throws MalformedReplacementStringException{
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
       return getStringToReplaceByRegexp(model, documentText, startOffset);
@@ -535,7 +535,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return toReplace;
   }
 
-  private String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) {
+  private String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) throws MalformedReplacementStringException{
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -563,17 +563,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       return replaced.substring(matcher.start());
     }
     catch (Exception e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()),
-                                   FindBundle.message("find.replace.invalid.replacement.string.title"));
-        }
-      });
-      return null;
+      throw new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
     }
   }
 
-  private String getStringToReplaceByRegexp0(String foundString, final FindModel model) {
+  private String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
     String toFind = model.getStringToFind();
     String toReplace = model.getStringToReplace();
     Pattern pattern;
@@ -594,13 +588,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
       }
       catch (Exception e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()),
-                                     FindBundle.message("find.replace.invalid.replacement.string.title"));
-          }
-        });
-        return null;
+        throw new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
       }
     }
     else {

@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.ui.actions;
+package com.intellij.execution.testframework.actions;
 
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.states.ComparisonFailureState;
-import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NonNls;
@@ -31,8 +28,10 @@ public class ViewAssertEqualsDiffAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
     if (testProxy != null) {
-      final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
-      state.openDiff(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      final AbstractTestProxy.AssertEqualsDiffViewerProvider diffViewerProvider = testProxy.getDiffViewerProvider();
+      if (diffViewerProvider != null) {
+        diffViewerProvider.openDiff(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      }
     }
   }
 
@@ -45,9 +44,8 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     }
     else {
       final AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(dataContext);
-      if (test instanceof TestProxy) {
-        final TestState state = ((TestProxy)test).getState();
-        enabled = state instanceof ComparisonFailureState;
+      if (test != null) {
+        enabled = test.getDiffViewerProvider() != null;
       }
       else {
         enabled = false;
