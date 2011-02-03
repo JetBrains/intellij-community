@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -440,6 +441,21 @@ public class FindUtil {
       }
       int startResultOffset = result.getStartOffset();
       model.setFromCursor(true);
+
+      int startOffset = result.getStartOffset();
+      int endOffset = result.getEndOffset();
+      String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
+      String toReplace;
+      try {
+        toReplace = findManager.getStringToReplace(foundString, model, startOffset, document.getText());
+      }
+      catch (FindManager.MalformedReplacementStringException e) {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          Messages.showErrorDialog(project, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
+        }
+        break;
+      }
+
       if (toPrompt) {
         int promptResult = findManager.showPromptDialog(model, FindBundle.message("find.replace.dialog.title"));
         if (promptResult == FindManager.PromptResult.SKIP) {
@@ -454,12 +470,6 @@ public class FindUtil {
           ((DocumentEx) document).setInBulkUpdate(true);
         }
       }
-
-      int startOffset = result.getStartOffset();
-      int endOffset = result.getEndOffset();
-      String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
-      String toReplace = findManager.getStringToReplace(foundString, model, startOffset, document.getText());
-      if (toReplace == null) break;
 
       boolean reallyReplace = toPrompt;
       TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);

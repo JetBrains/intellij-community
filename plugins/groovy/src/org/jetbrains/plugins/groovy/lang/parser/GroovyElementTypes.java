@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -356,7 +358,17 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
-  GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
+  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new EmptyStubElementType<GrVariableDeclaration>("variable definitions with errors", GroovyFileType.GROOVY_LANGUAGE) {
+    @Override
+    public boolean shouldCreateStub(ASTNode node) {
+      return false;
+    }
+
+    @Override
+    public GrVariableDeclaration createPsi(EmptyStub stub) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  };
   EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
     new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
@@ -371,7 +383,34 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType TUPLE_ERROR = new GroovyElementType("tuple with error");
 
-  GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
+  GrStubElementType<StubElement, GrVariable> VARIABLE = new GrStubElementType<StubElement, GrVariable>("assigned variable") {
+
+    @Override
+    public boolean shouldCreateStub(ASTNode node) {
+      return false;
+    }
+
+    @Override
+    public GrVariable createPsi(StubElement stub) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public StubElement createStub(GrVariable psi, StubElement parentStub) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void serialize(StubElement stub, StubOutputStream dataStream) throws IOException {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public StubElement deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  };
+
 
   //modifiers
   GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");

@@ -135,8 +135,12 @@ public class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
         continue;
       }
       
-      if (c == '>') {
-        if (startTagEndOffset < 0) {
+      if (c == '>' && (startTagEndOffset < 0)) {
+        if (i > startOffset && text.charAt(i - 1) == '/') {
+          // Handle situation like '<p/>[offset]'
+          break;
+        }
+        else {
           startTagEndOffset = i;
           continue;
         }

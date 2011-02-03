@@ -108,6 +108,16 @@ public abstract class FindManager {
   public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
                                         @Nullable VirtualFile findContextFile);
 
+  public static class MalformedReplacementStringException extends Exception {
+    public MalformedReplacementStringException(String s) {
+      super(s);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    public MalformedReplacementStringException(String s, Throwable throwable) {
+      super(s, throwable);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+  }
+
   /**
    * Gets the string to replace with, given the specified found string and find/replace
    * settings. Supports case-preserving and regular expression replaces.
@@ -116,8 +126,9 @@ public abstract class FindManager {
    * @param model       the search and replace settings, including the replace string.
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model);
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model, int startOffset, @NotNull String documentText);
+  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
+  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
+                                            int startOffset, @NotNull String documentText) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
