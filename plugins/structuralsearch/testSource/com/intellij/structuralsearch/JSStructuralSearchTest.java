@@ -264,6 +264,49 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest("interface A { function aba(); }", "aba", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
+  public void testStringLiteral() throws Exception {
+    String pattern = "\"$str$\"";
+    doTest("var s = \"hello\";", pattern, 1);
+    doTest("package {\n" +
+           "public class MyClass {\n" +
+           "    private var s:String = \"hello\";\n" +
+           "}\n" +
+           "}", pattern, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var s = \"str1\"; var s1 = \"str2\"; var s2 = \"hello\";", "\"'_str:[regex( str.* )]\"", 2);
+    doTest("var s = \"hello world\"; var s2 = \"hello\";", "\"$s$ $z$\"", 1);
+  }
+
+  public void testClasses() throws Exception {
+    String pattern = "class $name$ {}";
+    doTest("package {\n" +
+           "public class MyClass implements mx.messaging.messages.IMessage {\n" +
+           "}\n" +
+           "}", pattern, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("package {\n" +
+           "class MyClass implements mx.messaging.messages.IMessage {\n" +
+           "}\n" +
+           "}", pattern, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+
+    String c = "package {\n" +
+               "public class MyAsClass extends SomeClass {\n" +
+               "    function MyAsClass() {}\n" +
+               "    function f() {\n" +
+               "      var a = 1;" +
+               "    }\n" +
+               "    function g() {\n" +
+               "    }\n" +
+               "}\n" +
+               "}";
+    doTest(c, "class $name$ { function g() {} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function f() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function f() {} }", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function f() {var a = 1;} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function g() function f() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function $name$() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
+
+
+
   private void doTestByFile(String fileName, String pattern, int expectedOccurences) throws IOException {
     doTestByFile(fileName, pattern, expectedOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
   }

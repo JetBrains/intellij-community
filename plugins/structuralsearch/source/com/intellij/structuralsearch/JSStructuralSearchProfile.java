@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelpe
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.ArrayUtil;
@@ -252,6 +253,31 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     }
 
     @Override
+    public void visitJSLiteralExpression(JSLiteralExpression l1) {
+      final JSLiteralExpression l2 = (JSLiteralExpression)myGlobalVisitor.getElement();
+
+      MatchingHandler handler = (MatchingHandler)l1.getUserData(CompiledPattern.HANDLER_KEY);
+
+      if (handler instanceof SubstitutionHandler) {
+        int offset = 0;
+        int length = l2.getTextLength();
+        final String text = l2.getText();
+
+        if (length > 2 && text.charAt(0) == '"' && text.charAt(length - 1) == '"') {
+          length--;
+          offset++;
+        }
+        myGlobalVisitor.setResult(((SubstitutionHandler)handler).handle(l2, offset, length, myGlobalVisitor.getMatchContext()));
+      }
+      else if (handler != null) {
+        myGlobalVisitor.setResult(handler.match(l1, l2, myGlobalVisitor.getMatchContext()));
+      }
+      else {
+        myGlobalVisitor.setResult(l1.textMatches(l2));
+      }
+    }
+
+    @Override
     public void visitJSFunctionDeclaration(JSFunction f1) {
       final JSFunction f2 = (JSFunction)myGlobalVisitor.getElement();
 
@@ -261,6 +287,18 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
                                 myGlobalVisitor.matchSons(f1.getParameterList(), f2.getParameterList()) &&
                                 myGlobalVisitor.matchOptionally(f1.getReturnTypeElement(), f2.getReturnTypeElement()) &&
                                 myGlobalVisitor.matchOptionally(f1.getBody(), f2.getBody()));
+    }
+
+    @Override
+    public void visitJSClass(JSClass c1) {
+      JSClass c2 = (JSClass)myGlobalVisitor.getElement();
+
+      myGlobalVisitor.setResult(myGlobalVisitor.match(c1.getNameIdentifier(), c2.getNameIdentifier()) &&
+                                myGlobalVisitor.matchSonsOptionally(c1.getAttributeList(), c2.getAttributeList()) &&
+                                myGlobalVisitor.matchSonsOptionally(c1.getExtendsList(), c2.getExtendsList()) &&
+                                myGlobalVisitor.matchSonsOptionally(c1.getImplementsList(), c2.getImplementsList()) &&
+                                myGlobalVisitor.matchInAnyOrder(c1.getFields(), c2.getFields()) &&
+                                myGlobalVisitor.matchInAnyOrder(c1.getFunctions(), c2.getFunctions()));
     }
 
     @Override
@@ -359,7 +397,10 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
           return;
         }
       }
-      if (element instanceof JSStatement) {
+      if (element instanceof JSLiteralExpression) {
+        visitJsLiteralExpression((JSLiteralExpression)element);
+      }
+      else if (element instanceof JSStatement) {
         CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
         MatchingHandler handler = pattern.getHandler(element);
         if (handler.getFilter() == null) {
@@ -372,6 +413,19 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
                 element instanceof JSBlockStatement ? extractOnlyStatement((JSBlockStatement)element) : element, e);
             }
           });
+        }
+      }
+    }
+
+    private void visitJsLiteralExpression(JSLiteralExpression expression) {
+      String value = expression.getText();
+
+      if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+        @Nullable MatchingHandler handler =
+          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL);
+
+        if (handler != null) {
+          expression.putUserData(CompiledPattern.HANDLER_KEY, handler);
         }
       }
     }
