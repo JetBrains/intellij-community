@@ -1,4 +1,4 @@
-<caret>enum Planet {
+enum Planet {
   MERCURY(3.303e+23, 2.4397e6),
   VENUS(4.869e+24, 6.0518e6),
     protected static final CONST = 6.67300E-11
@@ -12,6 +12,6 @@
 
   double surfaceGravity() {
 //      introduce a constant from the below numeric literal
-    return CONST * mass / (radius * radius);
+    return <selection>CONST</selection> * mass / (radius * radius);
   }
 }
