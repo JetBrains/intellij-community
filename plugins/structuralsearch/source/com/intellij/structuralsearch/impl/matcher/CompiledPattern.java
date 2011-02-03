@@ -64,7 +64,7 @@ public abstract class CompiledPattern {
     this.nodes = nodes;
   }
 
-  boolean isTypedVar(final PsiElement element) {
+  public boolean isTypedVar(final PsiElement element) {
     return element!=null && isTypedVar( element.getText() );
   }
 

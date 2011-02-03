@@ -79,7 +79,7 @@ public class GlobalMatchingVisitor {
     );
   }
 
-  protected final boolean matchInAnyOrder(final PsiElement[] elements, final PsiElement[] elements2) {
+  public final boolean matchInAnyOrder(final PsiElement[] elements, final PsiElement[] elements2) {
     if (elements == elements2) return true;
 
     return matchInAnyOrder(

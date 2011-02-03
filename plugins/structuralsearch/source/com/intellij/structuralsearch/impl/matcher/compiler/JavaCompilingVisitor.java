@@ -7,7 +7,6 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -17,13 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.structuralsearch.MatchOptions.INSTANCE_MODIFIER_NAME;
-import static com.intellij.structuralsearch.MatchOptions.MODIFIER_ANNOTATION_NAME;
-import static com.intellij.structuralsearch.MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME;
 
 /**
  * @author Eugene.Kudelevsky
@@ -31,17 +25,6 @@ import static com.intellij.structuralsearch.MatchOptions.PACKAGE_LOCAL_MODIFIER_
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final GlobalCompilingVisitor myCompilingVisitor;
 
-  @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
-  private static Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
-
-  @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
-  private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
-
-  private static final Set<String> ourReservedWords = new HashSet<String>(
-    Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME, PACKAGE_LOCAL_MODIFIER_NAME)
-  );
-
-  private static final Pattern ourAlternativePattern = Pattern.compile("^\\((.+)\\)$");
   @NonNls private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
   private static Pattern ourPattern = Pattern.compile("//" + COMMENT, Pattern.DOTALL);
   private static Pattern ourPattern2 = Pattern.compile("/\\*" + COMMENT + "\\*/", Pattern.DOTALL);
@@ -99,15 +82,15 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
 
       RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
-      if (!IsNotSuitablePredicate(predicate, handler)) {
-        processTokenizedName(predicate.getRegExp(), true, OccurenceKind.COMMENT);
+      if (!GlobalCompilingVisitor.IsNotSuitablePredicate(predicate, handler)) {
+        myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.COMMENT);
       }
 
       matches = true;
     }
 
     if (!matches) {
-      MatchingHandler handler = processPatternStringWithFragments(text, OccurenceKind.COMMENT);
+      MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, GlobalCompilingVisitor.OccurenceKind.COMMENT);
       if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
     }
   }
@@ -118,7 +101,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
       @Nullable MatchingHandler handler =
-        processPatternStringWithFragments(value, OccurenceKind.LITERAL);
+        myCompilingVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL);
 
       if (handler != null) {
         expression.putUserData(CompiledPattern.HANDLER_KEY, handler);
@@ -164,7 +147,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     GlobalCompilingVisitor.setFilter(handler, MethodFilter.getInstance());
-    handleReferenceText(psiMethod.getName());
+    myCompilingVisitor.handleReferenceText(psiMethod.getName());
   }
 
   @Override
@@ -257,7 +240,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitVariable(PsiVariable psiVariable) {
     super.visitVariable(psiVariable);
     myCompilingVisitor.getContext().getPattern().getHandler(psiVariable).setFilter(VariableFilter.getInstance());
-    handleReferenceText(psiVariable.getName());
+    myCompilingVisitor.handleReferenceText(psiVariable.getName());
   }
 
   @Override
@@ -418,175 +401,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
 
-  @Nullable
-  private MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
-    String content;
-
-    if (kind == OccurenceKind.LITERAL) {
-      content = pattern.substring(1, pattern.length() - 1);
-    }
-    else if (kind == OccurenceKind.COMMENT) {
-      content = pattern;
-    }
-    else {
-      return null;
-    }
-
-    StringBuffer buf = new StringBuffer(content.length());
-    Matcher matcher = ourSubstitutionPattern.matcher(content);
-    List<SubstitutionHandler> handlers = null;
-    int start = 0;
-    String word;
-    boolean hasLiteralContent = false;
-
-    SubstitutionHandler handler = null;
-    while (matcher.find()) {
-      if (handlers == null) handlers = new LinkedList<SubstitutionHandler>();
-      handler = (SubstitutionHandler)myCompilingVisitor.getContext().getPattern().getHandler(matcher.group(1));
-      if (handler != null) handlers.add(handler);
-
-      word = content.substring(start, matcher.start());
-
-      if (word.length() > 0) {
-        buf.append(shieldSpecialChars(word));
-        hasLiteralContent = true;
-
-        processTokenizedName(word, false, kind);
-      }
-
-      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
-
-      if (predicate == null || !predicate.isWholeWords()) {
-        buf.append("(.*?)");
-      }
-      else {
-        buf.append(".*?\\b(").append(predicate.getRegExp()).append(")\\b.*?");
-      }
-
-      if (!IsNotSuitablePredicate(predicate, handler)) {
-        processTokenizedName(predicate.getRegExp(), false, kind);
-      }
-
-      start = matcher.end();
-    }
-
-    word = content.substring(start, content.length());
-
-    if (word.length() > 0) {
-      hasLiteralContent = true;
-      buf.append(shieldSpecialChars(word));
-
-      processTokenizedName(word, false, kind);
-    }
-
-    if (hasLiteralContent) {
-      if (kind == OccurenceKind.LITERAL) {
-        buf.insert(0, "\"");
-        buf.append("\"");
-      }
-      buf.append("$");
-    }
-
-    if (handlers != null) {
-      return (hasLiteralContent) ? (MatchingHandler)new LiteralWithSubstitutionHandler(
-        buf.toString(),
-        handlers
-      ) :
-             handler;
-    }
-
-    return null;
-  }
-
-  private static boolean IsNotSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
-    return predicate == null || handler.getMinOccurs() == 0 || !predicate.couldBeOptimized();
-  }
-
   private void handleReference(PsiJavaCodeReferenceElement reference) {
-    handleReferenceText(reference.getReferenceName());
-  }
-
-  private void handleReferenceText(String refname) {
-    if (refname == null) return;
-
-    if (myCompilingVisitor.getContext().getPattern().isTypedVar(refname)) {
-      SubstitutionHandler handler = (SubstitutionHandler)myCompilingVisitor.getContext().getPattern().getHandler(refname);
-      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
-      if (IsNotSuitablePredicate(predicate, handler)) {
-        return;
-      }
-
-      refname = predicate.getRegExp();
-
-      if (handler.isStrictSubtype() || handler.isSubtype()) {
-        if (myCompilingVisitor.getContext().getSearchHelper().addDescendantsOf(refname, handler.isSubtype())) {
-          myCompilingVisitor.getContext().getSearchHelper().endTransaction();
-        }
-
-        return;
-      }
-    }
-
-    addFilesToSearchForGivenWord(refname, true, OccurenceKind.CODE);
-  }
-
-  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction, OccurenceKind kind) {
-    if (!myCompilingVisitor.getContext().getSearchHelper().doOptimizing()) {
-      return;
-    }
-    if (ourReservedWords.contains(refname)) return; // skip our special annotations !!!
-
-    boolean addedSomething = false;
-
-    if (kind == OccurenceKind.CODE) {
-      addedSomething = myCompilingVisitor.getContext().getSearchHelper().addWordToSearchInCode(refname);
-    }
-    else if (kind == OccurenceKind.COMMENT) {
-      addedSomething = myCompilingVisitor.getContext().getSearchHelper().addWordToSearchInComments(refname);
-    }
-    else if (kind == OccurenceKind.LITERAL) {
-      addedSomething = myCompilingVisitor.getContext().getSearchHelper().addWordToSearchInLiterals(refname);
-    }
-
-    if (addedSomething && endTransaction) {
-      myCompilingVisitor.getContext().getSearchHelper().endTransaction();
-    }
-  }
-
-  private void processTokenizedName(String name, boolean skipComments, OccurenceKind kind) {
-    WordTokenizer tokenizer = new WordTokenizer(name);
-    for (Iterator<String> i = tokenizer.iterator(); i.hasNext();) {
-      String nextToken = i.next();
-      if (skipComments &&
-          (nextToken.equals("/*") || nextToken.equals("/**") || nextToken.equals("*/") || nextToken.equals("*") || nextToken.equals("//"))
-        ) {
-        continue;
-      }
-
-      Matcher matcher = ourAlternativePattern.matcher(nextToken);
-      if (matcher.matches()) {
-        StringTokenizer alternatives = new StringTokenizer(matcher.group(1), "|");
-        while (alternatives.hasMoreTokens()) {
-          addFilesToSearchForGivenWord(alternatives.nextToken(), !alternatives.hasMoreTokens(), kind);
-        }
-      }
-      else {
-        addFilesToSearchForGivenWord(nextToken, true, kind);
-      }
-    }
-  }
-
-  private static String shieldSpecialChars(String word) {
-    final StringBuffer buf = new StringBuffer(word.length());
-
-    for (int i = 0; i < word.length(); ++i) {
-      if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {
-        buf.append("\\");
-      }
-      buf.append(word.charAt(i));
-    }
-
-    return buf.toString();
+    myCompilingVisitor.handleReferenceText(reference.getReferenceName());
   }
 
   @Override
@@ -664,48 +480,5 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       return (handler2.isStrictSubtype() || handler2.isSubtype());
     }
     return false;
-  }
-
-  private static class WordTokenizer {
-    private final List<String> myWords = new LinkedList<String>();
-
-    WordTokenizer(String text) {
-      final StringTokenizer tokenizer = new StringTokenizer(text);
-      Matcher matcher = null;
-
-      while (tokenizer.hasMoreTokens()) {
-        String nextToken = tokenizer.nextToken();
-        if (matcher == null) {
-          matcher = ourWordSearchPattern.matcher(nextToken);
-        }
-        else {
-          matcher.reset(nextToken);
-        }
-
-        nextToken = (matcher.matches()) ? matcher.group(1) : nextToken;
-        int lastWordStart = 0;
-        int i;
-        for (i = 0; i < nextToken.length(); ++i) {
-          if (!Character.isJavaIdentifierStart(nextToken.charAt(i))) {
-            if (i != lastWordStart) {
-              myWords.add(nextToken.substring(lastWordStart, i));
-            }
-            lastWordStart = i + 1;
-          }
-        }
-
-        if (i != lastWordStart) {
-          myWords.add(nextToken.substring(lastWordStart, i));
-        }
-      }
-    }
-
-    Iterator<String> iterator() {
-      return myWords.iterator();
-    }
-  }
-
-  private static enum OccurenceKind {
-    LITERAL, COMMENT, CODE
   }
 }
