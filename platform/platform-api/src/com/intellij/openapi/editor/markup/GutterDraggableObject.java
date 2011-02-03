@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 import java.awt.*;
 
 /**
@@ -22,21 +24,20 @@ import java.awt.*;
  * a gutter icon which can be dragged and dropped is the breakpoint icon.
  *
  * @author ven
+ * @author Konstantin Bulenkov
  * @see GutterIconRenderer#getDraggableObject()
  */
 public interface GutterDraggableObject {
   /**
-   * Called when the drag and drop operation is successfully completed.
-   */
-  void removeSelf();
-
-  /**
    * Called when the icon is dropped over the specified line.
    *
+   *
    * @param line the line over which the icon has been dropped.
+   * @param file the DnD target file
    * @return true if the drag and drop operation has completed successfully, false otherwise.
+   * @since 10.0.3
    */
-  boolean copy(int line);
+  boolean copy(int line, VirtualFile file);
 
   /**
    * Returns the cursor to show when the drag is over the specified line.
