@@ -341,8 +341,14 @@ public class ReplaceInProjectManager {
           if (!findResult.isStringFound()) {
             return;
           }
-          String stringToReplace =
-            findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
+          String stringToReplace = null;
+          try {
+            stringToReplace =
+              findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
+          }
+          catch (FindManager.MalformedReplacementStringException e) {
+            Messages.showErrorDialog(myProject, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
+          }
           if (stringToReplace != null) {
             document.replaceString(textOffset, textEndOffset, stringToReplace);
           }
