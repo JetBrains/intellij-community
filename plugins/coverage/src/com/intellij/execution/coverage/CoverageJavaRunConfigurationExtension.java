@@ -118,6 +118,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
+  public void cleanUserData(RunConfigurationBase runConfiguration) {
+     runConfiguration.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
+  }
+
+  @Override
   public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
     throws RuntimeConfigurationException {
     if (!isApplicableFor(runJavaConfiguration)) {
