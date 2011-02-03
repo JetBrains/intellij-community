@@ -93,7 +93,7 @@ public class FileWatcher {
     myManagingFS = ManagingFS.getInstance();
     try {
       if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
-        startupProcess();
+        startupProcess(false);
       }
     }
     catch (IOException ignore) {
@@ -236,7 +236,7 @@ public class FileWatcher {
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  private void startupProcess() throws IOException {
+  private void startupProcess(final boolean restart) throws IOException {
     if (isShuttingDown) return;
 
     if (attemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
@@ -260,10 +260,22 @@ public class FileWatcher {
                                     : PathManager.getBinPath() + File.separatorChar + executableName;
     if (!new File(pathToExecutable).canExecute()) return;
 
+    LOG.info("Starting file watcher: " + pathToExecutable);
+
     notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
 
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
+
+    synchronized (LOCK) {
+      if (restart && myRecursiveWatchRoots.size() + myFlatWatchRoots.size() > 0) {
+        final List<String> recursiveWatchRoots = new ArrayList<String>(myRecursiveWatchRoots);
+        final List<String> flatWatchRoots = new ArrayList<String>(myFlatWatchRoots);
+        myRecursiveWatchRoots.clear();
+        myFlatWatchRoots.clear();
+        setWatchRoots(recursiveWatchRoots, flatWatchRoots);
+      }
+    }
   }
 
   private void shutdownProcess() {
@@ -301,7 +313,7 @@ public class FileWatcher {
           final String command = readLine();
           if (command == null) {
             // Unexpected process exit, relaunch attempt
-            startupProcess();
+            startupProcess(true);
             continue;
           }
 
@@ -352,7 +364,7 @@ public class FileWatcher {
             final String path = readLine();
             if (path == null) {
               // Unexpected process exit, relaunch attempt
-              startupProcess();
+              startupProcess(true);
               continue;
             }
 
