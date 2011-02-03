@@ -6,5 +6,5 @@ class A {
 
 class Other {
 
-  static final protected CONST = "abc"
+    static final protected CONST = "abc"
 }

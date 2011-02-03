@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -35,11 +34,16 @@ import java.util.List;
  * @author oleg
  */
 public class GithubUtil {
-  public static final String GITHUB_HOST = "https://github.com";
-  public static final String GITHUB_HOST_GIT = "git@github.com";
-
   private static final String API_URL = "/api/v2/xml";
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
+
+  public static String getHttpsUrl() {
+    return "https://" + GithubSettings.getInstance().getHost();
+  }
+
+  public static String getHostByUrl(final String url) {
+    return url.startsWith("https://") ? url.substring(8) : url.startsWith("http://") ? url.substring(7) : url.startsWith("git@") ? url.substring(4) : url;
+  }
 
   public static <T> T accessToGithubWithModalProgress(final Project project, final Computable<T> computable) throws CancelledException {
     final Ref<T> result = new Ref<T>();
@@ -69,9 +73,9 @@ public class GithubUtil {
     });
   }
 
-  public static boolean testConnection(final String login, final String password) {
+  public static boolean testConnection(final String url, final String login, final String password) {
     try {
-      final HttpMethod method = doREST(login, password, "/user/show/" + login, false);
+      final HttpMethod method = doREST(url, login, password, "/user/show/" + login, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -86,10 +90,10 @@ public class GithubUtil {
     return false;
   }
 
-  public static HttpMethod doREST(final String login, final String password, final String request, final boolean post) throws Exception {
+  public static HttpMethod doREST(final String url, final String login, final String password, final String request, final boolean post) throws Exception {
     final HttpClient client = getHttpClient(login, password);
     client.getParams().setContentCharset("UTF-8");
-    final String uri = JDOMUtil.escapeText(getUrl() + request, true, true);
+    final String uri = "https://" + getHostByUrl(url) + API_URL + request;
     final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     client.executeMethod(method);
     return method;
@@ -111,14 +115,10 @@ public class GithubUtil {
     return client;
   }
 
-  private static String getUrl() {
-    return GITHUB_HOST + API_URL;
-  }
-
-  public static List<RepositoryInfo> getAvailableRepos(final String login, final String password, final boolean ownOnly) {
+  public static List<RepositoryInfo> getAvailableRepos(final String url, final String login, final String password, final boolean ownOnly) {
     try {
       final String request = (ownOnly ? "/repos/show/" : "/repos/watched/") + login;
-      final HttpMethod method = doREST(login, password, request, false);
+      final HttpMethod method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -140,10 +140,10 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(final String login, final String password, final String name) {
+  public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String name) {
     try {
       final String request = "/repos/show/" + login + "/" + name;
-      final HttpMethod method = doREST(login, password, request, false);
+      final HttpMethod method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -158,10 +158,10 @@ public class GithubUtil {
     return null;
   }
 
-  public static boolean isPrivateRepoAllowed(final String login, final String password) {
+  public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) {
     try {
       final String request = "/user/show/" + login;
-      final HttpMethod method = doREST(login, password, request, false);
+      final HttpMethod method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -170,7 +170,7 @@ public class GithubUtil {
       }
       final Element plan = element.getChild("plan");
       assert plan != null : "Authentification failed";
-      final String privateRepos = plan.getChildText("private_repos");
+      final String privateRepos = plan.getChildText("private-repos");
       return privateRepos != null && Integer.valueOf(privateRepos) > 0;
     }
     catch (Exception e) {
@@ -180,9 +180,9 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
-    return checkCredentials(project, null, null);
+    return checkCredentials(project, null, null, null);
   }
-  public static boolean checkCredentials(final Project project, @Nullable final String login, @Nullable final String password) {
+  public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable final String password) {
     if (login == null && password == null && areCredentialsEmpty()){
       return false;
     }
@@ -191,11 +191,11 @@ public class GithubUtil {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          if (login != null && password != null){
-            return testConnection(login, password);
+          if (url != null && login != null && password != null){
+            return testConnection(url, login, password);
           }
           final GithubSettings settings = GithubSettings.getInstance();
-          return testConnection(settings.getLogin(), settings.getPassword());
+          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
         }
       });
     }
@@ -225,7 +225,7 @@ public class GithubUtil {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getLogin(), settings.getPassword());
+          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
         }
       });
     }
@@ -245,7 +245,7 @@ public class GithubUtil {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return getAvailableRepos(settings.getLogin(), settings.getPassword(), ownOnly);
+          return getAvailableRepos(settings.getHost(), settings.getLogin(), settings.getPassword(), ownOnly);
         }
       });
     }
@@ -268,7 +268,7 @@ public class GithubUtil {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getLogin(), settings.getPassword());
+          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
         }
       });
     }
@@ -288,7 +288,7 @@ public class GithubUtil {
         @Override
         public RepositoryInfo compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
-          return getDetailedRepoInfo(settings.getLogin(), settings.getPassword(), name);
+          return getDetailedRepoInfo(settings.getHost(), settings.getLogin(), settings.getPassword(), name);
         }
       });
     }
@@ -312,10 +312,11 @@ public class GithubUtil {
   public static GitRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
     try {
       // Check that given repository is properly configured git repository
+      final String host = GithubSettings.getInstance().getHost();
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       for (GitRemote gitRemote : gitRemotes) {
         final String pushUrl = gitRemote.pushUrl();
-        if (pushUrl.startsWith(GITHUB_HOST) || pushUrl.startsWith(GITHUB_HOST_GIT)) {
+        if (pushUrl.contains(host)) {
           return gitRemote;
         }
       }

@@ -1,11 +1,11 @@
 def foo() {
-  <begin>[].collect { it }<end>
+    <begin>[].collect { it }<end>
 }
 -----
 def foo() {
-  testMethod()
+    testMethod()
 }
 
 private def testMethod() {
-  [].collect { it }
+    [].collect { it }
 }

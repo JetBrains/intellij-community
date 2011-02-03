@@ -1,15 +1,15 @@
 def foo(def x) {
-  x++;
-  return x;
+    x++;
+    return x;
 }
 
 int i = 5;
-<begin>foo<end>(i);
+<selection>foo</selection>(i);
 i++;
 -----
 def foo(def x) {
-  x++;
-  return x;
+    x++;
+    return x;
 }
 
 int i = 5;

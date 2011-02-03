@@ -1762,5 +1762,16 @@ public class UIUtil {
     return null;
   }
 
+ @Nullable
+  public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
+    if (parent == null || cls.isAssignableFrom(parent.getClass())) return (T)parent;
+    for (Component component : parent.getComponents()) {
+      if (component instanceof JComponent) {
+        T comp = findComponentOfType((JComponent)component, cls);
+        if (comp != null) return comp;
+      }
+    }
+    return null;
+  }
 }
 

@@ -1,8 +1,8 @@
 def () {
-  a(<caret>
+    a(<caret>
 }
 -----
 def () {
-  a(
+    a(
 <caret>
 }
