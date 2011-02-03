@@ -59,12 +59,12 @@ class Foo extends Super {
   Object d
   final e
 
-  Foo(a, int b, int c, Object d, e) {
-    super(a, b)
-    this.c = c
-    this.d = d
-    this.e = e
-  }
+    Foo(a, int b, int c, Object d, e) {
+        super(a, b)
+        this.c = c
+        this.d = d
+        this.e = e
+    }
 }
 """
   }

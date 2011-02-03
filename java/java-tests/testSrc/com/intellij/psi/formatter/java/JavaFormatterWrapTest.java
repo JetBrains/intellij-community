@@ -239,4 +239,21 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "\n}"
     );
   }
+  
+  public void testMultipleExpressionInSameLine() throws Exception {
+    // Inspired by IDEA-64975.
+    
+    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
+    doMethodTest(
+      "int i = 1; int j = 2;",
+      "int i = 1; int j = 2;"
+    );
+
+    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
+    doMethodTest(
+      "int i = 1; int j = 2;",
+      "int i = 1;\n" +
+      "int j = 2;"
+    );
+  }
 }

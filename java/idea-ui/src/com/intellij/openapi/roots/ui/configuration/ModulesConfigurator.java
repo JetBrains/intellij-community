@@ -287,9 +287,26 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.canApply();
     }
+    
+    final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<Sdk, Sdk>();
+    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
+    for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
+      modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
+    }
+    
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       final ModifiableRootModel model = moduleEditor.apply();
       if (model != null) {
+        if (!model.isSdkInherited()) {
+          // make sure the sdk is set to original SDK stored in the JDK Table
+          final Sdk modelSdk = model.getSdk();
+          if (modelSdk != null) {
+            final Sdk original = modifiedToOriginalMap.get(modelSdk);
+            if (original != null) {
+              model.setSdk(original);
+            }
+          }
+        }
         models.add(model);
       }
     }

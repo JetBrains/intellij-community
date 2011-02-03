@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -114,9 +114,9 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
   private static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
     List<LibraryType> suitableTypes = new ArrayList<LibraryType>();
     suitableTypes.add(null);
-    final ModuleType moduleType = classpathPanel.getRootModel().getModule().getModuleType();
+    final Module module = classpathPanel.getRootModel().getModule();
     for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
-      if (libraryType.isSuitableModuleType(moduleType)) {
+      if (libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
         suitableTypes.add(libraryType);
       }
     }

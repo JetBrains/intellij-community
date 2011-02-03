@@ -53,6 +53,11 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
                                                              RefactoringBundle.message("choose.destination.package"));
   }
 
+  @Override
+  protected String getTargetPackageName() {
+    return ((PackageNameReferenceEditorCombo)myPackageNameField).getText().trim();
+  }
+
   protected JTextField createSourceClassField() {
     JTextField result = new JTextField();
     result.setEditable(false);

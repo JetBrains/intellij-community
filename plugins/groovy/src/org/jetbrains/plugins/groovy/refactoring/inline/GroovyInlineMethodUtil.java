@@ -63,8 +63,6 @@ import java.util.*;
  */
 @SuppressWarnings({"SuspiciousMethodCalls"})
 public class GroovyInlineMethodUtil {
-
-  private static String myErrorMessage = "ok";
   public static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.method.title");
 
   private GroovyInlineMethodUtil() {
@@ -246,23 +244,7 @@ public class GroovyInlineMethodUtil {
   }
 
   private static void showErrorMessage(String message, final Project project, Editor editor) {
-    Application application = ApplicationManager.getApplication();
-    myErrorMessage = message;
-    if (!application.isUnitTestMode()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
-    }
-  }
-
-  @Nullable
-  static String getInvokedResult() {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      String message = myErrorMessage;
-      myErrorMessage = "ok";
-      return message;
-    } else {
-      return null;
-    }
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
   }
 
   static boolean isStaticMethod(@NotNull GrMethod method) {

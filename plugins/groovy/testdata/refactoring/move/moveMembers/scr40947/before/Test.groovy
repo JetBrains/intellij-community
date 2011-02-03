@@ -1,9 +1,9 @@
 class A {
-  static void foo() {
-    A.bar(); // note redundant "A" qualifier
-  }
+    static void foo() {
+        A.bar(); // note redundant "A" qualifier
+    }
 
-  static void bar() {}
+    static void bar() {}
 }
 
 class Test {

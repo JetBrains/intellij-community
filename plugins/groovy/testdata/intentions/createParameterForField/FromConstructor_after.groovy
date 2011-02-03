@@ -1,7 +1,7 @@
 class Foo {
   def foo
-  def Foo(def foo) {
+  def Foo(<caret>def foo) {
 
-    this.foo = foo
+      this.foo = foo
   }
 }

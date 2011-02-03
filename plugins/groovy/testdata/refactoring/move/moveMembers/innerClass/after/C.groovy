@@ -1,5 +1,5 @@
 import B.Inner
 
 public class C {
-  Inner i = new Inner();
+    Inner i = new Inner();
 }

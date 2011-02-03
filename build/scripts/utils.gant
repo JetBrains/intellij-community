@@ -83,11 +83,13 @@ binding.setVariable("loadProject", {
   }
 
   project["compiler.resources.id"] = "idea.compiler.resources"
+  project.builder.compressJars = false
 })
 
 requireProperty("home", guessHome())
 
 project.builder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
+project.builder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   if (!artifactPath.startsWith(home)) {

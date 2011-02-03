@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 
 import javax.swing.*;
 import java.util.List;
@@ -34,4 +35,6 @@ public interface ClasspathPanel {
   Project getProject();
 
   JComponent getComponent();
+
+  ModuleConfigurationState getModuleConfigurationState();
 }

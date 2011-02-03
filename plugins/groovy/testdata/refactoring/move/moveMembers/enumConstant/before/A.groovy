@@ -1,3 +1,3 @@
 public enum A {
-  def A(String s) {}
+    def A(String s) {}
 }

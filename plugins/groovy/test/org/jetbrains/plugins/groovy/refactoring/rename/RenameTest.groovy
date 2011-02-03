@@ -158,11 +158,11 @@ class A {
 
     String ndame;
     void foo() {
-      print name
+        print name
 
-      print getName()
+        print getName()
 
-      setName("a")
+        setName("a")
     }
   }
 }""")
@@ -177,11 +177,11 @@ class A {
 
     String ndame;
     void foo() {
-      print A.this.ndame
+        print A.this.ndame
 
-      print A.this.getNdame()
+        print A.this.getNdame()
 
-      A.this.setNdame("a")
+        A.this.setNdame("a")
     }
   }
 }"""

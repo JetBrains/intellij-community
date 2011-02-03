@@ -1,5 +1,5 @@
 public enum A {
-  ONE("")
+    ONE("")
 
-  def A(String s) {}
+    def A(String s) {}
 }

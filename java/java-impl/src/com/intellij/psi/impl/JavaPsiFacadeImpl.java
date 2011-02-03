@@ -241,21 +241,26 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     PsiPackage aPackage = myPackageCache.get(qualifiedName);
-    if (aPackage == null) {
-      if (DumbService.getInstance(getProject()).isDumb()) {
-        return findPackageDefault(qualifiedName);
-      }
+    if (aPackage != null) {
+      return aPackage;
+    }
 
-      for (PsiElementFinder finder : myElementFinders) {
-        aPackage = finder.findPackage(qualifiedName);
-        if (aPackage != null) {
-          aPackage = ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
-          break;
-        }
+    if (DumbService.getInstance(getProject()).isDumb()) {
+      aPackage = findPackageDefault(qualifiedName);
+      if (aPackage != null) {
+        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
+      }
+      return null;
+    }
+
+    for (PsiElementFinder finder : myElementFinders) {
+      aPackage = finder.findPackage(qualifiedName);
+      if (aPackage != null) {
+        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
       }
     }
 
-    return aPackage;
+    return null;
   }
 
 

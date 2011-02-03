@@ -21,9 +21,9 @@ def gg = 7
 int yyy = <caret>testMethod(kkk, vv, gg)
 
 private int testMethod(int kkk, int vv, int gg) {
-  println(kkk + iii + (vv + gg))
-  yyy = kkk + 2
-  return yyy
+    println(kkk + iii + (vv + gg))
+    yyy = kkk + 2
+    return yyy
 }
 
 

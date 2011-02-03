@@ -23,10 +23,10 @@ class Test {<caret>}
     generateImplementation(findMethod(Object.name, "equals"))
     myFixture.checkResult """
 class Test {
-  @Override
-  boolean equals(Object obj) {
-    return super.equals(obj)    //To change body of overridden methods use File | Settings | File Templates.
-  }
+    @Override
+    boolean equals(Object obj) {
+        return super.equals(obj)    //To change body of overridden methods use File | Settings | File Templates.
+    }
 }
 """
   }
@@ -38,9 +38,9 @@ class Test {<caret>}
     generateImplementation(findMethod(Object.name, "Object"))
     myFixture.checkResult """
 class Test {
-  def Test() {
-    super()    //To change body of overridden methods use File | Settings | File Templates.
-  }
+    def Test() {
+        super()    //To change body of overridden methods use File | Settings | File Templates.
+    }
 }
 """
   }
@@ -59,9 +59,9 @@ class Test {<caret>}
     generateImplementation(findMethod("Foo", "foo"))
     myFixture.checkResult """
 class Test {
-  @Override def foo() {
-    return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
-  }
+    @Override def foo() {
+        return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
+    }
 }
 """
   }
@@ -78,9 +78,9 @@ class Test<T> extends Base<T> {<caret>}
     generateImplementation(findMethod("Base", "toArray"))
     myFixture.checkResult """
 class Test<T> extends Base<T> {
-  @Override def <T> T[] toArray(T[] t) {
-    return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
-  }
+    @Override def <T> T[] toArray(T[] t) {
+        return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
+    }
 }
 """
   }

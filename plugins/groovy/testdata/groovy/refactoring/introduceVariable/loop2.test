@@ -1,7 +1,7 @@
 while (true) {
-  <begin>foo()<end>
+    <begin>foo()<end>
 }
 -----
 while (true) {
-  def preved = foo()<caret>
+    def preved = foo()<caret>
 }

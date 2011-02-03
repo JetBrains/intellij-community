@@ -1,5 +1,5 @@
 
 public class Class2 {
-    public static void foo(){
-    }
+        public static void foo(){
+        }
 }

@@ -1,7 +1,7 @@
 class Foo {
-  public static final String CONST = "text"
+    public static final String CONST = "text"
 
-  def foo() {
+    def foo() {
     print <selection>CONST</selection>;
   }
 }

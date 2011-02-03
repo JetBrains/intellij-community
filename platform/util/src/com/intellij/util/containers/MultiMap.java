@@ -128,9 +128,11 @@ public class MultiMap<K, V> {
 
   public void removeValue(final K key, final V value) {
     final Collection<V> values = myMap.get(key);
-    values.remove(value);
-    if (values.isEmpty()) {
-      myMap.remove(key);
+    if (values != null) {
+      values.remove(value);
+      if (values.isEmpty()) {
+        myMap.remove(key);
+      }
     }
   }
 
