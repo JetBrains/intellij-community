@@ -1,14 +1,14 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,10 +18,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyLiteralCollectionType;
 import com.jetbrains.python.psi.types.PyType;
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,18 +55,9 @@ public class PyBuiltinCache {
   @NotNull
   public static PyBuiltinCache getInstance(@Nullable PsiElement reference) {
     if (reference != null) {
-      final Module module = ModuleUtil.findModuleForPsiElement(reference);
-      final Project project = reference.getProject();
-      ComponentManager instance_key = module != null ? module : project;
-      // got a cached one?
-      PyBuiltinCache instance = ourInstanceCache.get(instance_key);
-      if (instance != null) {
-        return instance;
-      }
-      // actually create an instance
       Sdk sdk = findSdkForFile(reference.getContainingFile());
       if (sdk != null) {
-        return getBuiltinsForSdk(project, instance_key, sdk);
+        return PythonSdkPathCache.getInstance(reference.getProject(), sdk).getBuiltins();
       }
     }
     return DUD_INSTANCE; // a non-functional fail-fast instance, for a case when skeletons are not available
@@ -109,8 +99,8 @@ public class PyBuiltinCache {
     return sdk;
   }
 
-  private static PyBuiltinCache getBuiltinsForSdk(Project project, ComponentManager instance_key, Sdk sdk) {
-    PyBuiltinCache instance;
+  @Nullable
+  public static PyFile getBuiltinsForSdk(Project project, Sdk sdk) {
     SdkType sdk_type = sdk.getSdkType();
     if (sdk_type instanceof PythonSdkType) {
       // dig out the builtins file, create an instance based on it
@@ -122,41 +112,19 @@ public class PyBuiltinCache {
           if (builtins.isFile() && builtins.canRead()) {
             VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
-              PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
-              if (builtins_psifile instanceof PyFile) {
-                instance = new PyBuiltinCache((PyFile)builtins_psifile);
-                ourInstanceCache.put(instance_key, instance);
-                if (! ourListenedProjects.contains(project)) {
-                  final MessageBusConnection connection = project.getMessageBus().connect();
-                  connection.subscribe(ProjectTopics.PROJECT_ROOTS, RESETTER);
-                  ourListenedProjects.add(project);
-                }
-                return instance;
+              PsiFile file = PsiManager.getInstance(project).findFile(builtins_vfile);
+              if (file instanceof PyFile) {
+                return (PyFile)file;
               }
             }
           }
         }
       }
     }
-    return DUD_INSTANCE;
+    return null;
   }
 
   private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache((PyFile)null);
-
-  /**
-   * Here we store our instances, keyed either by module or by project (for the module-less case of PyCharm).
-   */
-  private static final Map<ComponentManager, PyBuiltinCache> ourInstanceCache = new HashMap<ComponentManager, PyBuiltinCache>();
-
-
-  public static void clearInstanceCache() {
-    ourInstanceCache.clear();
-  }
-
-  /**
-   * Here we store projects whose ProjectRootManagers have our listeners already.
-   */
-  private static final List<Project> ourListenedProjects = new LinkedList<Project>();
 
   @Nullable
   static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
@@ -169,17 +137,6 @@ public class PyBuiltinCache {
   }
 
 
-  private static class CacheResetter implements ModuleRootListener {
-    public void beforeRootsChange(ModuleRootEvent event) {
-      // nothing
-    }
-
-    public void rootsChanged(ModuleRootEvent event) {
-      clearInstanceCache();
-    }
-  }
-  private static final CacheResetter RESETTER = new CacheResetter();
-
   private PyFile myBuiltinsFile;
 
   public PyBuiltinCache() {
@@ -188,7 +145,7 @@ public class PyBuiltinCache {
 
   public static final Key<String> MARKER_KEY = new Key<String>("python.builtins.skeleton.file");
 
-  private PyBuiltinCache(@Nullable final PyFile builtins) {
+  public PyBuiltinCache(@Nullable final PyFile builtins) {
     myBuiltinsFile = builtins;
     if (myBuiltinsFile != null) {
       myBuiltinsFile.putUserData(MARKER_KEY, ""); // mark this file as builtins
@@ -198,6 +155,10 @@ public class PyBuiltinCache {
   @Nullable
   public PyFile getBuiltinsFile() {
     return myBuiltinsFile;
+  }
+
+  public boolean isValid() {
+    return myBuiltinsFile == null || myBuiltinsFile.isValid();
   }
 
   /**
@@ -321,5 +282,4 @@ public class PyBuiltinCache {
     }
     return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
   }
-
 }

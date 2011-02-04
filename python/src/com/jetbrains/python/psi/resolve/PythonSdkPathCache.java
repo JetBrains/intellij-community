@@ -11,23 +11,26 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.WeakHashMap;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author yole
  */
 public class PythonSdkPathCache extends PythonPathCache implements Disposable {
-  private static final Key<Map<Project, PythonPathCache>> KEY = Key.create("PythonPathCache");
+  private static final Key<Map<Project, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
 
-  public static PythonPathCache getInstance(Project project, Sdk sdk) {
+  public static PythonSdkPathCache getInstance(Project project, Sdk sdk) {
     synchronized (KEY) {
-      Map<Project, PythonPathCache> cacheMap = sdk.getUserData(KEY);
+      Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = new WeakHashMap<Project, PythonPathCache>();
+        cacheMap = new WeakHashMap<Project, PythonSdkPathCache>();
         sdk.putUserData(KEY, cacheMap);
       }
-      PythonPathCache cache = cacheMap.get(project);
+      PythonSdkPathCache cache = cacheMap.get(project);
       if (cache == null) {
         cache = new PythonSdkPathCache(project, sdk);
         cacheMap.put(project, cache);
@@ -38,6 +41,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
 
   private final Project myProject;
   private final Sdk mySdk;
+  private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<PyBuiltinCache>();
 
   public PythonSdkPathCache(final Project project, final Sdk sdk) {
     myProject = project;
@@ -50,6 +54,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         for (Module module : modules) {
           PythonModulePathCache.getInstance(module).clearCache();
         }
+        myBuiltins.set(null);
       }
     }, this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
@@ -76,10 +81,26 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   public void dispose() {
     if (mySdk != null) {
       synchronized (KEY) {
-        final Map<Project, PythonPathCache> cacheMap = mySdk.getUserData(KEY);
+        final Map<Project, PythonSdkPathCache> cacheMap = mySdk.getUserData(KEY);
         if (cacheMap != null) {
           cacheMap.remove(myProject);
         }
+      }
+    }
+  }
+
+  @Nullable
+  public PyBuiltinCache getBuiltins() {
+    while (true) {
+      PyBuiltinCache pyBuiltinCache = myBuiltins.get();
+      if (pyBuiltinCache == null || !pyBuiltinCache.isValid()) {
+        PyBuiltinCache newCache = new PyBuiltinCache(PyBuiltinCache.getBuiltinsForSdk(myProject, mySdk));
+        if (myBuiltins.compareAndSet(pyBuiltinCache, newCache)) {
+          return newCache;
+        }
+      }
+      else {
+        return pyBuiltinCache;
       }
     }
   }
