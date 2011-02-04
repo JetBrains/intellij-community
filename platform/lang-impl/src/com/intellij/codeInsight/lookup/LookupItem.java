@@ -372,7 +372,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
   
   public static @Nullable LookupItem from(LookupElement lookupElement) {
-    if (lookupElement instanceof LookupElementDecorator) {
+    while (lookupElement instanceof LookupElementDecorator) {
       lookupElement = ((LookupElementDecorator)lookupElement).getDelegate();
     }
     if (lookupElement instanceof LookupItem) return (LookupItem)lookupElement;

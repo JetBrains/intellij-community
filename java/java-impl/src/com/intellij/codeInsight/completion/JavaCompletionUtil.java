@@ -728,14 +728,14 @@ public class JavaCompletionUtil {
     return item;
   }
 
-  private static LookupElementDecorator<LookupElement> highlight(LookupElement decorator) {
-    return LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+  private static LookupElement highlight(LookupElement decorator) {
+    return PrioritizedLookupElement.withGrouping(LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
       @Override
       public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
         element.getDelegate().renderElement(presentation);
         presentation.setItemTextBold(true);
       }
-    });
+    }), 1);
   }
 
   private static LookupItem<?> createLookupElement(CompletionElement completionElement, PsiType qualifierType) {
