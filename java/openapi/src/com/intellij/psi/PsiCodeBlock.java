@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java code block, usually surrounded by curly braces.
  */
-public interface PsiCodeBlock extends PsiElement {
+public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
   /**
    * The empty array of PSI code blocks which can be reused to avoid unnecessary allocations.
    */
