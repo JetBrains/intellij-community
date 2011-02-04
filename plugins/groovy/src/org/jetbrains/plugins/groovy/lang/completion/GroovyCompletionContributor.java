@@ -368,13 +368,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     result.restartCompletionOnPrefixChange(IS_PREFIX);
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
     final PsiElement qualifier = reference.getQualifier();
-    final PsiType qualifierType;
-    if (qualifier instanceof GrExpression) {
-      qualifierType = ((GrExpression)qualifier).getType();
-    }
-    else {
-      qualifierType = null;
-    }
+    final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
     final ElementFilter classFilter = getClassFilter(position);
 
@@ -448,7 +442,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (object instanceof PsiClass && !classFilter.isAcceptable(object, position)) {
           return;
         }
-        result.addElement(lookupElement);
+        result.addElement(JavaCompletionUtil.highlightIfNeeded(qualifierType, lookupElement, object));
       }
     });
 
