@@ -20,21 +20,21 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
-  private static final Key<ArrayList<WeakReference<SmartPointerEx>>> SMART_POINTERS_IN_PSI_FILE_KEY = Key.create(
-    "SMART_POINTERS_IN_DOCUMENT_KEY");
+  private static final Key<List<WeakReference<SmartPointerEx>>> SMART_POINTERS_IN_PSI_FILE_KEY = Key.create("SMART_POINTERS_IN_DOCUMENT_KEY");
   private static final Key<Boolean> BELTS_ARE_FASTEN_KEY = Key.create("BELTS_ARE_FASTEN_KEY");
 
   private final Project myProject;
@@ -43,13 +43,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
   }
 
-  public static void fastenBelts(PsiFile file) {
+  public static void fastenBelts(PsiFile file, int offset) {
     synchronized (file) {
       if (areBeltsFastened(file)) return;
 
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
 
-      ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
+      List<WeakReference<SmartPointerEx>> pointers = getPointers(file);
       if (pointers == null) return;
 
       int index = 0;
@@ -57,7 +57,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         WeakReference<SmartPointerEx> reference = pointers.get(i);
         SmartPointerEx pointer = reference.get();
         if (pointer != null) {
-          pointer.fastenBelt();
+          pointer.fastenBelt(offset);
           pointers.set(index++, reference);
         }
       }
@@ -66,22 +66,46 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
         PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
         if (injectedfile == null) continue;
-        fastenBelts(injectedfile);
+        fastenBelts(injectedfile, 0);
       }
 
       int size = pointers.size();
       for (int i = size - 1; i >= index; i--) {
         pointers.remove(i);
       }
+      int i = 0;
     }
   }
 
-  public static void unfastenBelts(PsiFile file) {
+  public static void unfastenBelts(PsiFile file, int offset) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
     for (Language language : languages) {
       final PsiFile f = file.getViewProvider().getPsi(language);
-      synchronized (f) {
-        f.putUserData(BELTS_ARE_FASTEN_KEY, null);
+      f.putUserData(BELTS_ARE_FASTEN_KEY, null);
+
+      List<WeakReference<SmartPointerEx>> pointers = getPointers(file);
+      if (pointers == null) return;
+
+      int index = 0;
+      for (int i = 0; i < pointers.size(); i++) {
+        WeakReference<SmartPointerEx> reference = pointers.get(i);
+        SmartPointerEx pointer = reference.get();
+        if (pointer != null) {
+          pointer.unfastenBelt(offset);
+          pointers.set(index++, reference);
+        }
+      }
+
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+      for(Document document:InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+        PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
+        if (injectedfile == null) continue;
+        unfastenBelts(injectedfile, 0);
+      }
+
+      int size = pointers.size();
+      for (int i = size - 1; i >= index; i--) {
+        pointers.remove(i);
       }
     }
   }
@@ -97,7 +121,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   private static void _synchronizePointers(final PsiFile file) {
-    ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
+    List<WeakReference<SmartPointerEx>> pointers = getPointers(file);
     if (pointers == null) return;
 
     int index = 0;
@@ -124,53 +148,46 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element) {
+  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     if (!element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
-
-    PsiFile file = element.getContainingFile();
-
-    if (isSafeReparseable(file)) {
-      return new IdentitySmartPointer<E>(element);
-    }
-
-    SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element);
-    initPointer(element, pointer);
+    PsiFile containingFile = element.getContainingFile();
+    SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
+    initPointer(element, pointer, containingFile);
 
     return pointer;
   }
 
-  private static boolean isSafeReparseable(final PsiFile file) {
-    return false;
-    //return file != null && !(file instanceof CodeFragmentElement);  TODO: needs proper processing of foreign chameleons on reparse (like javascript in HTML).
-  }
+  private <E extends PsiElement> void initPointer(E element, SmartPointerEx<E> pointer, PsiFile containingFile) {
+    if (containingFile == null) return;
+    synchronized (containingFile) {
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(containingFile);
+      //todo
+      //if (document != null) {
+      //  //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
+      //  if (!(element instanceof PsiFile)) {
+      //    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+      //    LOG.assertTrue(!documentManager.isUncommited(document) || documentManager.isCommittingDocument(document), "Document for : " +
+      //                                                                                                              containingFile + " is not committed");
+      //  }
+      //}
 
-  private <E extends PsiElement> void initPointer(E element, SmartPointerEx<E> pointer) {
-    PsiFile file = element.getContainingFile();
-    if (file != null) {
-      synchronized (file) {
-        Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
-        if (document != null) {
-          //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
-          if (!(element instanceof PsiFile)) {
-            PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-            LOG.assertTrue(!documentManager.isUncommited(document) || documentManager.isCommittingDocument(document), "Document for : " + file + " is not committed");
-          }
-        }
+      List<WeakReference<SmartPointerEx>> pointers = getPointers(containingFile);
+      if (pointers == null) {
+        pointers = new ArrayList<WeakReference<SmartPointerEx>>();
+        containingFile.putUserData(SMART_POINTERS_IN_PSI_FILE_KEY, pointers);
+      }
+      pointers.add(new WeakReference<SmartPointerEx>(pointer));
 
-        ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
-        if (pointers == null) {
-          pointers = new ArrayList<WeakReference<SmartPointerEx>>();
-          file.putUserData(SMART_POINTERS_IN_PSI_FILE_KEY, pointers);
-        }
-        pointers.add(new WeakReference<SmartPointerEx>(pointer));
-
-        if (areBeltsFastened(file)) {
-          pointer.fastenBelt();
-        }
+      if (areBeltsFastened(containingFile)) {
+        pointer.fastenBelt(0);
       }
     }
+  }
+
+  private static List<WeakReference<SmartPointerEx>> getPointers(@NotNull PsiFile containingFile) {
+    return containingFile.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
   }
 
   private static boolean areBeltsFastened(final PsiFile file) {
@@ -179,9 +196,23 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
 
   @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(E element) {
-    LazyPointerImpl<E> pointer = new LazyPointerImpl<E>(element);
-    initPointer(element, pointer);
-    return pointer;
+  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
+    return createSmartPsiElementPointer(element);
+    //LazyPointerImpl<E> pointer = new LazyPointerImpl<E>(element);
+    //initPointer(element, pointer, element.getContainingFile());
+    //return pointer;
+  }
+
+  @Override
+  public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+    if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
+      SmartPointerElementInfo elementInfo1 = ((SmartPsiElementPointerImpl)pointer1).getElementInfo();
+      SmartPointerElementInfo elementInfo2 = ((SmartPsiElementPointerImpl)pointer2).getElementInfo();
+      return elementInfo1.pointsToTheSameElementAs(elementInfo2);
+    }
+    if (pointer1 instanceof LazyPointerImpl && pointer2 instanceof LazyPointerImpl) {
+      return ((LazyPointerImpl)pointer1).pointsToTheSameElementAs((LazyPointerImpl)pointer2);
+    }
+    return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 }

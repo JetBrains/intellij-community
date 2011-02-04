@@ -866,7 +866,7 @@ public class FileManagerImpl implements FileManager {
       }
 
       if (oldPsiFile != null && oldPsiFile.isPhysical()) {
-        SmartPointerManagerImpl.fastenBelts(oldPsiFile);
+        SmartPointerManagerImpl.fastenBelts(oldPsiFile, 0);
       }
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {
@@ -1085,7 +1085,9 @@ public class FileManagerImpl implements FileManager {
           removeFilesAndDirsRecursively(child);
         }
       }
-      else myVFileToViewProviderMap.remove(vFile);
+      else {
+        myVFileToViewProviderMap.remove(vFile);
+      }
     }
   }
 

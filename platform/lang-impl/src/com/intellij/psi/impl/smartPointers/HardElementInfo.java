@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,21 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * User: cdr
 */
-class FileElementInfo implements SmartPointerElementInfo {
-  private final VirtualFile myVirtualFile;
-  private final Project myProject;
+class HardElementInfo implements SmartPointerElementInfo {
+  private final PsiElement myElement;
 
-  public FileElementInfo(@NotNull PsiFile file) {
-    myVirtualFile = file.getVirtualFile();
-    myProject = file.getProject();
+  public HardElementInfo(@NotNull PsiElement element) {
+    myElement = element;
   }
 
   public Document getDocumentToSynchronize() {
@@ -53,7 +49,7 @@ class FileElementInfo implements SmartPointerElementInfo {
   }
 
   public PsiElement restoreElement() {
-    return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+    return myElement;
   }
 
   @Override
@@ -62,24 +58,21 @@ class FileElementInfo implements SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    return myVirtualFile.hashCode();
+    return myElement.hashCode();
   }
 
   @Override
   public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
-    if (other instanceof FileElementInfo) {
-      return myVirtualFile == ((FileElementInfo)other).myVirtualFile;
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return Comparing.equal(myElement, other.restoreElement());
   }
 
   @Override
   public VirtualFile getVirtualFile() {
-    return myVirtualFile;
+    return PsiUtilBase.getVirtualFile(myElement);
   }
 
   @Override
   public Segment getSegment() {
-    return new TextRange(0, (int)myVirtualFile.getLength());
+    return myElement.getTextRange();
   }
 }

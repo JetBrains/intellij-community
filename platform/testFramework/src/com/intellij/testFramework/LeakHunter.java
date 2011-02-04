@@ -15,11 +15,12 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PersistentEnumerator;
@@ -27,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -40,7 +42,7 @@ import java.util.Set;
 /**
  * User: cdr
  */
-public class LeakedProjectHunter {
+public class LeakHunter {
   private static final Map<Class, List<Field>> allFields = new THashMap<Class, List<Field>>();
   private static List<Field> getAllFields(Class aClass) {
     List<Field> cached = allFields.get(aClass);
@@ -65,13 +67,13 @@ public class LeakedProjectHunter {
   }
 
   private static final Set<Object> visited = new THashSet<Object>(TObjectHashingStrategy.IDENTITY);
-  static class BackLink {
-    Class aClass;
-    Object value;
-    Field field;
-    BackLink backLink;
+  private static class BackLink {
+    private final Class aClass;
+    private final Object value;
+    private final Field field;
+    private final BackLink backLink;
 
-    BackLink(Class aClass, Object value, Field field, BackLink backLink) {
+    private BackLink(Class aClass, Object value, Field field, BackLink backLink) {
       this.aClass = aClass;
       this.value = value;
       this.field = field;
@@ -89,11 +91,15 @@ public class LeakedProjectHunter {
       Class rootClass = backLink.aClass;
       List<Field> fields = getAllFields(rootClass);
       for (Field field : fields) {
-        if (root instanceof Reference && "referent".equals(field.getName())) continue; // do not follow weak/soft refs
+        String fieldName = field.getName();
+        if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
         Object value = field.get(root);
         if (value == null) continue;
+        if (value instanceof PsiElement || value instanceof TreeElement)  {
+          int i = 0;
+        }
         Class valueClass = value.getClass();
-        if (valueClass == lookFor) {
+        if (lookFor.isAssignableFrom(valueClass)) {
           BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
           processor.process(newBackLink);
         }
@@ -146,7 +152,7 @@ public class LeakedProjectHunter {
     checkLeak(root, ProjectImpl.class);
   }
   @TestOnly
-  public static void checkLeak(Object root, Class suspectClass) throws Exception {
+  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws Exception {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -154,7 +160,9 @@ public class LeakedProjectHunter {
       UIUtil.pump();
     }
     PersistentEnumerator.clearCacheForTests();
-    toVisit.push(new BackLink(ApplicationImpl.class, root, null,null));
+    toVisit.clear();
+    visited.clear();
+    toVisit.push(new BackLink(root.getClass(), root, null,null));
     try {
       walkObjects(new Processor<BackLink>() {
         @Override

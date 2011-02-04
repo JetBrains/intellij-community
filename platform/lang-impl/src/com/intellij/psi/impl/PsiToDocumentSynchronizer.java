@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +87,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if(!insideTransaction){
       document.setModificationStamp(psiFile.getModificationStamp());
-      SmartPointerManagerImpl.synchronizePointers(psiFile);
       if (LOG.isDebugEnabled()) {
         PsiDocumentManagerImpl.checkConsistency(psiFile, document);
       }
