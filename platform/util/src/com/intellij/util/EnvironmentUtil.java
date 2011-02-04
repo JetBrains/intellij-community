@@ -18,7 +18,6 @@ package com.intellij.util;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 
 public class EnvironmentUtil {
@@ -27,7 +26,8 @@ public class EnvironmentUtil {
   private EnvironmentUtil() {
   }
 
-  public static @NonNls Map<String, String> getEnviromentProperties() {
+  @NonNls
+  public static Map<String, String> getEnviromentProperties() {
     return ourEnviromentProperties;
   }
 
@@ -39,8 +39,8 @@ public class EnvironmentUtil {
     Map enviroment = getEnviromentProperties();
     String[] envp = new String[enviroment.size()];
     int i = 0;
-    for (Iterator iterator = enviroment.keySet().iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (Object o : enviroment.keySet()) {
+      String name = (String)o;
       String value = (String)enviroment.get(name);
       envp[i++] = name + "=" + value;
     }

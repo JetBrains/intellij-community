@@ -323,8 +323,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
             if (usageView != null) {
               usageView.appendUsageLater(usage);
             }
-
-            if (usageCount % 100 == 0) System.out.println("usageCount = " + usageCount);
           }
           return indicator == null || !indicator.isCanceled();
         }

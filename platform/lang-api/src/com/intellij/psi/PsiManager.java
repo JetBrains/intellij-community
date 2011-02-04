@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * The main entry point for accessing the PSI services for a project.
  */
 public abstract class PsiManager extends UserDataHolderBase {
-
   /**
    * Returns the PSI manager instance for the specified project.
    *
@@ -239,4 +238,5 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   public abstract void unregisterLanguageInjector(@NotNull LanguageInjector injector);
 
+  public abstract void dropFileCaches(@NotNull PsiFile file);
 }

@@ -203,6 +203,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   public void processFinish() {
     if (myOwnerTask != null) {
       finish(myOwnerTask);
+      myOwnerTask = null;
     }
   }
 

@@ -154,7 +154,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (getConstructors().size() == 0 && !isInterface() && !isAnonymous()) {
+    if (getConstructors().isEmpty() && !isInterface() && !isAnonymous()) {
       RefImplicitConstructorImpl refImplicitConstructor = new RefImplicitConstructorImpl(this);
       setDefaultConstructor(refImplicitConstructor);
       addConstructor(refImplicitConstructor);
@@ -173,7 +173,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     final PsiClass applet = getRefJavaManager().getApplet();
     setApplet(applet != null && psiClass.isInheritor(applet, true));
     getRefManager().fireNodeInitialized(this);
-    getRefManager().getPsiManager().dropResolveCaches();
+    PsiManager psiManager = getRefManager().getPsiManager();
+    psiManager.dropResolveCaches();
+    PsiFile file = psiClass.getContainingFile();
+    if (file != null) {
+      psiManager.dropFileCaches(file);
+    }
   }
 
   private void initializeSuperReferences(PsiClass psiClass) {
@@ -434,7 +439,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.isReferenced()) return true;
 
     if (isInterface() || isAbstract()) {
-      if (getSubClasses().size() > 0) return true;
+      if (!getSubClasses().isEmpty()) return true;
     }
 
     return false;
@@ -444,7 +449,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.hasSuspiciousCallers()) return true;
 
     if (isInterface() || isAbstract()) {
-      if (getSubClasses().size() > 0) return true;
+      if (!getSubClasses().isEmpty()) return true;
     }
 
     return false;
