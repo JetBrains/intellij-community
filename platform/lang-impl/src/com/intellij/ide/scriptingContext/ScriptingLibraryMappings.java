@@ -51,11 +51,15 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   public ScriptingLibraryMappings(final Project project, final LibraryType libraryType) {
     super(project);
     myLibraryManager = new ScriptingLibraryManager(project, libraryType);
+    registerLibraryTableListener(this, this);
+    Disposer.register(project, this);
+  }
+
+  public void registerLibraryTableListener(LibraryTable.Listener listener, Disposable parentDisposable) {
     if (myLibraryManager.ensureModel()) {
       LibraryTable libTable = myLibraryManager.getLibraryTable();
-      if (libTable != null) libTable.addListener(this, this);
+      if (libTable != null) libTable.addListener(listener, parentDisposable);
     }
-    Disposer.register(project, this);
   }
 
   protected String serialize(final ScriptingLibraryTable.LibraryModel library) {
@@ -91,7 +95,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
             newContainer.addLibrary(libraryModel);
           }
         }
-        newContainer.applyChanges();
         setMapping(file, newContainer.isEmpty() ? null : newContainer);
         if (!newContainer.isEmpty()) {
           if (file == null) {
@@ -182,7 +185,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       container = new CompoundLibrary();
     }
     if (!((CompoundLibrary)container).containsLibrary(libName)) {
-      ((CompoundLibrary)container).toggleLibrary(libraryModel);
+      ((CompoundLibrary)container).addLibrary(libraryModel);
       setMapping(file, container);
     }
     updateDependencies(getMappings());
@@ -210,10 +213,9 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     for (String libName : libNames) {
       ScriptingLibraryTable.LibraryModel libraryModel = myLibraryManager.getLibraryByName(libName.trim());
       if (libraryModel != null) {
-        compoundLib.toggleLibrary(libraryModel);
+        compoundLib.addLibrary(libraryModel);
       }
     }
-    compoundLib.applyChanges();
     if (file == null) {
       myProjectLibs = compoundLib;
     }
@@ -331,6 +333,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     private void addLibrary(@NotNull ScriptingLibraryTable.LibraryModel library) {
       final String libName = library.getName();
       myLibraries.put(libName, library);
+      applyChanges();
     }
 
     public boolean containsLibrary(String libName) {
