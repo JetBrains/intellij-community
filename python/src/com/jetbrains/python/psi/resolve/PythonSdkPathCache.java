@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.WeakHashMap;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -89,7 +89,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     }
   }
 
-  @Nullable
+  @NotNull
   public PyBuiltinCache getBuiltins() {
     while (true) {
       PyBuiltinCache pyBuiltinCache = myBuiltins.get();
