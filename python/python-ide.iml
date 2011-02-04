@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="sass" scope="RUNTIME" />
     <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="colorSchemes" scope="RUNTIME" />
   </component>
 </module>
 

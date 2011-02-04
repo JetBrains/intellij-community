@@ -277,6 +277,9 @@
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
 
+    <projectService serviceInterface="com.jetbrains.django.model.DjangoTagLibrary"
+                    serviceImplementation="com.jetbrains.django.model.DjangoTagLibrary"/>
+
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>

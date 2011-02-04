@@ -9,7 +9,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
-import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +36,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   @Override
   public String getName() {
     final PyQualifiedName qname = getQualifiedName();
-    return qname != null? qname.getLastComponent() : null;
+    return qname != null ? qname.getLastComponent() : null;
   }
 
   @Nullable
@@ -101,6 +100,12 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
   }
 
+  @Override
+  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
+    PyExpression[] args = getArguments();
+    return args.length >= index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
+  }
+
   public void addArgument(PyExpression expression) {
     PyCallExpressionHelper.addArgument(this, expression);
   }
@@ -108,7 +113,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   public PyMarkedCallee resolveCallee(TypeEvalContext context) {
     PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, context);
     if (callee == null) return null;
-    if (! hasArgumentList()) {
+    if (!hasArgumentList()) {
       // NOTE: that +1 thing looks fishy
       callee = new PyMarkedCallee(callee.getCallable(), callee.getFlags(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
     }
@@ -132,7 +137,9 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
       node.replaceChild(name_node, nameElement);
       return this;
     }
-    else throw new IncorrectOperationException("No name node");
+    else {
+      throw new IncorrectOperationException("No name node");
+    }
   }
 
   // TODO: create a custom version of public PyType getType()
