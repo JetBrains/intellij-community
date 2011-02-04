@@ -357,6 +357,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
+    @NotNull
     private MappedRange insertMapping(int tokenIndex, IElementType outerToken) {
       CharSequence tokenText = getTokenText(tokenIndex);
 

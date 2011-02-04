@@ -148,8 +148,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     }
 
     public boolean equals(Object o) {
-      if (!(o instanceof LogUsageGroup)) return false;
-      return myPower == ((LogUsageGroup)o).myPower;
+      return o instanceof LogUsageGroup && myPower == ((LogUsageGroup)o).myPower;
     }
     public int hashCode() { return myPower; }
 
@@ -240,16 +239,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
     @Override
     public UsageGroup groupUsage(Usage usage) {
-      MockUsage mockUsage = ((MockUsage)usage);
+      MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;
 
-      if (mockUsage.getId() % 2 == 0) {
-        return EVEN;
-      }
-      else {
-        return ODD;
-      }
+      return mockUsage.getId() % 2 == 0 ? EVEN : ODD;
     }
   }
 
@@ -259,7 +253,6 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     public MockUsage(int index) {
       myId = index;
     }
-
 
     public int getId() {
       return myId;
@@ -314,10 +307,6 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
     public String toString() {
       return String.valueOf(myId);
-    }
-
-    public int compareTo(Usage o) {
-      return getId() - ((MockUsage)o).getId();
     }
 
     @Override

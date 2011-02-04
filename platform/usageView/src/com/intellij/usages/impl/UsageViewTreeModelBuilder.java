@@ -19,7 +19,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -107,16 +106,6 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private class RootGroupNode extends GroupNode {
     private RootGroupNode() {
       super(null, 0, UsageViewTreeModelBuilder.this);
-    }
-
-    public void addNode(final DefaultMutableTreeNode node) {
-      if (!myDetachedMode) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            myTreeModel.insertNodeInto(node, RootGroupNode.this, getNodeInsertionIndex(node));
-          }
-        });
-      }
     }
 
     @NonNls
