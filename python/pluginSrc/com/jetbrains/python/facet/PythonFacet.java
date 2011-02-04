@@ -59,7 +59,6 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
           if (library == null) {
             // we just create new project library
             library = PythonSdkTableListener.addLibrary(sdk);
-            PyBuiltinCache.clearInstanceCache();
           }
           model.addLibraryEntry(library);
           modelChanged = true;
