@@ -302,7 +302,6 @@ def layoutFull(String home, String targetDirectory) {
 
 
           fileset(dir: "$home/plugins/groovy/resources/conf")
-          fileset(dir: "${home}/plugins/groovy/lib")
         }
       }
 
