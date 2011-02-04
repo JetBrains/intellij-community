@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -65,7 +64,7 @@ public class GrLightParameter extends LightParameter implements GrParameter {
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(getName());
+    return null;
   }
 
   public PsiType getTypeGroovy() {
