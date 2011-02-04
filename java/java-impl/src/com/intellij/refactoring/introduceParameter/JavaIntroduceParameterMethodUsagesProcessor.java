@@ -60,6 +60,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     final PsiElement ref = usage.getElement();
     PsiCall callExpression = RefactoringUtil.getCallExpressionByMethodReference(ref);
     PsiExpressionList argList = RefactoringUtil.getArgumentListByMethodReference(ref);
+    if (argList == null) return true;
     PsiExpression[] oldArgs = argList.getExpressions();
 
     final PsiExpression anchor;

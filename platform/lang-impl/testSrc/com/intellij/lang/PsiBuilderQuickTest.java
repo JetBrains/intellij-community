@@ -17,6 +17,8 @@ package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
@@ -28,6 +30,8 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,6 +39,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -54,6 +59,30 @@ public class PsiBuilderQuickTest {
 
   private static final TokenSet WHITESPACE_SET = TokenSet.create(TokenType.WHITE_SPACE);
   private static final TokenSet COMMENT_SET = TokenSet.create(COMMENT);
+
+  private static ApplicationEx myMockApp = null;
+
+  @BeforeClass
+  public static void setUp() {
+    if (ApplicationManagerEx.getApplication() == null) {
+      if (myMockApp == null) {
+        myMockApp = createMock(ApplicationEx.class);
+        expect(myMockApp.isInternal()).andReturn(true);
+        expect(myMockApp.isUnitTestMode()).andReturn(true);
+        myMockApp.assertReadAccessAllowed();
+        expectLastCall().asStub();
+        replay(myMockApp);
+      }
+      ApplicationManagerEx.setApplication(myMockApp);
+    }
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    if (myMockApp != null) {
+      ApplicationManagerEx.setApplication(null);
+    }
+  }
 
   @Test
   public void testPlain() {
@@ -167,7 +196,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testPrecedeAndDoneBefore() throws Exception {
+  public void testPrecedeAndDoneBefore() {
     doTest("ab",
            new Parser() {
              @Override
@@ -193,7 +222,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testErrorBefore() throws Exception {
+  public void testErrorBefore() {
     doTest("a1",
            new Parser() {
              @Override
@@ -217,7 +246,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testValidityChecksOnDone() throws Exception {
+  public void testValidityChecksOnDone() {
     doFailTest("a",
                new Parser() {
                  @Override
@@ -232,7 +261,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore1() throws Exception {
+  public void testValidityChecksOnDoneBefore1() {
     doFailTest("a",
                new Parser() {
                  @Override
@@ -248,7 +277,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore2() throws Exception {
+  public void testValidityChecksOnDoneBefore2() {
     doFailTest("a",
                new Parser() {
                  @Override
@@ -263,7 +292,48 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testWhitespaceTrimming() throws Exception {
+  public void testValidityChecksOnTreeBuild1() {
+    doFailTest("aa",
+               new Parser() {
+                 @Override
+                 public void parse(PsiBuilder builder) {
+                   while(!builder.eof()) builder.advanceLexer();
+                 }
+               },
+               "Assertion failed: Parser produced no markers. Text:\naa");
+  }
+
+  @Test
+  public void testValidityChecksOnTreeBuild2() {
+    doFailTest("aa",
+               new Parser() {
+                 @Override
+                 public void parse(PsiBuilder builder) {
+                   final PsiBuilder.Marker marker = builder.mark();
+                   builder.advanceLexer();
+                   marker.done(LETTER);
+                 }
+               },
+               "Tokens [LETTER] were not inserted into the tree. Text:\naa");
+  }
+
+  @Test
+  public void testValidityChecksOnTreeBuild3() {
+    doFailTest("a ",
+               new Parser() {
+                 @Override
+                 public void parse(PsiBuilder builder) {
+                   final PsiBuilder.Marker marker = builder.mark();
+                   builder.advanceLexer();
+                   marker.done(LETTER);
+                   while(!builder.eof()) builder.advanceLexer();
+                 }
+               },
+               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\". Text:\na ");
+  }
+
+  @Test
+  public void testWhitespaceTrimming() {
     doTest(" a b ",
            new Parser() {
              @Override
@@ -288,7 +358,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testWhitespaceBalancingByErrors() throws Exception {
+  public void testWhitespaceBalancingByErrors() {
     doTest("a b c",
            new Parser() {
              @Override
@@ -322,7 +392,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testWhitespaceBalancingByEmptyComposites() throws Exception {
+  public void testWhitespaceBalancingByEmptyComposites() {
     doTest("a b c",
            new Parser() {
              @Override
@@ -353,7 +423,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testCustomEdgeProcessors() throws Exception {
+  public void testCustomEdgeProcessors() {
     final WhitespacesAndCommentsBinder leftEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
       public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
@@ -403,7 +473,7 @@ public class PsiBuilderQuickTest {
   }
 
   @Test
-  public void testLightChameleon() throws Exception {
+  public void testLightChameleon() {
     final IElementType CHAMELEON_2 = new MyLazyElementType("CHAMELEON_2") {
       @Override
       public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
@@ -578,6 +648,7 @@ public class PsiBuilderQuickTest {
         final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), TokenSet.EMPTY, TokenSet.EMPTY, text);
         builder.setDebugMode(true);
         parser.parse(builder);
+        builder.getLightTree();
         fail("should fail");
       }
       catch (AssertionError e) {

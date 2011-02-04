@@ -7,10 +7,14 @@ class LibraryLicense {
 
 List<LibraryLicense> licensesList = []
 List<String> jetbrainsLibraries = ["tcServiceMessages"]
+Map<String, String> predefinedLicenseUrls = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
 
 binding.setVariable("libraryLicense", {Map args ->
   if (args.libraryName == null) {
     args.libraryName = args.name;
+  }
+  if (args.licenseUrl == null) {
+    args.licenseUrl = predefinedLicenseUrls[args.license]
   }
   licensesList << new LibraryLicense(args)
 })
@@ -84,7 +88,7 @@ binding.setVariable("generateLicensesTable", {String filePath ->
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
     return "|$name| $lib.version|$license|".toString()
   }
-  lines.sort {String.CASE_INSENSITIVE_ORDER}
+  lines.sort(String.CASE_INSENSITIVE_ORDER)
 
   FileWriter out = new FileWriter(filePath)
   out.println("|| Software || Version || License ||")
@@ -108,7 +112,8 @@ libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11",
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
 libraryLicense(name: "Guava", version: "R6", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
-libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html")
+libraryLicense(name: "Gradle API", libraryName: "gradle-open-api-0.8.jar", version: "0.8", license: "Apache 2.0", url: "http://www.gradle.org/")
+libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "JavaCVS", version: "no version number available (with patches by JetBrains)", license: "Sun Public License", url: "http://javacvs.netbeans.org/library/", licenseUrl: "http://www.netbeans.org/about/legal/spl.html")
 libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "http://www.jaxen.org/", licenseUrl: "http://www.jaxen.org/license.html")
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")

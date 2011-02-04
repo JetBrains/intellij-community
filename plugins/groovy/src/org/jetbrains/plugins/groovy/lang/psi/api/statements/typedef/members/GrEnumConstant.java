@@ -16,22 +16,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public interface GrEnumConstant extends GrField, GrConstructorCall {
+public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConstant {
   GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
 
+  @Nullable
   GrTypeDefinitionBody getAnonymousBlock();
+
+  @Override
+  GrArgumentList getArgumentList();
 }

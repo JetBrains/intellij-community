@@ -227,6 +227,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiMethod caller = RefactoringUtil.getEnclosingMethod(ref);
     if (toChangeArguments) {
       final PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(ref);
+      LOG.assertTrue(list != null);
       boolean toInsertDefaultValue = needDefaultValue(changeInfo, caller);
       if (toInsertDefaultValue && ref instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression)ref).getQualifierExpression();

@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +29,12 @@ import javax.swing.*;
 public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   public ProjectLibrariesConfigurable(final Project project) {
     super(project);
-    MasterDetailsStateService.getInstance(project).register("ProjectLibrariesConfigurable.UI", this);
     myLevel = LibraryTablesRegistrar.PROJECT_LEVEL;
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "ProjectLibrariesConfigurable.UI";
   }
 
   @Nls

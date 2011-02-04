@@ -539,10 +539,13 @@
     </action>
 
 
+    <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
@@ -591,18 +594,5 @@
     </component>
   </project-components>
 
-  <actions>
-    <!-- Add your actions here -->
-      <action id="show-gradle" class="org.jetbrains.plugins.groovy.gradle.ui.ShowGradleUIAction"
-              text="Gradle UI" description="Run native Gradle UI for current project" icon="/icons/gradle/gradle.png">
-          <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="HierarchyGroup"/>
-          <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl G"/>
-      </action>
-  </actions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"
-                    serviceImplementation="org.jetbrains.plugins.groovy.gradle.ui.GradleUISettings"/>
-  </extensions>
 
 </idea-plugin>

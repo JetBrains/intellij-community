@@ -1,6 +1,6 @@
 def a, b, c
 
-[a, b, c] = foo(1)
+(a, b, c) = foo(1)
 
 private List foo(i) {
     if (i == 0)

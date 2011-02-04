@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsState;
+import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
@@ -100,6 +101,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     });
   }
 
+  @Override
+  protected MasterDetailsStateService getStateService() {
+    return MasterDetailsStateService.getInstance(myProject);
+  }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     if (place == null) return new ActionCallback.Done();

@@ -50,7 +50,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
@@ -96,10 +95,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
-    MasterDetailsStateService.getInstance(project).register("ModuleStructureConfigurable.UI", this);
     myModuleManager = manager;
   }
 
+  @Override
+  protected String getComponentStateKey() {
+    return "ModuleStructureConfigurable.UI";
+  }
 
   protected void initTree() {
     super.initTree();

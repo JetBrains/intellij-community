@@ -173,4 +173,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testTupleWithNullInIt() {
     assertTypeEquals("java.util.List", "A.groovy");
   }
+
+  public void testImplicitlyReturnedMethodCall() {
+    assertTypeEquals("java.util.Map<BasicRange,java.util.Map<BasicRange, java.lang.Double>>", "A.groovy");
+  }
 }

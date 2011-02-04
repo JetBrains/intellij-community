@@ -16,8 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiElement;
+
 /**
  * @author ilyas
  */
 public interface GrTupleExpression extends GrExpression {
+  int indexOf(PsiElement element);
 }
