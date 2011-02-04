@@ -288,11 +288,15 @@ public class InjectedLanguageUtil {
   private static final Key<List<RangeMarker>> INJECTED_REGIONS_KEY = Key.create("INJECTED_REGIONS_KEY");
   @NotNull
   public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
+    // modification of cachedInjectedDocuments must be under PsiLock only
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
       injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.<DocumentWindow>createEmptyCOWList());
     }
     return injected;
+  }
+  public static void clearCachedInjectedFragmentsForFile(@NotNull PsiFile file) {
+    file.putUserData(INJECTED_DOCS_KEY, null);
   }
 
   public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
@@ -320,10 +324,32 @@ public class InjectedLanguageUtil {
     PsiDocumentManagerImpl.checkConsistency(hostPsiFile, hostDocument);
   }
 
-  public static void clearCaches(PsiFile injected) {
+  public static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
+    if (psiManagerEx.isDisposed()) return;
     psiManagerEx.getFileManager().setViewProvider((VirtualFile)virtualFile, null);
+    PsiElement context = injected.getContext();
+    PsiFile hostFile;
+    if (context != null) {
+      hostFile = context.getContainingFile();
+    }
+    else {
+      VirtualFile delegate = virtualFile.getDelegate();
+      hostFile = delegate.isValid() ? psiManagerEx.findFile(delegate) : null;
+    }
+    if (hostFile != null) {
+      // modification of cachedInjectedDocuments must be under PsiLock
+      synchronized (PsiLock.LOCK) {
+        List<DocumentWindow> cachedInjectedDocuments = getCachedInjectedDocuments(hostFile);
+        for (int i = cachedInjectedDocuments.size() - 1; i >= 0; i--) {
+          DocumentWindow cachedInjectedDocument = cachedInjectedDocuments.get(i);
+          if (cachedInjectedDocument == documentWindow) {
+            cachedInjectedDocuments.remove(i);
+          }
+        }
+      }
+    }
   }
 
 

@@ -53,6 +53,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -61,12 +62,13 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -76,6 +78,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
+  private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
   private final PsiSearchHelperImpl mySearchHelper;
@@ -94,11 +97,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
   private boolean myTreeChangeEventIsFiring = false;
 
-  private final List<Runnable> myRunnablesOnChange = ContainerUtil.createEmptyCOWList();
-  private final List<WeakReference<Runnable>> myWeakRunnablesOnChange = ContainerUtil.createEmptyCOWList();
-  private final List<Runnable> myRunnablesOnAnyChange = ContainerUtil.createEmptyCOWList();
-  private final List<Runnable> myRunnablesAfterAnyChange = ContainerUtil.createEmptyCOWList();
-
   private boolean myIsDisposed;
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
@@ -106,6 +104,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
+  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = Topic.create("PSI_CHANGE_TOPIC",AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   private final List<LanguageInjector> myLanguageInjectors = ContainerUtil.createEmptyCOWList();
 
@@ -114,8 +113,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         StartupManager startupManager,
                         FileTypeManager fileTypeManager,
                         FileDocumentManager fileDocumentManager,
-                        PsiBuilderFactory psiBuilderFactory) {
+                        PsiBuilderFactory psiBuilderFactory, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
 
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
     @SuppressWarnings({"UnusedDeclaration", "UnnecessaryLocalVariable"}) Object used = psiBuilderFactory;
@@ -173,6 +173,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     ((FileManagerImpl)myFileManager).processQueue();
     physicalChange();
     nonPhysicalChange();
+  }
+
+  @Override
+  public void dropFileCaches(@NotNull PsiFile file) {
+    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
@@ -368,7 +373,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   @TestOnly
   public void cleanupForNextTest() {
-    //myFileManager.cleanupForNextTest();
+    myFileManager.cleanupForNextTest();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
   }
 
@@ -495,7 +500,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void childAdded(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(CHILD_ADDED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -504,11 +509,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void childRemoved(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(CHILD_REMOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -516,11 +521,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void childReplaced(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(CHILD_REPLACED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -530,11 +535,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void childMoved(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(CHILD_MOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -544,11 +549,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void childrenChanged(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(CHILDREN_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -556,11 +561,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void propertyChanged(PsiTreeChangeEventImpl event) {
-    onChange(true);
+    beforeChange(true);
     event.setCode(PROPERTY_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -571,7 +576,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       );
     }
     fireEvent(event);
-    afterAnyChange();
+    afterAnyChange(true);
   }
 
   public void addTreeChangePreprocessor(PsiTreeChangePreprocessor preprocessor) {
@@ -658,57 +663,59 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
   }
 
-  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
-    myRunnablesOnChange.add(runnable);
+  public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) runnable.run();
+      }
+
+      @Override
+      public void afterPsiChanged(boolean isPhysical) {
+      }
+    });
   }
 
-  public void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable) {
-    myWeakRunnablesOnChange.add(new WeakReference<Runnable>(runnable));
+  public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        runnable.run();
+      }
+
+      @Override
+      public void afterPsiChanged(boolean isPhysical) {
+      }
+    });
   }
 
-  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) { // includes non-physical changes
-    myRunnablesOnAnyChange.add(runnable);
-  }
+  public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+      }
 
-  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) { // includes non-physical changes
-    myRunnablesAfterAnyChange.add(runnable);
+      @Override
+      public void afterPsiChanged(boolean isPhysical) {
+        runnable.run();
+      }
+    });
   }
 
   public void nonPhysicalChange() {
-    onChange(false);
+    beforeChange(false);
   }
 
   public void physicalChange() {
-    onChange(true);
+    beforeChange(true);
   }
 
-  private void onChange(boolean isPhysical) {
-    if (isPhysical) {
-      runRunnables(myRunnablesOnChange);
-
-      WeakReference[] refs = myWeakRunnablesOnChange.toArray(new WeakReference[myWeakRunnablesOnChange.size()]);
-      myWeakRunnablesOnChange.clear();
-      for (WeakReference ref : refs) {
-        Runnable runnable = ref != null ? (Runnable)ref.get() : null;
-        if (runnable != null) {
-          runnable.run();
-        }
-      }
-    }
-
-    runRunnables(myRunnablesOnAnyChange);
+  private void beforeChange(boolean isPhysical) {
+    myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
   }
 
-  private void afterAnyChange() {
-    runRunnables(myRunnablesAfterAnyChange);
-  }
-
-  private static void runRunnables(List<Runnable> runnables) {
-    if (runnables.isEmpty()) return;
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < runnables.size(); i++) {
-      runnables.get(i).run();
-    }
+  private void afterAnyChange(boolean isPhysical) {
+    myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
   }
 
   @NotNull

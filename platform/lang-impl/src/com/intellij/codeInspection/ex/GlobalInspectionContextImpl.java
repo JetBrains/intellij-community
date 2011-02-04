@@ -82,7 +82,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private ProgressIndicator myProgressIndicator;
   public static final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
-  public static final JobDescriptor[] BUILD_GRAPH_ONLY = new JobDescriptor[]{BUILD_GRAPH};
+  public static final JobDescriptor[] BUILD_GRAPH_ONLY = {BUILD_GRAPH};
   public static final JobDescriptor FIND_EXTERNAL_USAGES =
     new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
 
@@ -556,6 +556,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
         catch (Exception e) {
           LOG.error(e);
+        }
+        finally {
+          psiManager.dropFileCaches(file);
         }
       }
     });

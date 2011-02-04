@@ -138,6 +138,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           collectedDeps.addAll(found);
 
           psiManager.dropResolveCaches();
+          psiManager.dropFileCaches(file);
         }
       }
       collectedDeps.removeAll(processed);

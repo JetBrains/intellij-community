@@ -269,12 +269,7 @@ public class FindInProjectUtil {
         String message = "<html><body>";
         if (largeFiles.size() == 1) {
           final VirtualFile vFile = largeFiles.iterator().next().getVirtualFile();
-          message
-            += "File '"
-            + getPresentablePath(vFile)
-            + "'&nbsp;("
-            + presentableSize(getFileLength(vFile))
-            + ") is ";
+          message += "File " + presentableFileInfo(vFile) + " is ";
         }
         else {
           message += "Files<br> ";
@@ -282,11 +277,7 @@ public class FindInProjectUtil {
           int counter = 0;
           for (PsiFile file : largeFiles) {
             final VirtualFile vFile = file.getVirtualFile();
-            message +=
-              getPresentablePath(vFile)
-              + "&nbsp;("
-              + presentableSize(getFileLength(vFile))
-              + ")<br> ";
+            message += presentableFileInfo(vFile) + "<br> ";
             if (counter++ > 10) break;
           }
 
@@ -310,6 +301,13 @@ public class FindInProjectUtil {
     if (progress != null) {
       progress.setText(FindBundle.message("find.progress.search.completed"));
     }
+  }
+
+  private static String presentableFileInfo(VirtualFile vFile) {
+    return getPresentablePath(vFile)
+           + "&nbsp;("
+           + presentableSize(getFileLength(vFile))
+           + ")";
   }
 
   private static int processUsagesInFile(final PsiFile psiFile,
@@ -339,11 +337,11 @@ public class FindInProjectUtil {
   }
 
   private static String getPresentablePath(final VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return virtualFile.getPresentableUrl();
       }
-    });
+    }) + "'";
   }
 
   private static String presentableSize(long bytes) {
@@ -434,9 +432,8 @@ public class FindInProjectUtil {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       public boolean accept(final VirtualFile file) {
-        if (file.isDirectory()) return true;
-        if (fileTypeManager.isFileIgnored(file) || fileTypeManager.getFileTypeByFile(file).isBinary()) return false;
-        return searchScope.contains(file);
+        return file.isDirectory() ||
+               !fileTypeManager.isFileIgnored(file) && !fileTypeManager.getFileTypeByFile(file).isBinary() && searchScope.contains(file);
       }
     };
     for (VirtualFile file : files) {
@@ -567,8 +564,7 @@ public class FindInProjectUtil {
 
   private static boolean canOptimizeForFastWordSearch(final FindModel findModel) {
     return !findModel.isRegularExpressions()
-           && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope)
-      ;
+           && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope);
   }
 
   private static int addToUsages(@NotNull Document document, @NotNull Processor<UsageInfo> consumer, @NotNull FindModel findModel,
@@ -588,7 +584,7 @@ public class FindInProjectUtil {
       if (!result.isStringFound()) break;
 
       UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
-      consumer.process(info);
+      if (!consumer.process(info)) break;
       count++;
 
       final int prevOffset = offset;
