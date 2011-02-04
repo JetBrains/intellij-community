@@ -39,14 +39,12 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
       write2file(tempFile, Boolean.FALSE.toString()); //append unloaded
       write2file(tempFile, Boolean.FALSE.toString());//merge with existing
       write2file(tempFile, String.valueOf(isSampling));
-      if (patterns != null) {
-        for (String coveragePattern : patterns) {
-          coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
-          if (!coveragePattern.endsWith(".*")) { //include inner classes
-            coveragePattern += "(\\$.*)*";
-          }
-          write2file(tempFile, coveragePattern);
+      for (String coveragePattern : patterns) {
+        coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
+        if (!coveragePattern.endsWith(".*")) { //include inner classes
+          coveragePattern += "(\\$.*)*";
         }
+        write2file(tempFile, coveragePattern);
       }
       argument.append(tempFile.getCanonicalPath());
     }
