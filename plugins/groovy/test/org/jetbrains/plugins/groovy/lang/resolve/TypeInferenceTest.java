@@ -177,4 +177,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testImplicitlyReturnedMethodCall() {
     assertTypeEquals("java.util.Map<BasicRange,java.util.Map<BasicRange, java.lang.Double>>", "A.groovy");
   }
+
+  public void testInferWithClosureType() {
+    assertTypeEquals("java.util.Date", "A.groovy");
+  }
 }
