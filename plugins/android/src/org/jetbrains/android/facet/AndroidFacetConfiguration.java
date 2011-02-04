@@ -77,15 +77,19 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   private AndroidFacet myFacet = null;
 
   public void init(@NotNull Module module, @NotNull VirtualFile contentRoot) {
+    init(module, contentRoot.getPath());
+  }
+
+  public void init(@NotNull Module module, @NotNull String baseDirectoryPath) {
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     if (moduleDirPath == null) {
       return;
     }
-    if (moduleDirPath.equals(contentRoot.getPath())) {
+    if (moduleDirPath.equals(baseDirectoryPath)) {
       return;
     }
 
-    String s = FileUtil.getRelativePath(moduleDirPath, contentRoot.getPath(), '/');
+    String s = FileUtil.getRelativePath(moduleDirPath, baseDirectoryPath, '/');
 
     GEN_FOLDER_RELATIVE_PATH_APT = '/' + s + GEN_FOLDER_RELATIVE_PATH_APT;
     GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + s + GEN_FOLDER_RELATIVE_PATH_AIDL;

@@ -307,4 +307,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testMapParamWithNoArgs() {doTest(new GroovyAssignabilityCheckInspection());}
 
+  public void testTestMarkupStubs() {
+    doTest();
+  }
+
 }
