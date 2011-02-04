@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -618,7 +619,9 @@ public class RefactoringUtil {
   }
 
   public static boolean isMethodUsage(PsiElement element) {
-    if (element instanceof PsiEnumConstant) return true;
+    if (element instanceof PsiEnumConstant) {
+      return StdLanguages.JAVA.equals(element.getLanguage());
+    }
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof PsiCall) {
@@ -630,6 +633,7 @@ public class RefactoringUtil {
     return false;
   }
 
+  @Nullable
   public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
     if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).getArgumentList();
     PsiElement parent = ref.getParent();

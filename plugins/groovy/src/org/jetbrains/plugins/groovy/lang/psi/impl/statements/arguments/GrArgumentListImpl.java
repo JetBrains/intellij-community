@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -221,5 +223,17 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
       }
     }
     super.deleteChildInternal(child);
+  }
+
+  @NotNull
+  @Override
+  public PsiExpression[] getExpressions() {
+    return PsiExpression.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getExpressionTypes() {
+    return PsiType.EMPTY_ARRAY;
   }
 }

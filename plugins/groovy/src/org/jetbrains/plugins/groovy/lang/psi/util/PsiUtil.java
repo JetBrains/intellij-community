@@ -176,6 +176,7 @@ public class PsiUtil {
 
   @Nullable
   public static GrArgumentList getArgumentsList(PsiElement methodRef) {
+    if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrCall) {
       return ((GrCall)parent).getArgumentList();
