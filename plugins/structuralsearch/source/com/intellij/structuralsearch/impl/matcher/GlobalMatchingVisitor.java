@@ -79,25 +79,13 @@ public class GlobalMatchingVisitor {
     );
   }
 
-  public final boolean matchInAnyOrder(final PsiElement[] elements, final PsiElement[] elements2) {
+  protected final boolean matchInAnyOrder(final PsiElement[] elements, final PsiElement[] elements2) {
     if (elements == elements2) return true;
 
     return matchInAnyOrder(
       new ArrayBackedNodeIterator(elements),
       new ArrayBackedNodeIterator(elements2)
     );
-  }
-
-  public final boolean matchSonsInAnyOrder(PsiElement element1, PsiElement element2) {
-    if (element1 == null && matchContext.getOptions().isLooseMatching()) {
-      return true;
-    }
-    if (element1 == null || element2 == null) {
-      return element1 == element2;
-    }
-    PsiElement e = element1.getFirstChild();
-    return (e == null && matchContext.getOptions().isLooseMatching()) ||
-           matchInAnyOrder(new FilteringNodeIterator(e), new FilteringNodeIterator(element2.getFirstChild()));
   }
 
   protected final boolean matchInAnyOrder(final NodeIterator elements, final NodeIterator elements2) {
