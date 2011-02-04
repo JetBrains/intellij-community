@@ -84,7 +84,7 @@ binding.setVariable("generateLicensesTable", {String filePath ->
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
     return "|$name| $lib.version|$license|".toString()
   }
-  lines.sort {String.CASE_INSENSITIVE_ORDER}
+  lines.sort(String.CASE_INSENSITIVE_ORDER)
 
   FileWriter out = new FileWriter(filePath)
   out.println("|| Software || Version || License ||")
