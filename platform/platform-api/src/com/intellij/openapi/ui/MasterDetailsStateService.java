@@ -33,6 +33,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,57 +47,53 @@ import java.util.*;
 )
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final SkipDefaultValuesSerializationFilters mySerializationFilter = new SkipDefaultValuesSerializationFilters();
-  private final Map<String, MasterDetailsComponent> myComponents = new HashMap<String, MasterDetailsComponent>();
-  private final States myStates = new States();
+  private final Map<String, ComponentState> myStates = new HashMap<String, ComponentState>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, MasterDetailsStateService.class);
   }
 
-  public void register(@NotNull @NonNls String key, MasterDetailsComponent masterDetailsComponent) {
-    myComponents.put(key, masterDetailsComponent);
-    for (ComponentState state : myStates.getStates()) {
-      if (key.equals(state.myKey)) {
-        final Element element = state.mySettings;
-        if (element != null) {
-          loadComponentState(masterDetailsComponent, element);
-        }
-      }
-    }
+  /**
+   * @deprecated override {@link MasterDetailsComponent#getComponentStateKey()} and {@link MasterDetailsComponent#getStateService()} instead
+   */
+  public void register(String key, MasterDetailsComponent component) {
   }
 
-  private static void loadComponentState(MasterDetailsComponent masterDetailsComponent, Element element) {
-    final MasterDetailsState loadedState = XmlSerializer.deserialize(element, masterDetailsComponent.getState().getClass());
-    masterDetailsComponent.loadState(loadedState);
+  @Nullable
+  public MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
+    ComponentState state = myStates.get(key);
+    return state != null ? XmlSerializer.deserialize(state.mySettings, stateClass) : null;
+  }
+
+  public void setComponentState(@NotNull @NonNls String key, @NotNull MasterDetailsState state) {
+    final Element element = XmlSerializer.serialize(state, mySerializationFilter);
+    if (element == null) {
+      myStates.remove(key);
+    }
+    else {
+      final ComponentState componentState = new ComponentState();
+      componentState.myKey = key;
+      componentState.mySettings = element;
+      myStates.put(key, componentState);
+    }
   }
 
   public States getState() {
-    myStates.getStates().clear();
-    for (Map.Entry<String, MasterDetailsComponent> entry : myComponents.entrySet()) {
-      final Element element = XmlSerializer.serialize(entry.getValue().getState(), mySerializationFilter);
-      if (element != null) {
-        final ComponentState state = new ComponentState();
-        state.myKey = entry.getKey();
-        state.mySettings = element;
-        myStates.getStates().add(state);
-      }
-    }
-    Collections.sort(myStates.getStates(), new Comparator<ComponentState>() {
+    States states = new States();
+    states.myStates.addAll(myStates.values());
+    Collections.sort(states.getStates(), new Comparator<ComponentState>() {
       @Override
       public int compare(ComponentState o1, ComponentState o2) {
         return o1.myKey.compareTo(o2.myKey);
       }
     });
-    return myStates;
+    return states;
   }
 
   public void loadState(States states) {
-    myStates.setStates(states.getStates());
-    for (ComponentState state : myStates.getStates()) {
-      final MasterDetailsComponent component = myComponents.get(state.myKey);
-      if (component != null) {
-        loadComponentState(component, state.mySettings);
-      }
+    myStates.clear();
+    for (ComponentState state : states.getStates()) {
+      myStates.put(state.myKey, state);
     }
   }
 

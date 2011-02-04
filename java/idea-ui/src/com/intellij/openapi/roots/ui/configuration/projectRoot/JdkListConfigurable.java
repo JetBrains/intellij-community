@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
@@ -75,10 +74,15 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   public JdkListConfigurable(final Project project, ProjectStructureConfigurable root) {
     super(project);
-    MasterDetailsStateService.getInstance(project).register("JdkListConfigurable.UI", this);
     myJdksTreeModel = root.getProjectJdksModel();
     myJdksTreeModel.addListener(myListener);
   }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "JdkListConfigurable.UI";
+  }
+
   protected void processRemovedItems() {
   }
 

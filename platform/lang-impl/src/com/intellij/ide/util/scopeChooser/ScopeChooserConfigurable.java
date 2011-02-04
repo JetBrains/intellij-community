@@ -61,6 +61,7 @@ import java.util.*;
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable, SearchableConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
+  @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
 
@@ -81,8 +82,17 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     mySharedScopesManager = DependencyValidationManager.getInstance(project);
     myProject = project;
 
-    MasterDetailsStateService.getInstance(project).register("ScopeChooserConfigurable.UI", this);
     initTree();
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return SCOPE_CHOOSER_CONFIGURABLE_UI_KEY;
+  }
+
+  @Override
+  protected MasterDetailsStateService getStateService() {
+    return MasterDetailsStateService.getInstance(myProject);
   }
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {

@@ -323,6 +323,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected abstract boolean wasObjectStored(Object editableObject);
 
   public void reset() {
+    loadComponentState();
     myHasDeletedItems = false;
     ((DefaultTreeModel)myTree.getModel()).reload();
     //myTree.requestFocus();
@@ -345,6 +346,17 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     updateSelectionFromTree();
   }
 
+  protected void loadComponentState() {
+    final String key = getComponentStateKey();
+    final MasterDetailsStateService stateService = getStateService();
+    if (key != null && stateService != null) {
+      final MasterDetailsState state = stateService.getComponentState(key, myState.getClass());
+      if (state != null) {
+        loadState(state);
+      }
+    }
+  }
+
   private static String getNodePathString(final MyNode node) {
     StringBuilder path = new StringBuilder();
     MyNode current = node;
@@ -365,11 +377,22 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return path.toString();
   }
 
-  public MasterDetailsState getState() {
+  @Nullable
+  @NonNls
+  protected String getComponentStateKey() {
+    return null;
+  }
+
+  @Nullable
+  protected MasterDetailsStateService getStateService() {
+    return null;
+  }
+
+  protected MasterDetailsState getState() {
     return myState;
   }
 
-  public void loadState(final MasterDetailsState object) {
+  protected void loadState(final MasterDetailsState object) {
     XmlSerializerUtil.copyBean(object, myState);
   }
 
@@ -391,6 +414,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     });
     myRoot.removeAllChildren();
+    final String key = getComponentStateKey();
+    final MasterDetailsStateService stateService = getStateService();
+    if (key != null && stateService != null) {
+      stateService.setComponentState(key, getState());
+    }
     myCurrentConfigurable = null;
   }
 

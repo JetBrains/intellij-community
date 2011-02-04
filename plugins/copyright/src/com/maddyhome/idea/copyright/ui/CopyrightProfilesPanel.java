@@ -60,13 +60,22 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   public CopyrightProfilesPanel(Project project) {
-      MasterDetailsStateService.getInstance(project).register("Copyright.UI", this);
-        myProject = project;
-        myManager = CopyrightManager.getInstance(project);
-        initTree();
-    }
+    myProject = project;
+    myManager = CopyrightManager.getInstance(project);
+    initTree();
+  }
 
-    protected void processRemovedItems() {
+  @Override
+  protected MasterDetailsStateService getStateService() {
+    return MasterDetailsStateService.getInstance(myProject);
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "Copyright.UI";
+  }
+
+  protected void processRemovedItems() {
         Map<String, CopyrightProfile> profiles = getAllProfiles();
         final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
         for (CopyrightProfile profile : myManager.getCopyrights()) {
