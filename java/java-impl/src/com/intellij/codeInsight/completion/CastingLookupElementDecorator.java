@@ -81,14 +81,4 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   static LookupElement createCastingElement(final LookupElement delegate, PsiType castTo) {
     return new CastingLookupElementDecorator(delegate, castTo);
   }
-  
-  public static @Nullable CastingLookupElementDecorator from(LookupElement element) {
-    if (element instanceof CastingLookupElementDecorator) return (CastingLookupElementDecorator)element;
-    else if (element instanceof LookupElementDecorator) {
-      element = ((LookupElementDecorator)element).getDelegate();
-      if (element instanceof CastingLookupElementDecorator) return (CastingLookupElementDecorator)element;
-    }
-    
-    return null;
-  }
 }

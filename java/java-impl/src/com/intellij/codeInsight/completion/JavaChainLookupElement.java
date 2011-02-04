@@ -124,7 +124,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
   @NotNull
   private LookupElement getComparableQualifier() {
-    final CastingLookupElementDecorator casting = CastingLookupElementDecorator.from(myQualifier);
+    final CastingLookupElementDecorator casting = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY);
     return casting == null ? myQualifier : casting.getDelegate();
   }
 

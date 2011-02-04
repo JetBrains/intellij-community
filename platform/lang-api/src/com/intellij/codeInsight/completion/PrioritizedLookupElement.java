@@ -19,7 +19,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.util.ClassConditionKey;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Use only when you want to control lookup sorting & preference in simple cases when you have control over ALL the items in lookup.
@@ -48,18 +47,12 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
   }
 
   public static LookupElement withPriority(LookupElement element, double priority) {
-    final PrioritizedLookupElement prioritized = PrioritizedLookupElement.from(element);
+    final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     return new PrioritizedLookupElement<LookupElement>(element, priority, prioritized == null ? 0 : prioritized.getGrouping());
   }
 
   public static LookupElement withGrouping(LookupElement element, int grouping) {
-    final PrioritizedLookupElement prioritized = PrioritizedLookupElement.from(element);
+    final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     return new PrioritizedLookupElement<LookupElement>(element, prioritized == null ? 0 : prioritized.getPriority(), grouping);
-  }
-
-  public static @Nullable PrioritizedLookupElement from(LookupElement element) {
-    if (element instanceof PrioritizedLookupElement) return (PrioritizedLookupElement)element;
-    if (element instanceof LookupElementDecorator) return from (((LookupElementDecorator)element).getDelegate());
-    return null;
   }
 }

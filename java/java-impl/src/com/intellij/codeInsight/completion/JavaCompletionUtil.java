@@ -503,13 +503,13 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
-    TypedLookupItem typed = typedFrom(element);
+    TypedLookupItem typed = element.as(TypedLookupItem.CLASS_CONDITION_KEY);
     if (typed != null) {
       return typed.getType();
     }
 
     final PsiType qualifierType = getPsiType(element.getObject());
-    final LookupItem lookupItem = LookupItem.from(element);
+    final LookupItem lookupItem = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem != null) {
       final Object o = lookupItem.getAttribute(LookupItem.TYPE);
       if (o instanceof PsiType) {
@@ -522,16 +522,6 @@ public class JavaCompletionUtil {
       }
     }
     return qualifierType;
-  }
-
-  public static @Nullable TypedLookupItem typedFrom(LookupElement element) {
-    TypedLookupItem typed = null;
-    if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
-    else if (element instanceof LookupElementDecorator) {
-      element = ((LookupElementDecorator)element).getDelegate();
-      if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
-    }
-    return typed;
   }
 
   @Nullable
@@ -729,13 +719,14 @@ public class JavaCompletionUtil {
   }
 
   private static LookupElement highlight(LookupElement decorator) {
-    return PrioritizedLookupElement.withGrouping(LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
-      @Override
-      public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-        element.getDelegate().renderElement(presentation);
-        presentation.setItemTextBold(true);
-      }
-    }), 1);
+    return PrioritizedLookupElement.withGrouping(
+      LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+        @Override
+        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          element.getDelegate().renderElement(presentation);
+          presentation.setItemTextBold(true);
+        }
+      }), 1);
   }
 
   private static LookupItem<?> createLookupElement(CompletionElement completionElement, PsiType qualifierType) {
