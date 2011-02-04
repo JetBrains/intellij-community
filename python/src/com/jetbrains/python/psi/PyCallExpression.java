@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +28,6 @@ public interface PyCallExpression extends PyExpression {
    */
   @NotNull
   PyExpression[] getArguments();
-
-  /**
-   * If the list of arguments has at least {@code index} elements and the index'th element is of type argClass,
-   * returns it. Otherwise, returns null.
-   *
-   * @param index    argument index
-   * @param argClass argument expected type
-   * @return the argument or null
-   */
-  @Nullable
-  <T extends PsiElement> T getArgument(int index, Class<T> argClass);
 
   void addArgument(PyExpression expression);
 
@@ -73,10 +61,9 @@ public interface PyCallExpression extends PyExpression {
 
     /**
      * Method-oriented constructor.
-     *
-     * @param function           the method (or any other callable, but why bother then).
-     * @param flags              result of decorators or wrapping.
-     * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
+     * @param function the method (or any other callable, but why bother then).
+     * @param flags result of decorators or wrapping.
+     * @param offset implicit argument offset; parameters up to this are implicitly filled in the call.
      * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
      */
     public PyMarkedCallee(@NotNull Callable function, EnumSet<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
@@ -90,7 +77,7 @@ public interface PyCallExpression extends PyExpression {
       myCallable = callable;
       myFlags = EnumSet.noneOf(PyFunction.Flag.class);
       myImplicitOffset = 0;
-      myImplicitlyResolved = implicitlyResolved;
+      myImplicitlyResolved = implicitlyResolved; 
     }
 
     public Callable getCallable() {
@@ -103,8 +90,8 @@ public interface PyCallExpression extends PyExpression {
 
     /**
      * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
-     *         Note that a <tt>*args</tt> is never marked as passed implicitly.
-     *         E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
+     * Note that a <tt>*args</tt> is never marked as passed implicitly.
+     * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.   
      */
     public int getImplicitOffset() {
       return myImplicitOffset;

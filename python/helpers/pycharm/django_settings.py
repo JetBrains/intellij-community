@@ -4,8 +4,6 @@ settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE')
 if not settings_file:
     settings_file = 'settings'
 
-print ("Importing Django settings module " + settings_file)
-
 try:
   settings_module = __import__(settings_file)
 
@@ -21,3 +19,4 @@ except ImportError:
 
 TEST_RUNNER = 'pycharm.django_test_runner.run_tests'
 
+print ("pycharm django settings imported") # XXX

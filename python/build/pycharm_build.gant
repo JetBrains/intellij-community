@@ -280,7 +280,7 @@ def build_searchable_options() {
   ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
   ant.copy(file: "$home/build/pycharm.license", todir: paths.ideaSystem)
   ant.java(classname: "com.intellij.idea.Main", fork: "true") {
-    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python -Didea.no.jre.check=true")
+    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python")
     jvmarg(value: "-Xbootclasspath/a:${boot.output}")
     arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
 
