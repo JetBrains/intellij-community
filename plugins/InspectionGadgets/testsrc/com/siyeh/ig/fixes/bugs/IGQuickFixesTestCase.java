@@ -13,11 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 16-Jun-2009
- */
 package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,6 +23,11 @@ import com.intellij.testFramework.fixtures.*;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 import org.junit.Assert;
 
+/*
+ * User: anna
+ * Date: 16-Jun-2009
+ * todo: fix to run on module classpath
+ */
 public abstract class IGQuickFixesTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
