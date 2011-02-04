@@ -160,4 +160,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Foooo.Bar", presentation.getItemText());*/
   }
 
+  public void testClassInCallOfItsMethod() throws Throwable {
+    final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
+    VfsUtil.saveText(foo.createChildData(this, "Foo.java"), "package foo; public interface Foo {}");
+    final VirtualFile bar = getSourceRoot().createChildDirectory(this, "bar");
+    VfsUtil.saveText(bar.createChildData(this, "Foo.java"), "package bar; public interface Foo {}");
+
+    checkPreferredItems(0, "Foo", "Foo");
+    assertEquals("foo.Foo", ((JavaPsiClassReferenceElement)getLookup().getCurrentItem()).getQualifiedName());
+  }
+
 }
