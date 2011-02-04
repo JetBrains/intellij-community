@@ -145,8 +145,4 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testValue_injection_2(){
     doTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");
   }
-
-  public void testComma(){
-    doTest("key: Hello, how are you?");
-  }
 }

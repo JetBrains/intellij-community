@@ -25,7 +25,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 %{
   private int valueIndent = 0;
   private boolean afterEOL = false;
-  private int braceCount = 0;
   private IElementType valueTokenType = null;
     
   private char previousChar() {
@@ -34,11 +33,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
   private char getChar(final int offset) {
     final int loc = getTokenStart()  + offset;
-    return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
-  }
-
-  private char getCharAfter(final int offset) {
-    final int loc = getTokenEnd()  + offset;
     return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
   }
 
@@ -82,23 +76,15 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     return EOL;
                                 }
 "{"                             {   yybegin(YYINITIAL);
-                                    braceCount++;
                                     return LBRACE;
                                 }
-"}"                             {   braceCount--;
-                                    return RBRACE;
-                                }
+"}"                             {   return RBRACE; }
 "["                             {   yybegin(YYINITIAL);
-                                    braceCount++;
                                     return LBRACKET;
                                 }
-"]"                             {   braceCount--;
-                                    return RBRACKET; }
-","                             {   if (braceCount > 0) {
-                                      yybegin(YYINITIAL);
-                                      return COMMA;
-                                    }
-                                    return TEXT;
+"]"                             {   return RBRACKET; }
+","                             {   yybegin(YYINITIAL);
+                                    return COMMA;
                                 }
 ":"                             {   yybegin(YYINITIAL);
                                     return COLON;
@@ -118,8 +104,7 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 
 <YYINITIAL>{
 
-"---"                           {   braceCount = 0;
-                                    return DOCUMENT_MARKER; }
+"---"                           {   return DOCUMENT_MARKER; }
 
 {WHITE_SPACE}                   {   final char prev = previousChar();
                                     return prev == (char)-1 || prev == '\n' ? INDENT : WHITESPACE;
@@ -135,9 +120,13 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 
 {WHITE_SPACE}                   {   return WHITESPACE; }
 
-{STRING}                        {   return SCALAR_STRING; }
+{STRING}                        {   yybegin(YYINITIAL);
+                                    return SCALAR_STRING;
+                                }
 
-{DSTRING}                       {   return SCALAR_DSTRING; }
+{DSTRING}                       {   yybegin(YYINITIAL);
+                                    return SCALAR_DSTRING;
+                                }
 
 ">"/ ({WHITE_SPACE} | {EOL})      {   yybegin(INDENT_VALUE);
                                     //System.out.println("Started SCALAR_TEXT state");
@@ -157,13 +146,7 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                 }
 
 ({INJECTION} | [^ \t\n,{\[|>]) ({INJECTION} | [^\n#,}\]])* ({INJECTION} | [^ \t\n#,}\]])
-                                {   if (braceCount <= 0) {
-                                      char c;
-                                      while ((c = getCharAfter(0)) == ' ' || c == ','){
-                                        zzMarkedPos++;
-                                      }
-                                    }
-                                    return TEXT; }
+                                {   return TEXT; }
 .                               {   return TEXT; }
 }
 
