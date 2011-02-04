@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorLi
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsState;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
@@ -61,7 +60,11 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project, new ArtifactStructureConfigurableState());
-    MasterDetailsStateService.getInstance(project).register("ArtifactsStructureConfigurable.UI", this);
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "ArtifactsStructureConfigurable.UI";
   }
 
   public void init(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable,
@@ -160,7 +163,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  public MasterDetailsState getState() {
+  protected MasterDetailsState getState() {
     ((ArtifactStructureConfigurableState)myState).setDefaultArtifactSettings(myDefaultSettings.getState());
     return super.getState();
   }
@@ -209,6 +212,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void reset() {
+    loadComponentState();
     myPackagingEditorContext.resetModifiableModel();
     super.reset();
   }

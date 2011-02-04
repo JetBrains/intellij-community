@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +58,12 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
-    MasterDetailsStateService.getInstance(project).register("FacetStructureConfigurable.UI", this);
     myModuleManager = moduleManager;
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "FacetStructureConfigurable.UI";
   }
 
   public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
