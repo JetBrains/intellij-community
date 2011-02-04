@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,19 @@
  */
 package com.intellij.ide.dnd;
 
-import java.awt.Point;
-import java.awt.Image;
-
 /**
  * @author Konstantin Bulenkov
  */
-public interface DnDTarget extends DnDDropHandler, DnDTargetChecker {
-  void cleanUpOnLeave();
-  void updateDraggedImage(Image image, Point dropPoint, Point imageOffset);
+public interface DnDTargetChecker {
+  /**
+   * All
+   *
+   * @param event Drag-n-Drop event
+   * @return <code>true</code> - if this target is unable to handle the event and parent component should be asked to process it.
+   *         <code>false</code> - if this target is unable to handle the event and parent component should NOT be asked to process it.
+   *
+   * @see DnDEvent#setDropPossible(boolean, String)
+   * @see DnDEvent#setDropPossible(String, DropActionHandler)
+   */
+  boolean update(DnDEvent event);
 }

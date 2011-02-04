@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,37 @@
  */
 package com.intellij.ide.dnd;
 
-import java.awt.Point;
-import java.awt.Image;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface DnDTarget extends DnDDropHandler, DnDTargetChecker {
-  void cleanUpOnLeave();
-  void updateDraggedImage(Image image, Point dropPoint, Point imageOffset);
+public final class DnDActionInfo {
+  private final DnDAction myAction;
+  private final Point myPoint;
+
+  public DnDActionInfo(DnDAction action, Point dragOrigin) {
+    myAction = action;
+    myPoint = dragOrigin;
+  }
+
+  public DnDAction getAction() {
+    return myAction;
+  }
+
+  public Point getPoint() {
+    return myPoint;
+  }
+
+  public boolean isMove() {
+    return myAction == DnDAction.MOVE;
+  }
+
+  public boolean isCopy() {
+    return myAction == DnDAction.COPY;
+  }
+
+  public boolean isLink() {
+    return myAction == DnDAction.LINK;
+  }
 }
