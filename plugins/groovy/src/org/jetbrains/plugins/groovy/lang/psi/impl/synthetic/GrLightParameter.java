@@ -21,7 +21,9 @@ import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -34,7 +36,7 @@ public class GrLightParameter extends LightParameter implements GrParameter {
   private volatile boolean myOptional;
 
   public GrLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement scope) {
-    super(name, type, scope);
+    super(name, type, scope, GroovyFileType.GROOVY_LANGUAGE);
   }
 
   public GrTypeElement getTypeElementGroovy() {
@@ -63,7 +65,7 @@ public class GrLightParameter extends LightParameter implements GrParameter {
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return null;
+    return GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(getName());
   }
 
   public PsiType getTypeGroovy() {

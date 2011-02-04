@@ -180,7 +180,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
   
   public LightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
-    return addParameter(new LightParameter(name, type, this));
+    return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA));
   }
 
   @NotNull
