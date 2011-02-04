@@ -13,26 +13,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.siyeh.ig.fixes.bugs;
+
+import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 
 /*
  * User: anna
  * Date: 16-Jun-2009
  */
-package com.siyeh.ig.fixes.bugs;
-
 public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
+  }
 
-
-  public void testReplaceCastInDeclaration() throws Throwable {
+  public void testReplaceCastInDeclaration() {
     doTest("replaceCastInDeclaration", "Replace cast");
   }
 
-  public void testReplaceInstaneOf() throws Throwable {
+  public void testReplaceInstanceOf() {
     doTest("replaceInstanceOf", "Replace instanceof");
   }
 
   @Override
   protected String getRelativePath() {
-    return "bugs/castconflicts";
+    return "bugs/castConflicts";
   }
 }

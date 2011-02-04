@@ -36,7 +36,6 @@ public abstract class IGQuickFixesTestCase extends UsefulTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
     final String dataPath = PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
@@ -52,7 +51,7 @@ public abstract class IGQuickFixesTestCase extends UsefulTestCase {
     super.tearDown();
   }
 
-  protected void doTest(String testName, String hint) throws Throwable {
+  protected void doTest(String testName, String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     Assert.assertNotNull(action);
