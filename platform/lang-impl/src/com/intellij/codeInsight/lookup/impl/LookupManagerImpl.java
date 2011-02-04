@@ -133,7 +133,7 @@ public class LookupManagerImpl extends LookupManager {
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable() {
       public void run() {
-        if (myActiveLookup == lookup) {
+        if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
           if (completion == null || !completion.isAutopopupCompletion()) {
             DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
