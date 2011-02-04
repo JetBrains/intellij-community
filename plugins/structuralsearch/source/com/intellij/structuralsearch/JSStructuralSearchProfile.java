@@ -295,8 +295,8 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
 
       myGlobalVisitor.setResult(myGlobalVisitor.match(c1.getNameIdentifier(), c2.getNameIdentifier()) &&
                                 myGlobalVisitor.matchSonsOptionally(c1.getAttributeList(), c2.getAttributeList()) &&
-                                myGlobalVisitor.matchSonsOptionally(c1.getExtendsList(), c2.getExtendsList()) &&
-                                myGlobalVisitor.matchSonsOptionally(c1.getImplementsList(), c2.getImplementsList()) &&
+                                myGlobalVisitor.matchSonsInAnyOrder(c1.getExtendsList(), c2.getExtendsList()) &&
+                                myGlobalVisitor.matchSonsInAnyOrder(c1.getImplementsList(), c2.getImplementsList()) &&
                                 myGlobalVisitor.matchInAnyOrder(c1.getFields(), c2.getFields()) &&
                                 myGlobalVisitor.matchInAnyOrder(c1.getFunctions(), c2.getFunctions()));
     }

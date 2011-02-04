@@ -303,6 +303,14 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest(c, "class $name$ { function f() {var a = 1;} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function g() function f() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function $name$() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+
+    String c1 = "package {\n" +
+               "class C1 implements I1, I2 {}\n" +
+               "}";
+    doTest(c1, "class $name$ implements $i1$, $i2$ {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c1, "class $name$ implements $i1$, $i2$, $i3$ {}", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c1, "class $name$ implements I2, I1 {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c1, "class $name$ implements $i$ {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
 
