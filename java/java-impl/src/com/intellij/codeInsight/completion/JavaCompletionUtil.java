@@ -974,7 +974,7 @@ public class JavaCompletionUtil {
 
     if (smart || needRightParenth && addCompletionChar) {
       TailType toInsert = tailType;
-      LookupItem lookupItem = item.as(LookupItem.class);
+      LookupItem lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
       if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
         if (!hasTail && item.getObject() instanceof PsiMethod && ((PsiMethod)item.getObject()).getReturnType() == PsiType.VOID) {
           PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();

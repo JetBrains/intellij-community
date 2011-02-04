@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
+  public static final ClassConditionKey<CastingLookupElementDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(CastingLookupElementDecorator.class);
+
   private final LookupElement myCastItem;
   private final PsiType myCastType;
 

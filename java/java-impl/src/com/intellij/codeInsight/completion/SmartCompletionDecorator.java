@@ -59,7 +59,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     }
 
     LookupElement delegate = getDelegate();
-    LookupItem item = as(LookupItem.class);
+    LookupItem item = as(LookupItem.CLASS_CONDITION_KEY);
     Object object = delegate.getObject();
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && (object instanceof PsiMethod || object instanceof PsiClass)) {
       return TailType.NONE;

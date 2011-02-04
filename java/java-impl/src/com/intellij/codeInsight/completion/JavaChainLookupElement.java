@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +31,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
+  public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
   private final LookupElement myQualifier;
 
   private JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
@@ -72,7 +74,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
     myQualifier.renderElement(qualifierPresentation);
     String name = maybeAddParentheses(qualifierPresentation.getItemText());
-    final String qualifierText = myQualifier.as(CastingLookupElementDecorator.class) != null ? "(" + name + ")" : name;
+    final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
   }
 

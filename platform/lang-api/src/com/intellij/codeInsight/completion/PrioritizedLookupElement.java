@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> {
+  public static final ClassConditionKey<PrioritizedLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(PrioritizedLookupElement.class);
   private final double myPriority;
   private final int myGrouping;
 
