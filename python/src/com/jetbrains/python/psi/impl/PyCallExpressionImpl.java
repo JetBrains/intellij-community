@@ -47,6 +47,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
   }
 
+  @Override
+  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
+    PyExpression[] args = getArguments();
+    return args.length >= index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
+  }
+
   public void addArgument(PyExpression expression) {
     PyCallExpressionHelper.addArgument(this, expression);
   }
@@ -56,7 +62,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   public boolean isCalleeText(@NotNull String... nameCandidates) {
-    return PyCallExpressionHelper.isCalleeText(this, nameCandidates); 
+    return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
   }
 
   @Override
@@ -100,7 +106,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
             if (context.allowReturnTypes()) {
-              return callable.getReturnType(context, (PyReferenceExpression) callee);
+              return callable.getReturnType(context, (PyReferenceExpression)callee);
             }
             if (callable instanceof PyFunction) {
               final PyType docStringType = ((PyFunction)callable).getReturnTypeFromDocString();
@@ -118,7 +124,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       else {
         final PyType type = context.getType(callee);
         if (type instanceof PyClassType) {
-          PyClassType classType = (PyClassType) type;
+          PyClassType classType = (PyClassType)type;
           if (classType.isDefinition()) {
             return new PyClassType(classType.getPyClass(), false);
           }
@@ -151,7 +157,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                 final PsiElement element = qRef == null ? null : qRef.resolve();
                 if (element instanceof PyParameter) {
                   final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
-                  if (parameterList != null && element == parameterList.getParameters() [0]) {
+                  if (parameterList != null && element == parameterList.getParameters()[0]) {
                     return getSuperCallType(context, containingClass, args[1]);
                   }
                 }
@@ -201,7 +207,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     final PyClass[] supers = pyClass.getSuperClasses();
     if (supers.length > 0) {
       if (supers.length == 1) {
-        return new PyClassType(supers [0], false);
+        return new PyClassType(supers[0], false);
       }
       List<PyType> superTypes = new ArrayList<PyType>();
       for (PyClass aSuper : supers) {
