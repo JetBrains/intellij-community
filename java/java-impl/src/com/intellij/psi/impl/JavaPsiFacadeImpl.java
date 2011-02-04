@@ -670,23 +670,22 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       if (element instanceof PsiFileSystemItem) {
         return false;
       }
-      
+
       if (element == null || element.getParent() == null) return true;
 
-      while(true){
-        if (element instanceof PsiFile || element instanceof PsiDirectory || element == null){
+      PsiElement parent = element;
+      while (true) {
+        if (parent instanceof PsiFile || parent instanceof PsiDirectory || parent == null) {
           return false;
         }
-        PsiElement pparent = element.getParent();
-        if (element instanceof PsiClass) return false; // anonymous or local class
-        if (element instanceof PsiCodeBlock){
-          if (pparent instanceof PsiMethod || pparent instanceof PsiClassInitializer){
+        if (parent instanceof PsiClass) return false; // anonymous or local class
+        if (parent instanceof PsiModifiableCodeBlock) {
+          if (!((PsiModifiableCodeBlock)parent).shouldChangeModificationCount(element)) {
             return true;
           }
         }
-        element = pparent;
+        parent = parent.getParent();
       }
     }
-
   }
 }
