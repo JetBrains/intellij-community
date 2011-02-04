@@ -20,11 +20,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalLiteralInspection extends BaseInspection {
-
+    @Pattern(VALID_ID_PATTERN)
     @Override
     @NotNull
     public String getID() {
@@ -77,13 +78,17 @@ public class OctalLiteralInspection extends BaseInspection {
                 return;
             }
             @NonNls final String text = literal.getText();
-            if ("0".equals(text) || "0L".equals(text) || "0l".equals(text)) {
+            if (text.length() == 1) {
                 return;
             }
             if (text.charAt(0) != '0') {
                 return;
             }
-            if (text.startsWith("0x") || text.startsWith("0X")) {
+            final char c1 = text.charAt(1);
+            if (c1 != '_' && (c1 < '0' || c1 > '7')) {
+                return;
+            }
+            if (literal.getValue() == null) {
                 return;
             }
             registerError(literal);
