@@ -62,10 +62,6 @@ def includeFile(String filepath) {
   s
 }
 
-boolean isEap() {
-  return "true" == p("component.version.eap")
-}
-
 class Paths {
   final sandbox
   final distAll
@@ -166,10 +162,9 @@ target('default': "Build artifacts") {
     format(property: "todayYear", pattern: "yyyy")
   }
 
-  ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
-  setProperty("isEap", isEap())
+  ant.xmlproperty(file: "$home/CIDR/resources/idea/CIDRApplicationInfo.xml", collapseAttributes: "true")
 
-  if (isEap) {
+  if (isEap()) {
     setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
@@ -240,14 +235,14 @@ target('default': "Build artifacts") {
             version: "1.0",
             system_selector: "PyCharm10",
             jdk_req: "1.6*",
-            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea" + (isEap ? " -agentlib:yjpagent=disablej2ee,sessionname=pycharm" : ""),
+            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea" + (isEap() ? " -agentlib:yjpagent=disablej2ee,sessionname=pycharm" : ""),
             paths.distMac)
 
   buildExe()
 
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
-  def root = isEap ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
+  def root = isEap() ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
@@ -511,68 +506,24 @@ def layoutFull(String target, Set usedJars) {
     }
   }
 
-  ant.echo(file: "$target/bin/idea.properties", append: "true", message:
-           isEap() ?
-           """
-
-#-----------------------------------------------------------------------
-# Change to 'disabled' if you do not need to receive instant visual
-# notifications about fatal errors that happen to PyCharm or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=enabled
-"""
-
-           :
-           """
-
-#-----------------------------------------------------------------------
-# Change to 'enabled' if you need to receive instant visual notifications about
-# fatal errors that happen to PyCharm or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=disabled
-"""
-  )
+  patchPropertiesFile(target)
 }
 
 def layoutMac(Map args, String target) {
   layout(target) {
     dir("bin") {
-      fileset(dir: "$home/community/bin/mac")
-      fileset(dir: "$home/community/bin/nix") {
-        exclude(name: "idea.sh")
-      }
-      fileset(dir: "$home/bin") {
-        include(name: "*.jnilib")
-      }
-      fileset(dir: "$home/python/build") {
-        include(name: "pycharm.sh")
-      }
-    }
-    dir("lib") {
-      fileset(dir: "$home/community/build/conf/mac/lib")
-    }
-    dir("Contents") {
-      dir("MacOS") {
-      }
-      dir("Resources") {
-        fileset(dir: "$home/python/resources", includes: "PyCharm.icns")
-      }
-      fileset(dir: "$home/python/build", includes: "Info.plist")
+      fileset(dir: "$home/bin", includes: "*.jnilib")
     }
   }
 
-  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", tofile: "$target/Contents/MacOS/pycharm")
+  args.buildNumber = buildName
+  args["executable"] = "pycharm"
+  args["icns"] = "$home/python/resources/PyCharm.icns"
+  args["bundle_name"] = "PyCharm"
+  args["bundleIdentifier"] = "com.jetbrains.pycharm"
+  args["platform_prefix"] = "Python"
 
-  ant.replace(file: "$target/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: args.buildName)
-    replacefilter(token: "@@year@@", value: "$todayYear")
-
-
-    replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
-    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
-  }
+  layoutMacApp(target, "$home/community", args)
 
   ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar")
 }
