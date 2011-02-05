@@ -344,10 +344,10 @@ initializer = (SP + Suppress("=") + SP + Combine(parenthesized_tuple | listItem 
 param = Group(Empty().setParseAction(replaceWith(T_SIMPLE)) + Combine(Optional(oneOf("* **")) + paramname) + Optional(initializer))
 
 ellipsis = Group(
-        Empty().setParseAction(replaceWith(T_SIMPLE))+ \
-  (Literal("..") + \
-  ZeroOrMore(Literal('.'))).setParseAction(replaceWith(TRIPLE_DOT)) # we want to accept both 'foo,..' and 'foo, ...'
-        )
+    Empty().setParseAction(replaceWith(T_SIMPLE))+ \
+    (Literal("..") + \
+    ZeroOrMore(Literal('.'))).setParseAction(replaceWith(TRIPLE_DOT)) # we want to accept both 'foo,..' and 'foo, ...'
+)
 
 paramSlot = Forward()
 
@@ -782,6 +782,7 @@ class ModuleRedeclarator(object):
     # NOTE: per-module signature data may be lazily imported
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
     # value is ("signature", "return_literal")
+    # TODO: create only the part relevant to current module, save a few milliseconds
     PREDEFINED_MOD_CLASS_SIGS = {
         ("binascii", None, "hexlify"): ("(data)", BYTES_LIT),
         ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
@@ -1173,6 +1174,8 @@ class ModuleRedeclarator(object):
                 return v
             thing = getattr(self.module, s, None)
             if thing:
+                if not isinstance(thing, type) and isCallable(thing): # a function
+                    return None # TODO: maybe divinate a return type; see pygame.mixer.Channel
                 return s
             # adds no noticeable slowdown, I did measure. dch.
             for im_name, im_module in self.imported_modules.items():
@@ -1188,6 +1191,8 @@ class ModuleRedeclarator(object):
                         if constr_args is None:
                             constr_args = "*(), **{}" # a silly catch-all constructor
                         ref = "%s(%s)" % (s, constr_args)
+                    elif isCallable(v): # a function, classes are ruled out above
+                        return None
                     else:
                         ref = s
                     if im_name:
@@ -1303,7 +1308,7 @@ class ModuleRedeclarator(object):
 
         # find the first thing to look like a definition
         prefix_re = re.compile("\s*(?:(\w+)[ \\t]+)?" + func_id + "\s*\(") # "foo(..." or "int foo(..."
-        match = prefix_re.search(func_doc)
+        match = prefix_re.search(func_doc) # TODO: this and previous line are perf hogs, up to 35% of time
         # parse the part that looks right
         if match:
             ret_hint = match.group(1)
@@ -1612,10 +1617,11 @@ class ModuleRedeclarator(object):
                 if prop_descr is None:
                     continue # explicitly omitted
                 acc_line, getter = prop_descr
-                accessors = []
-                accessors.append("r" in acc_line and getter or "None")
-                accessors.append("w" in acc_line and a_setter or "None")
-                accessors.append("d" in acc_line and a_deleter or "None")
+                accessors = [
+                    "r" in acc_line and getter or "None",
+                    "w" in acc_line and a_setter or "None",
+                    "d" in acc_line and a_deleter or "None"
+                ]
                 out(indent+1, item_name, " = property(", ", ".join(accessors), ")")
             else:
                 out(indent+1, item_name, " = property(lambda self: object(), None, None) # default")
@@ -1719,7 +1725,7 @@ class ModuleRedeclarator(object):
                             imported = getattr(imported, qual, None)
                             if not imported:
                                 break
-                        imported_path = getattr(imported, '__file__', "").lower()
+                        imported_path = (getattr(imported, '__file__', False) or "").lower()
                         note("path of %r is %r", mod_name, imported_path)
                         want_to_import = not (imported_path.endswith(".py") or imported_path.endswith(".pyc"))
                 except ImportError:
