@@ -39,6 +39,10 @@ import javax.swing.*;
 
 public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
 
+    private static final int THIS_METHOD = 1;
+    private static final int THIS_CLASS = 2;
+    private static final int SUPER_METHOD = 3;
+
     @SuppressWarnings({"PublicField"})
     public boolean ignoreInlineLinkToSuper = false;
 
@@ -53,14 +57,24 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     @NotNull
     @Override
     protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.javadoc.link.problem.descriptor");
+        final int n = ((Integer) infos[1]).intValue();
+        if (n == THIS_METHOD) {
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.javadoc.link.this.method.problem.descriptor");
+        } else if (n == THIS_CLASS) {
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.javadoc.link.this.class.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.javadoc.link.super.method.problem.descriptor");
+        }
     }
 
     @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("unnecessary.javadoc.link.option"),
+                InspectionGadgetsBundle.message(
+                        "unnecessary.javadoc.link.option"),
                 this, "ignoreInlineLinkToSuper");
     }
 
@@ -88,10 +102,11 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiDocTag)) {
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiDocTag)) {
                 return;
             }
-            final PsiDocTag docTag = (PsiDocTag) element;
+            final PsiDocTag docTag = (PsiDocTag) parent;
             final PsiDocComment docComment = docTag.getContainingComment();
             if (docComment != null) {
                 if (shouldDeleteEntireComment(docComment)) {
@@ -157,13 +172,15 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
                 return;
             }
             if (target.equals(containingMethod)) {
-                registerError(tag, '@' + name);
+                registerError(tag.getNameElement(), '@' + name,
+                        Integer.valueOf(THIS_METHOD));
                 return;
             }
             final PsiClass containingClass =
                     PsiTreeUtil.getParentOfType(tag, PsiClass.class);
             if (target.equals(containingClass)) {
-                registerError(tag, '@' + name);
+                registerError(tag.getNameElement(), '@' + name,
+                        Integer.valueOf(THIS_CLASS));
                 return;
             }
             if (!(target instanceof PsiMethod)) {
@@ -176,7 +193,8 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             if (ignoreInlineLinkToSuper && tag instanceof PsiInlineDocTag) {
                 return;
             }
-            registerError(tag, '@' + name);
+            registerError(tag.getNameElement(), '@' + name,
+                    Integer.valueOf(SUPER_METHOD));
         }
 
         private PsiReference extractReference(PsiDocTag tag) {
@@ -190,16 +208,17 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
             if (dataElements.length == 0) {
                 return null;
             }
-            final PsiElement lastElement =
-                    dataElements[dataElements.length - 1];
-            if (lastElement == null) {
+            PsiElement salientElement = null;
+            for (PsiElement dataElement : dataElements) {
+                if (!(dataElement instanceof PsiWhiteSpace)) {
+                    salientElement = dataElement;
+                    break;
+                }
+            }
+            if (salientElement == null) {
                 return null;
             }
-            final PsiElement[] children = lastElement.getChildren();
-            if (children.length == 0) {
-                return null;
-            }
-            final PsiElement child = children[0];
+            final PsiElement child = salientElement.getFirstChild();
             if (!(child instanceof PsiReference)) {
                 return null;
             }

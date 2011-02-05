@@ -5,7 +5,7 @@
     <file>UnnecessaryJavaDocLink.java</file>
     <line>6</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary JavaDoc link</problem_class>
-    <description>&lt;code&gt;{@link UnnecessaryJavaDocLink}&lt;/code&gt; is unnecessary #loc</description>
+    <description>&lt;code&gt;@link&lt;/code&gt; pointing to containing class is unnecessary #loc</description>
   </problem>
 
 
@@ -13,7 +13,7 @@
     <file>UnnecessaryJavaDocLink.java</file>
     <line>7</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary JavaDoc link</problem_class>
-    <description>&lt;code&gt;{@linkplain UnnecessaryJavaDocLink#equals(Object)}&lt;/code&gt; is unnecessary #loc</description>
+    <description>&lt;code&gt;@linkplain&lt;/code&gt; pointing to this method is unnecessary #loc</description>
   </problem>
 
 
@@ -21,21 +21,21 @@
     <file>UnnecessaryJavaDocLink.java</file>
     <line>8</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary JavaDoc link</problem_class>
-    <description>&lt;code&gt;@see Object#equals(Object)&lt;/code&gt; is unnecessary #loc</description>
+    <description>&lt;code&gt;@see&lt;/code&gt; pointing to super method is unnecessary #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryJavaDocLink.java</file>
     <line>16</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary JavaDoc link</problem_class>
-    <description>&lt;code&gt;{@link #foo()}&lt;/code&gt; is unnecessary #loc</description>
+    <description>&lt;code&gt;@link&lt;/code&gt; pointing to this method is unnecessary #loc</description>
   </problem>
 
   <problem>
     <file>UnnecessaryJavaDocLink.java</file>
     <line>17</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary JavaDoc link</problem_class>
-    <description>&lt;code&gt;@see #foo()&lt;/code&gt; is unnecessary #loc</description>
+    <description>&lt;code&gt;@see&lt;/code&gt; pointing to this method is unnecessary #loc</description>
   </problem>
 
 </problems>
