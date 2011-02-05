@@ -13,29 +13,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class RW {
-    public static <T> List<T> sort(final Collection<T> coll, final Comparator<? super T> comp) {
-        List<T> list = new ArrayList<T>();
 
-        for (T elem : coll) {
-            if (elem != null) {
-                list.add(elem);
-            }
-        }
-
-        Collections.sort(list, comp);
-
-        return list;
-    }
-
-    public static <T extends Comparable<? super T>> List<T> sort(final Collection<T> coll) {
-        return sort(coll, new Comparator<T>() {
-            public int compare(T a, T b) {
-                return a.compareTo(b);
-            }
-        });
-    }
-
-    public interface Writable extends Comparable {
+    public interface Writable {
         public void write(BufferedWriter w);
     }
 
@@ -47,16 +26,8 @@ public class RW {
 
         writeln(w, Integer.toString(c.size()));
 
-        if (c instanceof List) {
-            for (T e : c) {
+        for (T e : c) {
                 t.convert(e).write(w);
-            }
-        } else {
-            final List<T> sorted = sort(c);
-
-            for (T e : sorted) {
-                t.convert(e).write(w);
-            }
         }
     }
 
@@ -68,16 +39,8 @@ public class RW {
 
         writeln(w, Integer.toString(c.size()));
 
-        if (c instanceof List) {
-            for (Writable e : c) {
-                e.write(w);
-            }
-        } else {
-            final List<? extends Writable> sorted = sort(c);
-
-            for (Writable e : sorted) {
-                e.write(w);
-            }
+        for (Writable e : c) {
+            e.write(w);
         }
     }
 
@@ -110,7 +73,7 @@ public class RW {
         }
     }
 
-    public interface Constructor<T> {
+    public interface Reader<T> {
         public T read(BufferedReader r);
     }
 
@@ -119,10 +82,6 @@ public class RW {
             return new Writable() {
                 public void write(BufferedWriter w) {
                     writeln(w, s);
-                }
-
-                public int compareTo(Object o) {
-                    return 0;
                 }
             };
         }
@@ -134,7 +93,7 @@ public class RW {
         }
     };
 
-    public static Constructor<String> myStringConstructor = new Constructor<String>() {
+    public static Reader<String> myStringReader = new Reader<String>() {
         public String read(final BufferedReader r) {
             try {
                 return r.readLine();
@@ -145,7 +104,7 @@ public class RW {
         }
     };
 
-    public static <T> Collection<T> readMany(final BufferedReader r, final Constructor<T> c, final Collection<T> acc) {
+    public static <T> Collection<T> readMany(final BufferedReader r, final Reader<T> c, final Collection<T> acc) {
         final int size = readInt(r);
 
         for (int i = 0; i < size; i++) {

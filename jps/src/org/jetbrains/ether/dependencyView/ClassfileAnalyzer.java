@@ -54,6 +54,7 @@ public class ClassfileAnalyzer {
             return new Pair<ClassRepr, Set<Usage>>(repr, usages);
         }
 
+        @Override
         public void visit(int version, int access, String n, String sig, String s, String[] i) {
             takeIntoAccount = notPrivate(access);
 
@@ -63,8 +64,8 @@ public class ClassfileAnalyzer {
             interfaces = i;
         }
 
+        @Override
         public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-
             if (notPrivate(access)) {
                 fields.add(new FieldRepr(name, desc, signature));
             }
@@ -72,14 +73,7 @@ public class ClassfileAnalyzer {
             return null;
         }
 
-        public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-            usages.add(Usage.createFieldUsage(name, owner, desc));
-        }
-
-        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-            usages.add(Usage.createMethodUsage(name, owner, desc));
-        }
-
+        @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 
             if (notPrivate(access)) {
@@ -87,16 +81,20 @@ public class ClassfileAnalyzer {
             }
 
             return new EmptyVisitor() {
+
+                @Override
                 public void visitFieldInsn(int opcode, String owner, String name, String desc) {
                     usages.add(Usage.createFieldUsage(name, owner, desc));
                 }
 
+                @Override
                 public void visitMethodInsn(int opcode, String owner, String name, String desc) {
                     usages.add(Usage.createMethodUsage(name, owner, desc));
                 }
             };
         }
 
+        @Override
         public void visitInnerClass(String name, String outerName, String innerName, int access) {
             if (outerName != null && outerName.equals(name) && notPrivate(access)) {
                 nestedClasses.add(innerName);

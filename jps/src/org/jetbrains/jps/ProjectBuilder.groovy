@@ -81,9 +81,7 @@ class ProjectBuilder {
   }
 
   private def buildAllModules(boolean includeTests) {
-    listeners*.onBuildStarted(project)
     buildModules(project.modules.values(), includeTests)
-    listeners*.onBuildFinished(project)
   }
 
   private def clearChunks(Collection<Module> modules) {
@@ -95,11 +93,13 @@ class ProjectBuilder {
   }
 
   private def buildModules(Collection<Module> modules, boolean includeTests) {
+    listeners*.onBuildStarted(project)
     clearChunks(modules)
     buildChunks(modules, false)
     if (includeTests) {
       buildChunks(modules, true)
     }
+    listeners*.onBuildFinished(project)
   }
 
   private def buildChunks(Collection<Module> modules, boolean tests) {

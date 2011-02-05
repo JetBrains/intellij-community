@@ -54,8 +54,8 @@ public class ProjectWrapper {
         public List<String> getClassPath(ClasspathKind kind);
     }
 
-    private final RW.Constructor<LibraryWrapper> myLibraryWrapperConstructor =
-            new RW.Constructor<LibraryWrapper>() {
+    private final RW.Reader<LibraryWrapper> myLibraryWrapperReader =
+            new RW.Reader<LibraryWrapper>() {
                 public LibraryWrapper read(final BufferedReader r) {
                     return new LibraryWrapper(r);
                 }
@@ -75,7 +75,7 @@ public class ProjectWrapper {
             myName = RW.readStringAttribute(r, "Library:");
 
             RW.readTag(r, "Classpath:");
-            myClassPath = (List<String>) RW.readMany(r, RW.myStringConstructor, new ArrayList<String>());
+            myClassPath = (List<String>) RW.readMany(r, RW.myStringReader, new ArrayList<String>());
         }
 
         public LibraryWrapper(final Library lib) {
@@ -92,13 +92,26 @@ public class ProjectWrapper {
             return myClassPath;
         }
 
-        public int compareTo(Object o) {
-            return getName().compareTo(((LibraryWrapper) o).getName());
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            LibraryWrapper that = (LibraryWrapper) o;
+
+            if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return myName != null ? myName.hashCode() : 0;
         }
     }
 
-    private final RW.Constructor<ClasspathItemWrapper> myWeakClasspathItemWrapperConstructor =
-            new RW.Constructor<ClasspathItemWrapper>() {
+    private final RW.Reader<ClasspathItemWrapper> myWeakClasspathItemWrapperReader =
+            new RW.Reader<ClasspathItemWrapper>() {
                 public ClasspathItemWrapper read(final BufferedReader r) {
                     final String s = RW.lookString(r);
                     if (s.startsWith("Library:")) {
@@ -139,10 +152,6 @@ public class ProjectWrapper {
             return myName;
         }
 
-        public int compareTo(Object o) {
-            return getName().compareTo(((WeakClasspathItemWrapper) o).getName());
-        }
-
         public List<String> getClassPath(ClasspathKind kind) {
             return null;
         }
@@ -173,7 +182,7 @@ public class ProjectWrapper {
             myType = RW.readString(r);
 
             RW.readTag(r, "Classpath:");
-            myClassPath = (List<String>) RW.readMany(r, RW.myStringConstructor, new ArrayList<String>());
+            myClassPath = (List<String>) RW.readMany(r, RW.myStringReader, new ArrayList<String>());
         }
 
         public String getType() {
@@ -189,36 +198,10 @@ public class ProjectWrapper {
             RW.writeln(w, "Classpath:");
             RW.writeln(w, myClassPath, RW.fromString);
         }
-
-        public int compareTo(Object o) {
-            final GenericClasspathItemWrapper w = (GenericClasspathItemWrapper) o;
-            final int c = getType().compareTo(w.getType());
-            return
-                    c == 0 ?
-                            (new Object() {
-                                public int compare(Iterator<String> x, Iterator<String> y) {
-                                    if (x.hasNext()) {
-                                        if (y.hasNext()) {
-                                            final int c = x.next().compareTo(y.next());
-
-                                            return c == 0 ? compare(x, y) : c;
-                                        }
-
-                                        return 1;
-                                    } else if (y.hasNext()) {
-                                        return -1;
-                                    }
-
-                                    return 0;
-                                }
-                            }
-                            ).compare(getClassPath(null).iterator(), w.getClassPath(null).iterator())
-                            : c;
-        }
     }
 
-    private final RW.Constructor<FileWrapper> myFileWrapperConstructor =
-            new RW.Constructor<FileWrapper>() {
+    private final RW.Reader<FileWrapper> myFileWrapperReader =
+            new RW.Reader<FileWrapper>() {
                 public FileWrapper read(final BufferedReader r) {
                     return new FileWrapper(r);
                 }
@@ -242,8 +225,8 @@ public class ProjectWrapper {
             myName = RW.readString(r);
             myModificationTime = 0; // readLong(r);
 
-            final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.constructor, new HashSet<ClassRepr> ());
-            final Set<Usage> usages = (Set<Usage>) RW.readMany(r, Usage.constructor, new HashSet<Usage> ());
+            final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr> ());
+            final Set<Usage> usages = (Set<Usage>) RW.readMany(r, Usage.reader, new HashSet<Usage> ());
 
             myClassToSourceCallback.associate(classes, usages, myName);
         }
@@ -265,21 +248,26 @@ public class ProjectWrapper {
             // writeln(w, Long.toString(getStamp()));
         }
 
-        public int compareTo(Object o) {
-            return getName().compareTo(((FileWrapper) o).getName());
-        }
-
+        @Override
         public boolean equals(Object o) {
-            return o instanceof FileWrapper && myName.equals(((FileWrapper) o).getName());
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FileWrapper that = (FileWrapper) o;
+
+            if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+
+            return true;
         }
 
+        @Override
         public int hashCode() {
-            return myName.hashCode();
+            return myName != null ? myName.hashCode() : 0;
         }
     }
 
-    private final RW.Constructor<ModuleWrapper> myModuleWrapperConstructor =
-            new RW.Constructor<ModuleWrapper>() {
+    private final RW.Reader<ModuleWrapper> myModuleWrapperReader =
+            new RW.Reader<ModuleWrapper>() {
                 public ModuleWrapper read(final BufferedReader r) {
                     return new ModuleWrapper(r);
                 }
@@ -327,10 +315,10 @@ public class ProjectWrapper {
 
             public Properties(final BufferedReader r) {
                 RW.readTag(r, "Roots:");
-                myRoots = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String>());
+                myRoots = (Set<String>) RW.readMany(r, RW.myStringReader, new HashSet<String>());
 
                 RW.readTag(r, "Sources:");
-                mySources = (Set<FileWrapper>) RW.readMany(r, myFileWrapperConstructor, new HashSet<FileWrapper>());
+                mySources = (Set<FileWrapper>) RW.readMany(r, myFileWrapperReader, new HashSet<FileWrapper>());
 
                 RW.readTag(r, "Output:");
                 final String s = RW.readString(r);
@@ -423,10 +411,6 @@ public class ProjectWrapper {
             public boolean isOutdated() {
                 return (!emptySource() && !outputOk()) || (getLatestSource() > getEarliestOutput());
             }
-
-            public int compareTo(Object o) {
-                return 0;
-            }
         }
 
         final String myName;
@@ -491,13 +475,13 @@ public class ProjectWrapper {
             myTest = new Properties(r);
 
             RW.readTag(r, "Excludes:");
-            myExcludes = (Set<String>) RW.readMany(r, RW.myStringConstructor, new HashSet<String>());
+            myExcludes = (Set<String>) RW.readMany(r, RW.myStringReader, new HashSet<String>());
 
             RW.readTag(r, "Libraries:");
-            myLibraries = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
+            myLibraries = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperReader, new HashSet<LibraryWrapper>());
 
             RW.readTag(r, "Dependencies:");
-            myDependsOn = (List<ClasspathItemWrapper>) RW.readMany(r, myWeakClasspathItemWrapperConstructor, new ArrayList<ClasspathItemWrapper>());
+            myDependsOn = (List<ClasspathItemWrapper>) RW.readMany(r, myWeakClasspathItemWrapperReader, new ArrayList<ClasspathItemWrapper>());
         }
 
         public ModuleWrapper(final Module m) {
@@ -653,14 +637,29 @@ public class ProjectWrapper {
                     isNewModule;
         }
 
-        public int compareTo(Object o) {
-            return getName().compareTo(((ModuleWrapper) o).getName());
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ModuleWrapper that = (ModuleWrapper) o;
+
+            if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return myName != null ? myName.hashCode() : 0;
         }
     }
 
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
+
     final ProjectWrapper myHistory;
+
     final SourceToClass mySourceToClass = new SourceToClass(this);
     final Callbacks.Backend myClassToSourceCallback = mySourceToClass.getCallback();
 
@@ -758,14 +757,14 @@ public class ProjectWrapper {
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
         RW.readTag(r, "Libraries:");
-        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
+        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperReader, new HashSet<LibraryWrapper>());
 
         for (LibraryWrapper l : libs) {
             myLibraries.put(l.getName(), l);
         }
 
         RW.readTag(r, "Modules:");
-        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) RW.readMany(r, myModuleWrapperConstructor, new HashSet<ModuleWrapper>());
+        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) RW.readMany(r, myModuleWrapperReader, new HashSet<ModuleWrapper>());
 
         for (ModuleWrapper m : mods) {
             myModules.put(m.getName(), m);
@@ -887,31 +886,34 @@ public class ProjectWrapper {
     private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
         final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
 
-        final Set<Module> modules = new HashSet<Module>();
-        final Set<Module> marked = new HashSet<Module>();
-        final Map<Module, Boolean> visited = new HashMap<Module, Boolean>();
-        final Set<Module> frontier = new HashSet<Module>();
+        final Set<String> modules = new HashSet<String>();
+        final Set<String> marked = new HashSet<String>();
+        final Map<String, Boolean> visited = new HashMap<String, Boolean>();
+        final Set<String> frontier = new HashSet<String>();
 
-        final Map<Module, Set<Module>> reversedDependencies = new HashMap<Module, Set<Module>>();
+        final Map<String, Set<String>> reversedDependencies = new HashMap<String, Set<String>>();
 
         DotPrinter.header();
 
         for (Module m : myProject.getModules().values()) {
+            final String mName = m.getName();
 
-            DotPrinter.node(m.getName());
+            DotPrinter.node(mName);
 
             for (ClasspathItem cpi : m.getClasspath(kind)) {
                 if (cpi instanceof Module) {
-                    DotPrinter.edge(((Module) cpi).getName(), m.getName());
+                    final String name = ((Module) cpi).getName();
 
-                    Set<Module> sm = reversedDependencies.get(cpi);
+                    DotPrinter.edge(name, mName);
+
+                    Set<String> sm = reversedDependencies.get(name);
 
                     if (sm == null) {
-                        sm = new HashSet<Module>();
-                        reversedDependencies.put((Module) cpi, sm);
+                        sm = new HashSet<String>();
+                        reversedDependencies.put(name, sm);
                     }
 
-                    sm.add(m);
+                    sm.add(mName);
                 }
             }
         }
@@ -928,25 +930,28 @@ public class ProjectWrapper {
                     return;
 
                 for (Module module : initial) {
-                    if (marked.contains(module))
+
+                    final String mName = module.getName();
+
+                    if (marked.contains(mName))
                         continue;
 
-                    DotPrinter.node(module.getName());
+                    DotPrinter.node(mName);
 
                     final List<Module> dep = new ArrayList<Module>();
 
                     for (ClasspathItem cpi : module.getClasspath(kind)) {
                         if (cpi instanceof Module) {
-                            DotPrinter.edge(((Module) cpi).getName(), module.getName());
+                            DotPrinter.edge(((Module) cpi).getName(), mName);
                             dep.add((Module) cpi);
                         }
                     }
 
                     if (dep.size() == 0) {
-                        frontier.add(module);
+                        frontier.add(mName);
                     }
 
-                    marked.add(module);
+                    marked.add(mName);
 
                     run(dep);
                 }
@@ -957,26 +962,26 @@ public class ProjectWrapper {
 
         // Traversing "upper" subgraph and collecting outdated modules and their descendants
         new Object() {
-            public void run(final Collection<Module> initial, final boolean force) {
+            public void run(final Collection<String> initial, final boolean force) {
                 if (initial == null)
                     return;
 
-                for (Module module : initial) {
-                    if (!marked.contains(module))
+                for (String moduleName : initial) {
+                    if (!marked.contains(moduleName))
                         continue;
 
-                    final Boolean property = visited.get(module);
+                    final Boolean property = visited.get(moduleName);
 
                     if (property == null || !property && force) {
-                        if (force || getModule(module.getName()).isOutdated(tests, myHistory)) {
-                            visited.put(module, true);
-                            modules.add(module);
-                            run(reversedDependencies.get(module), true);
+                        if (force || getModule(moduleName).isOutdated(tests, myHistory)) {
+                            visited.put(moduleName, true);
+                            modules.add(moduleName);
+                            run(reversedDependencies.get(moduleName), true);
                         } else {
                             if (property == null) {
-                                visited.put(module, false);
+                                visited.put(moduleName, false);
                             }
-                            run(reversedDependencies.get(module), false);
+                            run(reversedDependencies.get(moduleName), false);
                         }
                     }
                 }
@@ -988,7 +993,13 @@ public class ProjectWrapper {
             return;
         }
 
-        myProject.makeSelected(modules, tests);
+        final List<Module> toDo = new ArrayList<Module> ();
+
+        for (String name : modules) {
+            toDo.add(myProject.getModules().get(name));
+        }
+
+        myProject.makeSelected(toDo, tests);
         rescan();
     }
 

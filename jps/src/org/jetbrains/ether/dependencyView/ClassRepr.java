@@ -47,13 +47,13 @@ public class ClassRepr implements RW.Writable {
         signature = s.length() == 0 ? null : s;
 
         superClass = RW.readString(r);
-        interfaces = RW.readMany(r, RW.myStringConstructor, new ArrayList<String>()).toArray(dummyStrings);
-        nestedClasses = RW.readMany(r, RW.myStringConstructor, new ArrayList<String>()).toArray(dummyStrings);
-        fields = RW.readMany(r, FieldRepr.constructor, new ArrayList<FieldRepr>()).toArray(dummyFields);
-        methods = RW.readMany(r, MethodRepr.constructor, new ArrayList<MethodRepr>()).toArray(dummyMethods);
+        interfaces = RW.readMany(r, RW.myStringReader, new ArrayList<String>()).toArray(dummyStrings);
+        nestedClasses = RW.readMany(r, RW.myStringReader, new ArrayList<String>()).toArray(dummyStrings);
+        fields = RW.readMany(r, FieldRepr.reader, new ArrayList<FieldRepr>()).toArray(dummyFields);
+        methods = RW.readMany(r, MethodRepr.reader, new ArrayList<MethodRepr>()).toArray(dummyMethods);
     }
 
-    public static RW.Constructor<ClassRepr> constructor = new RW.Constructor<ClassRepr>() {
+    public static RW.Reader<ClassRepr> reader = new RW.Reader<ClassRepr>() {
         public ClassRepr read(final BufferedReader r) {
             return new ClassRepr(r);
         }
@@ -70,7 +70,23 @@ public class ClassRepr implements RW.Writable {
         RW.writeln(w, methods, RW.fromWritable);
     }
 
-    public int compareTo(Object o) {
-        return 0;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClassRepr classRepr = (ClassRepr) o;
+
+        if (fileName != null ? !fileName.equals(classRepr.fileName) : classRepr.fileName != null) return false;
+        if (name != null ? !name.equals(classRepr.name) : classRepr.name != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = fileName != null ? fileName.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
     }
 }

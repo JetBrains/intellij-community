@@ -76,9 +76,6 @@ public class SourceToClass {
 
                 u.addAll(localUsages);
                 usages.put(sourceFileName, u);
-
-                //System.out.println("Filename: " + sourceFileName + ", number of usages: " + u.size());
-                //System.out.flush();
             }
 
             public void associate(final Set<ClassRepr> classes, final Set<Usage> u, final String sourceFileName) {

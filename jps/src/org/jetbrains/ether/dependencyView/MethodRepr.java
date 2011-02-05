@@ -19,16 +19,16 @@ public class MethodRepr implements RW.Writable {
 
     public final String name;
     public final String signature;
-    public final Type returnType;
-    public final Type[] argTypes;
+    //public final Type returnType;
+    //public final Type[] argTypes;
     public final String[] exceptions;
 
     private String descr;
 
     public MethodRepr (final String n, final String s, final String d, final String[] e) {
         name = n;
-        returnType = Type.getReturnType(d);
-        argTypes = Type.getArgumentTypes(d);
+        //returnType = Type.getReturnType(d);
+        //argTypes = Type.getArgumentTypes(d);
         exceptions = e;
         descr = d;
         signature = s;
@@ -42,10 +42,10 @@ public class MethodRepr implements RW.Writable {
         signature = s.length() == 0 ? null : s;
 
         descr = RW.readString(r);
-        exceptions = RW.readMany(r, RW.myStringConstructor, new ArrayList<String>()).toArray(dummy);
+        exceptions = RW.readMany(r, RW.myStringReader, new ArrayList<String>()).toArray(dummy);
 
-        argTypes = Type.getArgumentTypes(descr);
-        returnType = Type.getReturnType(descr);
+        //argTypes = Type.getArgumentTypes(descr);
+        //returnType = Type.getReturnType(descr);
     }
 
     public void write(final BufferedWriter w) {
@@ -55,11 +55,7 @@ public class MethodRepr implements RW.Writable {
         RW.writeln(w, exceptions, RW.fromString);
     }
 
-    public int compareTo(Object o) {
-        return 0;
-    }
-
-    public static RW.Constructor<MethodRepr> constructor = new RW.Constructor<MethodRepr> () {
+    public static RW.Reader<MethodRepr> reader = new RW.Reader<MethodRepr>() {
         public MethodRepr read(final BufferedReader r) {
             return new MethodRepr (r);
         }

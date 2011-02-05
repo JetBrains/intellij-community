@@ -15,14 +15,14 @@ import java.io.BufferedWriter;
  */
 public class FieldRepr implements RW.Writable {
     public final String name;
-    public final Type type;
+    //public final Type type;
     public final String signature;
 
     private final String descr;
 
     public FieldRepr (final String n, final String d, final String s) {
         name = n;
-        type = Type.getType (d);
+        //type = Type.getType (d);
         signature = s;
         descr = d;
     }
@@ -35,7 +35,7 @@ public class FieldRepr implements RW.Writable {
 
         signature = s.length() == 0 ? null : s;
 
-        type = Type.getType(descr);
+        //type = Type.getType(descr);
     }
 
     public void write(final BufferedWriter w) {
@@ -44,11 +44,7 @@ public class FieldRepr implements RW.Writable {
         RW.writeln (w, signature);
     }
 
-    public int compareTo(Object o) {
-        return 0;
-    }
-
-    public static RW.Constructor<FieldRepr> constructor = new RW.Constructor<FieldRepr> () {
+    public static RW.Reader<FieldRepr> reader = new RW.Reader<FieldRepr>() {
         public FieldRepr read(final BufferedReader r) {
             return new FieldRepr (r);
         }

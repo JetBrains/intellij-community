@@ -1,10 +1,13 @@
 package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
-import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,31 +18,37 @@ import java.io.BufferedWriter;
  */
 
 public class Usage implements RW.Writable {
+    private final static Map<Usage, Usage> myCache = new HashMap<Usage, Usage>();
+
+    private static Usage cached(final Usage u) {
+        final Usage v = myCache.get(u);
+
+        if (v == null) {
+            myCache.put(u, u);
+            return u;
+        }
+
+        return v;
+    }
+
     public final String name;
     public final String owner;
-    //public final Type type;
-
     private final String descr;
     private final String kind;
-
-    private final String representer;
 
     private Usage(final String k, final String n, final String o, final String d) {
         kind = k;
         name = n;
         owner = o;
         descr = d;
-
-        representer = k + n + o + d;
-        // type = Type.getType(descr);
     }
 
     public static Usage createFieldUsage(final String name, final String owner, final String descr) {
-        return new Usage("fieldUsage", name, owner, descr);
+        return cached(new Usage("fieldUsage", name, owner, descr));
     }
 
     public static Usage createMethodUsage(final String name, final String owner, final String descr) {
-        return new Usage("methodUsage", name, owner, descr);
+        return cached(new Usage("methodUsage", name, owner, descr));
     }
 
     public boolean isFieldUsage() {
@@ -51,9 +60,6 @@ public class Usage implements RW.Writable {
         name = RW.readString(r);
         owner = RW.readString(r);
         descr = RW.readString(r);
-
-        representer = kind + name + owner + descr;
-        //type = Type.getType(descr);
     }
 
     public void write(final BufferedWriter w) {
@@ -63,25 +69,33 @@ public class Usage implements RW.Writable {
         RW.writeln(w, descr);
     }
 
-    public static RW.Constructor<Usage> constructor = new RW.Constructor<Usage>() {
+    public static RW.Reader<Usage> reader = new RW.Reader<Usage>() {
         public Usage read(final BufferedReader r) {
-            return new Usage(r);
+            return cached (new Usage(r));
         }
     };
 
-    public int compareTo(Object o) {
-        return 0;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Usage usage = (Usage) o;
+
+        if (!descr.equals(usage.descr)) return false;
+        if (!kind.equals(usage.kind)) return false;
+        if (!name.equals(usage.name)) return false;
+        if (!owner.equals(usage.owner)) return false;
+
+        return true;
     }
 
+    @Override
     public int hashCode() {
-        return representer.hashCode();
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof Usage) {
-            return ((Usage) obj).representer.equals(representer);
-        }
-
-        return false;
+        int result = name.hashCode();
+        result = 31 * result + owner.hashCode();
+        result = 31 * result + descr.hashCode();
+        result = 31 * result + kind.hashCode();
+        return result;
     }
 }
