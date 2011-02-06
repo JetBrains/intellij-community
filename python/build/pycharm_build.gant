@@ -10,7 +10,6 @@ requireProperty("buildNumber", requireProperty("build.number", "104.SNAPSHOT"))
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
-setProperty("vmoptions", "-Xms128m -Xmx512m -XX:MaxPermSize=150m -ea")
 
 setProperty("pluginFilter", [
             "htmltools",
@@ -162,10 +161,10 @@ target('default': "Build artifacts") {
     format(property: "todayYear", pattern: "yyyy")
   }
 
-  ant.xmlproperty(file: "$home/CIDR/resources/idea/CIDRApplicationInfo.xml", collapseAttributes: "true")
+  ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
 
   if (isEap()) {
-    setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
+    binding.setVariable("common_vmoptions", "$common_vmoptions -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
   ant.patternset(id: "resources.included") {
@@ -234,8 +233,6 @@ target('default': "Build artifacts") {
   layoutMac(buildName: buildName,
             version: "1.0",
             system_selector: "PyCharm10",
-            jdk_req: "1.6*",
-            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea" + (isEap() ? " -agentlib:yjpagent=disablej2ee,sessionname=pycharm" : ""),
             paths.distMac)
 
   buildExe()
@@ -544,7 +541,7 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
 }
 
 def layoutUnix(String target) {
