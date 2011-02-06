@@ -67,8 +67,6 @@ target('default': 'The default target') {
           buildNumber: "IC-104.SNAPSHOT",
           version: "IdeaX",
           system_selector: "IntelliJIdeaCE10",
-          jdk_req: "1.6*",
-          vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
           home, out)
 }
 
@@ -102,7 +100,7 @@ private def layoutWin(Map args, String home, Paths paths) {
   }
 
   patchPropertiesFile(paths.distWin)
-  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
 
   def winZipPath = "$paths.artifacts/idea${args.buildNumber}.win.zip"
   ant.zip(zipfile: winZipPath) {
@@ -179,7 +177,7 @@ def layoutLinux(Map args, String home, Paths paths) {
 
   patchPropertiesFile(paths.distUnix)
 
-  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: args.vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: vmoptions32().replace(' ', '\n') )
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
 

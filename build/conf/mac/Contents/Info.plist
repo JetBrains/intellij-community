@@ -74,6 +74,12 @@
       <key>VMOptions</key>
       <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
+      <key>VMOptions.i386</key>
+      <string>@@vmoptions32@@</string>
+
+      <key>VMOptions.x86_64</key>
+      <string>@@vmoptions64@@</string>
+
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
     </dict>
