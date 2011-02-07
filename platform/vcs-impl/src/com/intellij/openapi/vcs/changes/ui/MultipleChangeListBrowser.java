@@ -260,7 +260,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       add(myChooser, BorderLayout.CENTER);
 
       JLabel label = new JLabel(VcsBundle.message("commit.dialog.changelist.label"));
-      label.setDisplayedMnemonic('l');
       label.setLabelFor(myChooser);
       add(label, BorderLayout.WEST);
     }
