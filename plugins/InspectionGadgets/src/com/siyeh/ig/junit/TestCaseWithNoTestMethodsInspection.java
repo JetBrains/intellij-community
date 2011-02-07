@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,28 +35,36 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreSupers = false;
 
+    @Override
     @NotNull
     public String getID() {
         return "JUnitTestCaseWithNoTests";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.case.with.no.test.methods.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "test.case.with.no.test.methods.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore test cases which have super classes with test methods", this, "ignoreSupers");
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "test.case.with.no.test.methods.option"), this,
+                "ignoreSupers");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TestCaseWithNoTestMethodsVisitor();
     }
@@ -74,7 +82,8 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
             if (aClass instanceof PsiTypeParameter) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if (!InheritanceUtil.isInheritor(aClass,
+                    "junit.framework.TestCase")) {
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();

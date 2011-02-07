@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,24 @@
 package com.siyeh.ig.security;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnsecureRandomNumberGenerationInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unsecure.random.number.generation.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         @NonNls final String text = ((PsiElement)infos[0]).getText();
@@ -47,6 +49,7 @@ public class UnsecureRandomNumberGenerationInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InsecureRandomNumberGenerationVisitor();
     }
@@ -54,7 +57,8 @@ public class UnsecureRandomNumberGenerationInspection
     private static class InsecureRandomNumberGenerationVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiJavaCodeReferenceElement reference =
                     expression.getClassReference();
@@ -66,7 +70,7 @@ public class UnsecureRandomNumberGenerationInspection
                 return;
             }
             final PsiClass aClass = (PsiClass) element;
-            if (!ClassUtils.isSubclass(aClass, "java.util.Random")) {
+            if (!InheritanceUtil.isInheritor(aClass, "java.util.Random")) {
                 return;
             }
             final String qualifiedName = aClass.getQualifiedName();

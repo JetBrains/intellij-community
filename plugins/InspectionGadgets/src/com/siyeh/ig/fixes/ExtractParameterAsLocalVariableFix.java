@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -74,9 +74,8 @@ public class ExtractParameterAsLocalVariableFix
         if (body == null) {
             return;
         }
-        final PsiManager manager = PsiManager.getInstance(project);
         final CodeStyleManager codeStyleManager =
-                manager.getCodeStyleManager();
+                CodeStyleManager.getInstance(project);
         final String parameterName = parameterReference.getText();
         final JavaCodeStyleManager javaCodeStyleManager =
                 JavaCodeStyleManager.getInstance(project);
@@ -192,7 +191,7 @@ public class ExtractParameterAsLocalVariableFix
                 (PsiAssignmentExpression)parent;
         final IElementType tokenType =
                 assignmentExpression.getOperationTokenType();
-        if (tokenType != JavaTokenType.EQ) {
+        if (!JavaTokenType.EQ.equals(tokenType)) {
             return false;
         }
         final PsiExpression lExpression =

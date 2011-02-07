@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,32 +19,40 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TeardownCallsSuperTeardownInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "TearDownDoesntCallSuperTearDown";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "teardown.calls.super.teardown.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "teardown.calls.super.teardown.problem.descriptor");
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new AddSuperTearDownCall();
     }
 
     private static class AddSuperTearDownCall extends InspectionGadgetsFix {
@@ -54,7 +62,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
             return InspectionGadgetsBundle.message(
                     "teardown.calls.super.teardown.add.quickfix");
         }
-
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodName = descriptor.getPsiElement();
@@ -66,22 +74,19 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
             if (body == null) {
                 return;
             }
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                  JavaPsiFacade.getElementFactory(project);
             final PsiStatement newStatement =
                     factory.createStatementFromText("super.tearDown();", null);
             final CodeStyleManager styleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             final PsiJavaToken brace = body.getRBrace();
             body.addBefore(newStatement, brace);
             styleManager.reformat(body);
         }
     }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new AddSuperTearDownCall();
-    }
-
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TeardownCallsSuperTeardownVisitor();
     }
@@ -109,7 +114,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
             if (targetClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(targetClass,
+            if (!InheritanceUtil.isInheritor(targetClass,
                     "junit.framework.TestCase")) {
                 return;
             }

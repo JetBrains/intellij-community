@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,31 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SetupCallsSuperSetupInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "SetUpDoesntCallSuperSetUp";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "setup.calls.super.setup.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -55,6 +58,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
                     "setup.calls.super.setup.add.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodName = descriptor.getPsiElement();
@@ -64,22 +68,24 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
             if (body == null) {
                 return;
             }
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
             final PsiStatement newStatement =
                     factory.createStatementFromText("super.setUp();", null);
             final CodeStyleManager styleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             final PsiJavaToken brace = body.getLBrace();
             body.addAfter(newStatement, brace);
             styleManager.reformat(body);
         }
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSuperSetUpCall();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SetupCallsSuperSetupVisitor();
     }
@@ -107,7 +113,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
             if (targetClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(targetClass,
+            if (!InheritanceUtil.isInheritor(targetClass,
                     "junit.framework.TestCase")) {
                 return;
             }

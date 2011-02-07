@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,23 +35,27 @@ import java.util.Collection;
 
 public class VarargParameterInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "VariableArgumentMethod";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "variable.argument.method.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "variable.argument.method.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new VarargParameterFix();
@@ -65,6 +69,7 @@ public class VarargParameterInspection extends BaseInspection {
                     "variable.argument.method.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -121,8 +126,9 @@ public class VarargParameterInspection extends BaseInspection {
                 }
             }
             builder.append('}');
-            final PsiManager manager = referenceExpression.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final Project project = referenceExpression.getProject();
+            final PsiElementFactory factory =
+                  JavaPsiFacade.getElementFactory(project);
             final PsiExpression arrayExpression =
                     factory.createExpressionFromText(builder.toString(),
                             referenceExpression);
@@ -136,12 +142,15 @@ public class VarargParameterInspection extends BaseInspection {
                 argumentList.add(arrayExpression);
             }
             final CodeStyleManager codeStyleManager =
-                    manager.getCodeStyleManager();
-            JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(argumentList);
+                    CodeStyleManager.getInstance(project);
+            final JavaCodeStyleManager javaCodeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
+            javaCodeStyleManager.shortenClassReferences(argumentList);
             codeStyleManager.reformat(argumentList);
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new VarargParameterVisitor();
     }

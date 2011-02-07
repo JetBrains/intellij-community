@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.without.constructor.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "class.without.constructor.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ClassWithoutConstructorFix();
     }
@@ -53,12 +56,13 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
                     "class.without.constructor.create.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement classIdentifier = descriptor.getPsiElement();
             final PsiClass aClass = (PsiClass)classIdentifier.getParent();
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                  JavaPsiFacade.getElementFactory(project);
             final PsiMethod constructor = factory.createConstructor();
             final PsiModifierList modifierList = constructor.getModifierList();
             if (aClass == null) {
@@ -78,11 +82,12 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
             }
             aClass.add(constructor);
             final CodeStyleManager styleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             styleManager.reformat(constructor);
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ClassWithoutConstructorVisitor();
     }
