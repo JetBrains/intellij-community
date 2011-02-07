@@ -26,7 +26,7 @@
 # installed, because pkg_resources is necessary to read eggs.
 
 from django.core.exceptions import ImproperlyConfigured
-from django.template import Origin, Template, Context, TemplateDoesNotExist, add_to_builtins
+from django.template.base import Origin, Template, Context, TemplateDoesNotExist, add_to_builtins
 from django.utils.importlib import import_module
 from django.conf import settings
 
@@ -142,7 +142,7 @@ def find_template_source(name, dirs=None):
     import warnings
     warnings.warn(
         "`django.template.loaders.find_template_source` is deprecated; use `django.template.loaders.find_template` instead.",
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     template, origin = find_template(name, dirs)
     if hasattr(template, 'render'):

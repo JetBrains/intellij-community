@@ -38,7 +38,7 @@
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperAttributesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperClassAttributesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -93,6 +93,8 @@
 
     <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
     <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
+
+    <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
@@ -275,6 +277,9 @@
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
 
+    <projectService serviceInterface="com.jetbrains.django.model.DjangoTagLibrary"
+                    serviceImplementation="com.jetbrains.django.model.DjangoTagLibrary"/>
+
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
@@ -299,8 +304,8 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
 
-    <projectService serviceInterface="com.jetbrains.django.model.DjangoElementGenerator"
-                    serviceImplementation="com.jetbrains.django.model.DjangoElementGenerator"/>
+    <projectService serviceInterface="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"
+                    serviceImplementation="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"/>
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
@@ -339,6 +344,14 @@
     <elementDescriptionProvider implementation="com.jetbrains.django.refactoring.DjangoElementDescriptionProvider"/>
 
     <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
+
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoAsViewArgsCompletionContributor"/>
+
+    <intentionAction>
+      <className>com.jetbrains.django.ref.DjangoClassViewMigrationIntention</className>
+      <category>Python</category>
+    </intentionAction>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
@@ -393,6 +406,7 @@
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
     <extensionPoint qualifiedName="Pythonid.unusedLocalFilter" interface="com.jetbrains.python.inspections.UnusedLocalFilter"/>
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType" interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
+    <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -416,6 +430,7 @@
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
     <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
+    <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>

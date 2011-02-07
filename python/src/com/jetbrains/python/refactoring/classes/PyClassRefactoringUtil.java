@@ -197,12 +197,12 @@ public class PyClassRefactoringUtil {
   }
 
   private static void rememberNamedReferences(final List<PyFunction> methods) {
-    for (PyFunction method : methods) {
+    for (final PyFunction method : methods) {
       method.acceptChildren(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
-          rememberReference(node);
+          rememberReference(node, method);
         }
       });
     }
@@ -210,13 +210,13 @@ public class PyClassRefactoringUtil {
 
 
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
-  private static void rememberReference(PyReferenceExpression node) {
+  private static void rememberReference(PyReferenceExpression node, PyFunction method) {
     // we will remember reference in deepest node
     if (node.getQualifier() instanceof PyReferenceExpression) return;
 
     final PsiPolyVariantReference ref = node.getReference();
     final PsiElement target = ref.resolve();
-    if (target instanceof PsiNamedElement) {
+    if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(method, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
     }
   }

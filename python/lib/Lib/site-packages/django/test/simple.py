@@ -1,12 +1,21 @@
 import sys
 import signal
-import unittest
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_app, get_apps
 from django.test import _doctest as doctest
 from django.test.utils import setup_test_environment, teardown_test_environment
 from django.test.testcases import OutputChecker, DocTestRunner, TestCase
+from django.utils import unittest
+
+try:
+    all
+except NameError:
+    from django.utils.itercompat import all
+
+
+__all__ = ('DjangoTestRunner', 'DjangoTestSuiteRunner', 'run_tests')
 
 # The module name for tests outside models.py
 TEST_MODULE = 'tests'
@@ -14,52 +23,13 @@ TEST_MODULE = 'tests'
 doctestOutputChecker = OutputChecker()
 
 class DjangoTestRunner(unittest.TextTestRunner):
-
-    def __init__(self, verbosity=0, failfast=False, **kwargs):
-        super(DjangoTestRunner, self).__init__(verbosity=verbosity, **kwargs)
-        self.failfast = failfast
-        self._keyboard_interrupt_intercepted = False
-
-    def run(self, *args, **kwargs):
-        """
-        Runs the test suite after registering a custom signal handler
-        that triggers a graceful exit when Ctrl-C is pressed.
-        """
-        self._default_keyboard_interrupt_handler = signal.signal(signal.SIGINT,
-            self._keyboard_interrupt_handler)
-        try:
-            result = super(DjangoTestRunner, self).run(*args, **kwargs)
-        finally:
-            signal.signal(signal.SIGINT, self._default_keyboard_interrupt_handler)
-        return result
-
-    def _keyboard_interrupt_handler(self, signal_number, stack_frame):
-        """
-        Handles Ctrl-C by setting a flag that will stop the test run when
-        the currently running test completes.
-        """
-        self._keyboard_interrupt_intercepted = True
-        sys.stderr.write(" <Test run halted by Ctrl-C> ")
-        # Set the interrupt handler back to the default handler, so that
-        # another Ctrl-C press will trigger immediate exit.
-        signal.signal(signal.SIGINT, self._default_keyboard_interrupt_handler)
-
-    def _makeResult(self):
-        result = super(DjangoTestRunner, self)._makeResult()
-        failfast = self.failfast
-
-        def stoptest_override(func):
-            def stoptest(test):
-                # If we were set to failfast and the unit test failed,
-                # or if the user has typed Ctrl-C, report and quit
-                if (failfast and not result.wasSuccessful()) or \
-                    self._keyboard_interrupt_intercepted:
-                    result.stop()
-                func(test)
-            return stoptest
-
-        setattr(result, 'stopTest', stoptest_override(result.stopTest))
-        return result
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "DjangoTestRunner is deprecated; it's functionality is indistinguishable from TextTestRunner",
+            PendingDeprecationWarning
+        )
+        super(DjangoTestRunner, self).__init__(*args, **kwargs)
 
 def get_tests(app_module):
     try:
@@ -222,6 +192,40 @@ def reorder_suite(suite, classes):
         bins[0].addTests(bins[i+1])
     return bins[0]
 
+def dependency_ordered(test_databases, dependencies):
+    """Reorder test_databases into an order that honors the dependencies
+    described in TEST_DEPENDENCIES.
+    """
+    ordered_test_databases = []
+    resolved_databases = set()
+    while test_databases:
+        changed = False
+        deferred = []
+
+        while test_databases:
+            signature, aliases = test_databases.pop()
+            dependencies_satisfied = True
+            for alias in aliases:
+                if alias in dependencies:
+                    if all(a in resolved_databases for a in dependencies[alias]):
+                        # all dependencies for this alias are satisfied
+                        dependencies.pop(alias)
+                        resolved_databases.add(alias)
+                    else:
+                        dependencies_satisfied = False
+                else:
+                    resolved_databases.add(alias)
+
+            if dependencies_satisfied:
+                ordered_test_databases.append((signature, aliases))
+                changed = True
+            else:
+                deferred.append((signature, aliases))
+
+        if not changed:
+            raise ImproperlyConfigured("Circular dependency in TEST_DEPENDENCIES")
+        test_databases = deferred
+    return ordered_test_databases
 
 class DjangoTestSuiteRunner(object):
     def __init__(self, verbosity=1, interactive=True, failfast=True, **kwargs):
@@ -232,6 +236,7 @@ class DjangoTestSuiteRunner(object):
     def setup_test_environment(self, **kwargs):
         setup_test_environment()
         settings.DEBUG = False
+        unittest.installHandler()
 
     def build_suite(self, test_labels, extra_tests=None, **kwargs):
         suite = unittest.TestSuite()
@@ -254,36 +259,80 @@ class DjangoTestSuiteRunner(object):
         return reorder_suite(suite, (TestCase,))
 
     def setup_databases(self, **kwargs):
-        from django.db import connections
-        old_names = []
-        mirrors = []
+        from django.db import connections, DEFAULT_DB_ALIAS
+
+        # First pass -- work out which databases actually need to be created,
+        # and which ones are test mirrors or duplicate entries in DATABASES
+        mirrored_aliases = {}
+        test_databases = {}
+        dependencies = {}
         for alias in connections:
             connection = connections[alias]
-            # If the database is a test mirror, redirect it's connection
-            # instead of creating a test database.
             if connection.settings_dict['TEST_MIRROR']:
-                mirrors.append((alias, connection))
-                mirror_alias = connection.settings_dict['TEST_MIRROR']
-                connections._connections[alias] = connections[mirror_alias]
+                # If the database is marked as a test mirror, save
+                # the alias.
+                mirrored_aliases[alias] = connection.settings_dict['TEST_MIRROR']
             else:
-                old_names.append((connection, connection.settings_dict['NAME']))
-                connection.creation.create_test_db(self.verbosity, autoclobber=not self.interactive)
+                # Store a tuple with DB parameters that uniquely identify it.
+                # If we have two aliases with the same values for that tuple,
+                # we only need to create the test database once.
+                test_databases.setdefault((
+                        connection.settings_dict['HOST'],
+                        connection.settings_dict['PORT'],
+                        connection.settings_dict['ENGINE'],
+                        connection.settings_dict['NAME'],
+                    ), []).append(alias)
+
+                if 'TEST_DEPENDENCIES' in connection.settings_dict:
+                    dependencies[alias] = connection.settings_dict['TEST_DEPENDENCIES']
+                else:
+                    if alias != DEFAULT_DB_ALIAS:
+                        dependencies[alias] = connection.settings_dict.get('TEST_DEPENDENCIES', [DEFAULT_DB_ALIAS])
+
+        # Second pass -- actually create the databases.
+        old_names = []
+        mirrors = []
+        for (host, port, engine, db_name), aliases in dependency_ordered(test_databases.items(), dependencies):
+            # Actually create the database for the first connection
+            connection = connections[aliases[0]]
+            old_names.append((connection, db_name, True))
+            test_db_name = connection.creation.create_test_db(self.verbosity, autoclobber=not self.interactive)
+            for alias in aliases[1:]:
+                connection = connections[alias]
+                if db_name:
+                    old_names.append((connection, db_name, False))
+                    connection.settings_dict['NAME'] = test_db_name
+                else:
+                    # If settings_dict['NAME'] isn't defined, we have a backend where
+                    # the name isn't important -- e.g., SQLite, which uses :memory:.
+                    # Force create the database instead of assuming it's a duplicate.
+                    old_names.append((connection, db_name, True))
+                    connection.creation.create_test_db(self.verbosity, autoclobber=not self.interactive)
+
+        for alias, mirror_alias in mirrored_aliases.items():
+            mirrors.append((alias, connections[alias].settings_dict['NAME']))
+            connections[alias].settings_dict['NAME'] = connections[mirror_alias].settings_dict['NAME']
+
         return old_names, mirrors
 
     def run_suite(self, suite, **kwargs):
-        return DjangoTestRunner(verbosity=self.verbosity, failfast=self.failfast).run(suite)
+        return unittest.TextTestRunner(verbosity=self.verbosity, failfast=self.failfast).run(suite)
 
     def teardown_databases(self, old_config, **kwargs):
         from django.db import connections
         old_names, mirrors = old_config
         # Point all the mirrors back to the originals
-        for alias, connection in mirrors:
-            connections._connections[alias] = connection
+        for alias, old_name in mirrors:
+            connections[alias].settings_dict['NAME'] = old_name
         # Destroy all the non-mirror databases
-        for connection, old_name in old_names:
-            connection.creation.destroy_test_db(old_name, self.verbosity)
+        for connection, old_name, destroy in old_names:
+            if destroy:
+                connection.creation.destroy_test_db(old_name, self.verbosity)
+            else:
+                connection.settings_dict['NAME'] = old_name
 
     def teardown_test_environment(self, **kwargs):
+        unittest.removeHandler()
         teardown_test_environment()
 
     def suite_result(self, suite, result, **kwargs):
@@ -320,7 +369,7 @@ def run_tests(test_labels, verbosity=1, interactive=True, failfast=False, extra_
     import warnings
     warnings.warn(
         'The run_tests() test runner has been deprecated in favor of DjangoTestSuiteRunner.',
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     test_runner = DjangoTestSuiteRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
     return test_runner.run_tests(test_labels, extra_tests=extra_tests)

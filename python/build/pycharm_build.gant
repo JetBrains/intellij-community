@@ -3,6 +3,7 @@ import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", "104.SNAPSHOT"))
@@ -10,7 +11,6 @@ requireProperty("buildNumber", requireProperty("build.number", "104.SNAPSHOT"))
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
-setProperty("vmoptions", "-Xms128m -Xmx512m -XX:MaxPermSize=150m -ea")
 
 setProperty("pluginFilter", [
             "htmltools",
@@ -60,10 +60,6 @@ def includeFile(String filepath) {
   Script s = groovyShell.parse(new File(filepath))
   s.setBinding(binding)
   s
-}
-
-boolean isEap() {
-  return "true" == p("component.version.eap")
 }
 
 class Paths {
@@ -167,10 +163,9 @@ target('default': "Build artifacts") {
   }
 
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
-  setProperty("isEap", isEap())
 
-  if (isEap) {
-    setProperty("vmoptions", vmoptions + " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
+  if (isEap()) {
+    binding.setVariable("common_vmoptions", "$common_vmoptions -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
   ant.patternset(id: "resources.included") {
@@ -231,6 +226,7 @@ target('default': "Build artifacts") {
   build_searchable_options()
   wire_build_date(buildName)
   layoutFull(paths.distAll, usedJars)
+  checkLibLicensesAndGenerateTable("$paths.artifacts/third-party-libraries.txt");
   buildDebuggerEgg(paths, buildName)
   scramble()
 
@@ -239,15 +235,13 @@ target('default': "Build artifacts") {
   layoutMac(buildName: buildName,
             version: "1.0",
             system_selector: "PyCharm10",
-            jdk_req: "1.6*",
-            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea" + (isEap ? " -agentlib:yjpagent=disablej2ee,sessionname=pycharm" : ""),
             paths.distMac)
 
   buildExe()
 
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
-  def root = isEap ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
+  def root = isEap() ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
@@ -280,7 +274,7 @@ def build_searchable_options() {
   ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
   ant.copy(file: "$home/build/pycharm.license", todir: paths.ideaSystem)
   ant.java(classname: "com.intellij.idea.Main", fork: "true") {
-    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python")
+    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python -Didea.no.jre.check=true")
     jvmarg(value: "-Xbootclasspath/a:${boot.output}")
     arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
 
@@ -511,68 +505,24 @@ def layoutFull(String target, Set usedJars) {
     }
   }
 
-  ant.echo(file: "$target/bin/idea.properties", append: "true", message:
-           isEap() ?
-           """
-
-#-----------------------------------------------------------------------
-# Change to 'disabled' if you do not need to receive instant visual
-# notifications about fatal errors that happen to PyCharm or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=enabled
-"""
-
-           :
-           """
-
-#-----------------------------------------------------------------------
-# Change to 'enabled' if you need to receive instant visual notifications about
-# fatal errors that happen to PyCharm or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=disabled
-"""
-  )
+  patchPropertiesFile(target)
 }
 
 def layoutMac(Map args, String target) {
   layout(target) {
     dir("bin") {
-      fileset(dir: "$home/community/bin/mac")
-      fileset(dir: "$home/community/bin/nix") {
-        exclude(name: "idea.sh")
-      }
-      fileset(dir: "$home/bin") {
-        include(name: "*.jnilib")
-      }
-      fileset(dir: "$home/python/build") {
-        include(name: "pycharm.sh")
-      }
-    }
-    dir("lib") {
-      fileset(dir: "$home/community/build/conf/mac/lib")
-    }
-    dir("Contents") {
-      dir("MacOS") {
-      }
-      dir("Resources") {
-        fileset(dir: "$home/python/resources", includes: "PyCharm.icns")
-      }
-      fileset(dir: "$home/python/build", includes: "Info.plist")
+      fileset(dir: "$home/bin", includes: "*.jnilib")
     }
   }
 
-  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", tofile: "$target/Contents/MacOS/pycharm")
+  args.buildNumber = buildName
+  args["executable"] = "pycharm"
+  args["icns"] = "$home/python/resources/PyCharm.icns"
+  args["bundle_name"] = "PyCharm"
+  args["bundleIdentifier"] = "com.jetbrains.pycharm"
+  args["platform_prefix"] = "Python"
 
-  ant.replace(file: "$target/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: args.buildName)
-    replacefilter(token: "@@year@@", value: "$todayYear")
-
-
-    replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
-    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
-  }
+  layoutMacApp(target, "$home/community", args)
 
   ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar")
 }
@@ -593,7 +543,7 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
 }
 
 def layoutUnix(String target) {

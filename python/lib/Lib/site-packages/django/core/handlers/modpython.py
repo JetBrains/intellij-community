@@ -1,5 +1,7 @@
 import os
 from pprint import pformat
+import sys
+from warnings import warn
 
 from django import http
 from django.core import signals
@@ -7,6 +9,10 @@ from django.core.handlers.base import BaseHandler
 from django.core.urlresolvers import set_script_prefix
 from django.utils import datastructures
 from django.utils.encoding import force_unicode, smart_str, iri_to_uri
+from django.utils.log import getLogger
+
+logger = getLogger('django.request')
+
 
 # NOTE: do *not* import settings (or any module which eventually imports
 # settings) until after ModPythonHandler has been called; otherwise os.environ
@@ -36,6 +42,8 @@ class ModPythonRequest(http.HttpRequest):
             # naughty, but also pretty harmless.
             self.path_info = u'/'
         self._post_parse_error = False
+        self._stream = self._req
+        self._read_started = False
 
     def __repr__(self):
         # Since this is called as part of error handling, we need to be very
@@ -74,26 +82,6 @@ class ModPythonRequest(http.HttpRequest):
         except AttributeError:
             # mod_python < 3.2.10 doesn't have req.is_https().
             return self._req.subprocess_env.get('HTTPS', '').lower() in ('on', '1')
-
-    def _load_post_and_files(self):
-        "Populates self._post and self._files"
-        if self.method != 'POST':
-            self._post, self._files = http.QueryDict('', encoding=self._encoding), datastructures.MultiValueDict()
-            return
-
-        if 'content-type' in self._req.headers_in and self._req.headers_in['content-type'].startswith('multipart'):
-            self._raw_post_data = ''
-            try:
-                self._post, self._files = self.parse_file_upload(self.META, self._req)
-            except:
-                # See django.core.handlers.wsgi.WSGIHandler for an explanation
-                # of what's going on here.
-                self._post = http.QueryDict('')
-                self._files = datastructures.MultiValueDict()
-                self._post_parse_error = True
-                raise
-        else:
-            self._post, self._files = http.QueryDict(self.raw_post_data, encoding=self._encoding), datastructures.MultiValueDict()
 
     def _get_request(self):
         if not hasattr(self, '_request'):
@@ -156,13 +144,6 @@ class ModPythonRequest(http.HttpRequest):
                 self._meta[key] = value
         return self._meta
 
-    def _get_raw_post_data(self):
-        try:
-            return self._raw_post_data
-        except AttributeError:
-            self._raw_post_data = self._req.read()
-            return self._raw_post_data
-
     def _get_method(self):
         return self.META['REQUEST_METHOD'].upper()
 
@@ -172,13 +153,15 @@ class ModPythonRequest(http.HttpRequest):
     FILES = property(_get_files)
     META = property(_get_meta)
     REQUEST = property(_get_request)
-    raw_post_data = property(_get_raw_post_data)
     method = property(_get_method)
 
 class ModPythonHandler(BaseHandler):
     request_class = ModPythonRequest
 
     def __call__(self, req):
+        warn(('The mod_python handler is deprecated; use a WSGI or FastCGI server instead.'),
+             PendingDeprecationWarning)
+
         # mod_python fakes the environ, and thus doesn't process SetEnv.  This fixes that
         os.environ.update(req.subprocess_env)
 
@@ -196,14 +179,16 @@ class ModPythonHandler(BaseHandler):
             try:
                 request = self.request_class(req)
             except UnicodeDecodeError:
+                logger.warning('Bad Request (UnicodeDecodeError): %s' % request.path,
+                    exc_info=sys.exc_info(),
+                    extra={
+                        'status_code': 400,
+                        'request': request
+                    }
+                )
                 response = http.HttpResponseBadRequest()
             else:
                 response = self.get_response(request)
-
-                # Apply response middleware
-                for middleware_method in self._response_middleware:
-                    response = middleware_method(request, response)
-                response = self.apply_response_fixes(request, response)
         finally:
             signals.request_finished.send(sender=self.__class__)
 

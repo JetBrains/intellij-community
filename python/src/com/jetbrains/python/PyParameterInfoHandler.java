@@ -121,14 +121,14 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           hint_flags.put(hint_texts.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
           if (last) hint_texts.add(")");
-          else hint_texts.add("),");
+          else hint_texts.add("), ");
         }
 
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           n_param_list.add(param);
           StringBuilder strb = new StringBuilder();
           strb.append(param.getRepr(true));
-          if (! last) strb.append(",");
+          if (! last) strb.append(", ");
           int hint_index = hint_texts.size();
           param_indexes.put(param, hint_index);
           hint_flags.put(hint_index, EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
@@ -138,7 +138,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hint_flags.put(hint_texts.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
           if (last) hint_texts.add("*");
-          else hint_texts.add("*,");
+          else hint_texts.add("*, ");
         }
       }
     );

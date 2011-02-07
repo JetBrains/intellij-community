@@ -7,8 +7,10 @@ from django.db.models.fields import (AutoField, Field, IntegerField,
 from django.db.models.related import RelatedObject
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import QueryWrapper
+from django.db.models.deletion import CASCADE
 from django.utils.encoding import smart_unicode
-from django.utils.translation import ugettext_lazy as _, string_concat, ungettext, ugettext
+from django.utils.translation import (ugettext_lazy as _, string_concat,
+    ungettext, ugettext)
 from django.utils.functional import curry
 from django.core import exceptions
 from django import forms
@@ -420,7 +422,7 @@ class ForeignRelatedObjectsDescriptor(object):
             def create(self, **kwargs):
                 kwargs.update({rel_field.name: instance})
                 db = router.db_for_write(rel_model, instance=instance)
-                return super(RelatedManager, self).using(db).create(**kwargs)
+                return super(RelatedManager, self.db_manager(db)).create(**kwargs)
             create.alters_data = True
 
             def get_or_create(self, **kwargs):
@@ -428,7 +430,7 @@ class ForeignRelatedObjectsDescriptor(object):
                 # ForeignRelatedObjectsDescriptor knows about.
                 kwargs.update({rel_field.name: instance})
                 db = router.db_for_write(rel_model, instance=instance)
-                return super(RelatedManager, self).using(db).get_or_create(**kwargs)
+                return super(RelatedManager, self.db_manager(db)).get_or_create(**kwargs)
             get_or_create.alters_data = True
 
             # remove() and clear() are only provided if the ForeignKey can have a value of null.
@@ -517,7 +519,7 @@ def create_many_related_manager(superclass, rel=False):
                 opts = through._meta
                 raise AttributeError("Cannot use create() on a ManyToManyField which specifies an intermediary model. Use %s.%s's Manager instead." % (opts.app_label, opts.object_name))
             db = router.db_for_write(self.instance.__class__, instance=self.instance)
-            new_obj = super(ManyRelatedManager, self).using(db).create(**kwargs)
+            new_obj = super(ManyRelatedManager, self.db_manager(db)).create(**kwargs)
             self.add(new_obj)
             return new_obj
         create.alters_data = True
@@ -525,7 +527,7 @@ def create_many_related_manager(superclass, rel=False):
         def get_or_create(self, **kwargs):
             db = router.db_for_write(self.instance.__class__, instance=self.instance)
             obj, created = \
-                super(ManyRelatedManager, self).using(db).get_or_create(**kwargs)
+                super(ManyRelatedManager, self.db_manager(db)).get_or_create(**kwargs)
             # We only need to add() if created because if we got an object back
             # from get() then the relationship already exists.
             if created:
@@ -566,7 +568,7 @@ def create_many_related_manager(superclass, rel=False):
                     # duplicate data row for symmetrical reverse entries.
                     signals.m2m_changed.send(sender=rel.through, action='pre_add',
                         instance=self.instance, reverse=self.reverse,
-                        model=self.model, pk_set=new_ids)
+                        model=self.model, pk_set=new_ids, using=db)
                 # Add the ones that aren't there already
                 for obj_id in new_ids:
                     self.through._default_manager.using(db).create(**{
@@ -578,7 +580,7 @@ def create_many_related_manager(superclass, rel=False):
                     # duplicate data row for symmetrical reverse entries.
                     signals.m2m_changed.send(sender=rel.through, action='post_add',
                         instance=self.instance, reverse=self.reverse,
-                        model=self.model, pk_set=new_ids)
+                        model=self.model, pk_set=new_ids, using=db)
 
         def _remove_items(self, source_field_name, target_field_name, *objs):
             # source_col_name: the PK colname in join_table for the source object
@@ -594,14 +596,16 @@ def create_many_related_manager(superclass, rel=False):
                         old_ids.add(obj.pk)
                     else:
                         old_ids.add(obj)
+                # Work out what DB we're operating on
+                db = router.db_for_write(self.through.__class__, instance=self.instance)
+                # Send a signal to the other end if need be.
                 if self.reverse or source_field_name == self.source_field_name:
                     # Don't send the signal when we are deleting the
                     # duplicate data row for symmetrical reverse entries.
                     signals.m2m_changed.send(sender=rel.through, action="pre_remove",
                         instance=self.instance, reverse=self.reverse,
-                        model=self.model, pk_set=old_ids)
+                        model=self.model, pk_set=old_ids, using=db)
                 # Remove the specified objects from the join table
-                db = router.db_for_write(self.through.__class__, instance=self.instance)
                 self.through._default_manager.using(db).filter(**{
                     source_field_name: self._pk_val,
                     '%s__in' % target_field_name: old_ids
@@ -611,17 +615,17 @@ def create_many_related_manager(superclass, rel=False):
                     # duplicate data row for symmetrical reverse entries.
                     signals.m2m_changed.send(sender=rel.through, action="post_remove",
                         instance=self.instance, reverse=self.reverse,
-                        model=self.model, pk_set=old_ids)
+                        model=self.model, pk_set=old_ids, using=db)
 
         def _clear_items(self, source_field_name):
+            db = router.db_for_write(self.through.__class__, instance=self.instance)
             # source_col_name: the PK colname in join_table for the source object
             if self.reverse or source_field_name == self.source_field_name:
                 # Don't send the signal when we are clearing the
                 # duplicate data rows for symmetrical reverse entries.
                 signals.m2m_changed.send(sender=rel.through, action="pre_clear",
                     instance=self.instance, reverse=self.reverse,
-                    model=self.model, pk_set=None)
-            db = router.db_for_write(self.through.__class__, instance=self.instance)
+                    model=self.model, pk_set=None, using=db)
             self.through._default_manager.using(db).filter(**{
                 source_field_name: self._pk_val
             }).delete()
@@ -630,7 +634,7 @@ def create_many_related_manager(superclass, rel=False):
                 # duplicate data rows for symmetrical reverse entries.
                 signals.m2m_changed.send(sender=rel.through, action="post_clear",
                     instance=self.instance, reverse=self.reverse,
-                    model=self.model, pk_set=None)
+                    model=self.model, pk_set=None, using=db)
 
     return ManyRelatedManager
 
@@ -731,8 +735,8 @@ class ReverseManyRelatedObjectsDescriptor(object):
         manager.add(*value)
 
 class ManyToOneRel(object):
-    def __init__(self, to, field_name, related_name=None,
-            limit_choices_to=None, lookup_overrides=None, parent_link=False):
+    def __init__(self, to, field_name, related_name=None, limit_choices_to=None,
+        parent_link=False, on_delete=None):
         try:
             to._meta
         except AttributeError: # to._meta doesn't exist, so it must be RECURSIVE_RELATIONSHIP_CONSTANT
@@ -742,9 +746,9 @@ class ManyToOneRel(object):
         if limit_choices_to is None:
             limit_choices_to = {}
         self.limit_choices_to = limit_choices_to
-        self.lookup_overrides = lookup_overrides or {}
         self.multiple = True
         self.parent_link = parent_link
+        self.on_delete = on_delete
 
     def is_hidden(self):
         "Should the related object be hidden?"
@@ -762,11 +766,12 @@ class ManyToOneRel(object):
         return data[0]
 
 class OneToOneRel(ManyToOneRel):
-    def __init__(self, to, field_name, related_name=None,
-            limit_choices_to=None, lookup_overrides=None, parent_link=False):
+    def __init__(self, to, field_name, related_name=None, limit_choices_to=None,
+        parent_link=False, on_delete=None):
         super(OneToOneRel, self).__init__(to, field_name,
                 related_name=related_name, limit_choices_to=limit_choices_to,
-                lookup_overrides=lookup_overrides, parent_link=parent_link)
+                parent_link=parent_link, on_delete=on_delete
+        )
         self.multiple = False
 
 class ManyToManyRel(object):
@@ -812,14 +817,16 @@ class ForeignKey(RelatedField, Field):
             to_field = to_field or (to._meta.pk and to._meta.pk.name)
         kwargs['verbose_name'] = kwargs.get('verbose_name', None)
 
+        if 'db_index' not in kwargs:
+            kwargs['db_index'] = True
+
         kwargs['rel'] = rel_class(to, to_field,
             related_name=kwargs.pop('related_name', None),
             limit_choices_to=kwargs.pop('limit_choices_to', None),
-            lookup_overrides=kwargs.pop('lookup_overrides', None),
-            parent_link=kwargs.pop('parent_link', False))
+            parent_link=kwargs.pop('parent_link', False),
+            on_delete=kwargs.pop('on_delete', CASCADE),
+        )
         Field.__init__(self, **kwargs)
-
-        self.db_index = True
 
     def validate(self, value, model_instance):
         if self.rel.parent_link:
@@ -828,7 +835,10 @@ class ForeignKey(RelatedField, Field):
         if value is None:
             return
 
-        qs = self.rel.to._default_manager.filter(**{self.rel.field_name:value})
+        using = router.db_for_read(model_instance.__class__, instance=model_instance)
+        qs = self.rel.to._default_manager.using(using).filter(
+                **{self.rel.field_name: value}
+             )
         qs = qs.complex_filter(self.rel.limit_choices_to)
         if not qs.exists():
             raise exceptions.ValidationError(self.error_messages['invalid'] % {
@@ -1045,25 +1055,6 @@ class ManyToManyField(RelatedField, Field):
                     setattr(self, cache_attr, getattr(f, attr))
                     break
         return getattr(self, cache_attr)
-
-    def isValidIDList(self, field_data, all_data):
-        "Validates that the value is a valid list of foreign keys"
-        mod = self.rel.to
-        try:
-            pks = map(int, field_data.split(','))
-        except ValueError:
-            # the CommaSeparatedIntegerField validator will catch this error
-            return
-        objects = mod._default_manager.in_bulk(pks)
-        if len(objects) != len(pks):
-            badkeys = [k for k in pks if k not in objects]
-            raise exceptions.ValidationError(
-                ungettext("Please enter valid %(self)s IDs. The value %(value)r is invalid.",
-                          "Please enter valid %(self)s IDs. The values %(value)r are invalid.",
-                          len(badkeys)) % {
-                'self': self.verbose_name,
-                'value': len(badkeys) == 1 and badkeys[0] or tuple(badkeys),
-            })
 
     def value_to_string(self, obj):
         data = ''

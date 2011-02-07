@@ -4,6 +4,13 @@ from django.core.xheaders import populate_xheaders
 from django.core.paginator import Paginator, InvalidPage
 from django.core.exceptions import ObjectDoesNotExist
 
+import warnings
+warnings.warn(
+    'Function-based generic views have been deprecated; use class-based views instead.',
+    PendingDeprecationWarning
+)
+
+
 def object_list(request, queryset, paginate_by=None, page=None,
         allow_empty=True, template_name=None, template_loader=loader,
         extra_context=None, context_processors=None, template_object_name='object',
@@ -64,10 +71,10 @@ def object_list(request, queryset, paginate_by=None, page=None,
             '%s_list' % template_object_name: page_obj.object_list,
             'paginator': paginator,
             'page_obj': page_obj,
+            'is_paginated': page_obj.has_other_pages(),
 
             # Legacy template context stuff. New templates should use page_obj
             # to access this instead.
-            'is_paginated': page_obj.has_other_pages(),
             'results_per_page': paginator.per_page,
             'has_next': page_obj.has_next(),
             'has_previous': page_obj.has_previous(),

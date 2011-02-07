@@ -26,7 +26,7 @@ if [ -z "$PYCHARM_JDK" ]; then
   fi
   if [ -z "$PYCHARM_JDK" ]; then
     echo ERROR: cannot start PyCharm.
-    echo No JDK found to run PyCharm. Please validate either PYCHARM_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+    echo No JDK found to run PyCharm. Please validate either PYCHARM_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation.
     echo
     echo Press Enter to continue.
     read IGNORE
@@ -47,7 +47,7 @@ if [ $OPEN_JDK -eq 0 ]; then
   echo          THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS
   echo
   echo NOTE:    If you have both Sun JDK and OpenJDK installed
-  echo          please validate either PYCHARM_JDK or JDK_HOME points to valid Sun JDK installation
+  echo          please validate either PYCHARM_JDK or JDK_HOME environment variable points to valid Sun JDK installation
   echo
   echo Press Enter to continue.
   read IGNORE

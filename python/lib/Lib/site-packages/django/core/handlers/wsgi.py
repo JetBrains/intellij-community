@@ -1,9 +1,11 @@
-from threading import Lock
 from pprint import pformat
+import sys
+from threading import Lock
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
+import socket
 
 from django import http
 from django.core import signals
@@ -11,6 +13,10 @@ from django.core.handlers import base
 from django.core.urlresolvers import set_script_prefix
 from django.utils import datastructures
 from django.utils.encoding import force_unicode, iri_to_uri
+from django.utils.log import getLogger
+
+logger = getLogger('django.request')
+
 
 # See http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 STATUS_CODE_TEXT = {
@@ -57,20 +63,55 @@ STATUS_CODE_TEXT = {
     505: 'HTTP VERSION NOT SUPPORTED',
 }
 
-def safe_copyfileobj(fsrc, fdst, length=16*1024, size=0):
-    """
-    A version of shutil.copyfileobj that will not read more than 'size' bytes.
-    This makes it safe from clients sending more than CONTENT_LENGTH bytes of
-    data in the body.
-    """
-    if not size:
-        return
-    while size > 0:
-        buf = fsrc.read(min(length, size))
-        if not buf:
-            break
-        fdst.write(buf)
-        size -= len(buf)
+class LimitedStream(object):
+    '''
+    LimitedStream wraps another stream in order to not allow reading from it
+    past specified amount of bytes.
+    '''
+    def __init__(self, stream, limit, buf_size=64 * 1024 * 1024):
+        self.stream = stream
+        self.remaining = limit
+        self.buffer = ''
+        self.buf_size = buf_size
+
+    def _read_limited(self, size=None):
+        if size is None or size > self.remaining:
+            size = self.remaining
+        if size == 0:
+            return ''
+        result = self.stream.read(size)
+        self.remaining -= len(result)
+        return result
+
+    def read(self, size=None):
+        if size is None:
+            result = self.buffer + self._read_limited()
+            self.buffer = ''
+        elif size < len(self.buffer):
+            result = self.buffer[:size]
+            self.buffer = self.buffer[size:]
+        else: # size >= len(self.buffer)
+            result = self.buffer + self._read_limited(size - len(self.buffer))
+            self.buffer = ''
+        return result
+
+    def readline(self, size=None):
+        while '\n' not in self.buffer or \
+              (size is not None and len(self.buffer) < size):
+            if size:
+                chunk = self._read_limited(size - len(self.buffer))
+            else:
+                chunk = self._read_limited()
+            if not chunk:
+                break
+            self.buffer += chunk
+        sio = StringIO(self.buffer)
+        if size:
+            line = sio.readline(size)
+        else:
+            line = sio.readline()
+        self.buffer = sio.read()
+        return line
 
 class WSGIRequest(http.HttpRequest):
     def __init__(self, environ):
@@ -93,6 +134,27 @@ class WSGIRequest(http.HttpRequest):
         self.META['SCRIPT_NAME'] = script_name
         self.method = environ['REQUEST_METHOD'].upper()
         self._post_parse_error = False
+        if type(socket._fileobject) is type and isinstance(self.environ['wsgi.input'], socket._fileobject):
+            # Under development server 'wsgi.input' is an instance of
+            # socket._fileobject which hangs indefinitely on reading bytes past
+            # available count. To prevent this it's wrapped in LimitedStream
+            # that doesn't read past Content-Length bytes.
+            #
+            # This is not done for other kinds of inputs (like flup's FastCGI
+            # streams) beacuse they don't suffer from this problem and we can
+            # avoid using another wrapper with its own .read and .readline
+            # implementation.
+            #
+            # The type check is done because for some reason, AppEngine
+            # implements _fileobject as a function, not a class.
+            try:
+                content_length = int(self.environ.get('CONTENT_LENGTH', 0))
+            except (ValueError, TypeError):
+                content_length = 0
+            self._stream = LimitedStream(self.environ['wsgi.input'], content_length)
+        else:
+            self._stream = self.environ['wsgi.input']
+        self._read_started = False
 
     def __repr__(self):
         # Since this is called as part of error handling, we need to be very
@@ -127,30 +189,6 @@ class WSGIRequest(http.HttpRequest):
     def is_secure(self):
         return 'wsgi.url_scheme' in self.environ \
             and self.environ['wsgi.url_scheme'] == 'https'
-
-    def _load_post_and_files(self):
-        # Populates self._post and self._files
-        if self.method == 'POST':
-            if self.environ.get('CONTENT_TYPE', '').startswith('multipart'):
-                self._raw_post_data = ''
-                try:
-                    self._post, self._files = self.parse_file_upload(self.META, self.environ['wsgi.input'])
-                except:
-                    # An error occured while parsing POST data.  Since when
-                    # formatting the error the request handler might access
-                    # self.POST, set self._post and self._file to prevent
-                    # attempts to parse POST data again.
-                    self._post = http.QueryDict('')
-                    self._files = datastructures.MultiValueDict()
-                    # Mark that an error occured.  This allows self.__repr__ to
-                    # be explicit about it instead of simply representing an
-                    # empty POST
-                    self._post_parse_error = True
-                    raise
-            else:
-                self._post, self._files = http.QueryDict(self.raw_post_data, encoding=self._encoding), datastructures.MultiValueDict()
-        else:
-            self._post, self._files = http.QueryDict('', encoding=self._encoding), datastructures.MultiValueDict()
 
     def _get_request(self):
         if not hasattr(self, '_request'):
@@ -187,32 +225,11 @@ class WSGIRequest(http.HttpRequest):
             self._load_post_and_files()
         return self._files
 
-    def _get_raw_post_data(self):
-        try:
-            return self._raw_post_data
-        except AttributeError:
-            buf = StringIO()
-            try:
-                # CONTENT_LENGTH might be absent if POST doesn't have content at all (lighttpd)
-                content_length = int(self.environ.get('CONTENT_LENGTH', 0))
-            except (ValueError, TypeError):
-                # If CONTENT_LENGTH was empty string or not an integer, don't
-                # error out. We've also seen None passed in here (against all
-                # specs, but see ticket #8259), so we handle TypeError as well.
-                content_length = 0
-            if content_length > 0:
-                safe_copyfileobj(self.environ['wsgi.input'], buf,
-                        size=content_length)
-            self._raw_post_data = buf.getvalue()
-            buf.close()
-            return self._raw_post_data
-
     GET = property(_get_get, _set_get)
     POST = property(_get_post, _set_post)
     COOKIES = property(_get_cookies, _set_cookies)
     FILES = property(_get_files)
     REQUEST = property(_get_request)
-    raw_post_data = property(_get_raw_post_data)
 
 class WSGIHandler(base.BaseHandler):
     initLock = Lock()
@@ -236,14 +253,16 @@ class WSGIHandler(base.BaseHandler):
             try:
                 request = self.request_class(environ)
             except UnicodeDecodeError:
+                logger.warning('Bad Request (UnicodeDecodeError): %s' % request.path,
+                    exc_info=sys.exc_info(),
+                    extra={
+                        'status_code': 400,
+                        'request': request
+                    }
+                )
                 response = http.HttpResponseBadRequest()
             else:
                 response = self.get_response(request)
-
-                # Apply response middleware
-                for middleware_method in self._response_middleware:
-                    response = middleware_method(request, response)
-                response = self.apply_response_fixes(request, response)
         finally:
             signals.request_finished.send(sender=self.__class__)
 

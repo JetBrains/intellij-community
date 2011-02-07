@@ -1,27 +1,34 @@
 "Memcached cache backend"
 
 import time
+from threading import local
 
 from django.core.cache.backends.base import BaseCache, InvalidCacheBackendError
-from django.utils.encoding import smart_unicode, smart_str
+from django.utils import importlib
 
-try:
-    import cmemcache as memcache
-    import warnings
-    warnings.warn(
-        "Support for the 'cmemcache' library has been deprecated. Please use python-memcached instead.",
-        PendingDeprecationWarning
-    )
-except ImportError:
-    try:
-        import memcache
-    except:
-        raise InvalidCacheBackendError("Memcached cache backend requires either the 'memcache' or 'cmemcache' library")
+class BaseMemcachedCache(BaseCache):
+    def __init__(self, server, params, library, value_not_found_exception):
+        super(BaseMemcachedCache, self).__init__(params)
+        if isinstance(server, basestring):
+            self._servers = server.split(';')
+        else:
+            self._servers = server
 
-class CacheClass(BaseCache):
-    def __init__(self, server, params):
-        BaseCache.__init__(self, params)
-        self._cache = memcache.Client(server.split(';'))
+        # The exception type to catch from the underlying library for a key
+        # that was not found. This is a ValueError for python-memcache,
+        # pylibmc.NotFound for pylibmc, and cmemcache will return None without
+        # raising an exception.
+        self.LibraryValueNotFoundException = value_not_found_exception
+
+        self._lib = library
+        self._options = params.get('OPTIONS', None)
+
+    @property
+    def _cache(self):
+        """
+        Implements transparent thread-safe access to a memcached client.
+        """
+        return self._lib.Client(self._servers)
 
     def _get_memcache_timeout(self, timeout):
         """
@@ -39,66 +46,139 @@ class CacheClass(BaseCache):
             timeout += int(time.time())
         return timeout
 
-    def add(self, key, value, timeout=0):
+    def add(self, key, value, timeout=0, version=None):
+        key = self.make_key(key, version=version)
         if isinstance(value, unicode):
             value = value.encode('utf-8')
-        return self._cache.add(smart_str(key), value, self._get_memcache_timeout(timeout))
+        return self._cache.add(key, value, self._get_memcache_timeout(timeout))
 
-    def get(self, key, default=None):
-        val = self._cache.get(smart_str(key))
+    def get(self, key, default=None, version=None):
+        key = self.make_key(key, version=version)
+        val = self._cache.get(key)
         if val is None:
             return default
         return val
 
-    def set(self, key, value, timeout=0):
-        self._cache.set(smart_str(key), value, self._get_memcache_timeout(timeout))
+    def set(self, key, value, timeout=0, version=None):
+        key = self.make_key(key, version=version)
+        self._cache.set(key, value, self._get_memcache_timeout(timeout))
 
-    def delete(self, key):
-        self._cache.delete(smart_str(key))
+    def delete(self, key, version=None):
+        key = self.make_key(key, version=version)
+        self._cache.delete(key)
 
-    def get_many(self, keys):
-        return self._cache.get_multi(map(smart_str,keys))
+    def get_many(self, keys, version=None):
+        new_keys = map(lambda x: self.make_key(x, version=version), keys)
+        ret = self._cache.get_multi(new_keys)
+        if ret:
+            _ = {}
+            m = dict(zip(new_keys, keys))
+            for k, v in ret.items():
+                _[m[k]] = v
+            ret = _
+        return ret
 
     def close(self, **kwargs):
         self._cache.disconnect_all()
 
-    def incr(self, key, delta=1):
+    def incr(self, key, delta=1, version=None):
+        key = self.make_key(key, version=version)
         try:
             val = self._cache.incr(key, delta)
 
         # python-memcache responds to incr on non-existent keys by
-        # raising a ValueError. Cmemcache returns None. In both
-        # cases, we should raise a ValueError though.
-        except ValueError:
+        # raising a ValueError, pylibmc by raising a pylibmc.NotFound
+        # and Cmemcache returns None. In all cases,
+        # we should raise a ValueError though.
+        except self.LibraryValueNotFoundException:
             val = None
         if val is None:
             raise ValueError("Key '%s' not found" % key)
-
         return val
 
-    def decr(self, key, delta=1):
+    def decr(self, key, delta=1, version=None):
+        key = self.make_key(key, version=version)
         try:
             val = self._cache.decr(key, delta)
 
-        # python-memcache responds to decr on non-existent keys by
-        # raising a ValueError. Cmemcache returns None. In both
-        # cases, we should raise a ValueError though.
-        except ValueError:
+        # python-memcache responds to incr on non-existent keys by
+        # raising a ValueError, pylibmc by raising a pylibmc.NotFound
+        # and Cmemcache returns None. In all cases,
+        # we should raise a ValueError though.
+        except self.LibraryValueNotFoundException:
             val = None
         if val is None:
             raise ValueError("Key '%s' not found" % key)
         return val
 
-    def set_many(self, data, timeout=0):
+    def set_many(self, data, timeout=0, version=None):
         safe_data = {}
         for key, value in data.items():
+            key = self.make_key(key, version=version)
             if isinstance(value, unicode):
                 value = value.encode('utf-8')
-            safe_data[smart_str(key)] = value
+            safe_data[key] = value
         self._cache.set_multi(safe_data, self._get_memcache_timeout(timeout))
 
-    def delete_many(self, keys):
-        self._cache.delete_multi(map(smart_str, keys))
+    def delete_many(self, keys, version=None):
+        l = lambda x: self.make_key(x, version=version)
+        self._cache.delete_multi(map(l, keys))
 
     def clear(self):
         self._cache.flush_all()
+
+# For backwards compatibility -- the default cache class tries a
+# cascading lookup of cmemcache, then memcache.
+class CacheClass(BaseMemcachedCache):
+    def __init__(self, server, params):
+        try:
+            import cmemcache as memcache
+            import warnings
+            warnings.warn(
+                "Support for the 'cmemcache' library has been deprecated. Please use python-memcached or pyblimc instead.",
+                DeprecationWarning
+            )
+        except ImportError:
+            try:
+                import memcache
+            except:
+                raise InvalidCacheBackendError(
+                    "Memcached cache backend requires either the 'memcache' or 'cmemcache' library"
+                    )
+        super(CacheClass, self).__init__(server, params,
+                                         library=memcache,
+                                         value_not_found_exception=ValueError)
+
+class MemcachedCache(BaseMemcachedCache):
+    "An implementation of a cache binding using python-memcached"
+    def __init__(self, server, params):
+        import memcache
+        super(MemcachedCache, self).__init__(server, params,
+                                             library=memcache,
+                                             value_not_found_exception=ValueError)
+
+class PyLibMCCache(BaseMemcachedCache):
+    "An implementation of a cache binding using pylibmc"
+    def __init__(self, server, params):
+        import pylibmc
+        self._local = local()
+        super(PyLibMCCache, self).__init__(server, params,
+                                           library=pylibmc,
+                                           value_not_found_exception=pylibmc.NotFound)
+
+    @property
+    def _cache(self):
+        # PylibMC uses cache options as the 'behaviors' attribute.
+        # It also needs to use threadlocals, because some versions of
+        # PylibMC don't play well with the GIL.
+        client = getattr(self._local, 'client', None)
+        if client:
+            return client
+
+        client = self._lib.Client(self._servers)
+        if self._options:
+            client.behaviors = self._options
+
+        self._local.client = client
+
+        return client

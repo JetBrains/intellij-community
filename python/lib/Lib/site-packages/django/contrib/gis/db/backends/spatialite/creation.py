@@ -1,5 +1,7 @@
 import os
 from django.conf import settings
+from django.core.cache import get_cache
+from django.core.cache.backends.db import BaseDatabaseCache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.db.backends.sqlite3.creation import DatabaseCreation
@@ -22,17 +24,18 @@ class SpatiaLiteCreation(DatabaseCreation):
         self.connection.close()
 
         self.connection.settings_dict["NAME"] = test_database_name
-        can_rollback = self._rollback_works()
-        self.connection.settings_dict["SUPPORTS_TRANSACTIONS"] = can_rollback
+        # Confirm the feature set of the test database
+        self.connection.features.confirm()
         # Need to load the SpatiaLite initialization SQL before running `syncdb`.
         self.load_spatialite_sql()
         call_command('syncdb', verbosity=verbosity, interactive=False, database=self.connection.alias)
 
-        if settings.CACHE_BACKEND.startswith('db://'):
-            from django.core.cache import parse_backend_uri
-            _, cache_name, _ = parse_backend_uri(settings.CACHE_BACKEND)
-            call_command('createcachetable', cache_name)
-
+        for cache_alias in settings.CACHES:
+            cache = get_cache(cache_alias)
+            if isinstance(cache, BaseDatabaseCache):
+                from django.db import router
+                if router.allow_syncdb(self.connection.alias, cache.cache_model_class):
+                    call_command('createcachetable', cache._table, database=self.connection.alias)
         # Get a cursor (even though we don't need one yet). This has
         # the side effect of initializing the test database.
         cursor = self.connection.cursor()

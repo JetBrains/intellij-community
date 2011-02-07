@@ -58,17 +58,23 @@ public class AddImportHelper {
         feeler = feeler.getNextSibling();
       }
       // maybe we arrived at the doc comment stmt; skip over it, too
-      else if (!skipped_over_imports && ! skipped_over_doc && file instanceof PyFile) {
-        PsiElement doc_elt = PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
+      else if (!skipped_over_imports && !skipped_over_doc && file instanceof PyFile) {
+        PsiElement doc_elt =
+          PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
         if (doc_elt != null && doc_elt.getParent() == feeler) {
           feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it
           skipped_over_doc = true;
         }
-        else break; // not a doc comment, stop on it
+        else {
+          break; // not a doc comment, stop on it
+        }
       }
-      else break; // some other statement, stop
-    } while (feeler != null);
+      else {
+        break; // some other statement, stop
+      }
+    }
+    while (feeler != null);
     return seeker;
   }
 
@@ -85,15 +91,15 @@ public class AddImportHelper {
       if (importElements.length == 0) {
         return false;
       }
-      relativeToName = importElements [0].getImportedQName();
-      source = ResolveImportUtil.resolveImportElement(importElements [0]);
+      relativeToName = importElements[0].getImportedQName();
+      source = ResolveImportUtil.resolveImportElement(importElements[0]);
     }
     if (relativeToName == null) {
       return false;
     }
     final PsiFileSystemItem containingFile;
     if (source instanceof PsiDirectory) {
-      containingFile = (PsiDirectory) source;
+      containingFile = (PsiDirectory)source;
     }
     else {
       containingFile = source != null ? source.getContainingFile() : null;
@@ -111,16 +117,21 @@ public class AddImportHelper {
 
   /**
    * Adds an import statement, presumably below all other initial imports in the file.
-   * @param file where to operate
-   * @param name which to import (qualified is OK)
+   *
+   * @param file   where to operate
+   * @param name   which to import (qualified is OK)
    * @param asName optional name for 'as' clause
    */
   public static void addImportStatement(PsiFile file, String name, @Nullable String asName, ImportPriority priority) {
     String as_clause;
-    if (asName == null) as_clause = "";
-    else as_clause = " as " + asName;
+    if (asName == null) {
+      as_clause = "";
+    }
+    else {
+      as_clause = " as " + asName;
+    }
     final PyImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createImportStatementFromText(
-        "import " + name + as_clause);
+      "import " + name + as_clause);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file, name, priority));
     }
@@ -132,15 +143,19 @@ public class AddImportHelper {
   /**
    * Adds an "import ... from ..." statement below other top-level imports.
    *
-   * @param file where to operate
-   * @param from name of the module
-   * @param name imported name
+   * @param file   where to operate
+   * @param from   name of the module
+   * @param name   imported name
    * @param asName optional name for 'as' clause
    */
   public static void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, ImportPriority priority) {
     String as_clause;
-    if (asName == null) as_clause = "";
-    else as_clause = " as " + asName;
+    if (asName == null) {
+      as_clause = "";
+    }
+    else {
+      as_clause = " as " + asName;
+    }
     final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
       LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + from + " import " + name + as_clause);
     try {
@@ -156,6 +171,11 @@ public class AddImportHelper {
     for (PyFromImportStatement existingImport : existingImports) {
       final PyQualifiedName qName = existingImport.getImportSourceQName();
       if (qName != null && qName.toString().equals(path)) {
+        for (PyImportElement el : existingImport.getImportElements()) {
+          if (name.equals(el.getVisibleName())) {
+            return;
+          }
+        }
         PyImportElement importElement = PyElementGenerator.getInstance(file.getProject()).createImportElement(name);
         existingImport.add(importElement);
         return;
@@ -166,12 +186,13 @@ public class AddImportHelper {
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? (PsiFileSystemItem) target : target.getContainingFile();
+    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? (PsiFileSystemItem)target : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
     final String path = ResolveImportUtil.findShortestImportableName(element, toImport.getVirtualFile());
     if (target instanceof PsiFileSystemItem) {
       addImportStatement(file, path, null, priority);
-    } else if (useQualified) {
+    }
+    else if (useQualified) {
       addImportStatement(file, path, null, priority);
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
       element.replace(elementGenerator.createExpressionFromText(path + "." + target.getName()));
@@ -202,7 +223,8 @@ public class AddImportHelper {
         return ImportPriority.BUILTIN;
       }
       final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(pythonSdk);
-      if (skeletonsDir != null && vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
+      if (skeletonsDir != null &&
+          vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
         return ImportPriority.BUILTIN;
       }
     }

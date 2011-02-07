@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -107,8 +108,15 @@ public class PyUtil {
     return ArrayUtil.toObjectArray(result, aClass);
   }
 
+  public static PyExpression flattenParens(PyExpression expr) {
+    while (expr instanceof PyParenthesizedExpression) {
+      expr = ((PyParenthesizedExpression) expr).getContainedExpression();
+    }
+    return expr;
+  }
+
   /**
-   * @see PyUtil#flattenedParens
+   * @see PyUtil#flattenedParensAndTuples
    */
   protected static List<PyExpression> _unfoldParenExprs(PyExpression[] targets, List<PyExpression> receiver,
                                                         boolean unfoldListLiterals, boolean unfoldStarExpressions) {
@@ -141,13 +149,13 @@ public class PyUtil {
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
-   * Typical usage: <code>flattenedParens(some_tuple.getExpressions())</code>.
+   * Typical usage: <code>flattenedParensAndTuples(some_tuple.getExpressions())</code>.
    *
    * @param targets target elements.
    * @return the list of flattened expressions.
    */
   @NotNull
-  public static List<PyExpression> flattenedParens(PyExpression... targets) {
+  public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
     return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, false);
   }
 
@@ -442,10 +450,23 @@ public class PyUtil {
           if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
+          for(PyKnownDecoratorProvider provider: KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+            String name = provider.toKnownDecorator(deconame);
+            if (name != null) {
+              return name;
+            }
+          }
         }
       }
     }
     return null;
+  }
+
+  public static class KnownDecoratorProviderHolder {
+    public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+
+    private KnownDecoratorProviderHolder() {
+    }
   }
 
   /**
@@ -672,6 +693,11 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static String strValue(@Nullable PyExpression expression) {
+    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression) expression).getStringValue() : null;
+  }
+
   /**
    * @param what thing to search for
    * @param variants things to search among
@@ -714,13 +740,13 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
+    return strValue(getKeywordArgument(expr, keyword));
+  }
+
   public static boolean isExceptionClass(PyClass pyClass) {
-    for (PyClassRef c: pyClass.iterateAncestors()) {
-      if ("BaseException".equals(c.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
+    return pyClass.isSubclass("BaseException");
   }
 
   public static class MethodFlags {

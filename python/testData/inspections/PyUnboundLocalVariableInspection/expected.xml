@@ -3,7 +3,7 @@
   <problem>
     <file>test.py</file>
     <line>4</line>
-    <description>"Local variable 'a' referenced before assignment"</description>
+    <description>"Local variable 'a' might be referenced before assignment"</description>
   </problem>
   <problem>
     <file>test.py</file>

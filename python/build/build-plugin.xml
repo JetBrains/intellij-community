@@ -157,7 +157,10 @@
 
     <mkdir dir="${plugindir}/helpers"/>
     <copy todir="${plugindir}/helpers">
-      <fileset dir="${plugin.home}/helpers" includes="**/*.py"/>
+      <fileset dir="${plugin.home}/helpers">
+        <include name="**/*.py"/>
+        <include name="**/*.xml"/>
+      </fileset>
     </copy>
 
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>

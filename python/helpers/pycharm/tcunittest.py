@@ -69,8 +69,10 @@ class TeamcityTestResult(TestResult):
         error_value = err[1][0]
 
         if error_value.startswith("'") or error_value.startswith('"'):
-          first = self.find_first(err[1][0])
-          second = self.find_second(err[1][0])
+            # let's unescape strings to show sexy multiline diff in PyCharm.
+            # By default all caret return chars are escaped by testing framework
+            first = self._unescape(self.find_first(err[1][0]))
+            second = self._unescape(self.find_second(err[1][0]))
         else:
           first = second = ""
         err = self.formatErr(err)
@@ -117,6 +119,9 @@ class TeamcityTestResult(TestResult):
         if self.current_suite:
             self.messages.testSuiteFinished(self.current_suite)
             self.current_suite = None
+
+    def _unescape(self, text):
+        return text.decode('string_escape')
 
 class TeamcityTestRunner:
     def __init__(self, stream=sys.stdout):

@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -212,8 +211,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     if (rightExpression == null) {
       return;
     }
-    PyExpression rhs = rightExpression;
-    while (rhs instanceof PyParenthesizedExpression) rhs = ((PyParenthesizedExpression)rhs).getContainedExpression();
+    PyExpression rhs = PyUtil.flattenParens(rightExpression);
     String param_text = sure(rhs).getText();
     final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
     Pair<StringBuilder, Boolean> converted = convertFormat(leftExpression);

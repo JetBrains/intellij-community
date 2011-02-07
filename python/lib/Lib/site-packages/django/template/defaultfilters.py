@@ -8,12 +8,13 @@ try:
 except ImportError:
     from django.utils.functional import wraps  # Python 2.4 fallback.
 
-from django.template import Variable, Library
+from django.template.base import Variable, Library
 from django.conf import settings
 from django.utils import formats
-from django.utils.translation import ugettext, ungettext
 from django.utils.encoding import force_unicode, iri_to_uri
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe, SafeData
+from django.utils.translation import ugettext, ungettext
 
 register = Library()
 
@@ -255,6 +256,8 @@ def truncatewords(value, arg):
     Truncates a string after a certain number of words.
 
     Argument: Number of words to truncate after.
+
+    Newlines within the string are removed.
     """
     from django.utils.text import truncate_words
     try:
@@ -270,6 +273,8 @@ def truncatewords_html(value, arg):
     Truncates HTML after a certain number of words.
 
     Argument: Number of words to truncate after.
+
+    Newlines in the HTML are preserved.
     """
     from django.utils.text import truncate_html_words
     try:
@@ -286,10 +291,20 @@ def upper(value):
 upper.is_safe = False
 upper = stringfilter(upper)
 
-def urlencode(value):
-    """Escapes a value for use in a URL."""
+def urlencode(value, safe=None):
+    """
+    Escapes a value for use in a URL.
+
+    Takes an optional ``safe`` parameter used to determine the characters which
+    should not be escaped by Django's ``urlquote`` method. If not provided, the
+    default safe characters will be used (but an empty string can be provided
+    when *all* characters should be escaped).
+    """
     from django.utils.http import urlquote
-    return urlquote(value)
+    kwargs = {}
+    if safe is not None:
+        kwargs['safe'] = safe
+    return urlquote(value, **kwargs)
 urlencode.is_safe = False
 urlencode = stringfilter(urlencode)
 
@@ -496,10 +511,9 @@ def join(value, arg, autoescape=None):
     """
     value = map(force_unicode, value)
     if autoescape:
-        from django.utils.html import conditional_escape
         value = [conditional_escape(v) for v in value]
     try:
-        data = arg.join(value)
+        data = conditional_escape(arg).join(value)
     except AttributeError: # fail silently but nicely
         return value
     return mark_safe(data)
@@ -597,6 +611,10 @@ def unordered_list(value, autoescape=None):
         first_item, second_item = list_
         if second_item == []:
             return [first_item], True
+        try:
+            it = iter(second_item)  # see if second item is iterable
+        except TypeError:
+            return list_, False
         old_style_list = True
         new_second_item = []
         for sublist in second_item:
@@ -809,7 +827,11 @@ def filesizeformat(bytes):
         return ugettext("%.1f KB") % (bytes / 1024)
     if bytes < 1024 * 1024 * 1024:
         return ugettext("%.1f MB") % (bytes / (1024 * 1024))
-    return ugettext("%.1f GB") % (bytes / (1024 * 1024 * 1024))
+    if bytes < 1024 * 1024 * 1024 * 1024:
+        return ugettext("%.1f GB") % (bytes / (1024 * 1024 * 1024))
+    if bytes < 1024 * 1024 * 1024 * 1024 * 1024:
+        return ugettext("%.1f TB") % (bytes / (1024 * 1024 * 1024 * 1024))
+    return ugettext("%.1f PB") % (bytes / (1024 * 1024 * 1024 * 1024 * 1024))
 filesizeformat.is_safe = True
 
 def pluralize(value, arg=u's'):
