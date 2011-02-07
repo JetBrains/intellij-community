@@ -519,7 +519,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                           AlignmentStrategy.wrap(arrangeChildAlignment(child, alignmentStrategy)), childOffset);
 
         if (childType == JavaElementType.MODIFIER_LIST && containsAnnotations(child)) {
-          myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType()), true);
+          myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(child)), true);
         }
 
         if (block instanceof AbstractJavaBlock) {
@@ -789,12 +789,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return ((PsiModifierList)child.getPsi()).getAnnotations().length > 0;
   }
 
-  private int getAnnotationWrapType() {
+  private int getAnnotationWrapType(@NotNull ASTNode child) {
     final IElementType nodeType = myNode.getElementType();
     if (nodeType == JavaElementType.METHOD) {
       return mySettings.METHOD_ANNOTATION_WRAP;
     }
     if (nodeType == JavaElementType.CLASS) {
+      // There is a possible case that current document state is invalid from language syntax point of view, e.g. the user starts
+      // typing field definition and re-formatting is triggered by 'auto insert javadocs' processing. Example:
+      //     class Test {
+      //         @NotNull Object
+      //     }
+      // Here '@NotNull' has a 'class' node as a parent but we want to use field annotation setting value. Hence, we check if subsequent
+      // parsed info is valid.
+      for (ASTNode node = child.getTreeNext(); node != null; node = node.getTreeNext()) {
+        if (JavaTokenType.WHITE_SPACE == node.getElementType() || node instanceof PsiTypeElement) {
+          continue;
+        }
+        if (node instanceof PsiErrorElement) {
+          return mySettings.FIELD_ANNOTATION_WRAP;
+        }
+      }
       return mySettings.CLASS_ANNOTATION_WRAP;
     }
     if (nodeType == JavaElementType.FIELD) {
