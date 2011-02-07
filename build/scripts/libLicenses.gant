@@ -27,7 +27,7 @@ def String getLibraryName(Library lib) {
   def name = lib.name
   if (name.startsWith("moduleLibrary#")) {
     if (lib.classpath.size() != 1) {
-      project.error("Non-single entry module library $name: $lib.classpath");
+      project.warning("Non-single entry module library $name: $lib.classpath");
     }
     String filePath = lib.classpath[0]
     return filePath.substring(filePath.lastIndexOf('/')+1)
@@ -108,6 +108,7 @@ libraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils
 libraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.3", license: "Apache 2.0", url: "http://commons.apache.org/codec/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons Collections", libraryName: "commons-collections", version: "3.1", license: "Apache 2.0", url: "http://commons.apache.org/collections/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)", license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x")
+libraryLicense(name: "Apache Commons Net", libraryName: "commons-net", version: "2.0", license: "Apache 2.0", url: "http://commons.apache.org/net/")
 libraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.4", license: "Apache 2.0", url: "http://commons.apache.org/lang/", licenseUrl: "http://commons.apache.org/lang/license.html")
 libraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0", url: "http://commons.apache.org/logging/")
 libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.3.0.jar", version: "2.3.0", license: "Apache 2.0", url: "http://lucene.apache.org/java")
@@ -123,7 +124,7 @@ libraryLicense(name: "JavaCVS", version: "no version number available (with patc
 libraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.1.10", license: "CDDL 1.1 & GPL 2", url: "http://jaxb.java.net/", licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html")
 libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "http://www.jaxen.org/", licenseUrl: "http://www.jaxen.org/license.html")
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")
-libraryLicense(name: "JCIP Annotations", libraryName: "jcip-annotations.jar", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
+libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
 libraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "CVS snapshot as of 5 May 2006", license: "BSD ", url: "http://www.jgoodies.com/freeware/forms/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JNA", libraryName: "jna", version: "3.2.4", license: "LGPL 2.1", url: "https://jna.dev.java.net/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
