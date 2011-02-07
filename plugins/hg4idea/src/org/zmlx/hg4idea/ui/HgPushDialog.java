@@ -105,7 +105,7 @@ public class HgPushDialog extends DialogWrapper {
   private void updateRepository() {
     final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
     final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);
-    final String defaultPath = configCommand.getDefaultPath(repo);
+    final String defaultPath = configCommand.getDefaultPushPath(repo);
     repositoryTxt.setText(defaultPath);
     loadBranches(repo);
     update();

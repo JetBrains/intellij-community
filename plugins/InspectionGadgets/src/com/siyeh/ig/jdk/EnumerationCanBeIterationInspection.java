@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -28,7 +29,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -179,8 +179,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 PsiMethodCallExpression methodCallExpression,
                 String variableName, PsiType parameterType)
                 throws IncorrectOperationException {
-            final StringBuilder newStatementText =
-                    new StringBuilder();
+            @NonNls final StringBuilder newStatementText = new StringBuilder();
             final Project project = methodCallExpression.getProject();
             final CodeStyleSettings codeStyleSettings =
                     CodeStyleSettingsManager.getSettings(project);
@@ -231,12 +230,13 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 return null;
             }
             newStatementText.append(';');
-            final PsiManager manager = methodCallExpression.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
             final PsiStatement statement =
                     factory.createStatementFromText(newStatementText.toString(),
                             methodExpression);
-            final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+            final JavaCodeStyleManager styleManager =
+                    JavaCodeStyleManager.getInstance(project);
             styleManager.shortenClassReferences(statement);
             return statement;
         }
@@ -293,9 +293,9 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                         (PsiMethodCallExpression) referenceGrandParent;
                 final PsiReferenceExpression foundReferenceExpression =
                         callExpression.getMethodExpression();
-                final String foundName =
+                @NonNls final String foundName =
                         foundReferenceExpression.getReferenceName();
-                final String newExpressionText;
+                @NonNls final String newExpressionText;
                 if ("hasMoreElements".equals(foundName)) {
                     newExpressionText = newVariableName + ".hasNext()";
                 } else if ("nextElement".equals(foundName)) {
@@ -312,6 +312,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             return result;
         }
 
+        @NonNls
         private static String createVariableName(PsiElement context) {
             final Project project = context.getProject();
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -339,6 +340,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new EnumerationCanBeIterationVisitor();
     }
@@ -400,10 +402,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     return;
                 }
                 final PsiClass containingClass = method.getContainingClass();
-                if (ClassUtils.isSubclass(containingClass,
+                if (InheritanceUtil.isInheritor(containingClass,
                         "java.util.Vector")) {
                     registerMethodCallError(expression, ITERATOR_TEXT);
-                } else if (ClassUtils.isSubclass(containingClass,
+                } else if (InheritanceUtil.isInheritor(containingClass,
                         "java.util.Hashtable")) {
                     registerMethodCallError(expression, VALUES_ITERATOR_TEXT);
                 }
@@ -413,7 +415,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     return;
                 }
                 final PsiClass containingClass = method.getContainingClass();
-                if (ClassUtils.isSubclass(containingClass,
+                if (InheritanceUtil.isInheritor(containingClass,
                         "java.util.Hashtable")) {
                     registerMethodCallError(expression, KEY_SET_ITERATOR_TEXT);
                 }
@@ -446,7 +448,8 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 super.visitMethodCallExpression(expression);
                 final PsiReferenceExpression methodExpression =
                         expression.getMethodExpression();
-                final String methodName = methodExpression.getReferenceName();
+                @NonNls final String methodName =
+                        methodExpression.getReferenceName();
                 if (!"hasMoreElements".equals(methodName) &&
                         !"nextElement".equals(methodName)) {
                     return;

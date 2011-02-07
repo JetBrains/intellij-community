@@ -76,7 +76,10 @@ public class DefaultHighlighter {
   static final String STATIC_METHOD_ACCESS_ID = "Static method access";
   @NonNls
   static final String CLASS_REFERENCE_ID = "Class";
-
+  @NonNls
+  static final String INSTANCE_PROPERTY_REFERENCE_ID = "Instance property reference ID";
+  @NonNls
+  static final String STATIC_PROPERTY_REFERENCE_ID = "Static property reference ID";
   @NonNls
   static final String MAP_KEY_ID = "Map key";
 
@@ -114,6 +117,18 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey CLASS_REFERENCE =
     TextAttributesKey.createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
+
+  public static final TextAttributes INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES = INSTANCE_FIELD.getDefaultAttributes().clone();
+  public static final TextAttributes STATIC_PROPERTY_REFERENCE_ATTRIBUTES = STATIC_FIELD.getDefaultAttributes().clone();
+  static {
+    INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES.setFontType(Font.PLAIN);
+    STATIC_PROPERTY_REFERENCE_ATTRIBUTES.setFontType(Font.ITALIC);
+  }
+  public static TextAttributesKey INSTANCE_PROPERTY_REFERENCE =
+    TextAttributesKey.createTextAttributesKey(INSTANCE_PROPERTY_REFERENCE_ID, INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES);
+
+  public static TextAttributesKey STATIC_PROPERTY_REFERENCE =
+    TextAttributesKey.createTextAttributesKey(STATIC_PROPERTY_REFERENCE_ID, STATIC_PROPERTY_REFERENCE_ATTRIBUTES);
 
   public static final TextAttributes KEYWORD_ATTRIBUTES = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
   static{

@@ -37,8 +37,8 @@ public class _LastInSuiteTest extends TestCase {
     }.execute().throwException();
 
     final Application application = ApplicationManager.getApplication();
-    LeakHunter.checkProjectLeak(application);
 
+    // disposes default project too
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -51,6 +51,7 @@ public class _LastInSuiteTest extends TestCase {
       }
     });
 
+    LeakHunter.checkProjectLeak(application);
     Disposer.assertIsEmpty();
   }
 }

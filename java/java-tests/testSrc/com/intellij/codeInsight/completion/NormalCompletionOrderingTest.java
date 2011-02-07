@@ -170,4 +170,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("foo.Foo", ((JavaPsiClassReferenceElement)getLookup().getCurrentItem()).getQualifiedName());
   }
 
+  public void testDeclaredMembersGoFirst() throws Exception {
+    invokeCompletion(getBasePath() + "/" + getTestName(false) + ".java");
+    assertStringItems("fromThis", "overridden", "fromSuper", "equals", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait", "wait", "wait");
+  }
+
 }

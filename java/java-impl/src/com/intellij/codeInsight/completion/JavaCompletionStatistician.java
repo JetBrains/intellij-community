@@ -19,7 +19,6 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -51,7 +50,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       }
     }
 
-    LookupItem item = LookupItem.from(element);
+    LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item == null) return null;
 
     PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);

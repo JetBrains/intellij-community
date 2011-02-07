@@ -42,6 +42,15 @@ public class GroovyPropertyUtils {
   private GroovyPropertyUtils() {
   }
 
+  public static PsiMethod[] getAllSettersByField(PsiField field) {
+    return getAllSetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(GrModifier.STATIC), false);
+  }
+
+  @NotNull
+  public static PsiMethod[] getAllGettersByField(PsiField field) {
+    return getAllGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(GrModifier.STATIC), false);
+  }
+
   @Nullable
   public static PsiMethod findSetterForField(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
@@ -84,11 +93,9 @@ public class GroovyPropertyUtils {
     return null;
   }
 
-  /**
-   * @deprecated use PropertyUtil.getAllProperties() instead.
-   */
-  @Deprecated()
-  public static List<PsiMethod> getAllPropertyGetters(@NotNull PsiClass aClass, @Nullable Boolean isStatic, boolean checkSuperClasses) {
+  @NotNull
+  public static PsiMethod[] getAllGetters(PsiClass aClass, String propertyName, boolean isStatic, boolean checkSuperClasses) {
+    if (aClass == null) return PsiMethod.EMPTY_ARRAY;
     PsiMethod[] methods;
     if (checkSuperClasses) {
       methods = aClass.getAllMethods();
@@ -97,18 +104,45 @@ public class GroovyPropertyUtils {
       methods = aClass.getMethods();
     }
 
-    List<PsiMethod> res = new ArrayList<PsiMethod>(methods.length);
-
+    List<PsiMethod> result = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
-      if (isStatic != null && method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertyGetter(method)) {
-        res.add(method);
+        if (propertyName.equals(getPropertyNameByGetter(method))) {
+          result.add(method);
+        }
       }
     }
 
-    return res;
+    return result.toArray(new PsiMethod[result.size()]);
   }
+
+  @NotNull
+  public static PsiMethod[] getAllSetters(PsiClass aClass, String propertyName, boolean isStatic, boolean checkSuperClasses) {
+    if (aClass == null) return PsiMethod.EMPTY_ARRAY;
+    PsiMethod[] methods;
+    if (checkSuperClasses) {
+      methods = aClass.getAllMethods();
+    }
+    else {
+      methods = aClass.getMethods();
+    }
+
+    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+
+      if (isSimplePropertySetter(method)) {
+        if (propertyName.equals(getPropertyNameBySetter(method))) {
+          result.add(method);
+        }
+      }
+    }
+
+    return result.toArray(new PsiMethod[result.size()]);
+  }
+
 
   @Nullable
   public static PsiMethod findPropertyGetter(@Nullable PsiClass aClass,

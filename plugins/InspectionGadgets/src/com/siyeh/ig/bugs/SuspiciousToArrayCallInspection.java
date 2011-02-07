@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2010 Bas Leijdekkers
+ * Copyright 2005-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +76,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
             final PsiClassType classType = (PsiClassType)type;
             final PsiClass aClass = classType.resolve();
             if (aClass == null ||
-                    !ClassUtils.isSubclass(aClass,
+                    !InheritanceUtil.isInheritor(aClass,
                             CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 return;
             }

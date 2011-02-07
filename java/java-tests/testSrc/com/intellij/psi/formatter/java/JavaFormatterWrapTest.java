@@ -256,4 +256,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "int j = 2;"
     );
   }
+  
+  public void testIncompleteFieldAndAnnotationWrap() throws Exception {
+    // Inspired by IDEA-64725
+    
+    getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doClassTest(
+      "@NotNull Comparable<String>",
+      "@NotNull Comparable<String>"
+    );
+  }
 }

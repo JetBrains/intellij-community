@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,30 +19,33 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MisorderedAssertEqualsParametersInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "misordered.assert.equals.parameters.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "misordered.assert.equals.parameters.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new FlipParametersFix();
     }
@@ -55,6 +58,7 @@ public class MisorderedAssertEqualsParametersInspection
                     "misordered.assert.equals.parameters.flip.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
@@ -95,6 +99,7 @@ public class MisorderedAssertEqualsParametersInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MisorderedAssertEqualsParametersVisitor();
     }
@@ -167,8 +172,8 @@ public class MisorderedAssertEqualsParametersInspection
                 return false;
             }
             final PsiField field = (PsiField) target;
-            return !(!field.hasModifierProperty(PsiModifier.STATIC) ||
-                    !field.hasModifierProperty(PsiModifier.FINAL));
+            return field.hasModifierProperty(PsiModifier.STATIC) &&
+                    field.hasModifierProperty(PsiModifier.FINAL);
         }
 
         private static boolean isAssertEquals(
@@ -185,11 +190,10 @@ public class MisorderedAssertEqualsParametersInspection
                 return false;
             }
             final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null) {
-                return false;
-            }
-            return ClassUtils.isSubclass(targetClass, "junit.framework.Assert")
-                    || ClassUtils.isSubclass(targetClass, "org.junit.Assert");
+            return InheritanceUtil.isInheritor(targetClass,
+                    "junit.framework.Assert") ||
+                    InheritanceUtil.isInheritor(targetClass,
+                            "org.junit.Assert");
         }
     }
 }

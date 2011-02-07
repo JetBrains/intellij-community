@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,9 +81,8 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                     JavaPsiFacade.getElementFactory(project);
             final PsiStatement newStatement =
                     factory.createStatementFromText("super();", null);
-            final PsiManager psiManager = PsiManager.getInstance(project);
             final CodeStyleManager styleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             if (body == null) {
                 return;
             }
@@ -116,7 +115,8 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                 final PsiClass superClass = containingClass.getSuperClass();
                 if (superClass != null) {
                     final String superClassName = superClass.getQualifiedName();
-                    if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
+                    if (CommonClassNames.JAVA_LANG_OBJECT.equals(
+                            superClassName)) {
                         return;
                     }
                 }

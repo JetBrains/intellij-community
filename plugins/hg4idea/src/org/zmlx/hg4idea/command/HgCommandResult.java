@@ -20,7 +20,8 @@ import java.util.List;
 
 public final class HgCommandResult {
 
-  static final HgCommandResult EMPTY = new HgCommandResult(new StringWriter(), new StringWriter(), 0);
+  public static final HgCommandResult EMPTY = new HgCommandResult(new StringWriter(), new StringWriter(), 0);
+  public static final HgCommandResult CANCELLED = new HgCommandResult(new StringWriter(), new StringWriter(), 1);
 
   private final StringWriter out;
   private final StringWriter err;

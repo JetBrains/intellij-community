@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -79,19 +75,6 @@ public class ClassUtils {
     }
 
     private ClassUtils() {
-    }
-
-    public static boolean isSubclass(@Nullable PsiClass aClass,
-                                     @NonNls String ancestorName) {
-        if (aClass == null) {
-            return false;
-        }
-        final PsiManager psiManager = aClass.getManager();
-        final Project project = psiManager.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiClass ancestorClass = psiFacade.findClass(ancestorName, scope);
-        return InheritanceUtil.isCorrectDescendant(aClass, ancestorClass, true);
     }
 
     public static boolean isPrimitive(PsiType type) {

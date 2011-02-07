@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -82,10 +83,18 @@ public abstract class LookupElement extends UserDataHolderBase {
     presentation.setItemText(getLookupString());
   }
 
+  /**
+   * use {@link #as(com.intellij.openapi.util.ClassConditionKey)} instead
+   */
+  @Deprecated
   @Nullable
-  public <T> T as(Class<T> aClass) {
-    //noinspection unchecked
-    return aClass.isInstance(this) ? (T) this : null;
+  public final <T> T as(Class<T> aClass) {
+    return as(ClassConditionKey.create(aClass));
+  }
+
+  @Nullable
+  public <T> T as(ClassConditionKey<T> conditionKey) {
+    return conditionKey.isInstance(this) ? (T) this : null;
   }
   
   public boolean isCaseSensitive() {

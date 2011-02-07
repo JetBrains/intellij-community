@@ -19,6 +19,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -39,6 +40,18 @@ public abstract class ExternalCompiler implements BackendCompiler {
   @NotNull
   public Set<FileType> getCompilableFileTypes() {
     return COMPILABLE_TYPES;
+  }
+
+  /**
+   * Checks if the compiler can compile the specified file.
+   *
+   * @param file    the file to check.
+   * @param context the context for the current compile operation.
+   * @return true if can compile the file, false otherwise. If the method returns false, <code>file</code>
+   *         will not be included in the list of files passed to {@link #compile(CompileContext, com.intellij.util.Chunk < com.intellij.openapi.module.Module >,com.intellij.openapi.vfs.VirtualFile[], com.intellij.openapi.compiler.TranslatingCompiler.OutputSink)}.
+   */
+  public boolean isCompilableFile(VirtualFile file, CompileContext context) {
+    return getCompilableFileTypes().contains(file.getFileType());
   }
 
   @NotNull

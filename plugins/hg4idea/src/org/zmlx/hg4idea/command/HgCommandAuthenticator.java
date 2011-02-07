@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
+import static org.zmlx.hg4idea.command.HgErrorUtil.isAbort;
 import static org.zmlx.hg4idea.command.HgErrorUtil.isAuthorizationError;
 
 /**
@@ -67,23 +68,27 @@ class HgCommandAuthenticator {
         HgUrl hgUrl = new HgUrl(remoteRepository);
         if (hgUrl.supportsAuthentication()) {
           final GetPasswordRunnable runnable = new GetPasswordRunnable(project, hgUrl);
-          // first time try to get info from password safe if it's there, or show auth dialog if not
-          result = tryToAuthenticate(project, localRepository, hgUrl, runnable, command, arguments, urlArgumentPosition);
-          if (!isAuthorizationError(result)) {
-            saveCredentials(project, runnable);
-          } else {
-            // then twice request auth info from user
-            runnable.setForceShowDialog(true);
-            for (int i = 0; i < 2; i++) {
-              result = tryToAuthenticate(project, localRepository, hgUrl, runnable, command, arguments, urlArgumentPosition);
-              if (!isAuthorizationError(result)) {
-                saveCredentials(project, runnable);
+          for (int i = 0; i < 3; i++) {
+            if (i == 1) {
+              runnable.setForceShowDialog(true); // first time try to get info from password safe if it's there, next time don't even try,
+                                                 // because it means that the saved data didn't pass the authentication
+            }
+            result = tryToAuthenticate(project, localRepository, hgUrl, runnable, command, arguments, urlArgumentPosition);
+            if (result == HgCommandResult.CANCELLED) {
+              return result;
+            }
+            if (isAbort(result)) {
+              if (isAuthorizationError(result)) {
+                continue;
+              } else {
                 return result;
               }
             }
-            HgUtil.notifyError(project, "Authentication failed", "Authentication to " + remoteRepository + " failed");
+            saveCredentials(project, runnable);
             return result;
           }
+          HgUtil.notifyError(project, "Authentication failed", "Authentication to " + remoteRepository + " failed");
+          return result;
         } else {
           HgUtil.notifyError(project, "Authentication error", "Authentication was requested, but " + hgUrl.getScheme() + " doesn't support it.");
         }
@@ -106,6 +111,8 @@ class HgCommandAuthenticator {
     if (runnable.isOk()) {
       hgUrl.setUsername(runnable.getUserName());
       hgUrl.setPassword(String.valueOf(runnable.getPassword()));
+    } else {
+      return HgCommandResult.CANCELLED;
     }
 
     arguments.set(urlArgumentPosition, hgUrl.asString());
@@ -198,7 +205,14 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, login, password);
+      String url;
+      try {
+        url = hgUrl.asString(false);
+      }
+      catch (URISyntaxException e) {
+        url = null;
+      }
+      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, url, login, password);
       dialog.show();
       if (dialog.isOK()) {
         userName = dialog.getUsername();

@@ -110,4 +110,57 @@ for (def ch: "abc".toCharArray()) {
   print ch.toUpperCase()
 }"""
   }
+
+  public void testDeclaredMembersGoFirst() {
+    myFixture.configureByText "a.groovy", """
+      class Foo {
+        def superProp
+        void fromSuper() {}
+        void fromSuper2() {}
+        void overridden() {}
+      }
+
+      class FooImpl extends Foo {
+        def thisProp
+        void overridden() {}
+        void fromThis() {}
+        void fromThis2() {}
+        void fromThis3() {}
+        void fromThis4() {}
+        void fromThis5() {}
+      }
+
+      new FooImpl().<caret>
+    """
+    myFixture.completeBasic()
+    assertOrderedEquals myFixture.lookupElementStrings,"""\
+fromThis
+fromThis2
+fromThis3
+fromThis4
+fromThis5
+overridden
+thisProp
+class
+equals
+fromSuper
+fromSuper2
+getProperty
+hashCode
+invokeMethod
+metaClass
+metaPropertyValues
+notify
+notifyAll
+properties
+setProperty
+superProp
+toString
+wait
+wait
+wait
+with\
+""".split('\n')
+  }
+
 }

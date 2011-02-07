@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,29 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfJDBCDriverClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.of.concrete.jdbc.driver.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "use.of.concrete.jdbc.driver.class.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UseOfJDBCDriverClassVisitor();
     }
@@ -65,7 +68,7 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
             if(resolveClass instanceof PsiTypeParameter){
                 return;
             }
-            if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {
+            if(!InheritanceUtil.isInheritor(resolveClass, "java.sql.Driver")) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
@@ -96,7 +99,7 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
             if(resolveClass instanceof PsiTypeParameter){
                 return;
             }
-            if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {
+            if(!InheritanceUtil.isInheritor(resolveClass, "java.sql.Driver")) {
                 return;
             }
             registerNewExpressionError(newExpression);

@@ -19,6 +19,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection;
@@ -346,5 +347,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testTestMarkupStubs() {
     doTest();
+  }
+
+  public void testResultOfAssignmentUsed() {
+    doTest(new GroovyResultOfAssignmentUsedInspection());
   }
 }

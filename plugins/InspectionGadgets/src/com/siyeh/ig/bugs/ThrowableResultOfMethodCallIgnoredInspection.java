@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,26 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowableResultOfMethodCallIgnoredInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "throwable.result.of.method.call.ignored.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -46,6 +48,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ThrowableResultOfMethodCallIgnoredVisitor();  
     }
@@ -75,7 +78,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection
             }
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 final PsiClass containingClass = method.getContainingClass();
-                if (ClassUtils.isSubclass(containingClass,
+                if (InheritanceUtil.isInheritor(containingClass,
                         CommonClassNames.JAVA_LANG_THROWABLE)) {
                     return;
                 }
@@ -117,11 +120,9 @@ public class ThrowableResultOfMethodCallIgnoredInspection
                     while (usageParent instanceof PsiParenthesizedExpression) {
                         usageParent = usageParent.getParent();
                     }
-                    if (usageParent instanceof PsiThrowStatement) {
-                        return;
-                    } else if (usageParent instanceof PsiReturnStatement) {
-                        return;
-                    } else if (usageParent instanceof PsiExpressionList) {
+                    if (usageParent instanceof PsiThrowStatement ||
+                            usageParent instanceof PsiReturnStatement ||
+                            usageParent instanceof PsiExpressionList) {
                         return;
                     }
                 }

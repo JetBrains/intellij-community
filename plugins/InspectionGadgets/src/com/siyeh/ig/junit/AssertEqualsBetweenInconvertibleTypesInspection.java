@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,8 +77,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(containingClass, "junit.framework.Assert") &&
-                    !ClassUtils.isSubclass(containingClass, "org.junit.Assert")) {
+            if (!InheritanceUtil.isInheritor(containingClass,
+                    "junit.framework.Assert") &&
+                    !InheritanceUtil.isInheritor(containingClass,
+                            "org.junit.Assert")) {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();

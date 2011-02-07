@@ -50,7 +50,8 @@ public class DomJavaUtil {
         }
         else {
           ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
-          scope = GlobalSearchScope.moduleRuntimeScope(module, fileIndex.isInTestSourceContent(virtualFile));
+          boolean tests = fileIndex.isInTestSourceContent(virtualFile);
+          scope = module.getModuleRuntimeScope(tests).union(module.getModuleWithDependenciesAndLibrariesScope(tests));
         }
       }
       else {

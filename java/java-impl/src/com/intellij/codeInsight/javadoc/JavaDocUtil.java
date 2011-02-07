@@ -27,19 +27,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocUtil");
 
   private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
-  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
-  private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
-  private static final @NonNls String LT_ENTITY = "&lt;";
 
   private JavaDocUtil() {
   }
@@ -348,41 +343,6 @@ public class JavaDocUtil {
       }
     }
     return memberText.substring(0, parenthIndex + 1) + buffer.toString() + ")";
-  }
-
-  private static String quote(String x) {
-    if (ourToQuote.matcher(x).find()) {
-      return "\\" + x;
-    }
-
-    return x;
-  }
-
-  public static String fixupText(String docText) {
-    Matcher fixupMatcher = ourLtFixupPattern.matcher(docText);
-    LinkedList<String> secondSymbols = new LinkedList<String>();
-
-    while (fixupMatcher.find()) {
-      String s = fixupMatcher.group(1);
-
-      //[db] that's workaround to avoid internal bug
-      if (!s.equals("\\") && !secondSymbols.contains(s)) {
-        secondSymbols.addFirst(s);
-      }
-    }
-
-    for (String s : secondSymbols) {
-      String pattern = "<" + quote(s);
-
-      try {
-        docText = Pattern.compile(pattern).matcher(docText).replaceAll(LT_ENTITY + pattern);
-      }
-      catch (PatternSyntaxException e) {
-        LOG.error("Pattern syntax exception on " + pattern);
-      }
-    }
-
-    return docText;
   }
 
   public static PsiClassType[] getImplementsList(PsiClass aClass) {

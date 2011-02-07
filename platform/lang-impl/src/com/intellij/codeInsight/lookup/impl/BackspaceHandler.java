@@ -16,9 +16,8 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -45,14 +44,14 @@ public class BackspaceHandler extends EditorActionHandler {
       }
     });
 
-    if (lookup.truncatePrefix()) {
+    final CompletionProgressIndicator process = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    if (lookup.truncatePrefix(process == null || !process.isAutopopupCompletion())) {
       return;
     }
 
     if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
-      final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-      if (process instanceof CompletionProgressIndicator) {
-        ((CompletionProgressIndicator)process).scheduleRestart();
+      if (process != null) {
+        process.scheduleRestart();
         return;
       }
     }

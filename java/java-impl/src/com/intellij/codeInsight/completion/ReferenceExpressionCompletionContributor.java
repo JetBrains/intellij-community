@@ -167,7 +167,7 @@ public class ReferenceExpressionCompletionContributor {
       }), false, parameters);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
-        final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.class);
+        final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         assert item != null;
         final PsiMethod method = (PsiMethod)lookupElement.getObject();
         if (SmartCompletionDecorator.hasUnboundTypeParams(method)) {

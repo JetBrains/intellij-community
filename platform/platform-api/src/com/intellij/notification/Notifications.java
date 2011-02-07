@@ -16,6 +16,7 @@
 package com.intellij.notification;
 
 import com.intellij.ide.FrameStateManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -68,8 +69,9 @@ public interface Notifications {
       FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
         @Override
         public void run() {
+          Application app = ApplicationManager.getApplication();
           final MessageBus bus =
-            project == null ? ApplicationManager.getApplication().getMessageBus() : (project.isDisposed() ? null : project.getMessageBus());
+            project == null ? (app.isDisposed() ? null : app.getMessageBus()) : (project.isDisposed() ? null : project.getMessageBus());
           if (bus != null) {
             _notify(notification, defaultDisplayType, bus);
           }

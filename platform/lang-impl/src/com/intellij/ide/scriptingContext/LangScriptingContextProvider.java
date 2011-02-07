@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -44,5 +46,11 @@ public abstract class LangScriptingContextProvider {
   
   @Nullable
   public abstract String getDefaultDocUrl(VirtualFile file);
+  
+  @Nullable
+  public abstract String getOfflineDocUrl(String defaultDocUrl);
+  
+  @Nullable
+  public abstract String downloadOfflineDoc(Project project, String offlineDocUrl, JComponent parent);
 
 }

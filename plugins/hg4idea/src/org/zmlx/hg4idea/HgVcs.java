@@ -47,12 +47,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
-import org.zmlx.hg4idea.provider.HgChangeProvider;
-import org.zmlx.hg4idea.provider.HgDiffProvider;
-import org.zmlx.hg4idea.provider.HgHistoryProvider;
-import org.zmlx.hg4idea.provider.HgMergeProvider;
-import org.zmlx.hg4idea.provider.HgRollbackEnvironment;
+import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
@@ -134,6 +129,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public Configurable getConfigurable() {
     return new HgProjectConfigurable(projectSettings);
+  }
+
+  public HgProjectSettings getProjectSettings() {
+    return projectSettings;
   }
 
   @Override

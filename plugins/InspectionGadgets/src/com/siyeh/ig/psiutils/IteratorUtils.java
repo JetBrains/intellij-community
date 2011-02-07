@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Bas Leijdekkers
+ * Copyright 2003-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,6 @@ public class IteratorUtils {
                 CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext");
     }
 
-    public static boolean isIterator(PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, CommonClassNames.JAVA_UTIL_ITERATOR);
-    }
-
     private static class CallsIteratorNextVisitor
             extends JavaRecursiveElementVisitor {
 
@@ -91,7 +87,8 @@ public class IteratorUtils {
             super.visitMethodCallExpression(expression);
             if (checkScanner) {
                 if (!MethodCallUtils.isCallToMethod(expression,
-                        CommonClassNames.JAVA_UTIL_ITERATOR, null, SCANNER_PATTERN)) {
+                        CommonClassNames.JAVA_UTIL_ITERATOR, null,
+                        SCANNER_PATTERN)) {
                     return;
                 }
             } else {
@@ -119,7 +116,7 @@ public class IteratorUtils {
                     final PsiReferenceExpression referenceExpression =
                             (PsiReferenceExpression) qualifier;
                     final PsiElement element = referenceExpression.resolve();
-                    if (target != element) {
+                    if (!target.equals(element)) {
                         return;
                     }
                 }
