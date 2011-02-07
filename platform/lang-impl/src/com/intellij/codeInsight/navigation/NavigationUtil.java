@@ -23,7 +23,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileHelper;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +93,9 @@ public final class NavigationUtil {
     boolean openAsNative = false;
     if (elt instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
-      openAsNative = OpenFileHelper.openAsNative(virtualFile);
+      if (virtualFile != null) {
+        openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
+      }
     }
     if (openAsNative || !activatePsiElementIfOpen(elt)) {
       ((NavigationItem)elt).navigate(true);
