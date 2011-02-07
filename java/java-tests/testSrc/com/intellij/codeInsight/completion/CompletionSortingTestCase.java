@@ -30,7 +30,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
 
   protected abstract String getBasePath();
 
-  protected void checkPreferredItems(final int selected, @NonNls final String... expected) throws Exception {
+  protected void checkPreferredItems(final int selected, @NonNls final String... expected) {
     invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(selected, expected);
   }
@@ -39,7 +39,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
     myFixture.assertPreferredCompletionItems(selected, expected);
   }
 
-  protected LookupImpl invokeCompletion(final String path) throws Exception {
+  protected LookupImpl invokeCompletion(final String path) {
     myFixture.configureFromExistingVirtualFile(
       myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
     myFixture.complete(myType);

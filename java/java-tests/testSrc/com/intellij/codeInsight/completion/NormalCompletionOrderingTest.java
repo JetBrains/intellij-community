@@ -174,4 +174,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertStringItems("fromThis", "overridden", "fromSuper", "equals", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait", "wait", "wait");
   }
 
+  public void testLocalVarsOverMethods() {
+    checkPreferredItems(0, "value");
+  }
+
 }
