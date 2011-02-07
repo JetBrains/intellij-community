@@ -327,7 +327,8 @@ public class UnsupportedFeatures extends PyAnnotator {
         getHolder().createWarningAnnotation(node, "Python version 2.4 doesn't support this syntax.");
 
       Stack<PsiElement> st = new Stack<PsiElement>();       // PY-2796
-      st.push(assignedValue);
+      if (assignedValue != null)
+        st.push(assignedValue);
       while (!st.isEmpty()) {
         PsiElement el = st.pop();
         if (el instanceof PyYieldExpression)
