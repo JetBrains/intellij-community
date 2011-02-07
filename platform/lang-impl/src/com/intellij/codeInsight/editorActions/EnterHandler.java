@@ -259,8 +259,8 @@ public class EnterHandler extends BaseEnterHandler {
           final PsiElement parent = element.getParent();
 
           if (text.equals(commentContext.commenter.getDocumentationCommentPrefix()) && isDocComment(parent, commentContext.commenter) ||
-              text.startsWith(commentContext.commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment
-             ) {
+              text.startsWith(commentContext.commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment)
+          {
             PsiComment comment = isDocComment(parent, commentContext.commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
@@ -321,7 +321,7 @@ public class EnterHandler extends BaseEnterHandler {
 
         String indentInsideJavadoc = null;
         int line = myDocument.getLineNumber(myOffset);
-        if (line > 0) {
+        if (line > 0 && (commentContext.docAsterisk || commentContext.docStart)) {
           indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(myDocument, myDocument.getLineStartOffset(line - 1));
         }
         
