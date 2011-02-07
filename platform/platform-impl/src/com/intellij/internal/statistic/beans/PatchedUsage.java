@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.frameworks;
+package com.intellij.internal.statistic.beans;
 
-public class LibrariesDownloadConnectionService extends SettingsConnectionService {
+public class PatchedUsage extends UsageDescriptor {
 
-  private static final LibrariesDownloadConnectionService myInstance = new LibrariesDownloadConnectionService();
-
-  public static LibrariesDownloadConnectionService getInstance() {
-    return myInstance;
+  public PatchedUsage(UsageDescriptor descriptor) {
+    super(descriptor.getGroup(), descriptor.getKey(), descriptor.getValue());
   }
 
-  private LibrariesDownloadConnectionService() {
-    super("http://jetbrains.com/idea/download-assistant.xml", "http://frameworks.jetbrains.com");
+  public PatchedUsage(GroupDescriptor group, String key, int value) {
+    super(group, key, value);
   }
 
+  public int getDelta() {
+    return getValue();
+  }
+
+  public void addValue(int add) {
+    setValue(getValue() + add);
+  }
+
+  public void subValue(int sub) {
+    setValue(getValue() - sub);
+  }
 }

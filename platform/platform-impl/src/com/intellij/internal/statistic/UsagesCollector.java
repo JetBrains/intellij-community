@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.statistic;
+package com.intellij.internal.statistic;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,4 +27,6 @@ public abstract class UsagesCollector {
   public static ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
 
   public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project);
+
+  public abstract @NotNull String getGroupId();
 }

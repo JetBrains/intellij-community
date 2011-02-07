@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intellij.statistic.persistence;
+package com.intellij.internal.statistic.persistence;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.statistic.StatisticsUploadAssistant;
-import com.intellij.statistic.beans.GroupDescriptor;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +66,7 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
 
       String valueData = groupElement.getAttributeValue(DATA_ATTR);
       if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(valueData)) {
-        getSentUsages().addAll(StatisticsUploadAssistant.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
+        getSentUsages().addAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
       }
     }
   }
@@ -80,12 +80,12 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : StatisticsUploadAssistant.groupDescriptors(getSentUsages())
+    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.groupDescriptors(getSentUsages())
       .entrySet()) {
       Element projectElement = new Element(GROUP_TAG);
       projectElement.setAttribute(GROUP_ID_ATTR, entry.getKey().getId());
       projectElement.setAttribute(GROUP_PRIORITY_ATTR, Double.toString(entry.getKey().getPriority()));
-      projectElement.setAttribute(DATA_ATTR, StatisticsUploadAssistant.convertValueMap(entry.getValue()));
+      projectElement.setAttribute(DATA_ATTR, ConvertUsagesUtil.convertValueMap(entry.getValue()));
 
       element.addContent(projectElement);
     }

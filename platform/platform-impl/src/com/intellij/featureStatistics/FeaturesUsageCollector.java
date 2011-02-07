@@ -16,9 +16,9 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.statistic.UsagesCollector;
-import com.intellij.statistic.beans.*;
-import com.intellij.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.*;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class FeaturesUsageCollector extends UsagesCollector {
+
+  @NotNull
+  @Override
+  public String getGroupId() {
+    return "productivity";
+  }
 
   @NotNull
   @Override
@@ -37,7 +43,7 @@ public class FeaturesUsageCollector extends UsagesCollector {
       final FeatureDescriptor featureDescriptor = registry.getFeatureDescriptor(featureId);
       if (featureDescriptor != null) {
         usages.add(new UsageDescriptor(
-           GroupDescriptor.create("productivity",  GroupDescriptor.LOWER_PRIORITY), featureId, featureDescriptor.getUsageCount()));
+           GroupDescriptor.create(getGroupId(),  GroupDescriptor.LOWER_PRIORITY), featureId, featureDescriptor.getUsageCount()));
       }
     }
 

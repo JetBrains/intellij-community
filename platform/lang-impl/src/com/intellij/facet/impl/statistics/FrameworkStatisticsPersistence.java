@@ -17,7 +17,7 @@
 package com.intellij.facet.impl.statistics;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 

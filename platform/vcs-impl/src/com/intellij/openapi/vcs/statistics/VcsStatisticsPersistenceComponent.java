@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -71,7 +71,7 @@ public class VcsStatisticsPersistenceComponent extends VcsStatisticsPersistence
       if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(vcs)) {
         Set<UsageDescriptor> vcsDescriptors = new HashSet<UsageDescriptor>();
         for (String key : StringUtil.split(vcs, TOKENIZER)) {
-          vcsDescriptors.add(new UsageDescriptor(VcsUsagesCollector.getGroupId(), key, 1));
+          vcsDescriptors.add(new UsageDescriptor(VcsUsagesCollector.createGroupDescriptor(), key, 1));
         }
         getVcsUsageMap().put(projectId, vcsDescriptors);
       }

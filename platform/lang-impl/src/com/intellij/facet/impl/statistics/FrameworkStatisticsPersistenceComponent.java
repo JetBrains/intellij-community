@@ -16,6 +16,7 @@
 
 package com.intellij.facet.impl.statistics;
 
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -25,7 +26,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -70,7 +70,7 @@ public class FrameworkStatisticsPersistenceComponent extends FrameworkStatistics
       if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
         Set<UsageDescriptor> frameworkDescriptors = new HashSet<UsageDescriptor>();
         for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-          frameworkDescriptors.add(new UsageDescriptor(FrameworkUsagesCollector.getGroupId(), key, 1));
+          frameworkDescriptors.add(new UsageDescriptor(FrameworkUsagesCollector.getGroupDescriptor(), key, 1));
         }
         getFrameworks().put(projectId, frameworkDescriptors);
       }

@@ -20,9 +20,9 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.statistic.UsagesCollector;
-import com.intellij.statistic.beans.GroupDescriptor;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FrameworkUsagesCollector extends UsagesCollector {
-  private static final String GROUP_ID = "frameworks";
+  public static final String GROUP_ID = "frameworks";
 
   public static void persistProjectUsages(@NotNull Project project) {
     persistProjectUsages(project, getProjectUsages(project));
@@ -51,12 +51,12 @@ public class FrameworkUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages() {
+  public Set<UsageDescriptor> getApplicationUsages() {
     return getApplicationUsages(FrameworkStatisticsPersistenceComponent.getInstance());
   }
 
   @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages(@NotNull final FrameworkStatisticsPersistence persistence) {
+  public Set<UsageDescriptor> getApplicationUsages(@NotNull final FrameworkStatisticsPersistence persistence) {
     final Map<String, Integer> facets = new HashMap<String, Integer>();
     
     for (Set<UsageDescriptor> frameworks : persistence.getFrameworks().values()) {
@@ -70,12 +70,18 @@ public class FrameworkUsagesCollector extends UsagesCollector {
     return ContainerUtil.map2Set(facets.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(Map.Entry<String, Integer> facet) {
-        return new UsageDescriptor(getGroupId(), facet.getKey(), facet.getValue());
+        return new UsageDescriptor(getGroupDescriptor(), facet.getKey(), facet.getValue());
       }
     });
   }
 
-  public static GroupDescriptor getGroupId() {
+  @NotNull
+  @Override
+  public String getGroupId() {
+    return GROUP_ID;
+  }
+
+  public static GroupDescriptor getGroupDescriptor() {
     return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
   }
 
@@ -92,14 +98,14 @@ public class FrameworkUsagesCollector extends UsagesCollector {
     final Set<String> facets = new HashSet<String>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-        facets.add(facet.getName());
+        facets.add(facet.getType().getStringId());
       }
     }
 
     return ContainerUtil.map2Set(facets, new Function<String, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(String facet) {
-        return new UsageDescriptor(getGroupId(), facet, 1);
+        return new UsageDescriptor(getGroupDescriptor(), facet, 1);
       }
     });
   }
