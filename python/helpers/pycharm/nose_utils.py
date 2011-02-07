@@ -76,8 +76,6 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
         TextTestResult.addSuccess(self, test)
 
     def addFailure(self, test, err):
-        TextTestResult.addFailure(self, test, err)
-
         err = self.formatErr(err)
 
         self.messages.testFailed(self.getTestName(test),
