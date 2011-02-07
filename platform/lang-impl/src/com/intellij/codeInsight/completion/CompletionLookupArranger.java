@@ -29,6 +29,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Comparator;
 import java.util.List;
@@ -107,7 +108,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public LookupItemWeightComparable getRelevance(LookupElement item) {
-    LookupItemWeightComparable result = item.getUserData(RELEVANCE_KEY);
+    LookupItemWeightComparable result = getCachedRelevance(item);
     if (result != null) return result;
 
     final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
@@ -118,4 +119,12 @@ public class CompletionLookupArranger extends LookupArranger {
     return result;
   }
 
+  public static LookupItemWeightComparable getCachedRelevance(LookupElement item) {
+    return item.getUserData(RELEVANCE_KEY);
+  }
+
+  @TestOnly
+  public static void clearRelevanceCache(LookupElement item) {
+    item.putUserData(RELEVANCE_KEY, null);
+  }
 }

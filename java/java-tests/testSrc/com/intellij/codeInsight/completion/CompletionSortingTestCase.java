@@ -53,7 +53,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
 
   protected static void refreshSorting(final LookupImpl lookup) {
     for (final LookupElement item : lookup.getItems()) {
-      item.putUserData(CompletionLookupArranger.RELEVANCE_KEY, null);
+      CompletionLookupArranger.clearRelevanceCache(item);
     }
     lookup.setSelectionTouched(false);
     lookup.resort();
