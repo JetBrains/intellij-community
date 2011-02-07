@@ -198,7 +198,14 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, login, password);
+      String url;
+      try {
+        url = hgUrl.asString(false);
+      }
+      catch (URISyntaxException e) {
+        url = null;
+      }
+      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, url, login, password);
       dialog.show();
       if (dialog.isOK()) {
         userName = dialog.getUsername();

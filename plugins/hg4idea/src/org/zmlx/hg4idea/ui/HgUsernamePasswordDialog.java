@@ -23,10 +23,11 @@ import javax.swing.*;
 public class HgUsernamePasswordDialog extends DialogWrapper {
   private AuthenticationPanel authPanel;
 
-  public HgUsernamePasswordDialog(Project project, String login, String password) {
+  public HgUsernamePasswordDialog(Project project, String url, String login, String password) {
     super(project, false);
     setTitle(HgVcsMessages.message("hgidea.dialog.login.password.required"));
-    authPanel = new AuthenticationPanel(null, login, password, !StringUtils.isBlank(password));
+    final String desc = (url == null ? null : "Login to " + url);
+    authPanel = new AuthenticationPanel(desc, login, password, false);
     init();
   }
 
