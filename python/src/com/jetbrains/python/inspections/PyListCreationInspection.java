@@ -49,6 +49,7 @@ public class PyListCreationInspection extends PyInspection {
           statement = expressionStatement.getExpression();
         ListCreationQuickFix quickFix = null;
         boolean availableFix = false;
+loop:
         while (statement instanceof PyCallExpression) {
           PyCallExpression callExpression = (PyCallExpression)statement;
           PyExpression callee = callExpression.getCallee();
@@ -59,6 +60,8 @@ public class PyListCreationInspection extends PyInspection {
               PyArgumentList argList = callExpression.getArgumentList();
               if (argList != null) {
                 for (PyExpression argument : argList.getArguments()) {
+                  if (argument.getText().equals(name))
+                    break loop;
                   if (!availableFix) {
                     quickFix = new ListCreationQuickFix(node);
                     availableFix = true;
