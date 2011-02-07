@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.internal.statistic.connect;
 
-package com.intellij.statistic.persistence;
 
-import com.intellij.statistic.beans.PatchedUsage;
-import com.intellij.statistic.beans.UsageDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+public interface StatisticsDataSender {
 
-public abstract class SentUsagesPersistence {
-
-  public abstract void persistPatch(@NotNull Set<PatchedUsage> patchedDescriptors);
-
-  @NotNull
-  public abstract Set<UsageDescriptor> getSentUsages();
+   void send(@NotNull String url, @NotNull String content) throws StatServiceException;
 }

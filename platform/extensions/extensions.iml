@@ -16,7 +16,7 @@
     <orderEntry type="library" scope="TEST" name="JMock1" level="project" />
     <orderEntry type="library" scope="TEST" name="asm" level="project" />
     <orderEntry type="library" scope="TEST" name="CGLIB" level="project" />
-    <orderEntry type="library" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
   </component>
   <component name="copyright">
     <Base>

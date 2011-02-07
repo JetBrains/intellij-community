@@ -469,7 +469,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           }
         }
         EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).drainDocumentQueue();
+        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
         if (manager instanceof FileDocumentManagerImpl) {

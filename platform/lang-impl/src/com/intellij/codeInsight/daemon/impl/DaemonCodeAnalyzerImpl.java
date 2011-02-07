@@ -159,7 +159,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     result.addAll(action1.getHighlights());
 
-    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength());
+    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0,
+                                                            psiFile.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
     action3.doCollectInformation(progress);
 
     result.addAll(action3.getHighlights());

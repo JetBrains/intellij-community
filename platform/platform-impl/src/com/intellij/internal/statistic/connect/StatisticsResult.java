@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.frameworks;
+package com.intellij.internal.statistic.connect;
 
-public class LibrariesDownloadConnectionService extends SettingsConnectionService {
+public class StatisticsResult {
+  private ResultCode code;
+  private String description;
 
-  private static final LibrariesDownloadConnectionService myInstance = new LibrariesDownloadConnectionService();
+    public StatisticsResult(ResultCode code, String description) {
+        this.code = code;
+        this.description = description;
+    }
 
-  public static LibrariesDownloadConnectionService getInstance() {
-    return myInstance;
-  }
+    public String getDescription() {
+        return description;
+    }
 
-  private LibrariesDownloadConnectionService() {
-    super("http://jetbrains.com/idea/download-assistant.xml", "http://frameworks.jetbrains.com");
-  }
+    public ResultCode getCode() {
+        return code;
+    }
+
+    public enum ResultCode {SEND, NOT_PERMITTED, ERROR_IN_CONFIG, NOTHING_TO_SEND, SEND_WITH_ERRORS}
+
 
 }
