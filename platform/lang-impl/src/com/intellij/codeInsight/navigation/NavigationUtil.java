@@ -23,6 +23,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileHelper;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -89,10 +90,17 @@ public final class NavigationUtil {
   }
 
   public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
-    if (!activatePsiElementIfOpen(elt)) {
+    boolean openAsNative = false;
+    if (elt instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
+      openAsNative = OpenFileHelper.openAsNative(virtualFile);
+    }
+    if (openAsNative || !activatePsiElementIfOpen(elt)) {
       ((NavigationItem)elt).navigate(true);
     }
   }
+
+
 
   private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt) {
     if (!elt.isValid()) return false;

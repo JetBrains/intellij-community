@@ -112,4 +112,6 @@
   <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
 
   <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
+
+  <extensionPoint name="openFileDescriptorHelper" interface="com.intellij.openapi.fileEditor.OpenFileHelper"/>
 </extensionPoints>

@@ -119,7 +119,12 @@ public class OpenFileDescriptor implements Navigatable {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
     if (type == null || !myFile.isValid()) return false;
 
-    if (type instanceof NativeFileType) {
+    boolean openAsNative = OpenFileHelper.openAsNative(myFile);
+
+    if (!openAsNative) {
+      openAsNative = type instanceof NativeFileType;
+    }
+    if (openAsNative) {
       return NativeFileType.openAssociatedApplication(myFile);
     }
 
