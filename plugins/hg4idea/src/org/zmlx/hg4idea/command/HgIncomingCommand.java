@@ -14,26 +14,10 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
-
-public class HgIncomingCommand extends HgChangesetsCommand {
+public class HgIncomingCommand extends HgRemoteChangesetsCommand {
 
   public HgIncomingCommand(Project project) {
     super(project, "incoming");
   }
 
-  @Override
-  protected void addArguments(List<String> args) {
-    args.add("--newest-first");
-  }
-
-  @Override
-  protected boolean isSilentCommand() {
-    return true;
-  }
-
-  @Override
-  protected boolean isAuthenticationNeeded() {
-    return true;
-  }
 }
