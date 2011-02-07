@@ -452,7 +452,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return policy;
     }
 
-    final LookupItem item = element.as(LookupItem.class);
+    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item != null) {
       return item.getAutoCompletionPolicy();
     }
@@ -505,8 +505,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       protected void run(Result result) throws Throwable {
         String uniqueText = _uniqueText;
 
-        if (item.getObject() instanceof DeferredUserLookupValue && item.as(LookupItem.class) != null) {
-          if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.class), context.getProject())) {
+        if (item.getObject() instanceof DeferredUserLookupValue && item.as(LookupItem.CLASS_CONDITION_KEY) != null) {
+          if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), context.getProject())) {
             return;
           }
 

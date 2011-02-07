@@ -503,13 +503,13 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
-    TypedLookupItem typed = typedFrom(element);
+    TypedLookupItem typed = element.as(TypedLookupItem.CLASS_CONDITION_KEY);
     if (typed != null) {
       return typed.getType();
     }
 
     final PsiType qualifierType = getPsiType(element.getObject());
-    final LookupItem lookupItem = LookupItem.from(element);
+    final LookupItem lookupItem = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem != null) {
       final Object o = lookupItem.getAttribute(LookupItem.TYPE);
       if (o instanceof PsiType) {
@@ -522,16 +522,6 @@ public class JavaCompletionUtil {
       }
     }
     return qualifierType;
-  }
-
-  public static @Nullable TypedLookupItem typedFrom(LookupElement element) {
-    TypedLookupItem typed = null;
-    if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
-    else if (element instanceof LookupElementDecorator) {
-      element = ((LookupElementDecorator)element).getDelegate();
-      if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
-    }
-    return typed;
   }
 
   @Nullable
@@ -605,7 +595,7 @@ public class JavaCompletionUtil {
         if (o instanceof PsiMember) {
           mentioned.add((PsiMember)o);
         }
-        set.add(mayHighlight ? highlightIfNeeded(qualifierType, item) : item);
+        set.add(mayHighlight ? highlightIfNeeded(qualifierType, item, o) : item);
       }
     }
 
@@ -668,7 +658,8 @@ public class JavaCompletionUtil {
     for (CompletionElement completionElement : processor.getResults()) {
       final LookupElement item = createLookupElement(completionElement, castTo);
       if (item != null) {
-        set.add(highlightIfNeeded(castTo, castQualifier(project, item, castItem)));
+        LookupElement item1 = castQualifier(project, item, castItem);
+        set.add(highlightIfNeeded(castTo, item1, item1.getObject()));
       }
     }
     return castTo;
@@ -706,11 +697,10 @@ public class JavaCompletionUtil {
     });
   }
 
-  private static LookupElement highlightIfNeeded(@NotNull PsiType qualifierType, @NotNull LookupElement item) {
-    Object o = item.getObject();
+  public static LookupElement highlightIfNeeded(PsiType qualifierType, LookupElement item, Object object) {
     if (qualifierType instanceof PsiArrayType) {
-      if (o instanceof PsiField || o instanceof PsiMethod) { //length and clone()
-        PsiElement parent = ((PsiElement)o).getParent();
+      if (object instanceof PsiField || object instanceof PsiMethod) { //length and clone()
+        PsiElement parent = ((PsiElement)object).getParent();
         if (parent instanceof PsiClass && parent.getContainingFile().getVirtualFile() == null) { //yes, they're a bit dummy
           return highlight(item);
         }
@@ -718,8 +708,8 @@ public class JavaCompletionUtil {
     }
     else if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
-      if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
-        PsiElement parent = ((PsiElement)o).getParent();
+      if (object instanceof PsiField || object instanceof PsiMethod || object instanceof PsiClass) {
+        PsiClass parent = ((PsiMember)object).getContainingClass();
         if (parent != null && parent.equals(qualifierClass)) {
           return highlight(item);
         }
@@ -728,14 +718,15 @@ public class JavaCompletionUtil {
     return item;
   }
 
-  private static LookupElementDecorator<LookupElement> highlight(LookupElement decorator) {
-    return LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
-      @Override
-      public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-        element.getDelegate().renderElement(presentation);
-        presentation.setItemTextBold(true);
-      }
-    });
+  private static LookupElement highlight(LookupElement decorator) {
+    return PrioritizedLookupElement.withGrouping(
+      LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+        @Override
+        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          element.getDelegate().renderElement(presentation);
+          presentation.setItemTextBold(true);
+        }
+      }), 1);
   }
 
   private static LookupItem<?> createLookupElement(CompletionElement completionElement, PsiType qualifierType) {
@@ -974,7 +965,7 @@ public class JavaCompletionUtil {
 
     if (smart || needRightParenth && addCompletionChar) {
       TailType toInsert = tailType;
-      LookupItem lookupItem = item.as(LookupItem.class);
+      LookupItem lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
       if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
         if (!hasTail && item.getObject() instanceof PsiMethod && ((PsiMethod)item.getObject()).getReturnType() == PsiType.VOID) {
           PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();

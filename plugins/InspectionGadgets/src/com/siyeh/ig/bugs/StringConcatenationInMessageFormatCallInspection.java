@@ -18,13 +18,13 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -224,7 +224,8 @@ public class StringConcatenationInMessageFormatCallInspection
                 return false;
             }
             final PsiClass aClass = (PsiClass) target;
-            return ClassUtils.isSubclass(aClass, "java.text.MessageFormat");
+            return InheritanceUtil.isInheritor(aClass,
+                    "java.text.MessageFormat");
         }
     }
 }

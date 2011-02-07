@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.NativeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,7 +120,7 @@ public class OpenFileDescriptor implements Navigatable {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
     if (type == null || !myFile.isValid()) return false;
 
-    if (type instanceof NativeFileType) {
+    if (type instanceof INativeFileType) {
       return NativeFileType.openAssociatedApplication(myFile);
     }
 

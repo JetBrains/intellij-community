@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -89,10 +90,19 @@ public final class NavigationUtil {
   }
 
   public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
-    if (!activatePsiElementIfOpen(elt)) {
+    boolean openAsNative = false;
+    if (elt instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
+      if (virtualFile != null) {
+        openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
+      }
+    }
+    if (openAsNative || !activatePsiElementIfOpen(elt)) {
       ((NavigationItem)elt).navigate(true);
     }
   }
+
+
 
   private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt) {
     if (!elt.isValid()) return false;

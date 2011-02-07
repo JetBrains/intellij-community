@@ -21,9 +21,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a module content root.
+ * You can get existing entries with {@link com.intellij.openapi.roots.ModuleRootModel#getContentEntries()} or
+ * create a new one with {@link ModifiableRootModel#addContentEntry(com.intellij.openapi.vfs.VirtualFile)}.
  *
  * @author dsl
  * @see ModuleRootModel#getContentEntries()
+ * @see ModifiableRootModel#addContentEntry(com.intellij.openapi.vfs.VirtualFile)
  */
 public interface ContentEntry extends Synthetic {
   /**

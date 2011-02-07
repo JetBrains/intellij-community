@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,22 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
 
+    @NonNls
     private static final Set<String> ASSERT_METHODS = new HashSet();
 
     static {
@@ -42,21 +44,23 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
     @Nls
     @NotNull
     public String getDisplayName() {
-        return "Constant JUnit assert argument";
+        return InspectionGadgetsBundle.message(
+                "constant.junit.assert.argument.display.name");
     }
 
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "Argument <code>#ref</code> is constant";
+        return InspectionGadgetsBundle.message(
+                "constant.junit.assert.argument.problem.descriptor");
     }
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ConstantJUnitAssertArugmentVisitor();
+        return new ConstantJUnitAssertArgumentVisitor();
     }
 
-    private static class ConstantJUnitAssertArugmentVisitor
+    private static class ConstantJUnitAssertArgumentVisitor
             extends BaseInspectionVisitor {
 
         @Override
@@ -74,8 +78,10 @@ public class ConstantJUnitAssertArgumentInspection extends BaseInspection {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if (!ClassUtils.isSubclass(containingClass, "junit.framework.Assert") &&
-                    !ClassUtils.isSubclass(containingClass, "org.junit.Assert")) {
+            if (!InheritanceUtil.isInheritor(containingClass,
+                    "junit.framework.Assert") &&
+                    !InheritanceUtil.isInheritor(containingClass,
+                            "org.junit.Assert")) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

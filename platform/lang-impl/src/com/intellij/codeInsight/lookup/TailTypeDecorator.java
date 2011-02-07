@@ -46,7 +46,7 @@ public abstract class TailTypeDecorator<T extends LookupElement> extends LookupE
     final LookupElement delegate = getDelegate();
     final TailType tailType = computeTailType(context);
 
-    final LookupItem lookupItem = delegate.as(LookupItem.class);
+    final LookupItem lookupItem = delegate.as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem != null && tailType != null) {
       lookupItem.setTailType(TailType.UNKNOWN);
     }

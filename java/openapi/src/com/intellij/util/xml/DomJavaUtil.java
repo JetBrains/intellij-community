@@ -16,6 +16,9 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -32,7 +35,7 @@ public class DomJavaUtil {
   }
 
   @Nullable
-  public static PsiClass findClass(@Nullable String name, @NotNull final PsiFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
+  public static PsiClass findClass(@Nullable String name, @NotNull PsiFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
     if (name == null) return null;
     if (name.indexOf('$')>=0) name = name.replace('$', '.');
 
@@ -40,7 +43,16 @@ public class DomJavaUtil {
     if (searchScope == null) {
 
       if (module != null) {
-        scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
+        file = file.getOriginalFile();
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) {
+          scope = GlobalSearchScope.moduleRuntimeScope(module, true);
+        }
+        else {
+          ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
+          boolean tests = fileIndex.isInTestSourceContent(virtualFile);
+          scope = module.getModuleRuntimeScope(tests).union(module.getModuleWithDependenciesAndLibrariesScope(tests));
+        }
       }
       else {
         scope = file.getResolveScope();

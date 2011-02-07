@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.statistics;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import com.intellij.statistic.UsagesCollector;
-import com.intellij.statistic.beans.GroupDescriptor;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -49,12 +49,12 @@ public class VcsUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages() {
+  public Set<UsageDescriptor> getApplicationUsages() {
     return getApplicationUsages(VcsStatisticsPersistenceComponent.getInstance());
   }
 
   @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
+  public Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
     final Map<String, Integer> vcsUsagesMap = new HashMap<String, Integer>();
 
     for (Set<UsageDescriptor> descriptors : persistence.getVcsUsageMap().values()) {
@@ -68,13 +68,14 @@ public class VcsUsagesCollector extends UsagesCollector {
     return ContainerUtil.map2Set(vcsUsagesMap.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(Map.Entry<String, Integer> vcsUsage) {
-        return new UsageDescriptor(getGroupId(), vcsUsage.getKey(), vcsUsage.getValue());
+        return new UsageDescriptor(createGroupDescriptor(), vcsUsage.getKey(), vcsUsage.getValue());
       }
     });
   }
 
-  public static GroupDescriptor getGroupId() {
-    return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
+  @NotNull
+  public String getGroupId() {
+    return GROUP_ID;
   }
 
   @NotNull
@@ -90,9 +91,13 @@ public class VcsUsagesCollector extends UsagesCollector {
     return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllVcss(), new Function<VcsDescriptor, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(VcsDescriptor descriptor) {
-        return new UsageDescriptor(getGroupId(), descriptor.getName(), 1);
+        return new UsageDescriptor(createGroupDescriptor(), descriptor.getName(), 1);
       }
     });
+  }
+
+  public static GroupDescriptor createGroupDescriptor() {
+    return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
   }
 }
 

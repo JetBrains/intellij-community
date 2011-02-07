@@ -19,7 +19,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -27,15 +26,12 @@ import org.jetbrains.annotations.Nullable;
 public class PriorityWeigher extends CompletionWeigher {
   @Override
   public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
-    final PrioritizedLookupElement prioritized = PrioritizedLookupElement.from(element);
+    final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     if (prioritized != null) {
       return -prioritized.getPriority();
     }
 
-    final LookupItem item = LookupItem.from(element);
+    final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item != null) {
       return -item.getPriority();
     }

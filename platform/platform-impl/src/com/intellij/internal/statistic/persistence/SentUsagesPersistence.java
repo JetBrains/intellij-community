@@ -13,29 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.statistic.beans;
 
+package com.intellij.internal.statistic.persistence;
+
+import com.intellij.internal.statistic.beans.PatchedUsage;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class PatchedUsage extends UsageDescriptor {
+import java.util.Set;
 
-  public PatchedUsage(@NotNull UsageDescriptor descriptor) {
-    super(descriptor.getGroup(), descriptor.getKey(), descriptor.getValue());
-  }
+public abstract class SentUsagesPersistence {
 
-  public PatchedUsage(@NotNull GroupDescriptor group, @NotNull String key, int value) {
-    super(group, key, value);
-  }
+  public abstract void persistPatch(@NotNull Set<PatchedUsage> patchedDescriptors);
 
-  public int getDelta() {
-    return getValue();
-  }
-
-  public void addValue(int add) {
-    setValue(getValue() + add);
-  }
-
-  public void subValue(int sub) {
-    setValue(getValue() - sub);
-  }
+  @NotNull
+  public abstract Set<UsageDescriptor> getSentUsages();
 }

@@ -16,9 +16,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.statistic.UsagesCollector;
-import com.intellij.statistic.beans.GroupDescriptor;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,18 +27,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class PluginsUsagesCollector extends UsagesCollector {
-  private static final String GROUP_ID = "plugins";
+  private static final String GROUP_ID = "disabled-plugins";
 
-  public static GroupDescriptor getGroupId() {
-    return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
+  @NotNull
+  public String getGroupId() {
+    return GROUP_ID;
   }
 
   @NotNull
   public Set<UsageDescriptor> getUsages(@Nullable Project project) {
-    return ContainerUtil.map2Set(PluginManager.getPlugins(), new Function<IdeaPluginDescriptor, UsageDescriptor>() {
+    return ContainerUtil.map2Set(PluginManager.getDisabledPlugins(), new Function<String, UsageDescriptor>() {
       @Override
-      public UsageDescriptor fun(IdeaPluginDescriptor descriptor) {
-        return new UsageDescriptor(getGroupId(), descriptor.getName(), 1);
+      public UsageDescriptor fun(String descriptor) {
+        return new UsageDescriptor(GroupDescriptor.create(getGroupId(), GroupDescriptor.HIGHER_PRIORITY), descriptor, 1);
       }
     });
   }

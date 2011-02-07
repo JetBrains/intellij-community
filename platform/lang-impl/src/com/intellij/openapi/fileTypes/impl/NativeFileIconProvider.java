@@ -17,8 +17,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.FileIconProvider;
-import com.intellij.openapi.fileTypes.NativeFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;

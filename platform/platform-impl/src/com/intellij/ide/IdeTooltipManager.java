@@ -66,7 +66,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Runnable myHideRunnable;
 
   private JBPopupFactory myPopupFactory;
-  private JEditorPane myTipLabel;
 
   private boolean myShowDelay = true;
 
@@ -176,9 +175,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
         JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
 
-        myTipLabel = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
-
-        setTipComponent(myTipLabel);
+        setTipComponent(initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane));
         return true;
       }
     }.setToCenter(toCenter);
@@ -344,7 +341,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useSystem;
   }
 
-  private boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;

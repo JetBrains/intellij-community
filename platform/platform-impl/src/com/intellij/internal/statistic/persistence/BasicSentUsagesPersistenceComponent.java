@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.statistic.persistence;
+package com.intellij.internal.statistic.persistence;
 
-import com.intellij.statistic.StatisticsUploadAssistant;
-import com.intellij.statistic.beans.PatchedUsage;
-import com.intellij.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.beans.PatchedUsage;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
 
   public void persistPatch(@NotNull Set<PatchedUsage> patchedDescriptors) {
     for (PatchedUsage patchedUsage : patchedDescriptors) {
-      UsageDescriptor usageDescriptor = StatisticsUploadAssistant.findDescriptor(mySentDescriptors, patchedUsage.getId());
+      UsageDescriptor usageDescriptor = StatisticsUploadAssistant.findDescriptor(mySentDescriptors, Pair.create(patchedUsage.getGroup(), patchedUsage.getKey()));
       if (usageDescriptor != null) {
         usageDescriptor.setValue(usageDescriptor.getValue() + patchedUsage.getDelta());
       }

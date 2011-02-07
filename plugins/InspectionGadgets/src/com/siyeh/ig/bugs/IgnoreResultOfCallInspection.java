@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.ui.*;
+import com.siyeh.ig.ui.ToggleAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +154,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
                     continue;
                 }
                 final String className = classNames.get(i);
-                if (!ClassUtils.isSubclass(aClass, className)) {
+                if (!InheritanceUtil.isInheritor(aClass, className)) {
                     continue;
                 }
                 registerMethodCallError(call, aClass);
@@ -198,7 +198,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         JCheckBox nonLibraryCheckbox;
 
         Form(){
-            super();
             addButton.setAction(new AddAction(table));
             removeButton.setAction(new RemoveAction(table));
             nonLibraryCheckbox.setAction(new ToggleAction(

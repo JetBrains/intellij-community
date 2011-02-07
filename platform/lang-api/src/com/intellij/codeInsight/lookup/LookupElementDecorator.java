@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -108,9 +109,9 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public <T> T as(Class<T> aClass) {
-    final T t = super.as(aClass);
-    return t == null ? myDelegate.as(aClass) : t;
+  public <T> T as(ClassConditionKey<T> conditionKey) {
+    final T t = super.as(conditionKey);
+    return t == null ? myDelegate.as(conditionKey) : t;
   }
   
   public boolean isCaseSensitive() {

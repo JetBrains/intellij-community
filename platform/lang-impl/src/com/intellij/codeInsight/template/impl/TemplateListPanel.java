@@ -35,6 +35,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
@@ -494,6 +495,17 @@ class TemplateListPanel extends JPanel {
     myTree.setSelectionInterval(selected, selected);
 
     updateTemplateTextArea();
+
+    List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+    TreePath[] selectedPaths = myTree.getSelectionPaths();
+    ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myTreeRoot);
+    TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
+    if (selectedPaths != null) {
+      myTree.setSelectionPaths(selectedPaths);
+    }
+
+    myTree.validate();
+    myTree.repaint();
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {

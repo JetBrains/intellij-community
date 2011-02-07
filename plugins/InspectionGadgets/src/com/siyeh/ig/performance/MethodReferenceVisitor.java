@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
     private final PsiMember m_method;
 
     MethodReferenceVisitor(PsiMember method){
-        super();
         m_method = method;
     }
 
@@ -40,7 +39,8 @@ class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
         super.visitElement(element);
     }
 
-    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
+    @Override public void visitReferenceElement(
+            PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
         final PsiElement resolvedElement = reference.resolve();
         if(!(resolvedElement instanceof PsiClass)){
@@ -77,7 +77,8 @@ class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-    @Override public void visitThisExpression(@NotNull PsiThisExpression expression){
+    @Override public void visitThisExpression(
+            @NotNull PsiThisExpression expression){
         super.visitThisExpression(expression);
         m_referencesStaticallyAccessible = false;
     }
@@ -91,7 +92,7 @@ class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
         final PsiClass containingClass = member.getContainingClass();
-        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
+        return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
                 containingClass, true);
     }
 }

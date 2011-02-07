@@ -18,9 +18,9 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PsiTypeLookupItem extends LookupItem {
+  public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
+
   public PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString) {
     super(o, lookupString);
   }
@@ -129,16 +131,6 @@ public class PsiTypeLookupItem extends LookupItem {
 
     }
     return new LookupItem(type, type.getPresentableText());
-  }
-  
-  public static @Nullable PsiTypeLookupItem from(LookupElement element) {
-    if (element instanceof PsiTypeLookupItem) return (PsiTypeLookupItem)element;
-    else if (element instanceof LookupElementDecorator) {
-      element = ((LookupElementDecorator)element).getDelegate();
-      if (element instanceof PsiTypeLookupItem) return (PsiTypeLookupItem)element;
-    }
-    
-    return null;
   }
 
   @Override

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +43,8 @@ import java.util.Set;
  * This class represents an item of a lookup list.
  */
 public class LookupItem<T> extends MutableLookupElement<T> implements Comparable {
+  public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
+
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object ICON_ATTR = Key.create("icon");
   public static final Object TYPE_TEXT_ATTR = Key.create("typeText");
@@ -358,24 +361,8 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myAllLookupStrings;
   }
 
-  public void copyAttributes(final LookupItem item) {
-    if (myAttributes == null) {
-      if (item.myAttributes == null) return;
-      myAttributes = new HashMap<Object, Object>(5);
-    }
-    myAttributes.putAll(item.myAttributes);
-  }
-
   @Override
   public boolean isCaseSensitive() {
     return !Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE));
-  }
-  
-  public static @Nullable LookupItem from(LookupElement lookupElement) {
-    if (lookupElement instanceof LookupElementDecorator) {
-      lookupElement = ((LookupElementDecorator)lookupElement).getDelegate();
-    }
-    if (lookupElement instanceof LookupItem) return (LookupItem)lookupElement;
-    return null;
   }
 }

@@ -1680,8 +1680,12 @@ public class CompileDriver {
         }
         if (LOG.isDebugEnabled() || ourDebugMode) {
           if (!toDelete.isEmpty()) {
-            final String message = "Found items to delete, compiler " + compiler.getDescription();
-            LOG.debug(message);
+            final StringBuilder message = new StringBuilder();
+            message.append("Found items to delete, compiler ").append(compiler.getDescription());
+            for (Trinity<File, String, Boolean> trinity : toDelete) {
+              message.append("\n").append(trinity.getFirst());
+            }
+            LOG.debug(message.toString());
             if (ourDebugMode) {
               System.out.println(message);
             }
