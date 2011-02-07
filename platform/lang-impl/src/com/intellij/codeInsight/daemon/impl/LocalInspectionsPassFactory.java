@@ -55,7 +55,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument()
     );
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), visibleRange){
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true){
       List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
         List<LocalInspectionTool> tools = super.getInspectionTools(profile);
         List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());

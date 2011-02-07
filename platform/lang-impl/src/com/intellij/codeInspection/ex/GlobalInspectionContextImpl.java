@@ -537,7 +537,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
         if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
-        final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
+        final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
+                                                                   file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
         try {
           final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();
           for (Tools tool : localTools) {
@@ -546,7 +547,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
               lTools.add(enabledTool);
             }
           }
-          pass.doInspectInBatch((InspectionManagerEx)manager, lTools, true);
+          pass.doInspectInBatch((InspectionManagerEx)manager, lTools);
         }
         catch (ProcessCanceledException e) {
           throw e;
