@@ -51,6 +51,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   private final List<Lib> myLibraries = new ArrayList<Lib>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
+  private LanguageLevel myLanguageLevel = null;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(StdModuleTypes.JAVA, fixtureBuilder);
@@ -61,8 +62,9 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   }
 
   @Override
-  public JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel) {
-    throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
+  public JavaModuleFixtureBuilder setLanguageLevel(final LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+    return this;
   }
 
   @Override
@@ -144,9 +146,13 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
       model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
     }
 
-    if (myMockJdkLevel == MockJdkLevel.jdk15) {
+    if (myLanguageLevel != null) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+    }
+    else if (myMockJdkLevel == MockJdkLevel.jdk15) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
+
     model.commit();
 
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -160,7 +166,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   @Override
   protected void setupRootModel(ModifiableRootModel rootModel) {
     if (myOutputPath != null) {
-      new File(myOutputPath).mkdirs();
+      assert new File(myOutputPath).mkdirs() : myOutputPath;
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
       assert virtualFile != null : "cannot find output path: " + myOutputPath;
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
@@ -168,7 +174,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
     }
     if (myTestOutputPath != null) {
-      new File(myTestOutputPath).mkdirs();
+      assert new File(myTestOutputPath).mkdirs() : myTestOutputPath;
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTestOutputPath);
       assert virtualFile != null : "cannot find test output path: " + myTestOutputPath;
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(virtualFile);
