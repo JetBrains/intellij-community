@@ -72,7 +72,7 @@ binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
 })
 
 binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> usedModules = project.modules.values()//.findAll {it["used"] != null}
+  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
@@ -122,7 +122,7 @@ libraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", v
 libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.3.0.jar", version: "2.3.0", license: "Apache 2.0", url: "http://lucene.apache.org/java")
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
-libraryLicense(name: "Ganymed", version: "bundled with SVNKit", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
+libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
 libraryLicense(name: "Guava", version: "R6", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Gradle API", libraryName: "gradle-open-api-0.8.jar", version: "0.8", license: "Apache 2.0", url: "http://www.gradle.org/")
 libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
@@ -150,7 +150,7 @@ libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", vers
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
-libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2-build213.jar", version: "build 213", license: "BSD style (see LICENSE.txt in trilead-ssh-build213.jar)", url: "http://www.trilead.com/SSH_Library/")
+libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
 libraryLicense(name: "Velocity", version: "1.3", license: "Apache", url: "http://velocity.apache.org/", licenseUrl: "http://velocity.apache.org/index.html")
 libraryLicense(name: "winp", version: "1.14", license: "MIT", url: "http://winp.dev.java.net/", licenseUrl: "https://winp.dev.java.net/license.html")
