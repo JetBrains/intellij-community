@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module-library" exported="">
