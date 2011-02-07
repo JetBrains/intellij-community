@@ -341,7 +341,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useSystem;
   }
 
-  private boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;

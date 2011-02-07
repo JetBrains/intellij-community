@@ -16,8 +16,10 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
@@ -61,6 +63,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       Window eventWindow = me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
       final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
       if (eventWindow != thisGlassWindow) return false;
+    }
+
+
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
+      if (ApplicationManager.getApplication() != null) {
+        IdeTooltipManager.getInstance().hideCurrent((MouseEvent)e, null, null);
+      }
     }
 
     boolean dispatched;
