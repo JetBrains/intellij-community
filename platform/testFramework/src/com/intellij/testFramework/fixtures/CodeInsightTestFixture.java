@@ -367,4 +367,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testFolding(String fileName);
   void testFoldingWithCollapseStatus(String fileName);
+
+  void assertPreferredCompletionItems(int selected, @NonNls String... expected);
 }

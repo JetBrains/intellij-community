@@ -10,11 +10,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author peter
  */
@@ -41,30 +36,12 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   }
 
   protected void assertPreferredItems(final int selected, @NonNls final String... expected) {
-    final LookupImpl lookup = getLookup();
-    final JList list = lookup.getList();
-    final List<LookupElement> model = lookup.getItems();
-    final List<String> actual = new ArrayList<String>();
-    final int count = lookup.getPreferredItemsCount();
-    for (int i = 0; i < count; i++) {
-      actual.add(model.get(i).getLookupString());
-    }
-    if (!actual.equals(Arrays.asList(expected))) {
-      final List<String> strings = new ArrayList<String>();
-      for (int i = 0; i < model.size(); i++) {
-        final LookupElement item = model.get(i);
-        strings.add(item.getLookupString() + Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT)));
-        if (i == count - 1) {
-          strings.add("---");
-        }
-      }
-      assertOrderedEquals(strings, expected);
-    }
-    assertEquals(selected, list.getSelectedIndex());
+    myFixture.assertPreferredCompletionItems(selected, expected);
   }
 
   protected LookupImpl invokeCompletion(final String path) throws Exception {
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
+    myFixture.configureFromExistingVirtualFile(
+      myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
     myFixture.complete(myType);
     return getLookup();
   }
