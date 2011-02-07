@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -26,14 +25,11 @@ import org.jetbrains.annotations.Nullable;
 public class PreferSimpleWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
-    final PsiTypeLookupItem lookupItem = PsiTypeLookupItem.from(item);
+    final PsiTypeLookupItem lookupItem = item.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
     if (lookupItem != null) {
       return -lookupItem.getBracketsCount();
     }
-    if (CastingLookupElementDecorator.from(item) != null) {
+    if (item.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
       return -239;
     }
     return 0;

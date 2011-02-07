@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.naming.ConventionInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ public class JUnitTestClassNamingConventionInspection
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "j.unit.test.class.naming.convention.display.name");
+                "junit.test.class.naming.convention.display.name");
     }
 
     @Override
@@ -57,13 +57,13 @@ public class JUnitTestClassNamingConventionInspection
         final String className = (String)infos[0];
         if (className.length() < getMinLength()) {
             return InspectionGadgetsBundle.message(
-                    "j.unit.test.class.naming.convention.problem.descriptor.short");
+                    "junit.test.class.naming.convention.problem.descriptor.short");
         } else if (className.length() > getMaxLength()) {
             return InspectionGadgetsBundle.message(
-                    "j.unit.test.class.naming.convention.problem.descriptor.long");
+                    "junit.test.class.naming.convention.problem.descriptor.long");
         }
         return InspectionGadgetsBundle.message(
-                "j.unit.test.class.naming.convention.problem.descriptor.regex.mismatch",
+                "junit.test.class.naming.convention.problem.descriptor.regex.mismatch",
                 getRegex());
     }
 
@@ -100,7 +100,8 @@ public class JUnitTestClassNamingConventionInspection
             if(aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if(!InheritanceUtil.isInheritor(aClass,
+                    "junit.framework.TestCase")) {
                 if (!hasJUnit4TestMethods(aClass)) {
                     return;
                 }

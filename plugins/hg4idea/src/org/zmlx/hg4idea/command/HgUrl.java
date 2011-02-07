@@ -74,9 +74,13 @@ public class HgUrl {
   }
 
   public String asString() throws URISyntaxException {
+    return asString(true);
+  }
+
+  public String asString(boolean authData) throws URISyntaxException {
     return new URI(
       uri.getScheme(),
-      username + ":" + password,
+      authData ? username + ":" + password : null,
       uri.getHost(),
       uri.getPort(),
       uri.getPath(),
@@ -84,7 +88,7 @@ public class HgUrl {
       uri.getFragment()
     ).toString();
   }
-
+  
   private String findUserInfoPart(int index) {
     String userInfo = uri.getUserInfo();
     if (StringUtils.isBlank(userInfo)) {

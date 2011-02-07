@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1066,7 +1066,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(declaredClass == null){
             return false;
         }
-        if(!ClassUtils.isSubclass(declaredClass,
+        if(!InheritanceUtil.isInheritor(declaredClass,
                 CommonClassNames.JAVA_UTIL_ITERATOR)){
             return false;
         }
@@ -1107,9 +1107,9 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(qualifierClass == null){
             return false;
         }
-        if(!ClassUtils.isSubclass(qualifierClass,
+        if(!InheritanceUtil.isInheritor(qualifierClass,
                 CommonClassNames.JAVA_LANG_ITERABLE) &&
-                !ClassUtils.isSubclass(qualifierClass,
+                !InheritanceUtil.isInheritor(qualifierClass,
                         CommonClassNames.JAVA_UTIL_COLLECTION)){
             return false;
         }
@@ -1288,7 +1288,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return false;
         }
         final PsiClass aClass = method.getContainingClass();
-        return ClassUtils.isSubclass(aClass, CommonClassNames.JAVA_UTIL_LIST);
+        return InheritanceUtil.isInheritor(aClass,
+                CommonClassNames.JAVA_UTIL_LIST);
     }
 
     private static Holder getCollectionFromListMethodCall(
@@ -1319,7 +1320,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return null;
         }
         final PsiClass containingClass = method.getContainingClass();
-        if (!ClassUtils.isSubclass(containingClass,
+        if (!InheritanceUtil.isInheritor(containingClass,
                 CommonClassNames.JAVA_UTIL_LIST)) {
             return null;
         }

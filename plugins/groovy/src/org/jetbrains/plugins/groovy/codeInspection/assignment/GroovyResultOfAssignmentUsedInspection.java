@@ -21,9 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+
+import java.util.List;
 
 public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
 
@@ -54,7 +59,9 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
     public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
       final PsiElement parent = grAssignmentExpression.getParent();
-      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile || parent == null) {
+      final List<GrStatement> returns = ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(grAssignmentExpression));
+      if (!returns.contains(grAssignmentExpression) &&
+          (parent instanceof GrCodeBlock || parent instanceof GroovyFile || parent instanceof GrControlStatement || parent == null)) {
         return;
       }
       registerError(grAssignmentExpression);

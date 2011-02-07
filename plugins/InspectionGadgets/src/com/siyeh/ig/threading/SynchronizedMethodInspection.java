@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,14 @@ public class SynchronizedMethodInspection extends BaseInspection {
     public boolean m_includeNativeMethods = true;
 
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "synchronized.method.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiMethod method = (PsiMethod)infos[0];
@@ -49,6 +51,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
                 "synchronized.method.problem.descriptor", method.getName());
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiMethod method = (PsiMethod)infos[0];
         if (method.getBody() == null) {
@@ -57,10 +60,12 @@ public class SynchronizedMethodInspection extends BaseInspection {
         return new SynchronizedMethodFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SynchronizedMethodVisitor();
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "synchronized.method.include.option"),
@@ -75,6 +80,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
                     "synchronized.method.move.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement nameElement = descriptor.getPsiElement();
@@ -100,14 +106,14 @@ public class SynchronizedMethodInspection extends BaseInspection {
                 replacementText = "{ synchronized(this){" + text.substring(1) +
                         '}';
             }
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory elementFactory =
+                  JavaPsiFacade.getElementFactory(project);
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(replacementText,
                             null);
             body.replace(block);
             final CodeStyleManager codeStyleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
             codeStyleManager.reformat(method);
         }
     }

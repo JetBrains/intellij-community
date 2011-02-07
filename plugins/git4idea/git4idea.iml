@@ -12,7 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module-library">
-      <library>
+      <library name="trilead-ssh2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/trilead-ssh2.jar!/" />
         </CLASSES>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.siyeh.ig.ui.CheckBox;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
@@ -53,6 +53,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     private final List<String> classNames = new ArrayList();
     private Map<String, Pattern> patternCache = null;
 
+    @SuppressWarnings({"PublicField"})
     public boolean assertKeywordIsAssertion = false;
 
     public TestMethodWithoutAssertionInspection() {
@@ -197,8 +198,8 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
             if (methodName == null) {
                 return;
             }
-            for (int i = 0, methodNamesSize = methodNamePatterns.size();
-                 i < methodNamesSize; i++) {
+            final int methodNamesSize = methodNamePatterns.size();
+            for (int i = 0; i < methodNamesSize; i++) {
                 final String pattern = methodNamePatterns.get(i);
                 if (!methodNamesMatch(methodName, pattern)) {
                     continue;
@@ -208,7 +209,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
                     continue;
                 }
                 final PsiClass aClass = method.getContainingClass();
-                if (!ClassUtils.isSubclass(aClass, classNames.get(i))) {
+                if (!InheritanceUtil.isInheritor(aClass, classNames.get(i))) {
                     continue;
                 }
                 containsAssertion = true;

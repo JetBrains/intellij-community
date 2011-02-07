@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
 import java.nio.charset.Charset;
@@ -33,8 +34,8 @@ public abstract class HgChangesetsCommand {
 
   private static final String SEPARATOR_STRING = "\u0017"; //ascii: end of transmission block
   
-  private final Project project;
-  private final String command;
+  protected final Project project;
+  protected final String command;
 
   public HgChangesetsCommand(Project project, String command) {
     this.project = project;
@@ -46,9 +47,6 @@ public abstract class HgChangesetsCommand {
   }
 
   protected List<HgRevisionNumber> getRevisions(VirtualFile repo) {
-    HgCommandService commandService = HgCommandService.getInstance(project);
-
-
     List<String> args = new ArrayList<String>(Arrays.asList(
       "--template",
       "{rev}|{node|short}|{author}|{desc|firstline}" + SEPARATOR_STRING,
@@ -57,13 +55,7 @@ public abstract class HgChangesetsCommand {
 
     addArguments(args);
 
-    HgCommandResult result;
-    if (isAuthenticationNeeded()) {
-      String repositoryURL = new HgShowConfigCommand(project).getDefaultPath(repo);
-      result = new HgCommandAuthenticator().executeCommandAndAuthenticateIfNecessary(project, repo, repositoryURL, command, args, args.size()-1);
-    } else {
-      result = commandService.execute(repo, HgCommandService.DEFAULT_OPTIONS, command, args, Charset.defaultCharset(), isSilentCommand());
-    }
+    HgCommandResult result = executeCommand(repo, args);
 
     if (result == null) {
       return Collections.emptyList();
@@ -89,14 +81,12 @@ public abstract class HgChangesetsCommand {
     return revisions;
   }
 
-  protected boolean isSilentCommand() {
-    return false;
+  @Nullable
+  protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
+    return HgCommandService.getInstance(project).execute(repo, HgCommandService.DEFAULT_OPTIONS, command, args, Charset.defaultCharset(), isSilentCommand());
   }
 
-  /**
-   * Return false for local operations, true - for remote, which may require authenticate on the server.
-   */
-  protected boolean isAuthenticationNeeded() {
+  protected boolean isSilentCommand() {
     return false;
   }
 

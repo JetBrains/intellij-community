@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.siyeh.ig.security;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +66,7 @@ public class LoadLibraryWithNonConstantStringInspection
             if (aClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "java.lang.System")) {
+            if (!InheritanceUtil.isInheritor(aClass, "java.lang.System")) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="e6922"/>
-          <text resource-bundle="messages/VcsBundle" key="create.patch.file.name.field"/>
+          <text resource-bundle="messages/VcsBundle" key="create.patch.file.path"/>
         </properties>
       </component>
       <vspacer id="86590">

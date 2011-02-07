@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +31,8 @@ public class TypeUtils {
     private TypeUtils() {}
 
     public static boolean expressionHasType(
-            @Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
+            @Nullable PsiExpression expression,
+            @NonNls @NotNull String typeName) {
         if (expression == null) {
             return false;
         }
@@ -79,7 +82,7 @@ public class TypeUtils {
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass aClass = classType.resolve();
-        return aClass != null && ClassUtils.isSubclass(aClass, typeName);
+        return aClass != null && InheritanceUtil.isInheritor(aClass, typeName);
     }
 
     //getTypeIfOneOfOrSubtype
@@ -102,7 +105,7 @@ public class TypeUtils {
             return null;
         }
         for (String typeName : typeNames) {
-            if (ClassUtils.isSubclass(aClass, typeName)) {
+            if (InheritanceUtil.isInheritor(aClass, typeName)) {
                 return typeName;
             }
         }
@@ -128,7 +131,7 @@ public class TypeUtils {
             return false;
         }
         for (String typeName : typeNames) {
-            if (ClassUtils.isSubclass(aClass, typeName)) {
+            if (InheritanceUtil.isInheritor(aClass, typeName)) {
                 return true;
             }
         }

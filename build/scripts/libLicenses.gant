@@ -27,7 +27,7 @@ def String getLibraryName(Library lib) {
   def name = lib.name
   if (name.startsWith("moduleLibrary#")) {
     if (lib.classpath.size() != 1) {
-      project.error("Non-single entry module library $name: $lib.classpath");
+      project.warning("Non-single entry module library $name: $lib.classpath");
     }
     String filePath = lib.classpath[0]
     return filePath.substring(filePath.lastIndexOf('/')+1)
@@ -72,24 +72,32 @@ binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
 })
 
 binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> modules = project.modules.values().findAll {it["used"] != null}
-  Set<String> usedLibraries = [] as Set
-  modules.each {
-    it.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
+  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
+  Map<String, String> usedLibraries = [:]
+  usedModules.each {Module module ->
+    module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
       if (item instanceof Library) {
-        usedLibraries << getLibraryName(item)
+        usedLibraries[getLibraryName(item)] = module
       }
     }
   }
 
-  def licenses = licensesList.findAll {usedLibraries.contains(it.libraryName) }
-  List<String> lines = licenses.collect { LibraryLicense lib ->
+  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) }
+  project.info("Generating licenses table")
+  project.info("Used libraries:")
+  List<String> lines = []
+  licenses.each { LibraryLicense lib ->
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
-    return "|$name| $lib.version|$license|".toString()
+    project.info(" $lib.libraryName (in module ${usedLibraries[lib.libraryName]})")
+    lines << "|$name| $lib.version|$license|".toString()
   }
-  lines.sort(String.CASE_INSENSITIVE_ORDER)
+  //project.info("Unused libraries:")
+  //licensesList.findAll {!usedLibraries.containsKey(it.libraryName)}.each {LibraryLicense lib ->
+  //  project.info(" $lib.libraryName")
+  //}
 
+  lines.sort(String.CASE_INSENSITIVE_ORDER)
   FileWriter out = new FileWriter(filePath)
   out.println("|| Software || Version || License ||")
   lines.each {
@@ -108,12 +116,13 @@ libraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils
 libraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.3", license: "Apache 2.0", url: "http://commons.apache.org/codec/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons Collections", libraryName: "commons-collections", version: "3.1", license: "Apache 2.0", url: "http://commons.apache.org/collections/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)", license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x")
+libraryLicense(name: "Apache Commons Net", libraryName: "commons-net", version: "2.0", license: "Apache 2.0", url: "http://commons.apache.org/net/")
 libraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.4", license: "Apache 2.0", url: "http://commons.apache.org/lang/", licenseUrl: "http://commons.apache.org/lang/license.html")
 libraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0", url: "http://commons.apache.org/logging/")
 libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.3.0.jar", version: "2.3.0", license: "Apache 2.0", url: "http://lucene.apache.org/java")
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
-libraryLicense(name: "Ganymed", version: "bundled with SVNKit", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
+libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
 libraryLicense(name: "Guava", version: "R6", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Gradle API", libraryName: "gradle-open-api-0.8.jar", version: "0.8", license: "Apache 2.0", url: "http://www.gradle.org/")
 libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
@@ -123,7 +132,7 @@ libraryLicense(name: "JavaCVS", version: "no version number available (with patc
 libraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.1.10", license: "CDDL 1.1 & GPL 2", url: "http://jaxb.java.net/", licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html")
 libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "http://www.jaxen.org/", licenseUrl: "http://www.jaxen.org/license.html")
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")
-libraryLicense(name: "JCIP Annotations", libraryName: "jcip-annotations.jar", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
+libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
 libraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "CVS snapshot as of 5 May 2006", license: "BSD ", url: "http://www.jgoodies.com/freeware/forms/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JNA", libraryName: "jna", version: "3.2.4", license: "LGPL 2.1", url: "https://jna.dev.java.net/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
@@ -141,7 +150,7 @@ libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", vers
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
-libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2-build213.jar", version: "build 213", license: "BSD style (see LICENSE.txt in trilead-ssh-build213.jar)", url: "http://www.trilead.com/SSH_Library/")
+libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
 libraryLicense(name: "Velocity", version: "1.3", license: "Apache", url: "http://velocity.apache.org/", licenseUrl: "http://velocity.apache.org/index.html")
 libraryLicense(name: "winp", version: "1.14", license: "MIT", url: "http://winp.dev.java.net/", licenseUrl: "https://winp.dev.java.net/license.html")
@@ -151,3 +160,4 @@ libraryLicense(name: "XMLBeans", libraryName: "XmlBeans", version: "2.3.0", lice
 libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0", url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html")
 libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "7.0.2", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
+jetbrainsLibrary("JPS")

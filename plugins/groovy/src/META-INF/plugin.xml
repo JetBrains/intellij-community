@@ -220,6 +220,7 @@
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
+    <todoIndexer filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyTodoIndexer"/>
 
     <basicWordSelectionFilter implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyWordSelectionFilter"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>

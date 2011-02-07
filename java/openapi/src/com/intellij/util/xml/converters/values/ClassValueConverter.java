@@ -63,6 +63,6 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
      }
      final boolean inTests = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(file);
 
-     return module.getModuleWithDependenciesAndLibrariesScope(inTests);
+     return module.getModuleRuntimeScope(inTests).union(module.getModuleWithDependenciesAndLibrariesScope(inTests));
   }
 }

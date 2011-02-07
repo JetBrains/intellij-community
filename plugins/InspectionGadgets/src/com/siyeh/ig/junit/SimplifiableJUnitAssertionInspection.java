@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "simplify.j.unit.assertion.simplify.quickfix");
+                    "simplify.junit.assertion.simplify.quickfix");
         }
 
         @Override
@@ -163,7 +163,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 return;
             }
             @NonNls final StringBuilder newExpression = new StringBuilder();
-            addStaticImportIfPossible(callExpression, "assertEquals", newExpression);
+            addStaticImportIfPossible(callExpression, "assertEquals",
+                    newExpression);
             newExpression.append("assertEquals(");
             if (message != null) {
                 newExpression.append(message.getText());
@@ -222,9 +223,11 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiReferenceExpression methodExpression =
                     callExpression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            final String memberName;
-            if ("assertFalse".equals(methodName) ^ tokenType.equals(JavaTokenType.NE)) {
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            @NonNls final String memberName;
+            if ("assertFalse".equals(methodName) ^
+                    tokenType.equals(JavaTokenType.NE)) {
                 memberName = "assertNotNull";
             } else {
                 memberName = "assertNull";
@@ -286,8 +289,9 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiReferenceExpression methodExpression =
                     callExpression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            final String memberName;
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            @NonNls final String memberName;
             if ("assertFalse".equals(methodName) ^
                     tokenType.equals(JavaTokenType.NE)) {
                 memberName = "assertNotSame";
@@ -338,8 +342,10 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 secondTestPosition = 1;
                 message = null;
             }
-            final PsiExpression firstTestArgument = arguments[firstTestPosition];
-            final PsiExpression secondTestArgument = arguments[secondTestPosition];
+            final PsiExpression firstTestArgument =
+                    arguments[firstTestPosition];
+            final PsiExpression secondTestArgument =
+                    arguments[secondTestPosition];
             final String literalValue;
             final String compareValue;
             if (isSimpleLiteral(firstTestArgument, secondTestArgument)) {
@@ -353,7 +359,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                     Character.toUpperCase(literalValue.charAt(0)) +
                             literalValue.substring(1);
             @NonNls final StringBuilder newExpression = new StringBuilder();
-            final String methodName = "assert" + uppercaseLiteralValue;
+            @NonNls final String methodName = "assert" + uppercaseLiteralValue;
             addStaticImportIfPossible(callExpression, methodName, newExpression);
             newExpression.append(methodName);
             newExpression.append('(');
@@ -367,8 +373,9 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                     newExpression.toString());
         }
 
-        private static void addStaticImportIfPossible(PsiMethodCallExpression context,
-                                                      String memberName, StringBuilder out) {
+        private static void addStaticImportIfPossible(
+                PsiMethodCallExpression context, @NonNls String memberName,
+                @NonNls StringBuilder out) {
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     context, PsiMethod.class);
             if (TestUtils.isJUnit4TestMethod(containingMethod)) {
@@ -470,7 +477,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                     (PsiBinaryExpression) argument;
             final IElementType tokenType =
                     binaryExpression.getOperationTokenType();
-            return tokenType == JavaTokenType.EQEQ;
+            return JavaTokenType.EQEQ.equals(tokenType);
         }
     }
 
@@ -768,7 +775,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
     private static boolean isAssertMethodCall(
             @NotNull PsiMethodCallExpression expression,
-            @NotNull String assertMethodName) {
+            @NonNls @NotNull String assertMethodName) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         @NonNls final String methodName = methodExpression.getReferenceName();

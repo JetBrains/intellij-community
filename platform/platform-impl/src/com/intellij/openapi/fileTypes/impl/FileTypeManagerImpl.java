@@ -36,9 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PatternUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -52,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author Yura Cangea
@@ -63,12 +60,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
-  private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
-  private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
-  private final Set<String> myNotIgnoredFiles = new ConcurrentHashSet<String>();
-  private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
+  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<FileType>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
   private final Map<FileNameMatcher, String> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, String>();
@@ -352,43 +346,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public String getIgnoredFilesList() {
-    StringBuilder sb = new StringBuilder();
-    for (String ignoreMask : myIgnoredFileMasksSet) {
-      sb.append(ignoreMask);
-      sb.append(';');
+    final Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
+    if (masks.isEmpty()) {
+      return "";
     }
-    return sb.toString();
+
+    return StringUtil.join(masks, ";") + ";";
   }
 
   public void setIgnoredFilesList(@NotNull String list) {
     fireBeforeFileTypesChanged();
-    setIgnoredFilesListWithoutNotification(list);
-
+    myIgnoredPatterns.setIgnoreMasks(list);
     fireFileTypesChanged();
-  }
-
-  private void setIgnoredFilesListWithoutNotification(String list) {
-    myIgnoredFileMasksSet.clear();
-    myIgnorePatterns.clear();
-
-    StringTokenizer tokenizer = new StringTokenizer(list, ";");
-    while (tokenizer.hasMoreTokens()) {
-      String ignoredFile = tokenizer.nextToken();
-      if (ignoredFile != null && !myIgnoredFileMasksSet.contains(ignoredFile)) {
-        if (!myIgnoredFileMasksSet.contains(ignoredFile)) {
-          myIgnorePatterns.add(PatternUtil.fromMask(ignoredFile));
-        }
-        myIgnoredFileMasksSet.add(ignoredFile);
-      }
-    }
-
-    //[mike]
-    //To make async delete work. See FileUtil.asyncDelete.
-    //Quite a hack, but still we need to have some name, which
-    //won't be catched by VF for sure.
-    //noinspection HardCodedStringLiteral
-    Pattern p = Pattern.compile(".*\\.__del__");
-    myIgnorePatterns.add(p);
   }
 
   public boolean isIgnoredFilesListEqualToCurrent(String list) {
@@ -397,22 +366,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     while (tokenizer.hasMoreTokens()) {
       tempSet.add(tokenizer.nextToken());
     }
-    return tempSet.equals(myIgnoredFileMasksSet);
+    return tempSet.equals(myIgnoredPatterns.getIgnoreMasks());
   }
 
   public boolean isFileIgnored(@NotNull String name) {
-    if (myNotIgnoredFiles.contains(name)) return false;
-    if (myIgnoredFiles.contains(name)) return true;
-
-    for (Pattern pattern : myIgnorePatterns) {
-      if (pattern.matcher(name).matches()) {
-        myIgnoredFiles.add(name);
-        return true;
-      }
-    }
-
-    myNotIgnoredFiles.add(name);
-    return false;
+    return myIgnoredPatterns.isIgnored(name);
   }
 
   @Override
@@ -453,11 +411,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void fireFileTypesChanged() {
-    myNotIgnoredFiles.clear();
-    myIgnoredFiles.clear();
-
-    final FileTypeEvent event = new FileTypeEvent(this);
-    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).fileTypesChanged(event);
+    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).fileTypesChanged(new FileTypeEvent(this));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
@@ -504,7 +458,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
       else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
-        setIgnoredFilesListWithoutNotification(e.getAttributeValue(ATTRIBUTE_LIST));
+        myIgnoredPatterns.setIgnoreMasks(e.getAttributeValue(ATTRIBUTE_LIST));
       }
       else if (AbstractFileType.ELEMENT_EXTENSIONMAP.equals(e.getName())) {
         readGlobalMappings(e);
@@ -583,10 +537,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void addIgnore(@NonNls final String ignoreMask) {
-    if (!myIgnoredFileMasksSet.contains(ignoreMask)) {
-      myIgnorePatterns.add(PatternUtil.fromMask(ignoreMask));
-      myIgnoredFileMasksSet.add(ignoreMask);
-    }
+    myIgnoredPatterns.addIgnoreMask(ignoreMask);
   }
 
   private void restoreStandardFileExtensions() {

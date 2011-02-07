@@ -19,7 +19,7 @@ package com.intellij.psi.impl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.NativeFileType;
+import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -136,7 +136,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static boolean isNativeFileType(FileType fileType) {
-    return fileType instanceof NativeFileType || fileType instanceof UnknownFileType;
+    return fileType instanceof INativeFileType || fileType instanceof UnknownFileType;
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, int flags) {

@@ -467,7 +467,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         return;
       }
 
-      CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel();
+      CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel(myProject);
       p.setFileName(getDefaultPatchFile());
       if (!showAsDialog(p)) return;
       myModel.createPatch(p.getFileName(), p.isReversePatch());

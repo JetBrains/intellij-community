@@ -40,7 +40,7 @@ public class GitBranch extends GitReference {
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
   private final boolean myRemote;
-  private final boolean myActive;
+  private boolean myActive;
 
   public GitBranch(@NotNull String name, boolean active, boolean remote) {
     super(name);
@@ -179,6 +179,7 @@ public class GitBranch extends GitReference {
     // origin/HEAD -> origin/master
     final String[] split = output.split("\n");
     GitBranch currentBranch = null;
+    String activeRemoteName = null;
     for (String b : split) {
       boolean current = b.charAt(0) == '*';
       b = b.substring(2).trim();
@@ -191,8 +192,15 @@ public class GitBranch extends GitReference {
         remotePrefix = REFS_REMOTES_PREFIX;
       }
       boolean isRemote = remotePrefix != null || remoteOnly;
-      if (isRemote && !remoteOnly) {
-        b = b.substring(remotePrefix.length());
+      if (isRemote) {
+        if (! remoteOnly) {
+          b = b.substring(remotePrefix.length());
+        }
+        final int idx = b.indexOf("HEAD ->");
+        if (idx > 0) {
+          activeRemoteName = b.substring(idx + "HEAD ->".length() + remotePrefix.length());
+          continue;
+        }
       }
       final GitBranch branch = new GitBranch(b, current, isRemote);
       if (current) {
@@ -200,6 +208,14 @@ public class GitBranch extends GitReference {
       }
       if (branches != null && ((isRemote && remoteWanted) || (!isRemote && localWanted))) {
         branches.add(branch);
+      }
+    }
+    if (activeRemoteName != null) {
+      for (GitBranch branch : branches) {
+        if (activeRemoteName.equals(branch.getName())) {
+          branch.setActive(true);
+          break;
+        }
       }
     }
     return currentBranch;
@@ -293,5 +309,9 @@ public class GitBranch extends GitReference {
     else {
       return GitRevisionNumber.resolve(project, root, output);
     }
+  }
+
+  public void setActive(boolean active) {
+    myActive = active;
   }
 }

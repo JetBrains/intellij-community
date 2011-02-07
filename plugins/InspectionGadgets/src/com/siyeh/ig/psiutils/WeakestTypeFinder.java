@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,9 +305,9 @@ public class WeakestTypeFinder {
                 HardcodedMethodConstants.INDEX_OF.equals(methodName) ||
                 HardcodedMethodConstants.LAST_INDEX_OF.equals(methodName)) {
             final PsiClass containingClass = method.getContainingClass();
-            if (ClassUtils.isSubclass(containingClass,
+            if (InheritanceUtil.isInheritor(containingClass,
                     CommonClassNames.JAVA_UTIL_MAP) ||
-                    ClassUtils.isSubclass(containingClass,
+                    InheritanceUtil.isInheritor(containingClass,
                             CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
@@ -521,9 +521,9 @@ public class WeakestTypeFinder {
             if (aClass == null) {
                 return true;
             }
-            if (!ClassUtils.isSubclass(aClass,
+            if (!InheritanceUtil.isInheritor(aClass,
                     CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) &&
-                    !ClassUtils.isSubclass(aClass,
+                    !InheritanceUtil.isInheritor(aClass,
                             CommonClassNames.JAVA_LANG_ERROR)) {
                 return true;
             }

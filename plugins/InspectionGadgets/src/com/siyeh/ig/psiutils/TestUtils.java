@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestUtils {
 
-    private TestUtils() {
-        super();
-    }
+    private TestUtils() {}
 
     public static boolean isTest(@Nullable PsiClass aClass) {
         if (aClass == null) {
@@ -104,6 +103,7 @@ public class TestUtils {
 
     public static boolean isJUnitTestClass(@Nullable PsiClass targetClass){
         return targetClass != null &&
-                ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
+                InheritanceUtil.isInheritor(targetClass,
+                        "junit.framework.TestCase");
     }
 }
