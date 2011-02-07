@@ -207,7 +207,8 @@ abstract class RangeHighlighterData {
   public int getAffectedAreaStartOffset() {
     int startOffset = getRangeHighlighter().getStartOffset();
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return startOffset;
-    if (startOffset == myModel.getDocument().getTextLength()) return startOffset;
+    int textLength = myModel.getDocument().getTextLength();
+    if (startOffset >= textLength) return textLength;
     return myModel.getDocument().getLineStartOffset(myModel.getDocument().getLineNumber(startOffset));
   }
 
