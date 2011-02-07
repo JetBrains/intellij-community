@@ -17,6 +17,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -36,9 +37,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -639,7 +638,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
     if (module != null) {
       String[] javadocPaths = ModuleRootManager.getInstance(module).getRootUrls(JavadocOrderRootType.getInstance());
-      final List<String> httpRoots = getHttpRoots(javadocPaths, relPath);
+      final List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(javadocPaths, relPath);
       // if found nothing and the file is from library classes, fall back to order entries
       if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) { 
         return httpRoots;
@@ -649,31 +648,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry orderEntry : orderEntries) {
       final String[] files = orderEntry.getUrls(JavadocOrderRootType.getInstance());
-      final List<String> httpRoot = getHttpRoots(files, relPath);
+      final List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(files, relPath);
       if (httpRoot != null) return httpRoot;
     }
     return null;
-  }
-
-  @Nullable
-  public static List<String> getHttpRoots(final String[] roots, String relPath) {
-    final ArrayList<String> result = new ArrayList<String>();
-    for (String root : roots) {
-      final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
-      if (virtualFile != null) {
-        if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
-          String url = virtualFile.getUrl();
-          if (!url.endsWith("/")) url += "/";
-          result.add(url + relPath);
-        }
-        else {
-          VirtualFile file = virtualFile.findFileByRelativePath(relPath);
-          if (file != null) result.add(file.getUrl());
-        }
-      }
-    }
-
-    return result.isEmpty() ? null : result;
   }
 
   @Nullable
