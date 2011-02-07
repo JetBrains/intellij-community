@@ -6,9 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * User: catherine
@@ -20,6 +23,45 @@ import org.jetbrains.annotations.NotNull;
  * {a: 3, b: 5} -> no transformation
  */
 public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction {
+  static Set<String> KEYWORDS = new HashSet<String>();
+  static {
+    KEYWORDS.add("class");
+    KEYWORDS.add("as");
+    KEYWORDS.add("assert");
+    KEYWORDS.add("and");
+    KEYWORDS.add("break");
+    KEYWORDS.add("continue");
+    KEYWORDS.add("def");
+    KEYWORDS.add("del");
+    KEYWORDS.add("else");
+    KEYWORDS.add("if");
+    KEYWORDS.add("elif");
+    KEYWORDS.add("except");
+    KEYWORDS.add("exec");
+    KEYWORDS.add("finally");
+    KEYWORDS.add("for");
+    KEYWORDS.add("from");
+    KEYWORDS.add("global");
+    KEYWORDS.add("import");
+    KEYWORDS.add("in");
+    KEYWORDS.add("is");
+    KEYWORDS.add("lambda");
+    KEYWORDS.add("not");
+    KEYWORDS.add("or");
+    KEYWORDS.add("pass");
+    KEYWORDS.add("print");
+    KEYWORDS.add("raise");
+    KEYWORDS.add("return");
+    KEYWORDS.add("try");
+    KEYWORDS.add("with");
+    KEYWORDS.add("while");
+    KEYWORDS.add("yield");
+    KEYWORDS.add("None");
+    KEYWORDS.add("True");
+    KEYWORDS.add("False");
+
+  }
+
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.convert.dict.literal.to.dict.constructor");
@@ -43,6 +85,7 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
           PyExpression key = element.getKey();
           if (! (key instanceof PyStringLiteralExpression)) return false;
           String str = ((PyStringLiteralExpression)key).getStringValue();
+          if (KEYWORDS.contains(str)) return false;
           if(str.length() == 0 || Character.isDigit(str.charAt(0))) return false;
           try {
             Integer.parseInt(str) ;
@@ -68,7 +111,7 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
 
   private static void replaceDictLiteral(PyDictLiteralExpression dictExpression, PyElementGenerator elementGenerator) {
     PyExpression[] argumentList = dictExpression.getElements();
-    StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder stringBuilder = new StringBuilder("dict(");
     int size = argumentList.length;
     for (int i = 0; i != size; ++i) {
       PyExpression argument = argumentList[i];
@@ -82,8 +125,9 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
           stringBuilder.append(", ");
       }
     }
-    PyStatement callExpression = elementGenerator.createFromText(LanguageLevel.forElement(dictExpression), PyStatement.class,
-                                                      "dict(" + stringBuilder.toString() + ")");
+    stringBuilder.append(")");
+    PyStatement callExpression = elementGenerator.createFromText(LanguageLevel.forElement(dictExpression),
+                                                     PyStatement.class, stringBuilder.toString());
     dictExpression.replace(callExpression);
   }
 }
