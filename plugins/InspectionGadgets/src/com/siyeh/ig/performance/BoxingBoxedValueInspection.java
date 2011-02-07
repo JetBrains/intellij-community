@@ -49,6 +49,11 @@ public class BoxingBoxedValueInspection extends BaseInspection {
         boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
     }
 
+    @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nls
     @NotNull
     @Override

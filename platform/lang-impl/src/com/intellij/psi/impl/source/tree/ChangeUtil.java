@@ -32,7 +32,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -192,9 +191,9 @@ public class ChangeUtil {
           final PsiManagerEx psiManager = (PsiManagerEx) manager;
           final PsiFile file = (PsiFile)changedFile.getPsi();
 
-          if (file.isPhysical()) {
-            SmartPointerManagerImpl.fastenBelts(file);
-          }
+          //if (file.isPhysical()) {
+          //  SmartPointerManagerImpl.fastenBelts(file, changedElement.getStartOffset());
+          //}
 
           action.makeChange(destinationTreeChange);
 

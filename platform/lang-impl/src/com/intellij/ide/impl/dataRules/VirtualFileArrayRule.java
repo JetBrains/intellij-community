@@ -30,15 +30,13 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageInFile;
-import com.intellij.usages.rules.UsageInFiles;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
 
 public class VirtualFileArrayRule implements GetDataRule {
   public Object getData(final DataProvider dataProvider) {
@@ -84,44 +82,13 @@ public class VirtualFileArrayRule implements GetDataRule {
 
     Usage[] usages = UsageView.USAGES_KEY.getData(dataProvider);
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataProvider);
-    if (usages != null || usageTargets != null)  {
-      return getFilesFromUsages(usages, usageTargets);
+    if (usages != null || usageTargets != null) {
+      return UsageDataUtil.provideVirtualFileArray(usages, usageTargets);
     }
-
 
     return null;
   }
 
-  private static VirtualFile[] getFilesFromUsages(Usage[] usages, UsageTarget[] usageTargets) {
-    Set<VirtualFile> result = new HashSet<VirtualFile>();
-
-    if (usages != null) {
-      for (Usage usage : usages) {
-        if (!usage.isValid()) continue;
-        if (usage instanceof UsageInFile) {
-          UsageInFile usageInFile = (UsageInFile)usage;
-          result.add(usageInFile.getFile());
-        }
-
-        if (usage instanceof UsageInFiles) {
-          UsageInFiles usageInFiles = (UsageInFiles)usage;
-          ContainerUtil.addAll(result, usageInFiles.getFiles());
-        }
-      }
-    }
-
-    if (usageTargets != null) {
-      for (UsageTarget usageTarget : usageTargets) {
-        if (!usageTarget.isValid()) continue;
-        VirtualFile[] files = usageTarget.getFiles();
-        if (files != null) {
-          ContainerUtil.addAll(result, files);
-        }
-      }
-    }
-
-    return VfsUtil.toVirtualFileArray(result);
-  }
 
   private static Object getFilesFromPsiElement(PsiElement elem) {
     if (elem instanceof PsiFile) {

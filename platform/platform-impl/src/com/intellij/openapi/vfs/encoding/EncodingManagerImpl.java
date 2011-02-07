@@ -24,6 +24,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -44,6 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,9 +56,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 @State(
@@ -72,16 +72,14 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
-  private final Queue<Document> myChangedDocuments = new ConcurrentLinkedQueue<Document>();
-  private final Runnable myEncodingUpdateRunnable = new Runnable() {
-    public void run() {
-      for (int i=0; i<50;i++) {
-        if (!pollAndHandleDocument()) return;
-      }
-      // requeue myself to handle the tail of the queue in next request
-      addCacheEncodingAlarm();
+
+  private final TransferToPooledThreadQueue<Document> myChangedDocuments = new TransferToPooledThreadQueue<Document>(new Processor<Document>() {
+    @Override
+    public boolean process(Document document) {
+      handleDocument(document);
+      return true;
     }
-  };
+  }, ApplicationManager.getApplication().getDisposed());
 
   public EncodingManagerImpl(EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
@@ -99,9 +97,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
-  private boolean pollAndHandleDocument() {
-    final Document document = myChangedDocuments.poll();
-    if (document == null) return false;
+
+  private void handleDocument(final Document document) {
     ApplicationManager.getApplication().runReadAction(new Runnable(){
       public void run() {
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -114,28 +111,15 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
       }
     });
-    return true;
   }
 
   public void dispose() {
     updateEncodingFromContent.cancelAllRequests();
-    drainDocumentQueue();
-  }
-
-  public void drainDocumentQueue() {
-    while (pollAndHandleDocument()) {
-      // loop until empty
-    }
+    clearDocumentQueue();
   }
 
   public void queueUpdateEncodingFromContent(@NotNull Document document) {
     myChangedDocuments.offer(document);
-    addCacheEncodingAlarm();
-  }
-
-  private void addCacheEncodingAlarm() {
-    updateEncodingFromContent.cancelAllRequests();
-    updateEncodingFromContent.addRequest(myEncodingUpdateRunnable, 400);
   }
 
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
@@ -170,6 +154,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
     if (encodingManager == null) return null; //tests
     return encodingManager.getEncoding(virtualFile, useParentDefaults);
+  }
+
+  public void clearDocumentQueue() {
+    myChangedDocuments.stop();
   }
 
   @Nullable

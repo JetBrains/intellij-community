@@ -90,7 +90,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
     if (textRange == null || myFileTools.containsKey(file) && !myFileTools.get(file)) return null;
-    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength()) {
+    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true) {
       List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
         List<LocalInspectionTool> tools = super.getInspectionTools(profile);
         List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();

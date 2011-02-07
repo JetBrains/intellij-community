@@ -459,7 +459,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   }
 
   private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
-    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server");
+    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
 
   public void clearAuthenticationDirectory() {
     final File authDir = new File(getConfigurationDirectory(), "auth");

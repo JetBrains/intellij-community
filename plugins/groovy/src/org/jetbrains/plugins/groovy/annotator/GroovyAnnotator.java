@@ -88,6 +88,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
@@ -1439,12 +1440,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement refNameElement = getElementToHighlight(refExpr);
     Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
 
-    if (member instanceof PsiField || member instanceof GrAccessorMethod) {
+    if (member instanceof PsiField) {
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
       return;
     }
+    else if (member instanceof GrAccessorMethod) {
+      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
+      return;
+    }
     if (member instanceof PsiMethod) {
-      annotation.setTextAttributes(!isStatic ? DefaultHighlighter.METHOD_CALL : DefaultHighlighter.STATIC_METHOD_ACCESS);
+      if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)member)) {
+        annotation
+          .setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
+      }
+      else {
+        annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL);
+      }
     }
     if (member instanceof PsiClass) {
       highligtClassReference(holder, refExpr);

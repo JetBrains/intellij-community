@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 public class OverriddenMethodCallDuringObjectConstructionInspection
         extends BaseInspection{
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "overridden.method.call.in.constructor.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
       return InspectionGadgetsBundle.message(
               "overridden.method.call.in.constructor.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new OverriddenMethodCallInConstructorVisitor();
     }
@@ -90,7 +93,7 @@ public class OverriddenMethodCallDuringObjectConstructionInspection
             }
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
-            if(!InheritanceUtil.isCorrectDescendant(containingClass,
+            if(!InheritanceUtil.isInheritorOrSelf(containingClass,
                     calledMethodClass, true)){
                 return;
             }

@@ -32,7 +32,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
+    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
   @Nls

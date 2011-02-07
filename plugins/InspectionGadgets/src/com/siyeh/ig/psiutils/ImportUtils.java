@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImportUtils{
+public class ImportUtils {
 
-    private ImportUtils(){
-    }
+    private ImportUtils() {}
 
     public static void addImportIfNeeded(PsiJavaFile file, PsiClass aClass) {
         final PsiFile containingFile = aClass.getContainingFile();
@@ -78,7 +77,7 @@ public class ImportUtils{
         if (containingClass == null) {
             return false;
         }
-        if (ClassUtils.isSubclass(containingClass, fqName)) {
+        if (InheritanceUtil.isInheritor(containingClass, fqName)) {
             return true;
         }
         final PsiField field =
@@ -424,7 +423,7 @@ public class ImportUtils{
             throws IncorrectOperationException {
         final PsiClass containingClass =
                 PsiTreeUtil.getParentOfType(context, PsiClass.class);
-        if (ClassUtils.isSubclass(containingClass, qualifierClass)) {
+        if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
             return;
         }
         final PsiFile psiFile = context.getContainingFile();
@@ -524,7 +523,7 @@ public class ImportUtils{
         }
         final PsiClass containingClass =
                 PsiTreeUtil.getParentOfType(context, PsiClass.class);
-        if (InheritanceUtil.isCorrectDescendant(containingClass, memberClass,
+        if (InheritanceUtil.isInheritorOrSelf(containingClass, memberClass,
                 true)) {
             return false;
         }

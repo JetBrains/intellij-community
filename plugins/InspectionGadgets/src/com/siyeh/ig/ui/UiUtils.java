@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Icons;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -251,7 +251,7 @@ public class UiUtils {
 
         public boolean isAccepted(PsiClass aClass) {
             for (String ancestorClass : ancestorClasses) {
-                if (ClassUtils.isSubclass(aClass, ancestorClass)) {
+                if (InheritanceUtil.isInheritor(aClass, ancestorClass)) {
                     return true;
                 }
             }

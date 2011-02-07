@@ -317,11 +317,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
-  public boolean truncatePrefix() {
+  public boolean truncatePrefix(boolean preserveSelection) {
     final int len = myAdditionalPrefix.length();
     if (len == 0) return false;
 
-    markSelectionTouched();
+    if (preserveSelection) {
+      markSelectionTouched();
+    }
 
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
@@ -593,8 +595,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (item == null ||
         item instanceof EmptyLookupItem ||
         item.getObject() instanceof DeferredUserLookupValue &&
-        item.as(LookupItem.class) != null &&
-        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.class), myProject)) {
+        item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
+        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), myProject)) {
       fireItemSelected(null, completionChar);
       return;
     }

@@ -151,7 +151,8 @@ public class DomUIFactoryImpl extends DomUIFactory {
         psiDocumentManager.commitAllDocuments();
 
         GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true);
-        LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0, document.getTextLength());
+        LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
+                                                            document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
         return new HighlightingPass[]{ghp, lip};
       }
 

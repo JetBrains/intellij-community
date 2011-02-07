@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,36 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SetupIsPublicVoidNoArgInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "SetUpWithIncorrectSignature";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "setup.is.public.void.no.arg.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "setup.is.public.void.no.arg.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SetupIsPublicVoidNoArgVisitor();
     }
@@ -63,16 +67,14 @@ public class SetupIsPublicVoidNoArgInspection extends BaseInspection {
             if (targetClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(targetClass,
+            if (!InheritanceUtil.isInheritor(targetClass,
                     "junit.framework.TestCase")) {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                registerMethodError(method);
-            } else if (!returnType.equals(PsiType.VOID)) {
-                registerMethodError(method);
-            } else if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
+            if (parameterList.getParametersCount() != 0 ||
+                    !returnType.equals(PsiType.VOID) ||
+                    !method.hasModifierProperty(PsiModifier.PUBLIC) &&
                     !method.hasModifierProperty(PsiModifier.PROTECTED)) {
                 registerMethodError(method);
             }

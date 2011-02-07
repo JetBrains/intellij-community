@@ -21,50 +21,54 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
-  private E myElement;
-  private SmartPointerElementInfo myElementInfo;
+  private Reference<E> myElement;
+  private final SmartPointerElementInfo myElementInfo;
   private final Project myProject;
+  private final Class<? extends PsiElement> myElementClass;
 
-  public SmartPsiElementPointerImpl(Project project, E element) {
+  public SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
     myProject = project;
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myElement = element;
-    myElementInfo = null;
+    myElement = new WeakReference<E>(element);
+    myElementInfo = createElementInfo(element, containingFile);
+    myElementClass = element.getClass();
 
     // Assert document committed.
-    PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-      if (psiDocumentManager instanceof PsiDocumentManagerImpl) {
-        Document doc = psiDocumentManager.getCachedDocument(file);
-        if (doc != null) {
-          //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
-          if (!(element instanceof PsiFile)) {
-            LOG.assertTrue(!psiDocumentManager.isUncommited(doc) || ((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc));
-          }
-        }
-      }
-    }
+    //todo
+    //if (containingFile != null) {
+    //  final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    //  if (psiDocumentManager instanceof PsiDocumentManagerImpl) {
+    //    Document doc = psiDocumentManager.getCachedDocument(containingFile);
+    //    if (doc != null) {
+    //      //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
+    //      if (!(element instanceof PsiFile)) {
+    //        LOG.assertTrue(!psiDocumentManager.isUncommited(doc) || ((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc));
+    //      }
+    //    }
+    //  }
+    //}
   }
 
   public boolean equals(Object obj) {
     if (!(obj instanceof SmartPsiElementPointer)) return false;
     SmartPsiElementPointer pointer = (SmartPsiElementPointer)obj;
-    return Comparing.equal(pointer.getElement(), getElement());
+    return SmartPointerManager.getInstance(myProject).pointToTheSameElement(this, pointer);
   }
 
   public int hashCode() {
-    PsiElement element = getElement();
-    return element != null ? element.hashCode() : 0;
+    return myElementInfo.elementHashCode();
   }
 
   @NotNull
@@ -74,35 +78,38 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Nullable
   public E getElement() {
-    if (myElement != null && !myElement.isValid()) {
-      if (myElementInfo == null) {
-        myElement = null;
+    PsiElement element = getCachedElement();
+    if (element != null && !element.isValid()) {
+      element = null;
+    }
+    if (element == null && myElementInfo != null) {
+      element = myElementInfo.restoreElement();
+      if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
+        element = null;
       }
-      else {
-        PsiElement restored = myElementInfo.restoreElement();
-        if (restored != null && (!areElementKindEqual(restored, myElement) || !restored.isValid())) {
-          restored = null;
-        }
 
-        myElement = (E) restored;
-      }
+      myElement = element == null ? null : new WeakReference(element);
     }
 
-    //if (myElementInfo != null && myElement != null) {
-    //  Document document = myElementInfo.getDocumentToSynchronize();
-    //  if (document != null && PsiDocumentManager.getInstance(myProject).isUncommited(document)) return myElement; // keep element info if document is modified
-    //}
-    // myElementInfo = null;
+    return (E)element;
+  }
 
-    return myElement;
+  private E getCachedElement() {
+    return myElement == null ? null : myElement.get();
   }
 
   public PsiFile getContainingFile() {
-    if (myElement != null) {
-      return myElement.getContainingFile();
+    E element = getCachedElement();
+    if (element != null) {
+      return element.getContainingFile();
+    }
+    VirtualFile virtualFile = myElementInfo.getVirtualFile();
+    if (virtualFile != null && virtualFile.isValid()) {
+      PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
+      if (psiFile != null) return psiFile;
     }
 
-    final Document doc = myElementInfo == null ? null : myElementInfo.getDocumentToSynchronize();
+    final Document doc = myElementInfo.getDocumentToSynchronize();
     if (doc == null) {
       final E resolved = getElement();
       return resolved != null ? resolved.getContainingFile() : null;
@@ -110,37 +117,37 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
   }
 
-  @Nullable
-  private SmartPointerElementInfo createElementInfo() {
-    if (myElement instanceof PsiCompiledElement) return null;
+  public VirtualFile getVirtualFile() {
+    return myElementInfo.getVirtualFile();
+  }
 
-    final PsiFile containingFile = myElement.getContainingFile();
-    if (containingFile == null) return null;
-    if (!myElement.isPhysical()) return null;
+  @Override
+  public Segment getSegment() {
+    return myElementInfo.getSegment();
+  }
+
+  @NotNull
+  private SmartPointerElementInfo createElementInfo(@NotNull E element, PsiFile containingFile) {
+    if (element instanceof PsiCompiledElement || !element.isPhysical() || containingFile == null || element.getTextRange() == null) {
+      return new HardElementInfo(element);
+    }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
-      final SmartPointerElementInfo result = factory.createElementInfo(myElement);
+      final SmartPointerElementInfo result = factory.createElementInfo(element);
       if (result != null) {
         return result;
       }
     }
 
-    if (myElement instanceof PsiFile) {
-      return new FileElementInfo((PsiFile)myElement);
+    if (element instanceof PsiFile) {
+      return new FileElementInfo((PsiFile)element);
     }
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-    Document document = documentManager.getDocument(containingFile);
-    if (document == null) return null;   // must be non-text file
 
     if (containingFile.getContext() != null) {
-      return new InjectedSelfElementInfo(myElement, document);
+      return new InjectedSelfElementInfo(element, containingFile);
     }
 
-    return new SelfElementInfo(myElement, document);
-  }
-
-  private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {
-    return element1.getClass().equals(element2.getClass()); //?
+    return new SelfElementInfo(element, containingFile);
   }
 
   public void documentAndPsiInSync() {
@@ -153,16 +160,20 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   public void dispose() {
     if (myElementInfo != null) {
       myElementInfo.dispose();
-      myElementInfo = null;
       myElement = null;
     }
   }
 
-  public void fastenBelt() {
-    if (myElementInfo != null && myElement != null && myElement.isValid()) return;
+  @Override
+  public void unfastenBelt(int offset) {
+    myElementInfo.unfastenBelt(offset);
+  }
 
-    if (myElementInfo == null && myElement != null && myElement.isValid()) {
-      myElementInfo = createElementInfo();
-    }
+  public void fastenBelt(int offset) {
+    myElementInfo.fastenBelt(offset);
+  }
+
+  SmartPointerElementInfo getElementInfo() {
+    return myElementInfo;
   }
 }

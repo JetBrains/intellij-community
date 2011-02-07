@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class TailRecursionInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("tail.recursion.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "tail.recursion.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiMethod containingMethod = (PsiMethod) infos[0];
@@ -74,6 +77,7 @@ public class TailRecursionInspection extends BaseInspection {
                     "tail.recursion.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement tailCallToken = descriptor.getPsiElement();
@@ -87,9 +91,12 @@ public class TailRecursionInspection extends BaseInspection {
             if (body == null) {
                 return;
             }
-            final StringBuilder builder = new StringBuilder();
+            @NonNls final StringBuilder builder = new StringBuilder();
             builder.append('{');
             final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
             final String thisVariableName;
             final JavaCodeStyleManager styleManager =
                     JavaCodeStyleManager.getInstance(project);
@@ -121,9 +128,8 @@ public class TailRecursionInspection extends BaseInspection {
                 tailCallIsContainedInLoop = false;
             }
             builder.append("while(true)");
-            final PsiManager psiManager = PsiManager.getInstance(project);
             final CodeStyleManager codeStyleManager =
-                    psiManager.getCodeStyleManager();
+                    CodeStyleManager.getInstance(project);
                 replaceTailCalls(body, method, thisVariableName,
                         tailCallIsContainedInLoop, builder);
             builder.append('}');
@@ -222,13 +228,8 @@ public class TailRecursionInspection extends BaseInspection {
                     out.append('.');
                 }
                 out.append(text);
-            } else if (element instanceof PsiThisExpression) {
-                if (thisVariableName == null) {
-                    out.append(text);
-                } else {
-                    out.append(thisVariableName);
-                }
-            } else if (element instanceof PsiSuperExpression) {
+            } else if (element instanceof PsiThisExpression ||
+                    element instanceof PsiSuperExpression) {
                 if (thisVariableName == null) {
                     out.append(text);
                 } else {
@@ -358,6 +359,7 @@ public class TailRecursionInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TailRecursionVisitor();
     }

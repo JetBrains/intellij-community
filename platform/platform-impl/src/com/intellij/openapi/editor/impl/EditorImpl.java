@@ -60,6 +60,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -158,6 +159,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean isReleased = false;
 
   private MouseEvent myMousePressedEvent = null;
+  private MouseEvent myMouseMovedEvent = null;
 
   private int mySavedSelectionStart = -1;
   private int mySavedSelectionEnd = -1;
@@ -226,6 +228,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Runnable myGutterSizeUpdater = null;
   private boolean myGutterNeedsUpdate = false;
   private Alarm myAppleRepaintAlarm;
+
+  private Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Runnable myMouseSelectionStateResetRunnable;
+
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
   private boolean mySpacesHaveSameWidth;
@@ -610,6 +616,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
+    myMousePressedEvent = null;
+    myMouseMovedEvent = null;
     Disposer.dispose(myCaretModel);
     clearCaretThread();
 
@@ -3508,6 +3516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               selectionModel.setSelection(mySavedSelectionStart, newSelection);
               getCaretModel().moveToOffset(newSelection);
             }
+            cancelAutoResetForMouseSelectionState();
             return;
           }
 
@@ -3518,6 +3527,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             else {
               selectionModel.setSelection(oldSelectionStart, newCaretOffset);
             }
+            cancelAutoResetForMouseSelectionState();
           }
           else {
             if (caretShift != 0) {
@@ -3531,7 +3541,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 else {
                   selectionModel.removeSelection();
                 }
-                myMousePressedEvent = null;
               }
             }
           }
@@ -4146,10 +4155,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setMouseSelectionState(int mouseSelectionState) {
+    if (getMouseSelectionState() == mouseSelectionState) return;
+
     myMouseSelectionState = mouseSelectionState;
     myMouseSelectionChangeTimestamp = System.currentTimeMillis();
+
+    myMouseSelectionStateAlarm.cancelAllRequests();
+    if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE) {
+      if (myMouseSelectionStateResetRunnable == null) {
+        myMouseSelectionStateResetRunnable = new Runnable() {
+          @Override
+          public void run() {
+            resetMouseSelectionState(null);
+          }
+        };
+      }
+      myMouseSelectionStateAlarm.addRequest(myMouseSelectionStateResetRunnable, Registry.intValue("editor.mouseSelectionStateResetTimeout"),
+                                           ModalityState.stateForComponent(myEditorComponent));
+    }
   }
 
+  private void resetMouseSelectionState(@Nullable MouseEvent event) {
+    setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+
+    MouseEvent e = event != null ? event : myMouseMovedEvent;
+    if (e != null) {
+      validateMousePointer(e);
+    }
+  }
+
+  private void cancelAutoResetForMouseSelectionState() {
+    myMouseSelectionStateAlarm.cancelAllRequests();
+  }
 
   void replaceInputMethodText(InputMethodEvent e) {
     getInputMethodRequests();
@@ -4532,7 +4569,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {
         runMouseClickedCommand(e);
       }
-      myMousePressedEvent = null;
     }
 
     public void mouseEntered(MouseEvent e) {
@@ -4648,8 +4684,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myInitialMouseEvent = e;
 
-      if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
-        setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+      if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
+        "editor.mouseSelectionStateResetTimeout")) {
+        resetMouseSelectionState(e);
       }
 
       int x = e.getX();
@@ -4871,7 +4908,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void mouseMoved(MouseEvent e) {
-      validateMousePointer(e);
+      if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+        if (myMousePressedEvent != null && myMousePressedEvent.getComponent() == e.getComponent()) {
+          Point lastPoint = myMousePressedEvent.getPoint();
+          Point point = e.getPoint();
+          int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadzone");
+          if (Math.abs(lastPoint.x - point.x) >= deadZone || Math.abs(lastPoint.y - point.y) >= deadZone) {
+            resetMouseSelectionState(e);
+          }
+        } else {
+          validateMousePointer(e);
+        }
+      } else {
+        validateMousePointer(e);
+      }
+
+      myMouseMovedEvent = e;
+
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (e.getSource() == myGutterComponent) {
         myGutterComponent.mouseMoved(e);

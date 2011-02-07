@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -74,18 +75,32 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
             if (field == null) {
                 return;
             }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
+            final PsiClass fieldClass = field.getContainingClass();
+            if (fieldClass == null) {
                 return;
             }
-            final PsiClass parentClass =
+            PsiClass containingClass =
                     ClassUtils.getContainingClass(expression);
             @NonNls final String newExpression;
-            if (!containingClass.equals(parentClass)) {
+            if (InheritanceUtil.isInheritorOrSelf(containingClass, fieldClass,
+                    true)) {
+                newExpression = "this." + expression.getText();
+            } else {
+                containingClass =
+                        ClassUtils.getContainingClass(containingClass);
+                if (containingClass == null) {
+                    return;
+                }
+                while (!InheritanceUtil.isInheritorOrSelf(containingClass,
+                        fieldClass, true)) {
+                    containingClass =
+                            ClassUtils.getContainingClass(containingClass);
+                    if (containingClass == null) {
+                        return;
+                    }
+                }
                 newExpression = containingClass.getQualifiedName() + ".this." +
                         expression.getText();
-            } else {
-                newExpression = "this." + expression.getText();
             }
             replaceExpressionAndShorten(expression, newExpression);
         }

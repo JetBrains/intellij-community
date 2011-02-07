@@ -100,20 +100,16 @@ public class ClassGroupingRule implements UsageGroupingRule {
     private final SmartPsiElementPointer myClassPointer;
     private final String myText;
     private final String myQName;
-    private Icon myIcon;
+    private final Icon myIcon;
 
     public ClassUsageGroup(PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
-      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(aClass.getProject());
-      myClassPointer = smartPointerManager.createLazyPointer(aClass);
-      update();
+      myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
+      myIcon = getPsiClass().getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
     public void update() {
-      if (isValid()) {
-        myIcon = getPsiClass().getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
-      }
     }
 
     private static String createText(PsiClass aClass) {

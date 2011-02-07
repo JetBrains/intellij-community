@@ -16,9 +16,7 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -101,7 +99,7 @@ public class AutoPopupController implements Disposable {
           if (!file.isValid()) return;
 
           if (condition != null && !condition.value(file)) return;
-          new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(myProject, editor, file);
+          CompletionAutoPopupHandler.invokeAutoPopupCompletion(myProject, editor);
         }
       };
 

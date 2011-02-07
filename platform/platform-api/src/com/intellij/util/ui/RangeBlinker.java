@@ -18,9 +18,9 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Segment;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 
@@ -33,7 +33,7 @@ import java.util.List;
 public class RangeBlinker {
   private final Editor myEditor;
   private int myTimeToLive;
-  private final List<RangeMarker> myMarkers = new ArrayList<RangeMarker>();
+  private final List<Segment> myMarkers = new ArrayList<Segment>();
   private boolean show = true;
   private final Alarm myBlinkingAlarm = new Alarm();
   private final TextAttributes myAttributes;
@@ -44,7 +44,8 @@ public class RangeBlinker {
     myEditor = editor;
     myTimeToLive = timeToLive;
   }
-  public void resetMarkers(final List<RangeMarker> markers) {
+
+  public void resetMarkers(final List<Segment> markers) {
     removeHighlights();
     myMarkers.clear();
     stopBlinking();
@@ -72,8 +73,7 @@ public class RangeBlinker {
 
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
-      for (final RangeMarker rangeMarker : myMarkers) {
-        if (!rangeMarker.isValid()) continue;
+      for (Segment rangeMarker : myMarkers) {
         RangeHighlighter highlighter = markupModel.addRangeHighlighter(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
                                                                        HighlighterLayer.ADDITIONAL_SYNTAX, myAttributes,
                                                                        HighlighterTargetArea.EXACT_RANGE);

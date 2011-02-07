@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.NonNls;
@@ -78,23 +79,28 @@ class IntentionUsagePanel extends JPanel{
   }
 
   private void setupSpots(Document document) {
-    List<RangeMarker> markers = new ArrayList<RangeMarker>();
+    List<Segment> markers = new ArrayList<Segment>();
     while (true) {
       String text = document.getText();
-      int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
+      final int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
       if (spotStart < 0) break;
-      int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
+      final int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
       if (spotEnd < 0) break;
 
       document.deleteString(spotEnd, spotEnd + SPOT_MARKER.length() + 3);
       document.deleteString(spotStart, spotStart + SPOT_MARKER.length() + 2);
-      final RangeMarker spotMarker = document.createRangeMarker(spotStart, spotEnd - SPOT_MARKER.length() - 2);
-      if (spotMarker == null) {
-        break;
-      }
-      else {
-        markers.add(spotMarker);
-      }
+      Segment spotMarker = new Segment() {
+        @Override
+        public int getStartOffset() {
+          return spotStart;
+        }
+
+        @Override
+        public int getEndOffset() {
+          return spotEnd - SPOT_MARKER.length() - 2;
+        }
+      };
+      markers.add(spotMarker);
     }
     myRangeBlinker.resetMarkers(markers);
     if (!markers.isEmpty()) {

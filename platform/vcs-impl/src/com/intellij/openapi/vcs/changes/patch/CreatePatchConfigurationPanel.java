@@ -22,8 +22,20 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.AdjustComponentWhenShown;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,15 +49,22 @@ public class CreatePatchConfigurationPanel {
   private JLabel myErrorLabel;
   private Consumer<Boolean> myOkEnabledListener;
 
-  public CreatePatchConfigurationPanel() {
+  public CreatePatchConfigurationPanel(final Project project) {
     myFileNameField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setSelectedFile(new File(myFileNameField.getText()));
-        if (fileChooser.showSaveDialog(myFileNameField) != JFileChooser.APPROVE_OPTION) {
-          return;
+        final FileSaverDialog dialog =
+          FileChooserFactory.getInstance().createSaveFileDialog(
+            new FileSaverDescriptor("Save patch to", ""), myPanel);
+        final String path = FileUtil.toSystemIndependentName(myFileNameField.getText().trim());
+        final int idx = path.lastIndexOf("/");
+        VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
+                              (LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path.substring(0, idx))));
+        baseDir = baseDir == null ? project.getBaseDir() : baseDir;
+        final String name = idx == -1 ? path : path.substring(idx + 1);
+        final VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
+        if (fileWrapper != null) {
+          myFileNameField.setText(fileWrapper.getFile().getPath());
         }
-        myFileNameField.setText(fileChooser.getSelectedFile().getPath());
       }
     });
 
@@ -53,6 +72,7 @@ public class CreatePatchConfigurationPanel {
       public void inputMethodTextChanged(final InputMethodEvent event) {
         checkName();
       }
+
       public void caretPositionChanged(final InputMethodEvent event) {
       }
     });
@@ -60,15 +80,26 @@ public class CreatePatchConfigurationPanel {
       public void keyTyped(final KeyEvent e) {
         checkName();
       }
+
       public void keyPressed(final KeyEvent e) {
         checkName();
       }
+
       public void keyReleased(final KeyEvent e) {
         checkName();
       }
     });
     myErrorLabel.setForeground(Color.RED);
     checkName();
+    new AdjustComponentWhenShown() {
+      @Override
+      protected boolean init() {
+        if (myPanel.isVisible()) {
+          IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myFileNameField.getTextField(), true);
+        }
+        return false;
+      }
+    }.install(myPanel);
   }
 
   private void checkName() {

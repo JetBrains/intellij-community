@@ -112,35 +112,39 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
         if (DumbService.getInstance(project).isDumb()) return;
 
-        new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(project, editor);
-
-        final AutoPopupState state = new AutoPopupState(project, editor);
-        editor.putUserData(STATE_KEY, state);
-
-        final Lookup lookup = LookupManager.getActiveLookup(editor);
-        if (lookup != null) {
-          lookup.addLookupListener(new LookupAdapter() {
-            @Override
-            public void itemSelected(LookupEvent event) {
-              final AutoPopupState state = getAutoPopupState(editor);
-              if (state != null) {
-                state.stopAutoPopup();
-              }
-            }
-
-            @Override
-            public void lookupCanceled(LookupEvent event) {
-              final AutoPopupState state = getAutoPopupState(editor);
-              if (event.isCanceledExplicitly() && state != null) {
-                state.stopAutoPopup();
-              }
-            }
-          });
-        }
+        invokeAutoPopupCompletion(project, editor);
       }
     };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
     return Result.STOP;
+  }
+
+  public static void invokeAutoPopupCompletion(Project project, final Editor editor) {
+    new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(project, editor);
+
+    final AutoPopupState state = new AutoPopupState(project, editor);
+    editor.putUserData(STATE_KEY, state);
+
+    final Lookup lookup = LookupManager.getActiveLookup(editor);
+    if (lookup != null) {
+      lookup.addLookupListener(new LookupAdapter() {
+        @Override
+        public void itemSelected(LookupEvent event) {
+          final AutoPopupState state = getAutoPopupState(editor);
+          if (state != null) {
+            state.stopAutoPopup();
+          }
+        }
+
+        @Override
+        public void lookupCanceled(LookupEvent event) {
+          final AutoPopupState state = getAutoPopupState(editor);
+          if (event.isCanceledExplicitly() && state != null) {
+            state.stopAutoPopup();
+          }
+        }
+      });
+    }
   }
 
   @Nullable

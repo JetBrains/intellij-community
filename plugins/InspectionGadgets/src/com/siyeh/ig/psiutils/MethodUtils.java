@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,8 @@ public class MethodUtils{
         }
         if (containingClassName != null) {
             final PsiClass containingClass = method.getContainingClass();
-            return ClassUtils.isSubclass(containingClass, containingClassName);
+            return InheritanceUtil.isInheritor(containingClass,
+                    containingClassName);
         }
         return true;
     }
@@ -186,7 +187,8 @@ public class MethodUtils{
         }
         if (containingClassName != null) {
             final PsiClass containingClass = method.getContainingClass();
-            return ClassUtils.isSubclass(containingClass, containingClassName);
+            return InheritanceUtil.isInheritor(containingClass,
+                    containingClassName);
         }
         return true;
     }
@@ -335,7 +337,7 @@ public class MethodUtils{
         }
         final PsiClass fieldContainingClass = field.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        if (InheritanceUtil.isCorrectDescendant(methodContainingClass,
+        if (InheritanceUtil.isInheritorOrSelf(methodContainingClass,
                 fieldContainingClass, true)) {
             return field;
         } else {
@@ -408,7 +410,7 @@ public class MethodUtils{
         final PsiField field = (PsiField) referent;
         final PsiClass fieldContainingClass = field.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        if(!InheritanceUtil.isCorrectDescendant(methodContainingClass,
+        if(!InheritanceUtil.isInheritorOrSelf(methodContainingClass,
                 fieldContainingClass, true)){
             return null;
         }

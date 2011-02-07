@@ -23,10 +23,10 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
@@ -67,15 +67,20 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         final GroupNode node1 = node = new GroupNode(group, ruleIndex, getBuilder());
         mySubgroupNodes.put(group, node);
 
-        if (!getBuilder().isDetachedMode()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myTreeModel.insertNodeInto(node1, GroupNode.this, getNodeInsertionIndex(node1));
-            }
-          });
-        }
+        addNode(node1);
       }
       return node;
+    }
+  }
+
+  void addNode(final DefaultMutableTreeNode node) {
+    if (!getBuilder().isDetachedMode()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myTreeModel.insertNodeInto(node, GroupNode.this, getNodeInsertionIndex(node));
+        }
+      });
     }
   }
 
@@ -150,7 +155,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     if (!getBuilder().isDetachedMode()) {
-      SwingUtilities.invokeLater(new Runnable() {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
           myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
           incrementUsageCount();
@@ -241,7 +246,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return false;
   }
 
-  int getNodeInsertionIndex(DefaultMutableTreeNode node) {
+  private int getNodeInsertionIndex(DefaultMutableTreeNode node) {
     Enumeration children = children();
     int idx = 0;
     while (children.hasMoreElements()) {

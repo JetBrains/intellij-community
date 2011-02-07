@@ -33,6 +33,15 @@ public class HgShowConfigCommand {
     return execute(repo).get("paths.default");
   }
 
+  public String getDefaultPushPath(VirtualFile repo) {
+    final Map<String, String> map = execute(repo);
+    String path = map.get("paths.default-push");
+    if (path == null) {
+      path = map.get("paths.default");
+    }
+    return path;
+  }
+
   public Map<String, String> execute(VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();

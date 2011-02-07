@@ -10,7 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
@@ -29,7 +28,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="trilead-ssh2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
         </CLASSES>

@@ -20,14 +20,15 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiElementPointer<T> {
   private T myElement;
   private final PsiFile myFile;
 
-  public IdentitySmartPointer(T element, PsiFile file) {
+  public IdentitySmartPointer(@NotNull T element, @NotNull PsiFile file) {
     myElement = element;
     myFile = file;
   }
@@ -41,11 +42,17 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
     return myFile.getProject();
   }
 
+  @Override
+  public VirtualFile getVirtualFile() {
+    return myFile.getVirtualFile();
+  }
+
   public T getElement() {
-    if (myElement != null && !myElement.isValid()) {
-      myElement = null;
+    T element = myElement;
+    if (element != null && !element.isValid()) {
+      element = null;
     }
-    return myElement;
+    return element;
   }
 
   public int hashCode() {
@@ -54,10 +61,17 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof SmartPsiElementPointer && Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
+    return obj instanceof SmartPsiElementPointer
+           && SmartPointerManager.getInstance(getProject()).pointToTheSameElement(this, (SmartPsiElementPointer)obj);
   }
 
   public PsiFile getContainingFile() {
     return myFile;
+  }
+
+  @Override
+  public Segment getSegment() {
+    T element = myElement;
+    return element == null ? null : element.getTextRange();
   }
 }

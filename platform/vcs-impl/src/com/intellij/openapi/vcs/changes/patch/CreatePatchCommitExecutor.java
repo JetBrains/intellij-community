@@ -112,7 +112,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
   }
 
   private class CreatePatchCommitSession implements CommitSession {
-    private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel();
+    private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {

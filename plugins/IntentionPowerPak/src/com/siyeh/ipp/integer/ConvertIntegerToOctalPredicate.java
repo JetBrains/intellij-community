@@ -33,15 +33,16 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
             return false;
         }
         @NonNls final String text = expression.getText();
-        if(text == null || text.length() == 0){
-            return false;
-        }
-        if(text.startsWith("0x") || text.startsWith("0X")){
+        if (text.charAt(0) != '0') {
             return true;
         }
-        if("0".equals(text) || "0L".equals(text)){
-            return false;
+        if (text.length() < 2) {
+            return true;
         }
-        return text.charAt(0) != '0';
+        final char c1 = text.charAt(1);
+        if (c1 != '_' && (c1 < '0' || c1 > '7')) {
+            return true;
+        }
+        return false;
     }
 }

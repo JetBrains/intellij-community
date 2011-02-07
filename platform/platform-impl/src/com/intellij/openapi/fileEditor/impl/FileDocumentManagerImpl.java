@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -608,6 +607,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
-    //myBus.asyncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
   }
 }

@@ -19,4 +19,10 @@ public class UnnecessaryJavaDocLink {
     void foo() {
 
     }
+
+    /**
+     * @see com.siyeh.igtest.style.unnecessary_javadoc_link.UnnecessaryJavaDocLink
+     * something
+     */
+    void bar() {}
 }

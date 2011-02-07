@@ -581,18 +581,7 @@ public class EditorsSplitters extends JPanel {
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
-        boolean alreadyFocused = false;
-        final JComponent comp = selectedEditor.getComponent();
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (owner != null && comp != null) {
-          alreadyFocused = owner == comp || SwingUtilities.isDescendingFrom(owner, comp);
-        }
-
-        if (requestFocus && !alreadyFocused) {
-          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus).doWhenDone(fireRunnable);
-        } else {
-          fireRunnable.run();
-        }
+        fireRunnable.run();
       }
     } else {
       fireRunnable.run();

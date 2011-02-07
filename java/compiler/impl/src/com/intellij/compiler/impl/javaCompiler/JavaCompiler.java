@@ -50,7 +50,11 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return getBackEndCompiler().getCompilableFileTypes().contains(file.getFileType());
+    final BackendCompiler backEndCompiler = getBackEndCompiler();
+    if (backEndCompiler instanceof ExternalCompiler) {
+      return ((ExternalCompiler)backEndCompiler).isCompilableFile(file, context);
+    }
+    return backEndCompiler.getCompilableFileTypes().contains(file.getFileType());
   }
 
   public void compile(CompileContext context, Chunk<Module> moduleChunk, VirtualFile[] files, OutputSink sink) {

@@ -67,8 +67,6 @@ target('default': 'The default target') {
           buildNumber: "IC-104.SNAPSHOT",
           version: "IdeaX",
           system_selector: "IntelliJIdeaCE10",
-          jdk_req: "1.6*",
-          vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
           home, out)
 }
 
@@ -93,35 +91,6 @@ public def layoutAll(Map args, String home, String out) {
   layoutWin(args, home, paths)
 }
 
-boolean isEap() {
-  return "true" == p("component.version.eap")
-}
-
-private def patchPropertiesFile(String where) {
-  ant.echo(file: "$where/bin/idea.properties", append: "true", message:
-           isEap() ?
-"""
-
-#-----------------------------------------------------------------------
-# Change to 'disabled' if you need not to receive instant visual notifications about
-# fatal errors that happen to IDEA or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=enabled
-"""
-
- :
-
-"""
-
-#-----------------------------------------------------------------------
-# Change to 'eanbled' if you need to receive instant visual notifications about
-# fatal errors that happen to IDEA or plugins installed.
-#-----------------------------------------------------------------------
-idea.fatal.error.notification=disabled
-"""
-  )
-}
-
 private def layoutWin(Map args, String home, Paths paths) {
   layout("$paths.distWin") {
     dir("bin") {
@@ -131,7 +100,7 @@ private def layoutWin(Map args, String home, Paths paths) {
   }
 
   patchPropertiesFile(paths.distWin)
-  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: args.vmoptions.replace(' ', '\n'))
+  ant.echo(file: "$paths.distWin/bin/idea.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
 
   def winZipPath = "$paths.artifacts/idea${args.buildNumber}.win.zip"
   ant.zip(zipfile: winZipPath) {
@@ -143,34 +112,37 @@ private def layoutWin(Map args, String home, Paths paths) {
 
 private def layoutMac(Map args, String home, Paths paths) {
   project.stage("Cleaning up sandbox folder")
+  args["executable"] = "idea"
+  args["bundle_name"] = "IntelliJ IDEA"
+  args["bundleIdentifier"] = "com.jetbrains.intellij.ce"
+  args["platform_prefix"] = "Idea"
+  args["doc_types"] = """
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>ipr</string>
+        </array>
+        <key>CFBundleTypeIconFile</key>
+        <string>idea.icns</string>
+        <key>CFBundleTypeName</key>
+        <string>IntelliJ IDEA Project File</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+      </dict>
+    </array>
+  """
 
-  ant.copy(todir: "$paths.distMac/bin") {
-    fileset(dir: "$home/bin") { include(name: "*.*") }
-    fileset(dir: "$home/bin/nix")
-    fileset(dir: "$home/bin/mac")
+  layoutMacApp(paths.distMac, home, args)
+
+  layout(paths.distMac) {
+    dir("bin") {
+      fileset(dir: "$home/bin") { include(name: "*.*") }
+    }
   }
 
   patchPropertiesFile(paths.distMac)
-
-  ant.copy(todir: paths.distMac) {
-    fileset(dir: "$home/build/conf/mac")
-  }
-
-  def version = isEap() ? p("component.version.codename") : p("component.version.major") + "." +  p("component.version.minor")
-
-  ant.tstamp() {
-    format(property: "todayYear", pattern: "yyyy")
-  }
-
-  ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
-    replacefilter(token: "@@build@@", value: args.buildNumber)
-    replacefilter(token: "@@year@@", value: "$todayYear")
-
-    replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS")
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
-    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
-  }
 
   def root = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
 
@@ -205,7 +177,7 @@ def layoutLinux(Map args, String home, Paths paths) {
 
   patchPropertiesFile(paths.distUnix)
 
-  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: args.vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: vmoptions32().replace(' ', '\n') )
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
 

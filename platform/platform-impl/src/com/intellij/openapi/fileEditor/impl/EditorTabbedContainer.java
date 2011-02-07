@@ -120,7 +120,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         }, "EditorChange", null);
         return result;
       }
-    });
+    }).getPresentation().setRequestFocusOnLastFocusedComponent(true);
 
     setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
 

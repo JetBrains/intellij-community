@@ -15,15 +15,20 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ImplicitVariable;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ImplicitVariable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ImplicitVariableElementInfoFactory implements SmartPointerElementInfoFactory {
   @Nullable
-  public SmartPointerElementInfo createElementInfo(final PsiElement element) {
+  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
     if (element instanceof ImplicitVariable) {
       return new ImplicitVariableInfo((ImplicitVariable) element);
     }
@@ -53,6 +58,39 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
     }
 
     public void documentAndPsiInSync() {
+    }
+
+    @Override
+    public void fastenBelt(int offset) {
+    }
+
+    @Override
+    public void unfastenBelt(int offset) {
+    }
+
+    @Override
+    public int elementHashCode() {
+      return myVar.hashCode();
+    }
+
+    @Override
+    public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+      if (other instanceof ImplicitVariableInfo) {
+        return myVar == ((ImplicitVariableInfo)other).myVar;
+      }
+      return Comparing.equal(restoreElement(), other.restoreElement());
+    }
+
+    @Override
+    public VirtualFile getVirtualFile() {
+      return PsiUtilBase.getVirtualFile(myVar);
+    }
+
+    @Override
+    public Segment getSegment() {
+      PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
+      if (psiIdentifier == null || !psiIdentifier.isValid()) return null;
+      return psiIdentifier.getTextRange();
     }
   }
 }

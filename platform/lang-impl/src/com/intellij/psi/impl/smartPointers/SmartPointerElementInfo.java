@@ -17,6 +17,8 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +27,17 @@ interface SmartPointerElementInfo {
   Document getDocumentToSynchronize();
 
   void documentAndPsiInSync();
+  void fastenBelt(int offset);
+
+  void unfastenBelt(int offset);
 
   @Nullable
   PsiElement restoreElement();
 
   void dispose();
+  int elementHashCode(); // must be immutable
+  boolean pointsToTheSameElementAs(SmartPointerElementInfo other);
+
+  VirtualFile getVirtualFile();
+  Segment getSegment();
 }

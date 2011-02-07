@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class NativeFileType implements FileType {
+public class NativeFileType implements INativeFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/custom.png");
   private NativeFileType() { }
 

@@ -39,9 +39,17 @@ public abstract class SmartPointerManager {
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI
    * element.
-   *
+   * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element);
+
+  /**
+   * @param pointer1 smart pointer to compare
+   * @param pointer2 smart pointer to compare
+   * @return true if both pointers point to the same PSI element.
+   * This method is cheaper than dereferencing both pointers and comparing the result.
+   */
+  public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
 }

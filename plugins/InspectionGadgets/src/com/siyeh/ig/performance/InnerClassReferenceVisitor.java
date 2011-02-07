@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
     private boolean referencesStaticallyAccessible = true;
 
     public InnerClassReferenceVisitor(PsiClass innerClass) {
-        super();
         this.innerClass = innerClass;
     }
 
@@ -42,14 +41,14 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
                 return true;
             }
         }
-        if (InheritanceUtil.isCorrectDescendant(innerClass, aClass, true)) {
+        if (InheritanceUtil.isInheritorOrSelf(innerClass, aClass, true)) {
             return true;
         }
         PsiClass classScope = aClass;
         final PsiClass outerClass =
                 ClassUtils.getContainingClass(innerClass);
         while (classScope != null) {
-            if (InheritanceUtil.isCorrectDescendant(outerClass, classScope,
+            if (InheritanceUtil.isInheritorOrSelf(outerClass, classScope,
                     true)) {
                 return false;
             }

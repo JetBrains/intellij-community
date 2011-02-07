@@ -62,6 +62,13 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
+    <action id="HtmlNavigatePopupAction"
+            class = "com.intellij.ide.actions.NavigateToRelatedFileAction"
+            text = "Related files..." description="Navigate to related file">
+      <add-to-group group-id="GoToMenu" relative-to-action="GotoLine" anchor="after"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift alt HOME"/>
+    </action>
+
     <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonEmptyActionGroup" text="XML Configuration File" popup="true" icon="/fileTypes/xml.png">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>

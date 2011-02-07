@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="JPS">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/build/lib/gant/lib/jps.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/build/lib/gant/jps-sources.zip!/" />
+    </SOURCES>
+  </library>
+</component>

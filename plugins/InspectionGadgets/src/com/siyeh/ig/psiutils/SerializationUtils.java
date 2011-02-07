@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +27,12 @@ public class SerializationUtils {
     private SerializationUtils() {}
 
     public static boolean isSerializable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass,
+        return InheritanceUtil.isInheritor(aClass,
                 CommonClassNames.JAVA_IO_SERIALIZABLE);
     }
 
     public static boolean isExternalizable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass,
+        return InheritanceUtil.isInheritor(aClass,
                 CommonClassNames.JAVA_IO_EXTERNALIZABLE);
     }
 
@@ -56,7 +57,8 @@ public class SerializationUtils {
     }
 
     public static boolean hasReadObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods = aClass.findMethodsByName("readObject", false);
+        final PsiMethod[] methods =
+                aClass.findMethodsByName("readObject", false);
         for (final PsiMethod method : methods) {
             if (isReadObject(method)) {
                 return true;
@@ -130,9 +132,9 @@ public class SerializationUtils {
             if (isExternalizable(psiClass)) {
                 return true;
             }
-            if (ClassUtils.isSubclass(psiClass,
+            if (InheritanceUtil.isInheritor(psiClass,
                     CommonClassNames.JAVA_UTIL_COLLECTION) ||
-                    ClassUtils.isSubclass(psiClass,
+                    InheritanceUtil.isInheritor(psiClass,
                             CommonClassNames.JAVA_UTIL_MAP)) {
                 final PsiType[] parameters = classTYpe.getParameters();
                 for (PsiType parameter : parameters) {

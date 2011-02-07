@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -29,13 +28,10 @@ import org.jetbrains.annotations.Nullable;
 public class PreferNonGenericWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
       PsiType type = ((PsiMethod)object).getReturnType();
-      final JavaMethodCallElement callItem = item.as(JavaMethodCallElement.class);
+      final JavaMethodCallElement callItem = item.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
       if (callItem != null) {
         type = callItem.getSubstitutor().substitute(type);
       }

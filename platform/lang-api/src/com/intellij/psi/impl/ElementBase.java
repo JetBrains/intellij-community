@@ -19,11 +19,10 @@ package com.intellij.psi.impl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.NativeFileType;
+import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -31,6 +30,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -48,6 +49,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
+  private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = new NullableFunction<ElementIconRequest, Icon>() {
+    public Icon fun(ElementIconRequest request) {
+      final PsiElement element = request.getElement();
+      if (!element.isValid()) return null;
+      if (element.getProject().isDisposed()) return null;
+      return computeIconNow(element, request.getFlags());
+    }
+  };
   private TIntObjectHashMap<Icon> myBaseIcon;
 
   private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
@@ -88,18 +97,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = myBaseIcon.get(flags);
     }
 
-    final Project project = psiElement.getProject();
     if (isToDeferIconLoading()) {
-      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), new NullableFunction<ElementIconRequest, Icon>() {
-        public Icon fun(ElementIconRequest request) {
-          if (project.isDisposed()) return null;
-          final PsiElement element = request.getElement();
-          if (!element.isValid()) return null;
-          if (element.getProject().isDisposed()) return null;
-          return computeIconNow(element, request.getFlags());
-        }
-      });
-    } else {
+      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
+    }
+    else {
       if (!psiElement.isValid()) return null;
       return computeIconNow(psiElement, flags);
     }
@@ -110,12 +111,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  private Icon computeIconNow(PsiElement element, int flags) {
+  private static Icon computeIconNow(PsiElement element, int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
     }
-    return getElementIcon(flags);
+    return ((ElementBase)element).getElementIcon(flags);
   }
 
   protected Icon computeBaseIcon(int flags) {
@@ -135,7 +136,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static boolean isNativeFileType(FileType fileType) {
-    return fileType instanceof NativeFileType || fileType instanceof UnknownFileType;
+    return fileType instanceof INativeFileType || fileType instanceof UnknownFileType;
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, int flags) {
@@ -177,11 +178,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static class ElementIconRequest extends ComparableObject.Impl {
     public ElementIconRequest(PsiElement element, int flags) {
-      super(new Object[] {element, flags});
+      super(new Object[] {createPointer(element), flags});
+    }
+
+    private static Object createPointer(PsiElement element) {
+      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     }
 
     public PsiElement getElement() {
-      return (PsiElement)getEqualityObjects()[0];
+      SmartPsiElementPointer pointer = (SmartPsiElementPointer)getEqualityObjects()[0];
+      return pointer.getElement();
     }
 
     public int getFlags() {

@@ -57,33 +57,35 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
       @Override
       public PsiElement[] getSecondaryElements() {
         PsiElement element = getPsiElement();
-        if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
         final PsiField field = (PsiField)element;
         PsiClass containingClass = field.getContainingClass();
         if (containingClass != null) {
-          PsiMethod getter = GroovyPropertyUtils.findGetterForField(field);
-          PsiMethod setter = GroovyPropertyUtils.findSetterForField(field);
-          if (getter != null || setter != null) {
+          PsiMethod[] getters = GroovyPropertyUtils.getAllGettersByField(field);
+          PsiMethod[] setters = GroovyPropertyUtils.getAllSettersByField(field);
+          if (getters.length + setters.length > 0) {
             final boolean doSearch;
-            if ((getter == null || !getter.isPhysical()) && (setter == null || !setter.isPhysical())) {
-              doSearch = true;
-            }
-            else {
+            if (arePhysical(getters) || arePhysical(setters)) {
+              if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
               doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
                                              FindBundle.message("find.field.accessors.title"),
                                              new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
                                              Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
+            else {
+              doSearch = true;
+            }
             if (doSearch) {
               final List<PsiElement> elements = new ArrayList<PsiElement>();
-              if (getter != null) {
+              for (PsiMethod getter : getters) {
                 ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
               }
-              if (setter != null) {
+
+              for (PsiMethod setter : setters) {
                 ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
               }
               return elements.toArray(new PsiElement[elements.size()]);
-            } else {
+            }
+            else {
               return PsiElement.EMPTY_ARRAY;
             }
           }
@@ -91,5 +93,12 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
         return super.getSecondaryElements();
       }
     };
+  }
+
+  private static boolean arePhysical(PsiMethod[] methods) {
+    for (PsiMethod method : methods) {
+      if (method.isPhysical()) return true;
+    }
+    return false;
   }
 }

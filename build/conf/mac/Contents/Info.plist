@@ -4,37 +4,23 @@
   <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
-    <key>CFBundleDocumentTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleTypeExtensions</key>
-        <array>
-          <string>ipr</string>
-        </array>
-        <key>CFBundleTypeIconFile</key>
-        <string>idea.icns</string>
-        <key>CFBundleTypeName</key>
-        <string>IntelliJ IDEA Project File</string>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
-      </dict>
-    </array>
+    @@doc_types@@
     <key>CFBundleExecutable</key>
-    <string>idea</string>
+    <string>@@executable@@</string>
     <key>CFBundleIconFile</key>
-    <string>idea.icns</string>
+    <string>@@icns@@</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>IntelliJ IDEA</string>
+    <string>@@bundle_name@@</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
-    <string>com.jetbrains.intellij</string>
+    <string>@@bundle_identifier@@</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
+    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
@@ -49,12 +35,12 @@
     <string>YES</string>
 
     <key>Java</key>
-   <dict>
+    <dict>
       <key>ClassPath</key>
       <string>$APP_PACKAGE/lib/bootstrap.jar:$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/util.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar</string>
 
       <key>JVMVersion</key>
-      <string>@@jdk_req@@</string>
+      <string>1.6*</string>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
@@ -82,13 +68,20 @@
         <string>true</string>
         <key>apple.awt.fullscreencapturealldisplays</key>
         <string>false</string>
+        @@platform@@
       </dict>
 
       <key>VMOptions</key>
       <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
 
+      <key>VMOptions.i386</key>
+      <string>@@vmoptions32@@</string>
+
+      <key>VMOptions.x86_64</key>
+      <string>@@vmoptions64@@</string>
+
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
-   </dict>
+    </dict>
   </dict>
 </plist>

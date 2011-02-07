@@ -44,11 +44,11 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -67,7 +67,7 @@ import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 
-class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DnDTarget, DnDSource {
+class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = 15;
   private static final int FREE_PAINTERS_AREA_WIDTH = 3;
@@ -92,10 +92,43 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      DnDManager.getInstance().registerSource(this, this);
-      DnDManager.getInstance().registerTarget(this, this);
+      installDnD();
     }
     setOpaque(true);
+  }
+
+  @SuppressWarnings({"ConstantConditions"})
+  private void installDnD() {
+    DnDSupport.createBuilder(this)
+      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
+        @Override
+        public DnDDragStartBean fun(DnDActionInfo info) {
+          final GutterIconRenderer renderer = getGutterRenderer(info.getPoint());
+          return renderer != null && (info.isCopy() || info.isMove()) ? new DnDDragStartBean(renderer) : null;
+        }
+      })
+      .setDropHandler(new DnDDropHandler() {
+        @Override
+        public void drop(DnDEvent e) {
+          final Object attachedObject = e.getAttachedObject();
+          if (attachedObject instanceof GutterIconRenderer) {
+            final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+            if (draggableObject != null) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                draggableObject.copy(line, myEditor.getVirtualFile());
+              }
+            }
+          }
+        }
+      })
+      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
+        @Override
+        public DnDImage fun(DnDActionInfo info) {
+          return new DnDImage(IconUtil.toImage(getGutterRenderer(info.getPoint()).getIcon()));
+        }
+      })
+      .install();
   }
 
   private void fireResized() {
@@ -338,57 +371,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     g2.setTransform(old);
-  }
-
-  @Override
-  public boolean update(DnDEvent aEvent) {
-    aEvent.setDropPossible(true, null);
-    return false;
-  }
-
-  @Override
-  public void drop(DnDEvent aEvent) {
-    final Object attachedObject = aEvent.getAttachedObject();
-    if (attachedObject instanceof GutterIconRenderer) {
-      final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
-      if (draggableObject != null) {
-        final int line = convertPointToLineNumber(aEvent.getPoint());
-        if (line != -1) {
-          draggableObject.copy(line, myEditor.getVirtualFile());
-        }
-      }
-    }
-  }
-
-  @Override
-  public void cleanUpOnLeave() {
-  }
-
-  @Override
-  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-  }
-
-  @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return (action == DnDAction.MOVE || action == DnDAction.COPY) && getGutterRenderer(dragOrigin) != null;
-  }
-
-  @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    return new DnDDragStartBean(getGutterRenderer(dragOrigin));
-  }
-
-  @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    return new Pair<Image, Point>(IconUtil.toImage(getGutterRenderer(dragOrigin).getIcon()), dragOrigin);
-  }
-
-  @Override
-  public void dragDropEnd() {
-  }
-
-  @Override
-  public void dropActionChanged(int gestureModifiers) {
   }
 
   private interface RangeHighlighterProcessor {

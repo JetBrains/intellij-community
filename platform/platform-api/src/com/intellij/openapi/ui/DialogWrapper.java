@@ -439,10 +439,11 @@ public abstract class DialogWrapper {
       final Object value = action.getValue(Action.MNEMONIC_KEY);
       if (value instanceof Integer) {
         final int mnemonic = ((Integer)value).intValue();
-        if (mnemonic == 'Y') {
+        final Object name = action.getValue(Action.NAME);
+        if (mnemonic == 'Y' && "Yes".equals(name)) {
           myYesAction = action;
         }
-        else if (mnemonic == 'N') {
+        else if (mnemonic == 'N' && "No".equals(name)) {
           myNoAction = action;
         }
         button.setMnemonic(mnemonic);
@@ -496,11 +497,11 @@ public abstract class DialogWrapper {
         plainText.append(ch);
       }
       button.setText(plainText.toString());
-
-      if (mnemonic == KeyEvent.VK_Y) {
+      final Object name = action.getValue(Action.NAME);
+      if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
         myYesAction = action;
       }
-      else if (mnemonic == KeyEvent.VK_N) {
+      else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
         myNoAction = action;
       }
 

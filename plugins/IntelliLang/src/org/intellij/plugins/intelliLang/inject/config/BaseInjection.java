@@ -71,7 +71,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @NotNull
-  private final List<InjectionPlace> myPlaces = new ArrayList<InjectionPlace>();
+  private final ArrayList<InjectionPlace> myPlaces = new ArrayList<InjectionPlace>();
 
   @NotNull
   public List<InjectionPlace> getInjectionPlaces() {
@@ -132,7 +132,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       final StringBuilder sb = new StringBuilder();
       textEscaper.decode(textRange, sb);
       final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(sb), sb.length());
-      return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
+      return !ranges.isEmpty() ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
         public TextRange fun(TextRange s) {
           return new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange));
         }
@@ -250,6 +250,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
         final String text = placeElement.getText();
         myPlaces.add(new InjectionPlace(text, null, enabled));
       }
+      myPlaces.trimToSize();
     }
   }
 

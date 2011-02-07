@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ThreadingUtils {
 
-    private ThreadingUtils() {
-        super();
-    }
+    private ThreadingUtils() {}
 
     public static boolean isWaitCall(
             @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"wait".equals(methodName)) {
             return false;
         }
@@ -62,7 +61,7 @@ class ThreadingUtils {
             @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"notify".equals(methodName) && !"notifyAll".equals(methodName)) {
             return false;
         }
@@ -75,7 +74,7 @@ class ThreadingUtils {
             @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"signal".equals(methodName) && !"signalAll".equals(methodName)) {
             return false;
         }
@@ -92,15 +91,15 @@ class ThreadingUtils {
         if (containingClass == null) {
             return false;
         }
-        return ClassUtils.isSubclass(containingClass,
-                        "java.util.concurrent.locks.Condition");
+        return InheritanceUtil.isInheritor(containingClass,
+                "java.util.concurrent.locks.Condition");
     }
 
     public static boolean isAwaitCall(
             @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if (!"await".equals(methodName)
                 && !"awaitUntil".equals(methodName)
                 && !"awaitUninterruptibly".equals(methodName)
@@ -115,7 +114,7 @@ class ThreadingUtils {
         if (containingClass == null) {
             return false;
         }
-        return ClassUtils.isSubclass(containingClass,
-                        "java.util.concurrent.locks.Condition");
+        return InheritanceUtil.isInheritor(containingClass,
+                "java.util.concurrent.locks.Condition");
     }
 }

@@ -18,6 +18,7 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.util.Consumer;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChangeListStorage {
@@ -26,7 +27,7 @@ public interface ChangeListStorage {
   long nextId();
 
   @Nullable
-  ChangeSetHolder readPrevious(int id);
+  ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard);
 
   void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
 

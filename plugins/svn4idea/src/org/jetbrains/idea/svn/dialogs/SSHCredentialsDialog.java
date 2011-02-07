@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -363,18 +364,19 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == myPasswordButton || e.getSource() == myKeyButton) {
       updateFields();
+      updateOKButton();
     }
     else {
-      String path = myKeyFileText.getText();
+      final String[] path = {myKeyFileText.getText()};
       VirtualFile file;
-      if (path != null && path.trim().length() > 0) {
-        path = "file://" + path.replace(File.separatorChar, '/');
-        file = VirtualFileManager.getInstance().findFileByUrl(path);
+      if (path[0] != null && path[0].trim().length() > 0) {
+        path[0] = "file://" + path[0].replace(File.separatorChar, '/');
+        file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
       }
       else {
-        path = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh/identity";
-        path = path.replace(File.separatorChar, '/');
-        file = VirtualFileManager.getInstance().findFileByUrl(path);
+        path[0] = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh/identity";
+        path[0] = path[0].replace(File.separatorChar, '/');
+        file = VirtualFileManager.getInstance().findFileByUrl(path[0]);
       }
       FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
 
@@ -383,18 +385,21 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       descriptor.setDescription(SvnBundle.message("dialog.description.openssh.v2.private.key"));
       descriptor.setHideIgnored(false);
 
-      String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
+      final String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
       PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
 
-      VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor, file);
-
-      PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
-      if (files != null && files.length == 1) {
-        path = files[0].getPath().replace('/', File.separatorChar);
-        myKeyFileText.setText(path);
-      }
+      FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, file, new Consumer<VirtualFile[]>() {
+        @Override
+        public void consume(VirtualFile[] files) {
+          PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
+          if (files != null && files.length == 1) {
+            path[0] = files[0].getPath().replace('/', File.separatorChar);
+            myKeyFileText.setText(path[0]);
+          }
+          updateOKButton();
+        }
+      });
     }
-    updateOKButton();
   }
 
   private void updateOKButton() {

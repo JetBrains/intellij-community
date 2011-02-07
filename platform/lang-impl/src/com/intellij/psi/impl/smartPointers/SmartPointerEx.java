@@ -15,11 +15,14 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 
-public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
-  void fastenBelt();
+public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E>, Disposable {
+  void fastenBelt(int offset);
   void documentAndPsiInSync();
   void dispose();
+
+  void unfastenBelt(int offset);
 }
