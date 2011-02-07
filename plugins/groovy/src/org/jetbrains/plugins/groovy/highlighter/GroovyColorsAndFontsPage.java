@@ -72,6 +72,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.INSTANCE_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
       new AttributesDescriptor(DefaultHighlighter.CLASS_REFERENCE_ID, DefaultHighlighter.CLASS_REFERENCE),
       new AttributesDescriptor(DefaultHighlighter.MAP_KEY_ID, DefaultHighlighter.MAP_KEY),
+      new AttributesDescriptor(DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE_ID, DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE),
+      new AttributesDescriptor(DefaultHighlighter.STATIC_PROPERTY_REFERENCE_ID, DefaultHighlighter.STATIC_PROPERTY_REFERENCE),
     };
 
   @NotNull
@@ -111,7 +113,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
            "def x=1 + <unresolved>unresolved</unresolved>\n" +
            "def f1 = []\n" +
-           "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>"
+           "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
+           "print new <classref>Demo</classref>().<prop>property</prop>"
       ;
   }
 
@@ -128,6 +131,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
     map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
     map.put("mapkey", DefaultHighlighter.MAP_KEY);
+    map.put("prop", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
+    map.put("staticprop", DefaultHighlighter.STATIC_PROPERTY_REFERENCE);
     return map;
   }
 }
