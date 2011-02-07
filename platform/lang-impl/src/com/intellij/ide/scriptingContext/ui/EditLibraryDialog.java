@@ -65,6 +65,7 @@ public class EditLibraryDialog extends DialogWrapper {
   private JButton myAddDocUrlButton;
   private JButton myRemoveDocUrlButton;
   private JBList myDocUrlList;
+  private JButton myDownloadButton;
   private Project myProject;
   private FileTableModel myFileTableModel;
   private VirtualFile mySelectedFile;
@@ -110,6 +111,7 @@ public class EditLibraryDialog extends DialogWrapper {
       @Override
       public void intervalAdded(ListDataEvent e) {
         myRemoveDocUrlButton.setEnabled(true);
+        checkDownloadOfflineDocEnabled();
       }
 
       @Override
@@ -117,6 +119,7 @@ public class EditLibraryDialog extends DialogWrapper {
         Object source = e.getSource();
         if (source instanceof MyDocUrlListModel && ((MyDocUrlListModel)source).getDocUrls().length == 0) {
           myRemoveDocUrlButton.setEnabled(false);
+          checkDownloadOfflineDocEnabled();
         }
       }
 
@@ -132,6 +135,14 @@ public class EditLibraryDialog extends DialogWrapper {
         specifyDocUrl();
       }
     });
+    
+    myDownloadButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        downloadDocumentation();
+      }
+    });
+    myDownloadButton.setVisible(false); //TODO<rv> Remove
     
     myRemoveDocUrlButton.addActionListener(new ActionListener() {
       @Override
@@ -160,6 +171,28 @@ public class EditLibraryDialog extends DialogWrapper {
     myDocUrlListModel.setDocUrls(docUrls);
     if (docUrls.length > 0) {
       myRemoveDocUrlButton.setEnabled(true);
+    }
+    checkDownloadOfflineDocEnabled();
+  }
+  
+  private void checkDownloadOfflineDocEnabled() {
+    for (String url : getDocUrls()) {
+      if (myProvider.getOfflineDocUrl(url) != null) {
+        myDownloadButton.setEnabled(true);
+        return;
+      }
+    }
+    myDownloadButton.setEnabled(false);
+  }
+  
+  private void downloadDocumentation() {
+    for (String url : getDocUrls()) {
+      String offlineDocUrl = myProvider.getOfflineDocUrl(url); 
+      if (offlineDocUrl != null) {
+        String targetFile = myProvider.downloadOfflineDoc(myProject, offlineDocUrl, getRootPane());
+        myDocUrlListModel.addUrl(targetFile);
+        return;
+      }
     }
   }
   
@@ -454,10 +487,13 @@ public class EditLibraryDialog extends DialogWrapper {
     }
     
     public int addUrl(String url) {
-      myDocUrls.add(url);
-      int newIndex = myDocUrls.indexOf(url);
-      fireIntervalAdded(this, newIndex, newIndex);
-      return newIndex;
+      if (!myDocUrls.contains(url)) {
+        myDocUrls.add(url);
+        int newIndex = myDocUrls.indexOf(url);
+        fireIntervalAdded(this, newIndex, newIndex);
+        return newIndex;
+      }
+      return myDocUrls.indexOf(url);
     }
     
     public int indexOf(String url) {
@@ -491,6 +527,7 @@ public class EditLibraryDialog extends DialogWrapper {
       int index = myDocUrlListModel.addUrl(url);
       myDocUrlList.ensureIndexIsVisible(index);
       myDocUrlList.setSelectedIndex(index);
+      checkDownloadOfflineDocEnabled();
     }
   }
 
