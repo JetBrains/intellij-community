@@ -18,15 +18,6 @@
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="Eclipse" level="project" />
     <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/dev/compilerapi.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />

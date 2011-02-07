@@ -57,7 +57,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
   private static class LibraryUsageGroup implements UsageGroup {
     public static final Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
 
-    OrderEntry myEntry;
+    private final OrderEntry myEntry;
 
     public void update() {
     }

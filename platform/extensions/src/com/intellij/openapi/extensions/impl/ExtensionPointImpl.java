@@ -125,22 +125,21 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private void internalRegisterExtension(T extension, ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (myExtensions.contains(extension)) {
       myLogger.error("Extension was already added: " + extension);
+      return;
     }
-    else {
-      myExtensions.add(index, extension);
-      myLoadedAdapters.add(index, adapter);
-      if (runNotifications) {
-        if (extension instanceof Extension) {
-          try {
-            ((Extension)extension).extensionAdded(this);
-          }
-          catch (Throwable e) {
-            myLogger.error(e);
-          }
+    myExtensions.add(index, extension);
+    myLoadedAdapters.add(index, adapter);
+    if (runNotifications) {
+      if (extension instanceof Extension) {
+        try {
+          ((Extension)extension).extensionAdded(this);
         }
-
-        notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
+        catch (Throwable e) {
+          myLogger.error(e);
+        }
       }
+
+      notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
     }
   }
 
@@ -163,31 +162,28 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         result = myExtensionsCache;
         if (result == null) {
           processAdapters();
-          List<T> extensions = new ArrayList<T>(myExtensions);
-
-          List<T> problemExtensions = new ArrayList<T>();
-
           final Class<T> extensionClass = getExtensionClass();
-          for (Iterator<T> iterator = extensions.iterator(); iterator.hasNext();) {
-            T t = iterator.next();
+          //noinspection unchecked
+          result = myExtensions.toArray((T[])Array.newInstance(extensionClass, myExtensions.size()));
+
+          for (int i = result.length - 1; i >= 0; i--) {
+            T t = result[i];
+            if (i > 0 && result[i] == result[i - 1]) {
+              LOG.error("Duplicate extension found: " + t + "; " +
+                        " Result:      "+ Arrays.asList(result)+";\n" +
+                        " extensions: "+ myExtensions+";\n" +
+                        " getExtensionClass(): "+ extensionClass +";\n" +
+                        " size:"+myExtensions.size()+";"+result.length);
+            }
+
             if (!extensionClass.isAssignableFrom(t.getClass())) {
-              problemExtensions.add(t);
-              iterator.remove();
+              LOG.error("Extension '" + t.getClass() + "' must be an instance of '" + extensionClass + "'",
+                        new ExtensionException(t.getClass()));
+              result = ArrayUtil.remove(result, i); // we assume that usually all extensions are OK
             }
           }
 
-          for (T problemExtension : problemExtensions) {
-            LOG.error("Extension '" + problemExtension.getClass() + "' should be instance of '" + extensionClass + "'", new ExtensionException(problemExtension.getClass()));
-          }
-
-          //noinspection unchecked
-          myExtensionsCache = result = extensions.toArray((T[])Array.newInstance(extensionClass, extensions.size()));
-          for (int i = 1; i < result.length; i++) {
-            assert result[i] != result[i - 1] : "Result:      "+ Arrays.asList(result)+";\n" +
-                                                " extensions: "+ extensions+";\n" +
-                                                " getExtensionClass(): "+ extensionClass +";\n" +
-                                                " size:"+extensions.size()+";"+result.length;
-          }
+          myExtensionsCache = result;
         }
       }
     }

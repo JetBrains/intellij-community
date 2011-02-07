@@ -17,13 +17,18 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +102,16 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   @Nullable
   protected GlobalSearchScope getScope(final GenericDomValue domValue) {
     final Module module = domValue.getModule();
-    return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
+    if (module == null) return null;
+    XmlElement element = domValue.getXmlElement();
+    if (element == null) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    file = file.getOriginalFile();
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
+    return GlobalSearchScope.moduleRuntimeScope(module, fileIndex.isInTestSourceContent(virtualFile));
   }
 
   public static class AnnotationType extends PsiClassConverter {

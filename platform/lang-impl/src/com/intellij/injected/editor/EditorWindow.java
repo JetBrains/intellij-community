@@ -109,20 +109,20 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
       if (!editorWindow.isValid()/* || myDocumentWindow.intersects(editorWindow.myDocumentWindow)*/) {
         editorWindow.dispose();
 
-        InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile());
+        InjectedLanguageUtil.clearCaches(editorWindow.myInjectedFile, editorWindow.getDocument());
         iterator.remove();
       }
     }
   }
 
   private boolean isValid() {
-    return !isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
+    return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
 
   public PsiFile getInjectedFile() {
     return myInjectedFile;
   }
-  public LogicalPosition hostToInjected(LogicalPosition pos) {
+  public LogicalPosition hostToInjected(@NotNull LogicalPosition pos) {
     assert isValid();
     int offsetInInjected = myDocumentWindow.hostToInjected(myDelegate.logicalPositionToOffset(pos));
     return offsetToLogicalPosition(offsetInInjected);

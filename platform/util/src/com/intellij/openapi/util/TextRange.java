@@ -18,7 +18,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TextRange {
+public class TextRange implements Segment{
   private final int myStartOffset;
   private final int myEndOffset;
 

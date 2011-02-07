@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -38,6 +40,8 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   protected JLabel myScrollHelper;
 
   private ToolWindow myToolWindow;
+
+  private boolean myListenerInstalled;
 
   protected ResizeToolWindowAction() {
   }
@@ -61,6 +65,16 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     if (project == null) {
       setDisabled(e);
       return;
+    }
+
+    if (!myListenerInstalled) {
+      myListenerInstalled = true;
+      ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+        @Override
+        public void projectClosed(Project project) {
+          setDisabled(null);
+        }
+      });
     }
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -99,9 +113,13 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   private void setDisabled(AnActionEvent e) {
-    e.getPresentation().setEnabled(false);
+    if (e != null) {
+      e.getPresentation().setEnabled(false);
+    }
+
     myLastWindow = null;
     myLastManager = null;
+    myToolWindow = null;
   }
 
   protected abstract void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr);

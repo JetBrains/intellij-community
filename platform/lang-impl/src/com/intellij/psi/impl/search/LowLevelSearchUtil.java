@@ -141,6 +141,10 @@ public class LowLevelSearchUtil {
     final CharSequence buffer = file.getViewProvider().getContents();
 
     TextRange range = scope.getTextRange();
+    if (range == null) {
+      throw new AssertionError("Element " + scope + " of class " + scope.getClass() + " has null range");
+    }
+
     int scopeStart = range.getStartOffset();
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();

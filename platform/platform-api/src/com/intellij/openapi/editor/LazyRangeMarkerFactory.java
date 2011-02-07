@@ -35,13 +35,13 @@ import java.util.Iterator;
 public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   private final WeakList<LazyMarker> myMarkers = new WeakList<LazyMarker>();
 
-  public LazyRangeMarkerFactory(Project project, final FileDocumentManager fdm) {
+  public LazyRangeMarkerFactory(Project project, final FileDocumentManager fileDocumentManager) {
     super(project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       public void beforeDocumentChange(DocumentEvent e) {
         for (Iterator<LazyMarker> it = myMarkers.iterator(); it.hasNext();) {
           final LazyMarker marker = it.next();
-          final VirtualFile docFile = fdm.getFile(e.getDocument());
+          final VirtualFile docFile = fileDocumentManager.getFile(e.getDocument());
           if (marker.getFile() == docFile) {
             marker.ensureDelegate();
             it.remove();
@@ -82,7 +82,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return marker;
   }
 
-  private static abstract class LazyMarker extends UserDataHolderBase implements RangeMarker{
+  private abstract static class LazyMarker extends UserDataHolderBase implements RangeMarker{
     private RangeMarker myDelegate = null;
     private final VirtualFile myFile;
     protected final int myInitialOffset;

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public enum AutoCompletionPolicy {
 
   @Nullable
   public static AutoCompletionPolicy getPolicy(LookupElement element) {
-    final PolicyDecorator decorator = element.as(PolicyDecorator.class);
+    final PolicyDecorator decorator = element.as(PolicyDecorator.CLASS_CONDITION_KEY);
     if (decorator != null) {
       return decorator.myPolicy;
     }
@@ -64,6 +65,7 @@ public enum AutoCompletionPolicy {
   }
 
   private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
+    public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 
     public PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {

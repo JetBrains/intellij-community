@@ -39,11 +39,6 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
       return null;
     }
 
-    // To provide file from editor manager, editor component should be active
-    if(!ToolWindowManager.getInstance(project).isEditorComponentActive()){
-      return null;
-    }
-
     return PlatformDataKeys.VIRTUAL_FILE.getData(context);
   }
 

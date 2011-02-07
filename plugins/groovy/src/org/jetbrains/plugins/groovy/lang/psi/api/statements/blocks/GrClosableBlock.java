@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -43,7 +42,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   @Nullable
   PsiType getReturnType();
 
-  PsiParameter[] getAllParameters();
+  GrParameter[] getAllParameters();
 
   @Nullable
   PsiElement getArrow();

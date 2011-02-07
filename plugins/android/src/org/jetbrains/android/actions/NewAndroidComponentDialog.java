@@ -18,16 +18,19 @@ package org.jetbrains.android.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.ElementCreator;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.AndroidFileTemplateProvider;
-import org.jetbrains.android.dom.manifest.*;
 import org.jetbrains.android.dom.manifest.Action;
+import org.jetbrains.android.dom.manifest.*;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -55,12 +58,18 @@ public class NewAndroidComponentDialog extends DialogWrapper {
 
   private PsiElement[] myCreatedElements;
 
-  protected NewAndroidComponentDialog(final Project project, final PsiDirectory directory) {
-    super(project);
+  protected NewAndroidComponentDialog(@NotNull final Module module, final PsiDirectory directory) {
+    super(module.getProject());
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
     myKindCombo.addItem(AndroidBundle.message("android.new.component.dialog.activity.item"), null, AndroidFileTemplateProvider.ACTIVITY);
+
+    if (!containsCustomApplicationClass(module)) {
+      myKindCombo.addItem(AndroidBundle.message("android.new.component.dialog.application.item"), null,
+                          AndroidFileTemplateProvider.APPLICATION);
+    }
+
     myKindCombo.addItem(AndroidBundle.message("android.new.component.dialog.service.item"), null, AndroidFileTemplateProvider.SERVICE);
     myKindCombo.addItem(AndroidBundle.message("android.new.component.dialog.broadcast.receiver.item"), null,
                         AndroidFileTemplateProvider.BROADCAST_RECEIVER);
@@ -68,7 +77,7 @@ public class NewAndroidComponentDialog extends DialogWrapper {
                         AndroidFileTemplateProvider.REMOTE_INTERFACE_TEMPLATE);
     init();
     setTitle(AndroidBundle.message("android.new.component.action.command.name"));
-    myCreator = new ElementCreator(project, CommonBundle.getErrorTitle()) {
+    myCreator = new ElementCreator(module.getProject(), CommonBundle.getErrorTitle()) {
       @Override
       protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
         JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
@@ -76,7 +85,7 @@ public class NewAndroidComponentDialog extends DialogWrapper {
 
       @Override
       protected PsiElement[] create(String newName) throws Exception {
-        final PsiElement element = NewAndroidComponentDialog.this.create(newName, directory, project);
+        final PsiElement element = NewAndroidComponentDialog.this.create(newName, directory, module.getProject());
         if (element != null) {
           return new PsiElement[]{element};
         }
@@ -93,9 +102,21 @@ public class NewAndroidComponentDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         String selected = myKindCombo.getSelectedName();
         myMarkAsStartupActivityCheckBox.setEnabled(AndroidFileTemplateProvider.ACTIVITY.equals(selected));
-        myLabelField.setEnabled(!AndroidFileTemplateProvider.REMOTE_INTERFACE_TEMPLATE.equals(selected));
+        myLabelField.setEnabled(!AndroidFileTemplateProvider.REMOTE_INTERFACE_TEMPLATE.equals(selected) &&
+                                !AndroidFileTemplateProvider.APPLICATION.equals(selected));
       }
     });
+  }
+
+  private static boolean containsCustomApplicationClass(@NotNull final Module module) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
+    PsiClass applicationClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      public PsiClass compute() {
+        return facade.findClass(AndroidUtils.APPLICATION_CLASS_NAME, module.getModuleWithDependenciesAndLibrariesScope(false));
+      }
+    });
+    return applicationClass != null && ClassInheritorsSearch.search(applicationClass, module.getModuleScope(), true).findFirst() != null;
   }
 
   @Nullable
@@ -174,6 +195,9 @@ public class NewAndroidComponentDialog extends DialogWrapper {
       Receiver receiver = application.addReceiver();
       receiver.getReceiverClass().setValue(aClass);
       return receiver;
+    }
+    else if (AndroidFileTemplateProvider.APPLICATION.equals(templateName)) {
+      application.getName().setValue(aClass);
     }
     return null;
   }

@@ -362,7 +362,7 @@ public class FindUsagesManager implements JDOMExternalizable {
             return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
           }
         });
-        List<? extends PsiElement> elements =
+        final List<? extends PsiElement> elements =
           ApplicationManager.getApplication().runReadAction(new Computable<List<? extends PsiElement>>() {
             public List<? extends PsiElement> compute() {
               return descriptor.getAllElements();
@@ -381,7 +381,12 @@ public class FindUsagesManager implements JDOMExternalizable {
             handler.processElementUsages(element, usageInfoProcessor, options);
           }
 
-          PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+          Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+            public Project compute() {
+              return scopeFile != null ? scopeFile.getProject() : !elements.isEmpty() ? elements.get(0).getProject() : handler.getProject();
+            }
+          });
+          PsiManager.getInstance(project).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
             public boolean processInReadAction(final PsiReference ref) {
               TextRange rangeInElement = ref.getRangeInElement();
               return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));

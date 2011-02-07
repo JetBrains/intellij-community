@@ -309,11 +309,16 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testWrongAnnotation() {doTest();}
 
   public void testAmbiguousMethods() {
-    myFixture.copyFileToProject(getTestName(false)+".java");
+    myFixture.copyFileToProject(getTestName(false) + ".java");
     doTest();
   }
 
   public void testMapParamWithNoArgs() {doTest(new GroovyAssignabilityCheckInspection());}
+
+  public void testGroovyEnumInJavaFile() {
+    myFixture.copyFileToProject(getTestName(false)+".groovy");
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+  }
 
   public void testRangeType() {
     doTest(new GroovyRangeTypeCheckInspection());
@@ -333,6 +338,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testMethodImplementedByDelegate() {
     doTest();
+  }
+
+  public void testVarNotAssigned() {
+    doTest(new UnassignedVariableAccessInspection());
   }
 
   public void testTestMarkupStubs() {

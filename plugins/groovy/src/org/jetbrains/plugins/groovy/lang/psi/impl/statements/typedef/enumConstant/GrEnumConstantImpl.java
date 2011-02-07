@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -110,6 +111,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   private GroovyResolveResult[] multiResolveConstructorImpl(boolean allVariants) {
     PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
     PsiClass clazz = getContainingClass();
+    assert clazz != null;
     PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
     MethodResolverProcessor processor =
       new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, allVariants);
@@ -128,13 +130,25 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     return findChildByClass(GrArgumentList.class);
   }
 
+  @Override
+  public PsiEnumConstantInitializer getInitializingClass() {
+    return null;
+  }
+
   public GrExpression removeArgument(final int number) {
     final GrArgumentList list = getArgumentList();
     return list != null ? list.removeArgument(number) : null;
   }
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
-    return null;
+    GrArgumentList list = getArgumentList();
+    assert list != null;
+    if (list.getText().trim().length() == 0) {
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+      final GrArgumentList newList = factory.createArgumentList();
+      list = (GrArgumentList)list.replace(newList);
+    }
+    return list.addNamedArgument(namedArgument);
   }
 
   @Override
@@ -167,6 +181,13 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
+  @NotNull
+  @Override
+  public JavaResolveResult resolveMethodGenerics() {
+    return JavaResolveResult.EMPTY;
+  }
+
+  @Nullable
   public GrTypeDefinitionBody getAnonymousBlock() {
     return findChildByClass(GrTypeDefinitionBody.class);
   }
@@ -223,5 +244,10 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
 
   public boolean isSoft() {
     return false;
+  }
+
+  @Override
+  public PsiMethod resolveConstructor() {
+    return resolveMethod();
   }
 }

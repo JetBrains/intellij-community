@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +41,7 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   public LightFieldBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type) {
-    super(manager, name, type);
+    super(manager, name, type, StdLanguages.JAVA);
   }
 
   public LightFieldBuilder setContainingClass(PsiClass psiClass) {

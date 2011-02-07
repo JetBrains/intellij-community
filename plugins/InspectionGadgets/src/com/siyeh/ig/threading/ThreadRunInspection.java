@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -25,26 +26,29 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadRunInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("thread.run.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "CallToThreadRun";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message("thread.run.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ThreadRunFix();
     }
@@ -57,6 +61,7 @@ public class ThreadRunInspection extends BaseInspection {
                     "thread.run.replace.quickfix");
         }
 
+        @Override
         public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
@@ -101,7 +106,7 @@ public class ThreadRunInspection extends BaseInspection {
             if (methodClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
+            if (!InheritanceUtil.isInheritor(methodClass, "java.lang.Thread")) {
                 return;
             }
             if (isInsideThreadRun(expression)) {
@@ -125,7 +130,7 @@ public class ThreadRunInspection extends BaseInspection {
             if (methodClass == null) {
                 return false;
             }
-            return ClassUtils.isSubclass(methodClass, "java.lang.Thread");
+            return InheritanceUtil.isInheritor(methodClass, "java.lang.Thread");
         }
     }
 }

@@ -347,21 +347,9 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-          String uid = "";
-          if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
-            try {
-              uid = UUID.randomUUID().toString();
-            }
-            catch (Exception ignored) {
-            }
-            catch (InternalError ignored) {
-            }
-            propertiesComponent.setValue(INSTALLATION_UID, uid);
-          }
-          else {
-            uid = propertiesComponent.getValue(INSTALLATION_UID);
-          }
+
+          String uid = getInstallationUID();
+
           final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
@@ -394,6 +382,25 @@ public final class UpdateChecker {
 
     if (exception[0] != null) throw exception[0];
     return document[0];
+  }
+
+  public static String getInstallationUID() {
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    String uid = "";
+    if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
+      try {
+        uid = UUID.randomUUID().toString();
+      }
+      catch (Exception ignored) {
+      }
+      catch (InternalError ignored) {
+      }
+      propertiesComponent.setValue(INSTALLATION_UID, uid);
+    }
+    else {
+      uid = propertiesComponent.getValue(INSTALLATION_UID);
+    }
+    return uid;
   }
 
   public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins, boolean showConfirmation) {

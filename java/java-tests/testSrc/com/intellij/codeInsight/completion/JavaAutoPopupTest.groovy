@@ -444,4 +444,37 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
   }
 
+  public void testResumeAfterBackspace() {
+    myFixture.configureByText("a.java", """
+    class A {
+      Object foo() { this<caret> }
+    }
+    """)
+    type '.'
+    assert lookup
+    type 'a'
+    assert !lookup
+    type '\b'
+    assert !lookup
+    type 'c'
+    assert lookup
+  }
+
+  public void testHideOnInvalidSymbolAfterBackspace() {
+    myFixture.configureByText("a.java", """
+    class A {
+      Object foo() { this<caret> }
+    }
+    """)
+    type '.'
+    assert lookup
+    type 'c'
+    assert lookup
+    type '\b'
+    assert lookup
+    type 'x'
+    assert !lookup
+  }
+
+
 }

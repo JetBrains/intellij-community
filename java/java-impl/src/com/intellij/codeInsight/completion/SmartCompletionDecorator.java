@@ -58,8 +58,9 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       return defType;
     }
 
-    LookupElement item = getDelegate();
-    Object object = item.getObject();
+    LookupElement delegate = getDelegate();
+    LookupItem item = as(LookupItem.CLASS_CONDITION_KEY);
+    Object object = delegate.getObject();
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && (object instanceof PsiMethod || object instanceof PsiClass)) {
       return TailType.NONE;
     }
@@ -67,8 +68,8 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(myPosition, PsiExpression.class, true);
 
     if (enclosing != null && object instanceof PsiElement) {
-      final PsiType type = getItemType(item);
-      final TailType itemType = item instanceof LookupItem ? ((LookupItem)item).getTailType() : TailType.NONE;
+      final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
+      final TailType itemType = item != null ? item.getTailType() : TailType.NONE;
       TailType cached = itemType;
       int cachedPrior = 0;
       if (type != null && type.isValid()) {
@@ -106,11 +107,6 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       return cached;
     }
     return null;
-  }
-
-  @Nullable
-  private PsiType getItemType(LookupElement element) {
-    return JavaCompletionUtil.getLookupElementType(element);
   }
 
   @Override

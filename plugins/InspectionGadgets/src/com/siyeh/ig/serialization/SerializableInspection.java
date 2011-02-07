@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,20 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.RemoveAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.intellij.codeInspection.ui.AddAction;
 import org.jdom.Element;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,16 +42,19 @@ public abstract class SerializableInspection extends BaseInspection {
         parseString(superClassString, superClassList);
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final Form form = new Form();
         return form.getContentPanel();
     }
 
+    @Override
     public void readSettings(Element node) throws InvalidDataException {
         super.readSettings(node);
         parseString(superClassString, superClassList);
     }
 
+    @Override
     public void writeSettings(Element node) throws WriteExternalException {
         superClassString = formatString(superClassList);
         super.writeSettings(node);
@@ -64,7 +65,7 @@ public abstract class SerializableInspection extends BaseInspection {
             return false;
         }
         for (String superClassName : superClassList) {
-            if (ClassUtils.isSubclass(aClass, superClassName)) {
+            if (InheritanceUtil.isInheritor(aClass, superClassName)) {
                 return true;
             }
         }

@@ -132,6 +132,10 @@ public abstract class ElementPresentationManager {
       return getElementName(o);
     }
   };
+  public static <T> NullableFunction<T, String> namer() {
+    //noinspection unchecked
+    return (NullableFunction<T, String>)NAMER;
+  }
 
   @Nullable
   public static String getElementName(Object element) {

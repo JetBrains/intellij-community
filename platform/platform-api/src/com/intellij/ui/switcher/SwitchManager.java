@@ -16,6 +16,7 @@
 package com.intellij.ui.switcher;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
@@ -32,24 +33,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
 public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnActionListener {
-
-  private Project myProject;
+  private final Project myProject;
   private QuickAccessSettings myQa;
 
   private SwitchingSession mySession;
 
   private boolean myWaitingForAutoInitSession;
-  private Alarm myInitSessionAlarm = new Alarm();
+  private final Alarm myInitSessionAlarm = new Alarm();
   private KeyEvent myAutoInitSessionEvent;
 
-  private Set<AnAction> mySwitchActions = new HashSet<AnAction>();
+  private final Set<AnAction> mySwitchActions = new HashSet<AnAction>();
 
-  private Set<SwitchingSession> myFadingWay = new HashSet<SwitchingSession>();
+  private final Set<SwitchingSession> myFadingAway = new HashSet<SwitchingSession>();
 
   public SwitchManager(Project project, QuickAccessSettings quickAccess, ActionManager actionManager) {
     myProject = project;
@@ -62,6 +63,14 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_LEFT));
     mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_RIGHT));
     mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_APPLY));
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(SwitchManager.this);
+      }
+    });
   }
 
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
@@ -77,7 +86,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
-      if (!myQa.isEnabled()) return false;
+    if (!myQa.isEnabled()) return false;
 
     if (mySession != null && !mySession.isFinished()) return false;
 
@@ -109,13 +118,15 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
             });
           }
         };
-        if (myFadingWay.size() == 0) {
+        if (myFadingAway.isEmpty()) {
           myInitSessionAlarm.addRequest(initRunnable, Registry.intValue("actionSystem.keyGestureHoldTime"));
-        } else {
+        }
+        else {
           initRunnable.run();
         }
       }
-    } else {
+    }
+    else {
       if (myWaitingForAutoInitSession) {
         cancelWaitingForAutoInit();
       }
@@ -147,33 +158,30 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     int mask = 0;
     for (Integer each : modifierCodes) {
       if (each == KeyEvent.VK_SHIFT) {
-        mask |= KeyEvent.SHIFT_MASK;
+        mask |= InputEvent.SHIFT_MASK;
       }
 
       if (each == KeyEvent.VK_CONTROL) {
-        mask |= KeyEvent.CTRL_MASK;
+        mask |= InputEvent.CTRL_MASK;
       }
 
       if (each == KeyEvent.VK_META) {
-        mask |= KeyEvent.META_MASK;
+        mask |= InputEvent.META_MASK;
       }
 
       if (each == KeyEvent.VK_ALT) {
-        mask |= KeyEvent.ALT_MASK;
+        mask |= InputEvent.ALT_MASK;
       }
     }
 
     return (modifiers ^ mask) == 0;
   }
 
- 
 
   public void initComponent() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
   }
 
   public void disposeComponent() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
     myQa = null;
   }
 
@@ -234,7 +242,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
           });
         }
       });
-    } else {
+    }
+    else {
       result.setDone();
     }
 
@@ -246,15 +255,14 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
   public boolean isSelectionWasMoved() {
-    if (!isSessionActive()) return false;
-    return mySession.isSelectionWasMoved();
+    return isSessionActive() && mySession.isSelectionWasMoved();
   }
 
   public void addFadingAway(SwitchingSession session) {
-    myFadingWay.add(session);
+    myFadingAway.add(session);
   }
 
   public void removeFadingAway(SwitchingSession session) {
-    myFadingWay.remove(session);
+    myFadingAway.remove(session);
   }
 }

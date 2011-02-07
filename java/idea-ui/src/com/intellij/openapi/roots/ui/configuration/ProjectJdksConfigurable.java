@@ -64,8 +64,17 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     super();
     myProject = project;
     myProjectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-    MasterDetailsStateService.getInstance(project).register("ProjectJDKs.UI", this);
     initTree();
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "ProjectJDKs.UI";
+  }
+
+  @Override
+  protected MasterDetailsStateService getStateService() {
+    return MasterDetailsStateService.getInstance(myProject);
   }
 
   protected void initTree() {

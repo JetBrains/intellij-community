@@ -242,7 +242,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                 result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
               }
               else {
-                final LookupItem item = element.as(LookupItem.class);
+                final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
                 if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
                     !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
                   item.setTailType(TailType.NONE);

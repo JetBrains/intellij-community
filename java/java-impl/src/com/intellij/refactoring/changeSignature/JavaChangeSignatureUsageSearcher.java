@@ -209,7 +209,7 @@ class JavaChangeSignatureUsageSearcher {
         if (!isToCatchExceptions) {
           if (RefactoringUtil.isMethodUsage(element)) {
             PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
-            if (!method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
+            if (list == null || !method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
           }
         }
         if (RefactoringUtil.isMethodUsage(element)) {

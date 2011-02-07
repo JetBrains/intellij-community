@@ -116,7 +116,7 @@ public class PsiUtil {
   public static boolean isLValue(GroovyPsiElement element) {
     if (element instanceof GrExpression) {
       PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
-      if (parent instanceof GrListOrMap && !((GrListOrMap)parent).isMap()) {
+      if (parent instanceof GrTupleExpression) {
         return isLValue((GroovyPsiElement)parent);
       }
       return parent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
@@ -176,6 +176,7 @@ public class PsiUtil {
 
   @Nullable
   public static GrArgumentList getArgumentsList(PsiElement methodRef) {
+    if (methodRef instanceof GrEnumConstant) return ((GrEnumConstant)methodRef).getArgumentList();
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrCall) {
       return ((GrCall)parent).getArgumentList();

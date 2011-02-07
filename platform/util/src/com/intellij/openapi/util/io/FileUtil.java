@@ -53,6 +53,7 @@ public class FileUtil {
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
   private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L;
   private static String ourCanonicalTempPathCache = null;
+  public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   @Nullable
   public static String getRelativePath(File base, File file) {
@@ -488,7 +489,7 @@ public class FileUtil {
   private static File getTempFile(String originalFileName, File parent) {
     int randomSuffix = (int)(System.currentTimeMillis() % 1000);
     for (int i = randomSuffix; ; i++) {
-      @NonNls String name = "___" + originalFileName + i + ".__del__";
+      @NonNls String name = "___" + originalFileName + i + ASYNC_DELETE_EXTENSION;
       File tempFile = new File(parent, name);
       if (!tempFile.exists()) return tempFile;
     }

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,8 +12,8 @@ public class LightParameter extends LightVariableBuilder implements PsiParameter
   private final String myName;
   private final PsiElement myDeclarationScope;
 
-  public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope) {
-    super(declarationScope.getManager(), name, type);
+  public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
+    super(declarationScope.getManager(), name, type, language);
     myName = name;
     myDeclarationScope = declarationScope;
   }

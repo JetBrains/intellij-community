@@ -341,16 +341,21 @@ public class AnalysisScope {
     if (needReadAction) {
       PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         public void run() {
-          file.accept(visitor);
-          psiManager.dropResolveCaches();
+          doProcessFile(visitor, psiManager, file);
         }
       });
-    } else {
-      file.accept(visitor);
-      psiManager.dropResolveCaches();
+    }
+    else {
+      doProcessFile(visitor, psiManager, file);
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
+  }
+
+  private static void doProcessFile(PsiElementVisitor visitor, PsiManager psiManager, PsiFile file) {
+    file.accept(visitor);
+    psiManager.dropResolveCaches();
+    psiManager.dropFileCaches(file);
   }
 
   protected void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor, final boolean needReadAction) {

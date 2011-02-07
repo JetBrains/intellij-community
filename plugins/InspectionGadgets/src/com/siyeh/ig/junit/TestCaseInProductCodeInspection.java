@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,48 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.case.in.product.code.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "JUnitTestCaseInProductSource";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "test.case.in.product.code.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TestCaseInProductCodeVisitor();
     }
@@ -63,7 +69,8 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
             if (TestUtils.isTest(aClass)) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if (!InheritanceUtil.isInheritor(aClass,
+                    "junit.framework.TestCase")) {
                 return;
             }
             registerClassError(aClass);

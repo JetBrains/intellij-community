@@ -108,7 +108,9 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
   public void computeUsages(List<PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
-    final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
+    final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(),
+                                                               parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE,
+                                                               false);
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {
@@ -128,7 +130,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       Runnable inspect = new Runnable() {
         public void run() {
-          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
+          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool));
         }
       };
       if (indicator == null) {

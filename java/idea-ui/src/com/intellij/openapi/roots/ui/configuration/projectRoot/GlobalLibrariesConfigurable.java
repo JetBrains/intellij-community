@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.MasterDetailsStateService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +30,12 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   public GlobalLibrariesConfigurable(final Project project) {
     super(project);
-    MasterDetailsStateService.getInstance(project).register("GlobalLibrariesConfigurable.UI", this);
     myLevel = LibraryTablesRegistrar.APPLICATION_LEVEL;
+  }
+
+  @Override
+  protected String getComponentStateKey() {
+    return "GlobalLibrariesConfigurable.UI";
   }
 
   @Nls

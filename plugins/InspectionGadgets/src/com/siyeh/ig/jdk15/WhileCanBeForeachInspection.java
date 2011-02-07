@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -31,7 +32,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -467,9 +467,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             if (qualifierClass == null) {
                 return false;
             }
-            if (!ClassUtils.isSubclass(qualifierClass,
+            if (!InheritanceUtil.isInheritor(qualifierClass,
                     CommonClassNames.JAVA_LANG_ITERABLE) &&
-                !ClassUtils.isSubclass(qualifierClass,
+                !InheritanceUtil.isInheritor(qualifierClass,
                         CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 return false;
             }
@@ -586,7 +586,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         private final PsiVariable iterator;
 
         private NumCallsToIteratorNextVisitor(PsiVariable iterator) {
-            super();
             this.iterator = iterator;
         }
 
@@ -626,7 +625,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         private final PsiVariable iterator;
 
         private IteratorRemoveVisitor(@NotNull PsiVariable iterator) {
-            super();
             this.iterator = iterator;
         }
 
@@ -670,7 +668,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         private final PsiVariable iterator;
 
         private IteratorHasNextVisitor(PsiVariable iterator) {
-            super();
             this.iterator = iterator;
         }
 

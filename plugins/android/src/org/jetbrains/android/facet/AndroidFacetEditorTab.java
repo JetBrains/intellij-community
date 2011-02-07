@@ -171,6 +171,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       public void actionPerformed(ActionEvent e) {
         AndroidFacetConfiguration configuration = new AndroidFacetConfiguration();
         Module module = myContext.getModule();
+        VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+        if (contentRoots.length == 1) {
+          configuration.init(module, contentRoots[0]);
+        }
         if (AndroidMavenUtil.isMavenizedModule(module)) {
           AndroidMavenProvider mavenProvider = AndroidMavenUtil.getMavenProvider();
           if (mavenProvider != null) {

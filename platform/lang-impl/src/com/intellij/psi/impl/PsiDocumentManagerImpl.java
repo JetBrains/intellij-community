@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
@@ -31,6 +32,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -48,6 +50,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +77,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
-  private final List<Listener> myListeners = new ArrayList<Listener>();
-  private Listener[] myCachedListeners = null; //guarded by mylisteners
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private final SmartPointerManagerImpl mySmartPointerManager;
 
   public PsiDocumentManagerImpl(Project project,
@@ -91,6 +93,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
     editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void fileContentLoaded(final VirtualFile virtualFile, Document document) {
+        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          public PsiFile compute() {
+            return getCachedPsiFile(virtualFile);
+          }
+        });
+        fireDocumentCreated(document, psiFile);
+      }
+    });
   }
 
   public void projectOpened() {
@@ -182,8 +195,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         cachePsi(document, file);
       }
     }
-
-    fireDocumentCreated(document, file);
 
     return document;
   }
@@ -366,27 +377,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  private Listener[] getCachedListeners() {
-    synchronized (myListeners) {
-      if (myCachedListeners == null) {
-        myCachedListeners = myListeners.toArray(new Listener[myListeners.size()]);
-      }
-      return myCachedListeners;
-    }
-  }
-
   public void addListener(@NotNull Listener listener) {
-    synchronized (myListeners) {
-      myListeners.add(listener);
-      myCachedListeners = null;
-    }
+    myListeners.add(listener);
   }
 
   public void removeListener(@NotNull Listener listener) {
-    synchronized (myListeners) {
-      myListeners.remove(listener);
-      myCachedListeners = null;
-    }
+    myListeners.remove(listener);
   }
 
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
@@ -402,15 +398,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private void fireDocumentCreated(Document document, PsiFile file) {
-    Listener[] listeners = getCachedListeners();
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }
   }
 
   private void fireFileCreated(Document document, PsiFile file) {
-    Listener[] listeners = getCachedListeners();
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.fileCreated(file, document);
     }
   }
@@ -425,11 +419,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (textBlock.isEmpty()) return false;
     ((DocumentImpl)document).normalizeRangeMarkers();
     myIsCommitInProgress = true;
-    try{
-      if (mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.synchronizePointers(file);
-      }
-
+    try {
       myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
 
       if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
@@ -479,9 +469,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
       myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
 
-      textBlock.unlock();
-      textBlock.clear();
-
       if (file.getTextLength() != document.getTextLength()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal()) {
           boolean x = false;
@@ -502,8 +489,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
     }
     finally {
+      textBlock.unlock();
+      textBlock.clear();
+
       myTreeElementBeingReparsedSoItWontBeCollected = null;
       myIsCommitInProgress = false;
+
+      if (mySmartPointerManager != null) { // mock tests
+        SmartPointerManagerImpl.synchronizePointers(file);
+      }
     }
     return true;
   }
@@ -530,12 +524,18 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final FileViewProvider provider = getCachedViewProvider(document);
     if (provider == null) return;
 
-    if (provider.getVirtualFile().getFileType().isBinary()) return;
+    VirtualFile virtualFile = provider.getVirtualFile();
+    if (virtualFile.getFileType().isBinary()) return;
 
     final List<PsiFile> files = provider.getAllFiles();
     boolean hasLockedBlocks = false;                                                      
     for (PsiFile file : files) {
       if (file == null) continue;
+
+      if (file.isPhysical() && mySmartPointerManager != null) { // mock tests
+        SmartPointerManagerImpl.fastenBelts(file, event.getOffset());
+      }
+
       final TextBlock textBlock = getTextBlock(document, file);
       if (textBlock.isLocked()) {
         hasLockedBlocks = true;
@@ -553,12 +553,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           myIsCommitInProgress = false;
         }
       }
-
-      if (file.isPhysical()) {
-        if (mySmartPointerManager != null) { // mock tests
-          SmartPointerManagerImpl.fastenBelts(file);
-        }
-      }
     }
 
     if (!hasLockedBlocks) {
@@ -570,19 +564,20 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final Document document = event.getDocument();
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider == null) return;
-    if (viewProvider.getVirtualFile().getFileType().isBinary()) return;
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    if (virtualFile.getFileType().isBinary()) return;
     if (viewProvider.getManager() != myPsiManager) return;
 
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = false;
     for (PsiFile file : files) {
       if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
+      if (mySmartPointerManager != null) { // mock tests
+        SmartPointerManagerImpl.unfastenBelts(file, event.getOffset());
+      }
       final TextBlock textBlock = getTextBlock(document, file);
       if (textBlock.isLocked()) continue;
 
-      if (mySmartPointerManager != null) { // mock tests
-        SmartPointerManagerImpl.unfastenBelts(file);
-      }
 
       textBlock.documentChanged(event);
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;

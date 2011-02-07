@@ -113,6 +113,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             }
           }
           psiManager.dropResolveCaches();
+          psiManager.dropFileCaches(file);
         }
       });
     }

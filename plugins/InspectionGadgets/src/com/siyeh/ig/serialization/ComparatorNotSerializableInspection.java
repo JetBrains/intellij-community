@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.siyeh.ig.serialization;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeSerializableFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
             if (aClass instanceof PsiAnonymousClass) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass,
+            if (!InheritanceUtil.isInheritor(aClass,
                     CommonClassNames.JAVA_UTIL_COMPARATOR)) {
                 return;
             }

@@ -22,12 +22,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AssertionInstruction;
@@ -38,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -89,11 +84,11 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
         return null;
       }
 
-      if (parent instanceof GrListOrMap) {
-        GrListOrMap list = (GrListOrMap)parent;
+      if (parent instanceof GrTupleExpression) {
+        GrTupleExpression list = (GrTupleExpression)parent;
         if (list.getParent() instanceof GrAssignmentExpression) { // multiple assignment
           final GrExpression rValue = ((GrAssignmentExpression) list.getParent()).getRValue();
-          int idx = Arrays.asList(list.getInitializers()).indexOf(element);
+          int idx = list.indexOf(element);
           if (idx >= 0 && rValue != null) {
             return getMultipleAssignmentTypeComputation(rValue, idx);
           }

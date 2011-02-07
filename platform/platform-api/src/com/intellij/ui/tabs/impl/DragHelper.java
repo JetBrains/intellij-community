@@ -257,4 +257,8 @@ class DragHelper extends MouseDragHelper {
 
     myTabs.revalidate();
   }
+
+  public TabInfo getDragSource() {
+    return myDragSource;
+  }
 }

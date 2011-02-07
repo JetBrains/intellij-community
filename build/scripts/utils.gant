@@ -21,6 +21,17 @@ binding.setVariable("isMac", {
   return System.getProperty("os.name").toLowerCase().startsWith("mac")
 })
 
+binding.setVariable("isEap", {
+  return "true" == p("component.version.eap")
+})
+
+binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m")
+binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m")
+binding.setVariable("common_vmoptions", "-ea")
+
+binding.setVariable("vmoptions32", {"$mem32 $common_vmoptions"})
+binding.setVariable("vmoptions64", {"$mem64 $common_vmoptions"})
+
 binding.setVariable("isDefined", {String key ->
   try {
     this[key]
@@ -109,3 +120,81 @@ binding.setVariable("commonJvmArgs", {
    "-Xdebug",
    "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5555"]
 })
+
+binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
+  ant.copy(todir: "$path/bin") {
+    fileset(dir: "$ch/bin/nix")
+    fileset(dir: "$ch/bin/mac")
+  }
+
+  ant.copy(todir: path) {
+    fileset(dir: "$ch/build/conf/mac")
+  }
+
+  ant.tstamp() {
+    format(property: "todayYear", pattern: "yyyy")
+  }
+
+  String icns = "idea.icns"
+  if (args.icns != null) {
+    ant.delete(file: "$path/Contents/Resources/idea.icns")
+    ant.copy(file: args.icns, todir: "$path/Contents/Resources")
+    icns = new File((String)args.icns).getName();
+  }
+
+  String platform = args.get("platform_prefix", null) != null ?
+  """
+        <key>idea.platform.prefix</key>
+        <string>$args.platform_prefix</string>
+  """ : ""
+
+  def version = isEap() ? "EAP " + args.buildNumber : p("component.version.major") + "." +  p("component.version.minor")
+
+  ant.replace(file: "$path/Contents/Info.plist") {
+    replacefilter(token: "@@build@@", value: args.buildNumber)
+    replacefilter(token: "@@doc_types@@", value: args.get("doc_types", ""))
+    replacefilter(token: "@@executable@@", value: args.executable)
+    replacefilter(token: "@@icns@@", value: icns)
+    replacefilter(token: "@@bundle_name@@", value: args.bundle_name)
+    replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
+    replacefilter(token: "@@year@@", value: "$todayYear")
+
+    replacefilter(token: "@@version@@", value: version)
+    replacefilter(token: "@@vmoptions@@", value: "$common_vmoptions -Xverify:none")
+    replacefilter(token: "@@vmoptions32@@", value: "$mem32")
+    replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOOPS")
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@platform@@", value: platform)
+  }
+
+  if (args.executable != "idea") {
+    ant.move(file: "$path/Contents/MacOS/idea", tofile: "$path/Contents/MacOS/$args.executable")
+  }
+
+})
+
+binding.setVariable("patchPropertiesFile", { String where ->
+  ant.echo(file: "$where/bin/idea.properties", append: "true", message:
+           isEap() ?
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'disabled' if you do not need to receive instant visual notifications about
+# fatal errors that happen to an IDE or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=enabled
+"""
+
+ :
+
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'eanbled' if you need to receive instant visual notifications about
+# fatal errors that happen to an IDE or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=disabled
+"""
+)
+})
+

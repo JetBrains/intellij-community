@@ -29,11 +29,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -322,37 +322,40 @@ public class ReplaceInProjectManager {
           return;
         }
 
-        List<RangeMarker> markers = ((UsageInfo2UsageAdapter)usage).getRangeMarkers();
-        for (RangeMarker marker : markers) {
-          Document document = marker.getDocument();
-          if (!document.isWritable()) return;
+        final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+        ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
+          @Override
+          public boolean process(Segment segment) {
+            if (!document.isWritable()) return false;
 
-          final int textOffset = marker.getStartOffset();
-          if (textOffset < 0 || textOffset >= document.getTextLength()) {
-            return;
+            final int textOffset = segment.getStartOffset();
+            if (textOffset < 0 || textOffset >= document.getTextLength()) {
+              return true;
+            }
+            final int textEndOffset = segment.getEndOffset();
+            if (textEndOffset < 0 || textOffset > document.getTextLength()) {
+              return true;
+            }
+            FindManager findManager = FindManager.getInstance(myProject);
+            final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
+            FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
+            if (!findResult.isStringFound()) {
+              return true;
+            }
+            String stringToReplace = null;
+            try {
+              stringToReplace =
+                findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
+            }
+            catch (FindManager.MalformedReplacementStringException e) {
+              Messages.showErrorDialog(myProject, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
+            }
+            if (stringToReplace != null) {
+              document.replaceString(textOffset, textEndOffset, stringToReplace);
+            }
+            return true;
           }
-          final int textEndOffset = marker.getEndOffset();
-          if (textEndOffset < 0 || textOffset > document.getTextLength()) {
-            return;
-          }
-          FindManager findManager = FindManager.getInstance(myProject);
-          final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-          FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
-          if (!findResult.isStringFound()) {
-            return;
-          }
-          String stringToReplace = null;
-          try {
-            stringToReplace =
-              findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
-          }
-          catch (FindManager.MalformedReplacementStringException e) {
-            Messages.showErrorDialog(myProject, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
-          }
-          if (stringToReplace != null) {
-            document.replaceString(textOffset, textEndOffset, stringToReplace);
-          }
-        }
+        });
       }
     });
   }

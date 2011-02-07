@@ -23,7 +23,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -38,16 +37,12 @@ public class RecursionWeigher extends CompletionWeigher {
   }
 
   public Result weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
     if (location.getCompletionType() != CompletionType.BASIC && location.getCompletionType() != CompletionType.SMART) return Result.normal;
 
     final Object object = element.getObject();
-    if (!(object instanceof PsiModifierListOwner) && !(object instanceof PsiExpression)) return Result.normal;
+    if (!(object instanceof PsiMethod || object instanceof PsiVariable || object instanceof PsiExpression)) return Result.normal;
 
     final PsiMethod positionMethod = JavaCompletionUtil.POSITION_METHOD.getValue(location);
-    if (positionMethod == null) return Result.normal;
 
     final PsiElement position = location.getCompletionParameters().getPosition();
     final ElementFilter filter = JavaCompletionUtil.recursionFilter(position);
@@ -66,7 +61,7 @@ public class RecursionWeigher extends CompletionWeigher {
       return Result.passingObjectToItself;
     }
 
-    if (expression != null) {
+    if (expression != null && positionMethod != null) {
       final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       if (expectedInfos != null) {
         final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
@@ -81,7 +76,7 @@ public class RecursionWeigher extends CompletionWeigher {
       return Result.normal;
     }
 
-    if (object instanceof PsiMethod) {
+    if (object instanceof PsiMethod && positionMethod != null) {
       final PsiMethod method = (PsiMethod)object;
       if (PsiTreeUtil.isAncestor(reference, position, false) &&
           Comparing.equal(method.getName(), positionMethod.getName()) &&

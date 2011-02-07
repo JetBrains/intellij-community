@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,31 +19,35 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticSuiteInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "SuiteNotDeclaredStatic";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("static.suite.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "static.suite.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StaticSuiteVisitor();
     }
@@ -60,7 +64,8 @@ public class StaticSuiteInspection extends BaseInspection {
             if (aClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+            if (!InheritanceUtil.isInheritor(aClass,
+                    "junit.framework.TestCase")) {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();

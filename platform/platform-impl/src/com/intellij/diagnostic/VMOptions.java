@@ -41,7 +41,8 @@ public class VMOptions {
 
   @NonNls private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
-  @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>VMOptions</key>(?:(?:\\s*)(?:<!--(?:.*)-->(?:\\s*))*)<string>)(.*)(</string>)");
+  @NonNls public static final String MAC_ARCH_VMOPTIONS = SystemInfo.is64Bit ? "VMOptions.x86_64" : "VMOptions.i386";
+  @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>" + MAC_ARCH_VMOPTIONS + "</key>(?:(?:\\s*)(?:<!--(?:.*)-->(?:\\s*))*)<string>)(.*)(</string>)");
 
   @NonNls private static final String INFO_PLIST = "/Contents/Info.plist";
 

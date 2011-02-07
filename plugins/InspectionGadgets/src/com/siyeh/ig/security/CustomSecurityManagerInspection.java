@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,29 @@
 package com.siyeh.ig.security;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CustomSecurityManagerInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "custom.security.manager.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "custom.security.manager.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CustomSecurityManagerVisitor();
     }
@@ -44,7 +47,8 @@ public class CustomSecurityManagerInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
+            if (!InheritanceUtil.isInheritor(aClass,
+                    "java.lang.SecurityManager")) {
                 return;
             }
             if ("java.lang.SecurityManager".equals(aClass.getQualifiedName())) {

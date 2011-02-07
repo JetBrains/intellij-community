@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -25,12 +26,12 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   public LightVariableBuilder(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
-    this(navigationElement.getManager(), name, type);
+    this(navigationElement.getManager(), name, type, StdLanguages.JAVA);
     setNavigationElement(navigationElement);
   }
   
-  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type) {
-    super(manager, StdLanguages.JAVA);
+  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, Language language) {
+    super(manager, language);
     myName = name;
     myType = type;
     myModifierList = new LightModifierList(manager);
