@@ -1700,7 +1700,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       final List<String> strings = new ArrayList<String>();
       for (int i = 0; i < model.size(); i++) {
         final LookupElement item = model.get(i);
-        strings.add(item.getLookupString() + Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT)));
+        strings.add(item.getLookupString() + item.getUserData(CompletionLookupArranger.RELEVANCE_KEY));
         if (i == count - 1) {
           strings.add("---");
         }

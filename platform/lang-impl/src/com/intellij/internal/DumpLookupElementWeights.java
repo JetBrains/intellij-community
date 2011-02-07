@@ -58,7 +58,7 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
     Map<String, String> values = new HashMap<String, String>();
     Set<String> toExclude = new HashSet<String>();
     for (LookupElement item : items) {
-      final String weight = Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT));
+      final String weight = item.getUserData(CompletionLookupArranger.RELEVANCE_KEY).toString();
       final Matcher matcher = pattern.matcher(weight);
       int start = 0;
       while (matcher.find(start)) {
@@ -78,7 +78,7 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
 
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      String weight = Arrays.toString(item.getUserData(CompletionLookupArranger.WEIGHT));
+      String weight = item.getUserData(CompletionLookupArranger.RELEVANCE_KEY).toString();
       for (String s : toExclude) {
         weight = StringUtil.replace(weight, s, "", false);
       }
