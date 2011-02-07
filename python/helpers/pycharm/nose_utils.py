@@ -143,7 +143,7 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
 class TeamcityNoseRunner(unittest.TextTestRunner):
     """Test runner that supports teamcity output
     """
-    def __init__(self, stream=sys.stderr, descriptions=1, verbosity=1,
+    def __init__(self, stream=sys.stdout, descriptions=1, verbosity=1,
                  config=None):
         if config is None:
             config = Config()
