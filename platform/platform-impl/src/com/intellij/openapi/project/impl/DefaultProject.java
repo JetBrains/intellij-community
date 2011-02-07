@@ -19,8 +19,7 @@ package com.intellij.openapi.project.impl;
  * @author peter
  */
 public class DefaultProject extends ProjectImpl {
-  protected DefaultProject(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed,
-                           String projectName) {
+  protected DefaultProject(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
     super(manager, filePath, isOptimiseTestLoadSpeed, projectName);
   }
 
