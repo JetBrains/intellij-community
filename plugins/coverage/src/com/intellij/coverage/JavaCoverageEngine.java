@@ -442,9 +442,10 @@ public class JavaCoverageEngine extends CoverageEngine {
             buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchHits).append("\n");
             hits += switchHits;
           }
-          if (hasDefaultLabel(conditionExpression)) {
-            buf.append(indent).append(indent).append("default: ").append(switchData.getDefaultHits()).append("\n");
-            hits += switchData.getDefaultHits();
+          final int defaultHits = switchData.getDefaultHits();
+          if (hasDefaultLabel(conditionExpression) || defaultHits > 0) {
+            buf.append(indent).append(indent).append("default: ").append(defaultHits).append("\n");
+            hits += defaultHits;
           }
         }
       }
