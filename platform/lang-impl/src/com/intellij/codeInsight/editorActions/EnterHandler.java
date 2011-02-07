@@ -49,6 +49,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EnterHandler extends BaseEnterHandler {
@@ -196,6 +197,9 @@ public class EnterHandler extends BaseEnterHandler {
           lexer.advance();
           continue;
         }
+        else if (isInvalidPsi(comment)) {
+          return false;
+        }
         return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
       }
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
@@ -205,6 +209,48 @@ public class EnterHandler extends BaseEnterHandler {
     }
   }
 
+  /**
+   * There is a following possible use-case:
+   * <pre>
+   * <ul>
+   *   <li>
+   *     <b>Particular document has valid text:</b>
+   *     <pre>
+   *       [caret]
+   *       class A {
+   *           int foo() {
+   *             return 1 *&#47;*comment*&#47; 1;
+   *           }
+   *       }
+   *     </pre>
+   *   </li>
+   *   <li>
+   *     <b>The user starts comment (inserts comment start symbols):</b>
+   *     <pre>
+   *       &#47;**[caret]
+   *       class A {
+   *           int foo() {
+   *             return 1 *&#47;*comment*&#47; 1;
+   *           }
+   *       }
+   *     </pre>
+   *   </li>
+   *   <li>The user presses <code>'enter'</code>;</li>
+   * </ul>
+   * </pre>
+   * We want to understand that doc comment is incomplete now, i.e. don't want to consider '*&#47;' before
+   * '*comment*&#47; 1;' as comment end. Current approach is to check if next PSI sibling to the current PSI comment is invalid.
+   * This method allows to perform such an examination.
+   */
+  private static boolean isInvalidPsi(@NotNull PsiElement base) {
+    for (PsiElement current = base.getNextSibling(); current != null; current = current.getNextSibling()) {
+      if (current.getTextLength() != 0) {
+        return current instanceof PsiErrorElement;
+      }
+    }
+    return false;
+  }
+  
   private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
     if (!(element instanceof PsiComment)) return false;
     PsiComment comment = (PsiComment) element;
