@@ -4,6 +4,8 @@ import datetime
 
 from tcmessages import TeamcityServiceMessages
 
+PYTHON_VERSION_MAJOR = sys.version_info[0]
+
 def strclass(cls):
     if not cls.__name__:
         return cls.__module__
@@ -66,13 +68,16 @@ class TeamcityTestResult(TestResult):
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
-        error_value = err[1][0]
+        if PYTHON_VERSION_MAJOR == 3:
+          error_value = str(err[1])
+        else:
+          error_value = err[1][0]
 
         if error_value.startswith("'") or error_value.startswith('"'):
             # let's unescape strings to show sexy multiline diff in PyCharm.
             # By default all caret return chars are escaped by testing framework
-            first = self._unescape(self.find_first(err[1][0]))
-            second = self._unescape(self.find_second(err[1][0]))
+            first = self._unescape(self.find_first(error_value))
+            second = self._unescape(self.find_second(error_value))
         else:
           first = second = ""
         err = self.formatErr(err)
@@ -121,6 +126,9 @@ class TeamcityTestResult(TestResult):
             self.current_suite = None
 
     def _unescape(self, text):
+      if PYTHON_VERSION_MAJOR == 3:
+        return text
+      else:
         return text.decode('string_escape')
 
 class TeamcityTestRunner:
