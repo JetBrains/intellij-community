@@ -72,24 +72,32 @@ binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
 })
 
 binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> modules = project.modules.values().findAll {it["used"] != null}
-  Set<String> usedLibraries = [] as Set
-  modules.each {
-    it.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
+  Set<Module> usedModules = project.modules.values()//.findAll {it["used"] != null}
+  Map<String, String> usedLibraries = [:]
+  usedModules.each {Module module ->
+    module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
       if (item instanceof Library) {
-        usedLibraries << getLibraryName(item)
+        usedLibraries[getLibraryName(item)] = module
       }
     }
   }
 
-  def licenses = licensesList.findAll {usedLibraries.contains(it.libraryName) }
-  List<String> lines = licenses.collect { LibraryLicense lib ->
+  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) }
+  project.info("Generating licenses table")
+  project.info("Used libraries:")
+  List<String> lines = []
+  licenses.each { LibraryLicense lib ->
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
-    return "|$name| $lib.version|$license|".toString()
+    project.info(" $lib.libraryName (in module ${usedLibraries[lib.libraryName]})")
+    lines << "|$name| $lib.version|$license|".toString()
   }
-  lines.sort(String.CASE_INSENSITIVE_ORDER)
+  //project.info("Unused libraries:")
+  //licensesList.findAll {!usedLibraries.containsKey(it.libraryName)}.each {LibraryLicense lib ->
+  //  project.info(" $lib.libraryName")
+  //}
 
+  lines.sort(String.CASE_INSENSITIVE_ORDER)
   FileWriter out = new FileWriter(filePath)
   out.println("|| Software || Version || License ||")
   lines.each {
@@ -152,3 +160,4 @@ libraryLicense(name: "XMLBeans", libraryName: "XmlBeans", version: "2.3.0", lice
 libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0", url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html")
 libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "7.0.2", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
+jetbrainsLibrary("JPS")
