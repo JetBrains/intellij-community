@@ -35,6 +35,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected JavaCodeInsightFixtureTestCase() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -66,7 +67,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   /**
-   * Return absolute path to the test data. Not intended to be overrided.
+   * Return absolute path to the test data. Not intended to be overridden.
    *
    * @return absolute path to the test data.
    */
