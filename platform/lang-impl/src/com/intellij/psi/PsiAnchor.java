@@ -21,10 +21,12 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
@@ -61,6 +63,8 @@ public abstract class PsiAnchor {
     if (file == null) {
       return new HardReference(element);
     }
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return new HardReference(element);
 
     if (element instanceof StubBasedPsiElement && element.isPhysical() && (element instanceof PsiCompiledElement || ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType)) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
@@ -88,7 +92,7 @@ public abstract class PsiAnchor {
     }
 
     if (lang == null) lang = element.getLanguage();
-    return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang);
+    return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang, virtualFile);
   }
 
   private static int calcStubIndex(StubBasedPsiElement psi) {
@@ -112,16 +116,22 @@ public abstract class PsiAnchor {
     return -1; // it is possible via custom stub builder intentionally not producing stubs for stubbed elements
   }
 
-
   private static class TreeRangeReference extends PsiAnchor {
-    private final PsiFile myFile;
+    private final VirtualFile myVirtualFile;
+    private final Project myProject;
     private final Language myLanguage;
     private final int myStartOffset;
     private final int myEndOffset;
     private final Class myClass;
 
-    private TreeRangeReference(final PsiFile file, final int startOffset, final int endOffset, final Class aClass, final Language language) {
-      myFile = file;
+    private TreeRangeReference(@NotNull PsiFile file,
+                               int startOffset,
+                               int endOffset,
+                               @NotNull Class aClass,
+                               @NotNull Language language,
+                               @NotNull VirtualFile virtualFile) {
+      myVirtualFile = virtualFile;
+      myProject = file.getProject();
       myStartOffset = startOffset;
       myEndOffset = endOffset;
       myClass = aClass;
@@ -130,7 +140,9 @@ public abstract class PsiAnchor {
 
     @Nullable
     public PsiElement retrieve() {
-      PsiElement element = myFile.getViewProvider().findElementAt(myStartOffset, myLanguage);
+      PsiFile psiFile = getFile();
+      if (psiFile == null || !psiFile.isValid()) return null;
+      PsiElement element = psiFile.getViewProvider().findElementAt(myStartOffset, myLanguage);
       if (element == null) return null;
 
       while  (!element.getClass().equals(myClass) ||
@@ -144,7 +156,7 @@ public abstract class PsiAnchor {
     }
 
     public PsiFile getFile() {
-      return myFile;
+      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
     }
 
     public int getStartOffset() {
@@ -161,23 +173,25 @@ public abstract class PsiAnchor {
 
       final TreeRangeReference that = (TreeRangeReference)o;
 
-      if (myEndOffset != that.myEndOffset) return false;
-      if (myStartOffset != that.myStartOffset) return false;
-      if (myClass != null ? !myClass.equals(that.myClass) : that.myClass != null) return false;
-      if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
-
-      return true;
+      return myEndOffset == that.myEndOffset &&
+             myStartOffset == that.myStartOffset &&
+             myClass.equals(that.myClass) &&
+             myVirtualFile.equals(that.myVirtualFile);
     }
 
     public int hashCode() {
       int result = myClass != null ? myClass.getName().hashCode() : 0;
       result = 31 * result + myStartOffset; //todo
       result = 31 * result + myEndOffset;
-      if (myFile != null) {
-        result = 31 * result + myFile.getName().hashCode();
-      }
+      result = 31 * result + myVirtualFile.getName().hashCode();
 
       return result;
+    }
+
+    @Override
+    public boolean pointsToTheSameElementAs(PsiAnchor other) {
+      if (other instanceof TreeRangeReference) return equals(other);
+      return Comparing.equal(retrieve(), other.retrieve());
     }
   }
 
@@ -217,9 +231,14 @@ public abstract class PsiAnchor {
     public int hashCode() {
       return myElement.hashCode();
     }
+
+    @Override
+    public boolean pointsToTheSameElementAs(PsiAnchor other) {
+      return myElement == other.retrieve();
+    }
   }
 
-  public static class StubIndexReference extends PsiAnchor {
+  private static class StubIndexReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
     private final int myIndex;
@@ -313,6 +332,14 @@ public abstract class PsiAnchor {
       if (resolved == null) throw new PsiInvalidElementAccessException(null);
       return resolved.getTextRange().getEndOffset();
     }
+
+    @Override
+    public boolean pointsToTheSameElementAs(PsiAnchor other) {
+      if (other instanceof StubIndexReference) return equals(other);
+      return Comparing.equal(retrieve(), other.retrieve());
+    }
   }
+
+  public abstract boolean pointsToTheSameElementAs(PsiAnchor other);
 }
 

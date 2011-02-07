@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -91,8 +90,8 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
     GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
-    final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-    if (!(resolved instanceof GrGdkMethod)) return null;
+//    final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+//    if (!(resolved instanceof GrGdkMethod)) return null;
 
     GrExpression qualifier = ((GrReferenceExpression)expression).getQualifierExpression();
     if (qualifier == null) return null;

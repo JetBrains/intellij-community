@@ -15,42 +15,30 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiImportList;
-import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ImportListElementInfoFactory implements SmartPointerElementInfoFactory {
   @Nullable
-  public SmartPointerElementInfo createElementInfo(final PsiElement element) {
+  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiImportList) {
       return new ImportListInfo((PsiJavaFile)element.getContainingFile());
     }
     return null;
   }
 
-  private static class ImportListInfo implements SmartPointerElementInfo {
-    private final PsiJavaFile myFile;
-
-    public ImportListInfo(PsiJavaFile file) {
-      myFile = file;
+  private static class ImportListInfo extends FileElementInfo {
+    public ImportListInfo(@NotNull PsiJavaFile file) {
+      super(file);
     }
 
     public PsiElement restoreElement() {
-      if (!myFile.isValid()) return null;
-      return myFile.getImportList();
-    }
-
-    @Override
-    public void dispose() {
-    }
-
-    public Document getDocumentToSynchronize() {
-      return null;
-    }
-
-    public void documentAndPsiInSync() {
+      PsiElement element = super.restoreElement();
+      if (!(element instanceof PsiJavaFile)) return null;
+      return ((PsiJavaFile)element).getImportList();
     }
   }
 }

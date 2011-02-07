@@ -640,4 +640,8 @@ class Zoo {
   public void testResolveValuesOnEnum() {
     assertNotNull resolve("A.groovy")
   }
+
+  public void testAvoidResolveLockInClosure() {
+    assertNotNull resolve("A.groovy")
+  }
 }

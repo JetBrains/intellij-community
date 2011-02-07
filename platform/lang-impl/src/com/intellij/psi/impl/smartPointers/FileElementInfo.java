@@ -15,9 +15,12 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -26,15 +29,12 @@ import org.jetbrains.annotations.NotNull;
 * User: cdr
 */
 class FileElementInfo implements SmartPointerElementInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.FileElementInfo");
-  private PsiFile myFile;
+  private final VirtualFile myVirtualFile;
   private final Project myProject;
 
   public FileElementInfo(@NotNull PsiFile file) {
-    LOG.assertTrue(file.isPhysical());
-    myFile = file;
-
-    myProject = myFile.getProject();
+    myVirtualFile = file.getVirtualFile();
+    myProject = file.getProject();
   }
 
   public Document getDocumentToSynchronize() {
@@ -44,12 +44,42 @@ class FileElementInfo implements SmartPointerElementInfo {
   public void documentAndPsiInSync() {
   }
 
+  @Override
+  public void fastenBelt(int offset) {
+  }
+
+  @Override
+  public void unfastenBelt(int offset) {
+  }
+
   public PsiElement restoreElement() {
-    myFile = SelfElementInfo.restoreFile(myFile, myProject);
-    return myFile;
+    return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
   public void dispose() {
+  }
+
+  @Override
+  public int elementHashCode() {
+    return myVirtualFile.hashCode();
+  }
+
+  @Override
+  public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+    if (other instanceof FileElementInfo) {
+      return myVirtualFile == ((FileElementInfo)other).myVirtualFile;
+    }
+    return Comparing.equal(restoreElement(), other.restoreElement());
+  }
+
+  @Override
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
+
+  @Override
+  public Segment getSegment() {
+    return new TextRange(0, (int)myVirtualFile.getLength());
   }
 }

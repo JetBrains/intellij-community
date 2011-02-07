@@ -56,6 +56,7 @@ public class GrGetPsiTypeAction extends AnAction implements DumbAware {
     int offset = editor.getCaretModel().getOffset();
 
     List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(psiFile, editor, offset);
+    if (expressions.size() == 0) return;
     if (expressions.size() == 1) {
       passInner(expressions.get(0));
     }

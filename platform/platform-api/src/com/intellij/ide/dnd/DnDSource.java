@@ -20,23 +20,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface DnDSource {
+/**
+ * @author Konstantin Bulenkov
+ */
+public interface DnDSource extends DnDDropActionHandler {
 
   boolean canStartDragging(DnDAction action, Point dragOrigin);
+
   DnDDragStartBean startDragging(DnDAction action, Point dragOrigin);
 
   /**
    * Image to be drawn on screen while dragging and the point of the offset to position cursor
    * in the proper place
    *
-   * @param action
-   * @param dragOrigin
+   * @param action drag-n-drop action
+   * @param dragOrigin origin drag point
    * @return Pair of image and cursor offset at the image
    */
   @Nullable
   Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin);
 
   void dragDropEnd();
-
-  void dropActionChanged(final int gestureModifiers);
 }

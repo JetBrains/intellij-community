@@ -15,11 +15,12 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,8 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
-  private final SmartPsiElementPointer mySmartPointer;
-  private final VirtualFile myVirtualFile;
+  private final SmartPsiElementPointer<?> mySmartPointer;
   public final int startOffset; // in navigation element
   public final int endOffset; // in navigation element
 
@@ -38,9 +38,19 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
     LOG.assertTrue(element.isValid());
-    LOG.assertTrue(element == element.getNavigationElement());
-    mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
-    myVirtualFile = element.getContainingFile().getVirtualFile();
+    element = element.getNavigationElement();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(element.getProject());
+    mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);
+
+    if (startOffset == -1 && endOffset == -1) {
+      // calculate natural element range
+      TextRange range = element.getTextRange();
+      if (range == null) {
+        LOG.error("text range null for " + element + "; " + element.getClass());
+      }
+      startOffset = element.getTextOffset() - range.getStartOffset();
+      endOffset = range.getEndOffset() - range.getStartOffset();
+    }
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.isNonCodeUsage = isNonCodeUsage;
@@ -49,22 +59,7 @@ public class UsageInfo {
   }
 
   public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
-    LOG.assertTrue(element.isValid());
-    element = element.getNavigationElement();
-
-    mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
-    myVirtualFile = element.getContainingFile().getVirtualFile();
-
-    TextRange range = element.getTextRange();
-    if (range == null) {
-      LOG.error("text range null for " + element+"; "+element.getClass());
-    }
-    startOffset = element.getTextOffset() - range.getStartOffset();
-    endOffset = range.getEndOffset() - range.getStartOffset();
-
-    this.isNonCodeUsage = isNonCodeUsage;
-    LOG.assertTrue(startOffset >= 0, startOffset);
-    LOG.assertTrue(endOffset >= startOffset, endOffset-startOffset);
+    this(element, -1, -1, isNonCodeUsage);
   }
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset) {
@@ -105,13 +100,23 @@ public class UsageInfo {
   }
 
   public final void navigateTo(boolean requestFocus) {
-    PsiElement element = getElement();
-    if (element == null) return;
-    VirtualFile file = element.getContainingFile().getVirtualFile();
-    TextRange range = element.getTextRange();
-    int offset = range.getStartOffset() + startOffset;
-    Project project = element.getProject();
+    int offset = getNavigationOffset();
+    VirtualFile file = getVirtualFile();
+    Project project = getProject();
     FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
+  }
+
+  public int getNavigationOffset() {
+    PsiElement element = getElement();
+    if (element == null) return -1;
+    TextRange range = element.getTextRange();
+    return range.getStartOffset() + startOffset;
+  }
+  public Segment getSegment() {
+    PsiElement element = getElement();
+    if (element == null) return null;
+    TextRange range = element.getTextRange();
+    return new TextRange(range.getStartOffset() + startOffset, Math.min(range.getEndOffset(), range.getStartOffset() + endOffset));
   }
 
   public Project getProject() {
@@ -132,9 +137,8 @@ public class UsageInfo {
     if (endOffset != usageInfo.endOffset) return false;
     if (isNonCodeUsage != usageInfo.isNonCodeUsage) return false;
     if (startOffset != usageInfo.startOffset) return false;
-    PsiElement thisElement = mySmartPointer.getElement();
-    PsiElement thatElement = usageInfo.mySmartPointer.getElement();
-    return Comparing.equal(thisElement, thatElement);
+
+    return SmartPointerManager.getInstance(getProject()).pointToTheSameElement(mySmartPointer, usageInfo.mySmartPointer);
   }
 
   public int hashCode() {
@@ -150,7 +154,12 @@ public class UsageInfo {
     return mySmartPointer.getContainingFile();
   }
 
+  @Nullable
   public VirtualFile getVirtualFile() {
-    return myVirtualFile;
+    return mySmartPointer.getVirtualFile();
+  }
+
+  public void dispose() {
+    ((Disposable)mySmartPointer).dispose();
   }
 }

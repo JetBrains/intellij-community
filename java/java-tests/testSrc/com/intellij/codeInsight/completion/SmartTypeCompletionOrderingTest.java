@@ -194,7 +194,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testFactoryMethodForDefaultType() throws Throwable {
-    checkPreferredItems(0, "create", "map", "this", "getClass");
+    checkPreferredItems(0, "create", "this", "map", "getClass");
   }
 
   public void testLocalVarsBeforeClassLiterals() throws Throwable {

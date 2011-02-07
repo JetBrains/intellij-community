@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 /**
@@ -43,6 +44,7 @@ public class GrLightElementRenamer extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     if (!(element instanceof LightElement)) return false;
+    if (element instanceof ClosureSyntheticParameter) return false;
     final Language language = element.getLanguage();
     return GroovyFileType.GROOVY_LANGUAGE.equals(language);
   }

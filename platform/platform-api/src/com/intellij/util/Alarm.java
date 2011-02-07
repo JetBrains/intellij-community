@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
 
   private final List<Request> myRequests = new ArrayList<Request>();
   private final List<Request> myPendingRequests = new ArrayList<Request>();

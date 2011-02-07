@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -29,72 +28,21 @@ import org.jetbrains.annotations.Nullable;
 /**
 * User: cdr
 */
-class AnchorElementInfo implements SmartPointerElementInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.AnchorElementInfo");
-  private PsiFile myFile;
-  private final RangeMarker myMarker;
-  private int mySyncStartOffset;
-  private int mySyncEndOffset;
-  private boolean mySyncMarkerIsValid;
-  private final Project myProject;
-
-  AnchorElementInfo(@NotNull PsiElement anchor) {
-    LOG.assertTrue(anchor.isPhysical());
-    LOG.assertTrue(anchor.isValid());
-    myFile = anchor.getContainingFile();
-    myProject = myFile.getProject();
-    TextRange range = anchor.getTextRange();
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = documentManager.getDocument(myFile);
-    LOG.assertTrue(!documentManager.isUncommited(document));
-    if (myFile.getTextLength() != document.getTextLength()) {
-      final String docText = document.getText();
-      myFile.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          TextRange elementRange = element.getTextRange();
-          final String rangeText = docText.length() <= elementRange.getEndOffset() ? "(IOOBE: "+docText.length()+" is out of "+elementRange+")" : elementRange.substring(docText);
-          final String elemText = element.getText();
-          if (!rangeText.equals(elemText)) {
-            throw new AssertionError("PSI text doesn't equal to the document's one: element" + element + "\ndocText=" + rangeText + "\npsiText" + elemText);
-          }
-        }
-      });
-      LOG.error("File=" + myFile);
-    }
-    myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-
-    mySyncStartOffset = range.getStartOffset();
-    mySyncEndOffset = range.getEndOffset();
-    mySyncMarkerIsValid = true;
-  }
-
-  public Document getDocumentToSynchronize() {
-    return myMarker.getDocument();
-  }
-
-  public void documentAndPsiInSync() {
-    if (!myMarker.isValid()) {
-      mySyncMarkerIsValid = false;
-      return;
-    }
-
-    mySyncStartOffset = myMarker.getStartOffset();
-    mySyncEndOffset = myMarker.getEndOffset();
+class AnchorElementInfo extends SelfElementInfo {
+  AnchorElementInfo(@NotNull PsiElement anchor, PsiFile containingFile) {
+    super(anchor, containingFile);
   }
 
   @Nullable
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;
-    myFile = SelfElementInfo.restoreFile(myFile, myProject);
-    if (myFile == null) return null;
-    PsiElement anchor = myFile.findElementAt(mySyncStartOffset);
+    PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+    if (file == null) return null;
+    PsiElement anchor = file.findElementAt(getSyncStartOffset());
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
-    if (range.getStartOffset() != mySyncStartOffset || range.getEndOffset() != mySyncEndOffset) return null;
+    if (range.getStartOffset() != getSyncStartOffset() || range.getEndOffset() != getSyncEndOffset()) return null;
 
     if (anchor instanceof PsiIdentifier) {
       PsiElement parent = anchor.getParent();
@@ -106,20 +54,10 @@ class AnchorElementInfo implements SmartPointerElementInfo {
 
       return parent;
     }
-    else if (anchor instanceof XmlToken) {
+    if (anchor instanceof XmlToken) {
       XmlToken token = (XmlToken)anchor;
-
       return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;
     }
-    else {
-      return null;
-    }
-  }
-
-  @Override
-  public void dispose() {
-    if (myMarker != null) {
-      myMarker.dispose();
-    }
+    return null;
   }
 }

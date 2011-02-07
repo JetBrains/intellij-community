@@ -29,7 +29,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
   public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {
     PsiElement anchor = getAnchor(element);
     if (anchor != null) {
-      return new AnchorElementInfo(anchor);
+      return new AnchorElementInfo(anchor, element.getContainingFile());
     }
     return null;
   }
@@ -55,7 +55,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
     else if (element instanceof XmlTag) {
       anchor = XmlTagUtil.getStartTagNameElement((XmlTag)element);
     }
-    if (anchor != null && !anchor.isPhysical()) return null;
+    if (anchor != null && (!anchor.isPhysical() || anchor.getTextRange()==null)) return null;
     return anchor;
   }
 

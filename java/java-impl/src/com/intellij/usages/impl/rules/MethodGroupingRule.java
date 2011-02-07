@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -69,7 +70,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
   private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
     private final String myName;
-    private Icon myIcon;
+    private final Icon myIcon;
     private final Project myProject;
 
     public MethodUsageGroup(PsiMethod psiMethod) {
@@ -80,15 +81,12 @@ public class MethodGroupingRule implements UsageGroupingRule {
           PsiFormatUtilBase.SHOW_TYPE
         );
       myProject = psiMethod.getProject();
-      myMethodPointer = SmartPointerManager.getInstance(myProject).createLazyPointer(psiMethod);
+      myMethodPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(psiMethod);
 
       myIcon = getIconImpl(psiMethod);
     }
 
     public void update() {
-      if (isValid()) {
-        myIcon = getIconImpl(getMethod());
-      }
     }
 
     private static Icon getIconImpl(PsiMethod psiMethod) {
@@ -104,10 +102,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
         return false;
       }
       MethodUsageGroup group = (MethodUsageGroup) object;
-      if (isValid() && group.isValid()) {
-        return getMethod().getManager().areElementsEquivalent(getMethod(), group.getMethod());
-      }
-      return Comparing.equal(myName, ((MethodUsageGroup)object).myName);
+      return Comparing.equal(myName, ((MethodUsageGroup)object).myName)
+             && SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, group.myMethodPointer);
     }
 
     public Icon getIcon(boolean isOpen) {
@@ -151,10 +147,15 @@ public class MethodGroupingRule implements UsageGroupingRule {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");
       }
       MethodUsageGroup other = (MethodUsageGroup)usageGroup;
-      PsiMethod myMethod = myMethodPointer.getElement();
-      PsiMethod otherMethod = other.myMethodPointer.getElement();
-      if (myMethod != null && otherMethod != null && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
-        return myMethod.getTextOffset() < otherMethod.getTextOffset() ? -1 : 1;
+      if (SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, other.myMethodPointer)) {
+        return 0;
+      }
+      if (!UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+        Segment segment1 = myMethodPointer.getSegment();
+        Segment segment2 = other.myMethodPointer.getSegment();
+        if (segment1 != null && segment2 != null) {
+          return segment1.getStartOffset() - segment2.getStartOffset();
+        }
       }
 
       return myName.compareTo(other.myName);

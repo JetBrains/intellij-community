@@ -43,7 +43,7 @@ public class FileContentQueue {
   private long myTotalSize;
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
-  private Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
+  private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
