@@ -76,18 +76,23 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   }
 
   @Override
-  public boolean isValid() {
+  protected String checkValidity() {
     final XmlTag tag = (XmlTag)getXmlElement();
     if (tag != null && !tag.isValid()) {
-      return false;
+      return "invalid root tag";
     }
 
-    return myParent.isValid();
+    final String s = myParent.checkValidity();
+    if (s != null) {
+      return "root: " + s;
+    }
+
+    return null;
   }
 
   @NotNull
   public DomFileElementImpl getParent() {
-    checkIsValid();
+    assertValid();
     return myParent;
   }
 

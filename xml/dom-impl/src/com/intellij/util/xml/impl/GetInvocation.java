@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -34,7 +33,7 @@ public class GetInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    handler.checkIsValid();
+    handler.assertValid();
     if (myConverter == Converter.EMPTY_CONVERTER) {
       return getValueInner(handler, myConverter);
     }

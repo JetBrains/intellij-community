@@ -33,7 +33,7 @@ class GetCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    handler.checkIsValid();
+    handler.assertValid();
     Map<XmlTag,DomElement> map = new THashMap<XmlTag, DomElement>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       for (DomElement element : handler.getCollectionChildren(qname, qname.getTagsGetter())) {
