@@ -35,6 +35,11 @@
       <categoryKey>intention.category.numbers</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.integer.ConvertIntegerToBinaryIntention</className>
+      <categoryKey>intention.category.numbers</categoryKey>
+    </intentionAction>
+
     <!-- Boolean -->
     <intentionAction>
       <className>com.siyeh.ipp.bool.DemorgansIntention</className>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,30 +19,22 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertIntegerToDecimalIntention extends ConvertNumberIntentionBase {
+public class ConvertIntegerToBinaryIntention extends ConvertNumberIntentionBase {
   @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
-    return new ConvertIntegerToDecimalPredicate();
+    return new ConvertIntegerToBinaryPredicate();
   }
 
   @Override
   protected String convertValue(final Number value, final PsiType type, final boolean negated) {
     if (PsiType.INT.equals(type)) {
       final int intValue = negated ? -value.intValue() : value.intValue();
-      return Integer.toString(intValue);
+      return "0b" + Integer.toBinaryString(intValue);
     }
     else if (PsiType.LONG.equals(type)) {
       final long longValue = negated ? -value.longValue() : value.longValue();
-      return Long.toString(longValue) + "L";
-    }
-    else if (PsiType.FLOAT.equals(type)) {
-      final float floatValue = negated ? -value.floatValue() : value.floatValue();
-      return Float.toString(floatValue) + 'f';
-    }
-    else if (PsiType.DOUBLE.equals(type)) {
-      final double doubleValue = negated ? -value.doubleValue() : value.doubleValue();
-      return Double.toString(doubleValue);
+      return "0b" + Long.toBinaryString(longValue) + "L";
     }
 
     return null;

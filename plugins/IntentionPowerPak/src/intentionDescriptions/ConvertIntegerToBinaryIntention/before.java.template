@@ -1,0 +1,5 @@
+public class X {
+  void f() {
+    int i = <spot>5</spot>;
+  }
+}

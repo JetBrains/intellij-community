@@ -18,7 +18,6 @@ package com.siyeh.ipp.integer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,9 +40,6 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
             return text.charAt(0) == '0';
         }
         if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){
-            if(!PsiUtil.isLanguageLevel5OrHigher(expression)){
-                return false;
-            }
             @NonNls final String text = expression.getText();
             if(text == null || text.length() < 2){
                 return false;
