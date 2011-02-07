@@ -4,12 +4,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,17 +19,13 @@ import java.util.List;
  * @author peter
  */
 @TestDataPath("$CONTENT_ROOT/testData")
-public abstract class CompletionSortingTestCase extends LightCompletionTestCase {
+public abstract class CompletionSortingTestCase extends LightFixtureCompletionTestCase {
+  private final CompletionType myType;
+
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected CompletionSortingTestCase(CompletionType type) {
-    setType(type);
+    myType = type;
   }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
 
   @Override
   protected void tearDown() throws Exception {
@@ -40,19 +33,14 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
     super.tearDown();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   protected abstract String getBasePath();
 
   protected void checkPreferredItems(final int selected, @NonNls final String... expected) throws Exception {
-    invokeCompletion(getBasePath() + "/" + getTestName(false) + ".java");
+    invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(selected, expected);
   }
 
-  protected static void assertPreferredItems(final int selected, @NonNls final String... expected) {
+  protected void assertPreferredItems(final int selected, @NonNls final String... expected) {
     final LookupImpl lookup = getLookup();
     final JList list = lookup.getList();
     final List<LookupElement> model = lookup.getItems();
@@ -75,8 +63,9 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
     assertEquals(selected, list.getSelectedIndex());
   }
 
-  protected LookupImpl invokeCompletion(final String filePath) throws Exception {
-    configureByFile(filePath);
+  protected LookupImpl invokeCompletion(final String path) throws Exception {
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
+    myFixture.complete(myType);
     return getLookup();
   }
 
