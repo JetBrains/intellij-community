@@ -17,6 +17,8 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.util.Consumer;
+import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,8 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
   }
 
   @Override
-  public ChangeSetHolder readPrevious(int id) {
+  @Nullable
+  public ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard) {
     if (mySets.isEmpty()) return null;
     if (id == -1) return new ChangeSetHolder(mySets.size() - 1, mySets.get(mySets.size() - 1));
     return id == 0 ? null : new ChangeSetHolder(id -1, mySets.get(id - 1));

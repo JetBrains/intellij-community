@@ -23,6 +23,7 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.util.Consumer;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -114,6 +115,8 @@ public class ChangeList {
     return new Iterable<ChangeSet>() {
       public Iterator<ChangeSet> iterator() {
         return new Iterator<ChangeSet>() {
+          private final TIntHashSet recursionGuard = new TIntHashSet(1000);
+
           private ChangeSetHolder currentBlock;
           private ChangeSet next = fetchNext();
 
@@ -134,13 +137,13 @@ public class ChangeList {
                   currentBlock = new ChangeSetHolder(-1, myCurrentChangeSet);
                 }
                 else {
-                  currentBlock = myStorage.readPrevious(-1);
+                  currentBlock = myStorage.readPrevious(-1, recursionGuard);
                 }
               }
             }
             else {
               synchronized (ChangeList.this) {
-                currentBlock = myStorage.readPrevious(currentBlock.id);
+                currentBlock = myStorage.readPrevious(currentBlock.id, recursionGuard);
               }
             }
             if (currentBlock == null) return null;

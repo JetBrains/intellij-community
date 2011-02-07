@@ -23,6 +23,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.AbstractStorage;
+import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -88,12 +91,12 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       LocalHistoryLog.LOG.error("cannot mark storage as broken", ex);
     }
     long vfsTimestamp = getVFSTimestamp();
-    long timestamp = System.currentTimeMillis() ;
+    long timestamp = System.currentTimeMillis();
     throw new RuntimeException("Local history is broken and will be rebuilt after restart " +
                                "(version:" + VERSION +
                                ",current timestamp:" + timestamp +
                                ",storage timestamp:" + storageTimestamp +
-                               ",vfs timestamp:" + vfsTimestamp+ ")", e);
+                               ",vfs timestamp:" + vfsTimestamp + ")", e);
   }
 
   public synchronized void close() {
@@ -104,25 +107,27 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     return myStorage.nextId();
   }
 
-  public synchronized ChangeSetHolder readPrevious(int id) {
-    int prevId = id == -1 ? myStorage.getLastRecord() : myStorage.getPrevRecord(id);
-    if (prevId == 0) return null;
-
-    return doReadBlock(prevId);
-  }
-
-  private ChangeSetHolder doReadBlock(int id) {
+  @Nullable
+  public synchronized ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard) {
     try {
-      DataInputStream in = myStorage.readStream(id);
-      try {
-        return new ChangeSetHolder(id, new ChangeSet(in));
-      }
-      finally {
-        in.close();
-      }
+      int prevId = id == -1 ? myStorage.getLastRecord() : doReadPrevSafely(id, recursionGuard);
+      if (prevId == 0) return null;
+
+      return doReadBlock(prevId);
     }
     catch (Throwable e) {
       throw handleError(e);
+    }
+  }
+
+  @NotNull
+  private ChangeSetHolder doReadBlock(int id) throws IOException {
+    DataInputStream in = myStorage.readStream(id);
+    try {
+      return new ChangeSetHolder(id, new ChangeSet(in));
+    }
+    finally {
+      in.close();
     }
   }
 
@@ -144,12 +149,15 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   public synchronized void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
-    int eachBlockId = findFirstObsoleteBlock(period, intervalBetweenActivities);
+    TIntHashSet recursionGuard = new TIntHashSet(1000);
+
     try {
+      int eachBlockId = findFirstObsoleteBlock(period, intervalBetweenActivities, recursionGuard);
+
       while (eachBlockId != 0) {
         processor.consume(doReadBlock(eachBlockId).changeSet);
         int toDelete = eachBlockId;
-        eachBlockId = myStorage.getPrevRecord(eachBlockId);
+        eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
         myStorage.deleteRecord(toDelete);
       }
       myStorage.force();
@@ -159,7 +167,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  private int findFirstObsoleteBlock(long period, int intervalBetweenActivities) {
+  private int findFirstObsoleteBlock(long period, int intervalBetweenActivities, TIntHashSet recursionGuard) throws IOException {
     long prevTimestamp = 0;
     long length = 0;
 
@@ -176,9 +184,16 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
       if (length >= period) return last;
 
-      last = myStorage.getPrevRecord(last);
+      last = doReadPrevSafely(last, recursionGuard);
     }
 
     return 0;
+  }
+
+  private int doReadPrevSafely(int id, TIntHashSet recursionGuard) throws IOException {
+    recursionGuard.add(id);
+    int prev = myStorage.getPrevRecord(id);
+    if (!recursionGuard.add(prev)) throw new IOException("Recursive records found");
+    return prev;
   }
 }
