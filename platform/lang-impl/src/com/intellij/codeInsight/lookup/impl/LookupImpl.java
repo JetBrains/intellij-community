@@ -317,11 +317,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
-  public boolean truncatePrefix() {
+  public boolean truncatePrefix(boolean preserveSelection) {
     final int len = myAdditionalPrefix.length();
     if (len == 0) return false;
 
-    markSelectionTouched();
+    if (preserveSelection) {
+      markSelectionTouched();
+    }
 
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
