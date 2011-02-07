@@ -436,15 +436,15 @@ public class JavaCoverageEngine extends CoverageEngine {
           final SwitchData switchData = (SwitchData)o;
           final PsiExpression conditionExpression = expressions.get(idx++);
           buf.append(indent).append(conditionExpression.getText()).append("\n");
-          if (hasDefaultLabel(conditionExpression)) {
-            buf.append(indent).append(indent).append("Default hits: ").append(switchData.getDefaultHits()).append("\n");
-            hits += switchData.getDefaultHits();
-          }
           int i = 0;
           for (int key : switchData.getKeys()) {
             final int switchHits = switchData.getHits()[i++];
             buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchHits).append("\n");
             hits += switchHits;
+          }
+          if (hasDefaultLabel(conditionExpression)) {
+            buf.append(indent).append(indent).append("default: ").append(switchData.getDefaultHits()).append("\n");
+            hits += switchData.getDefaultHits();
           }
         }
       }
@@ -515,7 +515,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @NotNull
-  private static String getPackageName(final PsiFile sourceFile) {
+  protected static String getPackageName(final PsiFile sourceFile) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return ((PsiClassOwner)sourceFile).getPackageName();
