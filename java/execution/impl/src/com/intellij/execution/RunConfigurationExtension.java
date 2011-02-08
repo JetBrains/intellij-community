@@ -60,6 +60,14 @@ public abstract class RunConfigurationExtension {
   public abstract void patchConfiguration(RunConfigurationBase runJavaConfiguration);
   public abstract void checkConfiguration(RunConfigurationBase runJavaConfiguration) throws RuntimeConfigurationException;
 
+  public void cleanUserData(RunConfigurationBase runConfigurationBase) {}
+
+  public static void cleanExtensionsUserData(RunConfigurationBase runConfigurationBase) {
+    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+      extension.cleanUserData(runConfigurationBase);
+    }
+  }
+
   public RefactoringElementListener wrapElementListener(PsiElement element,
                                                         RunConfigurationBase runJavaConfiguration,
                                                         RefactoringElementListener listener) {
