@@ -8,6 +8,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author ilyas
@@ -32,6 +33,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", variants)
   }
 
+  @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     return descriptor;
   }

@@ -31,6 +31,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author ilyas
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
   static def descriptor = new GantProjectDescriptor()
 
+  @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     return descriptor;
   }
