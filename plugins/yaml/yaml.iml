@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
 
