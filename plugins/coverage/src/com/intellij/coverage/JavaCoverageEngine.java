@@ -585,7 +585,7 @@ public class JavaCoverageEngine extends CoverageEngine {
           Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
           return;
         }
-        if (openInBrowser) BrowserUtil.launchBrowser(VfsUtil.pathToUrl(outputDir + "/index.html"));
+        if (openInBrowser) BrowserUtil.launchBrowser(VfsUtil.pathToUrl(StringUtil.trimEnd(outputDir, File.separator) + File.separator + "index.html"));
       }
     });
   }
