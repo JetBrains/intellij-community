@@ -7,6 +7,7 @@ commons-collections.jar
 commons-httpclient-3.1-patched.jar
 commons-lang-2.4.jar
 commons-logging-1.1.1.jar
+commons-net-2.0-patched.jar
 dtdparser113.jar
 groovy-all-1.7.3.jar
 guava-r06.jar
