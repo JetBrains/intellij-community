@@ -55,7 +55,13 @@ public interface GroupNames {
   String J2ME_GROUP_NAME = InspectionsBundle.message("group.names.j2me.issues");
   String CONTROL_FLOW_GROUP_NAME = InspectionsBundle.message("group.names.control.flow.issues");
   String NUMERIC_GROUP_NAME = InspectionsBundle.message("group.names.numeric.issues");
-  String JDK15_SPECIFIC_GROUP_NAME = InspectionsBundle.message("group.names.j2sdk5.0.specific.issues.and.migration.aids");
+
+  /**
+   * use LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME
+   */
+  @Deprecated
+  String JDK15_SPECIFIC_GROUP_NAME = InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
+  String LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME = InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   String JAVABEANS_GROUP_NAME = InspectionsBundle.message("group.names.javabeans.issues");
   String INHERITANCE_GROUP_NAME = InspectionsBundle.message("group.names.inheritance.issues");
   String DATA_FLOW_ISSUES = InspectionsBundle.message("group.names.data.flow.issues");
