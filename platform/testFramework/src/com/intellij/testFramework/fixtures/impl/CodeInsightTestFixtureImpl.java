@@ -179,11 +179,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    final String fullSourceFilePath = getTestDataPath() + "/" + sourceFilePath;
-    File fromFile = new File(fullSourceFilePath);
+    File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
-      assert fromFile.exists() : "cannot find test data neither as \"" + fullSourceFilePath + "\" nor as \"" + sourceFilePath + "\"";
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -191,13 +189,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
+      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + getTestDataPath() + ")";
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
+
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
     if (!destFile.exists()) {
-
       if (fromFile.isDirectory()) {
-        destFile.mkdirs();
+        assert destFile.mkdirs() : destFile;
       }
       else {
         try {
@@ -208,8 +207,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }
+
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    Assert.assertNotNull(file);
+    assert file != null : destFile;
     return file;
   }
 
