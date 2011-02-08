@@ -257,7 +257,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setPreferredPosition(tooltip.getPreferredPosition())
       .setFillColor(bg)
       .setBorderColor(border)
-      .setAnimationCycle(150)
+      .setAnimationCycle(Registry.intValue("ide.tooltip.animationCycle"))
       .setShowCallout(true)
       .setCalloutShift(tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
