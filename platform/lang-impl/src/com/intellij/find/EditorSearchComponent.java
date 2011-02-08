@@ -218,6 +218,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = myCbRegexp.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
         myCbWholeWords.setEnabled(!b);
+        if (myPreserveCase != null) {
+          myPreserveCase.setEnabled(!b);
+        }
         updateResults(true);
       }
     });
@@ -330,6 +333,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     mySelectionOnly.setSelected(!findInFileModel.isGlobal());
     myPreserveCase.setSelected(findInFileModel.isPreserveCase());
+    myPreserveCase.setEnabled(!findInFileModel.isRegularExpressions());
 
     replacement.add(mySelectionOnly);
     replacement.add(myPreserveCase);
@@ -525,7 +529,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         model.setStringToReplace(myReplaceField.getText());
         model.setPromptOnReplace(false);
         model.setGlobal(!mySelectionOnly.isSelected());
-        model.setPreserveCase(myPreserveCase.isSelected());
+        model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
       }
 
       myLivePreviewController.setFindModel(model);
