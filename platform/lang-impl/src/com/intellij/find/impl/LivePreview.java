@@ -448,6 +448,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         balloonBuilder.setHideOnClickOutside(false);
         balloonBuilder.setHideOnKeyOutside(false);
         balloonBuilder.setHideOnAction(false);
+        balloonBuilder.setCloseButtonEnabled(true);
         myReplacementBalloon = balloonBuilder.createBalloon();
         final int startOffset = myCursor.getPrimaryRange().getStartOffset();
         final int endOffset = myCursor.getPrimaryRange().getEndOffset();
@@ -500,7 +501,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     if (highlightManager != null) {
       highlightManager.addRangeHighlight(myEditor,
               textRange.getStartOffset(), textRange.getEndOffset(),
-              attributes, true, highlighters);
+              attributes, false, highlighters);
     }
   }
 

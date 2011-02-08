@@ -28,7 +28,15 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 public class IncrementalFindAction extends EditorAction {
-  private static class Handler extends EditorActionHandler {
+  public static class Handler extends EditorActionHandler {
+
+    private boolean myReplace;
+
+    public Handler(boolean isReplace) {
+
+      myReplace = isReplace;
+    }
+
     public void execute(final Editor editor, DataContext dataContext) {
       final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
@@ -38,7 +46,7 @@ public class IncrementalFindAction extends EditorAction {
           headerComponent.requestFocus();
         }
         else {
-          final EditorSearchComponent header = new EditorSearchComponent(editor, project);
+          final EditorSearchComponent header = new EditorSearchComponent(editor, project, myReplace);
           editor.setHeaderComponent(header);
 
           header.requestFocus();
@@ -53,6 +61,6 @@ public class IncrementalFindAction extends EditorAction {
   }
 
   public IncrementalFindAction() {
-    super(new Handler());
+    super(new Handler(false));
   }
 }

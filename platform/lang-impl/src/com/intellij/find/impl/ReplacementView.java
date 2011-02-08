@@ -54,6 +54,7 @@ public class ReplacementView extends JPanel {
         }
       }
     });
+    replaceAllButton.setMnemonic('a');
     add(replaceAllButton);
     setBackground(IdeTooltipManager.GRAPHITE_COLOR);
     if (SystemInfo.isMac) {

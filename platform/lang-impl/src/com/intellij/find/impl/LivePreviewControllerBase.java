@@ -57,6 +57,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate {
       TextRange r = myFindModel.isGlobal() ? new TextRange(0, Integer.MAX_VALUE) :
                     new TextRange(editor.getSelectionModel().getSelectionStart(),
                                   editor.getSelectionModel().getSelectionEnd());
+      if (r.getLength() == 0) {
+        r = new TextRange(0, Integer.MAX_VALUE);
+      }
       int offset = r.getStartOffset();
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
       ArrayList<FindResult> results = new ArrayList<FindResult>();
