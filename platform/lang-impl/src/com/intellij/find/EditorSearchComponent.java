@@ -282,6 +282,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
     configureTextField(mySearchField);
+    setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if ("".equals(mySearchField.getText())) {
@@ -328,7 +329,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
         updateResults(true);
       }
     });
-    final EditorSearchComponent c = this;
+    myPreserveCase.setMnemonic('P');
     mySelectionOnly.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -336,7 +337,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
         updateResults(true);
       }
     });
-
+    mySelectionOnly.setMnemonic('S');
     updateModelWithSelectionMode(findInFileModel);
 
     mySelectionOnly.setSelected(!findInFileModel.isGlobal());
@@ -345,6 +346,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
     replacement.add(mySelectionOnly);
     replacement.add(myPreserveCase);
+    for (Component comp : replacement.getComponents()) {
+      if (comp instanceof JComponent) {
+        setSmallerFont((JComponent)comp);
+      }
+    }
   }
 
   private void updateModelWithSelectionMode(FindModel findInFileModel) {
@@ -380,8 +386,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
   private void configureTextField(final JTextField searchField) {
     searchField.setColumns(25);
-
-    setSmallerFont(searchField);
 
     searchField.addFocusListener(new FocusListener() {
       public void focusGained(final FocusEvent e) {
@@ -712,7 +716,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
   public boolean hasMatches() {
     return myLivePreview != null && myLivePreview.hasMatches();
-    //return myOkToSearch && myHasMatches;
   }
 
   private static void registerShortcutsForComponent(ArrayList<Shortcut> shortcuts, JComponent component, AnAction a) {
