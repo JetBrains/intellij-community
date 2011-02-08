@@ -1,4 +1,5 @@
 <idea-plugin version="2">
+  <depends optional="true" config-file="yamlspellchecker.xml">com.intellij.spellchecker</depends>
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
