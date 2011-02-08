@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -42,7 +43,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     myConstructorCall = constructorCall;
   }
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
@@ -53,11 +54,10 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(constructor);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(),
                                                  getTargetSubstitutor(myConstructorCall));
-      CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
+      final PsiMethod superConstructor = CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
 
       constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
-      targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
       if (targetClass == null) return;
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
       final TextRange textRange = constructor.getTextRange();
@@ -72,7 +72,11 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
                 final int offset = editor.getCaretModel().getOffset();
                 PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-                CreateFromUsageUtils.setupMethodBody(constructor);
+                if (superConstructor == null) {
+                  CreateFromUsageUtils.setupMethodBody(constructor);
+                } else {
+                  OverrideImplementUtil.setupMethodBody(constructor, superConstructor, targetClass);
+                }
                 CreateFromUsageUtils.setupEditor(constructor, editor);
               }
               catch (IncorrectOperationException e) {

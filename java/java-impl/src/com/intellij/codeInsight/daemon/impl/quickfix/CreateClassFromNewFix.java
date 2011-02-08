@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -97,10 +98,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
   }
 
-  public static void setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
+  @Nullable
+  public static PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
     throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
-
+    PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) &&
           !"java.lang.Enum".equals(superClass.getQualifiedName())) {
@@ -110,7 +112,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       for (PsiMethod superConstructor : constructors) {
         if (superConstructor.getParameterList().getParametersCount() == 0) {
           hasDefaultConstructor = true;
+          supConstructor = null;
           break;
+        } else {
+          supConstructor = superConstructor;
         }
       }
 
@@ -126,6 +131,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
+    return supConstructor;
   }
 
   private static void setupGenericParameters(PsiNewExpression expr, PsiClass targetClass) throws IncorrectOperationException {
