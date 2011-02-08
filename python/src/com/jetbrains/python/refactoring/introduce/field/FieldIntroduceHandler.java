@@ -17,7 +17,7 @@ import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
-import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +83,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     } else if (initInConstructor == InitPlace.SET_UP) {
       return addFieldToSetUp(project, clazz, declaration);
     }
-    return VariableIntroduceHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+    return PyIntroduceVariableHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
   }
 
   private boolean inConstructor(@Nullable PyClass clazz, @NotNull PsiElement expression) {

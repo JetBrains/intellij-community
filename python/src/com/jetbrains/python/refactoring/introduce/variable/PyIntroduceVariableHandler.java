@@ -12,8 +12,8 @@ import java.util.List;
 /**
  * @author Alexey.Ivanov
  */
-public class VariableIntroduceHandler extends IntroduceHandler {
-  public VariableIntroduceHandler() {
+public class PyIntroduceVariableHandler extends IntroduceHandler {
+  public PyIntroduceVariableHandler() {
     super(new VariableValidator(), PyBundle.message("refactoring.introduce.variable.dialog.title"));
   }
 

@@ -4,7 +4,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 
 import java.util.Collection;
 
@@ -42,7 +42,7 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
 
   private void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
     myFixture.configureByFile("/refactoring/introduceVariable/" + getTestName(true) + ".py");
-    VariableIntroduceHandler handler = new VariableIntroduceHandler();
+    PyIntroduceVariableHandler handler = new PyIntroduceVariableHandler();
     PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), parentClass);
     final Collection<String> names = handler.getSuggestedNames(expr);
     for (String expectedName : expectedNames) {
@@ -52,7 +52,7 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
 
   private void doTest() {
     myFixture.configureByFile("/refactoring/introduceVariable/" + getTestName(true) + ".py");
-    VariableIntroduceHandler handler = new VariableIntroduceHandler();
+    PyIntroduceVariableHandler handler = new PyIntroduceVariableHandler();
     handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
     myFixture.checkResultByFile("/refactoring/introduceVariable/" + getTestName(true) + ".after.py");
   }
