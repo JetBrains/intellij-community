@@ -5,6 +5,8 @@ import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,6 +26,23 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
     myIsPureUnittest = new JCheckBox("Inspect only subclasses of unittest.TestCase");
     myIsPureUnittest.setSelected(configuration.isPureUnittest());
+
+    final JRadioButton functionRB = myTestRunConfigurationForm.getFunctionRB();
+
+    myIsPureUnittest.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        functionRB.setEnabled(!myIsPureUnittest.isSelected());
+      }
+    });
+
+    functionRB.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myIsPureUnittest.setEnabled(!functionRB.isSelected());
+      }
+    });
+
     myIsPureUnittest.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
