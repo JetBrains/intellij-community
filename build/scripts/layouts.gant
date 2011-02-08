@@ -130,10 +130,7 @@ def layoutFull(String home, String targetDirectory) {
         module("notNull")
       }
 
-      fileset(dir: "$home/lib") {
-        include(name: "*.jar")
-        exclude(name: "eawtstub.jar")
-      }
+      fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
       fileset(dir: "$home/lib/src") {
         include(name: "trove4j_changes.txt")
