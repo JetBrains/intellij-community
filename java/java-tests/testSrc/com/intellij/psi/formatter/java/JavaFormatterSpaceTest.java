@@ -274,4 +274,15 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testEmptyIterationAtFor() throws Exception {
+    // Inspired by IDEA-58293
+    
+    getSettings().SPACE_AFTER_SEMICOLON = true;
+    getSettings().SPACE_WITHIN_FOR_PARENTHESES = false;
+    
+    doMethodTest(
+      "for (   ; ;         )",
+      "for (; ; )"
+    );
+  }
 }

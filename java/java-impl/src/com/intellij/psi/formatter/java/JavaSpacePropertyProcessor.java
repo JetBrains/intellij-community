@@ -1146,10 +1146,16 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
       }
       else {
-        createParenSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                         new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
+        ASTNode prev = FormattingAstUtil.getPrevNonWhiteSpaceNode(myChild2);
+        if (prev != null && prev.getElementType() == JavaTokenType.SEMICOLON) {
+          // Handle empty 'condition' section.
+          createSpaceInCode(mySettings.SPACE_AFTER_SEMICOLON);
+        }
+        else {
+          createParenSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+                           new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
+        }
       }
-
     }
     else if (myRole1 == ChildRole.FOR_INITIALIZATION) {
       createSpaceInCode(mySettings.SPACE_AFTER_SEMICOLON);
