@@ -23,13 +23,17 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.LiveOccurrence;
 import com.intellij.find.impl.LivePreview;
 import com.intellij.find.impl.LivePreviewControllerBase;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,6 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -66,7 +71,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class EditorSearchComponent extends JPanel implements DataProvider {
+public class EditorSearchComponent extends JPanel implements DataProvider, LivePreview.CursorListener, SelectionListener {
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
@@ -112,6 +117,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
 
   private boolean myIsReplace;
+  private boolean myListeningSelection = false;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -300,6 +306,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
 
     myLivePreview = new LivePreview(myEditor.getProject());
+    myLivePreview.addCursorListener(this);
     myLivePreview.setDelegate(myLivePreviewController);
   }
 
@@ -321,15 +328,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         updateResults(true);
       }
     });
-
+    final EditorSearchComponent c = this;
     mySelectionOnly.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
-        final boolean b = mySelectionOnly.isSelected();
-        findInFileModel.setGlobal(!b);
+        updateModelWithSelectionMode(findInFileModel);
         updateResults(true);
       }
     });
+
+    updateModelWithSelectionMode(findInFileModel);
 
     mySelectionOnly.setSelected(!findInFileModel.isGlobal());
     myPreserveCase.setSelected(findInFileModel.isPreserveCase());
@@ -337,6 +345,19 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     replacement.add(mySelectionOnly);
     replacement.add(myPreserveCase);
+  }
+
+  private void updateModelWithSelectionMode(FindModel findInFileModel) {
+    final boolean b = mySelectionOnly.isSelected();
+    findInFileModel.setGlobal(!b);
+    if (b) {
+      myEditor.getSelectionModel().addSelectionListener(this);
+    } else {
+      if (myListeningSelection) {
+        myEditor.getSelectionModel().removeSelectionListener(this);
+      }
+    }
+    myListeningSelection = b;
   }
 
   private NonOpaquePanel createLeadPane() {
@@ -430,6 +451,36 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
+  @Override
+  public void cursorMoved() {
+    if (mySelectionOnly == null || !mySelectionOnly.isSelected()) {
+      LiveOccurrence cursor = myLivePreview.getCursor();
+      if (cursor != null) {
+        TextRange range = cursor.getPrimaryRange();
+        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+
+        myEditor.getCaretModel().moveToOffset(range.getEndOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+        myEditor.getCaretModel().moveToOffset(range.getStartOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+    }
+  }
+
+  @Override
+  public void selectionChanged(SelectionEvent e) {
+    updateResults(true);
+  }
+
+  public void moveCursor(boolean forwardOrBackward) {
+    if (forwardOrBackward) {
+      myLivePreview.nextOccurrence();
+    } else {
+      myLivePreview.prevOccurrence();
+    }
+  }
+
   private static void setSmallerFontAndOpaque(final JComponent component) {
     setSmallerFont(component);
     component.setOpaque(false);
@@ -483,12 +534,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myDocumentListener = null;
     }
     myLivePreview.cleanUp();
+    if (myListeningSelection) {
+      myEditor.getSelectionModel().removeSelectionListener(this);
+    }
   }
 
-  private void updateResults(boolean allowedToChangedEditorSelection) {
+  private void updateResults(final boolean allowedToChangedEditorSelection) {
     removeCurrentHighlights();
     myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.PLAIN));
-    String text = mySearchField.getText();
+    final String text = mySearchField.getText();
     if (text.length() == 0) {
       setRegularBackground();
       myMatchInfoLabel.setText("");
@@ -496,7 +550,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myLivePreview.cleanUp();
     }
     else {
-      FindModel model = new FindModel();
+      final FindModel model = new FindModel();
       model.setCaseSensitive(isCaseSensitive());
       model.setInCommentsOnly(isInComments());
       model.setInStringLiteralsOnly(isInLiterals());
@@ -524,6 +578,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       model.setStringToFind(text);
       model.setSearchHighlighters(true);
 
+      final FindManager findManager = FindManager.getInstance(myProject);
+      if (allowedToChangedEditorSelection) {
+        findManager.setFindWasPerformed();
+        FindModel copy = new FindModel();
+        copy.copyFrom(model);
+        findManager.setFindNextModel(copy);
+      }
+      
       if (myIsReplace) {
         model.setReplaceState(true);
         model.setStringToReplace(myReplaceField.getText());
@@ -532,17 +594,41 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
       }
 
-      if (allowedToChangedEditorSelection) {
-        FindManager findManager = FindManager.getInstance(myProject);
-        findManager.setFindWasPerformed();
-        findManager.setFindNextModel(model);
-      }
 
       myLivePreviewController.setFindModel(model);
       myLivePreview.update();
+      myLivePreview.setContinuation(new Runnable() {
+
+        @Override
+        public void run() {
+          final int count = myLivePreview.getSearchResults().size();
+          if (count <= myMatchesLimit) {
+            myClickToHighlightLabel.setVisible(false);
+
+            if (count > 0) {
+              setRegularBackground();
+              if (count > 1) {
+                myMatchInfoLabel.setText(count + " matches");
+              }
+              else {
+                myMatchInfoLabel.setText("1 match");
+              }
+            }
+            else {
+              setNotFoundBackground();
+              myMatchInfoLabel.setText("No matches");
+            }
+          }
+          else {
+            setRegularBackground();
+            myMatchInfoLabel.setText("More than 100 matches");
+            myClickToHighlightLabel.setVisible(true);
+            boldMatchInfo();
+          }
+        }
+
+      });
     }
-
-
   }
 
   private void boldMatchInfo() {

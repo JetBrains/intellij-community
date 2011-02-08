@@ -101,6 +101,24 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     return mySearchResults != null && !mySearchResults.isEmpty();
   }
 
+  public LiveOccurrence getCursor() {
+    return myCursor;
+  }
+
+  public interface CursorListener {
+    void cursorMoved();
+  }
+
+  private List<CursorListener> myListeners = new ArrayList<CursorListener>();
+
+  public void addCursorListener(CursorListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeCursorListener(CursorListener listener) {
+    myListeners.remove(listener);
+  }
+
   public interface Delegate {
     @NotNull
     List<LiveOccurrence> performSearchInBackgroundInReadAction(Editor editor);
@@ -390,6 +408,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private void setCursor(LiveOccurrence liveOccurrence) {
     hideBalloon();
+    boolean toNotify = myCursor != null && !myCursor.equals(liveOccurrence);
+
     myCursor = liveOccurrence;
 
     if (myCursorHighlighter != null) {
@@ -425,6 +445,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         });
       } else {
         showReplacementPreview();
+      }
+    }
+    if (toNotify) {
+      for (CursorListener l : myListeners) {
+        l.cursorMoved();
       }
     }
   }
