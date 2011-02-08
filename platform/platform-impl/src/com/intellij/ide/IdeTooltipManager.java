@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -440,7 +441,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     String htmlBody = getHtmlBody(text);
-    htmlBody = UIUtil.convertSpace2Nbsp(htmlBody);
     text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
            "</head><body>" +
@@ -500,7 +500,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     if (hintHint.isAwtTooltip()) {
-      Dimension size = layeredPane != null ? layeredPane.getSize() : new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+      Dimension size = layeredPane != null ? layeredPane.getSize() : ScreenUtil.getScreenRectangle(0, 0).getSize();
       int fitWidth = (int)(size.width * 0.8);
       Dimension prefSizeOriginal = pane.getPreferredSize();
       if (prefSizeOriginal.width > fitWidth) {

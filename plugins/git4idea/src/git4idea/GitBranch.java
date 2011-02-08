@@ -198,7 +198,7 @@ public class GitBranch extends GitReference {
         }
         final int idx = b.indexOf("HEAD ->");
         if (idx > 0) {
-          activeRemoteName = b.substring(idx + "HEAD ->".length() + remotePrefix.length());
+          activeRemoteName = b.substring(idx + "HEAD ->".length() + (remotePrefix == null ? 0 : remotePrefix.length()));
           continue;
         }
       }

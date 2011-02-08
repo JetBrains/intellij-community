@@ -44,7 +44,7 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
             return;
         }
         int index = 0;
-        while (index < max && text.charAt(index) == '0') {
+        while (index < max && (text.charAt(index) == '0' || text.charAt(index) == '_')) {
             index++;
         }
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

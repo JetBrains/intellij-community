@@ -397,6 +397,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
   }
 
+  @Override
   public void rebuild() {
     myFoldTree.rebuild();
   }

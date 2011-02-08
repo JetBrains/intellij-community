@@ -719,6 +719,13 @@ public class JBTabsImpl extends JComponent
         return new ActionCallback.Done();
       }
       else {
+        Component owner = myFocusManager.getFocusOwner();
+        JComponent c = info.getComponent();
+        if (c != null && owner != null) {
+          if (c == owner || SwingUtilities.isDescendingFrom(owner, c)) {
+            return new ActionCallback.Done();
+          }
+        }
         return requestFocus(getToFocus());
       }
     }

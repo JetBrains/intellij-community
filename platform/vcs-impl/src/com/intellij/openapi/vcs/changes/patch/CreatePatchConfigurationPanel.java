@@ -33,7 +33,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.AdjustComponentWhenShown;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,6 +91,15 @@ public class CreatePatchConfigurationPanel {
     });
     myErrorLabel.setForeground(Color.RED);
     checkName();
+    new AdjustComponentWhenShown() {
+      @Override
+      protected boolean init() {
+        if (myPanel.isVisible()) {
+          IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myFileNameField.getTextField(), true);
+        }
+        return false;
+      }
+    }.install(myPanel);
   }
 
   private void checkName() {

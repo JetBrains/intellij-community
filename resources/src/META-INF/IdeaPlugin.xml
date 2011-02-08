@@ -620,6 +620,14 @@
       <className>com.intellij.codeInspection.concurrencyAnnotations.JCiPOrderEntryFix</className>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
+      <category>Numbers</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
+      <category>Numbers</category>
+    </intentionAction>
 
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>

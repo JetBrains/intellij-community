@@ -16,9 +16,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -27,64 +31,92 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.text.LiteralFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants, ContributedReferenceHost {
+public class PsiLiteralExpressionImpl
+       extends ExpressionPsiElement
+       implements PsiLiteralExpression, PsiLanguageInjectionHost, Constants, ContributedReferenceHost, IntentionProvider {
   @NonNls private static final String QUOT = "&quot;";
-  @NonNls private static final String HEXPREFIX = "0x";
-  @NonNls private static final String HEXPREFIX2 = "0X";
-  @NonNls private static final String LHEX_PREFIX = "0xl";
+  @NonNls private static final String HEX_PREFIX = "0x";
+  @NonNls private static final String HEX_PREFIX2 = "0X";
+  @NonNls private static final String LONG_HEX_EMPTY = "0xl";
+  @NonNls private static final String BIN_PREFIX = "0b";
+  @NonNls private static final String BIN_PREFIX2 = "0B";
+  @NonNls private static final String LONG_BIN_EMPTY = "0bl";
+
+  @NonNls private static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+  @NonNls private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
+  @NonNls private static final String _2_IN_63_L = _2_IN_63 + "l";
+
+  private static final TokenSet INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
+  private static final TokenSet REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
+  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
   public PsiLiteralExpressionImpl() {
     super(LITERAL_EXPRESSION);
   }
 
   public PsiType getType() {
-    IElementType i = getFirstChildNode().getElementType();
-    if (i == INTEGER_LITERAL) {
+    final IElementType type = getFirstChildNode().getElementType();
+    if (type == INTEGER_LITERAL) {
       return PsiType.INT;
     }
-    if (i == LONG_LITERAL) {
+    if (type == LONG_LITERAL) {
       return PsiType.LONG;
     }
-    if (i == FLOAT_LITERAL) {
+    if (type == FLOAT_LITERAL) {
       return PsiType.FLOAT;
     }
-    if (i == DOUBLE_LITERAL) {
+    if (type == DOUBLE_LITERAL) {
       return PsiType.DOUBLE;
     }
-    if (i == CHARACTER_LITERAL) {
+    if (type == CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (i == STRING_LITERAL) {
+    if (type == STRING_LITERAL) {
       return PsiType.getJavaLangString(getManager(), getResolveScope());
     }
-    if (i == TRUE_KEYWORD || i == FALSE_KEYWORD) {
+    if (type == TRUE_KEYWORD || type == FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
     }
-    if (i == NULL_KEYWORD) {
+    if (type == NULL_KEYWORD) {
       return PsiType.NULL;
     }
     return null;
   }
 
-  @NonNls private static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
-  @NonNls private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
-  @NonNls private static final String _2_IN_63_L = _2_IN_63 + "l";
+  public String getCanonicalText() {
+    final TreeElement literal = getFirstChildNode();
+    final IElementType type = literal.getElementType();
+    return NUMERIC_LITERALS.contains(type) ? LiteralFormatUtil.removeUnderscores(literal.getText()) : literal.getText();
+  }
 
   public Object getValue() {
-    String text = getFirstChildNode().getText();
-    int textLength = text.length();
-    IElementType i = getFirstChildNode().getElementType();
-    if (i == INTEGER_LITERAL) {
+    final TreeElement literal = getFirstChildNode();
+    final IElementType type = literal.getElementType();
+    String text = getCanonicalText();
+    final int textLength = text.length();
+
+    if (type == INTEGER_LITERAL) {
       try {
-        if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
+        if (text.startsWith(HEX_PREFIX) || text.startsWith(HEX_PREFIX2)) {
           // should fit in 32 bits
           final long value = parseDigits(text.substring(2), 4, 32);
+          return Integer.valueOf((int)value);
+        }
+        if (text.startsWith(BIN_PREFIX) || text.startsWith(BIN_PREFIX2)) {
+          // should fit in 32 bits
+          final long value = parseDigits(text.substring(2), 1, 32);
           return Integer.valueOf((int)value);
         }
         if (StringUtil.startsWithChar(text, '0')) {
@@ -101,13 +133,16 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
         return null;
       }
     }
-    if (i == LONG_LITERAL) {
+    if (type == LONG_LITERAL) {
       if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
         text = text.substring(0, textLength - 1);
       }
       try {
-        if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
+        if (text.startsWith(HEX_PREFIX) || text.startsWith(HEX_PREFIX2)) {
           return parseDigits(text.substring(2), 4, 64);
+        }
+        if (text.startsWith(BIN_PREFIX) || text.startsWith(BIN_PREFIX2)) {
+          return parseDigits(text.substring(2), 1, 64);
         }
         if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 64 bits
@@ -120,7 +155,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
         return null;
       }
     }
-    if (i == FLOAT_LITERAL) {
+    if (type == FLOAT_LITERAL) {
       try {
         return Float.valueOf(text);
       }
@@ -128,7 +163,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
         return null;
       }
     }
-    if (i == DOUBLE_LITERAL) {
+    if (type == DOUBLE_LITERAL) {
       try {
         return Double.valueOf(text);
       }
@@ -136,7 +171,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
         return null;
       }
     }
-    if (i == CHARACTER_LITERAL) {
+    if (type == CHARACTER_LITERAL) {
       if (StringUtil.endsWithChar(text, '\'')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -150,7 +185,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       if (chars.length() != 1) return null;
       return Character.valueOf(chars.charAt(0));
     }
-    if (i == STRING_LITERAL) {
+    if (type == STRING_LITERAL) {
       if (StringUtil.endsWithChar(text, '\"')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -165,23 +200,21 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       }
       return internedParseStringCharacters(text);
     }
-    if (i == TRUE_KEYWORD) {
+    if (type == TRUE_KEYWORD) {
       return Boolean.TRUE;
     }
-    if (i == FALSE_KEYWORD) {
+    if (type == FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
-    if (i == NULL_KEYWORD) {
-      return null;
-    }
+
     return null;
   }
 
   // convert text to number according to radix specified
-  // if number is more than maxbits bits long, throws NumberFormatException
-  private static long parseDigits(String text, int bitsInRadix, int maxBits) throws NumberFormatException {
+  // if number is more than maxBits bits long, throws NumberFormatException
+  private static long parseDigits(final String text, final int bitsInRadix, final int maxBits) throws NumberFormatException {
     final int radix = 1 << bitsInRadix;
-    int textLength = text.length();
+    final int textLength = text.length();
     if (textLength == 0) {
       throw new NumberFormatException(text);
     }
@@ -189,7 +222,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
     if ((integer & (-1L << (maxBits - bitsInRadix))) != 0) {
       throw new NumberFormatException(text);
     }
-    int lastDigit = Character.digit(text.charAt(textLength - 1), radix);
+    final int lastDigit = Character.digit(text.charAt(textLength - 1), radix);
     if (lastDigit == -1) {
       throw new NumberFormatException(text);
     }
@@ -200,42 +233,68 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
 
   public String getParsingError() {
     final Object value = getValue();
-    TreeElement firstChildNode = getFirstChildNode();
-    String text = firstChildNode.getText();
-    IElementType i = firstChildNode.getElementType();
-    if (i == INTEGER_LITERAL) {
-      text = text.toLowerCase();
+    final TreeElement literal = getFirstChildNode();
+    final IElementType type = literal.getElementType();
+    String text = NUMERIC_LITERALS.contains(type) ? literal.getText().toLowerCase() : literal.getText();
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
+
+    if (REAL_LITERALS.contains(type)) {
+      if (text.startsWith(HEX_PREFIX) && !languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
+        return JavaErrorMessages.message("hex.FP.literals.not.supported");
+      }
+    }
+    if (INTEGER_LITERALS.contains(type)) {
+      if (text.startsWith(BIN_PREFIX) && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+        return JavaErrorMessages.message("binary.literals.not.supported");
+      }
+    }
+    if (NUMERIC_LITERALS.contains(type)) {
+      if (text.contains("_") && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+        return JavaErrorMessages.message("underscores.in.literals.not.supported");
+      }
+    }
+
+    if (type == INTEGER_LITERAL) {
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_31)
             && getParent() instanceof PsiPrefixExpression
             && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == MINUS)) {
-        if (text.equals(HEXPREFIX)) return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+        if (text.equals(HEX_PREFIX)) {
+          return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+        }
+        if (text.equals(BIN_PREFIX)) {
+          return JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
+        }
         if (value == null || text.equals(_2_IN_31)) {
           return JavaErrorMessages.message("integer.number.too.large");
         }
       }
     }
-    else if (i == LONG_LITERAL) {
-      text = text.toLowerCase();
+    else if (type == LONG_LITERAL) {
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_63_L)
             && getParent() instanceof PsiPrefixExpression
             && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == MINUS)) {
-        if (text.equals(HEXPREFIX) || text.equals(LHEX_PREFIX)) return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+        if (text.equals(LONG_HEX_EMPTY)) {
+          return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+        }
+        if (text.equals(LONG_BIN_EMPTY)) {
+          return JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
+        }
         if (value == null || text.equals(_2_IN_63_L)) {
           return JavaErrorMessages.message("long.number.too.large");
         }
       }
     }
-    else if (i == FLOAT_LITERAL || i == DOUBLE_LITERAL) {
+    else if (type == FLOAT_LITERAL || type == DOUBLE_LITERAL) {
       if (value == null) {
         return JavaErrorMessages.message("malformed.floating.point.literal");
       }
     }
-    else if (i == TRUE_KEYWORD || i == FALSE_KEYWORD || i == NULL_KEYWORD) {
-      // TODO
+    else if (type == TRUE_KEYWORD || type == FALSE_KEYWORD || type == NULL_KEYWORD) {
+      return null;
     }
-    else if (i == CHARACTER_LITERAL) {
+    else if (type == CHARACTER_LITERAL) {
       if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) return null;
         if (StringUtil.endsWithChar(text, '\'')) {
@@ -254,7 +313,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
         else if (chars.length() == 0) return JavaErrorMessages.message("empty.character.literal");
       }
     }
-    else if (i == STRING_LITERAL) {
+    else if (type == STRING_LITERAL) {
       if (value == null) {
         for (final PsiElement element : getChildren()) {
           if (element instanceof OuterLanguageElement) {
@@ -281,30 +340,54 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
       if (number.floatValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
     }
-    if (value instanceof Double) {
+    else if (value instanceof Double) {
       final Double number = (Double)value;
       if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
       if (number.doubleValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
     }
+
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<? extends IntentionAction> getIntentions() {
+    final TreeElement literal = getFirstChildNode();
+    final String text = literal.getText().toLowerCase();
+    final IElementType type = literal.getElementType();
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
+
+    if (REAL_LITERALS.contains(type)) {
+      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && text.startsWith(HEX_PREFIX)) {
+        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
+      }
+    }
+    if (NUMERIC_LITERALS.contains(type)) {
+      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && (text.startsWith(BIN_PREFIX) || text.contains("_"))) {
+        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_7));
+      }
+    }
+
+    return Collections.emptyList();
   }
 
   /**
    * @return true if floating point literal consists of zeros only
    */
   private boolean isFPZero() {
-    String text = getFirstChildNode().getText();
+    final String text = getFirstChildNode().getText();
     for(int i = 0; i < text.length(); i++){
-      char c = text.charAt(i);
+      final char c = text.charAt(i);
       if (Character.isDigit(c) && c != '0') return false;
       if (Character.toUpperCase(c) == 'E') break;
     }
     return true;
   }
 
-  private static String internedParseStringCharacters(String chars) {
-    StringBuilder outChars = new StringBuilder(chars.length());
-    boolean success = parseStringCharacters(chars, outChars, null);
+  @Nullable
+  private static String internedParseStringCharacters(final String chars) {
+    final StringBuilder outChars = new StringBuilder(chars.length());
+    final boolean success = parseStringCharacters(chars, outChars, null);
     return success ? outChars.toString() : null;
   }
 
@@ -471,4 +554,3 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
     InjectedLanguageUtil.enumerate(this, visitor);
   }
 }
-

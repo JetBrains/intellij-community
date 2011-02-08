@@ -147,4 +147,9 @@ public class FoldingModelWindow implements FoldingModelEx{
   public boolean removeListener(@NotNull FoldingListener listener) {
     return myDelegate.removeListener(listener);
   }
+
+  @Override
+  public void rebuild() {
+    myDelegate.rebuild();
+  }
 }

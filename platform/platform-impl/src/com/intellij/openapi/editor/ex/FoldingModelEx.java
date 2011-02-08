@@ -49,4 +49,6 @@ public interface FoldingModelEx extends FoldingModel {
   boolean addListener(@NotNull FoldingListener listener);
 
   boolean removeListener(@NotNull FoldingListener listener);
+
+  void rebuild();
 }
