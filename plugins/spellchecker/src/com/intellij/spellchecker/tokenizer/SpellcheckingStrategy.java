@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class SpellcheckingStrategy {
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer();
-  public static final Tokenizer<PsiElement> TOKENIZER = new Tokenizer<PsiElement>() {
+  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new Tokenizer<PsiElement>() {
     @Override
     public Token[] tokenize(@NotNull final PsiElement element) {
       return element.getText() != null ? new Token[]{new Token<PsiElement>(element, element.getText(), false, SplitterFactory
