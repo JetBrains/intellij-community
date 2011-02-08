@@ -532,6 +532,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
       }
 
+      if (allowedToChangedEditorSelection) {
+        FindManager findManager = FindManager.getInstance(myProject);
+        findManager.setFindWasPerformed();
+        findManager.setFindNextModel(model);
+      }
+
       myLivePreviewController.setFindModel(model);
       myLivePreview.update();
     }
