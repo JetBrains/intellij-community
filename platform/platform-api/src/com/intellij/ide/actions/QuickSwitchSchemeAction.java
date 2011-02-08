@@ -36,6 +36,16 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   @NotNull
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 
+  private final boolean myShowPopupWithNoActions;
+
+  protected QuickSwitchSchemeAction() {
+    this(false);
+  }
+
+  protected QuickSwitchSchemeAction(boolean showPopupWithNoActions) {
+    myShowPopupWithNoActions = showPopupWithNoActions;
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
@@ -46,7 +56,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   protected abstract void fillActions(Project project, DefaultActionGroup group, DataContext dataContext);
 
   private void showPopup(AnActionEvent e, DefaultActionGroup group) {
-    if (group.getChildrenCount() == 0) return;
+    if (!myShowPopupWithNoActions && group.getChildrenCount() == 0) return;
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(QuickSwitchSchemeAction.this.getPopupTitle(e),
                               group,
