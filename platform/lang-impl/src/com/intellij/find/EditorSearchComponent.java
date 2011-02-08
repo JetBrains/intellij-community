@@ -23,11 +23,13 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.LivePreview;
+import com.intellij.find.impl.LivePreviewControllerBase;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -38,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,7 +77,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final Project myProject;
   private final Editor myEditor;
   private final JTextField mySearchField;
+  private JTextField myReplaceField;
   private final Color myDefaultBackground;
+
+  private JCheckBox myPreserveCase;
+  private JCheckBox mySelectionOnly;
 
   private final Color GRADIENT_C1;
   private final Color GRADIENT_C2;
@@ -93,6 +98,26 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JCheckBox myCbWholeWords;
   private final JCheckBox myCbInComments;
   private final JCheckBox myCbInLiterals;
+
+  private final LivePreviewControllerBase myLivePreviewController = new LivePreviewControllerBase() {
+    @Override
+    public void getFocusBack() {
+      mySearchField.requestFocus();
+    }
+
+    public void notFound() {
+      setNotFoundBackground();
+    }
+
+    @Override
+    protected void tooManyMatches() {
+      myMatchInfoLabel.setText("More than " + myMatchesLimit + " matches");
+    }
+  };
+  private final LivePreview myLivePreview;
+
+
+  private boolean isReplace = true;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -111,38 +136,19 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     myProject = project;
     myEditor = editor;
 
-    JPanel leadPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
 
-    mySearchField = new JTextField() {
-      protected void paintBorder(final Graphics g) {
-        super.paintBorder(g);
+    if (isReplace) {
+      configureReplacementPane();
+      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
+    }
+    mySearchField = createTextField();
 
-        if (!(UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderQuaquaLookAndFeel()) && isFocusOwner()) {
-          final Rectangle bounds = getBounds();
-          g.setColor(FOCUS_CATCHER_COLOR);
-          g.drawRect(0, 0, bounds.width - 1, bounds.height - 1);
-        }
-      }
-    };
-
-    mySearchField.addFocusListener(new FocusListener() {
-      public void focusGained(final FocusEvent e) {
-        mySearchField.repaint();
-      }
-
-      public void focusLost(final FocusEvent e) {
-        mySearchField.repaint();
-      }
-    });
-
-    mySearchField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     leadPanel.add(mySearchField);
+    mySearchField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
 
     myDefaultBackground = mySearchField.getBackground();
-    mySearchField.setColumns(25);
-
-    setSmallerFont(mySearchField);
 
     DefaultActionGroup group = new DefaultActionGroup("search bar", false);
     group.add(new ShowHistoryAction());
@@ -266,27 +272,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
-    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        myMatchesLimit = 100;
-        updateResults(true);
-      }
-    });
-
-    mySearchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        close();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
-
-    mySearchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (getTextInField().length() == 0) {
-          showHistory(false);
-        }
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
-
+    configureTextField(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if ("".equals(mySearchField.getText())) {
@@ -297,17 +283,112 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           addCurrentTextToRecents();
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
+                                         JComponent.WHEN_FOCUSED);
 
     final String initialText = myEditor.getSelectionModel().getSelectedText();
 
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         setInitialText(initialText);
       }
     });
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
+
+    myLivePreview = new LivePreview(myEditor.getProject());
+    myLivePreview.setDelegate(myLivePreviewController);
+  }
+
+  private void configureReplacementPane() {
+    JPanel replacement = createLeadPane();
+    myReplaceField = createTextField();
+    configureTextField(myReplaceField);
+    replacement.add(myReplaceField);
+    add(replacement, BorderLayout.SOUTH);
+    myPreserveCase = new JCheckBox("Preserve case");
+    mySelectionOnly = new JCheckBox("Selection only");
+    final FindModel findInFileModel = FindManager.getInstance(myProject).getFindInFileModel();
+
+    myPreserveCase.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        final boolean b = myPreserveCase.isSelected();
+        findInFileModel.setPreserveCase(b);
+        updateResults(true);
+      }
+    });
+
+    mySelectionOnly.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        final boolean b = mySelectionOnly.isSelected();
+        findInFileModel.setGlobal(!b);
+        updateResults(true);
+      }
+    });
+
+    mySelectionOnly.setSelected(!findInFileModel.isGlobal());
+    myPreserveCase.setSelected(findInFileModel.isPreserveCase());
+
+    replacement.add(mySelectionOnly);
+    replacement.add(myPreserveCase);
+  }
+
+  private NonOpaquePanel createLeadPane() {
+    return new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+  }
+
+  private JTextField createTextField() {
+    return new JTextField() {
+      protected void paintBorder(final Graphics g) {
+        super.paintBorder(g);
+
+        if (!(UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderQuaquaLookAndFeel()) && isFocusOwner()) {
+          final Rectangle bounds = getBounds();
+          g.setColor(FOCUS_CATCHER_COLOR);
+          g.drawRect(0, 0, bounds.width - 1, bounds.height - 1);
+        }
+      }
+    };
+  }
+
+  private void configureTextField(final JTextField searchField) {
+    searchField.setColumns(25);
+
+    setSmallerFont(searchField);
+
+    searchField.addFocusListener(new FocusListener() {
+      public void focusGained(final FocusEvent e) {
+        searchField.repaint();
+      }
+
+      public void focusLost(final FocusEvent e) {
+        searchField.repaint();
+      }
+    });
+
+    searchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        myMatchesLimit = 100;
+        updateResults(true);
+      }
+    });
+
+    searchField.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        close();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
+
+    searchField.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        if (getTextInField().length() == 0) {
+          showHistory(false);
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
+
   }
 
   public void setInitialText(final String initialText) {
@@ -327,7 +408,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void searchBackward() {
-    if (hasMatches()) {
+    myLivePreview.prevOccurrence();
+    /*if (hasMatches()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
@@ -337,11 +419,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
       FindUtil.searchBack(myProject, myEditor, null);
       addCurrentTextToRecents();
-    }
+    }*/
   }
 
   private void searchForward() {
-    if (hasMatches()) {
+    myLivePreview.nextOccurrence();
+    /*if (hasMatches()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
@@ -351,7 +434,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
       FindUtil.searchAgain(myProject, myEditor, null);
       addCurrentTextToRecents();
-    }
+    }*/
   }
 
   private void addCurrentTextToRecents() {
@@ -409,6 +492,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myEditor.getDocument().removeDocumentListener(myDocumentListener);
       myDocumentListener = null;
     }
+    myLivePreview.cleanUp();
   }
 
   private void updateResults(boolean allowedToChangedEditorSelection) {
@@ -420,6 +504,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myMatchInfoLabel.setText("");
       myClickToHighlightLabel.setVisible(false);
       myOkToSearch = false;
+      myLivePreview.cleanUp();
     }
     else {
       myOkToSearch = true;
@@ -428,7 +513,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       model.setCaseSensitive(isCaseSensitive());
       model.setInCommentsOnly(isInComments());
       model.setInStringLiteralsOnly(isInLiterals());
-
+      setRegularBackground();
       if (isRegexp()) {
         model.setWholeWordsOnly(false);
         model.setRegularExpressions(true);
@@ -438,9 +523,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         catch (Exception e) {
           myOkToSearch = false;
           setNotFoundBackground();
-          myClickToHighlightLabel.setVisible(false);
           myMatchInfoLabel.setText("Incorrect regular expression");
           boldMatchInfo();
+          myClickToHighlightLabel.setVisible(false);
           return;
         }
       }
@@ -452,11 +537,22 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       model.setFromCursor(false);
       model.setStringToFind(text);
       model.setSearchHighlighters(true);
+
+      if (isReplace) {
+        model.setReplaceState(true);
+        model.setStringToReplace(myReplaceField.getText());
+        model.setPromptOnReplace(false);
+      }
+
       int offset = 0;
       VirtualFile virtualFile = FindUtil.getVirtualFile(myEditor);
       ArrayList<FindResult> results = new ArrayList<FindResult>();
 
-      CharSequence charsSequence = myEditor.getDocument().getCharsSequence();
+
+      //      CharSequence charsSequence = myEditor.getDocument().getCharsSequence();
+
+      /*
+
       while (true) {
         FindResult result = findManager.findString(charsSequence, offset, model, virtualFile);
         if (!result.isStringFound()) break;
@@ -512,8 +608,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       if (allowedToChangedEditorSelection) {
         findManager.setFindWasPerformed();
         findManager.setFindNextModel(model);
-      }
+      }*/
+
+      myLivePreviewController.setFindModel(model);
+      myLivePreview.update();
     }
+
+
   }
 
   private void boldMatchInfo() {
@@ -614,9 +715,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
                            ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
 
-      registerCustomShortcutSet(
-        new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
-        mySearchField);
+      registerShortcutsForComponent(shortcuts, mySearchField, this);
+      if (isReplace) {
+        registerShortcutsForComponent(shortcuts, myReplaceField, this);
+      }
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -629,7 +731,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   public boolean hasMatches() {
-    return myOkToSearch && myHasMatches;
+    return myLivePreview != null && myLivePreview.hasMatches();
+    //return myOkToSearch && myHasMatches;
+  }
+
+  private static void registerShortcutsForComponent(ArrayList<Shortcut> shortcuts, JComponent component, AnAction a) {
+    a.registerCustomShortcutSet(
+      new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
+      component);
   }
 
   private class NextOccurrenceAction extends AnAction implements DumbAware {
@@ -641,9 +750,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).getShortcutSet().getShortcuts());
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
 
-      registerCustomShortcutSet(
-        new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
-        mySearchField);
+      registerShortcutsForComponent(shortcuts, mySearchField, this);
+      if (isReplace) {
+        registerShortcutsForComponent(shortcuts, myReplaceField, this);
+      }
     }
 
     public void actionPerformed(final AnActionEvent e) {

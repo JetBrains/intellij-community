@@ -46,18 +46,60 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LivePreview extends DocumentAdapter {
+public class LivePreview extends DocumentAdapter implements ReplacementView.Delegate {
 
   private final Collection<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
   private RangeHighlighter myCursorHighlighter;
   private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
   private boolean myShouldStop;
+
+  @Override
+  public void performReplacement(LiveOccurrence occurrence, String replacement) {
+    if (myDelegate != null) {
+      final TextRange textRange = myDelegate.performReplace(occurrence, replacement, myEditor);
+      if (textRange != null) {
+        updateInBackground();
+        setContinuation(new Runnable() {
+          @Override
+          public void run() {
+            if (mySearchResults != null) {
+              LiveOccurrence nearest = null;
+              int minDist = Integer.MAX_VALUE;
+              for (LiveOccurrence o : mySearchResults) {
+                if (nearest == null) {
+                  nearest = o;
+                }
+                int dist = Math.abs(o.getPrimaryRange().getStartOffset() - textRange.getStartOffset());
+                if (dist < minDist) {
+                  minDist = dist;
+                  nearest = o;
+                }
+              }
+              if (nearest != null) {
+                moveCursorTo(nearest);
+              }
+            }
+          }
+        });
+        myDelegate.getFocusBack();
+      }
+    }
+
+  }
+
+  @Override
+  public void performReplaceAll() {
+    myDelegate.performReplaceAll(myEditor);
+  }
+
+  public boolean hasMatches() {
+    return mySearchResults != null && !mySearchResults.isEmpty();
+  }
 
   public interface Delegate {
     @NotNull
@@ -65,6 +107,12 @@ public class LivePreview extends DocumentAdapter {
 
     @Nullable
     String getReplacementPreviewText(Editor editor, LiveOccurrence liveOccurrence);
+
+    TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor);
+
+    void performReplaceAll(Editor e);
+
+    void getFocusBack();
   }
 
   private static final int USER_ACTIVITY_TRIGGERING_DELAY = 300;
@@ -80,6 +128,21 @@ public class LivePreview extends DocumentAdapter {
   private Delegate myDelegate;
 
   private LiveOccurrence myCursor;
+
+  private Runnable myContinuation;
+
+  public Runnable getContinuation() {
+    return myContinuation;
+  }
+
+  public void setContinuation(Runnable continuation) {
+    myContinuation = continuation;
+  }
+
+  public List<LiveOccurrence> getSearchResults() {
+    return mySearchResults;
+  }
+
   private List<LiveOccurrence> mySearchResults;
 
   private Balloon myReplacementBalloon;
@@ -203,6 +266,10 @@ public class LivePreview extends DocumentAdapter {
         public void run() {
           doInternalCleanUp();
           highlightUsages(oldCursorRange);
+          if (myContinuation != null) {
+            myContinuation.run();
+            myContinuation = null;
+          }
         }
       });
     }
@@ -368,10 +435,13 @@ public class LivePreview extends DocumentAdapter {
       String replacementPreviewText = myDelegate.getReplacementPreviewText(myEditor, myCursor);
       if (replacementPreviewText != null) {
 
-        JLabel balloonContent = new JLabel(replacementPreviewText);
-        balloonContent.setForeground(Color.WHITE);
+        //JLabel balloonContent = new JLabel(replacementPreviewText);
+        //balloonContent.setForeground(Color.WHITE);
 
-        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(balloonContent);
+        ReplacementView replacementView = new ReplacementView(replacementPreviewText, myCursor);
+        replacementView.setDelegate(this);
+
+        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
         balloonBuilder.setFadeoutTime(0);
         balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
         balloonBuilder.setAnimationCycle(0);

@@ -40,6 +40,7 @@ public class IncrementalFindAction extends EditorAction {
         else {
           final EditorSearchComponent header = new EditorSearchComponent(editor, project);
           editor.setHeaderComponent(header);
+
           header.requestFocus();
         }
       }
