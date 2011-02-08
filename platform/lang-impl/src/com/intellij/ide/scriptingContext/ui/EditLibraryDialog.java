@@ -44,10 +44,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 public class EditLibraryDialog extends DialogWrapper {
 
@@ -166,9 +163,9 @@ public class EditLibraryDialog extends DialogWrapper {
     this(title, provider, project);
     myLibName.setText(lib.getName());
     myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
-    String[] docUrls = lib.getDocUrls(); 
+    Set<String> docUrls = lib.getDocUrls(); 
     myDocUrlListModel.setDocUrls(docUrls);
-    if (docUrls.length > 0) {
+    if (docUrls.size() > 0) {
       myRemoveDocUrlButton.setEnabled(true);
     }
     checkDownloadOfflineDocEnabled();
@@ -469,9 +466,9 @@ public class EditLibraryDialog extends DialogWrapper {
     
     private ArrayList<String> myDocUrls = new ArrayList<String>();
     
-    public void setDocUrls(String[] urls) {
-      if (urls != null && urls.length > 0) {
-        myDocUrls.addAll(Arrays.asList(urls));
+    public void setDocUrls(Set<String> urls) {
+      if (urls != null && urls.size() > 0) {
+        myDocUrls.addAll(urls);
       }
     }
 
