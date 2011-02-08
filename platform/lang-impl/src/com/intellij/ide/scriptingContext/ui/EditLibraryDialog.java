@@ -142,7 +142,6 @@ public class EditLibraryDialog extends DialogWrapper {
         downloadDocumentation();
       }
     });
-    myDownloadButton.setVisible(false); //TODO<rv> Remove
     
     myRemoveDocUrlButton.addActionListener(new ActionListener() {
       @Override
