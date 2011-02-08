@@ -54,6 +54,7 @@ public class VcsEP extends AbstractExtensionPointBean {
         for (Class<?> anInterface : interfaces) {
           if (BaseComponent.class.isAssignableFrom(anInterface)) {
             myVcs = PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
+            myVcs = VcsActiveEnvironmentsProxy.proxyVcs(myVcs);
             return myVcs;
           }
         }
