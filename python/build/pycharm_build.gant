@@ -23,7 +23,7 @@ setProperty("pluginFilter", [
             "JSInspections",
             "JSIntentionPowerPack",
             "SpellChecker", "spellchecker",
-            "sass", "less",
+            "less", "sass", "haml",
             "hg4idea",
             "tasks", "tasks-core", "tasks-api", "jira-connector",
             "github",
