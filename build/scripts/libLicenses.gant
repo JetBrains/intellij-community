@@ -73,7 +73,7 @@ binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
 })
 
 binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> usedModules = project.modules.values()//.findAll {it["used"] != null}
+  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
