@@ -13,10 +13,16 @@ input and output, especially in builtin functions.
 This code has to work with CPython versions from 2.2 to 3.0+, and hopefully with
 compatible versions of Jython and IronPython.
 
-NOTE: Currently python 3 support is outright BROKEN, because bare asterisks and param decorators
-are not parsed. This is deliberate in current version, since the rest of PyCharm does not support
-all this too.
+NOTE: Currently python 3 support is incomplete, because bare asterisks are not parsed,
+but seemingly no one uses them in C extensions yet anyway.
 """
+
+# Note on performance:
+# Three major modes are detected on real modules.
+# * Import-bound, on things like numpy; up to 50% of time in __import__.
+# * pyparsing-bound, in likes of builtins PyQt4.Qt; > 60% in parseString(); very simple signatures.
+# * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
+# None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
 from datetime import datetime
 
@@ -384,9 +390,20 @@ paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Op
 
 _is_verbose = False # controlled by -v
 def note(msg, *data):
+    "Say something at debug info level (stderr)"
     if _is_verbose:
         sys.stderr.write(msg % data)
         sys.stderr.write("\n")
+
+def report(msg, *data):
+    "Say something at error level (stderr)"
+    sys.stderr.write(msg % data)
+    sys.stderr.write("\n")
+
+def say(msg, *data):
+    "Say something at info level (stdout)"
+    sys.stdout.write(msg % data)
+    sys.stdout.write("\n")
 
 _current_action = "nothing yet"
 def action(msg, *data):
@@ -790,6 +807,7 @@ class ModuleRedeclarator(object):
         ("time", None, "ctime"): ("(seconds=None)", DEFAULT_STR_LIT),
 
         ("_collections", "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
+        ("_collections", "defaultdict", "__init__"): ("(self, default_factory=None, **kwargs)", None), # doc string incomplete
 
         ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
         ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
@@ -836,6 +854,9 @@ class ModuleRedeclarator(object):
         ("numpy.core.multiarray", None, "arange") : ("(start=None, stop=None, step=None, dtype=None)", None), # same as range()
         ("numpy.core.multiarray", None, "set_numeric_ops") : ("(**ops)", None),
     }
+
+    if version[0] < 3:
+       PREDEFINED_MOD_CLASS_SIGS[("PyQt4.QtCore", None, "pyqtSlot")] = ("(*types, **keywords)", None) # doc assumes py3k syntax
 
     # known properties of modules
     # {{"module": {"class", "property" : ("letters", "getter")}},
@@ -1308,7 +1329,7 @@ class ModuleRedeclarator(object):
 
         # find the first thing to look like a definition
         prefix_re = re.compile("\s*(?:(\w+)[ \\t]+)?" + func_id + "\s*\(") # "foo(..." or "int foo(..."
-        match = prefix_re.search(func_doc) # TODO: this and previous line are perf hogs, up to 35% of time
+        match = prefix_re.search(func_doc) # Note: this and previous line may consume up to 35% of time
         # parse the part that looks right
         if match:
             ret_hint = match.group(1)
@@ -1727,7 +1748,7 @@ class ModuleRedeclarator(object):
                                 break
                         imported_path = (getattr(imported, '__file__', False) or "").lower()
                         note("path of %r is %r", mod_name, imported_path)
-                        want_to_import = not (imported_path.endswith(".py") or imported_path.endswith(".pyc"))
+                        want_to_import = not hasRegularPythonExt(imported_path)
                 except ImportError:
                     want_to_import = False
                 # NOTE: if we fail to import, we define 'imported' names here lest we lose them at all
@@ -1888,7 +1909,9 @@ class ModuleRedeclarator(object):
             self.imports_buf.out(0, "") # empty line after group
 
 
-
+def hasRegularPythonExt(name):
+    "Does name end with .py or .pyc?"
+    return name.endswith(".py") or name.endswith(".pyc")
 
 def buildOutputName(subdir, name):
     global action
@@ -1908,7 +1931,7 @@ def buildOutputName(subdir, name):
             init = fopen(init_py, "w")
             init.close()
     target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
-    #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
+    #note("target dir is %r", target_dir)
     target_name = target_dir + os.path.sep + quals[-1]
     if os.path.isdir(target_name):
         fname = os.path.join(target_name, "__init__.py")
@@ -1985,7 +2008,7 @@ if __name__ == "__main__":
         print(helptext)
         sys.exit(0)
     if '-b' not in opts and not fnames:
-        sys.stderr.write("Neither -b nor any module name given\n")
+        report("Neither -b nor any module name given")
         sys.exit(1)
     quiet = '-q' in opts
     update_mode = "-u" in opts
@@ -2018,11 +2041,11 @@ if __name__ == "__main__":
 
     # go on
     for name in names:
-        if name.endswith(".py"):
-          sys.stderr.write("Ignored a regular Python file " + name + "\n")
+        if hasRegularPythonExt(name):
+          report("Ignored a regular Python file %r", name)
           continue
         if not quiet:
-            sys.stdout.write(name + "\n")
+            say(name)
             sys.stdout.flush()
         action("doing nothing")
         try:
@@ -2047,7 +2070,7 @@ if __name__ == "__main__":
             try:
                 __import__(name) # sys.modules will fill up with what we want
             except ImportError:
-                sys.stderr.write("Name " + name + " failed to import\n")
+                report("Name %r failed to import", name)
                 continue
 
             if my_finder:
@@ -2069,7 +2092,7 @@ if __name__ == "__main__":
                         fname = buildOutputName(subdir, m)
                         redoModule(m, fname, imported_module_names)
         except:
-            sys.stderr.write("Failed to process " + name + " while " + _current_action + "\n")
+            report("Failed to process %r while %s", name, _current_action)
             if debug_mode:
                 raise
             else:
