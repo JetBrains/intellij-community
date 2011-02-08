@@ -21,7 +21,6 @@ looks-2.2.2.jar
 jcip-annotations.jar
 jh.jar
 JNIWrap.jar
-jsf-api.jar
 jsp-api.jar
 junit.jar
 junit-4.8.jar
