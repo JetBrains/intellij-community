@@ -30,7 +30,7 @@ public class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
           type == YAMLTokenTypes.SCALAR_STRING ||
           type == YAMLTokenTypes.SCALAR_DSTRING ||
           type == YAMLTokenTypes.COMMENT) {
-        return SpellcheckingStrategy.TOKENIZER;
+        return TEXT_TOKENIZER;
       }
     }
     return super.getTokenizer(element);
