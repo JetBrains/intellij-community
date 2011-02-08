@@ -238,7 +238,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
-      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true, true);
+      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
       resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
