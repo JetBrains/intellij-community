@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,9 +61,18 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     return result;
   }
 
-  public PsiElement findTargetElement(Editor editor, PsiFile file) {
+  @Nullable
+  public static PsiElement findTargetElement(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    return file.findElementAt(offset);
+    PsiElement endElement = file.findElementAt(offset);
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasSelection() && selectionModel.getSelectionStart() < offset) {
+      PsiElement startElement = file.findElementAt(selectionModel.getSelectionStart());
+      if (startElement != null && startElement != endElement && startElement.getTextRange().getEndOffset() == offset) {
+        return startElement;
+      }
+    }
+    return endElement;
   }
 
   public boolean showOptionsDialog() {
