@@ -17,15 +17,19 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
-public class EditConfigurationsDialog extends SingleConfigurableEditor {
+public class EditConfigurationsDialog extends SingleConfigurableEditor implements RunConfigurable.RunDialogBase {
   private Configurable mySelectedConfigurable;
+  protected Executor myExecutor;
 
   public EditConfigurationsDialog(final Project project) {
     super(project, new RunConfigurable(project));
+    ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
   }
 
@@ -43,5 +47,15 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
 
   protected String getDimensionServiceKey() {
     return "#com.intellij.execution.impl.EditConfigurationsDialog";
+  }
+
+  @Nullable
+  @Override
+  public Executor getExecutor() {
+    return myExecutor;
+  }
+
+  public void setOKActionEnabled(boolean isEnabled) {
+    super.setOKActionEnabled(isEnabled);
   }
 }
