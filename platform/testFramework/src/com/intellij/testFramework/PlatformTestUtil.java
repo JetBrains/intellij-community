@@ -351,27 +351,28 @@ public class PlatformTestUtil {
     action.actionPerformed(event);
   }
 
-  public static void assertTiming(String message, long expected, long actual) {
+  public static void assertTiming(final String message, final long expected, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
-    long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
+
+    final long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
-    // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
-    // just perform better than acceptable expected
-    int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
-    String logMessage = message + "." +
-                         " Operation took " + percentage + "% longer than expected." +
-                         " Expected on my machine: " + expectedOnMyMachine + "." +
-                         " Actual: " + actual + "." +
-                         " Expected on Etalon machine: " + expected + ";" +
-                         " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING;
+    final int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+    String logMessage = message + ".";
+    if (actual > expectedOnMyMachine) {
+      logMessage += " Operation took " + percentage + "% longer than expected.";
+    }
+    logMessage += " Expected on my machine: " + expectedOnMyMachine + "." +
+                  " Actual: " + actual + "." +
+                  " Expected on Etalon machine: " + expected + ";" +
+                  " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
+                  " Timings: CPU=" + Timings.CPU_TIMING + ", I/O=" + Timings.IO_TIMING + ".";
 
     if (actual < expectedOnMyMachine) {
       TeamCityLogger.info(logMessage);
     }
-    else if (actual > expectedOnMyMachine * acceptableChangeFactor &&
-        (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
+    else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
       TeamCityLogger.warning(logMessage);
     }
     else {

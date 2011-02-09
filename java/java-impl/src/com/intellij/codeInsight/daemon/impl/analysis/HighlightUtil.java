@@ -29,6 +29,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.IntentionProvider;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.StdLanguages;
@@ -813,10 +814,14 @@ public class HighlightUtil {
 
 
   @Nullable
-  static HighlightInfo checkLiteralExpressionParsingError(PsiLiteralExpression expression) {
-    String error = expression.getParsingError();
+  static HighlightInfo checkLiteralExpressionParsingError(final PsiLiteralExpression expression) {
+    final String error = expression.getParsingError();
     if (error != null) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, error);
+      final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, error);
+      if (expression instanceof IntentionProvider) {
+        QuickFixAction.registerQuickFixActions(info, ((IntentionProvider)expression).getIntentions());
+      }
+      return info;
     }
     return null;
   }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.jdk;
+package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -56,18 +56,21 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
     private static final int KEEP_DECLARATION = 2;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "enumeration.can.be.iteration.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "enumeration.can.be.iteration.problem.descriptor", infos[0]);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new EnumerationCanBeIterationFix();
@@ -82,6 +85,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     "enumeration.can.be.iteration.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -137,12 +141,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (newStatement == null) {
                 return;
             }
-            if (parent == variable) {
+            if (parent.equals(variable)) {
                 if (result == KEEP_NOTHING) {
-                    System.out.println("KEEP_NOTHING");
                     statement.replace(newStatement);
                 } else {
-                    insertNewStament(statement, newStatement);
+                    insertNewStatement(statement, newStatement);
                     if (result != KEEP_INITIALIZATION) {
                         final PsiExpression initializer =
                                 variable.getInitializer();
@@ -155,13 +158,13 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 if (result == KEEP_NOTHING || result == KEEP_DECLARATION) {
                     statement.replace(newStatement);
                 } else {
-                    insertNewStament(statement, newStatement);
+                    insertNewStatement(statement, newStatement);
                 }
             }
         }
 
-        private static void insertNewStament(PsiStatement anchor,
-                                             PsiStatement newStatement)
+        private static void insertNewStatement(PsiStatement anchor,
+                                               PsiStatement newStatement)
                 throws IncorrectOperationException {
             final PsiElement statementParent = anchor.getParent();
             if (statementParent instanceof PsiForStatement) {

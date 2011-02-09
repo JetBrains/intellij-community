@@ -73,7 +73,7 @@ binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
 })
 
 binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> usedModules = project.modules.values()//.findAll {it["used"] != null}
+  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
@@ -100,12 +100,18 @@ binding.setVariable("generateLicensesTable", {String filePath ->
   //}
 
   lines.sort(String.CASE_INSENSITIVE_ORDER)
-  FileWriter out = new FileWriter(filePath)
-  out.println("|| Software || Version || License ||")
-  lines.each {
-    out.println(it)
+  File file = new File(filePath)
+  file.parentFile.mkdirs()
+  FileWriter out = new FileWriter(file)
+  try {
+    out.println("|| Software || Version || License ||")
+    lines.each {
+      out.println(it)
+    }
   }
-  out.close()
+  finally {
+    out.close()
+  }
 })
 
 libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)", url: "http://www.incors.com/lookandfeel/", licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase")

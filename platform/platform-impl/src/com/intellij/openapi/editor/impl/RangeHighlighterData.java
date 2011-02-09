@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
@@ -207,17 +208,19 @@ abstract class RangeHighlighterData {
   public int getAffectedAreaStartOffset() {
     int startOffset = getRangeHighlighter().getStartOffset();
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return startOffset;
-    int textLength = myModel.getDocument().getTextLength();
+    Document document = myModel.getDocument();
+    int textLength = document.getTextLength();
     if (startOffset >= textLength) return textLength;
-    return myModel.getDocument().getLineStartOffset(myModel.getDocument().getLineNumber(startOffset));
+    return document.getLineStartOffset(document.getLineNumber(startOffset));
   }
 
   public int getAffectedAreaEndOffset() {
     int endOffset = getRangeHighlighter().getEndOffset();
     if (getTargetArea() == HighlighterTargetArea.EXACT_RANGE) return endOffset;
-    int textLength = myModel.getDocument().getTextLength();
+    Document document = myModel.getDocument();
+    int textLength = document.getTextLength();
     if (endOffset == textLength) return endOffset;
-    return Math.min(textLength, myModel.getDocument().getLineEndOffset(myModel.getDocument().getLineNumber(endOffset)) + 1);
+    return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
   }
 
   public void registerMe(int start, int end) {

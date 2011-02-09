@@ -127,10 +127,17 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings({"TestMethodWithIncorrectSignature"})
+@SuppressWarnings({"TestMethodWithIncorrectSignature", "JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention"})
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
 
   @NonNls private static final String PROFILE = "Configurable";
+
+  private static final Function<IntentionAction,String> INTENTION_NAME_FUN = new Function<IntentionAction, String>() {
+    @Override
+    public String fun(final IntentionAction intentionAction) {
+      return "\"" + intentionAction.getText() + "\"";
+    }
+  };
 
   private PsiManagerImpl myPsiManager;
   private PsiFile myFile;
@@ -175,7 +182,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
-//      assert fromFile.exists(): "cannot find " + getTestDataPath() + "/" + sourceFilePath;
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -183,14 +189,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
-      assert fromVFile != null : "can't find testdata file " + sourceFilePath;
+      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + getTestDataPath() + ")";
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
+
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
     if (!destFile.exists()) {
-
       if (fromFile.isDirectory()) {
-        destFile.mkdirs();
+        assert destFile.mkdirs() : destFile;
       }
       else {
         try {
@@ -201,8 +207,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }
+
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    Assert.assertNotNull(file);
+    assert file != null : destFile;
     return file;
   }
 
@@ -480,13 +487,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public IntentionAction findSingleIntention(@NotNull final String hint) {
     final List<IntentionAction> list = filterAvailableIntentions(hint);
-    if (list.size() != 1) {
-      Assert.fail(StringUtil.join(getAvailableIntentions(), new Function<IntentionAction, String>() {
-        @Override
-        public String fun(final IntentionAction intentionAction) {
-          return intentionAction.getText();
-        }
-      }, ", "));
+    if (list.size() == 0) {
+      Assert.fail("\"" + hint + "\" not in [" + StringUtil.join(getAvailableIntentions(), INTENTION_NAME_FUN, ", ") + "]");
+    }
+    else if (list.size() > 1) {
+      Assert.fail("Too many intention found for \"" + hint + "\": [" + StringUtil.join(list, INTENTION_NAME_FUN, ", ") + "]");
     }
     return UsefulTestCase.assertOneElement(list);
   }

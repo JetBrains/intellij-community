@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection;
+
+import org.jetbrains.annotations.Nullable;
 
 /*
  * User: anna
  * Date: 30-Nov-2006
  */
-package com.intellij.codeInspection;
-
 public interface LocalQuickFixProvider {
+  @Nullable
   LocalQuickFix[] getQuickFixes();
 }

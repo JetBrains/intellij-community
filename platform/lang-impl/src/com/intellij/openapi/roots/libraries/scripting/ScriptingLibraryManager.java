@@ -29,6 +29,8 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -259,7 +261,7 @@ public class ScriptingLibraryManager {
     return myLibTable.isLibraryFile(file);
   }
   
-  public String[] getDocUrlsFor(VirtualFile file) {
+  public Set<String> getDocUrlsFor(VirtualFile file) {
     ensureModel();
     assert myLibTable != null;
     return myLibTable.getDocUrlsFor(file);

@@ -194,10 +194,10 @@ public class SvnConfigurable implements Configurable {
         return true;
       }
     }
-    if (configuration.mySSHConnectionTimeout != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.mySSHConnectionTimeout/1000 != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
-    if (configuration.mySSHReadTimeout != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.mySSHReadTimeout/1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());

@@ -33,6 +33,7 @@ import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorEx {
@@ -356,7 +357,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   private void delegate(IndicatorAction action) {
-    CopyOnWriteArrayList<ProgressIndicatorEx> list = myStateDelegates;
+    List<ProgressIndicatorEx> list = myStateDelegates;
     if (list != null && !list.isEmpty()) {
       for (ProgressIndicatorEx each : list) {
         action.execute(each);

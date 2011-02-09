@@ -24,11 +24,19 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer();
+  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new Tokenizer<PsiElement>() {
+    @Override
+    public Token[] tokenize(@NotNull final PsiElement element) {
+      return element.getText() != null ? new Token[]{new Token<PsiElement>(element, element.getText(), false, SplitterFactory
+        .getInstance().getPlainTextSplitter())} : null;
+    }
+  };
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
@@ -41,7 +49,7 @@ public class SpellcheckingStrategy {
   }
 
   @NotNull
-  public Language getLanguage(){
+  public Language getLanguage() {
     return PlainTextLanguage.INSTANCE;
   }
 }

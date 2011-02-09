@@ -15,65 +15,36 @@
  */
 package com.siyeh.ipp.integer;
 
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.base.Intention;
+import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertIntegerToDecimalIntention extends Intention {
+public class ConvertIntegerToDecimalIntention extends ConvertNumberIntentionBase {
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ConvertIntegerToDecimalPredicate();
+  }
 
-    @Override @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ConvertIntegerToDecimalPredicate();
+  @Override
+  protected String convertValue(final Number value, final PsiType type, final boolean negated) {
+    if (PsiType.INT.equals(type)) {
+      final int intValue = negated ? -value.intValue() : value.intValue();
+      return Integer.toString(intValue);
+    }
+    else if (PsiType.LONG.equals(type)) {
+      final long longValue = negated ? -value.longValue() : value.longValue();
+      return Long.toString(longValue) + "L";
+    }
+    else if (PsiType.FLOAT.equals(type)) {
+      final float floatValue = negated ? -value.floatValue() : value.floatValue();
+      return Float.toString(floatValue) + 'f';
+    }
+    else if (PsiType.DOUBLE.equals(type)) {
+      final double doubleValue = negated ? -value.doubleValue() : value.doubleValue();
+      return Double.toString(doubleValue);
     }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiExpression expression = (PsiExpression)element;
-        final boolean negated = ExpressionUtils.isNegated(expression);
-        final Number value =
-                (Number)ExpressionUtils.computeConstantExpression(expression);
-        if (value == null) {
-            return;
-        }
-        final PsiType type = expression.getType();
-        final String decimalString;
-        if (PsiType.INT.equals(type)) {
-            if (negated) {
-                decimalString = String.valueOf(-value.intValue());
-            } else {
-                decimalString = String.valueOf(value.intValue());
-            }
-        } else if (PsiType.LONG.equals(type)) {
-            if (negated) {
-                decimalString = String.valueOf(-value.longValue()) + 'L';
-            } else {
-                decimalString = String.valueOf(value.longValue()) + 'L';
-            }
-        } else if (PsiType.FLOAT.equals(type)) {
-            if (negated) {
-                decimalString = String.valueOf(-value.floatValue()) + 'f';
-            } else {
-                decimalString = String.valueOf(value.floatValue()) + 'f';
-            }
-        }
-        else if (PsiType.DOUBLE.equals(type)) {
-            if (negated) {
-                decimalString = String.valueOf(-value.doubleValue());
-            } else {
-                decimalString = String.valueOf(value.doubleValue());
-            }
-        } else {
-            return;
-        }
-        if (negated) {
-            replaceExpression(decimalString,
-                    (PsiExpression)expression.getParent());
-        } else {
-            replaceExpression(decimalString, expression);
-        }
-    }
+    return null;
+  }
 }

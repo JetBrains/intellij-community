@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,8 +108,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         if (project != null && project.isDisposed()) return;
         Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
         Charset oldCached = getCachedCharsetFromContent(document);
-        document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-        ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+        if (!Comparing.equal(charset, oldCached)) {
+          document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+          firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+        }
       }
     });
   }

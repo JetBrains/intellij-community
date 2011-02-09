@@ -62,7 +62,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   private final Module myModule;
   @NonNls private static final String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
-  private Map<String, Integer> mySrcPlace = new HashMap<String, Integer>();
+  private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
 
   public EclipseModuleManager(Module module) {
     myModule = module;

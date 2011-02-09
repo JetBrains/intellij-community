@@ -18,11 +18,13 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
 class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
+  @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     return LightGroovyTestCase.GROOVY_DESCRIPTOR
   }

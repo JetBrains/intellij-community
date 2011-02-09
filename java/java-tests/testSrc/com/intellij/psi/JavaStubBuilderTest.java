@@ -300,15 +300,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     final char[] source = FileUtil.loadFileText(new File(path));
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", new String(source));
 
-    final long[] t = new long[]{0};
-    IdeaTestUtil.assertTiming("should work fast", 2000, new Runnable() {
+    IdeaTestUtil.assertTiming("Source file size: " + source.length, 2000, new Runnable() {
       public void run() {
-        t[0] = System.currentTimeMillis();
         NEW_BUILDER.buildStubTree(file);
-        t[0] = System.currentTimeMillis() - t[0];
       }
     });
-    System.out.println("size=" + source.length + " time=" + t[0] + "ms");
   }
 
   private static void doTest(final String source, final String tree) {

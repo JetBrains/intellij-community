@@ -44,13 +44,19 @@ import java.util.Set;
 public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements ApplicationComponent, PersistentStateComponent<Element> {
 
+  @NonNls private boolean isAllowed = false;
+  @NonNls private boolean isShowNotification = true;
+
+  @NonNls private static final String DATA_ATTR = "data";
   @NonNls private static final String GROUP_TAG = "group";
   @NonNls private static final String GROUP_ID_ATTR = "id";
   @NonNls private static final String GROUP_PRIORITY_ATTR = "priority";
-  @NonNls private static final String DATA_ATTR = "data";
 
+  @NonNls private static final String LAST_TIME_ATTR = "time";
+  @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
+  @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
 
-  public static SentUsagesPersistence getInstance() {
+  public static SentUsagesPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(SentUsagesPersistenceComponent.class);
   }
 
@@ -69,12 +75,19 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
         getSentUsages().addAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
       }
     }
-  }
 
-  private static double getPriority(String priority) {
-    if (StringUtil.isEmptyOrSpaces(priority)) return GroupDescriptor.DEFAULT_PRIORITY;
+    try {
+      setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR)));
+    }
+    catch (NumberFormatException e) {
+      setSentTime(0);
+    }
 
-    return Double.parseDouble(priority);
+    final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
+    setAllowed(StringUtil.isEmptyOrSpaces(isAllowedValue) ? false : Boolean.parseBoolean(isAllowedValue));
+
+    final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
+    setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) ? true : Boolean.parseBoolean(isShowNotificationValue));
   }
 
   public Element getState() {
@@ -90,7 +103,35 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
       element.addContent(projectElement);
     }
 
+    element.setAttribute(LAST_TIME_ATTR, String.valueOf(getLastTimeSent()));
+    element.setAttribute(IS_ALLOWED_ATTR, String.valueOf(isAllowed()));
+    element.setAttribute(SHOW_NOTIFICATION_ATTR, String.valueOf(isShowNotification()));
+
     return element;
+  }
+
+  public void setAllowed(boolean allowed) {
+    isAllowed = allowed;
+  }
+
+  @Override
+  public boolean isAllowed() {
+    return isAllowed;
+  }
+
+  public void setShowNotification(boolean showNotification) {
+    isShowNotification = showNotification;
+  }
+
+  @Override
+  public boolean isShowNotification() {
+    return isShowNotification;
+  }
+
+  private static double getPriority(String priority) {
+    if (StringUtil.isEmptyOrSpaces(priority)) return GroupDescriptor.DEFAULT_PRIORITY;
+
+    return Double.parseDouble(priority);
   }
 
   @NonNls

@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 11, 2002
- * Time: 5:18:36 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.testFramework;
 
 import com.intellij.ExtensionPoints;
@@ -57,6 +48,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+/*
+ * User: max
+ * Date: Apr 11, 2002
+ * Time: 5:18:36 PM
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");

@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+* Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ import com.siyeh.ig.j2me.*;
 import com.siyeh.ig.javabeans.ClassWithoutConstructorInspection;
 import com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection;
 import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
+import com.siyeh.ig.javadoc.UnnecessaryInheritDocInspection;
+import com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection;
 import com.siyeh.ig.jdk.*;
 import com.siyeh.ig.jdk15.*;
 import com.siyeh.ig.junit.*;
@@ -292,6 +294,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerInternationalInspections();
             registerJ2MEInspections();
             registerJavaBeansInspections();
+            registerJavadocInspections();
             registerJdk5SpecificInspections();
             registerJdkInspections();
             registerJUnitInspections();
@@ -687,6 +690,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
     }
 
+    public void registerJavadocInspections() {
+        m_inspectionClasses.add(UnnecessaryJavaDocLinkInspection.class);
+        m_inspectionClasses.add(UnnecessaryInheritDocInspection.class);
+    }
+
     private void registerCloneInspections() {
         m_inspectionClasses.add(CloneCallsConstructorsInspection.class);
         m_inspectionClasses.add(CloneCallsSuperCloneInspection.class);
@@ -778,9 +786,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
         m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
         m_inspectionClasses.add(UnnecessaryFullyQualifiedNameInspection.class);
-        m_inspectionClasses.add(UnnecessaryInheritDocInspection.class);
         m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
-        m_inspectionClasses.add(UnnecessaryJavaDocLinkInspection.class);
         m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);
         m_inspectionClasses.add(UnnecessarilyQualifiedStaticallyImportedElementInspection.class);
         m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
