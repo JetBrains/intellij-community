@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
@@ -45,17 +46,30 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   public static JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(ourProject);
+    return JavaPsiFacadeEx.getInstanceEx(getProject());
   }
 
   protected static void withLevel(final LanguageLevel level, final Runnable r) {
-    final LanguageLevel current = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+    final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevelModuleExtension moduleExt = LanguageLevelModuleExtension.getInstance(getModule());
+
+    final LanguageLevel projectLevel = projectExt.getLanguageLevel();
+    final LanguageLevel moduleLevel = moduleExt.getLanguageLevel();
     try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+      projectExt.setLanguageLevel(level);
+
+      final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
+      modifiable.setLanguageLevel(level);
+      modifiable.commit();
+
       r.run();
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(current);
+      final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
+      modifiable.setLanguageLevel(moduleLevel);
+      modifiable.commit();
+
+      projectExt.setLanguageLevel(projectLevel);
     }
   }
 
