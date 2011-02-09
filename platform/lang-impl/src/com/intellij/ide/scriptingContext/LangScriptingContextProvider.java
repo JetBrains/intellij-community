@@ -51,6 +51,6 @@ public abstract class LangScriptingContextProvider {
   public abstract String getOfflineDocUrl(String defaultDocUrl);
   
   @Nullable
-  public abstract String downloadOfflineDoc(Project project, String offlineDocUrl, JComponent parent);
+  public abstract VirtualFile downloadOfflineDoc(Project project, String offlineDocUrl, JComponent parent);
 
 }

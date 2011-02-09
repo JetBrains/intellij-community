@@ -185,8 +185,10 @@ public class EditLibraryDialog extends DialogWrapper {
     for (String url : getDocUrls()) {
       String offlineDocUrl = myProvider.getOfflineDocUrl(url); 
       if (offlineDocUrl != null) {
-        String targetFile = myProvider.downloadOfflineDoc(myProject, offlineDocUrl, getRootPane());
-        myDocUrlListModel.addUrl(targetFile);
+        VirtualFile targetFile = myProvider.downloadOfflineDoc(myProject, offlineDocUrl, getRootPane());
+        if (targetFile != null) {
+          myDocUrlListModel.addUrl(targetFile.getUrl());
+        }
         return;
       }
     }
