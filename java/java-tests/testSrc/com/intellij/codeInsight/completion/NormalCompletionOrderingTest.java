@@ -178,4 +178,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "value");
   }
 
+  public void _testCurrentClassBest() {
+    checkPreferredItems(0, "XcodeProjectTemplate", "XcodeConfigurable");
+  }
+
 }
