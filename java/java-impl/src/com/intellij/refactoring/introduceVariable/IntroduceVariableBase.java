@@ -148,7 +148,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
         correctedOffset--;
       }
-      if (text.charAt(correctedOffset) != ')') {
+      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')') {
         correctedOffset = offset;
       }
     }
