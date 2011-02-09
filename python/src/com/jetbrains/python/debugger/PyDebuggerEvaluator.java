@@ -50,7 +50,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
   @Nullable
   @Override
-  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
+  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset, boolean sideEffectsAllowed) {
     return PyDebugSupportUtils.getExpressionRangeAtOffset(project, document, offset);
   }
 }
