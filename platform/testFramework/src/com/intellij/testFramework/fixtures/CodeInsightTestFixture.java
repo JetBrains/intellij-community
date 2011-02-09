@@ -67,6 +67,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   Editor getEditor();
 
+  int getCaretOffset();
+
   PsiFile getFile();
 
   void setTestDataPath(@NonNls String dataPath);

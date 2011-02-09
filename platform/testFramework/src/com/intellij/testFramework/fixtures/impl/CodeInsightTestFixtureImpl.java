@@ -1383,6 +1383,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public int getCaretOffset() {
+    return myEditor.getCaretModel().getOffset();
+  }
+
+  @Override
   public PsiFile getFile() {
     return myFile;
   }

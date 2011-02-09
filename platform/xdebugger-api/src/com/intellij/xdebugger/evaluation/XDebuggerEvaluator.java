@@ -18,9 +18,11 @@ package com.intellij.xdebugger.evaluation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +80,7 @@ public abstract class XDebuggerEvaluator {
   /**
    * If this method returns {@code true} 'Code Fragment Mode' button will be shown in 'Evaluate' dialog allowing user to execute a set of
    * statements
+   *
    * @return {@code true} if debugger supports evaluation of code fragments (statements)
    */
   public boolean isCodeFragmentEvaluationSupported() {
@@ -85,15 +88,29 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
+   * @deprecated override {@link #getExpressionRangeAtOffset(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Document, int, boolean)} instead
+   */
+  @Nullable
+  @Deprecated
+  @SuppressWarnings({"MethodMayBeStatic"})
+  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset) {
+    return null;
+  }
+
+  /**
    * Return text range of expression which can be evaluated.
    *
-   * @param project  project
-   * @param document document
-   * @param offset   offset
+   * @param project            project
+   * @param document           document
+   * @param offset             offset
+   * @param sideEffectsAllowed if this parameter is false, the expression should not have any side effects when evaluated
+   *                           (such expressions are evaluated in quick popups)
    * @return text range of expression
    */
   @Nullable
-  public abstract TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset);
+  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
+    return sideEffectsAllowed ? null : getExpressionRangeAtOffset(project, document, offset);
+  }
 
   /**
    * @return delay before showing value tooltip (in ms)
