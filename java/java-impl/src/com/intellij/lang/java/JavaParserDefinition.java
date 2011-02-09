@@ -40,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
-  public static boolean USE_NEW_PARSER = true;
-
   @NotNull
   public Lexer createLexer(final Project project) {
     final LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();

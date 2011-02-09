@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.ReferenceParser;
@@ -26,17 +25,11 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.java.*;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.CharTable;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +135,7 @@ public interface JavaElementType {
   IElementType ANNOTATION_PARAMETER_LIST = new JavaCompositeElementType("ANNOTATION_PARAMETER_LIST", PsiAnnotationParameterListImpl.class, true);
   IElementType METHOD_RECEIVER = new JavaCompositeElementType("METHOD_RECEIVER", PsiMethodReceiverImpl.class);
 
-  class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType {
+  class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {
       super("CODE_BLOCK", StdLanguages.JAVA);
     }
@@ -160,23 +153,16 @@ public interface JavaElementType {
 
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      if (JavaParserDefinition.USE_NEW_PARSER) {
-        final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-        StatementParser.parseCodeBlockDeep(builder, true);
-        return builder.getTreeBuilt().getFirstChildNode();
-      }
+      final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+      StatementParser.parseCodeBlockDeep(builder, true);
+      return builder.getTreeBuilt().getFirstChildNode();
+    }
 
-      final CharSequence seq = chameleon.getChars();
-
-      ASTNode original = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
-      ASTNode context = original != null ? original : chameleon.getTreeParent();
-
-      final PsiManager manager = context.getPsi().getManager();
-      final CharTable table = SharedImplUtil.findCharTableByTree(context);
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((TreeElement)context).getPsi());
-      JavaParsingContext parsingContext = new JavaParsingContext(table, languageLevel);
-      return parsingContext.getStatementParsing().parseCodeBlockText(manager, new JavaLexer(languageLevel),
-                                                                     seq, 0, seq.length(), 0).getFirstChildNode();
+    @Override
+    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
+      final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+      StatementParser.parseCodeBlockDeep(builder, true);
+      return builder.getLightTree();
     }
 
     @Override
@@ -202,38 +188,18 @@ public interface JavaElementType {
       return balance;
     }
   }
-
-  class ICodeBlockNewElementType extends ICodeBlockElementType implements ILightLazyParseableElementType {
-    private ICodeBlockNewElementType() { }
-
-    @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
-      final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      StatementParser.parseCodeBlockDeep(builder, true);
-      return builder.getLightTree();
-    }
-  }
-
-  ILazyParseableElementType CODE_BLOCK = JavaParserDefinition.USE_NEW_PARSER ? new ICodeBlockNewElementType() : new ICodeBlockElementType();
+  ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
 
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA) {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      if (JavaParserDefinition.USE_NEW_PARSER) {
-        return JavaParserUtil.parseFragment(chameleon,
-                                            new JavaParserUtil.ParserWrapper() {
-                                              public void parse(final PsiBuilder builder) {
-                                                StatementParser.parseStatements(builder);
-                                              }
-                                            });
-      }
-
-      final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = ((FileElement)chameleon).getManager();
-      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-      JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.HIGHEST);
-      return context.getStatementParsing().parseStatements(manager, null, chars, 0, chars.length(), 0);
+      return JavaParserUtil.parseFragment(chameleon,
+                                          new JavaParserUtil.ParserWrapper() {
+                                            public void parse(final PsiBuilder builder) {
+                                              StatementParser.parseStatements(builder);
+                                            }
+                                          });
     }
   };
 
@@ -241,19 +207,12 @@ public interface JavaElementType {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      if (JavaParserDefinition.USE_NEW_PARSER) {
-        return JavaParserUtil.parseFragment(chameleon,
-                                            new JavaParserUtil.ParserWrapper() {
-                                              public void parse(final PsiBuilder builder) {
-                                                ExpressionParser.parse(builder);
-                                              }
-                                            });
-      }
-
-      final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = ((FileElement)chameleon).getManager();
-      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), LanguageLevel.HIGHEST);
-      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), 0);
+      return JavaParserUtil.parseFragment(chameleon,
+                                          new JavaParserUtil.ParserWrapper() {
+                                            public void parse(final PsiBuilder builder) {
+                                              ExpressionParser.parse(builder);
+                                            }
+                                          });
     }
   };
 
@@ -261,18 +220,12 @@ public interface JavaElementType {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      if (JavaParserDefinition.USE_NEW_PARSER) {
-        return JavaParserUtil.parseFragment(chameleon,
-                                            new JavaParserUtil.ParserWrapper() {
-                                              public void parse(final PsiBuilder builder) {
-                                                ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
-                                              }
-                                            });
-      }
-
-      final CharSequence chars = chameleon.getChars();
-      return Parsing.parseJavaCodeReferenceText(((FileElement)chameleon).getManager(), chars, 0, chars.length(),
-                                                SharedImplUtil.findCharTableByTree(chameleon), true);
+      return JavaParserUtil.parseFragment(chameleon,
+                                          new JavaParserUtil.ParserWrapper() {
+                                            public void parse(final PsiBuilder builder) {
+                                              ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+                                            }
+                                          });
     }
   };
 
@@ -280,19 +233,13 @@ public interface JavaElementType {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      if (JavaParserDefinition.USE_NEW_PARSER) {
-        return JavaParserUtil.parseFragment(chameleon,
-                                            new JavaParserUtil.ParserWrapper() {
-                                              public void parse(final PsiBuilder builder) {
-                                                ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-                                                expect(builder, JavaTokenType.ELLIPSIS);  // todo[r.sh] parse ellipsis and fix PsiTypeCodeFragmentImpl.getType()
-                                              }
-                                            });
-      }
-
-      final CharSequence chars = chameleon.getChars();
-      return Parsing.parseTypeText(((FileElement)chameleon).getManager(), null, chars, 0, chars.length(), 0,
-                                   SharedImplUtil.findCharTableByTree(chameleon));
+      return JavaParserUtil.parseFragment(chameleon,
+                                          new JavaParserUtil.ParserWrapper() {
+                                            public void parse(final PsiBuilder builder) {
+                                              ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+                                              expect(builder, JavaTokenType.ELLIPSIS);  // todo[r.sh] parse ellipsis and fix PsiTypeCodeFragmentImpl.getType()
+                                            }
+                                          });
     }
   };
 

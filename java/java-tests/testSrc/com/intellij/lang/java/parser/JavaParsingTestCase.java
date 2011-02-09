@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -116,19 +115,5 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     builder.setDebugMode(true);
     return builder;
-  }
-
-  @Override
-  protected void doTest(final boolean checkResult) {
-    final boolean parser = JavaParserDefinition.USE_NEW_PARSER;
-    try {
-      JavaParserDefinition.USE_NEW_PARSER = false;
-      super.doTest(checkResult);
-      JavaParserDefinition.USE_NEW_PARSER = true;
-      super.doTest(checkResult);
-    }
-    finally {
-      JavaParserDefinition.USE_NEW_PARSER = parser;
-    }
   }
 }
