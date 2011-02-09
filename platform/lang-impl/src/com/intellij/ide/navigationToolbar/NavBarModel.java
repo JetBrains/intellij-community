@@ -20,14 +20,11 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -38,31 +35,21 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class NavBarModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavBarModel");
-
   private List<Object> myModel = Collections.emptyList();
   private int mySelectedIndex;
   private final Project myProject;
-
-  private final static SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
   private final NavBarModelListener myNotificator;
 
   public NavBarModel(final Project project) {
@@ -241,13 +228,13 @@ public class NavBarModel {
 
 
   protected boolean hasChildren(Object object) {
-    if (!checkValid(object)) return false;
+    if (!isValid(object)) return false;
 
-    return !calcElementChildren(object).isEmpty();
+    return !getChildren(object).isEmpty();
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  static boolean checkValid(final Object object) {
+  static boolean isValid(final Object object) {
     if (object instanceof Project) {
       return !((Project)object).isDisposed();
     }
@@ -264,85 +251,6 @@ public class NavBarModel {
       ).booleanValue();
     }
     return object != null;
-  }
-
-  @NotNull
-  protected static String getPresentableText(final Object object, Window window) {
-    if (!checkValid(object)) return IdeBundle.message("node.structureview.invalid");
-    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-      String text = modelExtension.getPresentableText(object);
-      if (text != null) {
-        boolean truncated = false;
-        if (window != null) {
-          Rectangle wndBounds = window.getBounds();
-          Rectangle rec = ScreenUtil.getScreenRectangle(wndBounds.x, wndBounds.y);
-
-          final int windowWidth = rec.width;
-
-          while (window.getFontMetrics(window.getFont()).stringWidth(text) + 100 > windowWidth && text.length() > 10) {
-            text = text.substring(0, text.length() - 10);
-            truncated = true;
-          }
-        }
-        return text + (truncated ? "..." : "");
-      }
-    }
-    LOG.error("Failed to find navbar presentable text for " + object);
-    return object.toString();
-  }
-
-
-  protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
-    if (!checkValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    if (object instanceof PsiElement) {
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return ((PsiElement)object).isValid();
-        }
-      }).booleanValue()) return SimpleTextAttributes.GRAYED_ATTRIBUTES;
-      PsiFile psiFile = ((PsiElement)object).getContainingFile();
-      if (psiFile != null) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        return new SimpleTextAttributes(null, selected ? null : FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor(),
-                                        Color.red, WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
-                                                   ? SimpleTextAttributes.STYLE_WAVED
-                                                   : SimpleTextAttributes.STYLE_PLAIN);
-      }
-      else {
-        if (object instanceof PsiDirectory) {
-          VirtualFile vDir = ((PsiDirectory)object).getVirtualFile();
-          if (vDir.getParent() == null || ProjectRootsUtil.isModuleContentRoot(vDir, myProject)) {
-            return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-          }
-        }
-        
-        if (NavBarPanel.wolfHasProblemFilesBeneath((PsiElement)object)) {
-          return WOLFED;
-        }
-      }
-    }
-    else if (object instanceof Module) {
-      if (WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath((Module)object)) {
-        return WOLFED;
-      }
-
-    }
-    else if (object instanceof Project) {
-      final Project project = (Project)object;
-      final Module[] modules = ApplicationManager.getApplication().runReadAction(
-          new Computable<Module[]>() {
-            public Module[] compute() {
-              return  ModuleManager.getInstance(project).getModules();
-            }
-          }
-      );
-      for (Module module : modules) {
-        if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
-          return WOLFED;
-        }
-      }
-    }
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   public static void getDirectoryChildren(final PsiDirectory psiDirectory, final Object rootElement, final List<Object> result) {
@@ -370,8 +278,8 @@ public class NavBarModel {
     return child;
   }
 
-  List<Object> calcElementChildren(final Object object) {
-    if (!checkValid(object)) return new ArrayList<Object>();
+  List<Object> getChildren(final Object object) {
+    if (!isValid(object)) return new ArrayList<Object>();
     final List<Object> result = new ArrayList<Object>();
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
