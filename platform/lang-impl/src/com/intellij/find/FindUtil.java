@@ -80,6 +80,20 @@ public class FindUtil {
     return file != null ? file.getVirtualFile() : null;
   }
 
+  public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
+    if (editor != null){
+      String s = editor.getSelectionModel().getSelectedText();
+      if (!StringUtil.isEmpty(s)) {
+        if (!s.contains("\r") && !s.contains("\n")) {
+          findModel.setStringToFind(s);
+        } else {
+          findModel.setStringToFind(StringUtil.escapeToRegexp(s));
+          findModel.setRegularExpressions(true);
+        }
+      }
+    }
+  }
+
   private enum Direction {
     UP, DOWN
   }
