@@ -70,6 +70,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         packageGroupDisplayNameMap.put("internationalization", GroupNames.INTERNATIONALIZATION_GROUP_NAME);
         packageGroupDisplayNameMap.put("j2me", GroupNames.J2ME_GROUP_NAME);
         packageGroupDisplayNameMap.put("javabeans", GroupNames.JAVABEANS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("javadoc", GroupNames.JAVADOC_GROUP_NAME);
         packageGroupDisplayNameMap.put("jdk", GroupNames.JDK_GROUP_NAME);
         packageGroupDisplayNameMap.put("jdk15", GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME);
         packageGroupDisplayNameMap.put("junit", GroupNames.JUNIT_GROUP_NAME);

@@ -1,4 +1,4 @@
-package com.siyeh.ig.style;
+package com.siyeh.ig.javadoc;
 
 import com.IGInspectionTestCase;
 
