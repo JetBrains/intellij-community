@@ -21,6 +21,7 @@ import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +42,37 @@ public class StatisticsUploadAssistant {
     return getData(Collections.<String>emptySet());
   }
 
-  public String getData(@NotNull Set<String> disabledGroups) {
+  public static boolean showNotification() {
+    return SentUsagesPersistenceComponent.getInstance().isShowNotification();
+  }
+
+  public static boolean isTimeToSend() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+
+    return isTimeToSend(SentUsagesPersistenceComponent.getInstance());
+  }
+
+  public static boolean isTimeToSend(SentUsagesPersistence settings) {
+    final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
+
+    return Math.abs(timeDelta) > DateFormatUtil.HOUR; // todo setting
+  }
+
+  public static boolean isSendAllowed() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+
+    return isSendAllowed(SentUsagesPersistenceComponent.getInstance());
+  }
+
+  public static boolean isSendAllowed(final SentUsagesPersistence settings) {
+    return settings != null && settings.isAllowed();
+  }
+
+  public static String getData(@NotNull Set<String> disabledGroups) {
     return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
   }
 
-  public void persistSentPatch(@NotNull String patchStr) {
+  public static void persistSentPatch(@NotNull String patchStr) {
     persistSentPatch(patchStr, SentUsagesPersistenceComponent.getInstance());
   }
 
