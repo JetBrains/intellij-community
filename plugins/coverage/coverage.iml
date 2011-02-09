@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="j2ee-openapi" />
+    <orderEntry type="module" module-name="web-openapi" />
   </component>
 </module>
 
