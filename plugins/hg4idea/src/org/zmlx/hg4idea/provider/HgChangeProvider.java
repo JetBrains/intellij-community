@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -24,12 +25,19 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class HgChangeProvider implements ChangeProvider {
 
   private final Project myProject;
   private final VcsKey myVcsKey;
+
+  public static final FileStatus COPIED =
+    ServiceManager.getService(FileStatusFactory.class).createFileStatus("COPIED", "Copied", FileStatus.COLOR_ADDED);
+  public static final FileStatus RENAMED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("RENAMED", "Renamed",
+                                                                                                               Color.cyan.darker().darker());
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
     new EnumMap<HgFileStatusEnum, HgChangeProcessor>(HgFileStatusEnum.class);
@@ -225,7 +233,7 @@ public class HgChangeProvider implements ChangeProvider {
           processChange(
             null,
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            FileStatus.ADDED,
+            HgChangeProvider.COPIED,
             builder,
             vcsKey
           );
@@ -234,7 +242,7 @@ public class HgChangeProvider implements ChangeProvider {
           processChange(
             new HgContentRevision(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            FileStatus.MODIFIED,
+            HgChangeProvider.RENAMED,
             builder,
             vcsKey
           );
