@@ -46,6 +46,7 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
   }
 
   public void treeChanged(final PsiTreeChangeEventImpl event) {
+    if (!(event.getFile() instanceof YAMLFile)) return;
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
@@ -55,31 +56,31 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
           break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
         }
 
-      case CHILDREN_CHANGED :
+      case CHILDREN_CHANGED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_CHILD_ADDITION:
       case BEFORE_CHILD_REMOVAL:
-      case CHILD_ADDED :
-      case CHILD_REMOVED :
+      case CHILD_ADDED:
+      case CHILD_REMOVED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_PROPERTY_CHANGE:
-      case PROPERTY_CHANGED :
+      case PROPERTY_CHANGED:
         changedInsideCodeBlock = false;
-      break;
+        break;
 
       case BEFORE_CHILD_REPLACEMENT:
-      case CHILD_REPLACED :
+      case CHILD_REPLACED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_CHILD_MOVEMENT:
-      case CHILD_MOVED :
+      case CHILD_MOVED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
-      break;
+        break;
     }
 
     if (!changedInsideCodeBlock) {
@@ -98,17 +99,17 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
       if (element instanceof YAMLFile) {
         return false;
       }
-      if (element instanceof PsiFile || element instanceof PsiDirectory || element == null) {
+      if (element instanceof PsiFile || element instanceof PsiDirectory) {
         return true;
       }
-      PsiElement pparent = element.getParent();
-      if (!(pparent instanceof YAMLFile ||
-            pparent instanceof YAMLKeyValue ||
-            pparent instanceof YAMLCompoundValue ||
-            pparent instanceof YAMLDocument)) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof YAMLFile ||
+            parent instanceof YAMLKeyValue ||
+            parent instanceof YAMLCompoundValue ||
+            parent instanceof YAMLDocument)) {
         return true;
       }
-      element = pparent;
+      element = parent;
     }
   }
 }
