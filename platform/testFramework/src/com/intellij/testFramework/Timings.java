@@ -26,37 +26,56 @@ import java.math.BigInteger;
 /**
  * @author peter
  */
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class Timings {
+  public static final long CPU_TIMING;
+  public static final long IO_TIMING;
+  public static final long MACHINE_TIMING;
 
   static {
-    long start = System.currentTimeMillis();
+    long start;
+
+    start = System.currentTimeMillis();
     BigInteger k = new BigInteger("1");
     for (int i = 0; i < 1000000; i++) {
       k = k.add(new BigInteger("1"));
     }
+    CPU_TIMING = System.currentTimeMillis() - start;
+
+    start = System.currentTimeMillis();
     for (int i = 0; i < 42; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
+
         final FileWriter writer = new FileWriter(tempFile);
-        for (int j = 0; j < 15; j++) {
-          writer.write("test" + j);
-          writer.flush();
+        try {
+          for (int j = 0; j < 15; j++) {
+            writer.write("test" + j);
+            writer.flush();
+          }
         }
-        writer.close();
+        finally {
+          writer.close();
+        }
+
         final FileReader reader = new FileReader(tempFile);
-        while (reader.read() >= 0) {}
-        reader.close();
-        tempFile.delete();
+        try {
+          while (reader.read() >= 0) {}
+        }
+        finally {
+          reader.close();
+        }
+
+        if (!tempFile.delete()) {
+          throw new IOException("Unable to delete: " + tempFile);
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
+    IO_TIMING = System.currentTimeMillis() - start;
 
-    MACHINE_TIMING = System.currentTimeMillis() - start;
+    MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
-
-  public static final long MACHINE_TIMING;
-
-
 }
