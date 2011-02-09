@@ -21,80 +21,72 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 
-@NonNls public class TestLoggerFactory implements Logger.Factory {
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
+public class TestLoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
-  private static final String LOGDIR_MACRO = "$LOG_DIR$";
+  private static final String LOG_DIR_MACRO = "$LOG_DIR$";
+  private static final String LOG_DIR = "testlog";
+
+  private static final TestLoggerFactory ourInstance = new TestLoggerFactory();
 
   private boolean myInitialized = false;
 
-  private static final TestLoggerFactory ourInstance = new TestLoggerFactory();
-  public static final String LOG_DIR = "testlog";
+  private TestLoggerFactory() { }
 
   public static TestLoggerFactory getInstance() {
     return ourInstance;
   }
 
-  private TestLoggerFactory() {
-  }
-
   @Override
-  public Logger getLoggerInstance(String name) {
-    synchronized (this) {
-      try {
-        if (!isInitialized()) {
-          init();
-        }
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-
-      return new TestLogger(org.apache.log4j.Logger.getLogger(name));
+  public synchronized Logger getLoggerInstance(final String name) {
+    if (!myInitialized) {
+      init();
     }
+
+    return new TestLogger(org.apache.log4j.Logger.getLogger(name));
   }
 
   private void init() {
     try {
-      String fileName = PathManager.getBinPath() + File.separator + "log.xml";
-      File logXmlFile = new File(fileName);
+      final File logXmlFile = new File(PathManager.getBinPath() + File.separator + "log.xml");
       if (!logXmlFile.exists()) {
         return;
       }
-      System.setProperty("log4j.defaultInitOverride", "true");
+
+      final String logDir = PathManager.getSystemPath() + "/" + LOG_DIR;
       String text = new String(FileUtil.loadFileText(logXmlFile));
-      String logDir = PathManager.getSystemPath() + "/" + LOG_DIR;
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
+      text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
 
-      File file = new File(PathManager.getSystemPath() + File.separator + LOG_DIR);
-      file.mkdirs();
+      final File logDirFile = new File(PathManager.getSystemPath() + File.separator + LOG_DIR);
+      if (!logDirFile.mkdirs()) {
+        if (!logDirFile.exists()) {
+          throw new IOException("Unable to create log dir: " + logDirFile);
+        }
+      }
 
-      DOMConfigurator domConfigurator = new DOMConfigurator();
+      System.setProperty("log4j.defaultInitOverride", "true");
+      final DOMConfigurator domConfigurator = new DOMConfigurator();
       try {
         domConfigurator.doConfigure(new StringReader(text), LogManager.getLoggerRepository());
       }
       catch (ClassCastException e) {
         // shit :-E
-        System.out.println("log.xml content:\n" + text);
+        System.err.println("log.xml content:\n" + text);
         throw e;
       }
+
       myInitialized = true;
     }
     catch (Exception e) {
       e.printStackTrace();
     }
   }
-
-  private boolean isInitialized() {
-    return myInitialized;
-  }
-
-
 }
