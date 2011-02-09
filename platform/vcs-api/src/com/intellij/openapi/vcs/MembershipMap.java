@@ -40,30 +40,26 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
   public void putOptimal(final Key key, final Val val) {
     final int idx = putImpl(key, val);
 
-    final List<Integer> toRemove = new LinkedList<Integer>();
     // go for parents
     for (int i = idx - 1; i >= 0; -- i) {
       if (myKeysResemblance.process(myKeys.get(i), key)) {
-        toRemove.add(idx);
+        consistentRemove(idx);
+        return;
+      }
+    }
+    for (int i = idx + 1; i < myKeys.size(); ++ i) {
+      if (myKeysResemblance.process(key, myKeys.get(i))) {
+        consistentRemove(i);
+        -- i;
+      } else {
         break;
       }
     }
-    if (toRemove.isEmpty()) {
-      for (int i = idx + 1; i < myKeys.size(); ++ i) {
-        if (myKeysResemblance.process(key, myKeys.get(i))) {
-          toRemove.add(i);
-        } else {
-          break;
-        }
-      }
-    }
-    Collections.sort(toRemove);
-    for (int i = 0; i < toRemove.size(); i++) {
-      final Integer integer = toRemove.get(i);
-      final int correctedIdx = integer - i;
-      final Key keyToRemove = myKeys.remove(correctedIdx);
-      myMap.remove(keyToRemove);
-    }
+  }
+
+  private void consistentRemove(final int idx) {
+    final Key keyToRemove = myKeys.remove(idx);
+    myMap.remove(keyToRemove);
   }
 
   public void optimizeMap(final PairProcessor<Val, Val> valuesAreas) {
