@@ -7,7 +7,7 @@ contributor ([ctx], {
   method name:"globalLibrary", type:"org.jetbrains.jps.Library", params: [name:"String", initializer:{}]
   method name:"library", type:"org.jetbrains.jps.Library", params: [name:"String", initializer:{}]
 
-  method name:"layout", type:"void", params: [name:"String", layout:{}]
+  method name:"layout", type:"org.jetbrains.jps.LayoutInfo", params: [name:"String", layout:{}]
   method name:"module", type:"void", params: [name:"String"]
   method name:"module", type:"void", params: [name:"String", layout:{}]
   ["jar", "dir", "zip"].each { methodName ->

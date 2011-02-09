@@ -38,6 +38,7 @@ final class Jps {
 
     binding.setVariable("layout", {String dir, Closure body ->
       def old = binding.getVariable("module")
+      def layoutInfo = new LayoutInfo()
 
       ["module", "zip", "dir"].each {tag ->
         binding.setVariable(tag, {Object[] args ->
@@ -49,6 +50,9 @@ final class Jps {
           }
           else {
             project.error("unexpected number of parameters for $tag")
+          }
+          if (tag == "module") {
+            layoutInfo.usedModules << args[0].toString()
           }
         })
       }
@@ -81,7 +85,7 @@ final class Jps {
       } finally {
         binding.setVariable("module", old)
       }
-
+      return layoutInfo
     })
 
     project.taskdef(name: "layout", classname: "jetbrains.antlayout.tasks.LayoutTask")
