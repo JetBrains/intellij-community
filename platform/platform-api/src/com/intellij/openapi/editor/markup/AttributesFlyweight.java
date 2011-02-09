@@ -19,24 +19,16 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import gnu.trove.THashSet;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class AttributesFlyweight {
-  private static final class MyTHashSet extends THashSet<AttributesFlyweight> {
-    public int index(final AttributesFlyweight obj) {
-      return super.index(obj);
-    }
-
-    public AttributesFlyweight get(int index) {
-      return (AttributesFlyweight)_set[index];
-    }
-  }
-
-  private static final MyTHashSet entries = new MyTHashSet();
+  private final int myHashCode;
+  private static final StripedLockConcurrentHashMap<AttributesFlyweight, AttributesFlyweight> entries = new StripedLockConcurrentHashMap<AttributesFlyweight, AttributesFlyweight>();
 
   @NotNull
   public static AttributesFlyweight create(Color foreground,
@@ -46,15 +38,7 @@ public class AttributesFlyweight {
                                            EffectType effectType,
                                            Color errorStripeColor) {
     AttributesFlyweight key = new AttributesFlyweight(foreground, background, fontType, effectColor, effectType, errorStripeColor);
-    synchronized (entries) {
-      int idx = entries.index(key);
-      if (idx >= 0) {
-        return entries.get(idx);
-      }
-
-      entries.add(key);
-      return key;
-    }
+    return ConcurrencyUtil.cacheOrGet(entries, key, key);
   }
 
   private final Color      myForeground;
@@ -64,18 +48,29 @@ public class AttributesFlyweight {
   private final EffectType myEffectType;
   private final Color      myErrorStripeColor;
 
-  AttributesFlyweight(Color foreground,
-                              Color background,
-                              int fontType,
-                              Color effectColor,
-                              EffectType effectType,
-                              Color errorStripeColor) {
+  private AttributesFlyweight(Color foreground,
+                      Color background,
+                      int fontType,
+                      Color effectColor,
+                      EffectType effectType,
+                      Color errorStripeColor) {
     myForeground = foreground;
     myBackground = background;
     myFontType = fontType;
     myEffectColor = effectColor;
     myEffectType = effectType;
     myErrorStripeColor = errorStripeColor;
+    myHashCode = calcHashCode();
+  }
+
+  private int calcHashCode() {
+    int result = myForeground != null ? myForeground.hashCode() : 0;
+    result = 31 * result + (myBackground != null ? myBackground.hashCode() : 0);
+    result = 31 * result + myFontType;
+    result = 31 * result + (myEffectColor != null ? myEffectColor.hashCode() : 0);
+    result = 31 * result + (myEffectType != null ? myEffectType.hashCode() : 0);
+    result = 31 * result + (myErrorStripeColor != null ? myErrorStripeColor.hashCode() : 0);
+    return result;
   }
 
   public Color getForeground() {
@@ -145,13 +140,7 @@ public class AttributesFlyweight {
 
   @Override
   public int hashCode() {
-    int result = myForeground != null ? myForeground.hashCode() : 0;
-    result = 31 * result + (myBackground != null ? myBackground.hashCode() : 0);
-    result = 31 * result + myFontType;
-    result = 31 * result + (myEffectColor != null ? myEffectColor.hashCode() : 0);
-    result = 31 * result + (myEffectType != null ? myEffectType.hashCode() : 0);
-    result = 31 * result + (myErrorStripeColor != null ? myErrorStripeColor.hashCode() : 0);
-    return result;
+    return myHashCode;
   }
 
   @NonNls
