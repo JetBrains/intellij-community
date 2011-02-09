@@ -1,4 +1,4 @@
-PsiJavaFile:Uncomplete5.java
+PsiJavaFile:Incomplete4.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -29,14 +29,7 @@ PsiJavaFile:Uncomplete5.java
           PsiCatchSection
             PsiKeyword:catch('catch')
             PsiJavaToken:LPARENTH('(')
-            PsiModifierList:
-              <empty list>
-            PsiTypeElement:E
-              PsiJavaCodeReferenceElement:E
-                PsiIdentifier:E('E')
-                PsiReferenceParameterList
-                  <empty list>
-            PsiErrorElement:Identifier expected
+            PsiErrorElement:Parameter expected
               <empty list>
             PsiErrorElement:')' expected
               <empty list>

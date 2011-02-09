@@ -13,12 +13,12 @@ public class TryParsingTest extends JavaParsingTestCase {
   public void testNormal2() { doTest(true); }
   public void testNormal3() { doTest(true); }
 
-  public void testUncomplete1() { doTest(true); }
-  public void testUncomplete2() { doTest(true); }
-  public void testUncomplete3() { doTest(true); }
-  public void testUncomplete4() { doTest(true); }
-  public void testUncomplete5() { doTest(true); }
-  public void testUncomplete6() { doTest(true); }
-  public void testUncomplete7() { doTest(true); }
-  public void testUncomplete8() { doTest(true); }
+  public void testIncomplete1() { doTest(true); }
+  public void testIncomplete2() { doTest(true); }
+  public void testIncomplete3() { doTest(true); }
+  public void testIncomplete4() { doTest(true); }
+  public void testIncomplete5() { doTest(true); }
+  public void testIncomplete6() { doTest(true); }
+  public void testIncomplete7() { doTest(true); }
+  public void testIncomplete8() { doTest(true); }
 }

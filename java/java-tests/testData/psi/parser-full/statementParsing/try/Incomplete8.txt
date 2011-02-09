@@ -1,4 +1,4 @@
-PsiJavaFile:Uncomplete2.java
+PsiJavaFile:Incomplete8.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -26,7 +26,8 @@ PsiJavaFile:Uncomplete2.java
           PsiCodeBlock
             PsiJavaToken:LBRACE('{')
             PsiJavaToken:RBRACE('}')
-          PsiErrorElement:'catch' or 'finally' expected
+          PsiKeyword:finally('finally')
+          PsiErrorElement:'{' expected
             <empty list>
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
