@@ -4,7 +4,7 @@ if <warning descr="Python versions 3.0, 3.1 do not support <>, use != instead.">
   var = a
 ########################
 
-print <warning descr="Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function">"One value"</warning>
+<warning descr="Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function">print "One value"</warning>
 
 ########################
 
