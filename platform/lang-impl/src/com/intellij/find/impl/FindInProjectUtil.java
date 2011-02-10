@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vcs.FileStatus;
@@ -235,7 +236,7 @@ public class FindInProjectUtil {
         long fileLength = getFileLength(virtualFile);
         if (fileLength == -1) continue; // Binary or invalid
 
-        if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) continue;
+        if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !Registry.is("find.search.in.project.files")) continue;
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
           largeFiles.add(psiFile);
