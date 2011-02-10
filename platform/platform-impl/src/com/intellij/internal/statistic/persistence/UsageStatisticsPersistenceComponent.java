@@ -16,6 +16,7 @@
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -41,20 +43,28 @@ import java.util.Set;
       file = "$APP_CONFIG$/usages.statistics.xml"
     )}
 )
-public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceComponent
+public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements ApplicationComponent, PersistentStateComponent<Element> {
 
+  @NonNls private boolean isAllowed = false;
+  @NonNls private boolean isShowNotification = true;
+  @NotNull private SendPeriod myPeriod = SendPeriod.WEEKLY;
+
+  @NonNls private static final String DATA_ATTR = "data";
   @NonNls private static final String GROUP_TAG = "group";
   @NonNls private static final String GROUP_ID_ATTR = "id";
   @NonNls private static final String GROUP_PRIORITY_ATTR = "priority";
-  @NonNls private static final String DATA_ATTR = "data";
 
+  @NonNls private static final String LAST_TIME_ATTR = "time";
+  @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
+  @NonNls private static final String PERIOD_ATTR = "period";
+  @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
 
-  public static SentUsagesPersistence getInstance() {
-    return ApplicationManager.getApplication().getComponent(SentUsagesPersistenceComponent.class);
+  public static UsageStatisticsPersistenceComponent getInstance() {
+    return ApplicationManager.getApplication().getComponent(UsageStatisticsPersistenceComponent.class);
   }
 
-  public SentUsagesPersistenceComponent() {
+  public UsageStatisticsPersistenceComponent() {
   }
 
   public void loadState(final Element element) {
@@ -69,12 +79,21 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
         getSentUsages().addAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
       }
     }
-  }
 
-  private static double getPriority(String priority) {
-    if (StringUtil.isEmptyOrSpaces(priority)) return GroupDescriptor.DEFAULT_PRIORITY;
+    try {
+      setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR)));
+    }
+    catch (NumberFormatException e) {
+      setSentTime(0);
+    }
 
-    return Double.parseDouble(priority);
+    final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
+    setAllowed(StringUtil.isEmptyOrSpaces(isAllowedValue) ? false : Boolean.parseBoolean(isAllowedValue));
+
+    final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
+    setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) ? true : Boolean.parseBoolean(isShowNotificationValue));
+
+    setPeriod(parsePeriod(element.getAttributeValue(SHOW_NOTIFICATION_ATTR)));
   }
 
   public Element getState() {
@@ -90,7 +109,53 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
       element.addContent(projectElement);
     }
 
+    element.setAttribute(LAST_TIME_ATTR, String.valueOf(getLastTimeSent()));
+    element.setAttribute(IS_ALLOWED_ATTR, String.valueOf(isAllowed()));
+    element.setAttribute(SHOW_NOTIFICATION_ATTR, String.valueOf(isShowNotification()));
+    element.setAttribute(PERIOD_ATTR, myPeriod.getName());
+
     return element;
+  }
+
+  @NotNull
+  public SendPeriod getPeriod() {
+    return myPeriod;
+  }
+
+  public void setPeriod(@NotNull SendPeriod period) {
+    myPeriod = period;
+  }
+
+  @NotNull
+  private static SendPeriod parsePeriod(@Nullable String periodAttrValue) {
+    if (SendPeriod.DAILY.getName().equals(periodAttrValue)) return SendPeriod.DAILY;
+    if (SendPeriod.MONTHLY.getName().equals(periodAttrValue)) return SendPeriod.MONTHLY;
+
+    return SendPeriod.WEEKLY;
+  }
+
+  public void setAllowed(boolean allowed) {
+    isAllowed = allowed;
+  }
+
+  @Override
+  public boolean isAllowed() {
+    return isAllowed;
+  }
+
+  public void setShowNotification(boolean showNotification) {
+    isShowNotification = showNotification;
+  }
+
+  @Override
+  public boolean isShowNotification() {
+    return isShowNotification;
+  }
+
+  private static double getPriority(String priority) {
+    if (StringUtil.isEmptyOrSpaces(priority)) return GroupDescriptor.DEFAULT_PRIORITY;
+
+    return Double.parseDouble(priority);
   }
 
   @NonNls

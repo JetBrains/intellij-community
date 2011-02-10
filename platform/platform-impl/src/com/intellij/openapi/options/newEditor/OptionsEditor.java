@@ -108,6 +108,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
   private final PropertiesComponent myProperties;
+  private boolean myDisposed;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -332,6 +333,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private ActionCallback getUiFor(final Configurable configurable) {
+    if (myDisposed) {
+      return new ActionCallback.Rejected();
+    }
+
     final ActionCallback result = new ActionCallback();
 
     if (!myConfigurable2Content.containsKey(configurable)) {
@@ -863,6 +868,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public void dispose() {
+    myDisposed = true;
+
     myProperties.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
     myProperties.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
     myProperties.setValue(SEARCH_VISIBLE, Boolean.valueOf(isFilterFieldVisible()).toString());

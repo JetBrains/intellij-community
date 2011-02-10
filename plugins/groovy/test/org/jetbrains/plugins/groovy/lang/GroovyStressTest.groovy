@@ -5,11 +5,13 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
 class GroovyStressTest extends LightCodeInsightFixtureTestCase {
+  @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     LightGroovyTestCase.GROOVY_DESCRIPTOR
   }

@@ -170,7 +170,7 @@ public class EditorWindow {
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(editorManager.getProject()) {
             @Override
             public void run() {
               afterPublisher.fileClosed(editorManager, file);

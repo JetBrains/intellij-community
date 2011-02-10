@@ -34,5 +34,6 @@ public interface DomParentStrategy {
 
   @NotNull DomParentStrategy clearXmlElement();
 
-  boolean isValid();
+  @Nullable
+  String checkValidity();
 }

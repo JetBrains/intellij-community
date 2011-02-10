@@ -19,6 +19,7 @@ package com.intellij.find.findInProject;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,7 +28,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -71,12 +71,8 @@ public class FindInProjectManager {
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor != null){
-      String s = editor.getSelectionModel().getSelectedText();
-      if (!StringUtil.isEmpty(s) && !s.contains("\r") && !s.contains("\n")){
-        findModel.setStringToFind(s);
-      }
-    }
+    FindUtil.initStringToFindWithSelection(findModel, editor);
+
 
     findManager.showFindDialog(findModel, new Runnable() {
       public void run() {

@@ -26,7 +26,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
     }
 
     if (!myConnectionService.isTransmissionPermitted()) {
-      return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED, "NOT_PERMITTED");
+      return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
     String content = myAssistant.getData();
@@ -37,7 +37,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
 
     try {
       sender.send(serviceUrl, content);
-      myAssistant.persistSentPatch(content);
+      StatisticsUploadAssistant.persistSentPatch(content);
 
       return new StatisticsResult(StatisticsResult.ResultCode.SEND, "SUCCESS");
     }

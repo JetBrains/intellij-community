@@ -24,6 +24,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -32,11 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
@@ -99,19 +98,13 @@ class UndoableGroup {
   }
 
   private void undoOrRedo(boolean isUndo) {
-    LocalHistoryAction action = LocalHistoryAction.NULL;
-
-    if (myProject != null) {
-      if (isGlobal()) {
-        final String actionName;
-        if (isUndo) {
-          actionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
-        }
-        else {
-          actionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
-        }
-        action = LocalHistory.getInstance().startAction(actionName);
-      }
+    LocalHistoryAction action;
+    if (myProject != null && isGlobal()) {
+      String actionName = CommonBundle.message(isUndo ? "local.vcs.action.name.undo.command" : "local.vcs.action.name.redo.command", myCommandName);
+      action = LocalHistory.getInstance().startAction(actionName);
+    }
+    else {
+      action = LocalHistoryAction.NULL;
     }
 
     try {
@@ -122,8 +115,35 @@ class UndoableGroup {
     }
   }
 
+  private static void doInBulkMode(@NotNull final Runnable action, @NotNull Collection<DocumentEx> documents) {
+    Runnable runnable = action;
+    for (final DocumentEx document : documents) {
+      final Runnable oldRunnable = runnable;
+      runnable = new Runnable() {
+        @Override
+        public void run() {
+          doInBulkMode(oldRunnable, document);
+        }
+      };
+    }
+    runnable.run();
+  }
+  private static void doInBulkMode(@NotNull Runnable action, @NotNull DocumentEx document) {
+    boolean wasInBulkUpdate = document.isInBulkUpdate();
+    document.setInBulkUpdate(true);
+    try {
+      action.run();
+    }
+    finally {
+      if (!wasInBulkUpdate) {
+        document.setInBulkUpdate(false);
+      }
+    }
+  }
+
+
   private void doUndoOrRedo(final boolean isUndo) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    Runnable runnable = new Runnable() {
       public void run() {
         try {
           for (UndoableAction each : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
@@ -139,7 +159,27 @@ class UndoableGroup {
           reportUndoProblem(e, isUndo);
         }
       }
-    });
+    };
+    if (myActions.size() > 50) {
+      final Collection<DocumentEx> documents = new THashSet<DocumentEx>();
+      for (UndoableAction action : myActions) {
+        DocumentReference[] affectedDocuments = action.getAffectedDocuments();
+        if (affectedDocuments != null) {
+          for (DocumentReference affectedDocument : affectedDocuments) {
+            documents.add((DocumentEx)affectedDocument.getDocument());
+          }
+        }
+      }
+      final Runnable oldRunnable = runnable;
+      runnable = new Runnable() {
+        @Override
+        public void run() {
+          doInBulkMode(oldRunnable, documents);
+        }
+      };
+    }
+
+    ApplicationManager.getApplication().runWriteAction(runnable);
     commitAllDocuments();
   }
 
@@ -207,9 +247,8 @@ class UndoableGroup {
   }
 
   public boolean shouldAskConfirmation() {
-    if (myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) return true;
-    if (myConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) return false;
-    return myGlobal;
+    return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
+           myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
   }
 
   public void invalidateActionsFor(DocumentReference ref) {

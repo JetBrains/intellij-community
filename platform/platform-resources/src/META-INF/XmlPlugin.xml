@@ -293,6 +293,8 @@
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
 
+    <xml.relatedFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
+
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>

@@ -17,10 +17,6 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.compiler.generic.GenericCompilerCacheState;
-import com.intellij.openapi.compiler.generic.GenericCompilerInstance;
-import com.intellij.openapi.compiler.generic.GenericCompilerProcessingItem;
-import com.intellij.openapi.compiler.generic.VirtualFilePersistentState;
 import com.intellij.compiler.impl.packagingCompiler.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -28,6 +24,10 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.generic.GenericCompilerCacheState;
+import com.intellij.openapi.compiler.generic.GenericCompilerInstance;
+import com.intellij.openapi.compiler.generic.GenericCompilerProcessingItem;
+import com.intellij.openapi.compiler.generic.VirtualFilePersistentState;
 import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.BuildParticipantProvider;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -147,6 +148,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
       return Collections.emptyList();
     }
 
+    DumbService.getInstance(getProject()).waitForSmartMode();
     new ReadAction() {
       protected void run(final Result result) {
         collectItems(artifact, outputPath);

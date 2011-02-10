@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.style;
+package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -27,11 +27,12 @@ import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryInheritDocInspection extends BaseInspection {
@@ -53,7 +54,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
         return new UnnecessaryInheritDocFix();
     }
 
-    private class UnnecessaryInheritDocFix extends InspectionGadgetsFix {
+    private static class UnnecessaryInheritDocFix extends InspectionGadgetsFix {
 
         @NotNull
         public String getName() {
@@ -87,7 +88,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
             if (!(tag instanceof PsiInlineDocTag)) {
                 return;
             }
-            final String name = tag.getName();
+            @NonNls final String name = tag.getName();
             if (!"inheritDoc".equals(name)) {
                 return;
             }

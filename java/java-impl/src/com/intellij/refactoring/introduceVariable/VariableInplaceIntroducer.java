@@ -191,7 +191,7 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
           final PsiExpression initializer = psiVariable.getInitializer();
           LOG.assertTrue(initializer != null);
           final PsiType type = initializer.getType();
-          if (((PsiReferenceExpression)parent).resolve() == null) {
+          if (((PsiReferenceExpression)parent).resolve() == null && type != null) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             final PsiExpression castedExpr =
               elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);

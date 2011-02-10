@@ -149,11 +149,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions, new Runnable(){
-        public void run() {
-          execute(usagesIn);
-        }
-      });
+      ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
       dialog.show();
       if (!dialog.isOK()) {
         if (dialog.isShowConflicts()) prepareSuccessful();

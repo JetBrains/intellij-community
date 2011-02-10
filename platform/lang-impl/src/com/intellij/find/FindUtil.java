@@ -80,6 +80,20 @@ public class FindUtil {
     return file != null ? file.getVirtualFile() : null;
   }
 
+  public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
+    if (editor != null){
+      String s = editor.getSelectionModel().getSelectedText();
+      if (!StringUtil.isEmpty(s)) {
+        if (!s.contains("\r") && !s.contains("\n")) {
+          findModel.setStringToFind(s);
+        } else {
+          findModel.setStringToFind(StringUtil.escapeToRegexp(s));
+          findModel.setRegularExpressions(true);
+        }
+      }
+    }
+  }
+
   private enum Direction {
     UP, DOWN
   }
@@ -678,28 +692,18 @@ public class FindUtil {
                                0, false);
   }
 
-  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull String stringToReplace,
+  public static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull String stringToReplace,
                                      boolean reallyReplace,
                                      List<Pair<TextRange, String>> rangesToChange) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
 
-    final String converted = StringUtil.convertLineSeparators(stringToReplace);
     int newOffset;
     if (reallyReplace) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              //[ven] I doubt converting is a good solution to SCR 21224
-              document.replaceString(startOffset, endOffset, converted);
-            }
-          });
-        }
-      }, null, document);
-      newOffset = startOffset + converted.length();
+      newOffset = doReplace(project, document, startOffset, endOffset, stringToReplace);
     }
     else {
+      final String converted = StringUtil.convertLineSeparators(stringToReplace);
       TextRange textRange = new TextRange(startOffset, endOffset);
       rangesToChange.add(Pair.create(textRange,converted));
 
@@ -731,6 +735,25 @@ public class FindUtil {
       }
     }
     return new TextRange(start, end);
+  }
+
+  public static int doReplace(Project project,
+                               final Document document,
+                               final int startOffset,
+                               final int endOffset,
+                               final String stringToReplace) {
+    final String converted = StringUtil.convertLineSeparators(stringToReplace);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            //[ven] I doubt converting is a good solution to SCR 21224
+            document.replaceString(startOffset, endOffset, converted);
+          }
+        });
+      }
+    }, null, document);
+    return startOffset + converted.length();
   }
 
   private static void moveCaretAndDontChangeSelection(final Editor editor, int offset, ScrollType scrollType) {

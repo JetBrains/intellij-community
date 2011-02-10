@@ -57,6 +57,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
             presentation.setText(updateMessage);
             presentation.setDescription(updateMessage);
+            enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
           }
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {

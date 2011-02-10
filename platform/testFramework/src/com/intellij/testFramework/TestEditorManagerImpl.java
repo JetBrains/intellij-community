@@ -124,7 +124,7 @@ import java.util.Map;
 
   @Override
   public VirtualFile getCurrentFile() {
-    return null;
+    return myActiveFile;
   }
 
   @Override

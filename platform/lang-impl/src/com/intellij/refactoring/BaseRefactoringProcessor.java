@@ -523,11 +523,7 @@ public abstract class BaseRefactoringProcessor {
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
-        public void run() {
-          execute(usages);
-        }
-      });
+      final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usages);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
@@ -537,6 +533,16 @@ public abstract class BaseRefactoringProcessor {
 
     prepareSuccessful();
     return true;
+  }
+
+  protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
+    final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
+      public void run() {
+        execute(usages);
+      }
+    });
+    conflictsDialog.setCommandName(getCommandName());
+    return conflictsDialog;
   }
 
   @NotNull

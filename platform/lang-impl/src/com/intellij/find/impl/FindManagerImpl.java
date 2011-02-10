@@ -655,11 +655,22 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
+  private boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, boolean forwardOrBackward) {
+    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
+      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
+      searchComponent.moveCursor(forwardOrBackward);
+      return true;
+    }
+    return false;
+  }
+
   public boolean findNextUsageInEditor(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
-
+      if (tryToFindNextUsageViaEditorSearchComponent(editor, true)) {
+        return true;
+      }
       FindModel model = getFindNextModel(editor);
       if (model != null && model.searchHighlighters()) {
         RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
@@ -670,6 +681,25 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     return myFindUsagesManager.findNextUsageInFile(fileEditor);
+  }
+
+  public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      TextEditor textEditor = (TextEditor)fileEditor;
+      Editor editor = textEditor.getEditor();
+      if (tryToFindNextUsageViaEditorSearchComponent(editor, false)) {
+        return true;
+      }
+      FindModel model = getFindNextModel(editor);
+      if (model != null && model.searchHighlighters()) {
+        RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
+        if (highlighters.length > 0) {
+          return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), false, false);
+        }
+      }
+    }
+
+    return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
   }
 
   private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
@@ -736,23 +766,6 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     return false;
-  }
-
-  public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
-    if (fileEditor instanceof TextEditor) {
-      TextEditor textEditor = (TextEditor)fileEditor;
-      Editor editor = textEditor.getEditor();
-
-      FindModel model = getFindNextModel(editor);
-      if (model != null && model.searchHighlighters()) {
-        RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
-        if (highlighters.length > 0) {
-          return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), false, false);
-        }
-      }
-    }
-
-    return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
   }
 
   public FindUsagesManager getFindUsagesManager() {

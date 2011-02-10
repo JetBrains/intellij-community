@@ -14,11 +14,15 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +71,28 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+    return parents(repo, ObjectsConvertor.VIRTUAL_FILEPATH.convert(file), revision);
+  }
+  
+  /**
+   * @see #parents(VirtualFile, FilePath, HgRevisionNumber)
+   */
+  @NotNull
+  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
+    return parents(repo, file, null);
+  }
+  
+  /**
+   * Parent(s) of the given revision of the given file. If there are two of them (in the case of merge) the first element of the pair
+   * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
+   * @param repo     repository to work on.
+   * @param file     filepath which revision's parents we are interested in. If null, the history of the whole repository is considered.
+   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
+   *         So one should check pair elements for null.
+   */
+  @NotNull
+  public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision);
     switch (revisions.size()) {
       case 1: return Pair.create(revisions.get(0), null);
@@ -130,8 +156,10 @@ public class HgWorkingCopyRevisionsCommand {
    * @param revision revision to execute on. If <code><b>null</b></code> then executed without the '-r' parameter, i.e. on the latest revision.
    * @return List of revisions.
    */
-  @NotNull
-  private List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo, @NotNull String command, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
+  private List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
+                                              @NotNull String command,
+                                              @Nullable FilePath file,
+                                              @Nullable HgRevisionNumber revision) {
     final List<String> args = new LinkedList<String>();
     args.add("--template");
     args.add("{rev}|{node|short}\\n");
@@ -140,7 +168,7 @@ public class HgWorkingCopyRevisionsCommand {
       args.add(revision.getChangeset());
     }
     if (file != null) { // NB: this must be the last argument
-      args.add(file.getPath());
+      args.add(HgUtil.getOriginalFileName(file, ChangeListManager.getInstance(myProject)).getPath());
     }
     final HgCommandResult result = HgCommandService.getInstance(myProject).execute(repo, command, args);
 

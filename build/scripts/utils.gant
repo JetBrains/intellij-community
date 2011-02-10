@@ -1,4 +1,5 @@
 import org.jetbrains.jps.Jps
+import org.jetbrains.jps.Module
 import org.jetbrains.jps.idea.IdeaProjectLoader
 
 includeTool << Jps
@@ -94,6 +95,18 @@ binding.setVariable("loadProject", {
   }
 
   project["compiler.resources.id"] = "idea.compiler.resources"
+})
+
+boolean hasSourceRoots(Module module) {
+  !module.sourceRoots.isEmpty()
+}
+
+binding.setVariable("printUnusedModules", {Set<String> usedModules ->
+  project.modules.values().each {Module m ->
+    if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
+      project.warning("Module $m.name is not used in project layout")
+    }
+  }
 })
 
 requireProperty("home", guessHome())

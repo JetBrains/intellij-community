@@ -1107,4 +1107,14 @@ public class ContainerUtil {
     }
     return to;
   }
+
+  public static <T> int indexOf(List<T> list, Condition<T> condition) {
+    for (int i = 0, listSize = list.size(); i < listSize; i++) {
+      T t = list.get(i);
+      if (condition.value(t)) {
+        return i;
+      }
+    }
+    return -1;
+  }
 }

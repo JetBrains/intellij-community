@@ -369,12 +369,13 @@
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule" order="after sameLogicalRoot"/>
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary" order="after sameModule"/>
 
-  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NegativeStatisticsWeigher" id="negativeStats" order="first"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NegativeStatisticsWeigher" id="negativeStats" order="first, after priority"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats" order="after negativeStats"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix" order="after stats"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity" order="after prefix"/>
 
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="sPriority" order="first"/>
+  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher$Negative" id="sPriority" order="first"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="sGrouping" order="after sPriority"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupStringWeigher" id="sLookupString" order="after sGrouping"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="sProximity" order="after sLookupString"/>

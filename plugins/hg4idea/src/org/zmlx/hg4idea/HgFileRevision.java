@@ -96,7 +96,9 @@ public class HgFileRevision implements VcsFileRevision {
   public void loadContent() throws VcsException {
     try {
       Charset charset = hgFile.toFilePath().getCharset();
-      String result = new HgCatCommand(project).execute(hgFile, vcsRevisionNumber, charset);
+
+      HgFile fileToCat = HgUtil.getFileNameInTargetRevision(project, vcsRevisionNumber, hgFile);
+      String result = new HgCatCommand(project).execute(fileToCat, vcsRevisionNumber, charset);
       if (result == null) {
         content = new byte[0];
       } else {

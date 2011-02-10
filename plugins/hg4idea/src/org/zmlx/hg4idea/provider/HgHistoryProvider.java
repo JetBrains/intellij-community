@@ -104,12 +104,12 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
   private static List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project, int limit) {
     final HgLogCommand logCommand = new HgLogCommand(project);
-    logCommand.setFollowCopies(true);
+    logCommand.setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
     return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
   }
 
   public boolean supportsHistoryForDirectories() {
-    return false;
+    return true;
   }
 }

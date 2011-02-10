@@ -20,7 +20,8 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
-import com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +42,38 @@ public class StatisticsUploadAssistant {
     return getData(Collections.<String>emptySet());
   }
 
-  public String getData(@NotNull Set<String> disabledGroups) {
+  public static boolean showNotification() {
+    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification();
+  }
+
+  public static boolean isTimeToSend() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+
+    return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
+  }
+
+  public static boolean isTimeToSend(UsageStatisticsPersistenceComponent settings) {
+    final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
+
+    return Math.abs(timeDelta) > settings.getPeriod().getMillis();
+  }
+
+  public static boolean isSendAllowed() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+
+    return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
+  }
+
+  public static boolean isSendAllowed(final SentUsagesPersistence settings) {
+    return settings != null && settings.isAllowed();
+  }
+
+  public static String getData(@NotNull Set<String> disabledGroups) {
     return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
   }
 
-  public void persistSentPatch(@NotNull String patchStr) {
-    persistSentPatch(patchStr, SentUsagesPersistenceComponent.getInstance());
+  public static void persistSentPatch(@NotNull String patchStr) {
+    persistSentPatch(patchStr, UsageStatisticsPersistenceComponent.getInstance());
   }
 
   public static void persistSentPatch(@NotNull String patchStr, @NotNull SentUsagesPersistence persistenceComponent) {
@@ -62,7 +90,7 @@ public class StatisticsUploadAssistant {
 
   @NotNull
   public static String getStringPatch(@NotNull Set<String> disabledGroups, Project... project) {
-    return getStringPatch(disabledGroups, project, SentUsagesPersistenceComponent.getInstance(), 0);
+    return getStringPatch(disabledGroups, project, UsageStatisticsPersistenceComponent.getInstance(), 0);
   }
 
   @NotNull

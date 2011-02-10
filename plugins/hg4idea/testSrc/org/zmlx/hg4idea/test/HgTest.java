@@ -31,11 +31,7 @@ import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 
 import static org.testng.Assert.assertTrue;
 
@@ -52,8 +48,8 @@ public abstract class HgTest extends AbstractVcsTestCase {
   protected static final String BDIR = "b";
   protected static final String BFILE = "b.txt";
   protected static final String BFILE_PATH = BDIR + File.separator + BFILE;
-  protected static final String FILE_CONTENT = "Sample file content.";
-  protected static final String FILE_CONTENT_2 = "some other file content";
+  protected static final String INITIAL_FILE_CONTENT = "Initial file content";
+  protected static final String UPDATED_FILE_CONTENT = "Updated file content";
 
   protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
   protected HgTestChangeListManager myChangeListManager;

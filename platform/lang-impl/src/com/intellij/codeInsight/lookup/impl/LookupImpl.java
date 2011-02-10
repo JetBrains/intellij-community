@@ -58,8 +58,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -341,49 +339,68 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    final Pair<LinkedHashSet<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
-    final LinkedHashSet<LookupElement> items = snapshot.first;
+    final Pair<List<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
+
+    final List<LookupElement> items = matchingItems(snapshot);
+
     checkMinPrefixLengthChanges(items);
 
+    boolean hasPreselected = !mySelectionTouched && items.contains(myPreselectedItem);
     LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
     String oldInvariant = mySelectionInvariant;
-    boolean hasExactPrefixes;
-    final boolean hasPreselectedItem;
-    final boolean hasItems;
-    DefaultListModel model = (DefaultListModel)myList.getModel();
-    final LookupElement preselectedItem = myPreselectedItem;
+
+    LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
+    model.addAll(getPrefixItems(items));
+    model.addAll(myFrozenItems);
+    addMostRelevantItems(model, snapshot.second);
+    if (hasPreselected) {
+      model.add(myPreselectedItem);
+    }
+
+    myPreferredItemsCount = model.size();
+    myFrozenItems.clear();
+    myFrozenItems.addAll(model);
+
+    model.addAll(addRemainingItemsLexicographically(model, items));
+
+    DefaultListModel listModel = (DefaultListModel)myList.getModel();
     synchronized (myList) {
-      model.clear();
+      listModel.clear();
 
-      Set<LookupElement> firstItems = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
-
-      hasExactPrefixes = addExactPrefixItems(model, firstItems, items);
-      addMostRelevantItems(model, firstItems, snapshot.second);
-      hasPreselectedItem = items.contains(preselectedItem) && addPreselectedItem(model, firstItems, preselectedItem);
-      myPreferredItemsCount = firstItems.size();
-
-      addRemainingItemsLexicographically(model, firstItems, items);
-
-      hasItems = model.getSize() != 0;
-      if (!hasItems) {
-        addEmptyItem(model);
+      if (!model.isEmpty()) {
+        for (LookupElement element : model) {
+          listModel.addElement(element);
+        }
+      }
+      else {
+        addEmptyItem(listModel);
       }
     }
 
-    updateListHeight(model);
+    updateListHeight(listModel);
 
     myAdComponent.setText(myAdText);
 
-    if (hasItems) {
+    if (!model.isEmpty()) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
 
-      if (isFocused() && (!hasExactPrefixes || mySelectionTouched)) {
-        restoreSelection(oldSelected, hasPreselectedItem, oldInvariant);
+      if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched)) {
+        restoreSelection(oldSelected, hasPreselected, oldInvariant);
       }
       else {
         myList.setSelectedIndex(0);
       }
     }
+  }
+
+  private List<LookupElement> matchingItems(Pair<List<LookupElement>, List<List<LookupElement>>> snapshot) {
+    final List<LookupElement> items = new ArrayList<LookupElement>();
+    for (LookupElement element : snapshot.first) {
+      if (prefixMatches(element)) {
+        items.add(element);
+      }
+    }
+    return items;
   }
 
   private boolean checkReused() {
@@ -463,46 +480,29 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return p;
   }
 
-  private void addRemainingItemsLexicographically(DefaultListModel model, Set<LookupElement> firstItems, Collection<LookupElement> allItems) {
+  private static List<LookupElement> addRemainingItemsLexicographically(Set<LookupElement> firstItems, Collection<LookupElement> allItems) {
+    List<LookupElement> model = new ArrayList<LookupElement>();
     for (LookupElement item : allItems) {
-      if (!firstItems.contains(item) && prefixMatches(item)) {
-        model.addElement(item);
+      if (!firstItems.contains(item)) {
+        model.add(item);
       }
     }
+    return model;
   }
 
-  private boolean addPreselectedItem(DefaultListModel model, Set<LookupElement> firstItems, @Nullable final LookupElement preselectedItem) {
-    final boolean hasPreselectedItem = !mySelectionTouched && preselectedItem != EMPTY_LOOKUP_ITEM && preselectedItem != null && prefixMatches(preselectedItem);
-    if (hasPreselectedItem && !firstItems.contains(preselectedItem)) {
-      firstItems.add(preselectedItem);
-      model.addElement(preselectedItem);
-    }
-    return hasPreselectedItem;
-  }
-
-  private void addMostRelevantItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<List<LookupElement>> sortedItems) {
-    for (LookupElement item : myFrozenItems) {
-      if (prefixMatches(item) && firstItems.add(item)) {
-        model.addElement(item);
-      }
-    }
-
-    if (firstItems.size() > MAX_PREFERRED_COUNT) return;
+  private void addMostRelevantItems(final Set<LookupElement> model, final Collection<List<LookupElement>> sortedItems) {
+    if (model.size() > MAX_PREFERRED_COUNT) return;
 
     for (final List<LookupElement> elements : sortedItems) {
       final List<LookupElement> suitable = new SmartList<LookupElement>();
       for (final LookupElement item : elements) {
-        if (!firstItems.contains(item) && prefixMatches(item)) {
+        if (!model.contains(item) && prefixMatches(item)) {
           suitable.add(item);
         }
       }
 
-      if (firstItems.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
-      for (final LookupElement item : suitable) {
-        firstItems.add(item);
-        model.addElement(item);
-        myFrozenItems.add(item);
-      }
+      if (model.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
+      model.addAll(suitable);
     }
   }
 
@@ -510,26 +510,28 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myFrozenItems.contains(element);
   }
 
-  private boolean addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<LookupElement> elements) {
+  private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements) {
     final LookupArranger arranger = getActualArranger();
-    List<LookupElement> sorted = new SortedList<LookupElement>(new Comparator<LookupElement>() {
+    final Comparator<LookupElement> itemComparator = arranger.getItemComparator();
+    List<LookupElement> better = new SortedList<LookupElement>(new Comparator<LookupElement>() {
+      @Override
       public int compare(LookupElement o1, LookupElement o2) {
-        //noinspection unchecked
-        return arranger.getRelevance(o1).compareTo(arranger.getRelevance(o2));
+        int i = arranger.getRelevance(o1).compareTo(arranger.getRelevance(o2));
+        return i != 0 || itemComparator == null ? i : itemComparator.compare(o1, o2);
       }
     });
-    for (final LookupElement item : elements) {
-      if (isExactPrefixItem(item)) {
-        sorted.add(item);
 
+    for (LookupElement element : elements) {
+      if (isExactPrefixItem(element)) {
+        better.add(element);
       }
     }
-    for (final LookupElement item : sorted) {
-      model.addElement(item);
-      firstItems.add(item);
-    }
 
-    return !firstItems.isEmpty();
+    return better;
+  }
+
+  private String itemPrefix(LookupElement element) {
+    return element.getPrefixMatcher().getPrefix() + myAdditionalPrefix;
   }
 
   private LookupArranger getActualArranger() {
@@ -540,13 +542,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private boolean isExactPrefixItem(LookupElement item) {
-    return item.getAllLookupStrings().contains(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix);
+    return item.getAllLookupStrings().contains(itemPrefix(item));
   }
 
   private boolean prefixMatches(final LookupElement item) {
+    if (!item.isValid()) return false;
+
     if (myAdditionalPrefix.length() == 0) return item.isPrefixMatched();
 
-    return item.getPrefixMatcher().cloneWithPrefix(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix).prefixMatches(item);
+    return item.getPrefixMatcher().cloneWithPrefix(itemPrefix(item)).prefixMatches(item);
   }
 
   /**

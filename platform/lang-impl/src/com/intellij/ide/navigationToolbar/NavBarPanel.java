@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
@@ -24,39 +23,30 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -64,9 +54,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.Icons;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -74,61 +61,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * User: anna
- * Date: 03-Nov-2005
+ * @author Konstantin Bulenkov
+ * @author Anna Kozlova
  */
 public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
-  /*private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
-  private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
-*/
-  private final ArrayList<MyItemLabel> myList = new ArrayList<MyItemLabel>();
-
   private final NavBarModel myModel;
+
+  private final NavBarPresentation myPresentation;
   private final Project myProject;
 
-  private Runnable myDetacher;
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final ArrayList<NavBarItem> myList = new ArrayList<NavBarItem>();
 
-  private final IdeView myIdeView = new MyIdeView();
+  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final IdeView myIdeView;
   private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
-  private ListPopupImpl myNodePopup = null;
 
+  private ListPopupImpl myNodePopup = null;
   private JComponent myHintContainer;
   private Component myContextComponent;
+
+
   private Runnable myRunWhenListRebuilt;
-
-
   private final MergingUpdateQueue myUpdateQueue;
   private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
-  private MyItemLabel myContextObject;
 
-  private PropertyChangeListener myFocusListener = new PropertyChangeListener() {
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      if ("focusOwner".equals(evt.getPropertyName()) || "permanentFocusOwner".equals(evt.getPropertyName())) {
-        restartRebuild();
-      }
-    }
-  };
-
-  private void restartRebuild() {
-    myUserActivityAlarm.cancelAllRequests();
-    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
-  }
-
+  private NavBarItem myContextObject;
   private Alarm myUserActivityAlarm = new Alarm();
   private Runnable myUserActivityAlarmRunnable = new Runnable() {
     @Override
@@ -136,13 +103,92 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       processUserActivity();
     }
   };
-
   private Runnable myUserActivityRunnable = new Runnable() {
     @Override
     public void run() {
       restartRebuild();
     }
   };
+
+  public NavBarPanel(final Project project) {
+    super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+    myProject = project;
+    myModel = new NavBarModel(myProject);
+    myIdeView = new NavBarIdeView(this);
+    myPresentation = new NavBarPresentation(myProject);
+
+    IdeEventQueue.getInstance().addActivityListener(myUserActivityRunnable);
+
+    myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
+
+    PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
+
+    setBorder(new NavBarBorder(false, -1));
+
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
+      @NotNull
+      protected PsiElement[] getSelectedElements() {
+        final PsiElement element = getSelectedElement(PsiElement.class);
+        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
+      }
+    };
+
+
+    queueModelUpdateFromFocus();
+    queueRebuildUi();
+  }
+
+  public ListPopupImpl getNodePopup() {
+    return myNodePopup;
+  }
+
+  public NavBarPresentation getPresentation() {
+    return myPresentation;
+  }
+
+  public void setContextComponent(Component contextComponent) {
+    myContextComponent = contextComponent;
+  }
+
+  public ArrayList<NavBarItem> getItems() {
+    return myList;
+  }
+
+  public void escape() {
+    myModel.setSelectedIndex(-1);
+    hideHint();
+    ToolWindowManager.getInstance(myProject).activateEditorComponent();
+  }
+
+  public void enter() {
+    final Object o = myModel.getSelectedValue();
+    navigateInsideBar(optimizeTarget(o));
+  }
+
+  public void moveHome() {
+    shiftFocus(-myModel.getSelectedIndex());
+  }
+
+  public void navigate() {
+    if (myModel.getSelectedIndex() != -1) {
+      doubleClick(myModel.getSelectedIndex());
+    }
+  }
+
+  public void moveDown() {
+    if (myModel.getSelectedIndex() != -1) {
+      ctrlClick(myModel.getSelectedIndex());
+    }
+  }
+
+  public void moveEnd() {
+    shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
+  }
+
+  void restartRebuild() {
+    myUserActivityAlarm.cancelAllRequests();
+    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
+  }
 
   private void processUserActivity() {
     if (!isShowing()) {
@@ -181,124 +227,11 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     });
   }
 
-  public NavBarPanel(final Project project) {
-    super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-
-    myProject = project;
-    myModel = new NavBarModel(myProject);
-
-    IdeEventQueue.getInstance().addActivityListener(myUserActivityRunnable);
-
-    myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
-
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        shiftFocus(-1);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), WHEN_FOCUSED);
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        shiftFocus(1);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), WHEN_FOCUSED);
-
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        shiftFocus(-myModel.getSelectedIndex());
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), WHEN_FOCUSED);
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), WHEN_FOCUSED);
-
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myModel.getSelectedIndex() != -1) {
-          ctrlClick(myModel.getSelectedIndex());
-        }
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), WHEN_FOCUSED);
-
-    final ActionListener dblClickAction = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myModel.getSelectedIndex() != -1) {
-          doubleClick(myModel.getSelectedIndex());
-        }
-      }
-    };
-
-    registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), WHEN_FOCUSED);
-
-    registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        final Object o = myModel.getSelectedValue();
-        navigateInsideBar(optimizeTarget(o));
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
-
-    registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        myModel.setSelectedIndex(-1);
-        ToolWindowManager.getInstance(project).activateEditorComponent();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
-
-    addFocusListener(new FocusListener() {
-      public void focusGained(final FocusEvent e) {
-        updateItems();
-
-        if (!isInFloatingMode() && myList.size() > 0) {
-          myContextObject = myList.get(myList.size() - 1);
-        } else {
-          myContextObject = null;
-        }
-      }
-
-      public void focusLost(final FocusEvent e) {
-        if (myProject.isDisposed()) {
-          myContextObject = null;
-          hideHint();
-          return;
-        }
-
-        // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
-        // but future focused component
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            processFocusLost(e);
-          }
-        });
-      }
-    });
-
-    installBorder(-1, false);
-
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        final PsiElement element = getSelectedElement(PsiElement.class);
-        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
-      }
-    };
-
-
-    queueModelUpdateFromFocus();
-    queueRebuildUi();
-  }
-
   private void queueModelUpdate(DataContext context) {
     _queueModelUpdate(context, null, false);
   }
 
-  private void queueModelUpdateFromFocus() {
+  void queueModelUpdateFromFocus() {
     queueModelUpdateFromFocus(false);
   }
 
@@ -355,13 +288,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myModelUpdating.set(false);
   }
 
-  private void queueRebuildUi() {
+  void queueRebuildUi() {
     myUpdateQueue.queue(new AfterModel("ui", 1) {
       @Override
       protected void _run() {
         rebuildUi();
       }
     });
+    queueRevalidate(null);
   }
 
   private void queueRevalidate(@Nullable final Runnable after) {
@@ -407,6 +341,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     });
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
+  public NavBarModel getModel() {
+    return myModel;
+  }
+
   private abstract class AfterModel extends Update {
     private AfterModel(Object identity, int priority) {
       super(identity, priority);
@@ -435,22 +377,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     return target;
   }
 
-  private void processFocusLost(final FocusEvent e) {
-    final boolean nodePopupInactive = myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused();
-    boolean childPopupInactive = !JBPopupFactory.getInstance().isChildPopupFocused(this);
-    if (nodePopupInactive && childPopupInactive) {
-      final Component opposite = e.getOppositeComponent();
-      if (opposite != null && opposite != this && !isAncestorOf(opposite) && !e.isTemporary()) {
-        myContextObject = null;
-        hideHint();
-      }
-    }
-
-    updateItems();
-  }
-
-  private void updateItems() {
-    for (MyItemLabel item : myList) {
+  void updateItems() {
+    for (NavBarItem item : myList) {
       item.update();
     }
   }
@@ -472,28 +400,35 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myUpdateQueue.flush();
   }
 
+  public void moveLeft() {
+    shiftFocus(-1);
+  }
+
+  public void moveRight() {
+    shiftFocus(1);
+  }
   private void shiftFocus(int direction) {
     myModel.setSelectedIndex(myModel.getIndexByModel(myModel.getSelectedIndex() + direction));
   }
 
-  private void scrollSelectionToVisible() {
+  void scrollSelectionToVisible() {
     final int selectedIndex = myModel.getSelectedIndex();
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
 
-    MyItemLabel selectedItem = myList.get(selectedIndex);
+    NavBarItem selectedItem = myList.get(selectedIndex);
     Rectangle rect = selectedItem.getBounds();
     scrollRectToVisible(rect);
   }
 
   @Nullable
-  private MyItemLabel getItem(int index) {
+  private NavBarItem getItem(int index) {
     if (index != -1 && index < myList.size()) {
       return myList.get(index);
     }
     return null;
   }
 
-  private boolean isInFloatingMode() {
+  boolean isInFloatingMode() {
     return myHint != null && myHint.isVisible();
   }
 
@@ -504,22 +439,22 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       return super.getPreferredSize();
     }
     else {
-      return new MyItemLabel(null, 0, Icons.DIRECTORY_OPEN_ICON, "Sample", SimpleTextAttributes.REGULAR_ATTRIBUTES).getPreferredSize();
+      return new NavBarItem(this, null, 0).getPreferredSize();
     }
   }
 
   private boolean isRebuildUiNeeded() {
     if (myList.size() == myModel.size()) {
       int index = 0;
-      for (MyItemLabel eachLabel : myList) {
+      for (NavBarItem eachLabel : myList) {
         Object eachElement = myModel.get(index);
         if (eachLabel.getObject() == null || !eachLabel.getObject().equals(eachElement)) {
           return true;
         }
 
 
-        SimpleTextAttributes modelAttributes1 = myModel.getTextAttributes(eachElement, true);
-        SimpleTextAttributes modelAttributes2 = myModel.getTextAttributes(eachElement, false);
+        SimpleTextAttributes modelAttributes1 = myPresentation.getTextAttributes(eachElement, true);
+        SimpleTextAttributes modelAttributes2 = myPresentation.getTextAttributes(eachElement, false);
         SimpleTextAttributes labelAttributes = eachLabel.getAttributes();
 
         if (!modelAttributes1.toTextAttributes().equals(labelAttributes.toTextAttributes())
@@ -542,18 +477,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myList.clear();
     for (int index = 0; index < myModel.size(); index++) {
       final Object object = myModel.get(index);
-      Icon closedIcon = getIcon(object, false);
-      Icon openIcon = getIcon(object, true);
-
-      if (closedIcon == null && openIcon != null) closedIcon = openIcon;
-      if (openIcon == null && closedIcon != null) openIcon = closedIcon;
-      if (openIcon == null) {
-        openIcon = closedIcon = EmptyIcon.create(5);
-      }
-
-      final MyItemLabel label =
-        new MyItemLabel(object, index, wrapIcon(openIcon, closedIcon, index), NavBarModel.getPresentableText(object, getWindow()),
-                        myModel.getTextAttributes(object, false));
+      final NavBarItem label = new NavBarItem(this, object, index);
 
       installActions(index, label);
       myList.add(label);
@@ -569,56 +493,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
   }
 
-  @Nullable
-  private static Icon getIcon(final Object object, final boolean isopen) {
-    if (!NavBarModel.checkValid(object)) return null;
-    if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
-    if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
-    try {
-      if (object instanceof PsiElement) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
-          public Icon compute() {
-            return ((PsiElement)object).isValid() ? ((PsiElement)object)
-              .getIcon(isopen ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED) : null;
-          }
-        });
-      }
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
-    if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
-    if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
-    return null;
-  }
-
-
-  private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
-    return new Icon() {
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (myModel.getSelectedIndex() == idx && myNodePopup != null && myNodePopup.isVisible()) {
-          openIcon.paintIcon(c, g, x, y);
-        }
-        else {
-          closedIcon.paintIcon(c, g, x, y);
-        }
-      }
-
-      public int getIconWidth() {
-        return openIcon.getIconWidth();
-      }
-
-      public int getIconHeight() {
-        return openIcon.getIconHeight();
-      }
-    };
-  }
-
   private void rebuildComponent() {
     removeAll();
 
-    for (MyItemLabel item : myList) {
+    for (NavBarItem item : myList) {
       add(item);
     }
 
@@ -633,12 +511,13 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }, "scrollToVisible");
   }
 
-  private Window getWindow() {
+  @Nullable
+  Window getWindow() {
     return !isShowing() ? null : (Window)UIUtil.findUltimateParent(this);
   }
 
   // ------ NavBar actions -------------------------
-  private void installActions(final int index, final MyItemLabel component) {
+  private void installActions(final int index, final NavBarItem component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
@@ -727,16 +606,16 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
 
     final Object object = myModel.getElement(index);
-    final java.util.List<Object> objects = myModel.calcElementChildren(object);
+    final java.util.List<Object> objects = myModel.getChildren(object);
 
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
       final Icon[] icons = new Icon[objects.size()];
       for (int i = 0; i < objects.size(); i++) {
         siblings[i] = objects.get(i);
-        icons[i] = getIcon(siblings[i], false);
+        icons[i] = NavBarPresentation.getIcon(siblings[i], false);
       }
-      final MyItemLabel item = getItem(index);
+      final NavBarItem item = getItem(index);
       LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() {
@@ -745,7 +624,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
         @NotNull
         public String getTextFor(final Object value) {
-          return NavBarModel.getPresentableText(value, null);
+          return NavBarPresentation.getPresentableText(value, null);
         }
 
         public boolean isSelectable(Object value) {
@@ -759,20 +638,17 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
             }
           });
         }
-
-        /*
-        public void canceled() {
-          super.canceled();
-          item.getLabel().setIcon(wrapIcon(NavBarModel.getIcon(object), index, Color.gray));
-        }
-        */
       };
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       myNodePopup = new ListPopupImpl(step) {
         protected ListCellRenderer getListElementRenderer() {
-          return new MySiblingsListCellRenderer();
+          return new NavBarListCellRenderer(myProject, NavBarPanel.this);
         }
 
+        @Override
+        public void cancel(InputEvent e) {
+          super.cancel(e);
+        }
       };
       myNodePopup.registerAction("left", KeyEvent.VK_LEFT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
@@ -855,7 +731,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_POPUP);
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR, group);
-    final MyItemLabel item = getItem(index);
+    final NavBarItem item = getItem(index);
     if (item != null) {
       popupMenu.getComponent().show(this, item.getX(), item.getY() + item.getHeight());
     }
@@ -873,7 +749,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
   }
 
-  private void hideHint() {
+  void hideHint() {
     if (myHint != null) {
       myHint.hide();
       myHint = null;
@@ -950,7 +826,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   @Nullable
   @SuppressWarnings({"unchecked"})
-  private <T> T getSelectedElement(Class<T> klass) {
+  <T> T getSelectedElement(Class<T> klass) {
     Object selectedValue1 = myModel.getSelectedValue();
     if (selectedValue1 == null) {
       final int modelSize = myModel.size();
@@ -969,7 +845,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       index = modelSize - 1;
     }
     if (index > -1 && index < modelSize) {
-      final MyItemLabel item = getItem(index);
+      final NavBarItem item = getItem(index);
       if (item != null) {
         return new Point(item.getX(), item.getY() + item.getHeight());
       }
@@ -977,104 +853,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     return null;
   }
 
-  // ----- inplace NavBar -----------
-  public void installListeners() {
-    final MyPsiTreeChangeAdapter psiListener = new MyPsiTreeChangeAdapter();
-    final MyProblemListener problemListener = new MyProblemListener();
-    final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-
-
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener);
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(problemListener);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener);
-
-
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(myFocusListener);
-
-    final MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-    busConnection.subscribe(NavBarModelListener.NAV_BAR, new NavBarModelListener() {
-      public void modelChanged() {
-        queueRebuildUi();
-      }
-
-      public void selectionChanged() {
-        updateItems();
-
-        scrollSelectionToVisible();
-      }
-    });
-
-    if (myDetacher != null) uninstallListeners();
-
-    myDetacher = new Runnable() {
-      public void run() {
-        busConnection.disconnect();
-
-        WolfTheProblemSolver.getInstance(myProject).removeProblemListener(problemListener);
-        PsiManager.getInstance(myProject).removePsiTreeChangeListener(psiListener);
-        FileStatusManager.getInstance(myProject).removeFileStatusListener(fileStatusListener);
-      }
-    };
-  }
-
-  public void uninstallListeners() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
-    IdeEventQueue.getInstance().removeActivityListener(myUserActivityRunnable);
-    myDetacher.run();
-    myDetacher = null;
-  }
-
-  public void installBorder(final int rightOffset, final boolean isDocked) {
-    setBorder(new Border() {
-      public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-        if (!isDocked) return;
-
-        g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
-
-        boolean drawTopBorder = true;
-        if (isDocked) {
-          if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-            drawTopBorder = false;
-          }
-        }
-
-        if (rightOffset == -1) {
-          if (drawTopBorder) {
-            g.drawLine(0, 0, width - 1, 0);
-          }
-        }
-        else {
-          if (drawTopBorder) {
-            g.drawLine(0, 0, width - rightOffset + 3, 0);
-          }
-        }
-        g.drawLine(0, height - 1, width, height - 1);
-
-        if (rightOffset == -1) {
-          g.drawLine(0, 0, 0, height);
-          g.drawLine(width - 1, 0, width - 1, height - 1);
-        }
-      }
-
-      public Insets getBorderInsets(final Component c) {
-        return new Insets(3, 4, 3, 4);
-      }
-
-      public boolean isBorderOpaque() {
-        return true;
-      }
-    });
-  }
-
   public void addNotify() {
     super.addNotify();
-    installListeners();
+    NavBarListener.subscribeTo(this);
   }
 
   public void removeNotify() {
     super.removeNotify();
-    uninstallListeners();
+    NavBarListener.unsubscribeFrom(this);
   }
 
   public void updateState(final boolean show) {
@@ -1086,7 +872,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         public void run() {
           final int selectedIndex = myModel.getSelectedIndex();
           if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
-            final MyItemLabel item = getItem(selectedIndex);
+            final NavBarItem item = getItem(selectedIndex);
             if (item != null) {
               IdeFocusManager.getInstance(myProject).requestFocus(item, true);
             }
@@ -1115,7 +901,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           public void actionPerformed(ActionEvent e) {
             hideHint();
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW);
         final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         if (editor == null) {
           myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -1173,243 +959,4 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
     return result;
   }
-
-  public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
-    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        if (scope instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)scope;
-          if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
-          return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
-        }
-        else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
-          final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
-          for (PsiDirectory directory : psiDirectories) {
-            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    });
-  }
-
-  protected class MyItemLabel extends SimpleColoredComponent {
-    private final String myText;
-    private final SimpleTextAttributes myAttributes;
-    private final int myIndex;
-    private final Icon myIcon;
-    private Object myObject;
-
-    public MyItemLabel(Object object, int idx, Icon icon, String presentableText, SimpleTextAttributes textAttributes) {
-      myObject = object;
-      myIndex = idx;
-      myText = presentableText;
-      myIcon = icon;
-      myAttributes = textAttributes;
-
-      setIpad(new Insets(1, 2, 1, 2));
-
-      update();
-    }
-
-    public Object getObject() {
-      return myObject;
-    }
-
-    public SimpleTextAttributes getAttributes() {
-      return myAttributes;
-    }
-
-    private void update() {
-      clear();
-
-      setIcon(myIcon);
-      boolean focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == NavBarPanel.this;
-
-      boolean selected = myModel.getSelectedIndex() == myIndex;
-
-      setPaintFocusBorder(!focused && selected);
-      setFocusBorderAroundIcon(false);
-
-      setBackground(selected && focused
-                    ? UIUtil.getListSelectionBackground()
-                    : (UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground()));
-
-      final Color fg = selected && focused
-                       ? UIUtil.getListSelectionForeground()
-                       : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1
-                         ? UIUtil.getInactiveTextColor()
-                         : myAttributes.getFgColor();
-
-      final Color bg = selected && focused ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
-
-      append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
-
-      repaint();
-    }
-  }
-
-  private final class MyIdeView implements IdeView {
-
-    public void selectElement(PsiElement element) {
-      myModel.updateModel(element);
-
-      if (element instanceof Navigatable) {
-        final Navigatable navigatable = (Navigatable)element;
-        if (navigatable.canNavigate()) {
-          ((Navigatable)element).navigate(true);
-        }
-      }
-      hideHint();
-    }
-
-    public PsiDirectory[] getDirectories() {
-      final PsiDirectory dir = getSelectedElement(PsiDirectory.class);
-      if (dir != null && dir.isValid()) {
-        return new PsiDirectory[]{dir};
-      }
-      final PsiElement element = getSelectedElement(PsiElement.class);
-      if (element != null && element.isValid()) {
-        final PsiFile file = element.getContainingFile();
-        if (file != null) {
-          final PsiDirectory psiDirectory = file.getContainingDirectory();
-          return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
-        }
-      }
-      final PsiDirectoryContainer directoryContainer = getSelectedElement(PsiDirectoryContainer.class);
-      if (directoryContainer != null) {
-        return directoryContainer.getDirectories();
-      }
-      final Module module = getSelectedElement(Module.class);
-      if (module != null && !module.isDisposed()) {
-        ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
-        final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
-        for (VirtualFile virtualFile : sourceRoots) {
-          final PsiDirectory directory = psiManager.findDirectory(virtualFile);
-          if (directory != null && directory.isValid()) {
-            dirs.add(directory);
-          }
-        }
-        return dirs.toArray(new PsiDirectory[dirs.size()]);
-      }
-      return PsiDirectory.EMPTY_ARRAY;
-    }
-
-    public PsiDirectory getOrChooseDirectory() {
-      return DirectoryChooserUtil.getOrChooseDirectory(this);
-    }
-
-  }
-
-  private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
-    public void childAdded(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childReplaced(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childMoved(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childrenChanged(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void propertyChanged(final PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-  }
-
-  private class MyModuleRootListener implements ModuleRootListener {
-    public void beforeRootsChange(ModuleRootEvent event) {
-    }
-
-    public void rootsChanged(ModuleRootEvent event) {
-      queueModelUpdateFromFocus();
-    }
-  }
-
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-
-    public void problemsAppeared(VirtualFile file) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void problemsDisappeared(VirtualFile file) {
-      queueModelUpdateFromFocus();
-    }
-
-  }
-
-  private class MyFileStatusListener implements FileStatusListener {
-
-    public void fileStatusesChanged() {
-      queueRebuildUi();
-    }
-
-    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-      queueRebuildUi();
-    }
-  }
-
-  private class MySiblingsListCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      setFocusBorderAroundIcon(false);
-      String name = NavBarModel.getPresentableText(value, getWindow());
-
-      Color color = list.getForeground();
-      boolean isProblemFile = false;
-      if (value instanceof PsiElement) {
-        final PsiElement psiElement = (PsiElement)value;
-        PsiFile psiFile = psiElement.getContainingFile();
-        if (psiFile != null) {
-          VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile != null) {
-            if (WolfTheProblemSolver.getInstance(myProject).isProblemFile(vFile)) {
-              isProblemFile = true;
-            }
-            FileStatus status = FileStatusManager.getInstance(myProject).getStatus(vFile);
-            color = status.getColor();
-          }
-        }
-        else {
-          isProblemFile = wolfHasProblemFilesBeneath(psiElement);
-        }
-      }
-      else if (value instanceof Module) {
-        final Module module = (Module)value;
-        isProblemFile = WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath(module);
-      }
-      else if (value instanceof Project) {
-        final Module[] modules = ModuleManager.getInstance((Project)value).getModules();
-        for (Module module : modules) {
-          if (WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath(module)) {
-            isProblemFile = true;
-            break;
-          }
-        }
-      }
-      SimpleTextAttributes nameAttributes;
-      if (isProblemFile) {
-        TextAttributes attributes = new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
-        nameAttributes = SimpleTextAttributes.fromTextAttributes(attributes);
-      }
-      else {
-        nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
-      }
-      append(name, nameAttributes);
-      // manually set icon opaque to prevent background artifacts
-      setIconOpaque(false);
-      setIcon(NavBarPanel.getIcon(value, false));
-      setPaintFocusBorder(false);
-      setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-    }
-  }
-
 }

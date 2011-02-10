@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="svn4idea" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="vcs-impl" />
@@ -23,7 +23,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module-library">
       <library>

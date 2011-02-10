@@ -18,6 +18,7 @@ package com.intellij.ui.popup;
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -37,7 +38,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -730,24 +733,26 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                         @Nullable final HyperlinkListener listener) {
 
 
-    final JEditorPane text = new JEditorPane();
-    text.setEditorKit(new HTMLEditorKit());
+    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setAwtTooltip(true), null);
+
     if (listener != null) {
       text.addHyperlinkListener(listener);
     }
-    text.setText(UIUtil.toHtml(htmlContent));
-    final JLabel label = new JLabel(text.getText());
-    final Dimension size = label.getPreferredSize();
     text.setEditable(false);
     NonOpaquePanel.setTransparent(text);
     text.setBorder(null);
-    text.setPreferredSize(size);
 
 
+    JLabel label = new JLabel();
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
     final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
-    textWrapper.add(text);
+    JScrollPane scrolledText = new JScrollPane(text);
+    scrolledText.setBackground(fillColor);
+    scrolledText.getViewport().setBackground(fillColor);
+    scrolledText.getViewport().setBorder(null);
+    scrolledText.setBorder(null);
+    textWrapper.add(scrolledText);
     content.add(textWrapper, BorderLayout.CENTER);
 
     final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());

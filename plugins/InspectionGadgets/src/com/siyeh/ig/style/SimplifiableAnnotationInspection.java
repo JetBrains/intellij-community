@@ -57,7 +57,6 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
         private final String replacement;
 
         public SimplifiableAnnotationFix(String replacement) {
-            super();
             this.replacement = replacement;
         }
 
@@ -127,19 +126,46 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
             } else if (attributes.length == 1) {
                 final PsiNameValuePair attribute = attributes[0];
                 @NonNls final String name = attribute.getName();
-                if (!"value".equals(name)) {
-                    return;
-                }
                 final PsiAnnotationMemberValue attributeValue =
                         attribute.getValue();
                 if (attributeValue == null) {
                     return;
                 }
+                final String attributeValueText;
+                if (!"value".equals(name)) {
+                    if (!(attributeValue instanceof PsiArrayInitializerMemberValue)) {
+                        return;
+                    }
+                    final PsiArrayInitializerMemberValue arrayValue =
+                            (PsiArrayInitializerMemberValue) attributeValue;
+                    final PsiAnnotationMemberValue[] initializers =
+                            arrayValue.getInitializers();
+                    if (initializers.length != 1) {
+                        return;
+                    }
+                    attributeValueText = initializers[0].getText();
+                } else {
+                    attributeValueText = attributeValue.getText();
+                }
                 final String annotationName = nameReferenceElement.getText();
                 final String replacementText = '@' + annotationName +
-                        '(' + attributeValue.getText() + ')';
+                        '(' + getAttributeValueText(attributeValue) + ')';
                 registerError(annotation, replacementText);
             }
+        }
+
+        private static String getAttributeValueText(
+                PsiAnnotationMemberValue value) {
+            if (value instanceof PsiArrayInitializerMemberValue) {
+                final PsiArrayInitializerMemberValue arrayValue =
+                        (PsiArrayInitializerMemberValue) value;
+                final PsiAnnotationMemberValue[] initializers =
+                        arrayValue.getInitializers();
+                if (initializers.length == 1) {
+                    return initializers[0].getText();
+                }
+            }
+            return value.getText();
         }
     }
 }

@@ -16,10 +16,7 @@
 
 package com.intellij.find.replaceInProject;
 
-import com.intellij.find.FindBundle;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
+import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -108,12 +105,7 @@ public class ReplaceInProjectManager {
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor != null) {
-      String s = editor.getSelectionModel().getSelectedText();
-      if (s != null && !s.contains("\r") && !s.contains("\n")) {
-        findModel.setStringToFind(s);
-      }
-    }
+    FindUtil.initStringToFindWithSelection(findModel, editor);
 
     findManager.showFindDialog(findModel, new Runnable() {
       public void run() {

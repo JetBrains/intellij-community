@@ -73,8 +73,8 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return new VirtualDomParentStrategy(parent);
   }
 
-  public boolean isValid() {
-    return myElement.isValid();
+  public String checkValidity() {
+    return myElement.isValid() ? null : "Invalid PSI";
   }
 
   public boolean equals(final Object o) {

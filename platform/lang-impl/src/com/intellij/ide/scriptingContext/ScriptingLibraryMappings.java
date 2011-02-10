@@ -187,8 +187,8 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     if (!((CompoundLibrary)container).containsLibrary(libName)) {
       ((CompoundLibrary)container).addLibrary(libraryModel);
       setMapping(file, container);
+      updateDependencies(getMappings());
     }
-    updateDependencies(getMappings());
   }
   
   public boolean isAssociatedWith(VirtualFile file, String libName) {

@@ -49,24 +49,34 @@ public abstract class BaseTestNGInspectionsTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    final String dataPath = PluginPathManager.getPluginHomePath("testng") + "/testData";
-    myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+          final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+          myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
+          final String dataPath = PluginPathManager.getPluginHomePath("testng") + "/testData";
+          myFixture.setTestDataPath(dataPath);
+          final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
 
-    builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
-//    builder.addContentRoot(dataPath);
-    builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    builder.addLibrary("junit", PathUtil.getJarPathForClass(TestCase.class));
-    builder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
-    myEnabledTool = getEnabledTool();
-    myFixture.enableInspections(myEnabledTool);
-    myFixture.setUp();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
-    myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+          builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
+          //    builder.addContentRoot(dataPath);
+          builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+          builder.addLibrary("junit", PathUtil.getJarPathForClass(TestCase.class));
+          builder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
+          myEnabledTool = getEnabledTool();
+          myFixture.enableInspections(myEnabledTool);
+          myFixture.setUp();
+          final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+          myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
+          LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
 
