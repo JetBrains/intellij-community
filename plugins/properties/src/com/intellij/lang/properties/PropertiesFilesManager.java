@@ -48,8 +48,9 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
   public void projectOpened() {
     final PropertyChangeListener myListener = new PropertyChangeListener() {
       public void propertyChange(final PropertyChangeEvent evt) {
-        if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
-            EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(evt.getPropertyName())
+        String propertyName = evt.getPropertyName();
+        if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(propertyName) ||
+            EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(propertyName)
           ) {
           DumbService.getInstance(myProject).smartInvokeLater(new Runnable(){
             public void run() {

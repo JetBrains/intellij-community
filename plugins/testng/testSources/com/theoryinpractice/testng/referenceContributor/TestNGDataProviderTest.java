@@ -29,7 +29,17 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          TestNGDataProviderTest.super.setUp();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @AfterMethod

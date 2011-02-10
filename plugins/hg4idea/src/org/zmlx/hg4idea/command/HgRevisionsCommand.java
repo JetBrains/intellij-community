@@ -14,12 +14,15 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgUtil;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -71,8 +74,10 @@ abstract class HgRevisionsCommand {
     String template = includeFiles ? LONG_TEMPLATE : SHORT_TEMPLATE;
     int itemCount = includeFiles ? LONG_ITEM_COUNT : SHORT_ITEM_COUNT;
 
+    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
+    HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(
-      hgCommandService, hgFile.getRepo(), template, limit, hgFile
+      hgCommandService, hgFile.getRepo(), template, limit, originalHgFile
     );
 
     List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();

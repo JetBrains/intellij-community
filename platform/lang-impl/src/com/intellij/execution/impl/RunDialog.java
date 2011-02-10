@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class RunDialog extends DialogWrapper {
+public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialogBase {
   private final Project myProject;
   private final RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
@@ -87,6 +87,7 @@ public class RunDialog extends DialogWrapper {
     return myCenterPanel;
   }
 
+  @Override
   public void setOKActionEnabled(final boolean isEnabled){
     super.setOKActionEnabled(isEnabled);
   }
@@ -129,6 +130,7 @@ public class RunDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public Executor getExecutor() {
     return myExecutor;
   }

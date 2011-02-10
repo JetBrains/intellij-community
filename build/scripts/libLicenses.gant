@@ -66,14 +66,16 @@ binding.setVariable("checkLibLicenses", {
   }
 });
 
-binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
+binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath, Set<String> usedModules ->
   checkLibLicenses();
-  generateLicensesTable(filePath)
+  generateLicensesTable(filePath, usedModules)
   notifyArtifactBuilt(filePath)
 })
 
-binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
+binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedModulesNames ->
+  project.info("Generating licenses table")
+  project.info("Used modules: $usedModulesNames")
+  Set<Module> usedModules = project.modules.values().findAll {usedModulesNames.contains(it.name)}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
@@ -83,9 +85,7 @@ binding.setVariable("generateLicensesTable", {String filePath ->
     }
   }
 
-  def usedModuleNames = usedModules.collect {it.name} as Set
-  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) || usedModuleNames.contains(it.attachedTo)}
-  project.info("Generating licenses table")
+  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) || usedModulesNames.contains(it.attachedTo)}
   project.info("Used libraries:")
   List<String> lines = []
   licenses.each {LibraryLicense lib ->
@@ -100,12 +100,18 @@ binding.setVariable("generateLicensesTable", {String filePath ->
   //}
 
   lines.sort(String.CASE_INSENSITIVE_ORDER)
-  FileWriter out = new FileWriter(filePath)
-  out.println("|| Software || Version || License ||")
-  lines.each {
-    out.println(it)
+  File file = new File(filePath)
+  file.parentFile.mkdirs()
+  FileWriter out = new FileWriter(file)
+  try {
+    out.println("|| Software || Version || License ||")
+    lines.each {
+      out.println(it)
+    }
   }
-  out.close()
+  finally {
+    out.close()
+  }
 })
 
 libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)", url: "http://www.incors.com/lookandfeel/", licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase")
@@ -166,3 +172,4 @@ libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: 
 libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "7.0.2", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 jetbrainsLibrary("JPS")
+jetbrainsLibrary("Maven Embedder")

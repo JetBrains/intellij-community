@@ -17,7 +17,6 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 
 class NonUndoableAction implements UndoableAction {
@@ -31,12 +30,12 @@ class NonUndoableAction implements UndoableAction {
     myRefs = new DocumentReference[]{ref};
   }
 
-  public final void undo() throws UnexpectedUndoException {
-    LOG.assertTrue(false);
+  public final void undo() {
+    LOG.error("Cannot undo");
   }
 
-  public void redo() throws UnexpectedUndoException {
-    LOG.assertTrue(false);
+  public void redo() {
+    LOG.error("Cannot redo");
   }
 
   public DocumentReference[] getAffectedDocuments() {

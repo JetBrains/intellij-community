@@ -537,6 +537,12 @@ public class OverrideImplementUtil {
       chooser.selectElements(isAll ? all : onlyPrimary);
     }
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      chooser.selectElements(all);
+      chooser.close(DialogWrapper.OK_EXIT_CODE);
+      return chooser;
+    }
+
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 

@@ -28,4 +28,12 @@ public abstract class SentUsagesPersistence {
 
   @NotNull
   public abstract Set<UsageDescriptor> getSentUsages();
+
+  public abstract boolean isAllowed();
+
+  public abstract boolean isShowNotification();
+
+  public abstract long getLastTimeSent();
+
+
 }

@@ -32,7 +32,7 @@ public abstract class CodeStyleFacade {
     return ServiceManager.getService(CodeStyleFacade.class);
   }
 
-  public static CodeStyleFacade getInstance(Project project) {
+  public static CodeStyleFacade getInstance(@Nullable Project project) {
     if (project == null) return getInstance();
     return ServiceManager.getService(project, CodeStyleFacade.class);
   }

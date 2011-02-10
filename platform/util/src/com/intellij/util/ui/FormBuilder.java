@@ -97,4 +97,8 @@ public class FormBuilder {
   public JPanel getPanel() {
     return panel;
   }
+
+  public int getLine() {
+    return line;
+  }
 }

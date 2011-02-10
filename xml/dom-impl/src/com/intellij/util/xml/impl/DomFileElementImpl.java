@@ -329,7 +329,19 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final boolean isValid() {
-    return myFile.isValid() && equals(myManager.getFileElement(myFile));
+    return checkValidity() == null;
+  }
+
+  @Nullable
+  public String checkValidity() {
+    if (!myFile.isValid()) {
+      return "Invalid file";
+    }
+    final DomFileElementImpl<DomElement> fileElement = myManager.getFileElement(myFile);
+    if (!equals(fileElement)) {
+      return "file element changed: " + fileElement;
+    }
+    return null;
   }
 
   @NotNull

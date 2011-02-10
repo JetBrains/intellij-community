@@ -29,6 +29,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Comparator;
 import java.util.List;
@@ -39,7 +40,6 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
-  public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
   private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
 
   public CompletionLookupArranger(final CompletionParameters parameters) {
@@ -95,16 +95,6 @@ public class CompletionLookupArranger extends LookupArranger {
     return info.getContext() + "###" + info.getValue();
   }
 
-  public Comparable[] getRelevanceWeight(final LookupElement item) {
-    if (item.getUserData(WEIGHT) != null) return item.getUserData(WEIGHT);
-
-    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation)};
-
-    item.putUserData(WEIGHT, result);
-
-    return result;
-  }
-
   public Comparable getSortingWeight(final LookupElement item) {
     final Comparable comparable = mySortingWeights.get(item);
     if (comparable != null) return comparable;
@@ -116,39 +106,25 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
 
-  public static int doCompare(final double priority1, final double priority2, final Comparable[] weight1, final Comparable[] weight2) {
-    if (priority1 != priority2) {
-      final double v = priority1 - priority2;
-      if (v > 0) return -1;
-      if (v < 0) return 1;
-    }
-
-    for (int i = 0; i < weight1.length; i++) {
-      final Comparable w1 = weight1[i];
-      final Comparable w2 = i < weight2.length ? weight2[i]:null;
-      if (w1 != null || w2 != null) {
-        if (w1 == null) return 1;
-        if (w2 == null) return -1;
-        //noinspection unchecked
-        final int res = w1.compareTo(w2);
-        if (res != 0) return -res;
-      }
-    }
-
-    return 0;
-  }
-
   @Override
   public LookupItemWeightComparable getRelevance(LookupElement item) {
-    LookupItemWeightComparable result = item.getUserData(RELEVANCE_KEY);
+    LookupItemWeightComparable result = getCachedRelevance(item);
     if (result != null) return result;
 
     final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
+    result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation));
 
     item.putUserData(RELEVANCE_KEY, result);
 
     return result;
   }
 
+  public static LookupItemWeightComparable getCachedRelevance(LookupElement item) {
+    return item.getUserData(RELEVANCE_KEY);
+  }
+
+  @TestOnly
+  public static void clearRelevanceCache(LookupElement item) {
+    item.putUserData(RELEVANCE_KEY, null);
+  }
 }

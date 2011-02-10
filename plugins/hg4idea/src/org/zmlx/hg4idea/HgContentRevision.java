@@ -48,7 +48,8 @@ public class HgContentRevision implements ContentRevision {
       if (myRevisionNumber.isWorkingVersion()) {
         content = VcsUtil.getFileContent(myHgFile.getFile().getPath());
       } else {
-        content = new HgCatCommand(myProject).execute(myHgFile, myRevisionNumber, getFile().getCharset());
+        HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
+        content = new HgCatCommand(myProject).execute(fileToCat, myRevisionNumber, getFile().getCharset());
       }
     }
     return content;

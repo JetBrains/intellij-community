@@ -350,11 +350,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          mySelectionAlarm.addRequest(new Runnable() {
-            public void run() {
-              panel.updateSelection();
-            }
-          }, 200);
+          if (mySelectionAlarm != null) {
+            mySelectionAlarm.addRequest(new Runnable() {
+              public void run() {
+                panel.updateSelection();
+              }
+            }, 200);
+          }
         }
       });
 

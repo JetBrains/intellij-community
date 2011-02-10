@@ -31,7 +31,6 @@ class EditorChangeAction extends BasicUndoableAction {
   private final CharSequence myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  private final boolean myBulkUpdate;
 
   public EditorChangeAction(DocumentEx document,
                             int offset,
@@ -45,8 +44,6 @@ class EditorChangeAction extends BasicUndoableAction {
     myNewString = newString == null ? "" : newString;
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
-
-    myBulkUpdate = document.isInBulkUpdate();
   }
 
   public void undo() {
@@ -64,8 +61,6 @@ class EditorChangeAction extends BasicUndoableAction {
   private void exchangeStrings(CharSequence newString, CharSequence oldString) {
     DocumentEx d = getDocument();
 
-    if (myBulkUpdate) d.setInBulkUpdate(true);
-
     if (newString.length() > 0 && oldString.length() == 0) {
       d.deleteString(myOffset, myOffset + newString.length());
     }
@@ -75,8 +70,6 @@ class EditorChangeAction extends BasicUndoableAction {
     else if (oldString.length() > 0 && newString.length() > 0) {
       d.replaceString(myOffset, myOffset + newString.length(), oldString);
     }
-
-    if (myBulkUpdate) d.setInBulkUpdate(false);
   }
 
   private void refreshFileStatus() {

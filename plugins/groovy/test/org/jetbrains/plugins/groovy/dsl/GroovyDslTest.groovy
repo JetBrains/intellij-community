@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
@@ -120,6 +121,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
     )
   }
 
+  @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
     return descriptor;
   }

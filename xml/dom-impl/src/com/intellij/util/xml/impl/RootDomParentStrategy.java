@@ -53,8 +53,9 @@ public class RootDomParentStrategy implements DomParentStrategy {
     return this;
   }
 
-  public boolean isValid() {
-    return myFileElement.isValid();
+  @Override
+  public String checkValidity() {
+    return myFileElement.checkValidity();
   }
 
   public boolean equals(final Object o) {

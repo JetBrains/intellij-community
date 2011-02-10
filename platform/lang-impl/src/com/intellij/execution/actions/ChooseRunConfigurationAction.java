@@ -487,7 +487,7 @@ public class ChooseRunConfigurationAction extends AnAction {
             protected void init() {
               setOKButtonText(executor.getStartActionText());
               setOKButtonIcon(executor.getIcon());
-
+              myExecutor = executor;
               super.init();
             }
           };

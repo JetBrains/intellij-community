@@ -35,51 +35,15 @@ public class HgCatCommand {
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
     final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
     final HgCommandService service = HgCommandService.getInstance(myProject);
-    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset);
+    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset, true);
 
     if (result == null) { // in case of error
       return null;
     }
     if (result.getExitValue() == 1) { // file not found in given revision
-      return getContentFollowingRenames(hgFile, vcsRevisionNumber, charset, service);
-    }
-    return result.getRawOutput();
-  }
-
-  @Nullable
-  private String getContentFollowingRenames(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset, HgCommandService service) {
-    final String renamedHgFile = new HgTrackFileNamesAccrossRevisionsCommand(myProject)
-      .execute(hgFile, getCurrentRevision(hgFile), vcsRevisionNumber.getRevision(), -1);
-    if (renamedHgFile == null) {
       return null;
     }
-    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat",
-                                                   createArguments(vcsRevisionNumber, renamedHgFile), charset);
-    return result != null ? result.getRawOutput() : null;
-  }
-
-  private String getCurrentRevision(HgFile hgFile) {
-    HgParentsCommand parentsCommand = new HgParentsCommand(myProject);
-    List<HgRevisionNumber> parents = parentsCommand.execute(hgFile.getRepo());
-
-    String currentRevision = "0";
-
-    if (parents.size() == 1) {
-      currentRevision = parents.get(0).getRevision();
-    } else if (parents.size() > 1) {
-      long maxParentNumber = Long.MIN_VALUE;
-
-      for (HgRevisionNumber revisionNumber : parents) {
-        long revisionAsLong = revisionNumber.getRevisionAsLong();
-
-        if (revisionAsLong > maxParentNumber) {
-          maxParentNumber = revisionAsLong;
-          currentRevision = revisionNumber.getRevision();
-        }
-      }
-    }
-
-    return currentRevision;
+    return result.getRawOutput();
   }
 
   private static List<String> createArguments(HgRevisionNumber vcsRevisionNumber, String fileName) {

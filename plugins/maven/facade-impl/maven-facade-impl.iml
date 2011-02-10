@@ -49,8 +49,11 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="Maven">
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -58,12 +61,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="Maven">
+      <library name="Maven Embedder">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -30,20 +30,14 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   private final TObjectHashingStrategy<M> myHashingStrategy;
   private final Function<T, M> myMapper;
 
-  public static final Function ID = new Function() {
-    public Object fun(Object o) {
-      return o;
-    }
-  };
-
   public UniqueResultsQuery(final Query<T> original) {
     //noinspection unchecked
-    this(original, TObjectHashingStrategy.CANONICAL, ID);
+    this(original, TObjectHashingStrategy.CANONICAL, Function.ID);
   }
 
   public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy) {
     //noinspection unchecked
-    this(original, hashingStrategy, ID);
+    this(original, hashingStrategy, Function.ID);
   }
 
   public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy, Function<T, M> mapper) {
@@ -70,7 +64,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
   @NotNull
   public Collection<T> findAll() {
-    if (myMapper == ID) {
+    if (myMapper == Function.ID) {
       Set<M> set = new THashSet<M>(myHashingStrategy);
       process(CommonProcessors.<T>alwaysTrue(), Collections.synchronizedSet(set));
       //noinspection unchecked

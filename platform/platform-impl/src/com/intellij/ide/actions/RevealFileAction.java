@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -27,22 +29,34 @@ public class RevealFileAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
-    if (file != null && file.isInLocalFileSystem()) {
-      if (SystemInfo.isMac) {
-        e.getPresentation().setText("Show in Finder");
-      } else {
-        e.getPresentation().setText("Show in Explorer");
-      }
+    final boolean isLocalFile = isLocalFile(file);
+    if (isLocalFile) {
+      e.getPresentation().setText(getActionName());
     } else {
       e.getPresentation().setEnabled(false);
     }
   }
 
+  public static boolean isLocalFile(@Nullable final VirtualFile file) {
+    return file != null && file.isInLocalFileSystem();
+  }
+
+  @NotNull
+  public static String getActionName() {
+    return SystemInfo.isMac ? "Show in Finder" : "Show in Explorer";
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    assert file != null;
+
+    revealFile(file);
+  }
+
+  public static void revealFile(@NotNull final VirtualFile file) {
     File ioFile = new File(file.getPresentableUrl());
     if (!ioFile.isDirectory()) {
       ioFile = ioFile.getParentFile();

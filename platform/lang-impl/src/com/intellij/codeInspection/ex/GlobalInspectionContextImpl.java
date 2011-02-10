@@ -528,10 +528,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (virtualFile != null) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
           if (SingleRootFileViewProvider.isTooLarge(virtualFile)) return;
-          if (localScopeFiles != null) {
-            if (localScopeFiles.contains(virtualFile)) return;
-            localScopeFiles.add(virtualFile);
-          }
+          if (localScopeFiles != null && !localScopeFiles.add(virtualFile)) return;
         }
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);

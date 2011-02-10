@@ -7,24 +7,6 @@ target('default' : "Developers update") {
   layoutFull(home, deploy)
 }
 
-def module(String name) {
-  ant.module(name: name)
-  markUsed(name)
-}
-
-def module(String name, Closure init) {
-  ant.module(name: name, init)
-  markUsed(name)
-}
-
-private def markUsed(String name) {
-  def module = project.modules[name]
-  // Can be null in "Developers update" since we are not actually loading modules.xml
-  if (module != null) {
-    module["used"] = true
-  }
-}
-
 private List platformImplementationModules() {
   return [
           "platform-impl",
@@ -86,7 +68,7 @@ def layoutFull(String home, String targetDirectory) {
     exclude(name: "tips")
   }
 
-  layout(targetDirectory) {
+  def info = layout(targetDirectory) {
     dir("lib") {
       jar("util.jar") { module("util") }
 
@@ -316,21 +298,9 @@ def layoutFull(String home, String targetDirectory) {
     }
   }
 
-  printUnusedModules()
+  printUnusedModules(info.usedModules)
 
   //reorder(targetDirectory)
-}
-
-def printUnusedModules() {
-  project.modules.values().each {Module m ->
-    if (m["used"] == null && hasSourceRoots(m)) {
-      project.warning("Module ${m.getName()} is not used in project layout")
-    }
-  }
-}
-
-boolean hasSourceRoots(Module module) {
-  !module.sourceRoots.isEmpty()
 }
 
 def layoutPlugin(String moduleName) {

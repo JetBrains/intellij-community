@@ -135,15 +135,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @Nullable
   public DomElement getParent() {
-    checkIsValid();
+    assertValid();
 
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getProxy();
   }
 
-  protected final void checkIsValid() {
-    if (!isValid()) {
-      LOG.error(myType.toString() + " @" + hashCode() + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
+  protected final void assertValid() {
+    final String s = checkValidity();
+    if (s != null) {
+      throw new AssertionError(myType.toString() + " @" + hashCode() + "\nclass=" + getClass() + "\nxml=" + getXmlElement() + "; " + s);
     }
   }
 
@@ -271,7 +272,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public XmlTag ensureTagExists() {
-    checkIsValid();
+    assertValid();
 
     XmlTag tag = getXmlTag();
     if (tag != null) return tag;
@@ -315,34 +316,49 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return getXmlTag().createChildTag(localName, tagName.getNamespace(element, getFile()), null, false);
   }
 
-  public boolean isValid() {
+  public final boolean isValid() {
+    return checkValidity() == null;
+  }
+
+  @Nullable
+  protected String checkValidity() {
     ProgressManager.checkCanceled();
     final DomParentStrategy parentStrategy = getParentStrategy();
-    if (!parentStrategy.isValid()) {
-      return false;
+    String error = parentStrategy.checkValidity();
+    if (error != null) {
+      return "Strategy: " + error;
     }
 
-    if (myLastModCount == myManager.getPsiModificationCount()) {
-      return true;
+    final long modCount = myManager.getPsiModificationCount();
+    if (myLastModCount == modCount) {
+      return null;
     }
 
     final XmlElement xmlElement = parentStrategy.getXmlElement();
     if (xmlElement != null) {
       final SemService semService = SemService.getSemService(myManager.getProject());
-      return rememberValidity(equals(semService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, xmlElement)));
+      final DomInvocationHandler actual = semService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, xmlElement);
+      if (!equals(actual)) {
+        return "element changed: " + this + "!=" + actual;
+      }
+      myLastModCount = modCount;
+      return null;
     }
 
     final DomInvocationHandler parent = getParentHandler();
-    return rememberValidity(parent != null && parent.isValid());
-  }
-
-
-  private boolean rememberValidity(boolean isValid) {
-    if (isValid) {
-      myLastModCount = myManager.getPsiModificationCount();
+    if (parent == null) {
+      return "no parent: " + getDomElementType();
     }
-    return isValid;
+
+    error = parent.checkValidity();
+    if (error != null) {
+      return "parent: " + error;
+    }
+
+    myLastModCount = modCount;
+    return null;
   }
+
 
   @NotNull
   public final DomGenericInfoEx getGenericInfo() {
@@ -576,7 +592,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
-     checkIsValid();
+     assertValid();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = getXmlTag();
     
@@ -732,7 +748,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    checkIsValid();
+    assertValid();
     final List<XmlTag> subTags = tagsGetter.fun(this);
     if (subTags.isEmpty()) return Collections.emptyList();
 

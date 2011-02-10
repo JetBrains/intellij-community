@@ -73,7 +73,7 @@ class RunConfigurable extends BaseConfigurable {
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private final Project myProject;
-  private final RunDialog myRunDialog;
+  private RunDialogBase myRunDialog;
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private final Tree myTree = new Tree(myRoot);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -90,7 +90,7 @@ class RunConfigurable extends BaseConfigurable {
     this(project, null);
   }
 
-  public RunConfigurable(final Project project, final RunDialog runDialog) {
+  public RunConfigurable(final Project project, final RunDialogBase runDialog) {
     myProject = project;
     myRunDialog = runDialog;
   }
@@ -245,6 +245,10 @@ class RunConfigurable extends BaseConfigurable {
     });
     sortTree(myRoot);
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  public void setRunDialog(final RunDialogBase runDialog) {
+    myRunDialog = runDialog;
   }
 
   private void updateRightPanel(final Configurable configurable) {
@@ -615,9 +619,9 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private void updateDialog() {
-    if (myRunDialog == null) return;
+    final Executor executor = myRunDialog != null ? myRunDialog.getExecutor() : null;
+    if (executor == null) return;
     final StringBuilder buffer = new StringBuilder();
-    Executor executor = myRunDialog.getExecutor();
     buffer.append(executor.getId());
     final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
     if (configuration != null) {
@@ -1074,5 +1078,16 @@ class RunConfigurable extends BaseConfigurable {
     public SingleConfigurationConfigurable getConfigurable() {
       return myConfigurable;
     }
+  }
+
+  public interface RunDialogBase {
+    void setOKActionEnabled(boolean isEnabled);
+
+    @Nullable
+    Executor getExecutor();
+
+    void setTitle(String title);
+
+    void clickDefaultButton();
   }
 }

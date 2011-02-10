@@ -1518,7 +1518,14 @@ public class JavaDocInfoGenerator {
         return text.length();
       }
 
-      int length = generateLink ? generateLink(buffer, qName, null, context, false) : 0;
+      int length;
+      if (generateLink) {
+        length = generateLink(buffer, qName, null, context, false);
+      }
+      else {
+        buffer.append(qName);
+        length = buffer.length();
+      }
 
       if (psiClass.hasTypeParameters()) {
         StringBuilder subst = new StringBuilder();

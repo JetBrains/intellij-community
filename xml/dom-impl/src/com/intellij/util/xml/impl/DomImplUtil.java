@@ -47,6 +47,25 @@ public class DomImplUtil {
   private DomImplUtil() {
   }
 
+  public static void assertValidity(DomElement element, String msg) {
+    if (element instanceof DomFileElementImpl) {
+      final String s = ((DomFileElementImpl)element).checkValidity();
+      if (s != null) {
+        throw new AssertionError(s);
+      }
+      return;
+    }
+
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+    assert handler != null;
+    try {
+      handler.assertValid();
+    }
+    catch (AssertionError e) {
+      throw new AssertionError(msg + e.getMessage());
+    }
+  }
+
   public static boolean isTagValueGetter(final JavaMethod method) {
     if (!isGetter(method)) {
       return false;

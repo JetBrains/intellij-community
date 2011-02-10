@@ -21,6 +21,7 @@ import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -31,6 +32,26 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
   }
 
   protected Set<UsageDescriptor> mySentDescriptors = new HashSet<UsageDescriptor>();
+  @NonNls private long mySentTime = 0;
+
+  @Override
+  public boolean isAllowed() {
+    return true;
+  }
+
+  @Override
+  public boolean isShowNotification() {
+    return false;
+  }
+
+  @Override
+  public long getLastTimeSent() {
+    return mySentTime;
+  }
+
+  public void setSentTime(long time) {
+      mySentTime = time;
+  }
 
   public void persistPatch(@NotNull Set<PatchedUsage> patchedDescriptors) {
     for (PatchedUsage patchedUsage : patchedDescriptors) {
@@ -42,7 +63,9 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
         mySentDescriptors.add(new UsageDescriptor(patchedUsage.getGroup(), patchedUsage.getKey(), patchedUsage.getValue()));
       }
     }
+    setSentTime(System.currentTimeMillis());
   }
+
 
   @NotNull
   public Set<UsageDescriptor> getSentUsages() {

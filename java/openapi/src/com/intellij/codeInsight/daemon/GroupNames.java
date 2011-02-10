@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,4 +73,5 @@ public interface GroupNames {
 
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
   String CONCURRENCY_ANNOTATION_ISSUES = "Concurrency annotation issues";
+  String JAVADOC_GROUP_NAME = InspectionsBundle.message("group.names.javadoc.issues");
 }

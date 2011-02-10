@@ -17,7 +17,10 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -27,6 +30,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -39,8 +43,17 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return;
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    @Nullable Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    @Nullable Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+
     String expression = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+
+    if (expression == null && editor != null) {
+      Document document = editor.getDocument();
+      TextRange range = evaluator.getExpressionRangeAtOffset(project, document, editor.getCaretModel().getOffset(), true);
+      expression = range == null ? null : document.getText(range);
+    }
+
     if (expression == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {

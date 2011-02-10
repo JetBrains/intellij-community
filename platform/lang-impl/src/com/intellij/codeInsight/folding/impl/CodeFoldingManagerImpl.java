@@ -296,4 +296,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, null);
     }
   }
+
+  @Override
+  public void allowFoldingOnCaretLine(@NotNull Editor editor) {
+    editor.putUserData(UpdateFoldRegionsOperation.ALLOW_FOLDING_ON_CARET_LINE_KEY, true);
+  }
 }

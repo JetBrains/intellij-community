@@ -84,6 +84,11 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     PsiMethod parentMethod = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class);
     assertEquals(method, parentMethod);
   }
+  public void testStaticImportConflict3() throws Exception {
+    final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)configureByFile();
+    final JavaResolveResult result = ref.advancedResolve(false);
+    assertResolvesToMethodInClass(result, "ToImportX2");
+  }
 
   public void testGenericsAndVarargsNoConflict() throws Exception {
     final PsiReference ref = configureByFile();
@@ -343,7 +348,7 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertThat(target, instanceOf(PsiMethod.class));
     assertThat(target.getParent(), instanceOf(PsiClass.class));
     final PsiParameter[] parameters = ((PsiMethod)target).getParameterList().getParameters();
-    assertTrue(parameters.length == 1);
+    assertEquals(1, parameters.length);
     assertTrue(parameters[0].getType() instanceof PsiArrayType);
   }
 

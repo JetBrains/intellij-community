@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -36,10 +35,11 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
   public MyResult weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     final Object object = item.getObject();
 
+    if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
+      return MyResult.localOrParameter;
+    }
+
     if (location.getCompletionType() == CompletionType.SMART) {
-      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
-        return MyResult.localOrParameter;
-      }
       if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
         return MyResult.superMethodParameters;
       }

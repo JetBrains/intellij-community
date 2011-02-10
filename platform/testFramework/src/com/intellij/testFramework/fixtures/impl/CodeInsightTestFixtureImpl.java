@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -179,11 +180,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) {
-    final String fullSourceFilePath = getTestDataPath() + "/" + sourceFilePath;
-    File fromFile = new File(fullSourceFilePath);
+    File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
     if (!fromFile.exists()) {
       fromFile = new File(sourceFilePath);
-      assert fromFile.exists() : "cannot find test data neither as \"" + fullSourceFilePath + "\" nor as \"" + sourceFilePath + "\"";
     }
 
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
@@ -191,13 +190,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
+      assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + getTestDataPath() + ")";
       return myTempDirFixture.copyFile(fromVFile, targetPath);
     }
+
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
     if (!destFile.exists()) {
-
       if (fromFile.isDirectory()) {
-        destFile.mkdirs();
+        assert destFile.mkdirs() : destFile;
       }
       else {
         try {
@@ -208,8 +208,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }
+
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
-    Assert.assertNotNull(file);
+    assert file != null : destFile;
     return file;
   }
 
@@ -900,7 +901,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @Nullable
   public LookupElement[] getLookupElements() {
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+    LookupImpl lookup = getLookup();
     if (lookup == null) {
       return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
     }
@@ -1382,6 +1383,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public int getCaretOffset() {
+    return myEditor.getCaretModel().getOffset();
+  }
+
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
@@ -1683,4 +1689,34 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testFolding(final String verificationFileName) {
     testFoldingRegions(verificationFileName, false);
   }
+
+  @Override
+  public void assertPreferredCompletionItems(final int selected, @NonNls final String... expected) {
+    final LookupImpl lookup = getLookup();
+    assertNotNull(lookup);
+    final JList list = lookup.getList();
+    final List<LookupElement> model = lookup.getItems();
+    final List<String> actual = new ArrayList<String>();
+    final int count = lookup.getPreferredItemsCount();
+    for (int i = 0; i < count; i++) {
+      actual.add(model.get(i).getLookupString());
+    }
+    if (!actual.equals(Arrays.asList(expected))) {
+      final List<String> strings = new ArrayList<String>();
+      for (int i = 0; i < model.size(); i++) {
+        final LookupElement item = model.get(i);
+        strings.add(item.getLookupString() + CompletionLookupArranger.getCachedRelevance(item));
+        if (i == count - 1) {
+          strings.add("---");
+        }
+      }
+      assertOrderedEquals(strings, expected);
+    }
+    assertEquals(selected, list.getSelectedIndex());
+  }
+
+  private LookupImpl getLookup() {
+    return (LookupImpl)LookupManager.getActiveLookup(myEditor);
+  }
+
 }
