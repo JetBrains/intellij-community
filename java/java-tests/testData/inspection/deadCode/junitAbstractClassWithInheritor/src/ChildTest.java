@@ -1,0 +1,1 @@
+public class ChildTest extends AbstractTest {}
