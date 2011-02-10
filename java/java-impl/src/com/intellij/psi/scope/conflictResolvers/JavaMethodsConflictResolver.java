@@ -213,11 +213,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (returnType1 != null && returnType2 != null) {
           returnType1 = infoSubstitutor.substitute(returnType1);
           returnType2 = existing.getSubstitutor().substitute(returnType2);
-          if (returnType1.isAssignableFrom(returnType2)) {
+          if (!returnType1.equals(returnType2) && returnType1.isAssignableFrom(returnType2)) {
             conflicts.remove(i);
             i--;
+            continue;
           }
         }
+
+        // prefer derived class
+        signatures.put(signature, info);
       }
     }
   }
