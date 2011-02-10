@@ -15,60 +15,22 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.NotNullFactory;
+import com.intellij.codeInsight.lookup.ClassifierFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class CompletionSorter {
-  private final ClassifyingSequencer mySequencer;
+public abstract class CompletionSorter {
+  public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher weigher);
 
-  private CompletionSorter(ClassifyingSequencer sequencer) {
-    mySequencer = sequencer;
-  }
+  public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher weigher);
 
-  public static CompletionSorter defaultSorter() {
-    final ClassifyingSequencer sequencer = new ClassifyingSequencer(); //todo
-    return new CompletionSorter(sequencer);
-  }
+  public abstract CompletionSorter weigh(LookupElementWeigher weigher);
 
-  public static CompletionSorter emptySorter() {
-    return new CompletionSorter(new ClassifyingSequencer());
-  }
+  public abstract CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory);
 
-  private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
-    return new ClassifierFactory<LookupElement>(weigher.toString()) {
-      @Override
-      public Classifier<LookupElement> createClassifier(NotNullFactory<Classifier<LookupElement>> next) {
-        return new ComparingClassifier<LookupElement>(next) {
-          @Override
-          public Comparable getWeight(LookupElement element) {
-            return weigher.weigh(element);
-          }
-        };
-      }
-    };
-  }
-
-  public CompletionSorter weighBefore(@NotNull final String beforeId, final LookupElementWeigher weigher) {
-    return withClassifier(beforeId, true, weighingFactory(weigher));
-  }
-
-  public CompletionSorter weighAfter(@NotNull final String afterId, final LookupElementWeigher weigher) {
-    return withClassifier(afterId, false, weighingFactory(weigher));
-  }
-
-  public CompletionSorter weigh(final LookupElementWeigher weigher) {
-    return withClassifier(weighingFactory(weigher));
-  }
-
-  public CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory) {
-    return new CompletionSorter(mySequencer.withClassifier(factory));
-  }
-
-  public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
-    return new CompletionSorter(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
-  }
+  public abstract CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory);
 }

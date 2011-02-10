@@ -20,8 +20,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public interface Classifier<T> {
-  void addElement(T t);
+public abstract class Classifier<T> {
+  public abstract void addElement(T t);
 
-  List<List<T>> classifyContents();
+  public abstract List<List<T>> classifyContents();
 }

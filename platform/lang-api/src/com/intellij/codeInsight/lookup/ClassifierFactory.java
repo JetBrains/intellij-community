@@ -60,7 +60,7 @@ public abstract class ClassifierFactory<T> {
     };
   }
 
-  private static class ListClassifier<T> implements Classifier<T> {
+  private static class ListClassifier<T> extends Classifier<T> {
     private final List<T> myElements;
 
     private ListClassifier(final List<T> list) {

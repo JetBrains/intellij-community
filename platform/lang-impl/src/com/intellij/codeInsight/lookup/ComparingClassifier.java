@@ -25,7 +25,7 @@ import java.util.TreeMap;
 /**
 * @author peter
 */
-public abstract class ComparingClassifier<T> implements Classifier<T> {
+public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final SortedMap<Comparable, Classifier<T>> myWeightMap = new TreeMap<Comparable, Classifier<T>>();
   private final Factory<Classifier<T>> myContinuation;
 
