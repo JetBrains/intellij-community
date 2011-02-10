@@ -72,8 +72,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable {
 
     List<AnAction> createActions = ContainerUtil.map2List(groups, new Function<TaskRepositoryType, AnAction>() {
       public AnAction fun(final TaskRepositoryType group) {
-        String text = "New " + group.getName() + " server";
-        return new IconWithTextAction(text, text, group.getIcon()) {
+        String description = "New " + group.getName() + " server";
+        return new IconWithTextAction(group.getName(), description, group.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             TaskRepository repository = group.createRepository();
