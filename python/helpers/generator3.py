@@ -176,7 +176,7 @@ def cleanup(value):
     result = []
     prev = i = 0
     length = len(value)
-    first_non_ascii = chr(127)
+    last_ascii = chr(127)
     while i < length:
         c = value[i]
         replacement = None
@@ -184,7 +184,7 @@ def cleanup(value):
             replacement = '\\n'
         elif c == '\r':
             replacement = '\\r'
-        elif c < ' ' or c > first_non_ascii:
+        elif c < ' ' or c > last_ascii:
             replacement = '?' # NOTE: such chars are rare; long swaths could be precessed differently
         if replacement:
             result.append(value[prev:i])
@@ -1454,6 +1454,7 @@ class ModuleRedeclarator(object):
         deco_comment = ""
         mod_class_method_tuple = (p_modname, classname, p_name)
         ret_literal = None
+        is_init = False
         # any decorators?
         if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
             deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
@@ -1535,7 +1536,7 @@ class ModuleRedeclarator(object):
             if not is_init or funcdoc != p_class.__doc__:
                 self.outDocstring(out, funcdoc, indent + 1)
         # body
-        if ret_literal:
+        if ret_literal and not is_init:
           out(indent + 1, "return ", ret_literal)
         else:
           out(indent + 1, "pass" )
@@ -1638,14 +1639,11 @@ class ModuleRedeclarator(object):
                 if prop_descr is None:
                     continue # explicitly omitted
                 acc_line, getter = prop_descr
-                accessors = [
-                    "r" in acc_line and getter or "None",
-                    "w" in acc_line and a_setter or "None",
-                    "d" in acc_line and a_deleter or "None"
-                ]
-                out(indent+1, item_name, " = property(", ", ".join(accessors), ")")
+                out(indent+1, item_name,
+                    " = property(", self.formatAccessors(acc_line, getter, a_setter, a_deleter), ")"
+                )
             else:
-                out(indent+1, item_name, " = property(lambda self: object(), None, None) # default")
+                out(indent+1, item_name, " = property(lambda self: object()) # default")
             # TODO: handle prop's docstring
         if properties:
             out(0, "") # empty line after the block
@@ -1658,6 +1656,20 @@ class ModuleRedeclarator(object):
         #
         if not methods and not properties and not others:
             out(indent + 1, "pass")
+
+    def formatAccessors(self, accessor_line, getter, setter, deleter):
+        "Nicely format accessors, like 'getter, fdel=deleter'"
+        ret = []
+        consecutive = True
+        for key, arg, par in (('r', 'fget', getter), ('w', 'fset', setter), ('d', 'fdel', deleter)):
+            if key in accessor_line:
+                if consecutive:
+                    ret.append(par)
+                else:
+                    ret.append(arg + "=" + par)
+            else:
+                consecutive = False
+        return ", ".join(ret)
 
 
     def redoSimpleHeader(self, p_name):
