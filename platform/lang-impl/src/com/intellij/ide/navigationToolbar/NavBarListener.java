@@ -157,11 +157,15 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   private void rebuildUI() {
-    myPanel.queueRebuildUi();
+    if (myPanel.isShowing()) {
+      myPanel.queueRebuildUi();
+    }
   }
 
   private void updateModel() {
-    myPanel.queueModelUpdateFromFocus();
+    if (myPanel.isShowing()) {
+      myPanel.queueModelUpdateFromFocus();
+    }
   }
 
   @Override
@@ -222,9 +226,11 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    final String name = evt.getPropertyName();
-    if ("focusOwner".equals(name) || "permanentFocusOwner".equals(name)) {
-      myPanel.restartRebuild();
+    if (myPanel.isShowing()) {
+      final String name = evt.getPropertyName();
+      if ("focusOwner".equals(name) || "permanentFocusOwner".equals(name)) {
+        myPanel.restartRebuild();
+      }
     }
   }
 
