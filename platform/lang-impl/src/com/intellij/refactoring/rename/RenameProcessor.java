@@ -142,11 +142,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
       }
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, new Runnable() {
-        public void run() {
-          execute(refUsages.get());
-        }
-      });
+      ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();

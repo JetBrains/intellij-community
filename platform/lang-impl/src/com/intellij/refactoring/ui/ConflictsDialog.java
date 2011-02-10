@@ -52,6 +52,7 @@ public class ConflictsDialog extends DialogWrapper{
   private MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
   private Runnable myDoRefactoringRunnable;
+  private String myCommandName;
 
   public ConflictsDialog(Project project, MultiMap<PsiElement, String> conflictDescriptions) {
     this(project, conflictDescriptions, null);
@@ -126,6 +127,10 @@ public class ConflictsDialog extends DialogWrapper{
     return panel;
   }
 
+  public void setCommandName(String commandName) {
+    myCommandName = commandName;
+  }
+
   private class CancelAction extends AbstractAction {
     public CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
@@ -190,7 +195,7 @@ public class ConflictsDialog extends DialogWrapper{
       if (myDoRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
           myDoRefactoringRunnable,
-          RefactoringBundle.message("retry.command"), "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
+          myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"), "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);
     }

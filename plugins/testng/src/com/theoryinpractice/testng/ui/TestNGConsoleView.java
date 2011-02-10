@@ -125,7 +125,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void finish() {
-    if (currentTest != null) {
+    if (currentTest != null && testNGResults != null) {
       final TestProxy failedToStart = testNGResults.getFailedToStart();
       if (failedToStart != null) {
         currentTest.addChild(failedToStart);
