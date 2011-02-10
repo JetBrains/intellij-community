@@ -45,6 +45,7 @@ import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -54,62 +55,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Abstract class that implement rebase operation for several roots based on rebase operation (for example update operation)
  */
 public abstract class GitBaseRebaseProcess {
-  /**
-   * The logger
-   */
-  private static final Logger LOG = Logger.getInstance("#git4idea.update.GitUpdateProcess");
-  /**
-   * The context project
-   */
+  private static final Logger LOG = Logger.getInstance(GitBaseRebaseProcess.class);
   protected Project myProject;
-  /**
-   * The vcs service
-   */
   protected GitVcs myVcs;
-  /**
-   * The exception list
-   */
   protected List<VcsException> myExceptions;
-  /**
-   * Copy of local change list
-   */
-  private List<LocalChangeList> myListsCopy;
-  /**
-   * The changes sorted by root
-   */
-  private final Map<VirtualFile, List<Change>> mySortedChanges = new HashMap<VirtualFile, List<Change>>();
-  /**
-   * The change list manager
-   */
+
+  private List<LocalChangeList> myListsCopy; // Copy of local change list
+  private final Map<VirtualFile, List<Change>> mySortedChanges = new HashMap<VirtualFile, List<Change>>(); // The changes sorted by root
   private final ChangeListManagerEx myChangeManager;
-  /**
-   * Roots to stash
-   */
+
   private final HashSet<VirtualFile> myRootsToStash = new HashSet<VirtualFile>();
-  /**
-   * True if the stash was created (root local variable)
-   */
-  private boolean stashCreated;
-  /**
-   * The stash message
-   */
+  private boolean stashCreated; // True if the stash was created (root local variable)
   private String myStashMessage;
-  /**
-   * Shelve manager instance
-   */
+
   private ShelveChangesManager myShelveManager;
-  /**
-   * The shelved change list (used when {@code SHELVE} policy is selected)
-   */
   private ShelvedChangeList myShelvedChangeList;
-  /**
-   * Contains vcs roots for which commits were skipped
-   */
-  private SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> mySkippedCommits =
-    new TreeMap<VirtualFile, List<GitRebaseUtils.CommitInfo>>(GitUtil.VIRTUAL_FILE_COMPARATOR);
-  /**
-   * The progress indicator to use
-   */
+  // Contains vcs roots for which commits were skipped
+  private SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> mySkippedCommits = new TreeMap<VirtualFile, List<GitRebaseUtils.CommitInfo>>(GitUtil.VIRTUAL_FILE_COMPARATOR);
   private ProgressIndicator myProgressIndicator;
 
   public GitBaseRebaseProcess(final GitVcs vcs, final Project project, List<VcsException> exceptions) {
@@ -129,23 +91,25 @@ public abstract class GitBaseRebaseProcess {
     LOG.info("GitBaseRebaseProcess.doUpdate started");
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     projectManager.blockReloadingProjectOnExternalChanges();
-    this.myProgressIndicator = progressIndicator;
+    myProgressIndicator = progressIndicator;
     try {
-      if (areRootsUnderRebase(roots)) return;
-      if (!saveProjectChangesBeforeUpdate()) return;
+      if (isRebaseInProgressAndNotify(roots)) {
+        return;
+      }
+      if (!saveProjectChangesBeforeUpdate()) { // TODO: unite with saveRootChangesBeforeUpdate, show notification in case of failure
+        return;
+      }
+
+      if (!allTrackedBranchesConfigured(roots)) {
+        return;
+      }
+
       try {
         for (final VirtualFile root : roots) {
           List<GitRebaseUtils.CommitInfo> skippedCommits = null;
           try {
-            // check if there is a remote for the branch
-            final GitBranch branch = GitBranch.current(myProject, root);
-            if (branch == null) {
-              continue;
-            }
-            final String value = branch.getTrackedRemoteName(myProject, root);
-            if (value == null || value.length() == 0) {
-              continue;
-            }
+
+
             final Ref<Boolean> cancelled = new Ref<Boolean>(false);
             final Ref<Throwable> ex = new Ref<Throwable>();
             saveRootChangesBeforeUpdate(root);
@@ -214,14 +178,44 @@ public abstract class GitBaseRebaseProcess {
             myExceptions.add(ex);
           }
         }
+      } finally {
+        restoreProjectChangesAfterUpdate(); // TODO: unite with restoreRootChangesAfterUpdate
       }
-      finally {
-        restoreProjectChangesAfterUpdate();
-      }
-    }
-    finally {
+    } finally {
       projectManager.unblockReloadingProjectOnExternalChanges();
     }
+  }
+
+  /**
+   * For each root check that the repository is on branch, and this branch is tracking a remote branch.
+   * If it is not true for at least one of roots, notify and return false.
+   * If branch configuration is OK for all roots, return true.
+   */
+  private boolean allTrackedBranchesConfigured(@NotNull Set<VirtualFile> roots) {
+    for (VirtualFile root : roots) {
+      try {
+        final GitBranch branch = GitBranch.current(myProject, root);
+        if (branch == null) {
+          GitUIUtil.notifyImportantError(myProject, "Can't update: no current branch",
+                                         "You are in 'detached HEAD' state, which means that you're not on any branch.<br/>" +
+                                         "Checkout a branch to make update possible.");
+          return false;
+        }
+        final String value = branch.getTrackedRemoteName(myProject, root);
+        if (value == null || value.length() == 0) {
+          final String branchName = branch.getName();
+          GitUIUtil.notifyImportantError(myProject, "Can't update: no tracked branch",
+                                         "No tracked branch configured for branch " + branchName +
+                                         "<br/>To make your branch track a remote branch call, for example,<br/>" +
+                                         "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+          return false;
+        }
+      } catch (VcsException e) {
+        GitUIUtil.notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -496,7 +490,7 @@ public abstract class GitBaseRebaseProcess {
    * @param roots the roots to check
    * @return true if some roots are being rebased
    */
-  private boolean areRootsUnderRebase(Set<VirtualFile> roots) {
+  private boolean isRebaseInProgressAndNotify(Set<VirtualFile> roots) {
     Set<VirtualFile> rebasingRoots = new TreeSet<VirtualFile>(GitUtil.VIRTUAL_FILE_COMPARATOR);
     for (final VirtualFile root : roots) {
       if (GitRebaseUtils.isRebaseInTheProgress(root)) {
@@ -507,15 +501,9 @@ public abstract class GitBaseRebaseProcess {
       final StringBuilder files = new StringBuilder();
       for (VirtualFile r : rebasingRoots) {
         files.append(GitBundle.message("update.root.rebasing.item", r.getPresentableUrl()));
-        //noinspection ThrowableInstanceNeverThrown
         myExceptions.add(new VcsException(GitBundle.message("update.root.rebasing", r.getPresentableUrl())));
       }
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(myProject, GitBundle.message("update.root.rebasing.message", files.toString()),
-                                   GitBundle.message("update.root.rebasing.title"));
-        }
-      });
+      GitUIUtil.notifyImportantError(myProject, GitBundle.message("update.root.rebasing.title"), GitBundle.message("update.root.rebasing.message", files.toString()));
       return true;
     }
     return false;
