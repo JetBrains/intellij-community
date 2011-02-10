@@ -16,14 +16,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NotNullFactory;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * @author peter
@@ -50,8 +44,8 @@ public class CompletionSorter {
       public Classifier<LookupElement> createClassifier(NotNullFactory<Classifier<LookupElement>> next) {
         return new ComparingClassifier<LookupElement>(next) {
           @Override
-          Comparable getWeight(LookupElement o) {
-            return weigher.weigh(o);
+          public Comparable getWeight(LookupElement element) {
+            return weigher.weigh(element);
           }
         };
       }
@@ -77,36 +71,4 @@ public class CompletionSorter {
   public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
     return new CompletionSorter(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
   }
-
-  private static abstract class ComparingClassifier<T> implements Classifier<T> {
-    private final SortedMap<Comparable, Classifier<T>> myWeightMap = new TreeMap<Comparable, Classifier<T>>();
-    private final Factory<Classifier<T>> myContinuation;
-
-    protected ComparingClassifier(Factory<Classifier<T>> next) {
-      this.myContinuation = next;
-    }
-
-    abstract Comparable getWeight(T t);
-
-    @Override
-    public void addElement(T t) {
-      final Comparable weight = getWeight(t);
-      Classifier<T> next = myWeightMap.get(weight);
-      if (next == null) {
-        myWeightMap.put(weight, next = myContinuation.create());
-      }
-      next.addElement(t);
-    }
-
-    @Override
-    public List<List<T>> classifyContents() {
-      List<List<T>> result = new ArrayList<List<T>>();
-      for (Classifier<T> classifier : myWeightMap.values()) {
-        result.addAll(classifier.classifyContents());
-      }
-      return result;
-    }
-  }
-
-
 }

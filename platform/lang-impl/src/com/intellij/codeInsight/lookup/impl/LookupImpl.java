@@ -56,7 +56,7 @@ import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.SortedList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -511,23 +511,24 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private List<LookupElement> getPrefixItems(final Collection<LookupElement> elements) {
-    final LookupArranger arranger = getActualArranger();
-    final Comparator<LookupElement> itemComparator = arranger.getItemComparator();
-    List<LookupElement> better = new SortedList<LookupElement>(new Comparator<LookupElement>() {
-      @Override
-      public int compare(LookupElement o1, LookupElement o2) {
-        int i = arranger.getRelevance(o1).compareTo(arranger.getRelevance(o2));
-        return i != 0 || itemComparator == null ? i : itemComparator.compare(o1, o2);
-      }
-    });
-
+    List<LookupElement> better = new ArrayList<LookupElement>();
     for (LookupElement element : elements) {
       if (isExactPrefixItem(element)) {
         better.add(element);
       }
     }
 
-    return better;
+    final LookupArranger arranger = getActualArranger();
+    final Comparator<LookupElement> itemComparator = arranger.getItemComparator();
+    if (itemComparator != null) {
+      Collections.sort(better, itemComparator);
+    }
+
+    final Classifier<LookupElement> classifier = arranger.createRelevanceClassifier();
+    for (LookupElement element : better) {
+      classifier.addElement(element);
+    }
+    return ContainerUtil.flatten(classifier.classifyContents());
   }
 
   private String itemPrefix(LookupElement element) {

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.util.NotNullFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -56,6 +57,17 @@ public abstract class LookupArranger {
 
   public int suggestPreselectedItem(List<LookupElement> sorted) {
     return 0;
+  }
+
+  public Classifier<LookupElement> createRelevanceClassifier() {
+    final Comparator<LookupElement> c = getItemComparator();
+    final NotNullFactory<Classifier<LookupElement>> next = c != null ? ClassifierFactory.sortingListClassifier(c) : ClassifierFactory.<LookupElement>listClassifier();
+    return new ComparingClassifier<LookupElement>(next) {
+      @Override
+      public Comparable getWeight(LookupElement element) {
+        return getRelevance(element);
+      }
+    };
   }
 
   @Nullable

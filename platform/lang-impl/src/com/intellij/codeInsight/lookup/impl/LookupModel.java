@@ -15,13 +15,9 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupArranger;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementAction;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
@@ -46,8 +42,8 @@ public class LookupModel {
   @SuppressWarnings({"unchecked"}) private final Map<LookupElement, String> myItemPresentations = new THashMap<LookupElement, String>(TObjectHashingStrategy.IDENTITY);
   private final List<LookupElement> myItems = new ArrayList<LookupElement>();
   private SortedList<LookupElement> mySortedItems;
-  private TreeMap<Comparable, SortedList<LookupElement>> myRelevanceGroups;
   private LookupArranger myArranger;
+  private Classifier<LookupElement> myRelevanceClassifier;
 
   public List<LookupElement> getItems() {
     synchronized (lock) {
@@ -59,7 +55,7 @@ public class LookupModel {
     synchronized (lock) {
       myItems.clear();
       mySortedItems.clear();
-      myRelevanceGroups.clear();
+      myRelevanceClassifier = myArranger.createRelevanceClassifier();
     }
   }
 
@@ -67,13 +63,7 @@ public class LookupModel {
     synchronized (lock) {
       myItems.add(item);
       mySortedItems.add(item);
-
-      final Comparable relevance = myArranger.getRelevance(item);
-      SortedList<LookupElement> group = myRelevanceGroups.get(relevance);
-      if (group == null) {
-        myRelevanceGroups.put(relevance, group = new SortedList<LookupElement>(mySortedItems.getComparator()));
-      }
-      group.add(item);
+      myRelevanceClassifier.addElement(item);
     }
   }
 
@@ -107,13 +97,8 @@ public class LookupModel {
   public Pair<List<LookupElement>, List<List<LookupElement>>> getModelSnapshot() {
     synchronized (lock) {
       final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
-      final List<List<LookupElement>> relevanceGroups = ContainerUtil.map(myRelevanceGroups.values(), new Function<SortedList<LookupElement>, List<LookupElement>>() {
-        @Override
-        public List<LookupElement> fun(SortedList<LookupElement> lookupElements) {
-          return new ArrayList<LookupElement>(lookupElements);
-        }
-      });
-      return Pair.create(sorted, relevanceGroups);
+      final List<List<LookupElement>> groups = myRelevanceClassifier.classifyContents();
+      return Pair.create(sorted, groups);
     }
   }
 
@@ -151,7 +136,7 @@ public class LookupModel {
 
       final Comparator<LookupElement> comparator = arranger.getItemComparator();
       mySortedItems = new SortedList<LookupElement>(comparator == null ? COMMUNISM : comparator);
-      myRelevanceGroups = new TreeMap<Comparable, SortedList<LookupElement>>();
+      myRelevanceClassifier = myArranger.createRelevanceClassifier();
     }
   }
 }

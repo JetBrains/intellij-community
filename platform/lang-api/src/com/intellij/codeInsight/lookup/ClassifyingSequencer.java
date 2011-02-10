@@ -17,12 +17,10 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullFactory;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ClassifyingSequencer {
@@ -65,7 +63,7 @@ public class ClassifyingSequencer {
 
   private static <T> Classifier<T> createClassifier(final int index, final List<ClassifierFactory<T>> components) {
     if (index == components.size()) {
-      return new LeafClassifier<T>();
+      return ClassifierFactory.<T>listClassifier().create();
     }
 
     return components.get(index).createClassifier(new NotNullFactory<Classifier<T>>() {
@@ -80,19 +78,6 @@ public class ClassifyingSequencer {
     return createClassifier(0, myMembers);
   }
 
-  private static class LeafClassifier<T> implements Classifier<T> {
-    private final List<T> myElements = new SmartList<T>();
-
-    @Override
-    public void addElement(T t) {
-      myElements.add(t);
-    }
-
-    @Override
-    public List<List<T>> classifyContents() {
-      return Collections.singletonList(myElements);
-    }
-  }
 
 }
 

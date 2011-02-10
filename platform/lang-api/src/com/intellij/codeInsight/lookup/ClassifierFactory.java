@@ -16,6 +16,13 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.NotNullFactory;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.SortedList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author peter
@@ -32,4 +39,42 @@ public abstract class ClassifierFactory<T> {
   }
 
   public abstract Classifier<T> createClassifier(NotNullFactory<Classifier<T>> next);
+
+  public static <T> NotNullFactory<Classifier<T>> listClassifier() {
+    return new NotNullFactory<Classifier<T>>() {
+      @NotNull
+      @Override
+      public Classifier<T> create() {
+        return new ListClassifier<T>(new SmartList<T>());
+      }
+    };
+  }
+
+  public static <T> NotNullFactory<Classifier<T>> sortingListClassifier(final Comparator<T> comparator) {
+    return new NotNullFactory<Classifier<T>>() {
+      @NotNull
+      @Override
+      public Classifier<T> create() {
+        return new ListClassifier<T>(new SortedList<T>(comparator));
+      }
+    };
+  }
+
+  private static class ListClassifier<T> implements Classifier<T> {
+    private final List<T> myElements;
+
+    private ListClassifier(final List<T> list) {
+      myElements = list;
+    }
+
+    @Override
+    public void addElement(T t) {
+      myElements.add(t);
+    }
+
+    @Override
+    public List<List<T>> classifyContents() {
+      return Collections.singletonList(myElements);
+    }
+  }
 }
