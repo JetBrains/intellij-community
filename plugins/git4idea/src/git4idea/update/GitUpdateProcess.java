@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * This class encapsulates update operation from update environment. This allows to customize this operation when needed.
  */
-public class GitUpdateProcess extends GitBaseRebaseProcess {
+public class GitUpdateProcess extends GitUpdater {
 
   /**
    * The settings to use

@@ -32,7 +32,7 @@ import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
-import git4idea.update.GitBaseRebaseProcess;
+import git4idea.update.GitUpdater;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,10 +44,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * This is subclass of {@link git4idea.update.GitBaseRebaseProcess} that implement rebase operation for {@link GitPushActiveBranchesDialog}.
+ * This is subclass of {@link git4idea.update.GitUpdater} that implement rebase operation for {@link GitPushActiveBranchesDialog}.
  * This operation reorders commits if needed.
  */
-public class GitPushRebaseProcess extends GitBaseRebaseProcess {
+public class GitPushRebaseProcess extends GitUpdater {
   /**
    * The logger
    */

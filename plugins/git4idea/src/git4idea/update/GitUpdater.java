@@ -52,10 +52,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Abstract class that implement rebase operation for several roots based on rebase operation (for example update operation)
+ * Common class which handles update from remote repository via merge or rebase strategies.
  */
-public abstract class GitBaseRebaseProcess {
-  private static final Logger LOG = Logger.getInstance(GitBaseRebaseProcess.class);
+public abstract class GitUpdater {
+  private static final Logger LOG = Logger.getInstance(GitUpdater.class);
   protected Project myProject;
   protected GitVcs myVcs;
   protected List<VcsException> myExceptions;
@@ -74,7 +74,7 @@ public abstract class GitBaseRebaseProcess {
   private SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> mySkippedCommits = new TreeMap<VirtualFile, List<GitRebaseUtils.CommitInfo>>(GitUtil.VIRTUAL_FILE_COMPARATOR);
   private ProgressIndicator myProgressIndicator;
 
-  public GitBaseRebaseProcess(final GitVcs vcs, final Project project, List<VcsException> exceptions) {
+  public GitUpdater(final GitVcs vcs, final Project project, List<VcsException> exceptions) {
     myVcs = vcs;
     myProject = project;
     myExceptions = exceptions;
@@ -82,16 +82,17 @@ public abstract class GitBaseRebaseProcess {
   }
 
   /**
-   * Perform rebase operation
+   * Update depending on the chosen strategy.
    *
-   * @param progressIndicator the progress indicator to use
-   * @param roots             the vcs roots
+   * @param progressIndicator the progress indicator of overall update process
+   * @param roots             roots to be updated
    */
   public void doUpdate(ProgressIndicator progressIndicator, Set<VirtualFile> roots) {
-    LOG.info("GitBaseRebaseProcess.doUpdate started");
+    LOG.info("doUpdate started");
+    myProgressIndicator = progressIndicator;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     projectManager.blockReloadingProjectOnExternalChanges();
-    myProgressIndicator = progressIndicator;
+
     try {
       if (isRebaseInProgressAndNotify(roots)) {
         return;
@@ -99,7 +100,6 @@ public abstract class GitBaseRebaseProcess {
       if (!saveProjectChangesBeforeUpdate()) { // TODO: unite with saveRootChangesBeforeUpdate, show notification in case of failure
         return;
       }
-
       if (!allTrackedBranchesConfigured(roots)) {
         return;
       }
@@ -239,7 +239,7 @@ public abstract class GitBaseRebaseProcess {
    * Restore project changes after update
    */
   private void restoreProjectChangesAfterUpdate() {
-    LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy() + " myShelvedChangeList: " + myShelvedChangeList);
+    LOG.info("restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy() + " myShelvedChangeList: " + myShelvedChangeList);
     if (mySkippedCommits.size() > 0) {
       GitSkippedCommits.showSkipped(myProject, mySkippedCommits);
     }
@@ -255,7 +255,7 @@ public abstract class GitBaseRebaseProcess {
       final boolean isStash = getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH;
       HashSet<File> filesToRefresh = isStash ? new HashSet<File>() : null;
       for (LocalChangeList changeList : myListsCopy) {
-        LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate refreshing files from changelist " + changeList);
+        LOG.info("restoreProjectChangesAfterUpdate refreshing files from changelist " + changeList);
         for (Change c : changeList.getChanges()) {
           ContentRevision after = c.getAfterRevision();
           if (after != null) {
@@ -349,7 +349,7 @@ public abstract class GitBaseRebaseProcess {
    * @return false, if update process needs to be aborted
    */
   private boolean saveProjectChangesBeforeUpdate() {
-    LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate update policy: " + getUpdatePolicy());
+    LOG.info("saveProjectChangesBeforeUpdate update policy: " + getUpdatePolicy());
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
       myStashMessage = makeStashMessage();
       myListsCopy = myChangeManager.getChangeListsCopy();
@@ -404,9 +404,9 @@ public abstract class GitBaseRebaseProcess {
       }
       if (changes.size() > 0) {
         myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
-        LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate shelving changes");
+        LOG.info("saveProjectChangesBeforeUpdate shelving changes");
         myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, myExceptions);
-        LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate shelved changes to " + myShelvedChangeList);
+        LOG.info("saveProjectChangesBeforeUpdate shelved changes to " + myShelvedChangeList);
         if (myShelvedChangeList == null) {
           return false;
         }
