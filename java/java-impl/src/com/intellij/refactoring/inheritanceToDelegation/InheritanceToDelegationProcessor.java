@@ -202,12 +202,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
       analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
-        ConflictsDialog conflictsDialog =
-          new ConflictsDialog(myProject, conflicts, new Runnable() {
-            public void run() {
-              execute(usagesIn);
-            }
-          });
+        ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()){
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();
