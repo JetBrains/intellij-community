@@ -389,6 +389,17 @@
                         serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
+
+
+
+    <!-- Locale -->
+    <colorSettingsPage implementation="com.jetbrains.django.localization.LocaleColorsPage"/>
+    <lang.syntaxHighlighterFactory key="Locale"
+                                   implementationClass="com.jetbrains.django.localization.LocaleHighlighterFactory"/>
+    <lang.parserDefinition language="Locale" implementationClass="com.jetbrains.django.localization.LocaleParserDefinition"/>
+    <fileTypeFactory implementation="com.jetbrains.django.localization.LocaleFileTypeFactory"/>
+    <annotator language="Locale" implementationClass="com.jetbrains.django.localization.validation.LocaleAnnotatingVisitor"/>
+    <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
   </extensions>
 
   <extensionPoints>
