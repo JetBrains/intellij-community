@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.openapi.util.NotNullFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -27,17 +26,13 @@ import java.util.List;
  */
 public abstract class LookupArranger {
   public static final LookupArranger DEFAULT = new LookupArranger() {
-    @Override
-    public Comparable getRelevance(LookupElement element) {
-      return 0;
-    }
 
+    @Override
+    public Classifier<LookupElement> createRelevanceClassifier() {
+      return ClassifierFactory.<LookupElement>listClassifier().create();
+    }
   };
   public static final LookupArranger LEXICOGRAPHIC = new LookupArranger() {
-    @Override
-    public Comparable getRelevance(LookupElement element) {
-      return 0;
-    }
 
     @Override
     public Comparator<LookupElement> getItemComparator() {
@@ -48,9 +43,12 @@ public abstract class LookupArranger {
         }
       };
     }
-  };
 
-  public abstract Comparable getRelevance(LookupElement element);
+    @Override
+    public Classifier<LookupElement> createRelevanceClassifier() {
+      return ClassifierFactory.sortingListClassifier(getItemComparator()).create();
+    }
+  };
 
   public void itemSelected(LookupElement item, final Lookup lookup) {
   }
@@ -59,16 +57,7 @@ public abstract class LookupArranger {
     return 0;
   }
 
-  public Classifier<LookupElement> createRelevanceClassifier() {
-    final Comparator<LookupElement> c = getItemComparator();
-    final NotNullFactory<Classifier<LookupElement>> next = c != null ? ClassifierFactory.sortingListClassifier(c) : ClassifierFactory.<LookupElement>listClassifier();
-    return new ComparingClassifier<LookupElement>(next) {
-      @Override
-      public Comparable getWeight(LookupElement element) {
-        return getRelevance(element);
-      }
-    };
-  }
+  public abstract Classifier<LookupElement> createRelevanceClassifier();
 
   @Nullable
   public Comparator<LookupElement> getItemComparator() {

@@ -16,10 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupArranger;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.util.Key;
@@ -29,6 +26,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Comparator;
@@ -47,6 +45,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   @Override
+  @NotNull
   public Comparator<LookupElement> getItemComparator() {
     return new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
@@ -106,17 +105,21 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
 
-  @Override
-  public LookupItemWeightComparable getRelevance(LookupElement item) {
-    LookupItemWeightComparable result = getCachedRelevance(item);
-    if (result != null) return result;
+  public Classifier<LookupElement> createRelevanceClassifier() {
+    return new ComparingClassifier<LookupElement>(ClassifierFactory.sortingListClassifier(getItemComparator())) {
+      @Override
+      public Comparable getWeight(LookupElement item) {
+        LookupItemWeightComparable result = getCachedRelevance(item);
+        if (result != null) return result;
 
-    final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation));
+        final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
+        result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation));
 
-    item.putUserData(RELEVANCE_KEY, result);
+        item.putUserData(RELEVANCE_KEY, result);
 
-    return result;
+        return result;
+      }
+    };
   }
 
   public static LookupItemWeightComparable getCachedRelevance(LookupElement item) {
