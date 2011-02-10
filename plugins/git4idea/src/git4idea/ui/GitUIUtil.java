@@ -62,14 +62,22 @@ public class GitUIUtil {
     Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION), project);
   }
 
+  public static void notifyError(Project project, String title, String description) {
+    notifyError(project, title, description, GitVcs.NOTIFICATION_GROUP_ID);
+  }
+
+  public static void notifyImportantError(Project project, String title, String description) {
+    notifyError(project, title, description, GitVcs.IMPORTANT_ERROR_NOTIFICATION);
+  }
+
   /**
    * Displays an error notification.
    */
-  public static void notifyError(Project project, String title, String description) {
+  public static void notifyError(Project project, String title, String description, String id) {
     if (StringUtil.isEmptyOrSpaces(description)) {
       description = title;
     }
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
+    Notifications.Bus.notify(new Notification(id, title, description, NotificationType.ERROR), project);
   }
 
   public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
