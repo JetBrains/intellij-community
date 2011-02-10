@@ -49,12 +49,12 @@ public class VcsUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages() {
+  public static Set<UsageDescriptor> getApplicationUsages() {
     return getApplicationUsages(VcsStatisticsPersistenceComponent.getInstance());
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
+  public static Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
     final Map<String, Integer> vcsUsagesMap = new HashMap<String, Integer>();
 
     for (Set<UsageDescriptor> descriptors : persistence.getVcsUsageMap().values()) {

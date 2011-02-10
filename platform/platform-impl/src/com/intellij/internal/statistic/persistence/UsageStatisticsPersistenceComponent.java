@@ -16,6 +16,7 @@
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -41,11 +43,12 @@ import java.util.Set;
       file = "$APP_CONFIG$/usages.statistics.xml"
     )}
 )
-public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceComponent
+public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements ApplicationComponent, PersistentStateComponent<Element> {
 
   @NonNls private boolean isAllowed = false;
   @NonNls private boolean isShowNotification = true;
+  @NotNull private SendPeriod myPeriod = SendPeriod.WEEKLY;
 
   @NonNls private static final String DATA_ATTR = "data";
   @NonNls private static final String GROUP_TAG = "group";
@@ -54,13 +57,14 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
 
   @NonNls private static final String LAST_TIME_ATTR = "time";
   @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
+  @NonNls private static final String PERIOD_ATTR = "period";
   @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
 
-  public static SentUsagesPersistenceComponent getInstance() {
-    return ApplicationManager.getApplication().getComponent(SentUsagesPersistenceComponent.class);
+  public static UsageStatisticsPersistenceComponent getInstance() {
+    return ApplicationManager.getApplication().getComponent(UsageStatisticsPersistenceComponent.class);
   }
 
-  public SentUsagesPersistenceComponent() {
+  public UsageStatisticsPersistenceComponent() {
   }
 
   public void loadState(final Element element) {
@@ -88,6 +92,8 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) ? true : Boolean.parseBoolean(isShowNotificationValue));
+
+    setPeriod(parsePeriod(element.getAttributeValue(SHOW_NOTIFICATION_ATTR)));
   }
 
   public Element getState() {
@@ -106,8 +112,26 @@ public class SentUsagesPersistenceComponent extends BasicSentUsagesPersistenceCo
     element.setAttribute(LAST_TIME_ATTR, String.valueOf(getLastTimeSent()));
     element.setAttribute(IS_ALLOWED_ATTR, String.valueOf(isAllowed()));
     element.setAttribute(SHOW_NOTIFICATION_ATTR, String.valueOf(isShowNotification()));
+    element.setAttribute(PERIOD_ATTR, myPeriod.getName());
 
     return element;
+  }
+
+  @NotNull
+  public SendPeriod getPeriod() {
+    return myPeriod;
+  }
+
+  public void setPeriod(@NotNull SendPeriod period) {
+    myPeriod = period;
+  }
+
+  @NotNull
+  private static SendPeriod parsePeriod(@Nullable String periodAttrValue) {
+    if (SendPeriod.DAILY.getName().equals(periodAttrValue)) return SendPeriod.DAILY;
+    if (SendPeriod.MONTHLY.getName().equals(periodAttrValue)) return SendPeriod.MONTHLY;
+
+    return SendPeriod.WEEKLY;
   }
 
   public void setAllowed(boolean allowed) {

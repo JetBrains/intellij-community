@@ -20,7 +20,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
-import com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -43,25 +43,25 @@ public class StatisticsUploadAssistant {
   }
 
   public static boolean showNotification() {
-    return SentUsagesPersistenceComponent.getInstance().isShowNotification();
+    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification();
   }
 
   public static boolean isTimeToSend() {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
 
-    return isTimeToSend(SentUsagesPersistenceComponent.getInstance());
+    return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
   }
 
-  public static boolean isTimeToSend(SentUsagesPersistence settings) {
+  public static boolean isTimeToSend(UsageStatisticsPersistenceComponent settings) {
     final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
 
-    return Math.abs(timeDelta) > DateFormatUtil.HOUR; // todo setting
+    return Math.abs(timeDelta) > settings.getPeriod().getMillis();
   }
 
   public static boolean isSendAllowed() {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
 
-    return isSendAllowed(SentUsagesPersistenceComponent.getInstance());
+    return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
   }
 
   public static boolean isSendAllowed(final SentUsagesPersistence settings) {
@@ -73,7 +73,7 @@ public class StatisticsUploadAssistant {
   }
 
   public static void persistSentPatch(@NotNull String patchStr) {
-    persistSentPatch(patchStr, SentUsagesPersistenceComponent.getInstance());
+    persistSentPatch(patchStr, UsageStatisticsPersistenceComponent.getInstance());
   }
 
   public static void persistSentPatch(@NotNull String patchStr, @NotNull SentUsagesPersistence persistenceComponent) {
@@ -90,7 +90,7 @@ public class StatisticsUploadAssistant {
 
   @NotNull
   public static String getStringPatch(@NotNull Set<String> disabledGroups, Project... project) {
-    return getStringPatch(disabledGroups, project, SentUsagesPersistenceComponent.getInstance(), 0);
+    return getStringPatch(disabledGroups, project, UsageStatisticsPersistenceComponent.getInstance(), 0);
   }
 
   @NotNull

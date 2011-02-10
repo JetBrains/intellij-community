@@ -1,7 +1,8 @@
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
-import com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -11,6 +12,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 
 public class StatisticsNotificationManager {
@@ -21,7 +23,8 @@ public class StatisticsNotificationManager {
     Notifications.Bus.notify(new Notification("SendUsagesStatistics", getTitle(),
                                               getText(),
                                               NotificationType.INFORMATION,
-                                              new MyNotificationListener(statisticsService, SentUsagesPersistenceComponent.getInstance())));
+                                              new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent
+                                                .getInstance())));
   }
 
   private static String getText() {
@@ -43,10 +46,10 @@ public class StatisticsNotificationManager {
 
   private static class MyNotificationListener implements NotificationListener {
     private RemotelyConfigurableStatisticsService myStatisticsService;
-    private final SentUsagesPersistenceComponent mySettings;
+    private final UsageStatisticsPersistenceComponent mySettings;
 
     public MyNotificationListener(@NotNull RemotelyConfigurableStatisticsService statisticsService,
-                                  @NotNull SentUsagesPersistenceComponent settings) {
+                                  @NotNull UsageStatisticsPersistenceComponent settings) {
       myStatisticsService = statisticsService;
       mySettings = settings;
     }
@@ -70,7 +73,7 @@ public class StatisticsNotificationManager {
         else if ("settings".equals(description)) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-          //util.editConfigurable((JFrame)ideFrame, new EditorOptions());
+          util.editConfigurable((JFrame)ideFrame, new StatisticsConfigurable());
           notification.expire();
         }
       }
