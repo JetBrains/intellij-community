@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
@@ -24,7 +23,6 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.actionSystem.*;
@@ -33,26 +31,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -60,7 +54,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -68,11 +61,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -89,7 +79,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private final NavBarPresentation myPresentation;
   private final Project myProject;
 
-  private Runnable myDetacher;
   private final ArrayList<NavBarItem> myList = new ArrayList<NavBarItem>();
 
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
@@ -107,16 +96,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
 
   private NavBarItem myContextObject;
-
-  private PropertyChangeListener myFocusListener = new PropertyChangeListener() {
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      if ("focusOwner".equals(evt.getPropertyName()) || "permanentFocusOwner".equals(evt.getPropertyName())) {
-        restartRebuild();
-      }
-    }
-  };
-
   private Alarm myUserActivityAlarm = new Alarm();
   private Runnable myUserActivityAlarmRunnable = new Runnable() {
     @Override
@@ -143,9 +122,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
-    new NavBarListener(this);
 
-    installBorder(-1, false);
+    setBorder(new NavBarBorder(false, -1));
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
       @NotNull
@@ -178,6 +156,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public void escape() {
     myModel.setSelectedIndex(-1);
+    hideHint();
     ToolWindowManager.getInstance(myProject).activateEditorComponent();
   }
 
@@ -206,7 +185,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
   }
 
-  private void restartRebuild() {
+  void restartRebuild() {
     myUserActivityAlarm.cancelAllRequests();
     myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
   }
@@ -252,7 +231,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     _queueModelUpdate(context, null, false);
   }
 
-  private void queueModelUpdateFromFocus() {
+  void queueModelUpdateFromFocus() {
     queueModelUpdateFromFocus(false);
   }
 
@@ -309,7 +288,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myModelUpdating.set(false);
   }
 
-  private void queueRebuildUi() {
+  void queueRebuildUi() {
     myUpdateQueue.queue(new AfterModel("ui", 1) {
       @Override
       protected void _run() {
@@ -432,7 +411,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myModel.setSelectedIndex(myModel.getIndexByModel(myModel.getSelectedIndex() + direction));
   }
 
-  private void scrollSelectionToVisible() {
+  void scrollSelectionToVisible() {
     final int selectedIndex = myModel.getSelectedIndex();
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
 
@@ -465,7 +444,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   private boolean isRebuildUiNeeded() {
-    if (true) return true;
     if (myList.size() == myModel.size()) {
       int index = 0;
       for (NavBarItem eachLabel : myList) {
@@ -533,6 +511,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }, "scrollToVisible");
   }
 
+  @Nullable
   Window getWindow() {
     return !isShowing() ? null : (Window)UIUtil.findUltimateParent(this);
   }
@@ -666,6 +645,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           return new NavBarListCellRenderer(myProject, NavBarPanel.this);
         }
 
+        @Override
+        public void cancel(InputEvent e) {
+          super.cancel(e);
+        }
       };
       myNodePopup.registerAction("left", KeyEvent.VK_LEFT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
@@ -870,104 +853,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     return null;
   }
 
-  // ----- inplace NavBar -----------
-  public void installListeners() {
-    final MyPsiTreeChangeAdapter psiListener = new MyPsiTreeChangeAdapter();
-    final MyProblemListener problemListener = new MyProblemListener();
-    final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-
-
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener);
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(problemListener);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener);
-
-
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(myFocusListener);
-
-    final MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-    busConnection.subscribe(NavBarModelListener.NAV_BAR, new NavBarModelListener() {
-      public void modelChanged() {
-        queueRebuildUi();
-      }
-
-      public void selectionChanged() {
-        updateItems();
-
-        scrollSelectionToVisible();
-      }
-    });
-
-    if (myDetacher != null) uninstallListeners();
-
-    myDetacher = new Runnable() {
-      public void run() {
-        busConnection.disconnect();
-
-        WolfTheProblemSolver.getInstance(myProject).removeProblemListener(problemListener);
-        PsiManager.getInstance(myProject).removePsiTreeChangeListener(psiListener);
-        FileStatusManager.getInstance(myProject).removeFileStatusListener(fileStatusListener);
-      }
-    };
-  }
-
-  public void uninstallListeners() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
-    IdeEventQueue.getInstance().removeActivityListener(myUserActivityRunnable);
-    myDetacher.run();
-    myDetacher = null;
-  }
-
-  public void installBorder(final int rightOffset, final boolean isDocked) {
-    setBorder(new Border() {
-      public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-        if (!isDocked) return;
-
-        g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
-
-        boolean drawTopBorder = true;
-        if (isDocked) {
-          if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-            drawTopBorder = false;
-          }
-        }
-
-        if (rightOffset == -1) {
-          if (drawTopBorder) {
-            g.drawLine(0, 0, width - 1, 0);
-          }
-        }
-        else {
-          if (drawTopBorder) {
-            g.drawLine(0, 0, width - rightOffset + 3, 0);
-          }
-        }
-        g.drawLine(0, height - 1, width, height - 1);
-
-        if (rightOffset == -1) {
-          g.drawLine(0, 0, 0, height);
-          g.drawLine(width - 1, 0, width - 1, height - 1);
-        }
-      }
-
-      public Insets getBorderInsets(final Component c) {
-        return new Insets(3, 4, 3, 4);
-      }
-
-      public boolean isBorderOpaque() {
-        return true;
-      }
-    });
-  }
-
   public void addNotify() {
     super.addNotify();
-    installListeners();
+    NavBarListener.subscribeTo(this);
   }
 
   public void removeNotify() {
     super.removeNotify();
-    uninstallListeners();
+    NavBarListener.unsubscribeFrom(this);
   }
 
   public void updateState(final boolean show) {
@@ -1008,7 +901,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           public void actionPerformed(ActionEvent e) {
             hideHint();
           }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW);
         final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         if (editor == null) {
           myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -1065,80 +958,5 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       }
     }
     return result;
-  }
-
-  public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
-    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        if (scope instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)scope;
-          if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
-          return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
-        }
-        else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
-          final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
-          for (PsiDirectory directory : psiDirectories) {
-            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    });
-  }
-
-  private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
-    public void childAdded(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childReplaced(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childMoved(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void childrenChanged(PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void propertyChanged(final PsiTreeChangeEvent event) {
-      queueModelUpdateFromFocus();
-    }
-  }
-
-  private class MyModuleRootListener implements ModuleRootListener {
-    public void beforeRootsChange(ModuleRootEvent event) {
-    }
-
-    public void rootsChanged(ModuleRootEvent event) {
-      queueModelUpdateFromFocus();
-    }
-  }
-
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-
-    public void problemsAppeared(VirtualFile file) {
-      queueModelUpdateFromFocus();
-    }
-
-    public void problemsDisappeared(VirtualFile file) {
-      queueModelUpdateFromFocus();
-    }
-
-  }
-
-  private class MyFileStatusListener implements FileStatusListener {
-
-    public void fileStatusesChanged() {
-      queueRebuildUi();
-    }
-
-    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-      queueRebuildUi();
-    }
   }
 }

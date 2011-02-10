@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 22-Mar-2007
- */
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
@@ -46,11 +42,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author Konstantin Bulenkov
+ * @author Anna Kozlova
+ */
 public class NavBarModel {
   private List<Object> myModel = Collections.emptyList();
   private int mySelectedIndex;
   private final Project myProject;
   private final NavBarModelListener myNotificator;
+  private int checker = 0;
 
   public NavBarModel(final Project project) {
     myProject = project;
@@ -90,6 +91,8 @@ public class NavBarModel {
 
   protected void updateModel(DataContext dataContext) {
     if (LaterInvocator.isInModalContext()) return;
+    //if (!UISettings.getInstance().SHOW_NAVIGATION_BAR && checker++ > 1) return;
+
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);

@@ -21,18 +21,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScreenUtil;
@@ -128,7 +132,7 @@ public class NavBarPresentation {
           }
         }
 
-        if (NavBarPanel.wolfHasProblemFilesBeneath((PsiElement)object)) {
+        if (wolfHasProblemFilesBeneath((PsiElement)object)) {
           return WOLFED;
         }
       }
@@ -157,4 +161,24 @@ public class NavBarPresentation {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
+  public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
+    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        if (scope instanceof PsiDirectory) {
+          final PsiDirectory directory = (PsiDirectory)scope;
+          if (!VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) return false;
+          return ModuleUtil.findModuleForFile(virtualFile, scope.getProject()) == ModuleUtil.findModuleForPsiElement(scope);
+        }
+        else if (scope instanceof PsiDirectoryContainer) { // TODO: remove. It doesn't look like we'll have packages in navbar ever again
+          final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
+          for (PsiDirectory directory : psiDirectories) {
+            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
 }

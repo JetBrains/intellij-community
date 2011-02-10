@@ -65,7 +65,7 @@ public class NavBarListCellRenderer extends ColoredListCellRenderer {
         }
       }
       else {
-        isProblemFile = NavBarPanel.wolfHasProblemFilesBeneath(psiElement);
+        isProblemFile = NavBarPresentation.wolfHasProblemFilesBeneath(psiElement);
       }
     }
     else if (value instanceof Module) {
