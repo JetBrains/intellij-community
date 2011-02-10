@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -27,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class MoverWrapper {
   protected final boolean myIsDown;
@@ -82,6 +84,28 @@ class MoverWrapper {
     // to prevent flicker
     caretModel.moveToOffset(0);
 
+    // There is a possible case that the user performs, say, method move. It's also possible that one (or both) of moved methods
+    // are folded. We want to preserve their states then. The problem is that folding processing is based on PSI element pointers
+    // and the pointers behave as following during move up/down:
+    //     method1() {}
+    //     method2() {}
+    // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on 
+    // document change for further information). I.e. information about fold regions statuses holds the data swapped for 
+    // 'method1' and 'method2'. Hence, we want to apply correct 'collapsed' status.
+    FoldRegion topRegion = null;
+    FoldRegion bottomRegion = null;
+    for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
+      if (!foldRegion.isValid() || (!contains(myInfo.range1, foldRegion) && !contains(myInfo.range2, foldRegion))) {
+        continue;
+      }
+      if (contains(myInfo.range1, foldRegion) && !contains(topRegion, foldRegion)) {
+        topRegion = foldRegion;
+      }
+      else if (contains(myInfo.range2, foldRegion) && !contains(bottomRegion, foldRegion)) {
+        bottomRegion = foldRegion;
+      }
+    }
+
     document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
     document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
 
@@ -90,6 +114,21 @@ class MoverWrapper {
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    // Swap fold regions status if necessary.
+    if (topRegion != null && bottomRegion != null) {
+      final FoldRegion finalTopRegion = topRegion;
+      final FoldRegion finalBottomRegion = bottomRegion;
+      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          boolean topExpanded = finalTopRegion.isExpanded();
+          finalTopRegion.setExpanded(finalBottomRegion.isExpanded());
+          finalBottomRegion.setExpanded(topExpanded);
+        }
+      });
+    }
+    CodeFoldingManager.getInstance(project).allowFoldingOnCaretLine(editor);
 
     if (hasSelection) {
       restoreSelection(editor, selectionStart, selectionEnd, start, myInfo.range2.getStartOffset());
@@ -105,6 +144,32 @@ class MoverWrapper {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
+  /**
+   * Allows to check if text range defined by the given range marker completely contains text range of the given fold region.
+   * 
+   * @param rangeMarker   range marker to check
+   * @param foldRegion    fold region to check
+   * @return              <code>true</code> if text range defined by the given range marker completely contains text range
+   *                      of the given fold region; <code>false</code> otherwise
+   */
+  private static boolean contains(@NotNull RangeMarker rangeMarker, @NotNull FoldRegion foldRegion) {
+    return rangeMarker.getStartOffset() <= foldRegion.getStartOffset() && rangeMarker.getEndOffset() >= foldRegion.getEndOffset();
+  }
+
+  /**
+   * Allows to check if given <code>'region2'</code> is nested to <code>'region1'</code>
+   * 
+   * @param region1   'outer' region candidate
+   * @param region2   'inner' region candidate
+   * @return          <code>true</code> if 'region2' is nested to 'region1'; <code>false</code> otherwise
+   */
+  private static boolean contains(@Nullable FoldRegion region1, @NotNull FoldRegion region2) {
+    if (region1 == null) {
+      return false;
+    }
+    return region1.getStartOffset() <= region2.getStartOffset() && region1.getEndOffset() >= region2.getEndOffset();
+  }
+  
   private static void indentLinesIn(final Editor editor, final PsiFile file, final Document document, final Project project, RangeMarker range) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     int line1 = editor.offsetToLogicalPosition(range.getStartOffset()).line;

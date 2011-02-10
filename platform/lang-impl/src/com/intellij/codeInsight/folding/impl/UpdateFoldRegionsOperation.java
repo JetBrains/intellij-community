@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,6 +42,9 @@ import static com.intellij.util.containers.CollectionFactory.newTroveMap;
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
+  
+  static final Key<Boolean> ALLOW_FOLDING_ON_CARET_LINE_KEY = Key.create("AllowFoldingOnCaretLine.KEY");
+  
   private final Project myProject;
   private final Editor myEditor;
   private final boolean myApplyDefaultState;
@@ -68,6 +72,9 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
+    
+    // Reset the key.
+    myEditor.putUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY, false);
   }
 
   private static void applyExpandStatus(List<FoldRegion> newRegions, Map<FoldRegion, Boolean> shouldExpand, Map<FoldingGroup, Boolean> groupExpand) {
@@ -125,11 +132,17 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    final Document document = myEditor.getDocument();
-    final int firstLine = document.getLineNumber(range.getStartOffset());
-    final int lastLine = document.getLineNumber(range.getEndOffset());
-    final int currentLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
-    boolean caretInside = firstLine <= currentLine && currentLine <= lastLine;
+    boolean caretInside;
+    if (myEditor.getUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY) == Boolean.TRUE) {
+      caretInside = FoldingUtil.caretInsideRange(myEditor, range);
+    }
+    else {
+      final Document document = myEditor.getDocument();
+      final int firstLine = document.getLineNumber(range.getStartOffset());
+      final int lastLine = document.getLineNumber(range.getEndOffset());
+      final int currentLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+      caretInside = firstLine <= currentLine && currentLine <= lastLine;
+    }
 
     if (myApplyDefaultState) {
       return caretInside || !FoldingPolicy.isCollapseByDefault(element);

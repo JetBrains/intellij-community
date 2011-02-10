@@ -49,4 +49,14 @@ public abstract class CodeFoldingManager {
 
   public abstract void releaseFoldings(Editor editor);
   public abstract void buildInitialFoldings(Editor editor);
+
+  /**
+   * Asks do not perform automatic expansion of fold region the is located on the caret line during the next fold regions update.
+   * <p/>
+   * This method is necessary because fold regions that are located on caret line are automatically expanded to prevent problem
+   * from IDEA-64687. However, we don't want such an expansion when we, for example, move method up or down.
+   * 
+   * @param editor    target editor
+   */
+  public abstract void allowFoldingOnCaretLine(@NotNull Editor editor);
 }
