@@ -28,13 +28,21 @@ public class PriorityWeigher extends CompletionWeigher {
   public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     if (prioritized != null) {
-      return -prioritized.getPriority();
+      return prioritized.getPriority();
     }
 
     final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item != null) {
-      return -item.getPriority();
+      return item.getPriority();
     }
-    return -0.0;
+    return 0.0;
   }
+
+  public static class Negative extends PriorityWeigher {
+    @Override
+    public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+      return -super.weigh(element, location);
+    }
+  }
+
 }

@@ -375,7 +375,7 @@
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix" order="after stats"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity" order="after prefix"/>
 
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="sPriority" order="first"/>
+  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher$Negative" id="sPriority" order="first"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="sGrouping" order="after sPriority"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupStringWeigher" id="sLookupString" order="after sGrouping"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="sProximity" order="after sLookupString"/>
