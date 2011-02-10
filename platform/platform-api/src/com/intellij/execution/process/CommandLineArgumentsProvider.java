@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * @author Roman.Chernyatchik, oleg
  */
-public abstract class CommandLineArgumentsProvider {
+public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)
    */
