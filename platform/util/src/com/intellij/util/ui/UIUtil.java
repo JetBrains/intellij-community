@@ -26,6 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.WeakListener;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -84,6 +86,8 @@ public class UIUtil {
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
   @NonNls public static final String CENTER_TOOLTIP = "ToCenterTooltip";
+
+  private static final String ROOT_PANE = "JRootPane.future";
 
   private UIUtil() {
   }
@@ -1789,5 +1793,25 @@ public class UIUtil {
     }
     return null;
   }
+
+  public static JRootPane getRootPane(Component c) {
+    JRootPane root = getParentOfType(JRootPane.class, c);
+    if (root != null) return root;
+    Component eachParent = c;
+    while (eachParent != null) {
+      if (eachParent instanceof JComponent) {
+        WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
+        if (pane != null) return pane.get();
+      }
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
+  }
+
+  public static void setFutureRootPane(JComponent c, JRootPane pane) {
+    c.putClientProperty(ROOT_PANE, new WeakReference<JRootPane>(pane));
+  }
+
 }
 

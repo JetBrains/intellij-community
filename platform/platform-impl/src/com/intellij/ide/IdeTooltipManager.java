@@ -438,7 +438,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
 
-  public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable JLayeredPane layeredPane) {
+  public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     String htmlBody = getHtmlBody(text);
     text = "<html><head>" +
@@ -447,9 +447,38 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
            htmlBody +
            "</body></html>";
 
+    final boolean[] prefSizeWasComputed = new boolean[] {false};
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
+        if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
+          JLayeredPane lp = layeredPane;
+          if (lp == null) {
+            JRootPane rootPane = UIUtil.getRootPane(this);
+            if (rootPane != null) {
+              lp = rootPane.getLayeredPane();
+            }
+          }
+
+          Dimension size;
+          if (lp != null) {
+            size = lp.getSize();
+            prefSizeWasComputed[0] = true;
+          } else {
+            size = ScreenUtil.getScreenRectangle(0, 0).getSize();
+          }
+          int fitWidth = (int)(size.width * 0.8);
+          Dimension prefSizeOriginal = super.getPreferredSize();
+          if (prefSizeOriginal.width > fitWidth) {
+            setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+            Dimension fixedWidthSize = super.getPreferredSize();
+            prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
+          }
+          else {
+            prefSize.set(new Dimension(prefSizeOriginal));
+          }
+        }
+
         Dimension s = prefSize.get() != null ? new Dimension(prefSize.get()) : super.getPreferredSize();
         Border b = getBorder();
         if (b != null) {
@@ -499,18 +528,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       pane.setBorder(null);
     }
 
-    if (hintHint.isAwtTooltip()) {
-      Dimension size = layeredPane != null ? layeredPane.getSize() : ScreenUtil.getScreenRectangle(0, 0).getSize();
-      int fitWidth = (int)(size.width * 0.8);
-      Dimension prefSizeOriginal = pane.getPreferredSize();
-      if (prefSizeOriginal.width > fitWidth) {
-        pane.setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-        Dimension fixedWidthSize = pane.getPreferredSize();
-        prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
-      }
-      else {
-        prefSize.set(new Dimension(prefSizeOriginal));
-      }
+    if (!hintHint.isAwtTooltip()) {
+      prefSizeWasComputed[0] = true;
     }
 
     pane.setOpaque(hintHint.isOpaqueAllowed());

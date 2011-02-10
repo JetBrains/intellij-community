@@ -27,7 +27,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,24 +47,18 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
 
-    DialogWrapper fuck = new DialogWrapper(false) {
+    BalloonBuilder builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("" +
+                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
+                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
+                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
+                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
+                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
+                                                                                                      "", MessageType.INFO, null);
 
-      {
-        init();
-      }
-
-      @Override
-      protected JComponent createCenterPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("Fuck");
-        panel.add(label, BorderLayout.CENTER);
-        panel.setMinimumSize(label.getPreferredSize());
-        panel.setPreferredSize(new Dimension(-1, -1));
-        return panel;
-      }
-    };
-
-    fuck.show();
+    JFrame wnd = (JFrame)KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    JRootPane ro = wnd.getRootPane();
+    Point point = new Point(ro.getWidth() - 200, ro.getHeight() - 200);
+    builder.createBalloon().show(new RelativePoint(ro, point), Balloon.Position.above);
 
 
     if (true) return;

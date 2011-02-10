@@ -303,6 +303,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     myLayeredPane = root.getLayeredPane();
     myPosition = position;
+    UIUtil.setFutureRootPane(myContent, root);
 
     myLayeredPane.addComponentListener(myComponentListener);
 
