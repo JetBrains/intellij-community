@@ -109,7 +109,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     void cursorMoved();
   }
 
-  private List<CursorListener> myListeners = new ArrayList<CursorListener>();
+  private final List<CursorListener> myListeners = new ArrayList<CursorListener>();
 
   public void addCursorListener(CursorListener listener) {
     myListeners.add(listener);
@@ -166,7 +166,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private Balloon myReplacementBalloon;
 
   public LivePreview(Project project) {
-    this.myProject = project;
+    myProject = project;
     updateEditorReference();
   }
 
@@ -175,7 +175,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   public void setDelegate(Delegate delegate) {
-    this.myDelegate = delegate;
+    myDelegate = delegate;
   }
 
   @Nullable
