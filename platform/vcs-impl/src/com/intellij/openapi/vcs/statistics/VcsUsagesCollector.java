@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-// todo !!! this "statistics.usagesCollector" extension !!!
 public class VcsUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "vcs";
 
