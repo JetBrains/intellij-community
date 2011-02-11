@@ -45,7 +45,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
 
-  private final PsiElement[] myElementsToMove;
+  protected final PsiElement[] myElementsToMove;
   private final boolean mySearchForReferences;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
