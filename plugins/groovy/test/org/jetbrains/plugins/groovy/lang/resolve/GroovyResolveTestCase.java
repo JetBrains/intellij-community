@@ -58,7 +58,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     }
 
     int offset = fileText.indexOf(MARKER);
-    assertTrue(offset >= 0);
+    assertTrue("'ref' marker is not found", offset >= 0);
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
     if (newFilePath == null) {
