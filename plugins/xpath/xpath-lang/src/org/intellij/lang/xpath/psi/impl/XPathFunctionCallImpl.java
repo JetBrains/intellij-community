@@ -186,7 +186,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       }
 
       public String getName() {
-        return myFunctionDecl.getName();
+        return myFunctionDecl != null ? myFunctionDecl.getName() : getFunctionName();
       }
 
       public String toString() {

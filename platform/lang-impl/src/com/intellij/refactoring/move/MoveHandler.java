@@ -113,18 +113,18 @@ public class MoveHandler implements RefactoringActionHandler {
         .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{targetContainer}, null);
       return;
     }
-    doMove(project, elements, targetContainer, null);
+    doMove(project, elements, targetContainer, dataContext, null);
   }
 
   /**
    * must be invoked in AtomicAction
    */
-  public static void doMove(Project project, @NotNull PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
+  public static void doMove(Project project, @NotNull PsiElement[] elements, PsiElement targetContainer, DataContext dataContext, MoveCallback callback) {
     if (elements.length == 0) return;
 
     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
       if (delegate.canMove(elements, targetContainer)) {
-        delegate.doMove(project, elements, targetContainer, callback);
+        delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
         break;
       }
     }

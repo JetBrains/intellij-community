@@ -43,7 +43,7 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
                                                 new StatisticsHttpClientSender(),
                                                 new StatisticsUploadAssistant());
     if (StatisticsUploadAssistant.showNotification()) {
-      StatisticsNotificationManager.showNotification(statisticsService);
+      StatisticsNotificationManager.showNotification(statisticsService, myProject);
     }
     else {
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {

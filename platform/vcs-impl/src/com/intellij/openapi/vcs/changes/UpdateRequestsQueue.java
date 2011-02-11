@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -58,6 +59,7 @@ public class UpdateRequestsQueue {
   private final ExecutorWrapper myExecutorWrapper;
   @NonNls public static final String LOCAL_CHANGES_UPDATE = "Local changes update";
   private final boolean myTrackHeavyLatch;
+  private Getter<Boolean> myIsStoppedGetter;
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
     myProject = project;
@@ -75,11 +77,21 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
+    myIsStoppedGetter = new Getter<Boolean>() {
+      @Override
+      public Boolean get() {
+        return isStopped();
+      }
+    };
   }
 
   public void initialized() {
     LOG.debug("Initialized for project: " + myProject.getName());
     myStarted = true;
+  }
+
+  public Getter<Boolean> getIsStoppedGetter() {
+    return myIsStoppedGetter;
   }
 
   public boolean isStopped() {

@@ -312,12 +312,12 @@ public class GroovyPropertyUtils {
     return getAccessorName("set", name);
   }
 
-  private static String getAccessorName(String prefix, String name) {
+  public static String getAccessorName(String prefix, String name) {
     if (name.length() == 0) return prefix;
 
     StringBuilder sb = new StringBuilder();
     sb.append(prefix);
-    if (name.length() > 1 && isUpperCase(name.charAt(1))) {
+    if (name.length() > 1 && Character.isUpperCase(name.charAt(1))) {
       sb.append(name);
     }
     else {
@@ -382,7 +382,7 @@ public class GroovyPropertyUtils {
   public static String capitalize(String s) {
     if (s.length() == 0) return s;
     if (s.length() == 1) return s.toUpperCase();
-    if (isUpperCase(s.charAt(1))) return s;
+    if (Character.isUpperCase(s.charAt(1))) return s;
     final char[] chars = s.toCharArray();
     chars[0] = Character.toUpperCase(chars[0]);
     return new String(chars);

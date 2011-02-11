@@ -18,7 +18,6 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -26,7 +25,6 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -37,11 +35,9 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
@@ -53,10 +49,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,14 +59,13 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
 public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
+
   private final NavBarModel myModel;
 
   private final NavBarPresentation myPresentation;
@@ -91,24 +83,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private Component myContextComponent;
 
 
-  private Runnable myRunWhenListRebuilt;
-  private final MergingUpdateQueue myUpdateQueue;
-  private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
+
+  private final NavBarUpdateQueue myUpdateQueue;
 
   private NavBarItem myContextObject;
-  private Alarm myUserActivityAlarm = new Alarm();
-  private Runnable myUserActivityAlarmRunnable = new Runnable() {
-    @Override
-    public void run() {
-      processUserActivity();
-    }
-  };
-  private Runnable myUserActivityRunnable = new Runnable() {
-    @Override
-    public void run() {
-      restartRebuild();
-    }
-  };
 
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
@@ -116,10 +94,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myModel = new NavBarModel(myProject);
     myIdeView = new NavBarIdeView(this);
     myPresentation = new NavBarPresentation(myProject);
-
-    IdeEventQueue.getInstance().addActivityListener(myUserActivityRunnable);
-
-    myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
+    myUpdateQueue = new NavBarUpdateQueue(this);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -133,13 +108,16 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       }
     };
 
-
-    queueModelUpdateFromFocus();
-    queueRebuildUi();
+    myUpdateQueue.queueModelUpdateFromFocus();
+    myUpdateQueue.queueRebuildUi();
   }
 
   public ListPopupImpl getNodePopup() {
     return myNodePopup;
+  }
+
+  public LightweightHint getHint() {
+    return myHint;
   }
 
   public NavBarPresentation getPresentation() {
@@ -150,8 +128,16 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myContextComponent = contextComponent;
   }
 
+  public NavBarItem getContextObject() {
+    return myContextObject;
+  }
+
   public ArrayList<NavBarItem> getItems() {
     return myList;
+  }
+
+  public NavBarUpdateQueue getUpdateQueue() {
+    return myUpdateQueue;
   }
 
   public void escape() {
@@ -185,161 +171,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
   }
 
-  void restartRebuild() {
-    myUserActivityAlarm.cancelAllRequests();
-    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
-  }
 
-  private void processUserActivity() {
-    if (!isShowing()) {
-      return;
-    }
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        Window wnd = SwingUtilities.windowForComponent(NavBarPanel.this);
-        if (wnd == null) return;
-
-        Component focus = null;
-
-        if (!wnd.isActive()) {
-          IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, NavBarPanel.this);
-          if (frame != null) {
-            focus = IdeFocusManager.getInstance(myProject).getLastFocusedFor(frame);
-          }
-        } else {
-          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          if (window instanceof Dialog) {
-            final Dialog dialog = (Dialog)window;
-            if (dialog.isModal() && !SwingUtilities.isDescendingFrom(NavBarPanel.this, dialog)) {
-              return;
-            }
-          }
-        }
-
-        if (focus != null && focus.isShowing()) {
-          queueModelUpdate(DataManager.getInstance().getDataContext(focus));
-        } else if (wnd.isActive()) {
-          queueModelUpdateFromFocus();
-        }
-      }
-    });
-  }
-
-  private void queueModelUpdate(DataContext context) {
-    _queueModelUpdate(context, null, false);
-  }
-
-  void queueModelUpdateFromFocus() {
-    queueModelUpdateFromFocus(false);
-  }
-
-  private void queueModelUpdateFromFocus(boolean requeue) {
-    _queueModelUpdate(null, myContextObject, requeue);
-  }
-
-  private void queueModelUpdateForObject(Object object) {
-    _queueModelUpdate(null, object, false);
-  }
-
-  private void _queueModelUpdate(@Nullable final DataContext context, final @Nullable Object object, boolean requeue) {
-    if (myModelUpdating.getAndSet(true) && !requeue) return;
-
-    myUpdateQueue.cancelAllUpdates();
-
-    myUpdateQueue.queue(new Update("model", 0) {
-      @Override
-      public void run() {
-        if (context != null || object != null) {
-          _updateModelFrom(context, object);
-        }
-        else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
-            @Override
-            public void run(DataContext dataContext) {
-              _updateModelFrom(dataContext, null);
-            }
-          });
-        }
-      }
-
-      @Override
-      public void setRejected() {
-        super.setRejected();
-        myModelUpdating.set(false);
-      }
-    });
-  }
-
-  private void _updateModelFrom(DataContext dataContext, Object object) {
-    if (dataContext != null) {
-      if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject || isNodePopupShowing()) {
-        queueModelUpdateFromFocus(true);
-        return;
-      }
-      myModel.updateModel(dataContext);
-    } else {
-      myModel.updateModel(object);
-    }
-
-    queueRebuildUi();
-
-    myModelUpdating.set(false);
-  }
-
-  void queueRebuildUi() {
-    myUpdateQueue.queue(new AfterModel("ui", 1) {
-      @Override
-      protected void _run() {
-        rebuildUi();
-      }
-    });
-    queueRevalidate(null);
-  }
-
-  private void queueRevalidate(@Nullable final Runnable after) {
-    myUpdateQueue.queue(new AfterModel("revalidate", 2) {
-      @Override
-      protected void _run() {
-        if (myHint != null) {
-          getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
-            @Override
-            public void run(final RelativePoint relativePoint) {
-              myHint.setSize(getPreferredSize());
-              myHint.setLocation(relativePoint);
-              if (after != null) {
-                after.run();
-              }
-            }
-          });
-        }
-        else {
-          if (after != null) {
-            after.run();
-          }
-        }
-      }
-    });
-  }
-
-  private void queueSelect(final Runnable runnable) {
-    myUpdateQueue.queue(new AfterModel("select", 3) {
-      @Override
-      protected void _run() {
-        runnable.run();
-      }
-    });
-  }
-
-  private void queueAfterAll(final Runnable runnable, Object identity) {
-    myUpdateQueue.queue(new AfterModel(identity, 4) {
-      @Override
-      protected void _run() {
-        runnable.run();
-      }
-    });
-  }
 
   public Project getProject() {
     return myProject;
@@ -347,24 +180,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public NavBarModel getModel() {
     return myModel;
-  }
-
-  private abstract class AfterModel extends Update {
-    private AfterModel(Object identity, int priority) {
-      super(identity, priority);
-    }
-
-    @Override
-    public void run() {
-      if (myModelUpdating.get()) {
-        myUpdateQueue.queue(this);
-      }
-      else {
-        _run();
-      }
-    }
-
-    protected abstract void _run();
   }
 
   private static Object optimizeTarget(Object target) {
@@ -384,10 +199,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void selectTail() {
-    queueModelUpdateFromFocus();
-    queueRebuildUi();
+    myUpdateQueue.queueModelUpdateFromFocus();
+    myUpdateQueue.queueRebuildUi();
 
-    queueSelect(new Runnable() {
+    myUpdateQueue.queueSelect(new Runnable() {
       @Override
       public void run() {
         if (!myList.isEmpty()) {
@@ -408,16 +223,15 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     shiftFocus(1);
   }
   private void shiftFocus(int direction) {
-    myModel.setSelectedIndex(myModel.getIndexByModel(myModel.getSelectedIndex() + direction));
+    final int selectedIndex = myModel.getSelectedIndex();
+    final int index = myModel.getIndexByModel(selectedIndex + direction);
+    myModel.setSelectedIndex(index);
   }
 
   void scrollSelectionToVisible() {
     final int selectedIndex = myModel.getSelectedIndex();
     if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
-
-    NavBarItem selectedItem = myList.get(selectedIndex);
-    Rectangle rect = selectedItem.getBounds();
-    scrollRectToVisible(rect);
+    scrollRectToVisible(myList.get(selectedIndex).getBounds());
   }
 
   @Nullable
@@ -443,7 +257,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
   }
 
-  private boolean isRebuildUiNeeded() {
+  boolean isRebuildUiNeeded() {
     if (myList.size() == myModel.size()) {
       int index = 0;
       for (NavBarItem eachLabel : myList) {
@@ -471,53 +285,13 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
   }
 
-  private void rebuildUi() {
-    if (!isRebuildUiNeeded()) return;
-
-    myList.clear();
-    for (int index = 0; index < myModel.size(); index++) {
-      final Object object = myModel.get(index);
-      final NavBarItem label = new NavBarItem(this, object, index);
-
-      installActions(index, label);
-      myList.add(label);
-
-    }
-
-    rebuildComponent();
-
-    if (myRunWhenListRebuilt != null) {
-      Runnable r = myRunWhenListRebuilt;
-      myRunWhenListRebuilt = null;
-      r.run();
-    }
-  }
-
-  private void rebuildComponent() {
-    removeAll();
-
-    for (NavBarItem item : myList) {
-      add(item);
-    }
-
-    revalidate();
-    repaint();
-
-    queueAfterAll(new Runnable() {
-      @Override
-      public void run() {
-        scrollSelectionToVisible();
-      }
-    }, "scrollToVisible");
-  }
 
   @Nullable
   Window getWindow() {
     return !isShowing() ? null : (Window)UIUtil.findUltimateParent(this);
   }
 
-  // ------ NavBar actions -------------------------
-  private void installActions(final int index, final NavBarItem component) {
+  public void installActions(final int index, final NavBarItem component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
@@ -616,7 +390,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         icons[i] = NavBarPresentation.getIcon(siblings[i], false);
       }
       final NavBarItem item = getItem(index);
-      LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() {
           return true;
@@ -692,13 +465,13 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         validate();
       }
 
-      if (item.isShowing() && step.getValues().size() > 0) {
+      if (item != null && item.isShowing() && step.getValues().size() > 0) {
         myNodePopup.showUnderneathOf(item);
       }
     }
   }
 
-  private boolean isNodePopupShowing() {
+  boolean isNodePopupShowing() {
     return myNodePopup != null && myNodePopup.isVisible();
   }
 
@@ -707,10 +480,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
     myUpdateQueue.cancelAllUpdates();
 
-    queueModelUpdateForObject(object);
-    queueRebuildUi();
+    myUpdateQueue.queueModelUpdateForObject(object);
+    myUpdateQueue.queueRebuildUi();
 
-    queueAfterAll(new Runnable() {
+    myUpdateQueue.queueAfterAll(new Runnable() {
       public void run() {
         int index = myModel.indexOf(object);
         if (index >= 0) {
@@ -724,7 +497,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           doubleClick(object);
         }
       }
-    }, "navigateInside");
+    }, NavBarUpdateQueue.ID.NAVIGATE_INSIDE);
   }
 
   private void rightClick(final int index) {
@@ -864,10 +637,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void updateState(final boolean show) {
-    queueModelUpdateFromFocus();
+    myUpdateQueue.queueModelUpdateFromFocus();
     if (isShowing()) {
-      queueRebuildUi();
-      queueAfterAll(new Runnable() {
+      myUpdateQueue.queueRebuildUi();
+      myUpdateQueue.queueAfterAll(new Runnable() {
         @Override
         public void run() {
           final int selectedIndex = myModel.getSelectedIndex();
@@ -878,14 +651,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
             }
           }
         }
-      }, "requestFocus");
+      }, NavBarUpdateQueue.ID.REQUEST_FOCUS);
     }
   }
 
   // ------ popup NavBar ----------
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
-    queueModelUpdate(dataContext);
-    queueAfterAll(new Runnable() {
+    myUpdateQueue.queueModelUpdate(dataContext);
+    myUpdateQueue.queueAfterAll(new Runnable() {
       @Override
       public void run() {
         if (myModel.isEmpty()) return;
@@ -931,10 +704,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
         selectTail();
       }
-    }, "showHint");
+    }, NavBarUpdateQueue.ID.SHOW_HINT);
   }
 
-  private AsyncResult<RelativePoint> getHintContainerShowPoint() {
+  AsyncResult<RelativePoint> getHintContainerShowPoint() {
     final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
     if (myHintContainer != null) {
       final Point p = AbstractPopup.getCenterOf(myHintContainer, this);

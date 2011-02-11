@@ -295,7 +295,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
     try {
       synchronized (myDataLock) {
-        final RecursiveFileHolder fileHolder = (RecursiveFileHolder)myComposite.get(FileHolder.HolderType.IGNORED);
+        final IgnoredFilesHolder fileHolder = (IgnoredFilesHolder)myComposite.get(FileHolder.HolderType.IGNORED);
 
         for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext();) {
           final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope) iterator.next();
@@ -337,8 +337,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void updateImmediately(final AtomicSectionsAware atomicSectionsAware) {
-    final FileHolderComposite composite;
-    final ChangeListWorker changeListWorker;
+    final DataHolder dataHolder;
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! vcsManager.hasActiveVcss()) return;
@@ -371,43 +370,26 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
       // after update of copies of objects is complete, it would apply the same modifications to copies.)
       synchronized (myDataLock) {
-        changeListWorker = myWorker.copy();
-        composite = (FileHolderComposite) myComposite.copy();
+        dataHolder = new DataHolder((FileHolderComposite) myComposite.copy(), myWorker.copy(), wasEverythingDirty);
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
-          composite.cleanAll();
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("refresh procedure started, everything = " + wasEverythingDirty);
         }
       }
-      if (wasEverythingDirty) {
-        changeListWorker.notifyStartProcessingChanges(null);
-      }
+      dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      final ChangeListManagerGate gate = changeListWorker.createSelfGate();
-
+      final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
       // do actual requests about file statuses
-      final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(changeListWorker, composite, new Getter<Boolean>() {
-        public Boolean get() {
-          return myUpdater.isStopped();
-        }
-      }, myIgnoredIdeaLevel, gate);
+      final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
+        dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
 
       // todo should also ask self flag
-      myUpdateChangesProgressIndicator = new EmptyProgressIndicator() {
-        @Override
-        public boolean isCanceled() {
-          return myUpdater.isStopped() || atomicSectionsAware.shouldExitAsap();
-        }
-        @Override
-        public void checkCanceled() {
-          checkIfDisposed();
-          atomicSectionsAware.checkShouldExit();
-        }
-      };
+      myUpdateChangesProgressIndicator = createProgressIndicator(atomicSectionsAware);
+
       for (final VcsDirtyScope scope : scopes) {
         atomicSectionsAware.checkShouldExit();
 
@@ -416,18 +398,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope) scope);
 
         myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
-        if (! wasEverythingDirty) {
-          composite.cleanAndAdjustScope(adjustedScope);
-          changeListWorker.notifyStartProcessingChanges(adjustedScope);
-        }
+        dataHolder.notifyStartProcessingChanges(adjustedScope);
 
-        try {
-          actualUpdate(wasEverythingDirty, composite, builder, adjustedScope, vcs, changeListWorker, gate);
-        }
-        catch (Throwable t) {
-          LOG.debug(t);
-          Rethrow.reThrowRuntime(t);
-        }
+        actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
 
         if (myUpdateException != null) break;
       }
@@ -435,29 +408,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final boolean takeChanges = (myUpdateException == null);
       if (takeChanges) {
         // update IDEA-level ignored files
-        updateIgnoredFiles(composite);
+        updateIgnoredFiles(dataHolder.getComposite());
       }
       
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
-        if (wasEverythingDirty) {
-          changeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
-        }
+        dataHolder.notifyEnd();
         myModifier.exitUpdate();
         // should be applied for notifications to be delivered (they were delayed)
-        myModifier.apply(changeListWorker);
+        myModifier.apply(dataHolder.getChangeListWorker());
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
-          myWorker.takeData(changeListWorker);
+          myWorker.takeData(dataHolder.getChangeListWorker());
         }
 
         if (takeChanges) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("refresh procedure finished, size: " + composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
+            LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
           }
-          final boolean statusChanged = ! myComposite.equals(composite);
-          myComposite = composite;
+          final boolean statusChanged = ! myComposite.equals(dataHolder.getComposite());
+          myComposite = dataHolder.getComposite();
           if (statusChanged) {
             myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
           }
@@ -489,9 +460,71 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void actualUpdate(final boolean wasEverythingDirty, final FileHolderComposite composite, final UpdatingChangeListBuilder builder,
-                            final VcsDirtyScope scope, final AbstractVcs vcs, final ChangeListWorker changeListWorker,
-                            final ChangeListManagerGate gate) {
+  private EmptyProgressIndicator createProgressIndicator(final AtomicSectionsAware atomicSectionsAware) {
+    return new EmptyProgressIndicator() {
+      @Override
+      public boolean isCanceled() {
+        return myUpdater.isStopped() || atomicSectionsAware.shouldExitAsap();
+      }
+      @Override
+      public void checkCanceled() {
+        checkIfDisposed();
+        atomicSectionsAware.checkShouldExit();
+      }
+    };
+  }
+
+  private class DataHolder {
+    private final boolean myWasEverythingDirty;
+    final FileHolderComposite myComposite;
+    final ChangeListWorker myChangeListWorker;
+
+    private DataHolder(FileHolderComposite composite, ChangeListWorker changeListWorker, boolean wasEverythingDirty) {
+      myComposite = composite;
+      myChangeListWorker = changeListWorker;
+      myWasEverythingDirty = wasEverythingDirty;
+    }
+
+    public void notifyStart() {
+      if (myWasEverythingDirty) {
+        myComposite.cleanAll();
+        myChangeListWorker.notifyStartProcessingChanges(null);
+      }
+    }
+
+    public void notifyStartProcessingChanges(@NotNull final VcsModifiableDirtyScope scope) {
+      if (! myWasEverythingDirty) {
+        myComposite.cleanAndAdjustScope(scope);
+        myChangeListWorker.notifyStartProcessingChanges(scope);
+      }
+
+      myComposite.notifyVcsStarted(scope.getVcs());
+      myChangeListWorker.notifyVcsStarted(scope.getVcs());
+    }
+
+    public void notifyDoneProcessingChanges() {
+      if (! myWasEverythingDirty) {
+        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
+      }
+    }
+
+    public void notifyEnd() {
+      if (myWasEverythingDirty) {
+        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
+      }
+    }
+
+    public FileHolderComposite getComposite() {
+      return myComposite;
+    }
+
+    public ChangeListWorker getChangeListWorker() {
+      return myChangeListWorker;
+    }
+  }
+
+  private void actualUpdate(final UpdatingChangeListBuilder builder, final VcsDirtyScope scope, final AbstractVcs vcs,
+                            final DataHolder dataHolder, final ChangeListManagerGate gate) {
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
@@ -507,10 +540,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
       }
-    }
-    finally {
-      if ((! myUpdater.isStopped()) && !wasEverythingDirty) {
-        changeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
+    } catch (Throwable t) {
+      LOG.debug(t);
+      Rethrow.reThrowRuntime(t);
+    } finally {
+      if (! myUpdater.isStopped()) {
+        dataHolder.notifyDoneProcessingChanges();
       }
     }
   }
@@ -1035,7 +1070,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     synchronized (myDataLock) {
       final VirtualFileHolder unversionedHolder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      final RecursiveFileHolder<Object> ignoredHolder = (RecursiveFileHolder) myComposite.get(FileHolder.HolderType.IGNORED);
+      final IgnoredFilesHolder ignoredHolder = (IgnoredFilesHolder) myComposite.get(FileHolder.HolderType.IGNORED);
 
       scheduler.accept(unversionedHolder.getFiles());
       scheduler.accept(ignoredHolder.values());

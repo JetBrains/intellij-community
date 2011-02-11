@@ -81,7 +81,8 @@ public class PsiTypeLookupItem extends LookupItem {
     return item;
   }
 
-  private static LookupItem doCreateItem(PsiType type, PsiElement context) {
+  private static LookupItem doCreateItem(final PsiType type, PsiElement context) {
+    final String presentableText = type.getPresentableText();
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
@@ -101,7 +102,7 @@ public class PsiTypeLookupItem extends LookupItem {
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
       String text = type.getCanonicalText();
       if (text == null) {
-        text = type.getPresentableText();
+        text = presentableText;
       }
       String typeString = text;
       String typeParams = "";
@@ -130,7 +131,7 @@ public class PsiTypeLookupItem extends LookupItem {
       }
 
     }
-    return new LookupItem(type, type.getPresentableText());
+    return new PsiTypeLookupItem(type, presentableText);
   }
 
   @Override
@@ -141,10 +142,12 @@ public class PsiTypeLookupItem extends LookupItem {
     } else {
       assert object instanceof PsiType;
 
-      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+      if (!(object instanceof PsiPrimitiveType)) {
+        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+      }
 
       presentation.setItemText(((PsiType)object).getCanonicalText());
-      presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
+      presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null || object instanceof PsiPrimitiveType);
 
       String tailText = (String)getAttribute(LookupItem.TAIL_TEXT_ATTR);
       if (tailText != null) {

@@ -631,4 +631,9 @@ set<caret>Foo(2)
     def result = resolve("A.groovy")
     assertInstanceOf result, GrAccessorMethod
   }
+
+  public void testPreferAlias() {
+    myFixture.addFileToProject "a/B.groovy", "package a; class B {public static def f1; public static def f2}"
+    assertEquals 'f2', resolve("A.groovy").name
+  }
 }

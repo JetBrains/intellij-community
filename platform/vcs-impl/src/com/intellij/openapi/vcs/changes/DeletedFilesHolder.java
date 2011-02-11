@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 
 import java.util.ArrayList;
@@ -51,6 +52,10 @@ public class DeletedFilesHolder implements FileHolder {
 
   public HolderType getType() {
     return HolderType.DELETED;
+  }
+
+  @Override
+  public void notifyVcsStarted(AbstractVcs scope) {
   }
 
   public void addFile(final LocallyDeletedChange change) {

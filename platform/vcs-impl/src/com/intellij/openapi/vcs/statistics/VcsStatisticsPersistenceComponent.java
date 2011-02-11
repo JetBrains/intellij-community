@@ -46,7 +46,6 @@ import java.util.Set;
       file = "$APP_CONFIG$/vcs.usages.xml"
     )}
 )
-//todo !!! register this ApplicationComponent !!!!
 public class VcsStatisticsPersistenceComponent extends VcsStatisticsPersistence
   implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final String TOKENIZER = ",";

@@ -20,87 +20,67 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
-import com.intellij.refactoring.rename.RenameDialog;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.refactoring.rename.RenamePropertyUtil.askToRenameProperty;
 
 /**
  * @author ven
  */
 public class PropertyRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    return getProperty(dataContext) != null;
+    final PsiElement element = getElement(dataContext);
+    if (element instanceof GrField && ((GrField)element).isProperty()) return true;
+    if (element instanceof GrAccessorMethod) return true;
+    if (element instanceof GrMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)element)) return true;
+    return false;
   }
 
   @Nullable
-  private static GrField getProperty(DataContext dataContext) {
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof GrField && ((GrField)element).isProperty()) return (GrField)element;
-    if (element instanceof GrAccessorMethod) return ((GrAccessorMethod)element).getProperty();
-    return null;
+  private static PsiElement getElement(DataContext dataContext) {
+    return LangDataKeys.PSI_ELEMENT.getData(dataContext);
   }
 
   public boolean isRenaming(DataContext dataContext) {
-    return getProperty(dataContext) != null;
+    return isAvailableOnDataContext(dataContext);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
-    final GrField property = getProperty(dataContext);
-    assert property != null;
-    new PropertyRenameDialog(property, editor).show();
-  }
-
-  private static class PropertyRenameDialog extends RenameDialog {
-
-    private final GrField myProperty;
-
-    protected PropertyRenameDialog(GrField property, final Editor editor) {
-      super(property.getProject(), property, null, editor);
-      myProperty = property;
-    }
-
-    protected void doAction() {
-      final String newName = getNewName();
-      final boolean searchInComments = isSearchInComments();
-      doRename(newName, searchInComments);
-      close(OK_EXIT_CODE);
-    }
-
-    private void doRename(String newName, boolean searchInComments) {
-      final RenameRefactoring rename = new JavaRenameRefactoringImpl(myProperty.getProject(), myProperty, newName, searchInComments, false);
-      rename.setPreviewUsages(isPreviewUsages());
-      final PsiMethod setter = myProperty.getSetter();
-      if (setter != null && !(setter instanceof GrAccessorMethod)) {
-        final String setterName = PropertyUtil.suggestSetterName(newName);
-        rename.addElement(setter, setterName);
-      }
-
-      rename.run();
-    }
-
-    @Override
-    protected boolean areButtonsValid() {
-      final String newName = getNewName();
-      return JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(newName) &&
-             !GroovyRefactoringUtil.KEYWORDS.contains(newName);
-    }
+    final PsiElement element = getElement(dataContext);
+    invokeInner(project, editor, element);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-    final GrField property = getProperty(dataContext);
-    if (dataContext == null || property == null) return;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    new PropertyRenameDialog(property, editor).show();
+    PsiElement element = elements.length == 1 ? elements[0] : null;
+    if (element == null) element = getElement(dataContext);
+    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    invokeInner(project, editor, element);
+  }
+
+  private static void invokeInner(Project project, Editor editor, PsiElement element) {
+    final Pair<List<? extends PsiElement>, String> pair = askToRenameProperty((PsiMember)element);
+    final List<? extends PsiElement> result = pair.getFirst();
+    if (result.size() == 0) return;
+    if (result.size() == 1) {
+      PsiElementRenameHandler.invoke(result.get(0), project, result.get(0), editor);
+      return;
+    }
+    final String propertyName = pair.getSecond();
+
+    PsiElementRenameHandler.invoke(new PropertyForRename(result, propertyName, element.getManager()), project, element, editor);
   }
 }

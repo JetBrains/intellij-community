@@ -28,16 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  */
 public class AccessorResolverProcessor extends ResolverProcessor {
   private final boolean mySearchForGetter;
-  private final boolean myIsPropertyInvoked;
 
   public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter) {
-    this(name, place, searchForGetter, false);
-  }
-
-  public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter, boolean propertyInvoked) {
     super(name, RESOLVE_KINDS_METHOD, place, PsiType.EMPTY_ARRAY);
     mySearchForGetter = searchForGetter;
-    myIsPropertyInvoked = propertyInvoked;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -62,7 +56,7 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     boolean isAccessible = isAccessible(method);
     final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     boolean isStaticsOK = isStaticsOK(method, resolveContext);
-    addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, myIsPropertyInvoked));
+    addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, true));
     return !isAccessible || !isStaticsOK;
   }
 

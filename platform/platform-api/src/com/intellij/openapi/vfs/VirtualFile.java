@@ -599,6 +599,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
 
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable, ModalityState modalityState) {
+    if (modalityState != ModalityState.NON_MODAL) {
+      LOG.error("Refresh with non-modal modality state is not implemented for file: " + this);
+    }
+    refresh(asynchronous, recursive, postRunnable, ModalityState.NON_MODAL);
+  }
+
   public String getPresentableName() {
     return getName();
   }

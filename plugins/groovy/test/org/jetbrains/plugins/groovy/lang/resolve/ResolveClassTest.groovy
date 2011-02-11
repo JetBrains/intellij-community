@@ -209,6 +209,12 @@ interface Super {
     assertInstanceOf resolve("A.groovy"), PsiClass;
   }
 
+  void testPreferLastImportedAlias() {
+    myFixture.addFileToProject "a/C1.groovy", "package a; class C1{}"
+    myFixture.addFileToProject "a/C2.groovy", "package a; class C2{}"
+    assertEquals "C2", resolve("A.groovy").getName()
+  }
+
   private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

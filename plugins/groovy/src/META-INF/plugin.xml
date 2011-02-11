@@ -114,6 +114,9 @@
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
+    <renamePsiElementProcessor id="groovyFieldRenameProcessor"
+                               implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor"
+                               order="first"/>
     <renamePsiElementProcessor id="groovyPropertyRenameProcessor"
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
                                order="first"/>
@@ -125,6 +128,7 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedFieldProcessor" order="first"/>
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
+    <!--<renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrAccessorProcessor" order="first"/>-->
     
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 

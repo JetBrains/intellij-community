@@ -93,6 +93,14 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
+  protected Module getNodeModule(@Nullable Object element) {
+    if (element instanceof PackageElement) {
+      return ((PackageElement)element).getModule();
+    }
+    return super.getNodeModule(element);
+  }
+
+  @Override
   public Object getData(final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PackageElement selectedPackageElement = getSelectedPackageElement();

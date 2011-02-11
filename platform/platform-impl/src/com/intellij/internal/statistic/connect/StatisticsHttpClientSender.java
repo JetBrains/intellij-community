@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.connect;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.httpclient.Header;
@@ -35,7 +36,9 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
 
       post.setRequestBody(new NameValuePair[]{
         new NameValuePair("content", content),
-        new NameValuePair("uuid", UpdateChecker.getInstallationUID())});
+        new NameValuePair("uuid", UpdateChecker.getInstallationUID()),
+        new NameValuePair("ide", ApplicationNamesInfo.getInstance().getProductName()),
+      });
 
       httpclient.executeMethod(post);
 

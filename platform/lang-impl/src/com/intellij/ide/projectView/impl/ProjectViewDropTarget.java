@@ -21,6 +21,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -54,12 +55,12 @@ import java.util.List;
 class ProjectViewDropTarget implements DnDNativeTarget {
 
   private JTree myTree;
-  private final PsiRetriever myPsiRetriever;
+  private final Retriever myRetriever;
   private final Project myProject;
 
-  ProjectViewDropTarget(JTree tree, PsiRetriever psiRetriever, Project project) {
+  ProjectViewDropTarget(JTree tree, Retriever retriever, Project project) {
     myTree = tree;
-    myPsiRetriever = psiRetriever;
+    myRetriever = retriever;
     myProject = project;
   }
 
@@ -222,7 +223,11 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
-    return myPsiRetriever.getPsiElement(treeNode);
+    return myRetriever.getPsiElement(treeNode);
+  }
+
+  protected Module getModule(@Nullable final TreeNode treeNode) {
+    return myRetriever.getModule(treeNode);
   }
 
   public abstract class MoveCopyDropHandler implements DropHandler {
@@ -306,10 +311,14 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     private void doDrop(TreeNode targetNode, PsiElement[] sourceElements, final boolean externalDrop) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
+      final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {
         @Nullable
         public Object getData(@NonNls String dataId) {
+          if (LangDataKeys.TARGET_MODULE.is(dataId)) {
+            if (module != null) return module;
+          }
           if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
             return targetElement;
           }

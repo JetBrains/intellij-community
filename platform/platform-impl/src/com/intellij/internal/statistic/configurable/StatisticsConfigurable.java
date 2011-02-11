@@ -18,14 +18,16 @@ package com.intellij.internal.statistic.configurable;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StatisticsConfigurable implements Configurable {
+public class StatisticsConfigurable implements SearchableConfigurable {
 
   private StatisticsConfigurationComponent myConfig;
 
@@ -69,5 +71,16 @@ public class StatisticsConfigurable implements Configurable {
 
   public void disposeUIResources() {
     myConfig = null;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "usage.statistics";
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

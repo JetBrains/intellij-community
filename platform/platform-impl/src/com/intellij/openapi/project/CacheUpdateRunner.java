@@ -123,7 +123,12 @@ class CacheUpdateRunner {
   private boolean processSomeFilesWhileUserIsInactive(final FileContentQueue queue,
                                                       final Consumer<VirtualFile> progressUpdater,
                                                       final boolean processInReadAction) {
-    final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase();
+    final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
+      @Override
+      protected boolean isCancelable() {
+        return true; // the inner indicator must be always cancelable
+      }
+    };
     final ApplicationAdapter canceller = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {

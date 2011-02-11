@@ -15,11 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.AbstractVcs;
+
 interface FileHolder {
   void cleanAll();
   void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
   FileHolder copy();
   HolderType getType();
+
+  void notifyVcsStarted(AbstractVcs scope);
 
   static enum HolderType {
     DELETED,

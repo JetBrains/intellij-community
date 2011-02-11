@@ -238,7 +238,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
-      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true, true);
+      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
       resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
@@ -292,6 +292,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    /*
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) resolved;
@@ -337,6 +338,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     }
+*/
 
     return handleElementRenameInner(newElementName);
   }

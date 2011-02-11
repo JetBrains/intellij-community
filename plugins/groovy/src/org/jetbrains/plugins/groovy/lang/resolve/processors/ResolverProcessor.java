@@ -53,7 +53,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   private
   @NotNull final PsiType[] myTypeArguments;
 
-  private Set<GroovyResolveResult> myCandidates;
+  private List<GroovyResolveResult> myCandidates;
 
   protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                               PsiElement place,
@@ -97,12 +97,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected final void addCandidate(GroovyResolveResult candidate) {
-    if (myCandidates == null) myCandidates = new LinkedHashSet<GroovyResolveResult>();
+    if (myCandidates == null) myCandidates = new ArrayList<GroovyResolveResult>();
     myCandidates.add(candidate);
   }
 
-  protected Set<GroovyResolveResult> getCandidatesInternal() {
-    return myCandidates == null ? Collections.<GroovyResolveResult>emptySet() : myCandidates;
+  protected List<GroovyResolveResult> getCandidatesInternal() {
+    return myCandidates == null ? Collections.<GroovyResolveResult>emptyList() : myCandidates;
   }
 
   protected boolean isAccessible(PsiNamedElement namedElement) {

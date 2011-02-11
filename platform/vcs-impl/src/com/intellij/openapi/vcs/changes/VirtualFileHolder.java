@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +41,10 @@ public class VirtualFileHolder implements FileHolder {
 
   public HolderType getType() {
     return myType;
+  }
+
+  @Override
+  public void notifyVcsStarted(AbstractVcs vcs) {
   }
 
   public void cleanAll() {

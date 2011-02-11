@@ -44,7 +44,7 @@ public class ExpressionStatement implements GroovyElementTypes {
     if (result != PathExpression.Result.WRONG_WAY &&
         !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
         !TokenSets.BINARY_OP_SET.contains(builder.getTokenType()) &&
-        !TokenSets.UNARY_OP_SET.contains(builder.getTokenType())) {
+        !TokenSets.POSTFIX_UNARY_OP_SET.contains(builder.getTokenType())) {
       if (result == PathExpression.Result.CALL_WITH_CLOSURE) {
         marker.drop();
         return PATH_METHOD_CALL;

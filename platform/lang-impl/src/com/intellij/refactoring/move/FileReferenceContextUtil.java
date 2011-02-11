@@ -24,7 +24,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class FileReferenceContextUtil {
@@ -39,6 +41,14 @@ public class FileReferenceContextUtil {
     if (isBinary(element)) return map;
     element.accept(new PsiRecursiveElementWalkingVisitor(true) {
       @Override public void visitElement(PsiElement element) {
+        if (element instanceof PsiLanguageInjectionHost) {
+          ((PsiLanguageInjectionHost)element).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+              encodeFileReferences(injectedPsi);
+            }
+          });
+        }
+
         final PsiReference[] refs = element.getReferences();
         if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
           final FileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
@@ -75,6 +85,14 @@ public class FileReferenceContextUtil {
         element = bindElement(element, item);
         if (element != null) {
           element.acceptChildren(this);
+        }
+
+        if (element instanceof PsiLanguageInjectionHost) {
+          ((PsiLanguageInjectionHost)element).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+              decodeFileReferences(injectedPsi);
+            }
+          });
         }
       }
     });

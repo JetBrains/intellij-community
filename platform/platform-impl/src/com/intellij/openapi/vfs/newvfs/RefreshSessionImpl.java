@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -45,10 +46,17 @@ public class RefreshSessionImpl extends RefreshSession {
   private final Semaphore mySemaphore = new Semaphore();
   private volatile boolean iHaveEventsToFire;
 
+  private ModalityState myModalityState;
+
   public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
+    this(isAsync, recursively, finishRunnable, ModalityState.NON_MODAL);
+  }
+
+  public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable, ModalityState modalityState) {
     myIsRecursive = recursively;
     myFinishRunnable = finishRunnable;
     myIsAsync = isAsync;
+    myModalityState = modalityState;
   }
 
   public RefreshSessionImpl(final List<VFileEvent> events) {
@@ -151,5 +159,9 @@ public class RefreshSessionImpl extends RefreshSession {
     List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
     myEvents = new ArrayList<VFileEvent>();
     return events;
+  }
+
+  public ModalityState getModalityState() {
+    return myModalityState;
   }
 }

@@ -144,8 +144,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         return isImplicitlyImported(element, expectedName) || super.execute(element, state);
       }
     };
-    for (GrImportStatement importStatement : getImportStatements()) {
-      if (!importStatement.processDeclarations(importProcessor, state, lastParent, place)) {
+    GrImportStatement[] importStatements = getImportStatements();
+    for (int i = importStatements.length - 1; i >= 0; i--) {
+      if (!importStatements[i].processDeclarations(importProcessor, state, lastParent, place)) {
         return false;
       }
     }
@@ -386,7 +387,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (packageName == null || packageName.length() == 0) {
       if (currentPackage != null) {
         final ASTNode currNode = currentPackage.getNode();
-        assert currNode != null;
         fileNode.removeChild(currNode);
       }
       return;
@@ -395,7 +395,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final ASTNode newNode = newPackage.getNode();
     if (currentPackage != null) {
       final ASTNode currNode = currentPackage.getNode();
-      assert currNode != null;
       fileNode.replaceChild(currNode, newNode);
     } else {
       final ASTNode anchor = fileNode.getFirstChildNode();
