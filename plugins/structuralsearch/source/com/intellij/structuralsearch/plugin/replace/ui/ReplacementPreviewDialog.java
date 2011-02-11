@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,8 +48,8 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     init();
 
     final PsiElement element = info.getElement();
-    TextRange range = element.getTextRange();
-    hilight(element.getContainingFile().getVirtualFile(),range.getStartOffset() + info.startOffset, range.getStartOffset() + info.endOffset);
+    Segment range = info.getSegment();
+    hilight(element.getContainingFile().getVirtualFile(), range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString,0,-1,project);
   }
 
