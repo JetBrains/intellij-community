@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -101,6 +102,11 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
+  }
+
+  @Override
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable, ModalityState modalityState) {
+    RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, modalityState, this);
   }
 
   public long getModificationStamp() {

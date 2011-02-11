@@ -17,11 +17,13 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -456,10 +458,22 @@ public class FileSystemTreeImpl implements FileSystemTree {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node.getUserObject() instanceof FileNodeDescriptor) {
         FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
-        FileElement fileDescriptor = nodeDescriptor.getElement();
-        VirtualFile virtualFile = fileDescriptor.getFile();
+        final FileElement fileDescriptor = nodeDescriptor.getElement();
+        final VirtualFile virtualFile = fileDescriptor.getFile();
         if (virtualFile != null) {
-          virtualFile.refresh(false, false);
+          if (myTreeBuilder.getTreeStructure().isToBuildChildrenInBackground(virtualFile)) {
+            virtualFile.refresh(true, false, new Runnable() {
+              @Override
+              public void run() {
+                if (myTreeBuilder.isDisposed()) return;
+                if (myTreeBuilder.getUi().getExpandedElements().contains(fileDescriptor)) {
+                  myTreeBuilder.queueUpdateFrom(virtualFile, false);
+                }
+              }
+            }, ModalityState.stateForComponent(myTree));
+          } else {
+            virtualFile.refresh(false, false, null, ModalityState.stateForComponent(myTree));
+          }
         }
       }
     }
