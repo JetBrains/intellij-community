@@ -16,25 +16,29 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class CompletionSorterImpl extends CompletionSorter {
-  private final ClassifyingSequencer<LookupElement> mySequencer;
+  private final List<ClassifierFactory<LookupElement>> myMembers;
 
-  private CompletionSorterImpl(ClassifyingSequencer<LookupElement> sequencer) {
-    mySequencer = sequencer;
+  private CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
+    myMembers = members;
   }
 
   public static CompletionSorterImpl defaultSorter() {
-    final ClassifyingSequencer<LookupElement> sequencer = new ClassifyingSequencer<LookupElement>(); //todo
-    return new CompletionSorterImpl(sequencer);
+    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>()); //todo
   }
 
   public static CompletionSorterImpl emptySorter() {
-    return new CompletionSorterImpl(new ClassifyingSequencer<LookupElement>());
+    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
   private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
@@ -63,12 +67,30 @@ public class CompletionSorterImpl extends CompletionSorter {
     return withClassifier(weighingFactory(weigher));
   }
 
-  public CompletionSorterImpl withClassifier(ClassifierFactory<LookupElement> factory) {
-    return new CompletionSorterImpl(mySequencer.withClassifier(factory));
+  public CompletionSorterImpl withClassifier(ClassifierFactory<LookupElement> classifierFactory) {
+    return enhanced(classifierFactory, myMembers.size());
   }
 
-  public CompletionSorterImpl withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
-    return new CompletionSorterImpl(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
+  public CompletionSorterImpl withClassifier(@NotNull String anchorId,
+                                             boolean beforeAnchor, ClassifierFactory<LookupElement> classifierFactory) {
+    final int i = idIndex(anchorId);
+    return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
+  }
+
+  private CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
+    final List<ClassifierFactory<LookupElement>> copy = new ArrayList<ClassifierFactory<LookupElement>>(myMembers);
+    copy.add(index, classifierFactory);
+    return new CompletionSorterImpl(copy);
+  }
+
+
+  private int idIndex(final String id) {
+    return ContainerUtil.indexOf(myMembers, new Condition<ClassifierFactory<LookupElement>>() {
+      @Override
+      public boolean value(ClassifierFactory<LookupElement> factory) {
+        return id.equals(factory.getId());
+      }
+    });
   }
 
   @Override
@@ -78,17 +100,25 @@ public class CompletionSorterImpl extends CompletionSorter {
 
     CompletionSorterImpl that = (CompletionSorterImpl)o;
 
-    if (!mySequencer.equals(that.mySequencer)) return false;
+    if (!myMembers.equals(that.myMembers)) return false;
 
     return true;
   }
 
-  public Classifier<LookupElement> buildClassifier() {
-    return mySequencer.buildClassifier();
-  }
-
   @Override
   public int hashCode() {
-    return mySequencer.hashCode();
+    return myMembers.hashCode();
+  }
+
+  private static Classifier<LookupElement> createClassifier(final int index, final List<ClassifierFactory<LookupElement>> components) {
+    if (index == components.size()) {
+      return ClassifierFactory.listClassifier();
+    }
+
+    return components.get(index).createClassifier(createClassifier(index + 1, components));
+  }
+
+  public Classifier<LookupElement> buildClassifier() {
+    return createClassifier(0, myMembers);
   }
 }
