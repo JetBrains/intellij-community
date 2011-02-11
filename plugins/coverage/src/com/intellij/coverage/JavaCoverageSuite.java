@@ -1,8 +1,10 @@
 package com.intellij.coverage;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -199,13 +201,18 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public @NotNull List<PsiClass> getCurrentSuiteClasses(final Project project) {
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<PsiClass>();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String[] classNames = getFilteredClassNames();
     if (classNames.length > 0) {
-      for (String className : classNames) {
+      for (final String className : classNames) {
         final PsiClass aClass =
-          JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+          ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+            @Nullable
+            public PsiClass compute() {
+              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+            }
+          });
         if (aClass != null) {
           classes.add(aClass);
         }
