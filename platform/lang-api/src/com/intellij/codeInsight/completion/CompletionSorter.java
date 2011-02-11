@@ -28,4 +28,12 @@ public abstract class CompletionSorter {
 
   public abstract CompletionSorter weigh(LookupElementWeigher weigher);
 
+  public static CompletionSorter emptySorter() {
+    return CompletionService.getCompletionService().emptySorter();
+  }
+
+  public static CompletionSorter defaultSorter(CompletionParameters parameters) {
+    return CompletionService.getCompletionService().defaultSorter(parameters);
+  }
+
 }

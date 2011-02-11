@@ -16,7 +16,11 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,10 +29,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 /**
  * @author peter
@@ -40,6 +47,7 @@ public class CompletionServiceImpl extends CompletionService{
   private static CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl)CompletionService.getCompletionService();
   }
@@ -62,7 +70,7 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor, defaultSorter(parameters), null);
   }
 
   @Override
@@ -88,11 +96,24 @@ public class CompletionServiceImpl extends CompletionService{
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
     private final String myTextBeforePosition;
+    private final CompletionSorterImpl mySorter;
+    @Nullable private final CompletionResultSetImpl myOriginal;
 
     public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
-                                   final PrefixMatcher prefixMatcher, CompletionContributor contributor) {
+                                   final PrefixMatcher prefixMatcher,
+                                   CompletionContributor contributor,
+                                   @NotNull CompletionSorterImpl sorter,
+                                   CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myTextBeforePosition = textBeforePosition;
+      mySorter = sorter;
+      myOriginal = original;
+    }
+
+    @Override
+    public void addElement(@NotNull LookupElement element) {
+      element.putUserDataIfAbsent(CompletionLookupArranger.SORTER_KEY, mySorter);
+      super.addElement(element);
     }
 
     @NotNull
@@ -102,18 +123,26 @@ public class CompletionServiceImpl extends CompletionService{
         final String fragment = len > 100 ? myTextBeforePosition.substring(len - 100) : myTextBeforePosition;
         LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() + "\n text=" + fragment);
       }
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor) {
-        @Override
-        public void stopHere() {
-          super.stopHere();
-          CompletionResultSetImpl.this.stopHere();
-        }
-      };
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, mySorter, this);
+    }
+
+    @Override
+    public void stopHere() {
+      super.stopHere();
+      if (myOriginal != null) {
+        myOriginal.stopHere();
+      }
     }
 
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
       return withPrefixMatcher(new CamelHumpMatcher(prefix));
+    }
+
+    @NotNull
+    @Override
+    public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, (CompletionSorterImpl)sorter, this);
     }
 
     @NotNull
@@ -199,4 +228,28 @@ public class CompletionServiceImpl extends CompletionService{
 //    ApplicationManager.getApplication().assertIsDispatchThread();
     return ourPhase;
   }
+
+  public CompletionSorterImpl defaultSorter(CompletionParameters parameters) {
+    final CompletionLocation location = new CompletionLocation(parameters);
+
+    return emptySorter().weigh(new LookupElementWeigher() {
+      @Override
+      public Comparable weigh(@NotNull LookupElement item) {
+        LookupItemWeightComparable result = CompletionLookupArranger.getCachedRelevance(item);
+        if (result != null) return result;
+
+        final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
+        result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, location));
+
+        item.putUserData(CompletionLookupArranger.RELEVANCE_KEY, result);
+
+        return result;
+      }
+    });
+  }
+
+  public CompletionSorterImpl emptySorter() {
+    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
+  }
+
 }

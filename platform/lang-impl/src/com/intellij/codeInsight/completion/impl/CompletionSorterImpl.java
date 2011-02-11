@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
+package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,16 +30,8 @@ import java.util.List;
 public class CompletionSorterImpl extends CompletionSorter {
   private final List<ClassifierFactory<LookupElement>> myMembers;
 
-  private CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
+  CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
     myMembers = members;
-  }
-
-  public static CompletionSorterImpl defaultSorter() {
-    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>()); //todo
-  }
-
-  public static CompletionSorterImpl emptySorter() {
-    return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
   private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {

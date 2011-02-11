@@ -16,9 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
@@ -149,4 +147,9 @@ public abstract class CompletionService {
   }
 
   public abstract void correctCaseInsensitiveString(@NotNull final LookupElement element, InsertionContext context);
+
+  public abstract CompletionSorter defaultSorter(CompletionParameters parameters);
+
+  public abstract CompletionSorter emptySorter();
+
 }

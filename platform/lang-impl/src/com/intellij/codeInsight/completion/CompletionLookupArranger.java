@@ -17,7 +17,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.util.Key;
@@ -33,10 +38,14 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public class CompletionLookupArranger extends LookupArranger {
   public static final Key<LookupItemWeightComparable> RELEVANCE_KEY = Key.create("RELEVANCE_KEY");
+  public static final Key<CompletionSorterImpl> SORTER_KEY = Key.create("SORTER_KEY");
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
@@ -108,21 +117,6 @@ public class CompletionLookupArranger extends LookupArranger {
 
 
   public Classifier<LookupElement> createRelevanceClassifier() {
-    final CompletionSorterImpl defaultSorter = CompletionSorterImpl.emptySorter().weigh(new LookupElementWeigher() {
-      @Override
-      public Comparable weigh(@NotNull LookupElement item) {
-        LookupItemWeightComparable result = getCachedRelevance(item);
-        if (result != null) return result;
-
-        final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-        result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation));
-
-        item.putUserData(RELEVANCE_KEY, result);
-
-        return result;
-      }
-    });
-
     return new Classifier<LookupElement>() {
       private final FactoryMap<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new FactoryMap<CompletionSorterImpl, Classifier<LookupElement>>() {
         @Override
@@ -141,8 +135,9 @@ public class CompletionLookupArranger extends LookupArranger {
         myClassifiers.get(obtainSorter(element)).addElement(element);
       }
 
+      @NotNull
       private CompletionSorterImpl obtainSorter(LookupElement element) {
-        return defaultSorter;
+        return element.getUserData(SORTER_KEY);
       }
 
       @Override
