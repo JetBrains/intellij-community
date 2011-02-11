@@ -22,39 +22,39 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassifyingSequencer {
-  private final List<ClassifierFactory<LookupElement>> myMembers;
+public class ClassifyingSequencer<T> {
+  private final List<ClassifierFactory<T>> myMembers;
 
   public ClassifyingSequencer() {
-    this(new ArrayList<ClassifierFactory<LookupElement>>());
+    this(new ArrayList<ClassifierFactory<T>>());
   }
 
-  private ClassifyingSequencer(final List<ClassifierFactory<LookupElement>> members) {
+  private ClassifyingSequencer(final List<ClassifierFactory<T>> members) {
     myMembers = members;
   }
 
-  public ClassifyingSequencer withClassifier(ClassifierFactory<LookupElement> classifierFactory) {
+  public ClassifyingSequencer<T> withClassifier(ClassifierFactory<T> classifierFactory) {
     return enhanced(classifierFactory, myMembers.size());
   }
 
-  public ClassifyingSequencer withClassifier(ClassifierFactory<LookupElement> classifierFactory,
+  public ClassifyingSequencer<T> withClassifier(ClassifierFactory<T> classifierFactory,
                                              @NotNull String anchorId,
                                              boolean beforeAnchor) {
     final int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
-  private ClassifyingSequencer enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
-    final List<ClassifierFactory<LookupElement>> copy = new ArrayList<ClassifierFactory<LookupElement>>(myMembers);
+  private ClassifyingSequencer<T> enhanced(ClassifierFactory<T> classifierFactory, int index) {
+    final List<ClassifierFactory<T>> copy = new ArrayList<ClassifierFactory<T>>(myMembers);
     copy.add(index, classifierFactory);
-    return new ClassifyingSequencer(copy);
+    return new ClassifyingSequencer<T>(copy);
   }
 
 
   private int idIndex(final String id) {
-    return ContainerUtil.indexOf(myMembers, new Condition<ClassifierFactory<LookupElement>>() {
+    return ContainerUtil.indexOf(myMembers, new Condition<ClassifierFactory<T>>() {
       @Override
-      public boolean value(ClassifierFactory<LookupElement> lookupElementClassifierFactory) {
+      public boolean value(ClassifierFactory<T> lookupElementClassifierFactory) {
         return id.equals(lookupElementClassifierFactory.getId());
       }
     });
@@ -68,7 +68,7 @@ public class ClassifyingSequencer {
     return components.get(index).createClassifier(createClassifier(index + 1, components));
   }
 
-  Classifier buildClassifier() {
+  public Classifier<T> buildClassifier() {
     return createClassifier(0, myMembers);
   }
 

@@ -22,19 +22,19 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CompletionSorterImpl extends CompletionSorter {
-  private final ClassifyingSequencer mySequencer;
+  private final ClassifyingSequencer<LookupElement> mySequencer;
 
-  private CompletionSorterImpl(ClassifyingSequencer sequencer) {
+  private CompletionSorterImpl(ClassifyingSequencer<LookupElement> sequencer) {
     mySequencer = sequencer;
   }
 
-  public static CompletionSorter defaultSorter() {
-    final ClassifyingSequencer sequencer = new ClassifyingSequencer(); //todo
+  public static CompletionSorterImpl defaultSorter() {
+    final ClassifyingSequencer<LookupElement> sequencer = new ClassifyingSequencer<LookupElement>(); //todo
     return new CompletionSorterImpl(sequencer);
   }
 
-  public static CompletionSorter emptySorter() {
-    return new CompletionSorterImpl(new ClassifyingSequencer());
+  public static CompletionSorterImpl emptySorter() {
+    return new CompletionSorterImpl(new ClassifyingSequencer<LookupElement>());
   }
 
   private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
@@ -51,23 +51,23 @@ public class CompletionSorterImpl extends CompletionSorter {
     };
   }
 
-  @Override public CompletionSorter weighBefore(@NotNull final String beforeId, final LookupElementWeigher weigher) {
+  @Override public CompletionSorterImpl weighBefore(@NotNull final String beforeId, final LookupElementWeigher weigher) {
     return withClassifier(beforeId, true, weighingFactory(weigher));
   }
 
-  @Override public CompletionSorter weighAfter(@NotNull final String afterId, final LookupElementWeigher weigher) {
+  @Override public CompletionSorterImpl weighAfter(@NotNull final String afterId, final LookupElementWeigher weigher) {
     return withClassifier(afterId, false, weighingFactory(weigher));
   }
 
-  @Override public CompletionSorter weigh(final LookupElementWeigher weigher) {
+  @Override public CompletionSorterImpl weigh(final LookupElementWeigher weigher) {
     return withClassifier(weighingFactory(weigher));
   }
 
-  public CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory) {
+  public CompletionSorterImpl withClassifier(ClassifierFactory<LookupElement> factory) {
     return new CompletionSorterImpl(mySequencer.withClassifier(factory));
   }
 
-  public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
+  public CompletionSorterImpl withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
     return new CompletionSorterImpl(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
   }
 
@@ -81,6 +81,10 @@ public class CompletionSorterImpl extends CompletionSorter {
     if (!mySequencer.equals(that.mySequencer)) return false;
 
     return true;
+  }
+
+  public Classifier<LookupElement> buildClassifier() {
+    return mySequencer.buildClassifier();
   }
 
   @Override

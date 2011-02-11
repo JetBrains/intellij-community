@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -51,9 +52,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       list.add(t);
     }
     for (List<T> list : map.values()) {
-      for (List<T> ts : myNext.classify(list)) {
-        result.add(ts);
-      }
+      ContainerUtil.addAll(result, myNext.classify(list));
     }
     return result;
   }

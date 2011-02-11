@@ -122,6 +122,10 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<T> appendix) {
+    addAll(collection, appendix.iterator());
+  }
+
   public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
