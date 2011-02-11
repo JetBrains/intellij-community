@@ -56,6 +56,10 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
     NotificationsManagerImpl.getNotificationsManagerImpl().doNotify(notification, null, myProject);
   }
 
+  @Override
+  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
+  }
+
   public void notify(@NotNull Notification notification, @NotNull NotificationDisplayType defaultDisplayType) {
     NotificationsManagerImpl.getNotificationsManagerImpl().doNotify(notification, defaultDisplayType, myProject);
   }
