@@ -144,6 +144,14 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testjunitEntryPoint() throws Exception {
     doTest();
   }
+
+  public void testjunitAbstractClassWithInheritor() throws Exception {
+    doTest();
+  }
+
+  public void testjunitAbstractClassWithoutInheritor() throws Exception {
+    doTest();
+  }
   
   public void testjunitEntryPointCustomRunWith() throws Exception {
     doTest();

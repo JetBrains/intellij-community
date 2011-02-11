@@ -16,19 +16,25 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author Maxim.Medvedev
@@ -43,6 +49,74 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element), element);
+  }
+
+
+
+  @Override
+  public void renameElement(PsiElement psiElement,
+                            String newName,
+                            UsageInfo[] usages,
+                            RefactoringElementListener listener) throws IncorrectOperationException {
+    boolean isGetter = isSimplePropertyGetter((PsiMethod)psiElement);
+    boolean isSetter = isSimplePropertySetter((PsiMethod)psiElement);
+
+    List<UsageInfo> methodAccess = new ArrayList<UsageInfo>(usages.length);
+    List<UsageInfo> propertyAccess = new ArrayList<UsageInfo>(usages.length);
+
+    for (UsageInfo usage : usages) {
+      final PsiElement element = usage.getElement();
+      if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).advancedResolve().isInvokedOnProperty()) {
+        propertyAccess.add(usage);
+      }
+      else {
+        methodAccess.add(usage);
+      }
+    }
+    super.renameElement(psiElement, newName, methodAccess.toArray(new UsageInfo[methodAccess.size()]), listener);
+    final String propertyName;
+    if (isGetter) {
+      propertyName = getPropertyNameByGetterName(newName, true);
+    }
+    else if (isSetter) {
+      propertyName = getPropertyNameBySetterName(newName);
+    }
+    else {
+      propertyName = null;
+    }
+
+    if (propertyName == null) {
+      //it means accessor is renamed to not-accessor and we should replace all property-access-refs with method-access-refs
+
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(psiElement.getProject());
+      for (UsageInfo info : propertyAccess) {
+        final PsiElement element = info.getElement();
+        if (element instanceof GrReferenceExpression) {
+          final PsiElement qualifier = ((GrReferenceExpression)element).getQualifier();
+          String qualifierPrefix = qualifier == null ? "" : qualifier.getText() + ".";
+          if (isGetter) {
+            final GrExpression call = factory.createExpressionFromText(qualifierPrefix + newName + "()");
+            ((GrReferenceExpression)element).replaceWithExpression(call, true);
+          }
+          else {
+            final PsiElement parent = element.getParent();
+            assert parent instanceof GrAssignmentExpression;
+            final GrExpression rValue = ((GrAssignmentExpression)parent).getRValue();
+            final GrExpression call =
+              factory.createExpressionFromText(qualifierPrefix + newName + "(" + (rValue == null ? "" : rValue.getText()) + ")");
+            ((GrAssignmentExpression)parent).replaceWithExpression(call, true);
+          }
+        }
+      }
+    }
+    else {
+      for (UsageInfo usage : propertyAccess) {
+        final PsiReference ref = usage.getReference();
+        if (ref != null) {
+          ref.handleElementRename(propertyName);
+        }
+      }
+    }
   }
 
   @Override

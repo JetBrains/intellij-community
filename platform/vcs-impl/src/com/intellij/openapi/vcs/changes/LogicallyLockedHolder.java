@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collections;
@@ -51,6 +52,10 @@ public class LogicallyLockedHolder implements FileHolder {
 
   public HolderType getType() {
     return HolderType.LOGICALLY_LOCKED;
+  }
+
+  @Override
+  public void notifyVcsStarted(AbstractVcs vcs) {
   }
 
   public boolean containsKey(final VirtualFile vf) {

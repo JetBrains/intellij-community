@@ -543,5 +543,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     if (myRollbackEnvironment != null) throw new IllegalStateException("Attempt to redefine rollback environment");
     myRollbackEnvironment = rollbackEnvironment;
   }
+
+  public boolean reportsIgnoredDirectories() {
+    return true;
+  }
 }
 

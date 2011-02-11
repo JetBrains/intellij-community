@@ -33,9 +33,14 @@ public class JavaSdkUtil {
     }
   }
 
-  
+
   public static String getJunit4JarPath() {
-    return PathUtil.getJarPathForClass(org.junit.Test.class);
+    try {
+      return PathUtil.getJarPathForClass(Class.forName("org.junit.Test"));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static String getJunit3JarPath() {
