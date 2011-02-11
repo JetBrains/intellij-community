@@ -151,7 +151,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     public MigrationMapEntry mapEntry;
 
     public MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
-      super(info.getElement(), info.startOffset, info.endOffset);
+      super(info.getElement(), info.getRangeInElement().getStartOffset(), info.getRangeInElement().getEndOffset());
       this.mapEntry = mapEntry;
     }
   }

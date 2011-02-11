@@ -17,6 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -29,14 +30,14 @@ import org.jetbrains.annotations.NotNull;
 class InjectedSelfElementInfo extends SelfElementInfo {
   private DocumentWindow myDocument;
 
-  InjectedSelfElementInfo(@NotNull PsiElement anchor, PsiFile containingFile) {
-    super(anchor, containingFile);
+  InjectedSelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
+    super(project, anchor.getTextRange(), anchor.getClass(), containingFile);
     assert containingFile.getContext() != null;
   }
 
-  protected TextRange getPersistentAnchorRange(final PsiElement anchor) {
-    final TextRange textRange = super.getPersistentAnchorRange(anchor);
-    Document document = PsiDocumentManager.getInstance(anchor.getProject()).getDocument(anchor.getContainingFile());
+  protected TextRange getPersistentAnchorRange(final TextRange anchor, PsiFile containingFile) {
+    final TextRange textRange = super.getPersistentAnchorRange(anchor, containingFile);
+    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
     // must be non-text file
 
     if (!(document instanceof DocumentWindow)) return textRange;

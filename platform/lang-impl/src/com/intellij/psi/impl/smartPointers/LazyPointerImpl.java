@@ -141,11 +141,11 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
   }
 
   @Override
-  public Segment getSegment() {
+  public Segment getRange() {
     E element = myElement;
     if (element != null && element.isValid()) return element.getTextRange();
     SmartPsiElementPointer pointer = myPointer;
-    if (pointer != null) return pointer.getSegment();
+    if (pointer != null) return pointer.getRange();
     PsiAnchor anchor = myAnchor;
     if (anchor != null) {
       final PsiElement psiElement = anchor.retrieve();

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,9 +29,11 @@ import org.jetbrains.annotations.NotNull;
 */
 class HardElementInfo implements SmartPointerElementInfo {
   private final PsiElement myElement;
+  private final Project myProject;
 
-  public HardElementInfo(@NotNull PsiElement element) {
+  public HardElementInfo(@NotNull Project project, @NotNull PsiElement element) {
     myElement = element;
+    myProject = project;
   }
 
   public Document getDocumentToSynchronize() {
@@ -72,7 +75,13 @@ class HardElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public Segment getSegment() {
+  public Segment getRange() {
     return myElement.getTextRange();
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 }

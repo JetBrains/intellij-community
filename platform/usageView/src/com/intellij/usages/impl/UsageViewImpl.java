@@ -472,6 +472,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void rulesChanged() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
@@ -640,7 +641,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
   }
 
-  public void reset() {
+  private void reset() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
 

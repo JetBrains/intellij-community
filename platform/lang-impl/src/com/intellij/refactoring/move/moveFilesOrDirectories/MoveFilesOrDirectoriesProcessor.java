@@ -168,7 +168,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       Arrays.sort(usages, new Comparator<UsageInfo>() {
         public int compare(final UsageInfo o1, final UsageInfo o2) {
-          return o1.getElement() == o2.getElement() ? o2.startOffset - o1.startOffset : 0;
+          return o1.getElement() == o2.getElement() ? o2.getRangeInElement().getStartOffset() - o1.getRangeInElement().getStartOffset() : 0;
         }
       });
 

@@ -16,10 +16,12 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +31,31 @@ import org.jetbrains.annotations.Nullable;
 * User: cdr
 */
 class AnchorElementInfo extends SelfElementInfo {
-  AnchorElementInfo(@NotNull PsiElement anchor, PsiFile containingFile) {
-    super(anchor, containingFile);
+  private int stubId = -1;
+  private IStubElementType myStubElementType;
+
+  AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
+    super(containingFile.getProject(), anchor.getTextRange(), anchor.getClass(), containingFile);
+  }
+  // will restore by stub index until file tree get loaded
+  AnchorElementInfo(@NotNull PsiElement anchor,
+                    @NotNull PsiFileWithStubSupport containingFile,
+                    int stubId,
+                    @NotNull IStubElementType stubElementType) {
+    super(containingFile.getProject(), new TextRange(0,0), anchor.getClass(), containingFile);
+    this.stubId = stubId;
+    myStubElementType = stubElementType;
+    IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
+    assert contentElementType instanceof IStubFileElementType : contentElementType;
   }
 
   @Nullable
   public PsiElement restoreElement() {
+    if (stubId != -1) {
+      PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+      if (!(file instanceof PsiFileWithStubSupport)) return null;
+      return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, myStubElementType);
+    }
     if (!mySyncMarkerIsValid) return null;
     PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
     if (file == null) return null;
@@ -59,5 +80,18 @@ class AnchorElementInfo extends SelfElementInfo {
       return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;
     }
     return null;
+  }
+
+  @Override
+  public void fastenBelt(int offset) {
+    PsiElement element = restoreElement();
+    if (element != null) {
+      // switch to tree
+      stubId = -1;
+      myStubElementType = null;
+      PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
+      setRange((anchor == null ? element : anchor).getTextRange());
+    }
+    super.fastenBelt(offset);
   }
 }

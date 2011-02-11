@@ -66,7 +66,7 @@ public class MigrationUtil {
   }
 
   private static void bindNonJavaReference(PsiElement bindTo, PsiElement element, UsageInfo usage) {
-    final TextRange range = usage.getRange();
+    final TextRange range = usage.getRangeInElement();
     for (PsiReference reference : element.getReferences()) {
       if (reference instanceof JavaClassReference) {
         final JavaClassReference classReference = (JavaClassReference)reference;

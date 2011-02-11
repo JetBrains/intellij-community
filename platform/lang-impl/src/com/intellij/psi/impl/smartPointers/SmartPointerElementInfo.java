@@ -17,9 +17,11 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 interface SmartPointerElementInfo {
@@ -39,5 +41,6 @@ interface SmartPointerElementInfo {
   boolean pointsToTheSameElementAs(SmartPointerElementInfo other);
 
   VirtualFile getVirtualFile();
-  Segment getSegment();
+  Segment getRange();
+  @NotNull Project getProject();
 }

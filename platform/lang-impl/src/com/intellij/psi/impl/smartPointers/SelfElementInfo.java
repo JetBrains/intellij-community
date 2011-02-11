@@ -44,22 +44,21 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   private int mySyncStartOffset;
   private int mySyncEndOffset;
   protected boolean mySyncMarkerIsValid;
-  private Class myType;
+  private final Class myType;
   protected final Project myProject;
+  @SuppressWarnings({"UnusedDeclaration"})
   private RangeMarker myRangeMarker; //maintain hard reference during modification
 
-  public SelfElementInfo(@NotNull PsiElement anchor, PsiFile containingFile) {
-    LOG.assertTrue(anchor.isPhysical());
-    LOG.assertTrue(anchor.isValid());
-    PsiFile file = anchor.getContainingFile();
-    myVirtualFile = file.getVirtualFile();
-    TextRange range = anchor.getTextRange();
+  public SelfElementInfo(@NotNull Project project, @NotNull TextRange anchor, @NotNull Class anchorClass, @NotNull PsiFile containingFile) {
+    myVirtualFile = containingFile.getVirtualFile();
+    myType = anchorClass;
+    TextRange range = anchor;//.getTextRange();
     LOG.assertTrue(range != null, anchor);
-    range = getPersistentAnchorRange(anchor);
+    range = getPersistentAnchorRange(range, containingFile);
 
-    myProject = file.getProject();
+    myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = documentManager.getDocument(file);
+    Document document = documentManager.getDocument(containingFile);
     if (document == null || documentManager.isUncommited(document)) {
       mySyncMarkerIsValid = false;
       return;
@@ -82,19 +81,17 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     //  LOG.error("File=" + file);
     //}
 
-    if (documentManager.isUncommited(document)) {
-      mySyncMarkerIsValid = false;
-    }
-    else {
-      mySyncMarkerIsValid = true;
-      myType = anchor.getClass();
-    }
+    mySyncMarkerIsValid = true;
+    setRange(range);
+  }
+
+  protected void setRange(TextRange range) {
     mySyncStartOffset = range.getStartOffset();
     mySyncEndOffset = range.getEndOffset();
   }
 
-  protected TextRange getPersistentAnchorRange(final PsiElement anchor) {
-    return anchor.getTextRange();
+  protected TextRange getPersistentAnchorRange(final TextRange anchor, PsiFile containingFile) {
+    return anchor;
   }
 
   public Document getDocumentToSynchronize() {
@@ -128,14 +125,15 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
         marker = document.createRangeMarker(start, end, true);
         setMarker(marker);
-        myRangeMarker = marker; //make sure marker wont be gced
       //}
     }
     else if (!marker.isValid()) {
       mySyncMarkerIsValid = false;
       marker.dispose();
       setMarker(null);
+      marker = null;
     }
+    myRangeMarker = marker; //make sure marker wont be gced
   }
 
   // after change
@@ -267,8 +265,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public Segment getSegment() {
+  public Segment getRange() {
     if (!mySyncMarkerIsValid) return null;
     return new TextRange(getSyncStartOffset(), getSyncEndOffset());
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 }

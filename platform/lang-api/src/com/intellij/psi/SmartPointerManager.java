@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * element in the PSI tree after the reparse.
  */
 public abstract class SmartPointerManager {
+  @NotNull
+  public abstract SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range);
+
   public static SmartPointerManager getInstance(Project project) {
     return ServiceManager.getService(project, SmartPointerManager.class);
   }

@@ -95,7 +95,7 @@ public abstract class PsiAnchor {
     return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang, virtualFile);
   }
 
-  private static int calcStubIndex(StubBasedPsiElement psi) {
+  public static int calcStubIndex(StubBasedPsiElement psi) {
     if (psi instanceof PsiFile) {
       return 0;
     }
@@ -238,6 +238,41 @@ public abstract class PsiAnchor {
     }
   }
 
+  public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
+                                                int index,
+                                                IStubElementType elementType) {
+    if (fileImpl == null) return null;
+    StubTree tree = fileImpl.getStubTree();
+
+    boolean foreign = tree == null;
+    if (foreign) {
+      if (fileImpl instanceof PsiFileImpl) {
+        // Note: as far as this is a realization of StubIndexReference fileImpl#getContentElementType() must be instance of IStubFileElementType
+        tree = ((PsiFileImpl)fileImpl).calcStubTree();
+      }
+      else {
+        return null;
+      }
+    }
+
+    List<StubElement<?>> list = tree.getPlainList();
+    if (index >= list.size()) return null;
+    StubElement stub = list.get(index);
+
+    if (stub.getStubType() != elementType) return null;
+
+    if (foreign) {
+      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
+      if (cachedPsi != null) return cachedPsi;
+
+      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
+      return ast != null ? ast.getPsi() : null;
+    }
+    else {
+      return stub.getPsi();
+    }
+  }
+
   private static class StubIndexReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
@@ -271,37 +306,7 @@ public abstract class PsiAnchor {
     public PsiElement retrieve() {
       return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
         public PsiElement compute() {
-          PsiFileWithStubSupport fileImpl = (PsiFileWithStubSupport)getFile();
-          if (fileImpl == null) return null;
-          StubTree tree = fileImpl.getStubTree();
-
-          boolean foreign = tree == null;
-          if (foreign) {
-            if (fileImpl instanceof PsiFileImpl) {
-              // Note: as far as this is a realization of StubIndexReference fileImpl#getContentElementType() must be instance of IStubFileElementType
-              tree = ((PsiFileImpl)fileImpl).calcStubTree();
-            }
-            else {
-              return null;
-            }
-          }
-
-          List<StubElement<?>> list = tree.getPlainList();
-          if (myIndex >= list.size()) return null;
-          StubElement stub = list.get(myIndex);
-
-          if (stub.getStubType() != myElementType) return null;
-
-          if (foreign) {
-            final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
-            if (cachedPsi != null) return cachedPsi;
-
-            final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-            return ast != null ? ast.getPsi() : null;
-          }
-          else {
-            return stub.getPsi();
-          }
+          return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType);
         }
       });
     }
