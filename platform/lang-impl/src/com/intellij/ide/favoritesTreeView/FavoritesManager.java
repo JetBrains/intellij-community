@@ -44,7 +44,8 @@ import java.util.*;
 
 public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
-  private final Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
+  private final Map<String, LinkedHashSet<Pair<AbstractUrl,String>>> myName2FavoritesRoots =
+    new LinkedHashMap<String, LinkedHashSet<Pair<AbstractUrl, String>>>();
   private final Project myProject;
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();
   public interface FavoritesListener {
@@ -96,7 +97,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized void createNewList(@NotNull String name){
-    myName2FavoritesRoots.put(name, new ArrayList<Pair<AbstractUrl, String>>());
+    myName2FavoritesRoots.put(name, new LinkedHashSet<Pair<AbstractUrl, String>>());
     fireListeners.listAdded(name);
   }
 
@@ -107,7 +108,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return result;
   }
 
-  public List<Pair<AbstractUrl,String>> getFavoritesListRootUrls(@NotNull String name) {
+  public Collection<Pair<AbstractUrl, String>> getFavoritesListRootUrls(@NotNull String name) {
     return myName2FavoritesRoots.get(name);
   }
 
@@ -117,7 +118,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public boolean addRoots(final String name, final Collection<AbstractTreeNode> nodes) {
-    final List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
+    final Collection<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     for (AbstractTreeNode node : nodes) {
       final String className = node.getClass().getName();
       final Object value = node.getValue();
@@ -133,7 +134,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   public synchronized boolean removeRoot(@NotNull String name, @NotNull Object element) {
     AbstractUrl url = createUrlByElement(element, myProject);
     if (url == null) return false;
-    List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
+    Collection<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : list) {
       if (url.equals(pair.getFirst())) {
         list.remove(pair);
@@ -145,7 +146,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
-    List<Pair<AbstractUrl, String>> list = myName2FavoritesRoots.remove(oldName);
+    LinkedHashSet<Pair<AbstractUrl, String>> list = myName2FavoritesRoots.remove(oldName);
     if (list != null && newName.length() > 0) {
       myName2FavoritesRoots.put(newName, list);
       fireListeners.listRemoved(oldName);
@@ -186,7 +187,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     myName2FavoritesRoots.clear();
     for (Object list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
       final String name = ((Element)list).getAttributeValue(ATTRIBUTE_NAME);
-      List<Pair<AbstractUrl, String>> roots = readRoots((Element)list, myProject);
+      LinkedHashSet<Pair<AbstractUrl, String>> roots = readRoots((Element)list, myProject);
       myName2FavoritesRoots.put(name, roots);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -196,8 +197,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   @NonNls private static final String FAVORITES_ROOT = "favorite_root";
   @NonNls private static final String ELEMENT_FAVORITES_LIST = "favorites_list";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
-  private static List<Pair<AbstractUrl, String>> readRoots(final Element list, Project project) {
-    List<Pair<AbstractUrl, String>> result = new ArrayList<Pair<AbstractUrl, String>>();
+  private static LinkedHashSet<Pair<AbstractUrl, String>> readRoots(final Element list, Project project) {
+    LinkedHashSet<Pair<AbstractUrl, String>> result = new LinkedHashSet<Pair<AbstractUrl, String>>();
     for (Object favorite : list.getChildren(FAVORITES_ROOT)) {
       final String className = ((Element)favorite).getAttributeValue(CLASS_NAME);
       final AbstractUrl abstractUrl = readUrlFromElement((Element)favorite, project);
@@ -271,7 +272,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return null;
   }
 
-  private static void writeRoots(Element element, List<Pair<AbstractUrl, String>> roots) {
+  private static void writeRoots(Element element, LinkedHashSet<Pair<AbstractUrl, String>> roots) {
     for (Pair<AbstractUrl, String> root : roots) {
       final AbstractUrl url = root.getFirst();
       if (url == null) continue;
@@ -295,7 +296,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
     };
 
-    List<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
+    Collection<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : urls) {
       AbstractUrl abstractUrl = pair.getFirst();
       if (abstractUrl == null) {
@@ -387,8 +388,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
             new DirectoryUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiDirectory)child).getName(), module.getName());
         }
         for (String listName : myName2FavoritesRoots.keySet()) {
-          final List<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
-          final List<Pair<AbstractUrl, String>> newRoots = new ArrayList<Pair<AbstractUrl, String>>();
+          final LinkedHashSet<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
+          final LinkedHashSet<Pair<AbstractUrl, String>> newRoots = new LinkedHashSet<Pair<AbstractUrl, String>>();
           for (Pair<AbstractUrl, String> root : roots) {
             final Object[] path = root.first.createPath(myProject);
             if (path == null || path.length < 1 || path[0] == null) {
@@ -419,8 +420,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           final String url = ((PsiDirectory)psiElement.getParent()).getVirtualFile().getUrl() + "/" + event.getNewValue();
           final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url, module.getName()) : new DirectoryUrl(url, module.getName());
           for (String listName : myName2FavoritesRoots.keySet()) {
-            final List<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
-            final List<Pair<AbstractUrl, String>> newRoots = new ArrayList<Pair<AbstractUrl, String>>();
+            final LinkedHashSet<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
+            final LinkedHashSet<Pair<AbstractUrl, String>> newRoots = new LinkedHashSet<Pair<AbstractUrl, String>>();
             for (Pair<AbstractUrl, String> root : roots) {
               final Object[] path = root.first.createPath(myProject);
               if (path == null || path.length < 1 || path[0] == null) {
