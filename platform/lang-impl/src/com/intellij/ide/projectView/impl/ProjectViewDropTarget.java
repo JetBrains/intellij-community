@@ -21,6 +21,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -225,6 +226,10 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     return myPsiRetriever.getPsiElement(treeNode);
   }
 
+  protected Module getModule(@Nullable final TreeNode treeNode) {
+    return myPsiRetriever.getModule(treeNode);
+  }
+
   public abstract class MoveCopyDropHandler implements DropHandler {
 
     public boolean isValidSource(@NotNull final TreeNode[] sourceNodes, TreeNode targetNode) {
@@ -306,10 +311,14 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     private void doDrop(TreeNode targetNode, PsiElement[] sourceElements, final boolean externalDrop) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
+      final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {
         @Nullable
         public Object getData(@NonNls String dataId) {
+          if (LangDataKeys.TARGET_MODULE.is(dataId)) {
+            if (module != null) return module;
+          }
           if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
             return targetElement;
           }

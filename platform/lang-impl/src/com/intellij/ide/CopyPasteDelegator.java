@@ -142,7 +142,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
           }
         }
         else if (MoveHandler.canMove(elements, target)) {
-          MoveHandler.doMove(myProject, elements, target, new MoveCallback() {
+          MoveHandler.doMove(myProject, elements, target, dataContext, new MoveCallback() {
             public void refactoringCompleted() {
               PsiCopyPasteManager.getInstance().clear();
             }

@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
@@ -321,6 +322,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
+  @Nullable
+  protected Module getNodeModule(@Nullable final Object element) {
+    if (element instanceof PsiElement) {
+      PsiElement psiElement = (PsiElement)element;
+      return ModuleUtil.findModuleForPsiElement(psiElement);
+    }
+    return null;
+  }
+
   @NotNull
   public final Object[] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
@@ -520,6 +530,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
           return getPSIElement(getElement(node));
+        }
+
+        @Override
+        public Module getModule(TreeNode treeNode) {
+          return getNodeModule(getElement(treeNode));
         }
       }, myProject);
       myDragSource = new MyDragSource();

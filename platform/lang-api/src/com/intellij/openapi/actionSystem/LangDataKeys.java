@@ -50,6 +50,7 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<Condition<AnAction>> PRESELECT_NEW_ACTION_CONDITION = DataKey.create("newElementAction.preselect.id");
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
+  public static final DataKey<Module> TARGET_MODULE = DataKey.create("module.TargetModule");
   public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
 
   public static final DataKey<ConsoleView> CONSOLE_VIEW = DataKey.create("consoleView");
