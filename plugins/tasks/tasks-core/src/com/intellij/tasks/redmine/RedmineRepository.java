@@ -198,6 +198,13 @@ public class RedmineRepository extends BaseRepositoryImpl {
       url += "&limit=" + encodeUrl(String.valueOf(max));
     }
     HttpMethod method = doREST(url, false);
+    if (method.getStatusCode() == 401) {
+      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
+                          "\n\nAPI token is required for accessing private repositories, " +
+                          "you may find it on your account page on the right sidebar.\n" +
+                          "Please ensure that REST web service is enabled in your Redmine server " +
+                          "at Administration | Settings | Authentication");
+    }
     InputStream stream = method.getResponseBodyAsStream();
     Element element = new SAXBuilder(false).build(stream).getRootElement();
 
