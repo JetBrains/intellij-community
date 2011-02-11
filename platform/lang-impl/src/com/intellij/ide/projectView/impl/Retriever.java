@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 
 import javax.swing.tree.TreeNode;
 
-public interface PsiRetriever {
+public interface Retriever {
   @Nullable
   PsiElement getPsiElement(@Nullable TreeNode node);
 

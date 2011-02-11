@@ -55,12 +55,12 @@ import java.util.List;
 class ProjectViewDropTarget implements DnDNativeTarget {
 
   private JTree myTree;
-  private final PsiRetriever myPsiRetriever;
+  private final Retriever myRetriever;
   private final Project myProject;
 
-  ProjectViewDropTarget(JTree tree, PsiRetriever psiRetriever, Project project) {
+  ProjectViewDropTarget(JTree tree, Retriever retriever, Project project) {
     myTree = tree;
-    myPsiRetriever = psiRetriever;
+    myRetriever = retriever;
     myProject = project;
   }
 
@@ -223,11 +223,11 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
-    return myPsiRetriever.getPsiElement(treeNode);
+    return myRetriever.getPsiElement(treeNode);
   }
 
   protected Module getModule(@Nullable final TreeNode treeNode) {
-    return myPsiRetriever.getModule(treeNode);
+    return myRetriever.getModule(treeNode);
   }
 
   public abstract class MoveCopyDropHandler implements DropHandler {

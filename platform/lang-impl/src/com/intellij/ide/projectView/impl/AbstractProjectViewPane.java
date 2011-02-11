@@ -526,7 +526,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, new PsiRetriever(){
+      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever(){
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
           return getPSIElement(getElement(node));
