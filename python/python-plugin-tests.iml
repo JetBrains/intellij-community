@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="testFramework-java" />
-    <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="python-tests" />
   </component>
