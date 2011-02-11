@@ -42,11 +42,11 @@ public interface Notifications {
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
     public static void notify(@NotNull final Notification notification) {
-      notify(notification, NotificationDisplayType.BALLOON, null);
+      notify(notification, NotificationDisplayType.STICKY_BALLOON, null);
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable Project project) {
-      notify(notification, NotificationDisplayType.BALLOON, project);
+      notify(notification, NotificationDisplayType.STICKY_BALLOON, project);
     }
 
     public static void notify(@NotNull final Notification notification, @NotNull final NotificationDisplayType defaultDisplayType, @Nullable final Project project) {

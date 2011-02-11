@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.FileTemplateImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,7 +35,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
-import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.exception.ResourceNotFoundException;
@@ -55,18 +53,18 @@ import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
-
-import static com.intellij.util.containers.CollectionFactory.ar;
 
 /**
  * @author MYakovlev
  */
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
+  @NonNls private static final String FILE_RESOURCE_LOADER_INSTANCE = "file.resource.loader.instance";
   private static boolean ourVelocityInitialized = false;
   private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
@@ -234,7 +232,7 @@ public class FileTemplateUtil{
       Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
       //todo[myakovlev] implement my own Loader, with ability to load templates from classpath
-      Velocity.setProperty("file.resource.loader.class", MyFileResourceLoader.class.getName());
+      Velocity.setProperty(FILE_RESOURCE_LOADER_INSTANCE, new FileResourceLoader());
       Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
       Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
       Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
@@ -244,6 +242,21 @@ public class FileTemplateUtil{
     }
     catch (Exception e){
       LOG.error("Unable to init Velocity", e);
+    }
+  }
+
+  @TestOnly
+  public static void addResourcesDir(File dir) {
+    initVelocity();
+    final FileResourceLoader loader = (FileResourceLoader)Velocity.getProperty(FILE_RESOURCE_LOADER_INSTANCE);
+    try {
+      Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
+      pathsField.setAccessible(true);
+      Collection<String> paths = (Collection)pathsField.get(loader);
+      paths.add(dir.getAbsolutePath());
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -348,35 +361,6 @@ public class FileTemplateUtil{
 
     public synchronized InputStream getResourceStream(String name) throws ResourceNotFoundException{
       return super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
-    }
-  }
-
-  public static class MyFileResourceLoader extends FileResourceLoader{
-    public void init(ExtendedProperties configuration){
-      super.init(configuration);
-
-      File modifiedPatternsPath = new File(PathManager.getConfigPath());
-      modifiedPatternsPath = new File(modifiedPatternsPath, INCLUDES_PATH);
-
-      try {
-        Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
-        pathsField.setAccessible(true);
-        Collection<String> paths = (Collection)pathsField.get(this);
-        paths.clear();
-        paths.add(modifiedPatternsPath.getAbsolutePath());
-        if(ApplicationManager.getApplication().isUnitTestMode()){
-          // todo this is for FileTemplatesTest
-          // todo it should register its own loader and not depend on in what kind of test velocity is first needed
-          for (PathManagerEx.TestDataLookupStrategy strategy : ar(PathManagerEx.TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
-            File testsDir = new File(new File(PathManagerEx.getTestDataPath(strategy), "ide"), "fileTemplates");
-            paths.add(testsDir.getAbsolutePath());
-          }
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        throw new RuntimeException(e);
-      }
     }
   }
 

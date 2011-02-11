@@ -179,9 +179,5 @@
       <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
       <skipForDefaultProject/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
-    </component>
   </project-components>
 </components>

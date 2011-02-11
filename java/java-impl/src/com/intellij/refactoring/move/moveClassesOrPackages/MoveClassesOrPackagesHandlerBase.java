@@ -20,12 +20,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
@@ -147,11 +150,32 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
     MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
   }
 
+  @Override
+  public PsiElement adjustTargetForMove(DataContext dataContext, PsiElement targetContainer) {
+    if (targetContainer instanceof PsiPackage) {
+      final Module module = LangDataKeys.TARGET_MODULE.getData(dataContext);
+      if (module != null) {
+        final PsiDirectory[] directories = ((PsiPackage)targetContainer).getDirectories(GlobalSearchScope.moduleScope(module));
+        if (directories.length > 0) {
+          return directories[0];
+        }
+      }
+    }
+    return super.adjustTargetForMove(dataContext, targetContainer);
+  }
+
   private static boolean tryDirectoryMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement, final MoveCallback callback) {
     if (targetElement instanceof PsiDirectory) {
       final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, sourceElements, targetElement);
       if (adjustedElements != null) {
         if ( CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements),true) ) {
+          final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)targetElement);
+          if (psiPackage != null) {
+            final Module module = ModuleUtil.findModuleForFile(((PsiDirectory)targetElement).getVirtualFile(), project);
+            if (module != null) {
+              if (psiPackage.getDirectories(GlobalSearchScope.moduleScope(module)).length > 1) return false;
+            }
+          }
           new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetElement, adjustedElements, callback).show();
         }
       }
