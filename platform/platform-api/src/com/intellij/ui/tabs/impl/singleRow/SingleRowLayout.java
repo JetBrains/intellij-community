@@ -308,6 +308,9 @@ public class SingleRowLayout extends TabLayout {
                 myRowDropPolicy = after;
               }
             });
+          } else {
+            MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myTabs);
+            myTabs.processMouseEvent(event);
           }
         }
       });
