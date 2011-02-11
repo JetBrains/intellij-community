@@ -47,7 +47,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       TextRange range = new TextRange(children[i].getTextRange().getStartOffset(), e.getTextRange().getEndOffset());
       result.addAll(expandToWholeLine(editorText, range));
 
-      range = new TextRange(firstChild.getTextRange().getStartOffset(), firstChild.getTextRange().getEndOffset());
+      range = TextRange.create(firstChild.getTextRange());
       result.addAll(expandToWholeLine(editorText, range));
     }
     else if (firstChild instanceof PsiComment) {

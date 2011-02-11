@@ -668,7 +668,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     int offset = (element instanceof XmlAttributeValue) ?
       XmlUtil.findPrefixByQualifiedName(((XmlAttributeValue)element).getValue()).length() : 0;
     if (offset > 0) offset++;
-    final TypeOrElementOrAttributeReference ref = new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1 + offset, length - 1) : new TextRange(0,0));
+    final TypeOrElementOrAttributeReference ref = new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1 + offset, length - 1) : TextRange.EMPTY_RANGE);
     ref.setNamespacePrefix(ns);
     return ref;
   }

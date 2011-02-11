@@ -182,7 +182,7 @@ class UpdateFoldRegionsOperation implements Runnable {
       }
       else if (region.isValid() && info.isLightRegion(region)) {
         boolean isExpanded = region.isExpanded();
-        rangeToExpandStatusMap.put(new TextRange(region.getStartOffset(), region.getEndOffset()),
+        rangeToExpandStatusMap.put(TextRange.create(region),
                                    isExpanded ? Boolean.TRUE : Boolean.FALSE);
       }
       else {

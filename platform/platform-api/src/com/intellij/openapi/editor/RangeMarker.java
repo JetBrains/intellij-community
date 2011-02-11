@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ import java.util.Comparator;
  *
  * @see Document#createRangeMarker(int, int)
  */
-public interface RangeMarker extends UserDataHolder{
+public interface RangeMarker extends UserDataHolder, Segment {
   /**
    * Returns the document to which the marker belongs.
    *

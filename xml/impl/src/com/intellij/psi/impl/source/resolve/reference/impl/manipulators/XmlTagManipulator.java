@@ -45,7 +45,7 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
   public TextRange getRangeInElement(final XmlTag tag) {
     if (tag.getSubTags().length > 0) {
       // Text range in tag with subtags is not supported, return empty range, consider making this function nullable.
-      return new TextRange(0, 0);
+      return TextRange.EMPTY_RANGE;
     }
 
     final XmlTagValue value = tag.getValue();
@@ -56,7 +56,7 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
       case 1:
         return getValueRange(texts[0]);
       default:
-        return new TextRange(0, 0);
+        return TextRange.EMPTY_RANGE;
     }
   }
 

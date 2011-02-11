@@ -99,7 +99,7 @@ public class HighlightMethodUtil {
         }
       }
       else {
-        textRange = new TextRange(0, 0);
+        textRange = TextRange.EMPTY_RANGE;
       }
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiUtil.getAccessModifier(superAccessLevel), true, false);
@@ -175,7 +175,7 @@ public class HighlightMethodUtil {
                                                                    PsiType returnType,
                                                                    String detailMessage) {
     String message = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
-    TextRange textRange = includeRealPositionInfo ? methodToHighlight.getReturnTypeElement().getTextRange() : new TextRange(0, 0);
+    TextRange textRange = includeRealPositionInfo ? methodToHighlight.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE;
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
     IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix);
@@ -257,7 +257,7 @@ public class HighlightMethodUtil {
           textRange = exceptionContext.getTextRange();
         }
         else {
-          textRange = new TextRange(0, 0);
+          textRange = TextRange.EMPTY_RANGE;
         }
         HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, false, false));

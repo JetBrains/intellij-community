@@ -77,7 +77,7 @@ public class TagNameReference implements PsiReference {
   public TextRange getRangeInElement() {
     final ASTNode nameElement = getNameElement();
     if (nameElement == null){
-      return new TextRange(0, 0);
+      return TextRange.EMPTY_RANGE;
     }
 
     int colon = nameElement.getText().indexOf(':') + 1;

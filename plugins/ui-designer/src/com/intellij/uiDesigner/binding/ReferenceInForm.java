@@ -55,7 +55,7 @@ public abstract class ReferenceInForm implements PsiReference {
   }
 
   public TextRange getRangeInElement() {
-    return new TextRange(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
+    return TextRange.create(myRangeMarker);
   }
 
   @NotNull

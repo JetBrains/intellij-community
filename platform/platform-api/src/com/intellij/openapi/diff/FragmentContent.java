@@ -92,7 +92,7 @@ public class FragmentContent extends DiffContent {
     Document document = rangeMarker.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
-    return new FragmentContent(new DocumentContent(project, document), new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()), project, type);
+    return new FragmentContent(new DocumentContent(project, document), TextRange.create(rangeMarker), project, type);
   }
 
   private class MyDocumentsSynchonizer extends DocumentsSynchonizer {

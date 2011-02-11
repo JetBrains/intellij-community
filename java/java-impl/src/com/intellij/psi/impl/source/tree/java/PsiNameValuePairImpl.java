@@ -146,7 +146,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         if (id != null) {
           return new TextRange(0, id.getTextLength());
         }
-        return new TextRange(0, 0);
+        return TextRange.EMPTY_RANGE;
       }
 
       public PsiElement resolve() {

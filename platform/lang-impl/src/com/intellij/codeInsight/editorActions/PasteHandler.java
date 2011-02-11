@@ -231,7 +231,7 @@ public class PasteHandler extends EditorActionHandler {
         caretModel.moveToOffset(bounds.getEndOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         selectionModel.removeSelection();
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, new TextRange(bounds.getStartOffset(), bounds.getEndOffset()));
+        editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
       }
     }
   }

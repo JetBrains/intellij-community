@@ -203,7 +203,7 @@ public class HighlightNamesUtil {
   }
 
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
-    if (method instanceof JspHolderMethod) return new TextRange(0,0);
+    if (method instanceof JspHolderMethod) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
     int end = method.getThrowsList().getTextRange().getEndOffset();
     return new TextRange(start, end);

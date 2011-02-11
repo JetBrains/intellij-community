@@ -38,7 +38,7 @@ public class MergeBuilderTest extends TestCase {
     addLeft(base, version);
     addRight(base, version);
     CHECK.singleElement(finish(2, 1, 2),
-                        fragment(new TextRange(0, 1), new TextRange(0, 0), new TextRange(0, 1)));
+                        fragment(new TextRange(0, 1), TextRange.EMPTY_RANGE, new TextRange(0, 1)));
   }
 
   public void testSameInsertsConflicts2() {
@@ -61,7 +61,7 @@ public class MergeBuilderTest extends TestCase {
     addRight(range, new TextRange(1, 2));
     addLeft(range, range);
     CHECK.singleElement(finish(1, 1, 2),
-                        fragment(null, new TextRange(0, 0), new TextRange(0, 1)));
+                        fragment(null, TextRange.EMPTY_RANGE, new TextRange(0, 1)));
   }
 
   public void testOneSideChange() {
@@ -87,7 +87,7 @@ public class MergeBuilderTest extends TestCase {
     addRight(new TextRange(6, 7), new TextRange(5, 6));
     addLeft(new TextRange(9, 10), new TextRange(9, 10));
     CHECK.compareAll(new MergeBuilder.MergeFragment[]{
-      fragment(new TextRange(0, 1), new TextRange(0, 1), new TextRange(0, 0)),
+      fragment(new TextRange(0, 1), new TextRange(0, 1), TextRange.EMPTY_RANGE),
       fragment(null, new TextRange(2, 3), new TextRange(1, 1)),
       fragment(null, new TextRange(4, 4), new TextRange(2, 3)),
       fragment(null, new TextRange(5, 6), new TextRange(4, 5)),

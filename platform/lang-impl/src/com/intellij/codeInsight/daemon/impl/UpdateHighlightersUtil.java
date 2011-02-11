@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -138,7 +137,7 @@ public class UpdateHighlightersUtil {
     };
 
     void recycleHighlighter(RangeHighlighter highlighter) {
-      incinerator.putValue(InjectedLanguageUtil.toTextRange(highlighter), highlighter);
+      incinerator.putValue(ProperTextRange.create(highlighter), highlighter);
     }
 
     RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer){

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TextRange implements Segment{
+  public static final TextRange EMPTY_RANGE = new TextRange(0,0);
   private final int myStartOffset;
   private final int myEndOffset;
 
@@ -100,6 +101,10 @@ public class TextRange implements Segment{
   @NotNull
   public static TextRange create(int startOffset, int endOffset) {
     return new TextRange(startOffset, endOffset);
+  }
+  @NotNull
+  public static TextRange create(@NotNull Segment segment) {
+    return create(segment.getStartOffset(), segment.getEndOffset());
   }
 
   @NotNull

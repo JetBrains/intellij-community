@@ -414,11 +414,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private static void cacheInjectedRegion(DocumentWindowImpl documentWindow, DocumentEx hostDocument) {
     List<RangeMarker> injectedRegions = InjectedLanguageUtil.getCachedInjectedRegions(hostDocument);
     RangeMarker newMarker = documentWindow.getHostRanges()[0];
-    TextRange newRange = InjectedLanguageUtil.toTextRange(newMarker);
+    TextRange newRange = ProperTextRange.create(newMarker);
     for (int i = 0; i < injectedRegions.size(); i++) {
       RangeMarker stored = injectedRegions.get(i);
       if (!stored.isValid()) continue;
-      TextRange storedRange = InjectedLanguageUtil.toTextRange(stored);
+      TextRange storedRange = ProperTextRange.create(stored);
       if (storedRange.intersects(newRange)) {
         injectedRegions.set(i, newMarker);
         break;
