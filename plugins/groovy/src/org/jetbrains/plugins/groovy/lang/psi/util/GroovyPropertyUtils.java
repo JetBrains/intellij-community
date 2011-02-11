@@ -312,7 +312,7 @@ public class GroovyPropertyUtils {
     return getAccessorName("set", name);
   }
 
-  private static String getAccessorName(String prefix, String name) {
+  public static String getAccessorName(String prefix, String name) {
     if (name.length() == 0) return prefix;
 
     StringBuilder sb = new StringBuilder();

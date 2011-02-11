@@ -292,6 +292,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    /*
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) resolved;
@@ -337,6 +338,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     }
+*/
 
     return handleElementRenameInner(newElementName);
   }

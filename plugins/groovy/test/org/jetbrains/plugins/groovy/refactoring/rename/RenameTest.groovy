@@ -2,9 +2,6 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
@@ -18,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.*
 
 /**
  * @author ven
@@ -68,7 +66,8 @@ NewClass c = new NewClass()
   }
 
   public void testRenameGetter() throws Exception {
-    def clazz = myFixture.addClass("class Foo { def getFoo(){}}")
+    myFixture.addFileToProject("Foo.groovy", "class Foo { def getFoo(){return 2}}")
+    final PsiClass clazz = myFixture.findClass("Foo")
     def methods = clazz.findMethodsByName("getFoo", false)
     myFixture.configureByText("a.groovy", "print new Foo().foo")
     myFixture.renameElement methods[0], "get"
@@ -76,7 +75,8 @@ NewClass c = new NewClass()
   }
 
   public void testRenameSetter() throws Exception {
-    def clazz = myFixture.addClass("class Foo { def setFoo(def foo){}}")
+    myFixture.addFileToProject("Foo.groovy","class Foo { def setFoo(def foo){}}")
+    def clazz = myFixture.findClass("Foo")
     def methods = clazz.findMethodsByName("setFoo", false)
     myFixture.configureByText("a.groovy", "print new Foo().foo = 2")
     myFixture.renameElement methods[0], "set"
@@ -187,7 +187,7 @@ class A {
 }"""
   }
 
-  public void _testRenameFieldWithNonstandardName() {
+  public void testRenameFieldWithNonstandardName() {
     def file = myFixture.configureByText("a.groovy", """
 class SomeBean {
   String xXx<caret> = "field"
@@ -196,10 +196,12 @@ class SomeBean {
   }
   public static void main(String[] args) {
     println(new SomeBean().xXx)
+    println(new SomeBean().getxXx())
   }
 }
 """)
-    myFixture.renameElementAtCaret "xXx777"
+    final PsiClass clazz = myFixture.findClass('SomeBean')
+    myFixture.renameElement new PropertyForRename([clazz.findFieldByName('xXx', false), clazz.findMethodsByName('getxXx', false)[0]], 'xXx', PsiManager.getInstance(project)), "xXx777"
     assertEquals """
 class SomeBean {
   String xXx777 = "field"
@@ -208,6 +210,7 @@ class SomeBean {
   }
   public static void main(String[] args) {
     println(new SomeBean().xXx777)
+    println(new SomeBean().getxXx777())
   }
 }
 """, file.text
@@ -250,7 +253,7 @@ class SomeBean {
     return newName;
   }
 
-  public void _testRecursivePathRename() {
+  public void testRecursivePathRename() {
     def file = myFixture.configureByText("SomeBean.groovy", """
 class SomeBean {
 

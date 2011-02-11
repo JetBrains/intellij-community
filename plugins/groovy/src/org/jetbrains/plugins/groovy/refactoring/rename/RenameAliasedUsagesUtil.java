@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class RenameAliasedUsagesUtil {
-  private static final String EMPTY_ALIAS = "EMPTY_ALIAS";
+  private static final String EMPTY_ALIAS = "____00_______EMPTY_ALIAS_______00____";
 
   private RenameAliasedUsagesUtil() {
   }
