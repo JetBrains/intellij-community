@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.DefaultStubBuilder;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 
-/*
+/**
  * @author max
+ * @deprecated use {@link JavaLightStubBuilder} (to remove in IDEA 11)
  */
 public class JavaFileStubBuilder extends DefaultStubBuilder {
+  private static final StubBuilder LIGHT_BUILDER = new JavaLightStubBuilder();
+
+  @Override
   protected StubElement createStubForFile(final PsiFile file) {
     if (file instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)file;
@@ -34,5 +41,19 @@ public class JavaFileStubBuilder extends DefaultStubBuilder {
     }
 
     return super.createStubForFile(file);
+  }
+
+  @Override
+  protected boolean skipChildProcessingWhenBuildingStubs(final PsiElement element, final PsiElement child) {
+    final ASTNode node = element.getNode();
+    if (node == null) return false;
+    final ASTNode childNode = child.getNode();
+    if (childNode == null) return false;
+    return skipChildProcessingWhenBuildingStubs(node.getElementType(), childNode.getElementType());
+  }
+
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
+    return LIGHT_BUILDER.skipChildProcessingWhenBuildingStubs(nodeType, childType);
   }
 }

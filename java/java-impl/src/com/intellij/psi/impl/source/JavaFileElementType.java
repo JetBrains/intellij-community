@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -41,10 +37,13 @@ import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
+/**
+ * @author max
+ */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
   public static boolean USE_NEW_STUB_BUILDER = true;
 
-  public static final int STUB_VERSION = USE_NEW_STUB_BUILDER ? 6 : 5;
+  public static final int STUB_VERSION = (USE_NEW_STUB_BUILDER ? 6 : 5) + 1;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);

@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -27,6 +23,9 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 
+/**
+ * @author max
+ */
 public class DefaultStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.DefaultStubBuilder");
 
@@ -38,7 +37,7 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  protected static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
       final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
@@ -57,10 +56,16 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     for (PsiElement child = elt.getFirstChild(); child != null; child = child.getNextSibling()) {
-      buildStubTreeFor(child, stub); // do not filter via skipChildProcessingWhenBuildingStubs here due to SOE in tests
+      if (!skipChildProcessingWhenBuildingStubs(elt, child)) {
+        buildStubTreeFor(child, stub);
+      }
     }
 
     return stub;
+  }
+
+  protected boolean skipChildProcessingWhenBuildingStubs(final PsiElement element, final PsiElement child) {
+    return false;
   }
 
   protected StubElement buildStubTreeFor(ASTNode node, StubElement parentStub) {
