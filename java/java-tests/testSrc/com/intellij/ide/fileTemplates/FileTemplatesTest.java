@@ -26,8 +26,9 @@ import java.util.Properties;
 public class FileTemplatesTest extends IdeaTestCase {
   public void testAllTemplates() throws Exception {
     File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates");
-    final String txt = ".txt";
+    FileTemplateUtil.addResourcesDir(testsDir);
 
+    final String txt = ".txt";
     File[] children = testsDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
