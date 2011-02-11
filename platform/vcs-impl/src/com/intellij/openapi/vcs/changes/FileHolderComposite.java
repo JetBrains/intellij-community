@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -29,7 +30,7 @@ public class FileHolderComposite implements FileHolder {
     myHolders.put(FileHolder.HolderType.UNVERSIONED, new VirtualFileHolder(project, FileHolder.HolderType.UNVERSIONED));
     myHolders.put(FileHolder.HolderType.ROOT_SWITCH, new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
     myHolders.put(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING, new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
-    myHolders.put(FileHolder.HolderType.IGNORED, new RecursiveFileHolder<Object>(project, FileHolder.HolderType.IGNORED));
+    myHolders.put(FileHolder.HolderType.IGNORED, new IgnoredFilesCompositeHolder(project));
     myHolders.put(FileHolder.HolderType.LOCKED, new VirtualFileHolder(project, FileHolder.HolderType.LOCKED));
     myHolders.put(FileHolder.HolderType.LOGICALLY_LOCKED, new LogicallyLockedHolder(project));
   }
@@ -99,7 +100,13 @@ public class FileHolderComposite implements FileHolder {
     throw new UnsupportedOperationException();
   }
 
-  public RecursiveFileHolder getIgnoredFileHolder() {
-    return (RecursiveFileHolder) myHolders.get(HolderType.IGNORED);
+  public IgnoredFilesHolder getIgnoredFileHolder() {
+    return (IgnoredFilesHolder) myHolders.get(HolderType.IGNORED);
+  }
+
+  public void notifyVcsStarted(AbstractVcs vcs) {
+    for (FileHolder fileHolder : myHolders.values()) {
+      fileHolder.notifyVcsStarted(vcs);
+    }
   }
 }

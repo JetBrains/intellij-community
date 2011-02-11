@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,18 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vfs.VirtualFile;
 
-interface FileHolder {
-  void cleanAll();
+import java.util.Collection;
+
+/**
+ * @author irengrig
+ *         Date: 2/10/11
+ *         Time: 4:54 PM
+ */
+public interface IgnoredFilesHolder extends FileHolder {
+  void addFile(VirtualFile file);
+  boolean containsFile(VirtualFile file);
+  Collection<VirtualFile> values();
   void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
-  FileHolder copy();
-  HolderType getType();
-
-  void notifyVcsStarted(AbstractVcs scope);
-
-  static enum HolderType {
-    DELETED,
-    UNVERSIONED,
-    SWITCHED,
-    MODIFIED_WITHOUT_EDITING,
-    IGNORED,
-    LOCKED,
-    LOGICALLY_LOCKED,
-    ROOT_SWITCH
-  }
 }
