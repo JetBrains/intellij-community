@@ -158,13 +158,13 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   private void rebuildUI() {
     if (myPanel.isShowing()) {
-      myPanel.queueRebuildUi();
+      myPanel.getUpdateQueue().queueRebuildUi();
     }
   }
 
   private void updateModel() {
     if (myPanel.isShowing()) {
-      myPanel.queueModelUpdateFromFocus();
+      myPanel.getUpdateQueue().queueModelUpdateFromFocus();
     }
   }
 
@@ -229,7 +229,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     if (myPanel.isShowing()) {
       final String name = evt.getPropertyName();
       if ("focusOwner".equals(name) || "permanentFocusOwner".equals(name)) {
-        myPanel.restartRebuild();
+        myPanel.getUpdateQueue().restartRebuild();
       }
     }
   }
