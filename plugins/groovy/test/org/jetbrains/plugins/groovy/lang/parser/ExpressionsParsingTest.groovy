@@ -250,6 +250,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testcommandExpr$indexAccess3() {doTest()}
   public void testcommandExpr$closureArg2() {doTest()}
   public void testcommandExpr$closureArg3() {doTest()}
+  public void testcommandExpr$not() {doTest()}
   /*def testCommandExpr$() {doTest()}
   def testCommandExpr$() {doTest()}
   def testCommandExpr$() {doTest()}

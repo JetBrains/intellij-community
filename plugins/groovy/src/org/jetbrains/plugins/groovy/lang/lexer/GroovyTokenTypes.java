@@ -224,6 +224,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
             mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
 
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
+  TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
   TokenSet BINARY_OP_SET =
     TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL,
