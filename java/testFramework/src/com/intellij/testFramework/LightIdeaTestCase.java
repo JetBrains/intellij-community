@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 
 /**
@@ -48,5 +49,9 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
+  }
+
+  protected static void withLevel(final LanguageLevel level, final Runnable r) {
+    IdeaTestUtil.withLevel(getModule(), level, r);
   }
 }

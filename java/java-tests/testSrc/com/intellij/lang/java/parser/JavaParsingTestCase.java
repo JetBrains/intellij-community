@@ -19,20 +19,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -45,32 +40,8 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     IdeaTestCase.initPlatformPrefix();
   }
 
-  public static JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(getProject());
-  }
-
   protected static void withLevel(final LanguageLevel level, final Runnable r) {
-    final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevelModuleExtension moduleExt = LanguageLevelModuleExtension.getInstance(getModule());
-
-    final LanguageLevel projectLevel = projectExt.getLanguageLevel();
-    final LanguageLevel moduleLevel = moduleExt.getLanguageLevel();
-    try {
-      projectExt.setLanguageLevel(level);
-
-      final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
-      modifiable.setLanguageLevel(level);
-      modifiable.commit();
-
-      r.run();
-    }
-    finally {
-      final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
-      modifiable.setLanguageLevel(moduleLevel);
-      modifiable.commit();
-
-      projectExt.setLanguageLevel(projectLevel);
-    }
+    IdeaTestUtil.withLevel(getModule(), level, r);
   }
 
   protected interface TestParser {
@@ -91,7 +62,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   private static IFileElementType TEST_FILE_ELEMENT_TYPE = null;
   private static TestParser TEST_PARSER;
 
-  protected PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
+  private PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
     if (TEST_FILE_ELEMENT_TYPE == null) {
       TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", StdLanguages.JAVA) {
         @Override

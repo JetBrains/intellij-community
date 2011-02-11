@@ -18,6 +18,9 @@ package com.intellij.testFramework;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import junit.framework.Assert;
@@ -167,9 +171,33 @@ public class IdeaTestUtil extends PlatformTestUtil {
     printDetectedPerformanceTimings();
   }
 
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
   public static void printDetectedPerformanceTimings() {
     System.out.println("Etalon timing: " + ETALON_TIMING);
     System.out.println("This machine timing: " + Timings.MACHINE_TIMING);
+  }
+
+  public static void withLevel(final Module module, final LanguageLevel level, final Runnable r) {
+    final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
+    final LanguageLevelModuleExtension moduleExt = LanguageLevelModuleExtension.getInstance(module);
+
+    final LanguageLevel projectLevel = projectExt.getLanguageLevel();
+    final LanguageLevel moduleLevel = moduleExt.getLanguageLevel();
+    try {
+      projectExt.setLanguageLevel(level);
+      setModuleLanguageLevel(level, moduleExt);
+      r.run();
+    }
+    finally {
+      setModuleLanguageLevel(moduleLevel, moduleExt);
+      projectExt.setLanguageLevel(projectLevel);
+    }
+  }
+
+  private static void setModuleLanguageLevel(final LanguageLevel level, final LanguageLevelModuleExtension moduleExt) {
+    final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
+    modifiable.setLanguageLevel(level);
+    modifiable.commit();
   }
 
   public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
