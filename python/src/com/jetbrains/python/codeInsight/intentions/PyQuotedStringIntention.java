@@ -55,12 +55,12 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
     if (string != null) {
       String stringText = string.getText();
       if (stringText.startsWith("'") && stringText.endsWith("'")) {
-        String result = convertSingleToDoubleQuoted(stringText);
+        String result = convertSingleToDoubleQuoted(stringText.substring(1, stringText.length()-1));
         PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
       if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
-        String result = convertDoubleToSingleQuoted(string.getStringValue());
+        String result = convertDoubleToSingleQuoted(stringText);
         PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
@@ -85,7 +85,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
       }
-      else if (ch == '\\') {
+      else if (ch == '\\' && charArr[i+1] == '\"') {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }
@@ -115,7 +115,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '"') {
         stringBuilder.append("\\\"");
       }
-      else if (ch == '\\') {
+      else if (ch == '\\' && charArr[i+1] == '\'') {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }

@@ -139,7 +139,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     assertNull(action);
   }
 
-  public void testQuotedString() {
+  public void testQuotedString() {      //PY-2915
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 

@@ -1,1 +1,1 @@
-a = "'Hello'<caret> - said man."
+a = "'Hello'<caret> - said man.\n Let's go."
