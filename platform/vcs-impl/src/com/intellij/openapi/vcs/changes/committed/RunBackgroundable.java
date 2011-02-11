@@ -30,19 +30,21 @@ public class RunBackgroundable {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       pm.run(task);
     } else {
+      boolean canceled = true;
       try {
         task.run(pm.getProgressIndicator());
+        canceled = pm.getProgressIndicator() != null && pm.getProgressIndicator().isCanceled();
       } catch (ProcessCanceledException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            task.onCancel();
-          }
-        });
-        return;
+        //
       }
+      final boolean finalCanceled = canceled;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          task.onSuccess();
+          if (finalCanceled) {
+            task.onCancel();
+          } else {
+            task.onSuccess();
+          }
         }
       });
     }
