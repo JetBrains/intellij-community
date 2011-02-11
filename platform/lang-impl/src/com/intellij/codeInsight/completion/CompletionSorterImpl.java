@@ -70,4 +70,21 @@ public class CompletionSorterImpl extends CompletionSorter {
   public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
     return new CompletionSorterImpl(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof CompletionSorterImpl)) return false;
+
+    CompletionSorterImpl that = (CompletionSorterImpl)o;
+
+    if (!mySequencer.equals(that.mySequencer)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return mySequencer.hashCode();
+  }
 }

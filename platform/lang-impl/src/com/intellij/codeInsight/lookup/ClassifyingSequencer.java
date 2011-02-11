@@ -72,6 +72,21 @@ public class ClassifyingSequencer {
     return createClassifier(0, myMembers);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ClassifyingSequencer)) return false;
 
+    ClassifyingSequencer that = (ClassifyingSequencer)o;
+
+    if (!myMembers.equals(that.myMembers)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myMembers.hashCode();
+  }
 }
 
