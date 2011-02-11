@@ -268,7 +268,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   private GroovyResolveResult[] filterCandidates() {
-    Set<GroovyResolveResult> array = getCandidatesInternal();
+    List<GroovyResolveResult> array = getCandidatesInternal();
     if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
 
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
