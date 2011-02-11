@@ -3,11 +3,9 @@ package com.intellij.internal.statistic.updater;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +17,13 @@ public class StatisticsNotificationManager {
   private StatisticsNotificationManager() {
   }
 
-  public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService) {
+  public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService, Project project) {
+
     Notifications.Bus.notify(new Notification("SendUsagesStatistics", getTitle(),
                                               getText(),
                                               NotificationType.INFORMATION,
                                               new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent
-                                                .getInstance())));
+                                                .getInstance())), NotificationDisplayType.STICKY_BALLOON, project);
   }
 
   private static String getText() {
@@ -36,7 +35,7 @@ public class StatisticsNotificationManager {
       "Please click <a href='allow'>Agree</a> if you want to help make IntelliJ IDEA better  " +
       "or <a href='decline'>Don't agree</a> otherwise." +
       "<br/>" +
-      "You can customize settings on <a href='ettings'>IDE Settings -> Usage statistics</a> pane" +
+      "You can customize settings on <a href='settings'>IDE Settings -> Usage statistics</a> pane" +
       "</html>";
   }
 

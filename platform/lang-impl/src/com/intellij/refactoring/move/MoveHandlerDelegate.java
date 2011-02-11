@@ -48,6 +48,10 @@ public abstract class MoveHandlerDelegate {
                      @Nullable final PsiElement targetContainer, @Nullable final MoveCallback callback) {
   }
 
+  public PsiElement adjustTargetForMove(DataContext dataContext, PsiElement targetContainer) {
+    return targetContainer;
+  }
+
   @Nullable
   public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
     return sourceElements;
