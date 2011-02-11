@@ -15,41 +15,45 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.openapi.util.Factory;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
 * @author peter
 */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  private final SortedMap<Comparable, Classifier<T>> myWeightMap = new TreeMap<Comparable, Classifier<T>>();
-  private final Factory<Classifier<T>> myContinuation;
+  private final Map<T, Comparable> myWeights = new HashMap<T, Comparable>();
+  private final Classifier<T> myNext;
 
-  public ComparingClassifier(Factory<Classifier<T>> next) {
-    myContinuation = next;
+  public ComparingClassifier(Classifier<T> next) {
+    myNext = next;
   }
 
   public abstract Comparable getWeight(T t);
 
   @Override
   public void addElement(T t) {
-    final Comparable weight = getWeight(t);
-    Classifier<T> next = myWeightMap.get(weight);
-    if (next == null) {
-      myWeightMap.put(weight, next = myContinuation.create());
-    }
-    next.addElement(t);
+    myWeights.put(t, getWeight(t));
+    myNext.addElement(t);
   }
 
   @Override
-  public List<List<T>> classifyContents() {
+  public Iterable<List<T>> classify(List<T> source) {
     List<List<T>> result = new ArrayList<List<T>>();
-    for (Classifier<T> classifier : myWeightMap.values()) {
-      result.addAll(classifier.classifyContents());
+    TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
+    for (T t : source) {
+      final Comparable weight = myWeights.get(t);
+      List<T> list = map.get(weight);
+      if (list == null) {
+        map.put(weight, list = new SmartList<T>());
+      }
+      list.add(t);
+    }
+    for (List<T> list : map.values()) {
+      for (List<T> ts : myNext.classify(list)) {
+        result.add(ts);
+      }
     }
     return result;
   }

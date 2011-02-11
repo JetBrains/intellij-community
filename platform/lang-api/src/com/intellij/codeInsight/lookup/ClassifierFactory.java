@@ -15,11 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.openapi.util.NotNullFactory;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.SortedList;
-import org.jetbrains.annotations.NotNull;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -38,43 +34,34 @@ public abstract class ClassifierFactory<T> {
     return myId;
   }
 
-  public abstract Classifier<T> createClassifier(NotNullFactory<Classifier<T>> next);
+  public abstract Classifier<T> createClassifier(Classifier<T> next);
 
-  public static <T> NotNullFactory<Classifier<T>> listClassifier() {
-    return new NotNullFactory<Classifier<T>>() {
-      @NotNull
+  public static <T> Classifier<T> listClassifier() {
+    return new Classifier<T>() {
       @Override
-      public Classifier<T> create() {
-        return new ListClassifier<T>(new SmartList<T>());
+      public void addElement(T t) {
+      }
+
+      @Override
+      public Iterable<List<T>> classify(List<T> source) {
+        return Collections.singleton(source);
       }
     };
   }
 
-  public static <T> NotNullFactory<Classifier<T>> sortingListClassifier(final Comparator<T> comparator) {
-    return new NotNullFactory<Classifier<T>>() {
-      @NotNull
+  public static <T> Classifier<T> sortingListClassifier(final Comparator<T> comparator) {
+    return new Classifier<T>() {
       @Override
-      public Classifier<T> create() {
-        return new ListClassifier<T>(new SortedList<T>(comparator));
+      public void addElement(T t) {
+      }
+
+      @Override
+      public Iterable<List<T>> classify(List<T> source) {
+        final List<T> copy = new ArrayList<T>(source);
+        Collections.sort(source, comparator);
+        return Collections.singletonList(copy);
       }
     };
   }
 
-  private static class ListClassifier<T> extends Classifier<T> {
-    private final List<T> myElements;
-
-    private ListClassifier(final List<T> list) {
-      myElements = list;
-    }
-
-    @Override
-    public void addElement(T t) {
-      myElements.add(t);
-    }
-
-    @Override
-    public List<List<T>> classifyContents() {
-      return Collections.singletonList(myElements);
-    }
-  }
 }

@@ -106,7 +106,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
 
   public Classifier<LookupElement> createRelevanceClassifier() {
-    return new ComparingClassifier<LookupElement>(ClassifierFactory.sortingListClassifier(getItemComparator())) {
+    return new ComparingClassifier<LookupElement>(ClassifierFactory.<LookupElement>listClassifier()) {
       @Override
       public Comparable getWeight(LookupElement item) {
         LookupItemWeightComparable result = getCachedRelevance(item);

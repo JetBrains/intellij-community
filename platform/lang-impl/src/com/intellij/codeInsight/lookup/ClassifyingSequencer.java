@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,15 +62,10 @@ public class ClassifyingSequencer {
 
   private static <T> Classifier<T> createClassifier(final int index, final List<ClassifierFactory<T>> components) {
     if (index == components.size()) {
-      return ClassifierFactory.<T>listClassifier().create();
+      return ClassifierFactory.listClassifier();
     }
 
-    return components.get(index).createClassifier(new NotNullFactory<Classifier<T>>() {
-      @Override
-      public Classifier<T> create() {
-        return createClassifier(index + 1, components);
-      }
-    });
+    return components.get(index).createClassifier(createClassifier(index + 1, components));
   }
 
   Classifier buildClassifier() {

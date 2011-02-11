@@ -1089,7 +1089,7 @@ public class ContainerUtil {
   }
 
   @NotNull
-  public static <E> List<E> flatten(@NotNull Collection<? extends Collection<E>> collections) {
+  public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<E>> collections) {
     List<E> result = new ArrayList<E>();
     for (Collection<E> list : collections) {
       result.addAll(list);

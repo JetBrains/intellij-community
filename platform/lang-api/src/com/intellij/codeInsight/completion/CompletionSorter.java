@@ -30,7 +30,4 @@ public abstract class CompletionSorter {
 
   public abstract CompletionSorter weigh(LookupElementWeigher weigher);
 
-  public abstract CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory);
-
-  public abstract CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory);
 }

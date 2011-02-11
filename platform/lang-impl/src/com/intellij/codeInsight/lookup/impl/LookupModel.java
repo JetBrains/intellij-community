@@ -94,10 +94,10 @@ public class LookupModel {
     }
   }
 
-  public Pair<List<LookupElement>, List<List<LookupElement>>> getModelSnapshot() {
+  public Pair<List<LookupElement>, Iterable<List<LookupElement>>> getModelSnapshot() {
     synchronized (lock) {
       final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
-      final List<List<LookupElement>> groups = myRelevanceClassifier.classifyContents();
+      final Iterable<List<LookupElement>> groups = myRelevanceClassifier.classify(sorted);
       return Pair.create(sorted, groups);
     }
   }

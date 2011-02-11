@@ -29,7 +29,7 @@ public abstract class LookupArranger {
 
     @Override
     public Classifier<LookupElement> createRelevanceClassifier() {
-      return ClassifierFactory.<LookupElement>listClassifier().create();
+      return ClassifierFactory.listClassifier();
     }
   };
   public static final LookupArranger LEXICOGRAPHIC = new LookupArranger() {
@@ -46,7 +46,7 @@ public abstract class LookupArranger {
 
     @Override
     public Classifier<LookupElement> createRelevanceClassifier() {
-      return ClassifierFactory.sortingListClassifier(getItemComparator()).create();
+      return ClassifierFactory.sortingListClassifier(getItemComparator());
     }
   };
 

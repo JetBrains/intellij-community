@@ -339,7 +339,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    final Pair<List<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
+    final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
     final List<LookupElement> items = matchingItems(snapshot);
 
@@ -393,7 +393,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private List<LookupElement> matchingItems(Pair<List<LookupElement>, List<List<LookupElement>>> snapshot) {
+  private List<LookupElement> matchingItems(Pair<List<LookupElement>, Iterable<List<LookupElement>>> snapshot) {
     final List<LookupElement> items = new ArrayList<LookupElement>();
     for (LookupElement element : snapshot.first) {
       if (prefixMatches(element)) {
@@ -490,7 +490,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return model;
   }
 
-  private void addMostRelevantItems(final Set<LookupElement> model, final Collection<List<LookupElement>> sortedItems) {
+  private void addMostRelevantItems(final Set<LookupElement> model, final Iterable<List<LookupElement>> sortedItems) {
     if (model.size() > MAX_PREFERRED_COUNT) return;
 
     for (final List<LookupElement> elements : sortedItems) {
@@ -528,7 +528,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     for (LookupElement element : better) {
       classifier.addElement(element);
     }
-    return ContainerUtil.flatten(classifier.classifyContents());
+    return ContainerUtil.flatten(classifier.classify(better));
   }
 
   private String itemPrefix(LookupElement element) {

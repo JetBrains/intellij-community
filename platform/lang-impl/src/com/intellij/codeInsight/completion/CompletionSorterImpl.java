@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.NotNullFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,7 +40,7 @@ public class CompletionSorterImpl extends CompletionSorter {
   private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
     return new ClassifierFactory<LookupElement>(weigher.getClass().getName()) {
       @Override
-      public Classifier<LookupElement> createClassifier(NotNullFactory<Classifier<LookupElement>> next) {
+      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new ComparingClassifier<LookupElement>(next) {
           @Override
           public Comparable getWeight(LookupElement element) {
@@ -64,11 +63,11 @@ public class CompletionSorterImpl extends CompletionSorter {
     return withClassifier(weighingFactory(weigher));
   }
 
-  @Override public CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory) {
+  public CompletionSorter withClassifier(ClassifierFactory<LookupElement> factory) {
     return new CompletionSorterImpl(mySequencer.withClassifier(factory));
   }
 
-  @Override public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
+  public CompletionSorter withClassifier(@NotNull String anchorId, boolean beforeAnchor, ClassifierFactory<LookupElement> factory) {
     return new CompletionSorterImpl(mySequencer.withClassifier(factory, anchorId, beforeAnchor));
   }
 }
