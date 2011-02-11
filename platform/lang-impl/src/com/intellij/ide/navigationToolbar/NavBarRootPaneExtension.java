@@ -130,7 +130,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     });
     result.add(closeLabel, BorderLayout.EAST);
 
-    myNavigationBar.installBorder(0, true);
+    myNavigationBar.setBorder(new NavBarBorder(true, 0));
     result.setBorder(myNavigationBar.getBorder());
     myNavigationBar.setBorder(null);
     return result;

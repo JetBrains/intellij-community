@@ -1457,6 +1457,14 @@ public class JavaDocInfoGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context) {
+    return generateType(buffer, type, context, true);
+  }
+
+  /**
+   * @return Length of the generated label.
+   */
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink) {
     if (type instanceof PsiPrimitiveType) {
       String text = type.getCanonicalText();
       buffer.append(text);
@@ -1464,7 +1472,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (type instanceof PsiArrayType) {
-      int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context);
+      int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink);
       if ((type instanceof PsiEllipsisType)) {
         buffer.append("...");
         return rest + 3;
@@ -1485,7 +1493,7 @@ public class JavaDocInfoGenerator {
       if (bound != null){
         final String keyword = wt.isExtends() ? " extends " : " super ";
         buffer.append(keyword);
-        return generateType(buffer, bound, context) + 1 + keyword.length();
+        return generateType(buffer, bound, context, generateLink) + 1 + keyword.length();
       }
 
       return 1;
@@ -1510,7 +1518,14 @@ public class JavaDocInfoGenerator {
         return text.length();
       }
 
-      int length = generateLink(buffer, qName, null, context, false);
+      int length;
+      if (generateLink) {
+        length = generateLink(buffer, qName, null, context, false);
+      }
+      else {
+        buffer.append(qName);
+        length = buffer.length();
+      }
 
       if (psiClass.hasTypeParameters()) {
         StringBuilder subst = new StringBuilder();
@@ -1527,7 +1542,7 @@ public class JavaDocInfoGenerator {
             break;
           }
 
-          length += generateType(subst, t, context);
+          length += generateType(subst, t, context, generateLink);
 
           if (i < params.length - 1) {
             subst.append(", ");

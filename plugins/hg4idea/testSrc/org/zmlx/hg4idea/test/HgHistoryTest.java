@@ -1,8 +1,10 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgVcs;
@@ -27,11 +29,11 @@ public class HgHistoryTest extends HgSingleUserTest {
   @Test
   public void testCurrentAndPreviousRevisions() throws Exception {
     int versions = 0;
-    fillFile(myProjectDir, new String[]{ AFILE }, FILE_CONTENT);
+    fillFile(myProjectDir, new String[]{ AFILE }, INITIAL_FILE_CONTENT);
     addAll();
     commitAll("initial content");
     versions++;
-    fillFile(myProjectDir, new String[] { AFILE} , FILE_CONTENT_2);
+    fillFile(myProjectDir, new String[] { AFILE} , UPDATED_FILE_CONTENT);
     commitAll("updated content");
     versions++;
 
@@ -43,8 +45,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(revisions.size(), versions);
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), FILE_CONTENT_2.getBytes());
-    assertEquals(revisions.get(1).getContent(), FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
   }
 
   /**
@@ -58,7 +60,7 @@ public class HgHistoryTest extends HgSingleUserTest {
   public void renameShouldPreserveFileHistory() throws Exception {
     int versions = 0;
 
-    fillFile(myProjectDir, new String[]{ AFILE }, FILE_CONTENT);
+    fillFile(myProjectDir, new String[]{ AFILE }, INITIAL_FILE_CONTENT);
     addAll();
     commitAll("initial content");
     versions++;
@@ -67,7 +69,7 @@ public class HgHistoryTest extends HgSingleUserTest {
     commitAll("file renamed");
     versions++;
 
-    fillFile(myProjectDir, new String[]{ BFILE }, FILE_CONTENT_2);
+    fillFile(myProjectDir, new String[]{ BFILE }, UPDATED_FILE_CONTENT);
     commitAll("updated content");
     versions++;
 
@@ -77,11 +79,42 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(revisions.size(), versions);
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), FILE_CONTENT_2.getBytes());
-    assertEquals(revisions.get(2).getContent(), FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(2).getContent(), INITIAL_FILE_CONTENT.getBytes());
+  }
+  
+  @Test
+  public void locallyRenamedFileShouldGetHistory() throws Exception {
+    int versions = 0;
+    fillFile(myProjectDir, new String[]{ AFILE }, INITIAL_FILE_CONTENT);
+    addAll();
+    commitAll("initial content");
+    versions++;
+    fillFile(myProjectDir, new String[]{AFILE}, UPDATED_FILE_CONTENT);
+    commitAll("updated content");
+    versions++;
+
+    
+    runHgOnProjectRepo("rename", AFILE, BFILE);
+    //don't commit 
+
+    LocalFileSystem.getInstance().refresh(false);
+    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    
+    final VcsHistorySession session = getHistorySession(BFILE);
+    final List<VcsFileRevision> revisions = session.getRevisionList();
+    for (VcsFileRevision rev : revisions) {
+      rev.loadContent();
+    }
+
+    assertEquals(revisions.size(), versions);
+    assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
+    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
+    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    
   }
 
-  private void loadAllRevisions(Collection<VcsFileRevision> revisions) throws Exception {
+  private static void loadAllRevisions(Collection<VcsFileRevision> revisions) throws Exception {
     for (VcsFileRevision rev : revisions) {
       rev.loadContent();
     }

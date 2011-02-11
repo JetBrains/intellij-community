@@ -4,8 +4,8 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.statistics.StatisticsManager;
 
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
@@ -13,11 +13,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public SmartTypeCompletionOrderingTest() {
     super(CompletionType.SMART);
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_6;
   }
 
   public void testJComponentAdd() throws Throwable {
@@ -31,7 +26,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testJComponentAddNewWithStats() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/JComponentAddNew.java");
+    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
     assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
     incUseCount(lookup, 3); //Container
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
@@ -44,7 +39,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testMethodStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "bar", "foo", "goo");
     incUseCount(lookup, 2);
     assertPreferredItems(0, "goo", "bar", "foo");
@@ -141,7 +136,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(1, "List<Foo>", "AbstractList<Foo>", "AbstractSequentialList<Foo>", "ArrayList<Foo>");
     incUseCount(lookup, 0);
     assertPreferredItems(1, "List<Foo>", "AbstractList<Foo>", "AbstractSequentialList<Foo>", "ArrayList<Foo>");
@@ -155,7 +150,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferDelegatingMethodParams() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "xyz", "abc");
     incUseCount(lookup, 1);
     assertPreferredItems(0, "xyz", "abc");
@@ -214,7 +209,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVariablesOutweighStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "param", "this", "bar", "goo");
     incUseCount(lookup, 4);
     assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
@@ -226,15 +221,15 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferredByNameDontChangeStatistics() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "false");
-    lookup.finishLookup(',');
+    myFixture.type(',');
     complete();
     assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
   }
 
   public void testFieldNameOutweighsStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "myFoo", "myBar");
     incUseCount(lookup, 1); //myBar
     assertPreferredItems(0, "myFoo", "myBar");
@@ -242,6 +237,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   @Override
   protected String getBasePath() {
-    return BASE_PATH;
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
   }
 }

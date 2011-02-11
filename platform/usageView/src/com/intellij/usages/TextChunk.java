@@ -20,14 +20,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public class TextChunk {
-
-  public static final TextChunk[] EMPTY_ARRAY = new TextChunk[0]; 
+  public static final TextChunk[] EMPTY_ARRAY = new TextChunk[0];
 
   private final AttributesFlyweight myAttributes;
   private final String myText;
 
-  public TextChunk(@NotNull TextAttributes attributesKey, @NotNull String text) {
-    myAttributes = attributesKey.getFlyweight();
+  public TextChunk(@NotNull TextAttributes attributes, @NotNull String text) {
+    myAttributes = attributes.getFlyweight();
     myText = text;
   }
 

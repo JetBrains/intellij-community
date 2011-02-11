@@ -114,8 +114,8 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.internal.statistic.persistence.SentUsagesPersistenceComponent</implementation-class>
+      <interface-class>com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent</implementation-class>
     </component>
 
     <component>
@@ -123,6 +123,15 @@
       <headless-implementation-class/>
     </component>
 
+    <component>
+      <interface-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.vcs.statistics.VcsStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.statistics.VcsStatisticsPersistenceComponent</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -169,6 +178,10 @@
     <component>
       <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
       <skipForDefaultProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
     </component>
   </project-components>
 </components>

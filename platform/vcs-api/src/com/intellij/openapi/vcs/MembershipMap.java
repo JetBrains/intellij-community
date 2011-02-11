@@ -38,31 +38,19 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
   }
 
   public void putOptimal(final Key key, final Val val) {
-    final int idx = putImpl(key, val);
+    final int idx = putIfNoParent(key, val);
+    if (idx < 0) return;
 
-    final List<Integer> toRemove = new LinkedList<Integer>();
-    // go for parents
-    for (int i = idx - 1; i >= 0; -- i) {
-      if (myKeysResemblance.process(myKeys.get(i), key)) {
-        toRemove.add(idx);
-        break;
-      }
-    }
-    if (toRemove.isEmpty()) {
-      for (int i = idx + 1; i < myKeys.size(); ++ i) {
-        if (myKeysResemblance.process(key, myKeys.get(i))) {
-          toRemove.add(i);
+    if (idx + 1 < myKeys.size()) {
+      for (final ListIterator<Key> listIterator = myKeys.listIterator(idx + 1); listIterator.hasNext();) {
+        final Key next = listIterator.next();
+        if (myKeysResemblance.process(key, next)) {
+          listIterator.remove();
+          myMap.remove(next);
         } else {
           break;
         }
       }
-    }
-    Collections.sort(toRemove);
-    for (int i = 0; i < toRemove.size(); i++) {
-      final Integer integer = toRemove.get(i);
-      final int correctedIdx = integer - i;
-      final Key keyToRemove = myKeys.remove(correctedIdx);
-      myMap.remove(keyToRemove);
     }
   }
 

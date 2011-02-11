@@ -72,8 +72,12 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     return this;
   }
 
-  public synchronized boolean isValid() {
-    return getModCount() == myModCount;
+  @Override
+  public synchronized String checkValidity() {
+    if (getModCount() == myModCount) {
+      return null;
+    }
+    return "mod count changed";
   }
 
   public boolean equals(final Object o) {

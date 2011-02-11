@@ -104,9 +104,9 @@ public class LookupModel {
     }
   }
 
-  public Pair<LinkedHashSet<LookupElement>, List<List<LookupElement>>> getModelSnapshot() {
+  public Pair<List<LookupElement>, List<List<LookupElement>>> getModelSnapshot() {
     synchronized (lock) {
-      final LinkedHashSet<LookupElement> sorted = new LinkedHashSet<LookupElement>(mySortedItems);
+      final List<LookupElement> sorted = new ArrayList<LookupElement>(mySortedItems);
       final List<List<LookupElement>> relevanceGroups = ContainerUtil.map(myRelevanceGroups.values(), new Function<SortedList<LookupElement>, List<LookupElement>>() {
         @Override
         public List<LookupElement> fun(SortedList<LookupElement> lookupElements) {

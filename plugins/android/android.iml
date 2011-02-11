@@ -11,14 +11,14 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="xdebugger-impl" />
-    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="module" module-name="junit" />

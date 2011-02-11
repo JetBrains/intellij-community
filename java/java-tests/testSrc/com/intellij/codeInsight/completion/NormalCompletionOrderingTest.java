@@ -4,11 +4,13 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
+
+import java.util.List;
 
 @SuppressWarnings({"ALL"})
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
@@ -19,7 +21,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   protected String getBasePath() {
-    return BASE_PATH;
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
   }
 
   public void testDontPreferRecursiveMethod() throws Throwable {
@@ -51,7 +53,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testShorterPrefixesGoFirst() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getBasePath() + "/" + getTestName(false) + ".html");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".html");
     assertPreferredItems(0, "p", "param", "pre");
     incUseCount(lookup, 2);
     assertPreferredItems(0, "p", "pre", "param");
@@ -108,7 +110,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferImpls() throws Throwable {
-    VfsUtil.saveText(getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Xxx.java"), "package foo; public class Xxx {}");
+    myFixture.addClass("package foo; public class Xxx {}");
     checkPreferredItems(0, "Xxy", "Xxx", "XxxEx", "XxxImpl");
   }
 
@@ -121,27 +123,26 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDontDispreferImplsAfterNew() throws Throwable {
-    VfsUtil.saveText(getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Xxx.java"), "package foo; public interface Xxx {}");
+    myFixture.addClass("package foo; public interface Xxx {}");
     checkPreferredItems(0, "Xxx", "XxxImpl");
   }
 
   public void testPreferLessHumps() throws Throwable {
-    final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
-    VfsUtil.saveText(foo.createChildData(this, "XaYa.java"), "package foo; public interface XaYa {}");
-    VfsUtil.saveText(foo.createChildData(this, "XyYa.java"), "package foo; public interface XyYa {}");
+    myFixture.addClass("package foo; public interface XaYa {}");
+    myFixture.addClass("package foo; public interface XyYa {}");
     checkPreferredItems(0, "XaYa", "XyYa", "XaYaEx", "XaYaImpl", "XyYaXa");
   }
 
   public void testPreferLessParameters() throws Throwable {
     checkPreferredItems(0, "foo", "foo", "foo", "fox");
-    assertEquals(0, ((PsiMethod)myItems[0].getObject()).getParameterList().getParametersCount());
-    assertEquals(1, ((PsiMethod)myItems[1].getObject()).getParameterList().getParametersCount());
-    assertEquals(2, ((PsiMethod)myItems[2].getObject()).getParameterList().getParametersCount());
+    final List<LookupElement> items = getLookup().getItems();
+    assertEquals(0, ((PsiMethod)items.get(0).getObject()).getParameterList().getParametersCount());
+    assertEquals(1, ((PsiMethod)items.get(1).getObject()).getParameterList().getParametersCount());
+    assertEquals(2, ((PsiMethod)items.get(2).getObject()).getParameterList().getParametersCount());
   }
   public void testStatsForClassNameInExpression() throws Throwable {
-    final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
-    VfsUtil.saveText(foo.createChildData(this, "FooBar.java"), "package foo; public interface FooBar {}");
-    VfsUtil.saveText(foo.createChildData(this, "FooBee.java"), "package foo; public interface FooBee {}");
+    myFixture.addClass("package foo; public interface FooBar {}");
+    myFixture.addClass("package foo; public interface FooBee {}");
 
     checkPreferredItems(0, "FooBar", "FooBee");
     incUseCount(getLookup(), 1);
@@ -161,18 +162,24 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testClassInCallOfItsMethod() throws Throwable {
-    final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
-    VfsUtil.saveText(foo.createChildData(this, "Foo.java"), "package foo; public interface Foo {}");
-    final VirtualFile bar = getSourceRoot().createChildDirectory(this, "bar");
-    VfsUtil.saveText(bar.createChildData(this, "Foo.java"), "package bar; public interface Foo {}");
+    myFixture.addClass("package foo; public interface Foo {}");
+    myFixture.addClass("package bar; public interface Foo {}");
 
     checkPreferredItems(0, "Foo", "Foo");
     assertEquals("foo.Foo", ((JavaPsiClassReferenceElement)getLookup().getCurrentItem()).getQualifiedName());
   }
 
   public void testDeclaredMembersGoFirst() throws Exception {
-    invokeCompletion(getBasePath() + "/" + getTestName(false) + ".java");
+    invokeCompletion(getTestName(false) + ".java");
     assertStringItems("fromThis", "overridden", "fromSuper", "equals", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait", "wait", "wait");
+  }
+
+  public void testLocalVarsOverMethods() {
+    checkPreferredItems(0, "value");
+  }
+
+  public void _testCurrentClassBest() {
+    checkPreferredItems(0, "XcodeProjectTemplate", "XcodeConfigurable");
   }
 
 }

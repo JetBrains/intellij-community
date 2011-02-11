@@ -17,10 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -39,12 +36,15 @@ class ConvertOctalLiteralToDecimalFix
     protected void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
-        final String text = element.getText();
-        final int number = Integer.parseInt(text, 8);
+        if (!(element instanceof PsiLiteralExpression)) return;
+
+        final Object value = ((PsiLiteralExpression)element).getValue();
+        if (value == null) return;
+
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiExpression decimalNumber =
-                factory.createExpressionFromText(Integer.toString(number),
+                factory.createExpressionFromText(value.toString(),
                         element);
         element.replace(decimalNumber);
     }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.statistics;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.internal.statistic.UsagesCollector;
@@ -27,10 +28,10 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-// todo !!! this "statistics.usagesCollector" extension !!!
 public class VcsUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "vcs";
 
@@ -49,12 +50,12 @@ public class VcsUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages() {
+  public static Set<UsageDescriptor> getApplicationUsages() {
     return getApplicationUsages(VcsStatisticsPersistenceComponent.getInstance());
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
+  public static Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
     final Map<String, Integer> vcsUsagesMap = new HashMap<String, Integer>();
 
     for (Set<UsageDescriptor> descriptors : persistence.getVcsUsageMap().values()) {
@@ -88,10 +89,10 @@ public class VcsUsagesCollector extends UsagesCollector {
   }
 
   public static Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllVcss(), new Function<VcsDescriptor, UsageDescriptor>() {
+    return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), new Function<AbstractVcs, UsageDescriptor>() {
       @Override
-      public UsageDescriptor fun(VcsDescriptor descriptor) {
-        return new UsageDescriptor(createGroupDescriptor(), descriptor.getName(), 1);
+      public UsageDescriptor fun(AbstractVcs vcs) {
+        return new UsageDescriptor(createGroupDescriptor(), vcs.getName(), 1);
       }
     });
   }

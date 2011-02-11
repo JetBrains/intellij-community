@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
@@ -40,16 +41,8 @@ public class HgDiffProvider implements DiffProvider {
       return null;
     }
 
-    HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(project);
-    HgRevisionNumber currentRevision = command.identify(vcsRoot);
-    if (currentRevision == null) {
-      return null;
-    }
-
-    if (currentRevision.isWorkingVersion()) {
-      return command.firstParent(vcsRoot);
-    }
-    return currentRevision;
+    FilePath filePath = ObjectsConvertor.VIRTUAL_FILEPATH.convert(file);
+    return new HgWorkingCopyRevisionsCommand(project).parents(vcsRoot, filePath).first;
   }
 
   public ItemLatestState getLastRevision(VirtualFile file) {

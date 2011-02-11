@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,8 +42,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction {
-  private QuickFixAction() {
-  }
+  private QuickFixAction() { }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
@@ -52,12 +52,18 @@ public final class QuickFixAction {
     registerQuickFixAction(info, null, action, null);
   }
 
-  @Deprecated
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
-    doregister(info, action, options, displayName, null, null);
+  public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
+    for (IntentionAction action : actions) {
+      registerQuickFixAction(info, action);
+    }
   }
 
-  private static void doregister(HighlightInfo info,
+  @Deprecated
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
+    doRegister(info, action, options, displayName, null, null);
+  }
+
+  private static void doRegister(HighlightInfo info,
                                  IntentionAction action,
                                  List<IntentionAction> options,
                                  String displayName,
@@ -78,7 +84,7 @@ public final class QuickFixAction {
   }
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
-    doregister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+    doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
   public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {

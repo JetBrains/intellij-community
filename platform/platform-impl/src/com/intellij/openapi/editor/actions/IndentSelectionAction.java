@@ -57,7 +57,7 @@ public class IndentSelectionAction extends EditorAction {
     return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
   }
 
-  public static void indentSelection(Editor editor, Project project) {
+  private static void indentSelection(Editor editor, Project project) {
     if(!editor.getSelectionModel().hasSelection())
       return;
 

@@ -23,16 +23,13 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Set;
 
 public class JavaLexer extends LexerBase {
   private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
     myTable = getTable(isAssertKeywordEnabled, isJDK15);
-    myFlexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
+    myFlexLexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
   }
 
   public JavaLexer(LanguageLevel level) {
@@ -59,7 +56,7 @@ public class JavaLexer extends LexerBase {
   private int myBufferEndOffset;
 
   private IElementType myTokenType;
-  private _JavaLexer myFlexlexer;
+  private _JavaLexer myFlexLexer;
 
   //Positioned after the last symbol of the current token
   private int myTokenEndOffset;
@@ -179,7 +176,7 @@ public class JavaLexer extends LexerBase {
     myBufferEndOffset = endOffset;
     myTokenType = null;
     myTokenEndOffset = startOffset;
-    myFlexlexer.reset(myBuffer, startOffset, endOffset, 0);
+    myFlexLexer.reset(myBuffer, startOffset, endOffset, 0);
   }
 
   public int getState() {
@@ -213,7 +210,6 @@ public class JavaLexer extends LexerBase {
   }
 
   private void _locateToken() {
-
     if (myTokenEndOffset == myBufferEndOffset) {
       myTokenType = null;
       myBufferIndex = myBufferEndOffset;
@@ -297,9 +293,9 @@ public class JavaLexer extends LexerBase {
 
   private void flexLocateToken() {
     try {
-      myFlexlexer.goTo(myBufferIndex);
-      myTokenType = myFlexlexer.advance();
-      myTokenEndOffset = myFlexlexer.getTokenEnd();
+      myFlexLexer.goTo(myBufferIndex);
+      myTokenType = myFlexLexer.advance();
+      myTokenEndOffset = myFlexLexer.getTokenEnd();
     }
     catch (IOException e) {
       // Can't be
@@ -416,6 +412,7 @@ public class JavaLexer extends LexerBase {
     return myBufferEndOffset;
   }
 
+  /*
   public static void main(String[] args) throws IOException {
     File root = new File(args[0]);
 
@@ -472,4 +469,5 @@ public class JavaLexer extends LexerBase {
       }
     }
   }
+  */
 }

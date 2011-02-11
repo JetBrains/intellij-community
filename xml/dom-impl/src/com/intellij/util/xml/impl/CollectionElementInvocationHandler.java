@@ -36,8 +36,17 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
   }
 
   @Override
-  public boolean isValid() {
-    return super.isValid() && getXmlTag() != null;
+  protected String checkValidity() {
+    final String s = super.checkValidity();
+    if (s != null) {
+      return s;
+    }
+
+    if (getXmlTag() == null) {
+      return "no XmlTag for collection element: " + getDomElementType();
+    }
+
+    return null;
   }
 
   public final void undefineInternal() {

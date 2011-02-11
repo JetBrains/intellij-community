@@ -13,11 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 16-Jun-2009
- */
 package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,6 +23,11 @@ import com.intellij.testFramework.fixtures.*;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 import org.junit.Assert;
 
+/*
+ * User: anna
+ * Date: 16-Jun-2009
+ * todo: fix to run on module classpath
+ */
 public abstract class IGQuickFixesTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
@@ -36,7 +36,6 @@ public abstract class IGQuickFixesTestCase extends UsefulTestCase {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
     final String dataPath = PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
@@ -52,7 +51,7 @@ public abstract class IGQuickFixesTestCase extends UsefulTestCase {
     super.tearDown();
   }
 
-  protected void doTest(String testName, String hint) throws Throwable {
+  protected void doTest(String testName, String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     Assert.assertNotNull(action);

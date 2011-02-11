@@ -75,11 +75,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       MultiMap<PsiElement, String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
-        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, new Runnable(){
-          public void run() {
-            execute(refUsages.get());
-          }
-        });
+        ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) {
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();

@@ -167,7 +167,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     getPicoContainer().registerComponentInstance(Application.class, this);
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
-
+    AWTExceptionHandler.register(); // do not crash AWT on exceptions
     if ((isInternal || isUnitTestMode) && !Comparing.equal("off", System.getProperty("idea.disposer.debug"))) {
       Disposer.setDebugMode(true);
     }

@@ -52,7 +52,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = new NullableFunction<ElementIconRequest, Icon>() {
     public Icon fun(ElementIconRequest request) {
       final PsiElement element = request.getElement();
-      if (!element.isValid()) return null;
+      if (element == null || !element.isValid()) return null;
       if (element.getProject().isDisposed()) return null;
       return computeIconNow(element, request.getFlags());
     }

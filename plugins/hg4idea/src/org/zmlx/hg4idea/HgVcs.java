@@ -358,4 +358,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       return myExecutableValidator;
     }
   }
+
+  @Override
+  public boolean reportsIgnoredDirectories() {
+    return false;
+  }
 }

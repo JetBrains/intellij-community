@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -85,6 +86,23 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     myElementsToMove = toMove.toArray(new PsiElement[toMove.size()]);
+    Arrays.sort(myElementsToMove, new Comparator<PsiElement>() {
+      @Override
+      public int compare(PsiElement o1, PsiElement o2) {
+        if (o1 instanceof PsiClass && o2 instanceof PsiClass) {
+          final PsiFile containingFile = o1.getContainingFile();
+          if (Comparing.equal(containingFile, o2.getContainingFile())) {
+            final VirtualFile virtualFile = containingFile.getVirtualFile();
+            if (virtualFile != null) {
+              final String fileName = virtualFile.getNameWithoutExtension();
+              if (Comparing.strEqual(fileName, ((PsiClass)o1).getName())) return -1;
+              if (Comparing.strEqual(fileName, ((PsiClass)o2).getName())) return 1;
+            }
+          }
+        }
+        return 0;
+      }
+    });
     myMoveDestination = moveDestination;
     myTargetPackage = myMoveDestination.getTargetPackage();
     mySearchInComments = searchInComments;

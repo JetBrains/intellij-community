@@ -15,6 +15,11 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class NavigateToRelatedFileAction extends QuickSwitchSchemeAction {
+
+  public NavigateToRelatedFileAction() {
+    super(true);
+  }
+
   @Override
   protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -46,7 +51,9 @@ public class NavigateToRelatedFileAction extends QuickSwitchSchemeAction {
         }
       }
     }
-    e.getPresentation().setVisible(visible);
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(visible);
+    presentation.setEnabled(visible);
   }
 
   public static Set<PsiFile> collectRelatedFiles(@NotNull PsiFile file) {

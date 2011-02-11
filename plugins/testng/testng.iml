@@ -12,12 +12,12 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="testng_rt" />
     <orderEntry type="module" module-name="java-i18n" />
-    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />

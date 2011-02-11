@@ -21,7 +21,11 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -29,20 +33,15 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.command.HgChange;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.provider.HgChangeProvider;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * HgUtil is a collection of static utility methods for Mercurial.
@@ -291,4 +290,38 @@ public abstract class HgUtil {
     Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
   }
 
+  public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
+    HgStatusCommand statCommand = new HgStatusCommand(project);
+    statCommand.setIncludeUnknown(false);
+    statCommand.setBaseRevision(vcsRevisionNumber);
+    statCommand.setIncludeCopySource(true);
+
+    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo());
+
+    for (HgChange change : changes) {
+      if (change.afterFile().equals(localHgFile)) {
+        return change.beforeFile();
+      }
+    }
+    return localHgFile;
+  }
+
+  @NotNull
+  public static FilePath getOriginalFileName(@NotNull FilePath filePath, ChangeListManager changeListManager) {
+    Change change = changeListManager.getChange(filePath);
+    if (change == null) {
+      return filePath;
+    }
+
+    FileStatus status = change.getFileStatus();
+    if (status == HgChangeProvider.COPIED ||
+        status == HgChangeProvider.RENAMED) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      assert beforeRevision != null : "If a file's status is copied or renamed, there must be an previous version";
+      return beforeRevision.getFile();
+    }
+    else {
+      return filePath;
+    }
+  }
 }

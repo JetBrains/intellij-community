@@ -7,6 +7,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.MembershipMap;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -14,84 +15,67 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
  */
-public class RecursiveFileHolder<T> implements FileHolder {
+public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
   protected final HolderType myHolderType;
-  protected final MembershipMap<VirtualFile, T> myMap;
-
-  protected final Project myProject;
+  protected final TreeMap<VirtualFile, T> myMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
-    myMap = MembershipMap.createMembershipMap(new PairProcessor<VirtualFile, VirtualFile>() {
-      @Override
-      public boolean process(final VirtualFile parent, final VirtualFile child) {
-        return VfsUtil.isAncestor(parent, child, false);
-      }
-    }, FilePathComparator.getInstance());
-
-    myProject = project;
+    super(project);
+    myMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
     myHolderType = holderType;
   }
 
-  public synchronized void cleanAll() {
+  public void cleanAll() {
     myMap.clear();
   }
 
-  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
-        synchronized(RecursiveFileHolder.this) {
-          if (myProject.isDisposed()) return;
-
-          final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myMap.keySet());
-          for (final VirtualFile file : currentFiles) {
-            if (isFileDirty(scope, file)) {
-              myMap.remove(file);
-            }
-          }
-        }
-      }
-    });
+  @Override
+  protected Collection<VirtualFile> keys() {
+    return myMap.keySet();
   }
 
-  protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
-    return fileDropped(file) || scope.belongsTo(new FilePathImpl(file));
+  @Override
+  public void notifyVcsStarted(AbstractVcs scope) {
   }
 
   public HolderType getType() {
     return myHolderType;
   }
 
-  protected boolean fileDropped(final VirtualFile file) {
-    return !file.isValid() || ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) == null;
+  public void addFile(final VirtualFile file) {
+    if (! containsFile(file)) {
+      myMap.put(file, null);
+    }
   }
 
-  public synchronized void addFile(final VirtualFile file) {
-    myMap.putOptimal(file, null);
-  }
-
-  public synchronized void removeFile(final VirtualFile file) {
+  public void removeFile(final VirtualFile file) {
     myMap.remove(file);
   }
 
-  public synchronized RecursiveFileHolder copy() {
+  public RecursiveFileHolder copy() {
     final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<T>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
     return copyHolder;
   }
 
-  public synchronized boolean containsFile(final VirtualFile file) {
-    return myMap.getMapping(file) != null;
+  public boolean containsFile(final VirtualFile file) {
+    final VirtualFile floor = myMap.floorKey(file);
+    if (floor == null) return false;
+    final SortedMap<VirtualFile, T> floorMap = myMap.headMap(floor, true);
+    for (VirtualFile parent : floorMap.keySet()) {
+      if (VfsUtil.isAncestor(parent, file, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  public synchronized Collection<VirtualFile> values() {
+  public Collection<VirtualFile> values() {
     return myMap.keySet();
   }
 

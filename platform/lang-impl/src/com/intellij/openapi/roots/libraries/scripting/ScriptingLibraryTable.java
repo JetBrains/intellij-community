@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Rustam Vishnyakov
@@ -65,14 +65,14 @@ public class ScriptingLibraryTable {
     return false;
   }
 
-  public String[] getDocUrlsFor(VirtualFile file) {
+  public Set<String> getDocUrlsFor(VirtualFile file) {
     Set<String> urls = new HashSet<String>();
     for (LibraryModel libraryModel : myLibraryModels) {
       if (libraryModel.containsFile(file)) {
-        urls.addAll(Arrays.asList(libraryModel.getDocUrls()));
+        urls.addAll(libraryModel.getDocUrls());
       }
     }
-    return ArrayUtil.toStringArray(urls);
+    return urls;
   }
 
   public boolean isCompactFile(VirtualFile file) {
@@ -151,7 +151,7 @@ public class ScriptingLibraryTable {
     private String myName;
     private Set<VirtualFile> mySourceFiles = new HashSet<VirtualFile>();
     private Set<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
-    private ArrayList<String> myDocUrls = new ArrayList<String>(); 
+    private Set<String> myDocUrls = new TreeSet<String>(); 
 
     public LibraryModel(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles, String[] docUrls) {
       this(name);
@@ -191,8 +191,8 @@ public class ScriptingLibraryTable {
       return myCompactFiles;
     }
     
-    public String[] getDocUrls() {
-      return ArrayUtil.toStringArray(myDocUrls);
+    public Set<String> getDocUrls() {
+      return myDocUrls;
     }
 
     @NotNull

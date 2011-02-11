@@ -723,7 +723,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (newEditorCreated) {
-      focusManager.doWhenFocusSettlesDown(new Runnable() {
+      focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
           if (isFileOpen(file)) {
@@ -1250,7 +1250,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
           publisher.selectionChanged(event);

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +32,10 @@ import java.io.IOException;
 public abstract class LexerTestCase extends UsefulTestCase {
 
   protected void doTest(@NonNls String text) {
+    doTest(text, null);
+  }
+
+  protected void doTest(@NonNls String text, @Nullable String expected) {
     Lexer lexer = createLexer();
     lexer.start(text);
     String result = "";
@@ -45,7 +50,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
       result += line;
       lexer.advance();
     }
-    assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+
+    if (expected != null) {
+      assertSameLines(expected, result);
+    }
+    else {
+      assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+    }
   }
 
   protected void doFileTest(@NonNls String fileExt) {

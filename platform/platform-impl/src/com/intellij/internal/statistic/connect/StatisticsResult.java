@@ -19,20 +19,18 @@ public class StatisticsResult {
   private ResultCode code;
   private String description;
 
-    public StatisticsResult(ResultCode code, String description) {
-        this.code = code;
-        this.description = description;
-    }
+  public StatisticsResult(ResultCode code, String description) {
+    this.code = code;
+    this.description = description;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public ResultCode getCode() {
-        return code;
-    }
+  public ResultCode getCode() {
+    return code;
+  }
 
-    public enum ResultCode {SEND, NOT_PERMITTED, ERROR_IN_CONFIG, NOTHING_TO_SEND, SEND_WITH_ERRORS}
-
-
+  public enum ResultCode {SEND, NOT_PERMITTED_SERVER, NOT_PERMITTED_USER, ERROR_IN_CONFIG, NOT_PERMITTED_TIMEOUT, NOTHING_TO_SEND, SEND_WITH_ERRORS}
 }

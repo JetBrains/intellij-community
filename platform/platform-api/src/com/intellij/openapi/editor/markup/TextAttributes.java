@@ -111,17 +111,23 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     private void setEffectType(EffectType effectType) {
       if (effectType == EffectType.BOXED) {
         EFFECT_TYPE = EFFECT_BORDER;
-      } else if (effectType == EffectType.LINE_UNDERSCORE) {
+      }
+      else if (effectType == EffectType.LINE_UNDERSCORE) {
         EFFECT_TYPE = EFFECT_LINE;
-      } else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+      }
+      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
         EFFECT_TYPE = EFFECT_BOLD_LINE;
-      } else if (effectType == EffectType.STRIKEOUT) {
+      }
+      else if (effectType == EffectType.STRIKEOUT) {
         EFFECT_TYPE = EFFECT_STRIKEOUT;
-      } else if (effectType == EffectType.WAVE_UNDERSCORE) {
+      }
+      else if (effectType == EffectType.WAVE_UNDERSCORE) {
         EFFECT_TYPE = EFFECT_WAVE;
-      } else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+      }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
         EFFECT_TYPE = EFFECT_BOLD_DOTTED_LINE;
-      } else {
+      }
+      else {
         EFFECT_TYPE = -1;
       }
     }
@@ -213,44 +219,12 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     if(!(obj instanceof TextAttributes)) {
       return false;
     }
-    TextAttributes textAttributes = (TextAttributes)obj;
-    if(!Comparing.equal(textAttributes.getForegroundColor(), getForegroundColor())) {
-      return false;
-    }
-    if(!Comparing.equal(textAttributes.getBackgroundColor(), getBackgroundColor())) {
-      return false;
-    }
-    if(!Comparing.equal(textAttributes.getErrorStripeColor(), getErrorStripeColor())) {
-      return false;
-    }
-    if(!Comparing.equal(textAttributes.getEffectColor(), getEffectColor())) {
-      return false;
-    }
-    if (textAttributes.getEffectType() != getEffectType()) {
-      return false;
-    }
-    if(textAttributes.getFontType() != getFontType()) {
-      return false;
-    }
-    return true;
+    // myAttrs are interned, see com.intellij.openapi.editor.markup.AttributesFlyweight.create()
+    return myAttrs == ((TextAttributes)obj).myAttrs;
   }
 
   public int hashCode() {
-    int hashCode = 0;
-    if(getForegroundColor() != null) {
-      hashCode += getForegroundColor().hashCode();
-    }
-    if(getBackgroundColor() != null) {
-      hashCode += getBackgroundColor().hashCode();
-    }
-    if(getErrorStripeColor() != null) {
-      hashCode += getErrorStripeColor().hashCode();
-    }
-    if(getEffectColor() != null) {
-      hashCode += getEffectColor().hashCode();
-    }
-    hashCode += getFontType();
-    return hashCode;
+    return myAttrs.hashCode();
   }
 
   public void readExternal(Element element) throws InvalidDataException {

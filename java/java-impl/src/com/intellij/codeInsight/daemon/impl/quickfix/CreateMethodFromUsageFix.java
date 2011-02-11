@@ -284,6 +284,11 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       @Override
       public void visitTypeElement(PsiTypeElement type) {
         super.visitTypeElement(type);
+        final PsiClass psiClass = PsiUtil.resolveClassInType(type.getType());
+        if (psiClass instanceof PsiTypeParameter &&
+            PsiTreeUtil.isAncestor(((PsiTypeParameter)psiClass).getOwner(), typeElement, true)) {
+          return;
+        }
         if (Comparing.strEqual(typeParameterName, type.getText())) {
           found[0] = true;
         }

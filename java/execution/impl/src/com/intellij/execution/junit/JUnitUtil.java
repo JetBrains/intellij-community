@@ -26,8 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
@@ -69,9 +71,13 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
+    return isTestMethod(location, true);
+  }
+
+  public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract) {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
-    if (aClass == null || !isTestClass(aClass)) return false;
+    if (aClass == null || !isTestClass(aClass, checkAbstract, true)) return false;
     if (isTestAnnotated(psiMethod)) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -192,7 +198,28 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethodOrConfig(PsiMethod psiMethod) {
-    if (getTestMethod(psiMethod) != null) return true;
+    if (getTestMethod(psiMethod, false) != null) {
+      final PsiClass containingClass = psiMethod.getContainingClass();
+      assert containingClass != null;
+      if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final boolean[] foundNonAbstractInheritor = new boolean[1];
+        ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass psiClass) {
+            if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              foundNonAbstractInheritor[0] = true;
+              return false;
+            }
+            return true;
+          }
+        });
+        if (foundNonAbstractInheritor[0]) {
+          return true;
+        }
+      } else {
+        return true;
+      }
+    }
     final String name = psiMethod.getName();
     if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (SUITE_METHOD_NAME.equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
@@ -260,13 +287,16 @@ public class JUnitUtil {
     }
     return null;
   }
+   public static PsiMethod getTestMethod(final PsiElement element) {
+     return getTestMethod(element, true);
+   }
 
-  public static PsiMethod getTestMethod(final PsiElement element) {
+  public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract) {
     final PsiManager manager = element.getManager();
     final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final Location<? extends PsiMethod> methodLocation = iterator.next();
-      if (isTestMethod(methodLocation)) return methodLocation.getPsiElement();
+      if (isTestMethod(methodLocation, checkAbstract)) return methodLocation.getPsiElement();
     }
     return null;
   }

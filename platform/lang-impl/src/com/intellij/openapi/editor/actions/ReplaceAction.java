@@ -47,7 +47,7 @@ public class ReplaceAction extends EditorAction {
   }
 
   public ReplaceAction() {
-    super(new Handler());
+    super(new IncrementalFindAction.Handler(true));
   }
 
 }

@@ -534,7 +534,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     instance.setValue(PROP_SHOWCLASSES, Boolean.toString(myShowClasses));
     instance.setValue(PROP_COPYJAVADOC, Boolean.toString(myCopyJavadocCheckbox.isSelected()));
 
-    getContentPane().removeAll();
+    final Container contentPane = getContentPane();
+    if (contentPane != null) {
+      contentPane.removeAll();
+    }
     mySelectedNodes.clear();
     myElements = null;
     super.dispose();

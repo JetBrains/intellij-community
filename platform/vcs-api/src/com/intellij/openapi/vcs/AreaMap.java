@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,37 @@ public class AreaMap<Key, Val> {
 
   public void put(final Key key, final Val val) {
     putImpl(key, val);
+  }
+
+  protected int putIfNoParent(final Key key, final Val val) {
+    if(myMap.put(key, val) != null) {
+      return -1;
+    }
+
+    if (myKeys.isEmpty()) {
+      myKeys.add(key);
+      return 0;
+    }
+
+    final int idx = Collections.binarySearch(myKeys, key, myComparator);
+    if (idx < 0) {
+      // insertion, no copy exist
+      final int insertionIdx = - idx - 1;
+      // check parent
+      for (final ListIterator<Key> listIterator = myKeys.listIterator(insertionIdx); listIterator.hasPrevious();) {
+        final Key previous = listIterator.previous();
+        if (myKeysResemblance.process(previous, key)) {
+          myMap.remove(key);
+          return -1;
+        }
+      }
+      // insertionIdx not necessarily exist
+      myKeys.add(insertionIdx, key);
+      return insertionIdx;
+    }
+    assert true;
+    myMap.remove(key);
+    return -1;
   }
 
   protected int putImpl(final Key key, final Val val) {
@@ -115,8 +147,8 @@ public class AreaMap<Key, Val> {
       // take item before
       final int itemBeforeIdx = insertionIdx - 1;
       if (itemBeforeIdx >= 0) {
-        for (int i = itemBeforeIdx; i >= 0; -- i) {
-          final Key candidate = myKeys.get(i);
+        for (ListIterator<Key> iterator = myKeys.listIterator(itemBeforeIdx + 1); iterator.hasPrevious(); ) {
+          final Key candidate = iterator.previous();
           if (! myKeysResemblance.process(candidate, key)) continue;
           if (consumer.process(candidate, myMap.get(candidate))) break;     // if need only a part of keys
         }

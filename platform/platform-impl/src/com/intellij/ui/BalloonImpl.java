@@ -57,18 +57,7 @@ import javax.swing.JTree;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.AWTEvent;
-import java.awt.AlphaComposite;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -314,6 +303,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     myLayeredPane = root.getLayeredPane();
     myPosition = position;
+    UIUtil.setFutureRootPane(myContent, root);
 
     myLayeredPane.addComponentListener(myComponentListener);
 
@@ -1085,7 +1075,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         @Override
         public void run() {
           if (myCloseRec != null && myCloseRec.getParent() != null) {
-            myCloseRec.getParent().remove(myCloseRec);
+            Container parent = myCloseRec.getParent();
+            parent.remove(myCloseRec);
+            ((JComponent)parent).revalidate();
+            ((JComponent)parent).repaint();
           }
         }
       });

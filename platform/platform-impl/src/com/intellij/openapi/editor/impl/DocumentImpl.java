@@ -80,7 +80,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
   private final boolean myAssertWriteAccess;
-  private boolean myDoingBulkUpdate = false;
+  private volatile boolean myDoingBulkUpdate = false;
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
 
@@ -252,7 +252,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangesIntersect(start, block.getStartOffset(), end, block.getEndOffset(), true, block.isGreedyToLeft(), true, block.isGreedyToRight())) {
+      if (rangesIntersect(start, true, block.getStartOffset(), block.isGreedyToLeft(), end, true, block.getEndOffset(), block.isGreedyToRight())) {
         return block;
       }
     }
@@ -273,14 +273,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return start <= offset && offset < end;
   }
 
-  private static boolean rangesIntersect(int start0, int start1, int end0, int end1, boolean leftInclusive0, boolean leftInclusive1, boolean rightInclusive0, boolean rightInclusive1) {
+  private static boolean rangesIntersect(int start0, boolean leftInclusive0,
+                                         int start1, boolean leftInclusive1,
+                                         int end0, boolean rightInclusive0,
+                                         int end1, boolean rightInclusive1) {
     if (start0 > start1 || start0 == start1 && !leftInclusive0) {
-      return rangesIntersect(start1, start0, end1, end0, leftInclusive1, leftInclusive0, rightInclusive1, rightInclusive0);
+      return rangesIntersect(start1, leftInclusive1, start0, leftInclusive0, end1, rightInclusive1, end0, rightInclusive0);
     }
-    if (end0 < start1) return false;
-    if (end0 > start1) return true;
-
-    return leftInclusive1 && rightInclusive0;
+    if (end0 == start1) return leftInclusive1 && rightInclusive0;
+    return end0 > start1;
   }
 
   @NotNull

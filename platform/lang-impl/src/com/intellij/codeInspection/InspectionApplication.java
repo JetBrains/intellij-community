@@ -81,13 +81,13 @@ public class InspectionApplication {
       InspectionMain.printHelp();
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    application.runReadAction(new Runnable() {
       public void run() {
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
           final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
           logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName()));
-          application.doNotSave();          
+          application.doNotSave();
           logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
           InspectionApplication.this.run();
@@ -102,7 +102,7 @@ public class InspectionApplication {
     });
   }
 
-  public void run() {
+  private void run() {
     try {
       myProjectPath = myProjectPath.replace(File.separatorChar, '/');
       VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(myProjectPath);
@@ -125,9 +125,9 @@ public class InspectionApplication {
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run(){
-              VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-          }
+        public void run(){
+          VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+        }
       });
 
       //fetch profile by name from project file (project profiles can be disabled)
@@ -159,12 +159,12 @@ public class InspectionApplication {
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-      final AnalysisScope scope;
 
       final GlobalInspectionContextImpl inspectionContext = im.createNewGlobalContext(true);
       inspectionContext.setExternalProfile((InspectionProfile)inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
+      final AnalysisScope scope;
       if (mySourceDirectory == null) {
         scope = new AnalysisScope(myProject);
       }
@@ -280,7 +280,6 @@ public class InspectionApplication {
 
   @Nullable
   private static String getPrefix(final String text) {
-    String prefix = null;
     //noinspection HardCodedStringLiteral
     int idx = text.indexOf(" in ");
     if (idx == -1) {
@@ -288,10 +287,7 @@ public class InspectionApplication {
       idx = text.indexOf(" of ");
     }
 
-    if (idx != -1){
-      prefix = text.substring(0, idx);
-    }
-    return prefix;
+    return idx == -1 ? null : text.substring(0, idx);
   }
 
   public void setVerboseLevel(int verboseLevel) {
@@ -327,9 +323,8 @@ public class InspectionApplication {
       groupInspections.add(entry);
     }
 
-    FileWriter fw = null;
+    FileWriter fw = new FileWriter(myOutputPath);
     try {
-      fw = new FileWriter(myOutputPath);
       @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode(INSPECTIONS_NODE);
       if (name != null) {
@@ -346,7 +341,8 @@ public class InspectionApplication {
           final String description = entry.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
-          } else {
+          }
+          else {
             LOG.error(entry.getShortName() + " descriptionUrl==null");
           }
           xmlWriter.endNode();
@@ -356,9 +352,7 @@ public class InspectionApplication {
       xmlWriter.endNode();
     }
     finally {
-      if (fw != null) {
-        fw.close();
-      }
+      fw.close();
     }
   }
 }

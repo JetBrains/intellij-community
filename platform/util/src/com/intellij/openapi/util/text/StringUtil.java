@@ -1217,13 +1217,18 @@ public class StringUtil {
 
   public static boolean containsAnyChar(@NotNull final String value, @NotNull final String chars) {
     for (int i = 0; i < chars.length(); i++) {
-      if (value.indexOf(chars.charAt(i)) != -1) return true;
+      if (containsChar(value, chars.charAt(i))) return true;
     }
 
     return false;
   }
 
-  public static String firstLetterToUpperCase(String displayString) {
+  public static boolean containsChar(final String value, final char ch) {
+    return value.indexOf(ch) >= 0;
+  }
+
+  @Nullable
+  public static String firstLetterToUpperCase(@Nullable final String displayString) {
     if (displayString == null || displayString.length() == 0) return displayString;
     char firstChar = displayString.charAt(0);
     char uppedFirstChar = toUpperCase(firstChar);
@@ -1243,8 +1248,8 @@ public class StringUtil {
    * @return stripped string e.g. "mystring"
    */
   @NotNull
-  public static String strip(@NotNull final String s, @NotNull CharFilter filter) {
-    StringBuilder result = new StringBuilder(s.length());
+  public static String strip(@NotNull final String s, @NotNull final CharFilter filter) {
+    final StringBuilder result = new StringBuilder(s.length());
     for (int i = 0; i < s.length(); i++) {
       char ch = s.charAt(i);
       if (filter.accept(ch)) {
@@ -1374,6 +1379,17 @@ public class StringUtil {
     int i = text.indexOf(subString);
     if (i == -1) return -1;
     return i + subString.length();
+  }
+
+  public static int indexOfAny(final String s, final String chars) {
+    return indexOfAny(s, chars, 0, s.length());
+  }
+
+  public static int indexOfAny(final String s, final String chars, final int start, final int end) {
+    for (int i = start; i < end; i++) {
+      if (containsChar(chars, s.charAt(i))) return i;
+    }
+    return -1;
   }
 
   public static String substringAfter(@NotNull String text, @NotNull String subString) {

@@ -190,7 +190,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
           buffer.append(" extends ");
 
           for (int j = 0; j < refs.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[j], aClass);
+            JavaDocInfoGenerator.generateType(buffer, refs[j], aClass, false);
 
             if (j < refs.length - 1) {
               buffer.append(" & ");
@@ -217,7 +217,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
         else {
           for (int i = 0; i < refs.length; i++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[i], aClass);
+            JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
 
             if (i < refs.length - 1) {
               buffer.append(", ");
@@ -232,7 +232,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       newLine(buffer);
       buffer.append("implements ");
       for (int i = 0; i < refs.length; i++) {
-        JavaDocInfoGenerator.generateType(buffer, refs[i], aClass);
+        JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
 
         if (i < refs.length - 1) {
           buffer.append(", ");
@@ -271,7 +271,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
           buffer.append(" extends ");
 
           for (int j = 0; j < extendees.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, extendees[j], method);
+            JavaDocInfoGenerator.generateType(buffer, extendees[j], method, false);
 
             if (j < extendees.length - 1) {
               buffer.append(" & ");
@@ -287,7 +287,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     if (method.getReturnType() != null) {
-      JavaDocInfoGenerator.generateType(buffer, method.getReturnType(), method);
+      JavaDocInfoGenerator.generateType(buffer, method.getReturnType(), method, false);
       buffer.append(" ");
     }
 
@@ -297,7 +297,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
-      JavaDocInfoGenerator.generateType(buffer, parm.getType(), method);
+      JavaDocInfoGenerator.generateType(buffer, parm.getType(), method, false);
       buffer.append(" ");
       if (parm.getName() != null) {
         buffer.append(parm.getName());
@@ -343,7 +343,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     generateModifiers(buffer, field);
 
-    JavaDocInfoGenerator.generateType(buffer, field.getType(), field);
+    JavaDocInfoGenerator.generateType(buffer, field.getType(), field, false);
     buffer.append(" ");
     buffer.append(field.getName());
 
@@ -357,7 +357,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     generateModifiers(buffer, variable);
 
-    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable);
+    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable, false);
 
     buffer.append(" ");
 

@@ -1120,7 +1120,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return "";
+    return InspectionsBundle.message("group.names.javadoc.issues");
   }
 
   @NotNull

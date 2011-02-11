@@ -110,7 +110,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
+    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
   @NotNull

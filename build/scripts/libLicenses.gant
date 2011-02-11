@@ -3,6 +3,7 @@ import org.jetbrains.jps.*
 class LibraryLicense {
   String name, libraryName, url, version
   String license, licenseUrl
+  String attachedTo
 }
 
 List<LibraryLicense> licensesList = []
@@ -65,14 +66,16 @@ binding.setVariable("checkLibLicenses", {
   }
 });
 
-binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath ->
+binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath, Set<String> usedModules ->
   checkLibLicenses();
-  generateLicensesTable(filePath)
+  generateLicensesTable(filePath, usedModules)
   notifyArtifactBuilt(filePath)
 })
 
-binding.setVariable("generateLicensesTable", {String filePath ->
-  Set<Module> usedModules = project.modules.values().findAll {it["used"] != null}
+binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedModulesNames ->
+  project.info("Generating licenses table")
+  project.info("Used modules: $usedModulesNames")
+  Set<Module> usedModules = project.modules.values().findAll {usedModulesNames.contains(it.name)}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
@@ -82,11 +85,10 @@ binding.setVariable("generateLicensesTable", {String filePath ->
     }
   }
 
-  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) }
-  project.info("Generating licenses table")
+  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) || usedModulesNames.contains(it.attachedTo)}
   project.info("Used libraries:")
   List<String> lines = []
-  licenses.each { LibraryLicense lib ->
+  licenses.each {LibraryLicense lib ->
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
     project.info(" $lib.libraryName (in module ${usedLibraries[lib.libraryName]})")
@@ -98,12 +100,18 @@ binding.setVariable("generateLicensesTable", {String filePath ->
   //}
 
   lines.sort(String.CASE_INSENSITIVE_ORDER)
-  FileWriter out = new FileWriter(filePath)
-  out.println("|| Software || Version || License ||")
-  lines.each {
-    out.println(it)
+  File file = new File(filePath)
+  file.parentFile.mkdirs()
+  FileWriter out = new FileWriter(file)
+  try {
+    out.println("|| Software || Version || License ||")
+    lines.each {
+      out.println(it)
+    }
   }
-  out.close()
+  finally {
+    out.close()
+  }
 })
 
 libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)", url: "http://www.incors.com/lookandfeel/", licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase")
@@ -128,13 +136,14 @@ libraryLicense(name: "Gradle API", libraryName: "gradle-open-api-0.8.jar", versi
 libraryLicense(name: "Groovy", version: "1.7.3", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "Gson", libraryName: "gson-1.3.jar", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/")
 libraryLicense(name: "ISO RELAX", libraryName: "isorelax.jar", license: "MIT License", url: "http://sourceforge.net/projects/iso-relax/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
-libraryLicense(name: "JavaCVS", version: "no version number available (with patches by JetBrains)", license: "Sun Public License", url: "http://javacvs.netbeans.org/library/", licenseUrl: "http://www.netbeans.org/about/legal/spl.html")
+libraryLicense(name: "JavaCVS", attachedTo: "javacvs-src", version: "no version number available (with patches by JetBrains)", license: "Sun Public License", url: "http://javacvs.netbeans.org/library/", licenseUrl: "http://www.netbeans.org/about/legal/spl.html")
 libraryLicense(name: "JAXB", libraryName: "JAXB", version: "2.1.10", license: "CDDL 1.1 & GPL 2", url: "http://jaxb.java.net/", licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html")
 libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "http://www.jaxen.org/", licenseUrl: "http://www.jaxen.org/license.html")
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")
 libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
 libraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "CVS snapshot as of 5 May 2006", license: "BSD ", url: "http://www.jgoodies.com/freeware/forms/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
+libraryLicense(name: "JGoodies Looks", attachedTo: "platform-impl", version: "2.2.2", license: "BSD ", url: "http://www.jgoodies.com/freeware/looks/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JNA", libraryName: "jna", version: "3.2.4", license: "LGPL 2.1", url: "https://jna.dev.java.net/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
 libraryLicense(name: "JNA", libraryName: "jna.jar", version: "3.2.7", license: "LGPL 2.1", url: "https://jna.dev.java.net/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
 libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/")
@@ -147,6 +156,7 @@ libraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", version: "3.3",
 libraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", version: "2.0.8", license: "Apache", url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
 libraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD", url: "http://www.picocontainer.org/", licenseUrl: "http://docs.codehaus.org/display/PICO/License")
 libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", version: "1.5.5", license: "Apache 2.0", url: "http://plexus.codehaus.org/plexus-utils")
+libraryLicense(name: "Quaqua L&F", attachedTo: "platform-impl", version: "6.2", license: "BSD", url: "http://www.randelshofer.ch/quaqua/", licenseUrl: "http://www.randelshofer.ch/quaqua/license.html")
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")
 libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
@@ -162,3 +172,4 @@ libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: 
 libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "7.0.2", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 jetbrainsLibrary("JPS")
+jetbrainsLibrary("Maven Embedder")

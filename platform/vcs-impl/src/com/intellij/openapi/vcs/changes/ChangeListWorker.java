@@ -531,6 +531,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myLocallyDeleted.isContainedInLocallyDeleted(filePath);
   }
 
+  public void notifyVcsStarted(AbstractVcs vcs) {
+    myLocallyDeleted.notifyVcsStarted(vcs);
+    mySwitchedHolder.notifyVcsStarted(vcs);
+  }
+
   private abstract class ExternalVsInternalChangesIntersection {
     protected final Collection<Change> myInChanges;
     protected final Map<Pair<String, String>, LocalChangeList> myInternalMap;

@@ -38,10 +38,10 @@ public class ScreenUtil {
 
       Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(eachConfig);
       if (insets != null) {
-        eachRec.x -= insets.left;
-        eachRec.width += (insets.left + insets.right);
-        eachRec.y -= insets.top;
-        eachRec.height += (insets.top + insets.bottom);
+        eachRec.x += insets.left;
+        eachRec.width -= (insets.left + insets.right);
+        eachRec.y += insets.top;
+        eachRec.height -= (insets.top + insets.bottom);
       }
 
       if (eachRec.x <= x && x < eachRec.x + eachRec.width && eachRec.y <= y && y < eachRec.y + eachRec.height) {

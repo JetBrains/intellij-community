@@ -29,10 +29,6 @@
       <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
     </component>
 
-    <component>
-      <interface-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

@@ -67,6 +67,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   Editor getEditor();
 
+  int getCaretOffset();
+
   PsiFile getFile();
 
   void setTestDataPath(@NonNls String dataPath);
@@ -367,4 +369,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testFolding(String fileName);
   void testFoldingWithCollapseStatus(String fileName);
+
+  void assertPreferredCompletionItems(int selected, @NonNls String... expected);
 }
