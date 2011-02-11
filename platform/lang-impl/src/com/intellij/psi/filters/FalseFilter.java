@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
  * To change this template use Options | File Templates.
  */
 public class FalseFilter implements ElementFilter{
+  public static final FalseFilter INSTANCE = new FalseFilter();
 
   public boolean isClassAcceptable(Class hintClass){
     return true;
