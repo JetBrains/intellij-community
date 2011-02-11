@@ -213,7 +213,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   public final void checkCanceled() {
-    if (isCanceled() && myNonCancelableCount == 0) {
+    if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
     }
 

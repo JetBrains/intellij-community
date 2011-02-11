@@ -19,7 +19,11 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import java.util.List;
 
 /**
  * @author ven
@@ -30,11 +34,26 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     super(name, RESOLVE_KINDS_PROPERTY, place, PsiType.EMPTY_ARRAY);
   }
 
+  @Override
   public boolean execute(PsiElement element, ResolveState state) {
-    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
+    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier()!=null) {
       return true;
     }
     return super.execute(element, state);
   }
 
+  @NotNull
+  @Override
+  public GroovyResolveResult[] getCandidates() {
+    //do not have more than one correct result. And if it exists it is the last
+    final List<GroovyResolveResult> candidates = getCandidatesInternal();
+    final int size = candidates.size();
+    if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
+    final GroovyResolveResult last = candidates.get(size - 1);
+    if (last.isAccessible() && last.isStaticsOK()) return candidates.toArray(new GroovyResolveResult[candidates.size()]);
+    for (GroovyResolveResult candidate : candidates) {
+      if (candidate.isStaticsOK()) return new GroovyResolveResult[]{candidate};
+    }
+    return candidates.toArray(new GroovyResolveResult[candidates.size()]);
+  }
 }

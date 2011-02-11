@@ -157,6 +157,13 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                        TIntArrayList commentEnds,
                                        TIntArrayList commentStartsList,
                                        TIntArrayList commentEndsList) {
+    if (commentStarts.size() == 0 && commentEnds.size() == 0) {
+      commentStarts.add(commentStartsList.toNativeArray());
+      commentEnds.add(commentEndsList.toNativeArray());
+      return;
+    }
+
+    // TODO: this is costly for large N !
     for (int i = 0; i < commentStartsList.size(); i++) {
       boolean found = false;
       for (int j = 0; j < commentStarts.size(); j++) {

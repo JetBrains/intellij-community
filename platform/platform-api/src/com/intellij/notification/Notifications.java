@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -37,30 +38,55 @@ public interface Notifications {
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   void notify(@NotNull Notification notification);
-  void notify(@NotNull Notification notification, @NotNull NotificationDisplayType defaultDisplayType);
+  void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
+
+    /**
+     * Registration is OPTIONAL: STICKY_BALLOON display type will be used by default.
+     */
+    public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
+      invoke(null, new Processor<MessageBus>() {
+        @Override
+        public boolean process(final MessageBus bus) {
+          bus.syncPublisher(TOPIC).register(group_id, defaultDisplayType);
+          return false;
+        }
+      });
+    }
+
+    @Deprecated
+    public static void notify(@NotNull final Notification notification, final NotificationDisplayType displayType, @Nullable final Project project) {
+      notify(notification, project);
+    }
+
     public static void notify(@NotNull final Notification notification) {
-      notify(notification, NotificationDisplayType.BALLOON, null);
+      notify(notification, null);
     }
 
-    public static void notify(@NotNull final Notification notification, @Nullable Project project) {
-      notify(notification, NotificationDisplayType.BALLOON, project);
+    public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
+      invoke(project, new Processor<MessageBus>() {
+        @Override
+        public boolean process(final MessageBus messageBus) {
+          messageBus.syncPublisher(TOPIC).notify(notification);
+          return false;
+        }
+      });
     }
 
-    public static void notify(@NotNull final Notification notification, @NotNull final NotificationDisplayType defaultDisplayType, @Nullable final Project project) {
+    private static void invoke(final Project project, final Processor<MessageBus> fun) {
       if (project != null && !project.isDisposed()) {
         if (!project.isInitialized()) {
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
             public void run() {
-              project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+              fun.process(project.getMessageBus());
             }
           });
         }
         else {
           final MessageBus bus = project.getMessageBus();
-          _notify(notification, defaultDisplayType, bus);
+          notifyLaterIfNeeded(bus, fun);
         }
 
         return;
@@ -73,21 +99,22 @@ public interface Notifications {
           final MessageBus bus =
             project == null ? (app.isDisposed() ? null : app.getMessageBus()) : (project.isDisposed() ? null : project.getMessageBus());
           if (bus != null) {
-            _notify(notification, defaultDisplayType, bus);
+            notifyLaterIfNeeded(bus, fun);
           }
         }
       });
     }
 
-    private static void _notify(final Notification notification, final NotificationDisplayType defaultDisplayType, final MessageBus bus) {
+    private static void notifyLaterIfNeeded(final MessageBus bus,
+                                            final Processor<MessageBus> fun) {
       if (EventQueue.isDispatchThread()) {
-        bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+        fun.process(bus);
       }
       else {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+            fun.process(bus);
           }
         });
       }

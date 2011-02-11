@@ -1,0 +1,12 @@
+print !true
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Unary expression
+        PsiElement(!)('!')
+        Literal
+          PsiElement(true)('true')
