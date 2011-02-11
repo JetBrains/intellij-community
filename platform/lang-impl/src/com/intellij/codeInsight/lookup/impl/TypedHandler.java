@@ -57,7 +57,6 @@ public class TypedHandler implements TypedActionHandler {
 
       final LookupElement currentItem = lookup.getCurrentItem();
       final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
-      CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
       lookup.performGuardedChange(new Runnable() {
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);
