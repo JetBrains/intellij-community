@@ -130,9 +130,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
-      for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
+      for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
         Set<FilePath> files = new HashSet<FilePath>();
         final VirtualFile root = entry.getKey();
         try {
@@ -495,8 +495,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param exceptions exceptions to collect
    * @return sorted changes
    */
-  private static Map<VirtualFile, List<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
-    Map<VirtualFile, List<Change>> result = new HashMap<VirtualFile, List<Change>>();
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
+    Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -515,7 +515,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         exceptions.add(e);
         continue;
       }
-      List<Change> changeList = result.get(vcsRoot);
+      Collection<Change> changeList = result.get(vcsRoot);
       if (changeList == null) {
         changeList = new ArrayList<Change>();
         result.put(vcsRoot, changeList);

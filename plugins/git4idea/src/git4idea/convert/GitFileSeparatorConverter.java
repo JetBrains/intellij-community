@@ -48,7 +48,7 @@ public class GitFileSeparatorConverter {
    */
   public static boolean convertSeparatorsIfNeeded(final Project project,
                                                   final GitVcsSettings settings,
-                                                  Map<VirtualFile, List<Change>> sortedChanges,
+                                                  Map<VirtualFile, Collection<Change>> sortedChanges,
                                                   final List<VcsException> exceptions) {
     final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
     if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
@@ -56,7 +56,7 @@ public class GitFileSeparatorConverter {
       final String nl = CodeStyleFacade.getInstance(project).getLineSeparator();
       final Map<VirtualFile, Set<VirtualFile>> files = new HashMap<VirtualFile, Set<VirtualFile>>();
       // preliminary screening of files
-      for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
+      for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
         final VirtualFile root = entry.getKey();
         final Set<VirtualFile> added = new HashSet<VirtualFile>();
         for (Change change : entry.getValue()) {
