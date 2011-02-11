@@ -43,12 +43,12 @@ public class ApplySwitchAction extends AnAction {
         e.getPresentation().setEnabled(false);
       } else {
         List<AnAction> actions = quickActionProvider.getActions(true);
-        e.getPresentation().setEnabled(actions != null && actions.size() > 0);
+        e.getPresentation().setEnabled(actions != null && !actions.isEmpty());
       }
     }
   }
 
-  private Project getProject(AnActionEvent e) {
+  private static Project getProject(AnActionEvent e) {
     return PlatformDataKeys.PROJECT.getData(e.getDataContext());
   }
 

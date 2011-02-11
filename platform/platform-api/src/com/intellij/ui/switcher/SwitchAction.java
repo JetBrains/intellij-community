@@ -37,7 +37,7 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
     }
 
     SwitchingSession session = getSession(e);
-    e.getPresentation().setEnabled((session != null && !session.isFinished()) || getProvider(e) != null);
+    e.getPresentation().setEnabled(session != null && !session.isFinished() || getProvider(e) != null);
   }
 
   @Override
@@ -52,24 +52,24 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
     move(session);
   }
 
-  protected QuickAccessSettings getSettings() {
+  protected static QuickAccessSettings getSettings() {
     return QuickAccessSettings.getInstance();
   }
 
-  private SwitchProvider getProvider(AnActionEvent e) {
+  private static SwitchProvider getProvider(AnActionEvent e) {
     return e.getData(SwitchProvider.KEY);
   }
 
-  private SwitchingSession getSession(AnActionEvent e) {
+  private static SwitchingSession getSession(AnActionEvent e) {
     return getManager(e).getSession();
   }
 
-  private SwitchManager getManager(AnActionEvent e) {
+  private static SwitchManager getManager(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     return SwitchManager.getInstance(project);
   }
 
-  private void initSession(AnActionEvent e, SwitchingSession session) {
+  private static void initSession(AnActionEvent e, SwitchingSession session) {
     getManager(e).initSession(session);    
   }
 

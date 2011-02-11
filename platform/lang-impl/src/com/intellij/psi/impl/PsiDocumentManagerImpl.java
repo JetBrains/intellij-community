@@ -412,7 +412,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @SuppressWarnings({"ALL"})
   private ASTNode myTreeElementBeingReparsedSoItWontBeCollected;
 
-  protected boolean commit(final Document document, final PsiFile file) {
+  private boolean commit(final Document document, final PsiFile file) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document, file);
