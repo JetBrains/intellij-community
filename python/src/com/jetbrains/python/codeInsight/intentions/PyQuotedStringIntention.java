@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -53,14 +54,17 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
-      String stringText = string.getText();
+      StringBuilder strBuilder = new StringBuilder();
+      for (ASTNode node : string.getStringNodes())
+        strBuilder.append(node.getText());
+      String stringText = strBuilder.toString();//string.getText();
       if (stringText.startsWith("'") && stringText.endsWith("'")) {
         String result = convertSingleToDoubleQuoted(stringText);
         PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
       if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
-        String result = convertDoubleToSingleQuoted(string.getStringValue());
+        String result = convertDoubleToSingleQuoted(stringText);
         PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
@@ -85,7 +89,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
       }
-      else if (ch == '\\') {
+      else if (ch == '\\' && charArr[i+1] == '\"') {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }
@@ -115,7 +119,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '"') {
         stringBuilder.append("\\\"");
       }
-      else if (ch == '\\') {
+      else if (ch == '\\' && charArr[i+1] == '\'') {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }

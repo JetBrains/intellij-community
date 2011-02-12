@@ -68,10 +68,7 @@ class TeamcityTestResult(TestResult):
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
-        if PYTHON_VERSION_MAJOR == 3:
-          error_value = str(err[1])
-        else:
-          error_value = err[1][0]
+        error_value = str(err[1])
 
         if error_value.startswith("'") or error_value.startswith('"'):
             # let's unescape strings to show sexy multiline diff in PyCharm.

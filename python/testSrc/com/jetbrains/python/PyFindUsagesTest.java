@@ -82,7 +82,7 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
     int pos = usageText.indexOf("<caret>");
     assert pos >= 0;
     usageText = usageText.replace("<caret>", "");
-    final int startIndex = usageInfo.getElement().getTextOffset() + usageInfo.getRange().getStartOffset() - pos;
+    final int startIndex = usageInfo.getElement().getTextOffset() + usageInfo.getRangeInElement().getStartOffset() - pos;
     assertEquals(usageText, myFixture.getFile().getText().substring(startIndex, startIndex + usageText.length()));
   }
 }

@@ -1,1 +1,1 @@
-a = '\'Hello\' - said man.'
+a = '\'Hello\' - said man.\n Let\'s go.'
