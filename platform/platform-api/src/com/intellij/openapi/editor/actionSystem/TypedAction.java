@@ -61,6 +61,7 @@ public class TypedAction {
       doc.startGuardedBlockChecking();
       try {
         final String str = String.valueOf(charTyped);
+        CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
         EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {
@@ -119,6 +120,6 @@ public class TypedAction {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, EditorBundle.message("typing.in.editor.command.name"), editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 }
