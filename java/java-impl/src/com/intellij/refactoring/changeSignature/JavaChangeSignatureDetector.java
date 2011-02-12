@@ -381,6 +381,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
     }.execute();
   }
 
+  @Override
+  public boolean ignoreChanges(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiImportList.class) != null;
+  }
+
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     if (body != null) {

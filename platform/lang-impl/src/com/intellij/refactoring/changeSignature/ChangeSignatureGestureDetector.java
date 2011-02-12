@@ -199,6 +199,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       if (changeBean != null && changeBean.getInitialText() != null) {
         final Editor editor = myFileEditorManager.getSelectedTextEditor();
         if (editor != null && myTemplateManager.getActiveTemplate(editor) != null) return;
+        if (LanguageChangeSignatureDetectors.INSTANCE.forLanguage(child.getLanguage()).ignoreChanges(child)) return;
         final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(child, changeBean.getInitialChangeInfo());
         if (info == null) {
           changeBean.reinit();
