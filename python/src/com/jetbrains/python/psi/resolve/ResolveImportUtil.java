@@ -219,11 +219,18 @@ public class ResolveImportUtil {
           return resolveModulesInRoots(qualifiedName, source_file);
         }
         else {
-          PsiElement module = resolveModuleAt(source_file.getOriginalFile().getContainingDirectory(), source_file, qualifiedName);
+          final PsiDirectory dir = source_file.getOriginalFile().getContainingDirectory();
+          PsiElement module = resolveModuleAt(dir, source_file, qualifiedName);
           if (module != null) {
             return Collections.singletonList(module);
           }
-          return resolveModulesInRoots(qualifiedName, source_file);
+          List<PsiElement> found_in_roots = resolveModulesInRoots(qualifiedName, source_file);
+          if (found_in_roots.size() > 0) return found_in_roots;
+          // TODO: resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
+          // TODO: move this to project settings some day
+          ResolveInRootVisitor visitor = new ResolveInRootAsTopPackageVisitor(qualifiedName, source_file.getManager(), source_file, true);
+          visitRoots(source_file, visitor);
+          return visitor.results;
         }
       }
     }
@@ -275,17 +282,7 @@ public class ResolveImportUtil {
     PsiFile footholdFile = foothold.getContainingFile();
     if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
 
-    PythonPathCache cache = null;
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
-    if (module != null) {
-      cache = PythonModulePathCache.getInstance(module);
-    }
-    else {
-      final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
-      if (sdk != null) {
-        cache = PythonSdkPathCache.getInstance(foothold.getProject(), sdk);
-      }
-    }
+    PythonPathCache cache = getPathCache(foothold, footholdFile);
     if (cache != null) {
       final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
       if (cachedResults != null) {
@@ -298,6 +295,22 @@ public class ResolveImportUtil {
       cache.put(moduleQualifiedName, visitor.results);
     }
     return visitor.results;
+  }
+
+  @Nullable
+  private static PythonPathCache getPathCache(PsiElement foothold, PsiFile footholdFile) {
+    PythonPathCache cache = null;
+    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    if (module != null) {
+      cache = PythonModulePathCache.getInstance(module);
+    }
+    else {
+      final Sdk sdk = PyBuiltinCache.findSdkForFile(footholdFile);
+      if (sdk != null) {
+        cache = PythonSdkPathCache.getInstance(foothold.getProject(), sdk);
+      }
+    }
+    return cache;
   }
 
   @NotNull
@@ -561,23 +574,59 @@ public class ResolveImportUtil {
       }
       return true;
     }
+
+    @Nullable
+    private PsiElement resolveInRoot(VirtualFile root,
+                                            PyQualifiedName qualifiedName,
+                                            PsiManager psiManager,
+                                            @Nullable PsiFile foothold_file,
+                                            boolean checkForPackage) {
+      PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
+      module = patchModule(module, qualifiedName);
+      if (module == null) return null;
+      for (String component : qualifiedName.getComponents()) {
+        if (component == null) {
+          module = null;
+          break;
+        }
+        module = resolveChild(module, component, foothold_file, root, false, checkForPackage); // only files, we want a module
+      }
+      return module;
+    }
+
+    /**
+     * @param root_module file or dir representing a module's root.
+     * @param name what we try to resolve
+     * @return altered parent module; this implementation returns root_module unmodified.
+     */
+    @Nullable
+    @SuppressWarnings({"MethodMayBeStatic"})
+    protected PsiElement patchModule(PsiElement root_module, PyQualifiedName name) {
+      return root_module;
+    }
+
   }
 
-  @Nullable
-  private static PsiElement resolveInRoot(VirtualFile root,
-                                          PyQualifiedName qualifiedName,
-                                          PsiManager psiManager,
-                                          @Nullable PsiFile foothold_file,
-                                          boolean checkForPackage) {
-    PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
-    for (String component : qualifiedName.getComponents()) {
-      if (component == null) {
-        module = null;
-        break;
-      }
-      module = resolveChild(module, component, foothold_file, root, false, checkForPackage); // only files, we want a module
+  /**
+   * Visits roots and detects if qName is a name of top package coincinding with a root:
+   * that is, tha package is not one of root's children, but the root itself.
+   */
+  private static class ResolveInRootAsTopPackageVisitor extends ResolveInRootVisitor {
+    public ResolveInRootAsTopPackageVisitor(@NotNull PyQualifiedName qName,
+                                            @NotNull PsiManager psiManager,
+                                            @Nullable PsiFile foothold_file,
+                                            boolean checkForPackage) {
+      super(qName, psiManager, foothold_file, checkForPackage);
     }
-    return module;
+
+    @Nullable
+    @Override
+    protected PsiElement patchModule(PsiElement root_module, PyQualifiedName name) {
+      if (name.matchesPrefix(PyQualifiedName.fromDottedString(((PsiNamedElement)root_module).getName()))) {
+        return root_module.getParent();
+      }
+      return null;
+    }
   }
 
   /**
@@ -646,13 +695,13 @@ public class ResolveImportUtil {
                                                final PsiDirectory dir, @Nullable VirtualFile root, boolean isFileOnly,
                                                boolean checkForPackage) {
     if (referencedName == null) return null;
-    final PsiElement module = findModuleInDir(dir, referencedName);
+    final PsiElement module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
 
     if (isInSdk(dir)) {
       PsiDirectory skeletonDir = findSkeletonDir(dir, root);
       if (skeletonDir != null) {
-        final PsiFile skeletonFile = findModuleInDir(skeletonDir, referencedName);
+        final PsiFile skeletonFile = findPyFileInDir(skeletonDir, referencedName);
         if (skeletonFile != null) {
           return skeletonFile;
         }
@@ -675,7 +724,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiFile findModuleInDir(PsiDirectory dir, String referencedName) {
+  private static PsiFile findPyFileInDir(PsiDirectory dir, String referencedName) {
     final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
     // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
