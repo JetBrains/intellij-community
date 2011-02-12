@@ -26,7 +26,7 @@ but seemingly no one uses them in C extensions yet anyway.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 11, 26, 17, 14, 0) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2011, 02, 13, 1, 55, 0) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
