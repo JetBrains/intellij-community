@@ -122,7 +122,11 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     doTest("script", new String[]{"pack1.Xx"}, "pack2");
   }
 
-  private void performAction(String[] classNames, String newPackageName) throws Exception {
+  public void testTwoClasses() {
+    doTest("twoClasses", new String[] {"p1.C1", "p1.C2"}, "p2");
+  }
+
+  private void performAction(String[] classNames, String newPackageName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
@@ -153,7 +157,7 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
-  private void doTest(String testName, String[] classNames, String newPackageName) throws Exception {
+  private void doTest(String testName, String[] classNames, String newPackageName) {
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
     performAction(classNames, newPackageName);

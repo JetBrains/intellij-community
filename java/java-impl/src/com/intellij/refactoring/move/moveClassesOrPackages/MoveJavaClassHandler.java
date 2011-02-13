@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
@@ -31,6 +32,20 @@ import java.util.Set;
  */
 public class MoveJavaClassHandler implements MoveClassHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler");
+
+  @Override
+  public void finishMoveClass(@NotNull PsiClass aClass) {
+    if (aClass.getContainingFile() instanceof PsiJavaFile) {
+      ChangeContextUtil.decodeContextInfo(aClass, null, null);
+    }
+  }
+
+  @Override
+  public void prepareMove(@NotNull PsiClass aClass) {
+    if (aClass.getContainingFile() instanceof PsiJavaFile) {
+      ChangeContextUtil.encodeContextInfo(aClass, true);
+    }
+  }
 
   public PsiClass doMoveClass(@NotNull final PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();

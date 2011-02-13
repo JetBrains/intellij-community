@@ -28,6 +28,10 @@ import org.jetbrains.annotations.Nullable;
 public interface MoveClassHandler {
   ExtensionPointName<MoveClassHandler> EP_NAME = new ExtensionPointName<MoveClassHandler>("com.intellij.refactoring.moveClassHandler");
 
+  void prepareMove(@NotNull PsiClass aClass);
+
+  void finishMoveClass(@NotNull PsiClass aClass);
+
   /**
    * @return null if it cannot move aClass
    */
