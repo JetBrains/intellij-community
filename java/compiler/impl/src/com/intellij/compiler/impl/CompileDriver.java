@@ -92,7 +92,7 @@ import java.util.*;
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
   // to be used in tests only for debug output
-  public static boolean ourDebugMode = false;
+  public static volatile boolean ourDebugMode = false;
 
   private final Project myProject;
   private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]

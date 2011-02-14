@@ -24,6 +24,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerException;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -61,13 +62,22 @@ public class JavaCompiler implements TranslatingCompiler {
     final BackendCompiler backEndCompiler = getBackEndCompiler();
     final BackendCompilerWrapper wrapper = new BackendCompilerWrapper(moduleChunk, myProject, Arrays.asList(files), (CompileContextEx)context, backEndCompiler, sink);
     try {
+      if (CompileDriver.ourDebugMode) {
+        System.out.println("Starting java compiler; with backend compiler: " + backEndCompiler.getClass().getName());
+      }
       wrapper.compile();
     }
     catch (CompilerException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
       LOG.info(e);
     }
     catch (CacheCorruptedException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       LOG.info(e);
       context.requestRebuildNextTime(e.getMessage());
     }

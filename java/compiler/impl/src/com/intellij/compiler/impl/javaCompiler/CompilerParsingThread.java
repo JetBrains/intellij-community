@@ -16,11 +16,12 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SpinAllocator;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -106,6 +107,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
     final String line = readLine(myCompilerOutStreamReader);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LIne read: #" + line + "#");
+    }
+    if (CompileDriver.ourDebugMode) {
+      System.out.println("LIne read: #" + line + "#");
     }
     if (TERMINATION_STRING.equals(line)) {
       myLastReadLine = null;
