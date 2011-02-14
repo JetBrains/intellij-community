@@ -1,6 +1,7 @@
 import org.jetbrains.jps.Jps
 import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+import org.jetbrains.jps.LayoutInfo
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
@@ -23,7 +24,7 @@ setProperty("pluginFilter", [
             "JSInspections",
             "JSIntentionPowerPack",
             "SpellChecker", "spellchecker",
-            "sass", "less",
+            "less", "sass", "haml",
             "hg4idea",
             "tasks", "tasks-core", "tasks-api", "jira-connector",
             "github",
@@ -225,8 +226,8 @@ target('default': "Build artifacts") {
 
   build_searchable_options()
   wire_build_date(buildName)
-  layoutFull(paths.distAll, usedJars)
-  checkLibLicensesAndGenerateTable("$paths.artifacts/third-party-libraries.txt");
+  LayoutInfo layoutInfo = layoutFull(paths.distAll, usedJars)
+  checkLibLicensesAndGenerateTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
   buildDebuggerEgg(paths, buildName)
   scramble()
 
@@ -403,7 +404,7 @@ def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
   def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
 
-  layout(target) {
+  def result = layout(target) {
     dir("lib") {
       jar("util.jar") { module("util") }
 
@@ -506,6 +507,7 @@ def layoutFull(String target, Set usedJars) {
   }
 
   patchPropertiesFile(target)
+  return result
 }
 
 def layoutMac(Map args, String target) {

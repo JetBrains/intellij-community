@@ -239,6 +239,10 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   public LabeledComponent getPatternComponent() {
     return myPatternComponent;
   }
+
+  public JRadioButton getFunctionRB() {
+    return myTestFunctionRB;
+  }
 }
 
 

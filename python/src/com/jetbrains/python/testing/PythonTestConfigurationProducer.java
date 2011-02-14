@@ -50,7 +50,7 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
 
-    final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class);
+    final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class, false);
     if (pyElement != null) {
       settings = createConfigurationFromFunction(location, pyElement);
       if (settings != null) return settings;

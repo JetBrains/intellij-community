@@ -530,11 +530,17 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyPrintStatement(PyPrintStatement node) {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)) {
+        boolean hasProblem = false;
         PsiElement[] arguments = node.getChildren();
         for (PsiElement element : arguments) {
-          if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression)))
-            registerProblem(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
+          if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression))) {
+            hasProblem = true;
+            break;
+          }
         }
+        if (hasProblem || arguments.length == 0)
+          registerProblem(node, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function",
+                            new CompatibilityPrintCallQuickFix());
       }
     }
 

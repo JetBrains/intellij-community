@@ -39,6 +39,13 @@ def is_binary(path, f):
       return not os.path.exists(fullname)
     return False
 
+logging = False
+def note(*strings):
+    if logging:
+        for s in strings:
+            sys.stderr.write(s)
+        sys.stderr.write("\n")
+
 mac_stdlib_pattern = re.compile("/System/Library/Frameworks/Python\\.framework/Versions/(.+)/lib/python\\1/(.+)")
 mac_skip_modules = ["test", "ctypes/test", "distutils/tests", "email/test",
                     "importlib/test", "json/tests", "lib2to3/tests",
@@ -78,17 +85,17 @@ def find_binaries(paths):
       prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
       if prefix:
         prefix += '.'
-      #print root, path, prefix, preprefix # XXX
+      note("root:", root, "path:", path, "prefix:", prefix, "preprefix:", preprefix)
       for f in files:
         if is_binary(root, f) and not is_mac_skipped_module(root, f):
           name = f[:f.rindex('.')]
-          #print "+++ ", name
+          note("cutout:", name)
           if preprefix:
-            #print("prefixes: ", prefix, preprefix) # XXX
+            note("prefixes: ", prefix, preprefix)
             pre_name = (preprefix + prefix + name).upper()
             if pre_name in res:
               res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
-            #print "+ ", name # XXX
+            note("done with ", name)
           the_name = prefix + name
           res[the_name.upper()] = (the_name, root + SEP + f)
   return list(res.values())
@@ -100,21 +107,25 @@ if __name__ == "__main__":
 
   helptext="""Finds binary importable python modules.
   Usage:
-    find_binaries.py -h -- prints this message.
-    find_binaries.py [dir ...]
+    find_binaries.py [-l] [dir ...]
+    find_binaries.py -h
   Every "dir" will be non-recursively searched for binary modules (.so, .pyd).
   The list of full found modules is printed to stdout in the following format:
     module_namme <space> full paths to the binary file <newline>
-  On filesystems that don't hamour case properly, module_name may have a wrong 
+  On filesystems that don't honour case properly, module_name may have a wrong
   case. Python import should be able to cope with this, though.
   If no dirs are given. sys.path will be the list of dirs.
+    -v verbose: print some log messages to stderr.
+    -h print this text.
   """
-  opts, dirs = getopt(sys.argv[1:], "h")
+  opts, dirs = getopt(sys.argv[1:], "hl")
   opts = dict(opts)
   if '-h' in opts:
     print(helptext)
     sys.exit(0)
-    
+      
+  logging = '-v' in opts
+
   if not dirs:
     dirs = sys.path
   

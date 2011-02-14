@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -102,6 +103,8 @@ public class PyStringFormatInspection extends PyInspection {
           if (!(pyElement instanceof PyExpression)) {
             return -1;
           }
+          if (pyElement instanceof PyDictLiteralExpression)
+            return inspectDict(rightExpression, problemTarget, true);
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
@@ -146,43 +149,7 @@ public class PyStringFormatInspection extends PyInspection {
           return expressions.length;
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
-          final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)rightExpression).getElements();
-          if (myUsedMappingKeys.isEmpty()) {
-            if (myExpectedArguments > 0) {
-              if (myExpectedArguments == expressions.length) {
-                // probably "%s %s" % {'a':1, 'b':2}, with names forgotten in template
-                registerProblem(rightExpression, PyBundle.message("INSP.format.requires.no.mapping"));
-              }
-              else {
-                // "braces: %s" % {'foo':1} gives "braces: {'foo':1}", implicit str() kicks in
-                return 1;
-              }
-            }
-            else {
-              // "foo" % {whatever} is just "foo"
-              return 0;
-            }
-          }
-          for (PyKeyValueExpression expression : expressions) {
-            final PyExpression key = expression.getKey();
-            if (key instanceof PyStringLiteralExpression) {
-              final String name = ((PyStringLiteralExpression)key).getStringValue();
-              if (myUsedMappingKeys.get(name) != null) {
-                myUsedMappingKeys.put(name, true);
-                final PyExpression value = expression.getValue();
-                if (value != null) {
-                  checkExpressionType(value, myFormatSpec.get(name), problemTarget);
-                }
-              }
-            }
-          }
-          for (String key : myUsedMappingKeys.keySet()) {
-            if (!myUsedMappingKeys.get(key).booleanValue()) {
-              registerProblem(problemTarget, PyBundle.message("INSP.key.$0.has.no.arg", key));
-              break;
-            }
-          }
-          return expressions.length;
+          return inspectDict(rightExpression, problemTarget, false);
         }
         else if (PyUtil.instanceOf(rightExpression, LIST_LIKE_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -191,6 +158,92 @@ public class PyStringFormatInspection extends PyInspection {
           }
         }
         return -1;
+      }
+
+
+      private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
+        Map<PyExpression, PyExpression> additionalExpressions = new HashMap<PyExpression,PyExpression>();
+        PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
+        for (PySubscriptionExpression expr : subscriptionExpressions) {
+          if (expr.getOperand().getText().equals(operand)) {
+            PsiElement parent = expr.getParent();
+            if (parent instanceof PyAssignmentStatement) {
+              if (expr.equals(((PyAssignmentStatement)parent).getLeftHandSideExpression())) {
+                PyExpression key = expr.getIndexExpression();
+                if (key != null) {
+                  additionalExpressions.put(key, ((PyAssignmentStatement)parent).getAssignedValue());
+                }
+              }
+            }
+          }
+        }
+        return additionalExpressions;
+      }
+
+      // inspects dict expressions. Finds key-value pairs from subscriptions if addSubscriptions is true.
+      private int inspectDict(PyExpression rightExpression, PsiElement problemTarget, boolean addSubscriptions) {
+        PsiElement pyElement;
+        Map<PyExpression, PyExpression> additionalExpressions;
+        if (addSubscriptions) {
+          additionalExpressions = addSubscriptions(rightExpression.getContainingFile(),
+                                                                                 rightExpression.getText());
+          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(myTypeEvalContext).getElement();
+        }
+        else {
+          additionalExpressions = new HashMap<PyExpression,PyExpression>();
+          pyElement = rightExpression;
+        }
+
+        final PyKeyValueExpression[] expressions = ((PyDictLiteralExpression)pyElement).getElements();
+        if (myUsedMappingKeys.isEmpty()) {
+          if (myExpectedArguments > 0) {
+            if (myExpectedArguments == (expressions.length + additionalExpressions.size())) {
+              // probably "%s %s" % {'a':1, 'b':2}, with names forgotten in template
+              registerProblem(pyElement, PyBundle.message("INSP.format.requires.no.mapping"));
+            }
+            else {
+              // "braces: %s" % {'foo':1} gives "braces: {'foo':1}", implicit str() kicks in
+              return 1;
+            }
+          }
+          else {
+            // "foo" % {whatever} is just "foo"
+            return 0;
+          }
+        }
+        for (PyKeyValueExpression expression : expressions) {
+          final PyExpression key = expression.getKey();
+          if (key instanceof PyStringLiteralExpression) {
+            final String name = ((PyStringLiteralExpression)key).getStringValue();
+            if (myUsedMappingKeys.get(name) != null) {
+              myUsedMappingKeys.put(name, true);
+              final PyExpression value = expression.getValue();
+              if (value != null) {
+                checkExpressionType(value, myFormatSpec.get(name), problemTarget);
+              }
+            }
+          }
+        }
+        for (Map.Entry<PyExpression, PyExpression> expression : additionalExpressions.entrySet()) {
+          final PyExpression key = expression.getKey();
+          if (key instanceof PyStringLiteralExpression) {
+            final String name = ((PyStringLiteralExpression)key).getStringValue();
+            if (myUsedMappingKeys.get(name) != null) {
+              myUsedMappingKeys.put(name, true);
+              final PyExpression value = expression.getValue();
+              if (value != null) {
+                checkExpressionType(value, myFormatSpec.get(name), problemTarget);
+              }
+            }
+          }
+        }
+        for (String key : myUsedMappingKeys.keySet()) {
+          if (!myUsedMappingKeys.get(key).booleanValue()) {
+            registerProblem(problemTarget, PyBundle.message("INSP.key.$0.has.no.arg", key));
+            break;
+          }
+        }
+        return (expressions.length + additionalExpressions.size());
       }
 
       private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {

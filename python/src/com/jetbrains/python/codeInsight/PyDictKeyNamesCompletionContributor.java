@@ -40,8 +40,7 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
      ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
+          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
           PsiElement original = parameters.getOriginalPosition();
           int offset = parameters.getOffset();
           final CompletionResultSet dictCompletion = createResult(original, result, offset);
