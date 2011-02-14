@@ -56,7 +56,7 @@ public abstract class ASTFactory {
   // factory methods
 
   @NotNull
-  public static LazyParseableElement lazy(final ILazyParseableElementType type, final CharSequence text) {
+  public static LazyParseableElement lazy(@NotNull final ILazyParseableElementType type, final CharSequence text) {
     final ASTNode node = type.createNode(text);
     if (node != null) return (LazyParseableElement)node;
 
@@ -72,7 +72,7 @@ public abstract class ASTFactory {
   }
 
   @NotNull
-  public static CompositeElement composite(final IElementType type) {
+  public static CompositeElement composite(@NotNull final IElementType type) {
     if (type instanceof ICompositeElementType) {
       return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
     }
@@ -82,7 +82,7 @@ public abstract class ASTFactory {
   }
 
   @NotNull
-  public static LeafElement leaf(final IElementType type, final CharSequence text) {
+  public static LeafElement leaf(@NotNull final IElementType type, final CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
       return new PsiWhiteSpaceImpl(text);
     }
