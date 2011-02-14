@@ -1922,8 +1922,9 @@ class ModuleRedeclarator(object):
 
 
 def hasRegularPythonExt(name):
-    "Does name end with .py or .pyc?"
-    return name.endswith(".py") or name.endswith(".pyc")
+    "Does name end with .py?"
+    return name.endswith(".py")   # Note that the standard library on MacOS X 10.6 is shipped only as .pyc files, so we need to
+                                  # have them processed by the generator in order to have any code insight for the standard library.
 
 def buildOutputName(subdir, name):
     global action
