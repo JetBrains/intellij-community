@@ -187,7 +187,9 @@ public class CodeFormatterFacade {
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
 
-          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
+          FormatterEx formatter = FormatterEx.getInstanceEx();
+          formatter.setProgressIndicator(new FormattingProgressIndicatorImpl(project, file));
+          formatter.format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());

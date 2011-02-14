@@ -99,16 +99,25 @@ class FormatProcessor {
     });
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
+  @NotNull
+  private final FormattingProgressIndicator myProgressIndicator;
+  
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
   private CodeStyleSettings.IndentOptions myJavaIndentOptions;
+  
+  @NotNull
+  private State myCurrentState;
 
+  //TODO den check if we need dedicated constructor with progress indicator here
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
-                         @Nullable FormatTextRanges affectedRanges) {
-    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1);
+                         @Nullable FormatTextRanges affectedRanges,
+                         @NotNull FormattingProgressIndicator progressIndicator)
+  {
+    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1, progressIndicator);
   }
 
   public FormatProcessor(final FormattingDocumentModel docModel,
@@ -116,22 +125,25 @@ class FormatProcessor {
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
-                         int interestingOffset) {
+                         int interestingOffset,
+                         @NotNull FormattingProgressIndicator progressIndicator) 
+  {
+    myProgressIndicator = progressIndicator;
     myIndentOption = indentOptions;
     mySettings = settings;
-    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock,
-                                                                      docModel,
-                                                                      affectedRanges,
-                                                                      indentOptions,
-                                                                      interestingOffset);
-    myInfos = builder.getBlockToInfoMap();
-    myRootBlockWrapper = builder.getRootBlockWrapper();
-    myFirstTokenBlock = builder.getFirstTokenBlock();
-    myLastTokenBlock = builder.getLastTokenBlock();
-    myCurrentBlock = myFirstTokenBlock;
-    myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-    myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
-    myLastWhiteSpace.append(docModel.getTextLength(), docModel, indentOptions);
+    myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
+    //TODO den remove
+    //final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(
+    //  rootBlock, docModel, affectedRanges, indentOptions, interestingOffset, progressIndicator
+    //);
+    //myInfos = builder.getBlockToInfoMap();
+    //myRootBlockWrapper = builder.getRootBlockWrapper();
+    //myFirstTokenBlock = builder.getFirstTokenBlock();
+    //myLastTokenBlock = builder.getLastTokenBlock();
+    //myCurrentBlock = myFirstTokenBlock;
+    //myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
+    //myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
+    //myLastWhiteSpace.append(docModel.getTextLength(), docModel, indentOptions);
   }
 
   private LeafBlockWrapper getLastBlock() {
@@ -153,20 +165,72 @@ class FormatProcessor {
   }
 
   public void format(FormattingModel model) {
-    formatWithoutRealModifications();
-    performModifications(model);
+    format(model, false);
   }
 
-  @SuppressWarnings({"WhileLoopSpinsOnField"})
+  /**
+   * Asks current processor to perform formatting.
+   * <p/>
+   * There are two processing approaches at the moment:
+   * <pre>
+   * <ul>
+   *   <li>perform formatting during the current method call;</li>
+   *   <li>
+   *     split the whole formatting process to the set of fine-grained tasks and execute them sequentially during
+   *     subsequent {@link #iteration()} calls;
+   *   </li>
+   * </ul>
+   * </pre>
+   * <p/>
+   * Here is rationale for the second approach - formatting may introduce changes to the underlying document and IntelliJ IDEA
+   * is designed in a way that write access is allowed from EDT only. That means that every time we execute particular action
+   * from EDT we have no chance of performing any other actions from EDT simultaneously (e.g. we may want to show progress bar
+   * that reflects current formatting state but the progress bar can' bet updated if formatting is performed during a single long
+   * method call). So, we can interleave formatting iterations with GUI state updates.
+   * 
+   * @param model         target formatting model
+   * @param sequentially  flag that indicates what kind of processing should be used
+   */
+  public void format(FormattingModel model, boolean sequentially) {
+    if (sequentially) {
+      AdjustWhiteSpacesState adjustState = new AdjustWhiteSpacesState();
+      adjustState.setNext(new ApplyChangesState(model));
+      myCurrentState.setNext(adjustState);
+    }
+    else {
+      formatWithoutRealModifications(sequentially);
+      performModifications(model, sequentially);
+    }
+  }
+
+  /**
+   * Asks current processor to perform processing iteration
+   * 
+   * @return    <code>true</code> if the processing is finished; <code>false</code> otherwise
+   * @see #format(FormattingModel, boolean) 
+   */
+  public boolean iteration() {
+    if (myCurrentState.isDone()) {
+      return true;
+    }
+    myCurrentState.iteration();
+    return myCurrentState.isDone();
+  }
+
   public void formatWithoutRealModifications() {
-    while (true) {
-      myAlignAgain.clear();
-      myCurrentBlock = myFirstTokenBlock;
-      while (myCurrentBlock != null) {
-        processToken();
-      }
-      if (myAlignAgain.isEmpty()) return;
-      reset();
+    formatWithoutRealModifications(false);
+  }
+  
+  @SuppressWarnings({"WhileLoopSpinsOnField"})
+  public void formatWithoutRealModifications(boolean sequentially) {
+    myCurrentState.setNext(new AdjustWhiteSpacesState());
+    
+    if (!sequentially) {
+      return;
+    }
+    
+    while (myCurrentState.getStateId() == FormattingStateId.PROCESSING_BLOCKS && !myCurrentState.isDone()) {
+      myCurrentState.iteration();
     }
   }
 
@@ -181,69 +245,24 @@ class FormatProcessor {
   }
 
   public void performModifications(FormattingModel model) {
+    performModifications(model, false);
+  }
+  
+  public void performModifications(FormattingModel model, boolean sequentially) {
     assert !myDisposed;
-    final List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
-
-    // call doModifications static method to ensure no access to state
-    // thus we may clear formatting state
-    reset();
-
-    myInfos = null;
-    myRootBlockWrapper = null;
-    myTextRangeToWrapper = null;
-    myPreviousDependencies = null;
-    myLastWhiteSpace = null;
-    myFirstTokenBlock = null;
-    myLastTokenBlock = null;
-    myDisposed = true;
-
-    //for GeneralCodeFormatterTest
-    if (myJavaIndentOptions == null) {
-      myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
+    myCurrentState.setNext(new ApplyChangesState(model));
+    
+    if (!sequentially) {
+      return;
     }
 
-    doModify(blocksToModify, model, myIndentOption, myJavaIndentOptions);
+    while (myCurrentState.getStateId() == FormattingStateId.APPLYING_CHANGES && !myCurrentState.isDone()) {
+      myCurrentState.iteration();
+    }
   }
 
   public void setJavaIndentOptions(final CodeStyleSettings.IndentOptions javaIndentOptions) {
     myJavaIndentOptions = javaIndentOptions;
-  }
-
-  private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                               CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
-    final int blocksToModifyCount = blocksToModify.size();
-    DocumentEx updatedDocument = null;
-
-    try {
-      final boolean bulkReformat = blocksToModifyCount > 50;
-      updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
-      if (updatedDocument != null) {
-        updatedDocument.setInBulkUpdate(true);
-      }
-      
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
-        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
-          return;
-        }
-      }
-      
-      int shift = 0;
-      for (int i = 0; i < blocksToModifyCount; ++i) {
-        final LeafBlockWrapper block = blocksToModify.get(i);
-        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(indentOption), javaOptions);
-
-        // block could be gc'd
-        block.getParent().dispose();
-        block.dispose();
-        blocksToModify.set(i, null);
-      }
-    }
-    finally {
-      if (updatedDocument != null) {
-        updatedDocument.setInBulkUpdate(false);
-      }
-      model.commitChanges();
-    }
   }
 
   /**
@@ -326,6 +345,7 @@ class FormatProcessor {
     return shift;
   }
 
+  @NotNull
   private List<LeafBlockWrapper> collectBlocksToModify() {
     List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
 
@@ -449,10 +469,8 @@ class FormatProcessor {
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
     final ArrayList<WrapImpl> wraps = myCurrentBlock.getWraps();
-    final int wrapsCount = wraps.size();
-
-    for (int i = 0; i < wrapsCount; ++i) {
-      wraps.get(i).processNextEntry(myCurrentBlock.getStartOffset());
+    for (WrapImpl wrap : wraps) {
+      wrap.processNextEntry(myCurrentBlock.getStartOffset());
     }
 
     final WrapImpl wrap = getWrapToBeUsed(wraps);
@@ -489,8 +507,7 @@ class FormatProcessor {
       myWrapCandidate = null;
     }
     else {
-      for (int i = 0; i < wrapsCount; ++i) {
-        final WrapImpl wrap1 = wraps.get(i);
+      for (final WrapImpl wrap1 : wraps) {
         if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)) {
           myWrapCandidate = myCurrentBlock;
         }
@@ -870,7 +887,6 @@ class FormatProcessor {
     }
     if (myWrapCandidate == myCurrentBlock) return wraps.get(0);
 
-    final int wrapsCount = wraps.size();
     for (final WrapImpl wrap : wraps) {
       if (!isSuitableInTheCurrentPosition(wrap)) continue;
       if (wrap.isIsActive()) return wrap;
@@ -1265,6 +1281,9 @@ class FormatProcessor {
         processToken();
         if (myCurrentBlock == null) {
           myCurrentBlock = myLastTokenBlock;
+          if (myCurrentBlock != null) {
+            myProgressIndicator.afterProcessingBlock(myCurrentBlock);
+          }
           break;
         }
       }
@@ -1302,6 +1321,218 @@ class FormatProcessor {
       }
     }
   }
+  
+  private abstract class State {
 
+    private final FormattingStateId myStateId;
+    
+    private State   myNextState;
+    private boolean myDone;
 
+    protected State(FormattingStateId stateId) {
+      myStateId = stateId;
+    }
+
+    public void iteration() {
+      if (!isDone()) {
+        doIteration();
+      }
+      shiftStateIfNecessary();
+    }
+
+    public boolean isDone() {
+      return myDone;
+    }
+
+    protected void setDone(boolean done) {
+      myDone = done;
+    }
+
+    public void setNext(@NotNull State state) {
+      if (getStateId() == state.getStateId() || (myNextState != null && myNextState.getStateId() == state.getStateId())) {
+        return;
+      }
+      myNextState = state;
+      shiftStateIfNecessary();
+    }
+
+    public FormattingStateId getStateId() {
+      return myStateId;
+    }
+    
+    protected abstract void doIteration();
+    protected abstract void prepare();
+
+    private void shiftStateIfNecessary() {
+      if (isDone() && myNextState != null) {
+        myCurrentState = myNextState;
+        myNextState = null;
+        myCurrentState.prepare();
+      }
+    }
+  }
+  
+  private class WrapBlocksState extends State {
+
+    private final InitialInfoBuilder      myWrapper;
+    private final FormattingDocumentModel myModel;
+
+    WrapBlocksState(@NotNull Block root,
+                    @NotNull FormattingDocumentModel model,
+                    @Nullable final FormatTextRanges affectedRanges,
+                    int interestingOffset)
+    {
+      super(FormattingStateId.WRAPPING_BLOCKS);
+      myModel = model;
+      myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
+        root, model, affectedRanges, myIndentOption, interestingOffset, myProgressIndicator
+      );
+    }
+
+    @Override
+    protected void prepare() {
+    }
+
+    @Override
+    public void doIteration() {
+      if (isDone()) {
+        return;
+      }
+      
+      setDone(myWrapper.doIteration());
+      if (!isDone()) {
+        return;
+      }
+
+      myInfos = myWrapper.getBlockToInfoMap();
+      myRootBlockWrapper = myWrapper.getRootBlockWrapper();
+      myFirstTokenBlock = myWrapper.getFirstTokenBlock();
+      myLastTokenBlock = myWrapper.getLastTokenBlock();
+      myCurrentBlock = myFirstTokenBlock;
+      myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
+      myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
+      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myIndentOption);
+    }
+  }
+  
+  private class AdjustWhiteSpacesState extends State {
+
+    AdjustWhiteSpacesState() {
+      super(FormattingStateId.PROCESSING_BLOCKS);
+    }
+
+    @Override
+    protected void prepare() {
+    }
+
+    @Override
+    protected void doIteration() {
+      LeafBlockWrapper blockToProcess = myCurrentBlock;
+      processToken();
+      if (blockToProcess != null) {
+        myProgressIndicator.afterProcessingBlock(blockToProcess);
+      }
+      
+      if (myCurrentBlock != null) {
+        return;
+      }
+      
+      if (myAlignAgain.isEmpty()) {
+        setDone(true);
+      }
+      else {
+        myAlignAgain.clear();
+        myCurrentBlock = myFirstTokenBlock;
+      }
+    }
+  }
+  
+  private class ApplyChangesState extends State {
+
+    private final FormattingModel        myModel;
+    private       List<LeafBlockWrapper> myBlocksToModify;
+    private       int                    myShift;
+    private       int                    myIndex;
+    private       boolean                myResetBulkUpdateState;
+
+    private ApplyChangesState(FormattingModel model) {
+      super(FormattingStateId.APPLYING_CHANGES);
+      myModel = model;
+    }
+
+    @Override
+    protected void prepare() {
+      myBlocksToModify = collectBlocksToModify();
+      // call doModifications static method to ensure no access to state
+      // thus we may clear formatting state
+      reset();
+
+      myInfos = null;
+      myRootBlockWrapper = null;
+      myTextRangeToWrapper = null;
+      myPreviousDependencies = null;
+      myLastWhiteSpace = null;
+      myFirstTokenBlock = null;
+      myLastTokenBlock = null;
+      myDisposed = true;
+
+      if (myBlocksToModify.isEmpty()) {
+        setDone(true);
+        return;
+      }
+      
+      //for GeneralCodeFormatterTest
+      if (myJavaIndentOptions == null) {
+        myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
+      }
+
+      myProgressIndicator.beforeApplyingFormatChanges(myBlocksToModify);
+
+      final int blocksToModifyCount = myBlocksToModify.size();
+      final boolean bulkReformat = blocksToModifyCount > 50;
+      DocumentEx updatedDocument = bulkReformat ? getAffectedDocument(myModel) : null;
+      if (updatedDocument != null) {
+        updatedDocument.setInBulkUpdate(true);
+        myResetBulkUpdateState = true;
+      }
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA && applyChangesAtBulkMode(myBlocksToModify, myModel, myIndentOption)) {
+        setDone(true);
+      }
+    }
+
+    @Override
+    protected void doIteration() {
+      LeafBlockWrapper blockWrapper = myBlocksToModify.get(myIndex);
+      myShift = replaceWhiteSpace(
+        myModel, blockWrapper, myShift, blockWrapper.getWhiteSpace().generateWhiteSpace(myIndentOption), myJavaIndentOptions
+      );
+      myProgressIndicator.afterApplyingChange(blockWrapper);
+      // block could be gc'd
+      blockWrapper.getParent().dispose();
+      blockWrapper.dispose();
+      myBlocksToModify.set(myIndex, null);
+      myIndex++;
+      
+      if (myIndex >= myBlocksToModify.size()) {
+        setDone(true);
+      }
+    }
+
+    @Override
+    protected void setDone(boolean done) {
+      super.setDone(done);
+      
+      if (myResetBulkUpdateState) {
+        DocumentEx document = getAffectedDocument(myModel);
+        if (document != null) {
+          document.setInBulkUpdate(false);
+          myResetBulkUpdateState = false;
+        }
+      }
+      
+      if (done) {
+        myModel.commitChanges();
+      }
+    }
+  }
 }
