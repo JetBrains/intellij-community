@@ -175,7 +175,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: "$common_vmoptions -Xverify:none")
     replacefilter(token: "@@vmoptions32@@", value: "$mem32")
-    replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOOPS")
+    replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@platform@@", value: platform)
   }
