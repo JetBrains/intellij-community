@@ -16,9 +16,11 @@
 package com.intellij.usages;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.rules.PsiElementUsage;
@@ -70,22 +72,23 @@ public abstract class UsageViewManager {
   @Nullable
   public abstract UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(Usage usage, UsageTarget[] searchForTarget) {
+  public static boolean isSelfUsage(final Usage usage, final UsageTarget[] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
-    final PsiElement element = ((PsiElementUsage)usage).getElement();
-    if (element == null) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        final PsiElement element = ((PsiElementUsage)usage).getElement();
+        if (element == null) return false;
 
-    boolean selfUsage = false;
-    for (UsageTarget ut : searchForTarget) {
-      if (ut instanceof PsiElementUsageTarget) {
-        if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
-          selfUsage = true;
-          break;
+        for (UsageTarget ut : searchForTarget) {
+          if (ut instanceof PsiElementUsageTarget) {
+            if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
+              return true;
+            }
+          }
         }
+        return false;
       }
-    }
-
-    return selfUsage;
+    });
   }
 
   public static boolean isSelfUsage(PsiElement element, PsiElement psiElement) {
