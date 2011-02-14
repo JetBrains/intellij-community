@@ -50,7 +50,10 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
 
   @Override
   public void cleanAndAdjustScope(VcsModifiableDirtyScope scope) {
-    myHolderMap.get(scope.getVcs()).cleanAndAdjustScope(scope);
+    final AbstractVcs vcs = scope.getVcs();
+    if (myHolderMap.containsKey(vcs)) {
+      myHolderMap.get(vcs).cleanAndAdjustScope(scope);
+    }
   }
 
   @Override

@@ -301,6 +301,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope) iterator.next();
           final VcsDirtyScopeModifier modifier = scope.getModifier();
           if (modifier != null) {
+            fileHolder.notifyVcsStarted(scope.getVcs());
             final Iterator<FilePath> filesIterator = modifier.getDirtyFilesIterator();
             for (; filesIterator.hasNext();) {
               final FilePath dirtyFile = filesIterator.next();
