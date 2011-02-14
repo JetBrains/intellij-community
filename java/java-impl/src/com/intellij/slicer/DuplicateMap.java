@@ -28,7 +28,7 @@ public class DuplicateMap {
   private static final TObjectHashingStrategy<SliceUsage> USAGEINFO_EQUALITY = new TObjectHashingStrategy<SliceUsage>() {
     public int computeHashCode(SliceUsage object) {
       UsageInfo info = object.getUsageInfo();
-      return info.startOffset + info.endOffset * 31;
+      return info.getRangeInElement().hashCode();
     }
 
     public boolean equals(SliceUsage o1, SliceUsage o2) {

@@ -122,7 +122,13 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
       }
 
       final XmlElement including = getUserData(INCLUDING_ELEMENT);
-      return including != null ? including : getAstParent().getNavigationElement();
+      if (including != null) {
+        return including;
+      }
+      PsiElement astParent = getAstParent();
+      PsiElement parentNavigation = astParent.getNavigationElement();
+      if (parentNavigation.getTextOffset() == getTextOffset()) return parentNavigation;
+      return this;
     }
     return super.getNavigationElement();
   }

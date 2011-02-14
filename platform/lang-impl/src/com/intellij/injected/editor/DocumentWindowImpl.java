@@ -33,7 +33,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
@@ -235,7 +234,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public TextRange getHostRange(int hostOffset) {
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker currentRange = shred.getHostRangeMarker();
-      TextRange textRange = InjectedLanguageUtil.toTextRange(currentRange);
+      TextRange textRange = ProperTextRange.create(currentRange);
       if (textRange.grown(1).contains(hostOffset)) return textRange;
     }                              
     return null;
@@ -629,7 +628,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker hostRange = shred.getHostRangeMarker();
       if (!hostRange.isValid()) continue;
-      TextRange textRange = InjectedLanguageUtil.toTextRange(hostRange);
+      TextRange textRange = ProperTextRange.create(hostRange);
       if (textRange.contains(new ProperTextRange(start, end))) return true;
     }
     return false;
@@ -665,7 +664,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     while (i < myShreds.size() && j < documentWindow.myShreds.size()) {
       RangeMarker range = myShreds.get(i).getHostRangeMarker();
       RangeMarker otherRange = documentWindow.myShreds.get(j).getHostRangeMarker();
-      if (InjectedLanguageUtil.toTextRange(range).intersects(InjectedLanguageUtil.toTextRange(otherRange))) return true;
+      if (ProperTextRange.create(range).intersects(ProperTextRange.create(otherRange))) return true;
       if (range.getEndOffset() > otherRange.getStartOffset()) i++;
       else if (range.getStartOffset() < otherRange.getEndOffset()) j++;
       else {

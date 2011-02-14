@@ -202,8 +202,7 @@ public class ShowUsagesAction extends AnAction {
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
     Processor<Usage> collect = new Processor<Usage>() {
-      final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
-
+      private final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
           if (visibleNodes.size() > maxUsages) return false;

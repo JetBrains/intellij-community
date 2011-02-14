@@ -98,9 +98,11 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
         }
 
-        TextChunk[] text = node.getUsage().getPresentation().getText();
-        for (TextChunk textChunk : text) {
-          append(textChunk.getText(), patchAttrs(node, SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes())));
+        if (node.isValid()) {
+          TextChunk[] text = node.getUsage().getPresentation().getText();
+          for (TextChunk textChunk : text) {
+            append(textChunk.getText(), patchAttrs(node, SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes())));
+          }
         }
       }
       else if (userObject instanceof String) {

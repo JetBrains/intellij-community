@@ -648,18 +648,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       catch (Exception e) {
         myBadRepositories.add(repository);
         LOG.warn(e);
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
-          new Notification("Tasks", "Cannot connect to " + repository.getUrl(),
-                           "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
-                           new NotificationListener() {
-                             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                               TaskRepositoriesConfigurable configurable = new TaskRepositoriesConfigurable(myProject);
-                               ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
-                               if (!ArrayUtil.contains(repository, getAllRepositories())) {
-                                  notification.expire();
-                               }
-                             }
-                           }), NotificationDisplayType.STICKY_BALLOON);
+        Notifications.Bus.notify(new Notification("Tasks", "Cannot connect to " + repository.getUrl(),
+                                                  "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                                                  new NotificationListener() {
+                                                    public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                @NotNull HyperlinkEvent event) {
+                                                      TaskRepositoriesConfigurable configurable =
+                                                        new TaskRepositoriesConfigurable(myProject);
+                                                      ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
+                                                      if (!ArrayUtil.contains(repository, getAllRepositories())) {
+                                                        notification.expire();
+                                                      }
+                                                    }
+                                                  }));
       }
     }
     return issues;

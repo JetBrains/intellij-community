@@ -57,6 +57,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>

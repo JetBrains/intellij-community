@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 
 public class TextBlock extends DocumentAdapter {
+  @SuppressWarnings({"UnusedDeclaration"})
   private Document myDocument; // Will hold a document on a hard reference until there's uncommited PSI for this document.
 
   private int myStartOffset = -1;

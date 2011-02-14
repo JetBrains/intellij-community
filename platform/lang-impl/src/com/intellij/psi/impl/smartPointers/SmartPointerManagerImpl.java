@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -154,15 +155,28 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     PsiFile containingFile = element.getContainingFile();
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
-    initPointer(element, pointer, containingFile);
+    initPointer(pointer, containingFile);
 
     return pointer;
   }
 
-  private <E extends PsiElement> void initPointer(E element, SmartPointerEx<E> pointer, PsiFile containingFile) {
+  @Override
+  @NotNull
+  public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
+    if (!file.isValid()) {
+      LOG.error("Invalid element:" + file);
+    }
+
+    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, range);
+    initPointer(pointer, file);
+
+    return pointer;
+  }
+
+  private <E extends PsiElement> void initPointer(SmartPointerEx<E> pointer, PsiFile containingFile) {
     if (containingFile == null) return;
     synchronized (containingFile) {
-      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(containingFile);
+      //Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(containingFile);
       //todo
       //if (document != null) {
       //  //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional

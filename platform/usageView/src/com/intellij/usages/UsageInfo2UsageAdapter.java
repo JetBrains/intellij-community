@@ -146,7 +146,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
     if (!(editor instanceof TextEditor)) return null;
 
-    return new TextEditorLocation(getUsageInfo().startOffset + getElement().getTextRange().getStartOffset(), (TextEditor)editor);
+    return new TextEditorLocation(getUsageInfo().getSegment().getStartOffset(), (TextEditor)editor);
   }
 
   public void selectInEditor() {
@@ -283,6 +283,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   public boolean merge(MergeableUsage other) {
     if (!(other instanceof UsageInfo2UsageAdapter)) return false;
     UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
+    assert u2 != this;
     if (myLineNumber != u2.myLineNumber || getFile() != u2.getFile()) return false;
     myMergedUsageInfos.addAll(u2.myMergedUsageInfos);
     Collections.sort(myMergedUsageInfos, new Comparator<UsageInfo>() {
@@ -296,6 +297,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   public void reset() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myMergedUsageInfos.isEmpty()) {
       myMergedUsageInfos.clear();
       myMergedUsageInfos.add(myUsageInfo);
@@ -372,16 +374,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @NotNull
   public TextChunk[] getText() {
     TextChunk[] chunks = myTextChunks.get();
-    if (chunks == null) {
-      myModificationStamp = -1;
-    }
-    if (chunks == null || isValid()) {
+    final long currentModificationStamp = getCurrentModificationStamp();
+    boolean isModified = currentModificationStamp != myModificationStamp;
+    if (chunks == null || isValid() && isModified) {
       // the check below makes sense only for valid PsiElement
-      final long currentModificationStamp = getCurrentModificationStamp();
-      if (currentModificationStamp != myModificationStamp) {
-        chunks = initChunks();
-        myModificationStamp = currentModificationStamp;
-      }
+      chunks = initChunks();
+      myModificationStamp = currentModificationStamp;
     }
     return chunks;
   }

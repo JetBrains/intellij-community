@@ -121,9 +121,23 @@ public class StatisticsUploadAssistant {
     Set<PatchedUsage> usages = new HashSet<PatchedUsage>();
 
     for (Project project : projects) {
-      usages.addAll(getPatchedUsages(getAllUsages(project, disabledGroups), usagesPersistence.getSentUsages()));
+      final Set<UsageDescriptor> allUsages = getAllUsages(project, disabledGroups);
+      final Set<UsageDescriptor> sentUsages = filterDisabled(disabledGroups, usagesPersistence.getSentUsages());
+
+      usages.addAll(getPatchedUsages(allUsages, sentUsages));
     }
     return usages;
+  }
+
+  private static Set<UsageDescriptor> filterDisabled(@NotNull Set<String> disabledGroups, @NotNull Set<UsageDescriptor> usages) {
+    Set<UsageDescriptor> filtered = new HashSet<UsageDescriptor>();
+
+    for (UsageDescriptor usage : usages) {
+      if (!disabledGroups.contains(usage.getGroup().getId())) {
+        filtered.add(usage);
+      }
+    }
+    return filtered;
   }
 
   @NotNull

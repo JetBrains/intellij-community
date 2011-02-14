@@ -135,7 +135,9 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
       PushedFilePropertiesUpdater.getInstance(myProject).pushAll(pusher);
     }
-    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+    if (shouldReparseFiles()) {
+      FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+    }
   }
 
   public Collection<T> getAvailableValues(VirtualFile file) {
@@ -210,6 +212,10 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   
   protected Project getProject() {
     return myProject;
+  }
+  
+  protected boolean shouldReparseFiles() {
+    return true;
   }
 
 }

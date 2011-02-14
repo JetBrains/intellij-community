@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,8 +32,9 @@ public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
   private final SmartPsiElementPointer<?> mySmartPointer;
-  public final int startOffset; // in navigation element
-  public final int endOffset; // in navigation element
+
+  private final int startOffset; // in navigation element
+  private final int endOffset; // in navigation element
 
   public final boolean isNonCodeUsage;
 
@@ -40,7 +42,6 @@ public class UsageInfo {
     LOG.assertTrue(element.isValid());
     element = element.getNavigationElement();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(element.getProject());
-    mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);
 
     if (startOffset == -1 && endOffset == -1) {
       // calculate natural element range
@@ -51,11 +52,22 @@ public class UsageInfo {
       startOffset = element.getTextOffset() - range.getStartOffset();
       endOffset = range.getEndOffset() - range.getStartOffset();
     }
-    this.startOffset = startOffset;
-    this.endOffset = endOffset;
-    this.isNonCodeUsage = isNonCodeUsage;
+
     LOG.assertTrue(startOffset >= 0, startOffset);
     LOG.assertTrue(endOffset >= startOffset, endOffset-startOffset);
+
+    if (element instanceof PsiFile) {
+      PsiFile file = (PsiFile)element;
+      mySmartPointer = smartPointerManager.createSmartPsiFileRangePointer(file, TextRange.create(startOffset, endOffset));
+      this.startOffset = -1;
+      this.endOffset = -1;
+    }
+    else {
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+      mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);
+    }
+    this.isNonCodeUsage = isNonCodeUsage;
   }
 
   public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
@@ -85,10 +97,27 @@ public class UsageInfo {
 
   @Nullable
   public PsiReference getReference() {
-    return getElement().getReference();
+    PsiElement element = getElement();
+    return element == null ? null : element.getReference();
   }
 
+  /**
+   * @deprecated for the range in element use {@link #getRangeInElement} instead,
+   *             for the whole text range in the file covered by this usage info, use {@link #getSegment()}
+   */
   public TextRange getRange() {
+    return getRangeInElement();
+  }
+
+  /**
+   * @return range in element
+   */
+  @Nullable("null means range is invalid")
+  public TextRange getRangeInElement() {
+    if (mySmartPointer instanceof SmartPsiFileRange) {
+      return TextRange.create(mySmartPointer.getRange());
+    }
+
     return new TextRange(startOffset, endOffset);
   }
 
@@ -110,13 +139,20 @@ public class UsageInfo {
     PsiElement element = getElement();
     if (element == null) return -1;
     TextRange range = element.getTextRange();
-    return range.getStartOffset() + startOffset;
+
+    TextRange rangeInElement = getRangeInElement();
+    if (rangeInElement == null) return -1;
+    return range.getStartOffset() + rangeInElement.getStartOffset();
   }
+
   public Segment getSegment() {
     PsiElement element = getElement();
     if (element == null) return null;
     TextRange range = element.getTextRange();
-    return new TextRange(range.getStartOffset() + startOffset, Math.min(range.getEndOffset(), range.getStartOffset() + endOffset));
+    TextRange rangeInElement = getRangeInElement();
+    if (rangeInElement == null) return null;
+    return new TextRange(range.getStartOffset() + rangeInElement.getStartOffset(),
+                         Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
   public Project getProject() {
@@ -136,15 +172,15 @@ public class UsageInfo {
 
     if (endOffset != usageInfo.endOffset) return false;
     if (isNonCodeUsage != usageInfo.isNonCodeUsage) return false;
-    if (startOffset != usageInfo.startOffset) return false;
+    if (!Comparing.equal(getRangeInElement(), usageInfo.getRangeInElement())) return false;
 
     return SmartPointerManager.getInstance(getProject()).pointToTheSameElement(mySmartPointer, usageInfo.mySmartPointer);
   }
 
   public int hashCode() {
     int result = mySmartPointer != null ? mySmartPointer.hashCode() : 0;
-    result = 29 * result + startOffset;
-    result = 29 * result + endOffset;
+    TextRange rangeInElement = getRangeInElement();
+    result = 29 * result + (rangeInElement == null ? 0 : rangeInElement.hashCode());
     result = 29 * result + (isNonCodeUsage ? 1 : 0);
     return result;
   }

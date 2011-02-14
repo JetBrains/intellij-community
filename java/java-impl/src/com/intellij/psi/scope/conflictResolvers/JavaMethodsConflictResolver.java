@@ -16,11 +16,13 @@
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -55,6 +57,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     if (conflicts.isEmpty()) return null;
+    if (conflicts.size() == 1) return conflicts.get(0);
+
+    checkVarargMethods(conflicts, myActualParameterTypes.length);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     boolean atLeastOneMatch = checkParametersNumber(conflicts, myActualParameterTypes.length, true);
@@ -456,5 +461,32 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
     return substitutor;
+  }
+
+  public void checkVarargMethods(final List<CandidateInfo> conflicts,
+                                 final int argumentsCount) {
+    PsiMethod objectVararg = null;
+    for (CandidateInfo conflict : conflicts) {
+      final PsiMethod method = (PsiMethod)conflict.getElement();
+      final int parametersCount = method.getParameterList().getParametersCount();
+      if (method.isVarArgs() && parametersCount - 1 == argumentsCount) {
+        final PsiType type = method.getParameterList().getParameters()[parametersCount - 1].getType();
+        final PsiType componentType = ((PsiArrayType)type).getComponentType();
+        final PsiClassType classType = PsiType.getJavaLangObject(method.getManager(), GlobalSearchScope.allScope(method.getProject()));
+        if (Comparing.equal(componentType, classType)) {
+          objectVararg = method;
+        }
+      }
+    }
+
+    if (objectVararg != null) {
+      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+        CandidateInfo conflict = iterator.next();
+        PsiMethod method = (PsiMethod)conflict.getElement();
+        if (method != objectVararg && method.isVarArgs() && method.getParameterList().getParametersCount() - 1 == argumentsCount) {
+          iterator.remove();
+        }
+      }
+    }
   }
 }

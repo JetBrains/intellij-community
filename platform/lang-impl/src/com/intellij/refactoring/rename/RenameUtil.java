@@ -274,14 +274,14 @@ public class RenameUtil {
       if (element == null) continue;
       final PsiFile containingFile = element.getContainingFile();
       final Document document = psiDocumentManager.getDocument(containingFile);
-      int fileOffset = element.getTextRange().getStartOffset() + usage.startOffset;
+      int fileOffset = usage.getSegment().getStartOffset();
 
       ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
       if (list == null) {
         list = new ArrayList<UsageOffset>();
         docsToOffsetsMap.put(document, list);
       }
-      list.add(new UsageOffset(fileOffset, fileOffset + usage.endOffset - usage.startOffset, usage.newText));
+      list.add(new UsageOffset(fileOffset, fileOffset + usage.getRangeInElement().getLength(), usage.newText));
     }
 
     for (Document document : docsToOffsetsMap.keySet()) {

@@ -129,7 +129,8 @@ public class ITNReporter extends ErrorReportSubmitter {
             Notification notification = new Notification(ReportMessages.ERROR_REPORT, ReportMessages.ERROR_REPORT,
                                                          DiagnosticBundle.message("error.report.confirmation"),
                                                          NotificationType.INFORMATION);
-            Notifications.Bus.notify(notification, NotificationDisplayType.BALLOON_ONLY, project);
+            Notifications.Bus.register(ReportMessages.ERROR_REPORT, NotificationDisplayType.BALLOON_ONLY);
+            Notifications.Bus.notify(notification, project);
           }
         });
       }

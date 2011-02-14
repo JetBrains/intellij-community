@@ -61,6 +61,6 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
   }
 
   public NonCodeUsageInfo replaceElement(PsiElement newElement) {
-    return new NonCodeUsageInfo(newElement, startOffset, endOffset, getReferencedElement(), newText);
+    return new NonCodeUsageInfo(newElement, getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset(), getReferencedElement(), newText);
   }
 }

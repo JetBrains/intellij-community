@@ -78,12 +78,11 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public void notify(@NotNull Notification notification) {
-    doNotify(notification, NotificationDisplayType.BALLOON);
+    doNotify(notification, NotificationDisplayType.STICKY_BALLOON);
   }
 
-  public void notify(@NotNull Notification notification,
-                     @NotNull NotificationDisplayType defaultDisplayType) {
-    doNotify(notification, defaultDisplayType);
+  @Override
+  public void register(@NotNull String group_id, @NotNull NotificationDisplayType defaultDisplayType) {
   }
 
   @Override
@@ -141,7 +140,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   public void doNotify(@NotNull final Notification notification, @Nullable NotificationDisplayType displayType, @Nullable final Project project) {
     final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
+      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.STICKY_BALLOON : displayType);
     }
 
     if (NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType() != NotificationDisplayType.BALLOON_ONLY) {

@@ -381,6 +381,11 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
+  public void processMouseEvent(MouseEvent e) {
+    super.processMouseEvent(e);
+  }
+
   private void addTimerUpdate() {
     if (myActionManager != null && !myListenerAdded) {
       myActionManager.addTimerListener(500, this);

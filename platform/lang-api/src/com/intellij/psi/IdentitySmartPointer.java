@@ -70,7 +70,7 @@ public class IdentitySmartPointer<T extends PsiElement> implements SmartPsiEleme
   }
 
   @Override
-  public Segment getSegment() {
+  public Segment getRange() {
     T element = myElement;
     return element == null ? null : element.getTextRange();
   }

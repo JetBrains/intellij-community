@@ -472,7 +472,7 @@ public class OverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
-    Collection<CandidateInfo> secondary = toImplement ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, true);
+    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, true);
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;

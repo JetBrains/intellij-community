@@ -25,12 +25,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ui.UIUtil;
@@ -111,7 +109,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
       TextRange elementRange = psiElement.getTextRange();
-      TextRange infoRange = info.getRange();
+      TextRange infoRange = info.getRangeInElement();
       TextRange textRange = elementRange.intersection(infoRange);
       if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight

@@ -129,7 +129,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   public final TextRange getTextRange() {
     PsiElement mirror = getMirror();
-    return mirror != null ? mirror.getTextRange() : new TextRange(0, 0);
+    return mirror != null ? mirror.getTextRange() : TextRange.EMPTY_RANGE;
   }
 
   public final int getStartOffsetInParent() {

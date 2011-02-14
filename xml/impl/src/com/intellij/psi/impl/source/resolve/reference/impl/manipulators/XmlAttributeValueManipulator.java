@@ -69,7 +69,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
   public TextRange getRangeInElement(final XmlAttributeValue xmlAttributeValue) {
     final PsiElement child = xmlAttributeValue.getFirstChild();
     if (child == null) {
-      return new TextRange(0, 0);
+      return TextRange.EMPTY_RANGE;
     }
     final ASTNode node = child.getNode();
     assert node != null;

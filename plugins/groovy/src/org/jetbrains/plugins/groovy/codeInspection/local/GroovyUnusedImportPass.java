@@ -160,7 +160,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       final int end = imports[imports.length - 1].getTextRange().getEndOffset();
       ignoreRange = new TextRange(start, end);
     } else {
-      ignoreRange = new TextRange(0, 0);
+      ignoreRange = TextRange.EMPTY_RANGE;
     }
 
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {

@@ -1121,4 +1121,12 @@ public class ContainerUtil {
     }
     return -1;
   }
+
+  public static <A,B> Map<B,A> reverseMap(Map<A,B> map) {
+    final Map<B,A> result = new HashMap<B, A>();
+    for (A a : map.keySet()) {
+      result.put(map.get(a), a);
+    }
+    return result;
+  }
 }

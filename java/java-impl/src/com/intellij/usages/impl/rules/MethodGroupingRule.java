@@ -151,8 +151,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
         return 0;
       }
       if (!UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
-        Segment segment1 = myMethodPointer.getSegment();
-        Segment segment2 = other.myMethodPointer.getSegment();
+        Segment segment1 = myMethodPointer.getRange();
+        Segment segment2 = other.myMethodPointer.getRange();
         if (segment1 != null && segment2 != null) {
           return segment1.getStartOffset() - segment2.getStartOffset();
         }

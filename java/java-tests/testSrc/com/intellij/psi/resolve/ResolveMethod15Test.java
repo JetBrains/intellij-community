@@ -249,6 +249,32 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertEquals(2, candidates.length);
   }
 
+  public void testFilterVarargsVsVarargs3() throws Exception {
+    final PsiReference ref = configureByFile();
+    assertThat(ref, instanceOf(PsiReferenceExpression.class));
+    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+    PsiCallExpression call = (PsiCallExpression) refExpr.getParent();
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    assertNotNull(resolveResult.getElement());
+    assertFalse(resolveResult.isValidResult());
+
+    final JavaResolveResult[] candidates = refExpr.multiResolve(false);
+    assertEquals(1, candidates.length);
+  }
+
+  public void testFilterVarargsVsVarargs4() throws Exception {
+    final PsiReference ref = configureByFile();
+    assertThat(ref, instanceOf(PsiReferenceExpression.class));
+    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+    PsiCallExpression call = (PsiCallExpression) refExpr.getParent();
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    assertNull(resolveResult.getElement());
+    assertFalse(resolveResult.isValidResult());
+
+    final JavaResolveResult[] candidates = refExpr.multiResolve(false);
+    assertEquals(2, candidates.length);
+  }
+
   //IDEADEV-3313
   public void testCovariantReturnTypes() throws Exception {
     final PsiReference ref = configureByFile();

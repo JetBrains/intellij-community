@@ -17,8 +17,10 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -31,7 +33,7 @@ import com.intellij.util.ui.UIUtil;
 /**
  * User: cdr
  */
-public class UsageViewMemoryTest extends LightPlatformCodeInsightTestCase{
+public class UsageViewTest extends LightPlatformCodeInsightTestCase{
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() throws Exception {
     PsiFile psiFile = createFile("X.java", "public class X{} //iuggjhfg");
     Usage[] usages = new Usage[100];
@@ -48,6 +50,35 @@ public class UsageViewMemoryTest extends LightPlatformCodeInsightTestCase{
 
     LeakHunter.checkLeak(usageView, PsiFileImpl.class);
     LeakHunter.checkLeak(usageView, Document.class);
+  }
+
+  public void testUsageViewHandlesDocumentChange() throws Exception {
+    PsiFile psiFile = createFile("X.java", "public class X{ int xxx; } //comment");
+    Usage usage = createUsage(psiFile, psiFile.getText().indexOf("xxx"));
+
+    UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
+    Disposer.register(getTestRootDisposable(), usageView);
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    Document document = documentManager.getDocument(psiFile);
+    document.insertString(0, "/* sdfsdfsd */");
+    documentManager.commitAllDocuments();
+    int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
+    assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
+  }
+  public void testTextUsageInfoHandlesDocumentChange() throws Exception {
+    PsiFile psiFile = createFile("X.java", "public class X{ int xxx; } //comment");
+    Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
+
+    UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
+    Disposer.register(getTestRootDisposable(), usageView);
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    Document document = documentManager.getDocument(psiFile);
+    document.insertString(0, "/* sdfsdfsd */");
+    documentManager.commitAllDocuments();
+    int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
+    assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
 
   private static Usage createUsage(PsiFile psiFile, int offset) {

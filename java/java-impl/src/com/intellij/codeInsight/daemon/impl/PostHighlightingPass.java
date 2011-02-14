@@ -699,7 +699,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private boolean containsErrorsPreventingOptimize(PsiFile file) {
     // ignore unresolved imports errors
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    final TextRange importsRange = importList == null ? new TextRange(0,0) : importList.getTextRange();
+    final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
       public boolean process(HighlightInfo error) {
         int infoStart = error.getActualStartOffset();

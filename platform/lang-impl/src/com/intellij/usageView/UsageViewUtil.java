@@ -21,6 +21,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
@@ -120,11 +121,12 @@ public class UsageViewUtil {
             if (psiReference == null) continue;
             
             int injectionOffsetInMasterFile = InjectedLanguageManager.getInstance(usageElement.getProject()).injectedToHost(usageElement, usageElement.getTextOffset());
+            TextRange range = usage.getRangeInElement().shiftRight(injectionOffsetInMasterFile);
             set.remove(
               NonCodeUsageInfo.create(
                 context.getContainingFile(), 
-                usage.startOffset + injectionOffsetInMasterFile, 
-                usage.endOffset + injectionOffsetInMasterFile,
+                range.getStartOffset(),
+                range.getEndOffset(),
                 ((MoveRenameUsageInfo)usage).getReferencedElement(), 
                 newTextInNonCodeUsage
               )

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,17 +30,19 @@ import org.jetbrains.annotations.Nullable;
 public class ImplicitVariableElementInfoFactory implements SmartPointerElementInfoFactory {
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
-    if (element instanceof ImplicitVariable) {
-      return new ImplicitVariableInfo((ImplicitVariable) element);
+    if (element instanceof ImplicitVariable && element.isValid()) {
+      return new ImplicitVariableInfo((ImplicitVariable) element, element.getProject());
     }
     return null;
   }
 
   private static class ImplicitVariableInfo implements SmartPointerElementInfo {
     private final ImplicitVariable myVar;
+    private final Project myProject;
 
-    public ImplicitVariableInfo(ImplicitVariable var) {
+    public ImplicitVariableInfo(@NotNull ImplicitVariable var, @NotNull Project project) {
       myVar = var;
+      myProject = project;
     }
 
     public PsiElement restoreElement() {
@@ -87,10 +90,16 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
     }
 
     @Override
-    public Segment getSegment() {
+    public Segment getRange() {
       PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
       if (psiIdentifier == null || !psiIdentifier.isValid()) return null;
       return psiIdentifier.getTextRange();
+    }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myProject;
     }
   }
 }

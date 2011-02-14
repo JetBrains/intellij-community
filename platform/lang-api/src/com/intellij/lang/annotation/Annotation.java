@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ import java.util.List;
  * @see AnnotationHolder
  * @see com.intellij.openapi.editor.markup.RangeHighlighter
  */
-public final class Annotation {
+public final class Annotation implements Segment {
   private final int myStartOffset;
   private final int myEndOffset;
   private final HighlightSeverity mySeverity;
@@ -64,7 +65,7 @@ public final class Annotation {
 
     @Deprecated
     public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options, String displayName) {
-      this.key = null;
+      key = null;
       this.quickFix = quickFix;
       this.textRange = textRange;
       this.displayName = quickFix.getText();

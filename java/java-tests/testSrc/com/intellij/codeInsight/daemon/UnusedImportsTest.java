@@ -21,7 +21,7 @@ public class UnusedImportsTest extends DaemonAnalyzerTestCase {
   public void testInnersOnDemand1() throws Exception { doTest(); }
   public void testInnersOnDemand2() throws Exception { doTest(); }
   public void testStaticImportingInner() throws Exception {
-    super.doTest(BASE_PATH + "/" + getTestName(false) + ".java", BASE_PATH, true, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", BASE_PATH, true, false);
   }
 
   public void testImportFromSamePackage1() throws Exception {
@@ -32,6 +32,6 @@ public class UnusedImportsTest extends DaemonAnalyzerTestCase {
   }
 
   protected void doTest() throws Exception {
-    super.doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

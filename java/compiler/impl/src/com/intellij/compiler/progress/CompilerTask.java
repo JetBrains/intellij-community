@@ -553,7 +553,7 @@ public class CompilerTask extends Task.Backgroundable {
       int offset = ((OpenFileDescriptor)navigatable).getOffset();
       return new TextRange(offset, offset);
     }
-    return new TextRange(0, 0);
+    return TextRange.EMPTY_RANGE;
   }
 
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {

@@ -123,7 +123,7 @@ public class ChunkExtractor {
 
   private TextChunk[] extractChunks(UsageInfo2UsageAdapter usageInfo2UsageAdapter) {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
-    assert absoluteStartOffset != -1;
+    if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
     final int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
     final int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);

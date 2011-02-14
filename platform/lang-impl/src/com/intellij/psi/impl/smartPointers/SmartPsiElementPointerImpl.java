@@ -28,23 +28,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
-  private final Project myProject;
   private final Class<? extends PsiElement> myElementClass;
 
-  public SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
-    myProject = project;
+  public SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile) {
+    this(element, createElementInfo(project, element, containingFile), element.getClass());
+  }
+  public SmartPsiElementPointerImpl(@NotNull E element,
+                                    @NotNull SmartPointerElementInfo elementInfo,
+                                    @NotNull Class<? extends PsiElement> elementClass) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myElement = new WeakReference<E>(element);
-    myElementInfo = createElementInfo(element, containingFile);
-    myElementClass = element.getClass();
-
+    cacheElement(element);
+    myElementClass = elementClass;
+    myElementInfo = elementInfo;
     // Assert document committed.
     //todo
     //if (containingFile != null) {
@@ -64,7 +66,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   public boolean equals(Object obj) {
     if (!(obj instanceof SmartPsiElementPointer)) return false;
     SmartPsiElementPointer pointer = (SmartPsiElementPointer)obj;
-    return SmartPointerManager.getInstance(myProject).pointToTheSameElement(this, pointer);
+    return SmartPointerManager.getInstance(getProject()).pointToTheSameElement(this, pointer);
   }
 
   public int hashCode() {
@@ -73,29 +75,34 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @NotNull
   public Project getProject() {
-    return myProject;
+    return myElementInfo.getProject();
   }
 
   @Nullable
   public E getElement() {
-    PsiElement element = getCachedElement();
+    E element = getCachedElement();
     if (element != null && !element.isValid()) {
       element = null;
     }
     if (element == null && myElementInfo != null) {
-      element = myElementInfo.restoreElement();
+      element = (E)myElementInfo.restoreElement();
       if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
         element = null;
       }
 
-      myElement = element == null ? null : new WeakReference(element);
+      cacheElement(element);
     }
 
-    return (E)element;
+    return element;
+  }
+
+  private void cacheElement(E element) {
+    myElement = element == null ? null : new SoftReference<E>(element);
   }
 
   private E getCachedElement() {
-    return myElement == null ? null : myElement.get();
+    Reference<E> ref = myElement;
+    return ref == null ? null : ref.get();
   }
 
   public PsiFile getContainingFile() {
@@ -114,7 +121,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       final E resolved = getElement();
       return resolved != null ? resolved.getContainingFile() : null;
     }
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
+    return PsiDocumentManager.getInstance(getProject()).getPsiFile(doc);
   }
 
   public VirtualFile getVirtualFile() {
@@ -122,21 +129,23 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Override
-  public Segment getSegment() {
-    return myElementInfo.getSegment();
+  public Segment getRange() {
+    return myElementInfo.getRange();
   }
 
   @NotNull
-  private SmartPointerElementInfo createElementInfo(@NotNull E element, PsiFile containingFile) {
-    if (element instanceof PsiCompiledElement || !element.isPhysical() || containingFile == null || element.getTextRange() == null) {
-      return new HardElementInfo(element);
+  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+    if (element instanceof PsiCompiledElement || !element.isPhysical() || containingFile == null) {
+      return new HardElementInfo(project, element);
     }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
       final SmartPointerElementInfo result = factory.createElementInfo(element);
-      if (result != null) {
-        return result;
-      }
+      if (result != null) return result;
+    }
+
+    if (element.getTextRange() == null) {
+      return new HardElementInfo(project, element);
     }
 
     if (element instanceof PsiFile) {
@@ -144,10 +153,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     if (containingFile.getContext() != null) {
-      return new InjectedSelfElementInfo(element, containingFile);
+      return new InjectedSelfElementInfo(project, element, containingFile);
     }
 
-    return new SelfElementInfo(element, containingFile);
+    LOG.assertTrue(element.isPhysical());
+    LOG.assertTrue(element.isValid());
+
+    return new SelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile);
   }
 
   public void documentAndPsiInSync() {

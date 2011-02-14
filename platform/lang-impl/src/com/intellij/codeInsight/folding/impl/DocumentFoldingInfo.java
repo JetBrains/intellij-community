@@ -78,7 +78,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
       boolean expanded = region.isExpanded();
       boolean collapseByDefault = element != null &&
                                   FoldingPolicy.isCollapseByDefault(element) &&
-                                  !FoldingUtil.caretInsideRange(editor, new TextRange(region.getStartOffset(), region.getEndOffset()));
+                                  !FoldingUtil.caretInsideRange(editor, TextRange.create(region));
       if (collapseByDefault != !expanded || element == null) {
         if (element != null) {
           myPsiElementsOrRangeMarkers.add(element);

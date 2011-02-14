@@ -41,7 +41,7 @@ import java.util.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> implements LibraryTable.Listener,
+public abstract class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> implements LibraryTable.Listener,
                                                                                                                      Disposable {
 
   private final ScriptingLibraryManager myLibraryManager;
@@ -128,7 +128,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   }
 
   private void updateDependencies(final Map<VirtualFile, ScriptingLibraryTable.LibraryModel> mappings) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    Runnable updateDependenciesAction = new Runnable() {
       @Override
       public void run() {
         final LibraryTable libTable = myLibraryManager.getLibraryTable();
@@ -141,19 +141,19 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
           //
           Set<Library> librariesToAdd = new HashSet<Library>();
           for (VirtualFile file : mappings.keySet()) {
-            //
-            // In case if there is a single module (like in Web/PhpStorm), just use it without checking whether it contains the source file 
-            // or not. Otherwise add dependency to a module containing the source file.
-            // Note: file == null means project.
-            //
-            if (file == null || module.getModuleScope().contains(file) || modules.length == 1) {
-              ScriptingLibraryTable.LibraryModel container = mappings.get(file);
-              assert container instanceof CompoundLibrary;
-              for (ScriptingLibraryTable.LibraryModel libModel : ((CompoundLibrary)container).getLibraries()) {
-                final Library library = myLibraryManager.getOriginalLibrary(libModel);
-                if (!dependencyExists(rootManager, library)) {
-                  librariesToAdd.add(library);
-                }
+            ScriptingLibraryTable.LibraryModel container = mappings.get(file);
+            assert container instanceof CompoundLibrary;
+            for (ScriptingLibraryTable.LibraryModel libModel : ((CompoundLibrary)container).getLibraries()) {
+              final Library library = myLibraryManager.getOriginalLibrary(libModel);
+              //
+              // In case if there is a single module (like in Web/PhpStorm), just use it without checking whether it contains the source file 
+              // or not. Otherwise add dependency to a module containing the source file.
+              // Note: file == null means project.
+              //
+              if (!isPredefinedLibrary(libModel.getName()) && // TODO<rv> Check module type instead
+                  (file == null || module.getModuleScope().contains(file) || modules.length == 1) &&
+                  !dependencyExists(rootManager, library)) {
+                librariesToAdd.add(library);
               }
             }
           }
@@ -169,7 +169,13 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
           }
         }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().runWriteAction(updateDependenciesAction);
+    }
+    else {
+      updateDependenciesAction.run();
+    }
   }
 
   /**
@@ -453,5 +459,11 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
     collectLibraryFilesFor(file.getParent(), libFiles);
   }
+  
+  protected abstract boolean isPredefinedLibrary(String libName);
 
+  @Override
+  protected boolean shouldReparseFiles() {
+    return false;
+  }
 }

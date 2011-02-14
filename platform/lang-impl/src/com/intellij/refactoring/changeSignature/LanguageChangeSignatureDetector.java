@@ -39,4 +39,6 @@ public interface LanguageChangeSignatureDetector {
   boolean isMoveParameterAvailable(PsiElement parameter, boolean left);
 
   void moveParameter(PsiElement parameter, Editor editor, boolean left);
+
+  boolean ignoreChanges(PsiElement element);
 }

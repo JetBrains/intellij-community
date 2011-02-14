@@ -94,10 +94,6 @@ public class InjectedLanguageUtil {
     return result.isEmpty() ? null : result;
   }
 
-  public static TextRange toTextRange(RangeMarker marker) {
-    return new ProperTextRange(marker.getStartOffset(), marker.getEndOffset());
-  }
-
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }

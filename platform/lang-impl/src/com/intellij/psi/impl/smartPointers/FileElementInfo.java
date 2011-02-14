@@ -79,7 +79,13 @@ class FileElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public Segment getSegment() {
+  public Segment getRange() {
     return new TextRange(0, (int)myVirtualFile.getLength());
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 }

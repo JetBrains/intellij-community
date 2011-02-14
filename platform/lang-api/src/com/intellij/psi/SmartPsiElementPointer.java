@@ -46,5 +46,5 @@ public interface SmartPsiElementPointer<E extends PsiElement> {
 
   VirtualFile getVirtualFile();
 
-  Segment getSegment();
+  Segment getRange();
 }

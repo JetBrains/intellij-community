@@ -198,7 +198,7 @@ public class FileStatusMap implements Disposable {
       }
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : marker.isValid() ? new TextRange(marker.getStartOffset(), marker.getEndOffset()) : new TextRange(0, document.getTextLength());
+      return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
   }
   
@@ -260,7 +260,7 @@ public class FileStatusMap implements Disposable {
     if (old == null) {
       return document.createRangeMarker(scope);
     }
-    TextRange oldRange = new TextRange(old.getStartOffset(), old.getEndOffset());
+    TextRange oldRange = TextRange.create(old);
     TextRange union = scope.union(oldRange);
     if (old.isValid() && union.equals(oldRange)) {
       return old;

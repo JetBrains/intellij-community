@@ -74,4 +74,9 @@ public class ProperTextRange extends TextRange {
     TextRange range = super.union(textRange);
     return new ProperTextRange(range);
   }
+
+  @NotNull
+  public static ProperTextRange create(@NotNull Segment segment) {
+    return new ProperTextRange(segment.getStartOffset(), segment.getEndOffset());
+  }
 }

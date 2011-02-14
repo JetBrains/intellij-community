@@ -125,7 +125,7 @@ class ByWord implements DiffPolicy{
   static Word[] buildWords(String text, ComparisonPolicy policy) {
     ArrayList<Word> words = new ArrayList<Word>();
     if (text.length() == 0 || !Character.isWhitespace(text.charAt(0)))
-      words.add(policy.createFormatting(text, new TextRange(0, 0)));
+      words.add(policy.createFormatting(text, TextRange.EMPTY_RANGE));
     int start = 0;
     boolean withinFormatting = true;
     for (int i = 0; i < text.length(); i++) {

@@ -430,7 +430,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     if (!freeFormatingActions.isEmpty()) {
       FormatTextRanges ranges = new FormatTextRanges();
       for (PostprocessFormattingTask action : freeFormatingActions) {
-        TextRange range = new TextRange(action.getStartOffset(), action.getEndOffset());
+        TextRange range = TextRange.create(action);
         ranges.add(range, action instanceof ReformatWithHeadingWhitespaceTask);
       }
       result.add(new ReformatRangesAction(ranges));
@@ -572,7 +572,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     return codeFormatter;
   }
 
-  private abstract static class PostprocessFormattingTask implements Comparable<PostprocessFormattingTask> {
+  private abstract static class PostprocessFormattingTask implements Comparable<PostprocessFormattingTask>, Segment {
     private final RangeMarker myRange;
 
     public PostprocessFormattingTask(RangeMarker rangeMarker) {

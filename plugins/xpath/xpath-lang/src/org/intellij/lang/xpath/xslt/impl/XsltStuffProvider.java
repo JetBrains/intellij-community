@@ -160,7 +160,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionT
                 } else {
                     final PsiReference[] references = u.getElement().getReferences();
                     for (PsiReference reference : references) {
-                        if (reference.getRangeInElement().equals(usageInfo.getRange())) {
+                        if (reference.getRangeInElement().equals(usageInfo.getRangeInElement())) {
                             return buildGroup(reference.resolve(), usageInfo, false);
                         }
                     }

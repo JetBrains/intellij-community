@@ -68,13 +68,12 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
 
     cancelAllUpdates();
 
-    queue(new Update("model", 0) {
+    queue(new AfterModelUpdate(ID.MODEL) {
       @Override
       public void run() {
         if (context != null || object != null) {
           requestModelUpdateFromContextOrObject(context, object);
-        }
-        else {
+        } else {
           DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
             @Override
             public void run(DataContext dataContext) {
@@ -144,7 +143,9 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
 
         if (focus != null && focus.isShowing()) {
-          requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
+          if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+            requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
+          }
         }
         else if (wnd.isActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), false);
@@ -260,14 +261,19 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     queue(new AfterModelUpdate(id) {
       @Override
       protected void after() {
-        runnable.run();
+        if (runnable != null) {
+          runnable.run();
+        }
       }
     });
   }
 
   private abstract class AfterModelUpdate extends Update {
+    private final ID myId;
+
     private AfterModelUpdate(ID id) {
       super(id.name(), id.getPriority());
+      myId = id;
     }
 
     @Override
@@ -278,12 +284,18 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         after();
       }
     }
-
-    protected abstract void after();
+    protected void after() {}
   }
 
   public static enum ID {
-    UI(1), REVALIDATE(2), SELECT(3), SCROLL_TO_VISIBLE(4), SHOW_HINT(4), REQUEST_FOCUS(4), NAVIGATE_INSIDE(4);
+    MODEL(0),
+    UI(1),
+    REVALIDATE(2),
+    SELECT(3),
+    SCROLL_TO_VISIBLE(4),
+    SHOW_HINT(4),
+    REQUEST_FOCUS(4),
+    NAVIGATE_INSIDE(4);
 
     private final int myPriority;
 

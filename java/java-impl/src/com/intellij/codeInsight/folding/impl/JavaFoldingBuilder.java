@@ -533,7 +533,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     final String text = list.getText();
     if (text.startsWith("<") && text.endsWith(">") && text.length() > ifLongerThan) {
       final TextRange range = list.getTextRange();
-      addFoldRegion(foldElements, list, document, true, new TextRange(range.getStartOffset(), range.getEndOffset()));
+      addFoldRegion(foldElements, list, document, true, range);
     }
   }
 

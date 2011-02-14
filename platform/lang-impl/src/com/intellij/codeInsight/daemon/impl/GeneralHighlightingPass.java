@@ -452,7 +452,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static TextRange findNearestTextRange(final DocumentWindow documentWindow, final int startOffset) {
     TextRange textRange = null;
     for (RangeMarker marker : documentWindow.getHostRanges()) {
-      TextRange curRange = InjectedLanguageUtil.toTextRange(marker);
+      TextRange curRange = ProperTextRange.create(marker);
       if (curRange.getStartOffset() > startOffset && textRange != null) break;
       textRange = curRange;
     }
