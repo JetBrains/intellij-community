@@ -64,7 +64,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
     return searchElements(annotationClass, scope, PsiMethod.class);
   }
 
-  public static Query<PsiMember> searchPsiMetmbers(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  public static Query<PsiMember> searchPsiMembers(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return searchElements(annotationClass, scope, PsiMember.class);
   }
 
