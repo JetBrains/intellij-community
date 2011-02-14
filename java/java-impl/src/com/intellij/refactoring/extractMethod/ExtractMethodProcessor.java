@@ -51,6 +51,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -736,10 +737,16 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myExpression instanceof PsiAssignmentExpression) {
         expression2Replace = ((PsiAssignmentExpression)myExpression).getRExpression();
       } else if (myExpression instanceof PsiPostfixExpression || myExpression instanceof PsiPrefixExpression) {
-        PsiExpression operand = myExpression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)myExpression).getOperand() :
-                                ((PsiPrefixExpression)myExpression).getOperand();
-        expression2Replace =
-          ((PsiBinaryExpression)myExpression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
+        final IElementType elementType = myExpression instanceof PsiPostfixExpression
+                                          ? ((PsiPostfixExpression)myExpression).getOperationTokenType()
+                                          : ((PsiPrefixExpression)myExpression).getOperationTokenType();
+        if (elementType == JavaTokenType.PLUSPLUS || elementType == JavaTokenType.MINUSMINUS) {
+          PsiExpression operand = myExpression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)myExpression).getOperand() :
+                                  ((PsiPrefixExpression)myExpression).getOperand();
+          expression2Replace =
+            ((PsiBinaryExpression)myExpression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
+        }
+
       }
       myExpression = (PsiExpression)IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
       myMethodCall = PsiTreeUtil.getParentOfType(myExpression.findElementAt(myExpression.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
