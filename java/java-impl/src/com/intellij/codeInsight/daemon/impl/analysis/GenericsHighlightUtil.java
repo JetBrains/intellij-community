@@ -38,6 +38,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
@@ -1067,6 +1068,72 @@ public class GenericsHighlightUtil {
     catch (IndexNotReadyException e) {
       return null;
     }
+  }
+
+  @Nullable
+  public static HighlightInfo checkSafeVarargsAnnotation(PsiMethod method) {
+    PsiModifierList list = method.getModifierList();
+    final PsiAnnotation safeVarargsAnnotation = list.findAnnotation("java.lang.SafeVarargs");
+    if (safeVarargsAnnotation == null) {
+      return null;
+    }
+    try {
+      if (!method.isVarArgs()) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on methods with fixed arity");
+      }
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.FINAL)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on non-final instance methods");
+      }
+
+      final PsiParameter varParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
+
+      for (PsiReference reference : ReferencesSearch.search(varParameter)) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, element, "@SafeVarargs do not suppress potentially unsafe operations");
+        }
+      }
+
+
+
+      LOG.assertTrue(varParameter.isVarArgs());
+      final PsiEllipsisType ellipsisType = (PsiEllipsisType)varParameter.getType();
+      final PsiType componentType = ellipsisType.getComponentType();
+      if (isReifiableType(componentType)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, varParameter.getTypeElement(), "@SafeVarargs is not applicable for reifiable types");
+      }
+      return null;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
+  }
+
+  static boolean isReifiableType(PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return isReifiableType(((PsiArrayType)type).getComponentType());
+    }
+
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+
+    if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) {
+      return false;
+    }
+
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      if (classType.isRaw()) {
+        return true;
+      }
+      if (!classType.hasParameters()) {
+        return true;
+      }
+      return !classType.hasNonTrivialParameters();
+    }
+
+    return false;
   }
 
   static void checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, final HighlightInfoHolder holder) {
