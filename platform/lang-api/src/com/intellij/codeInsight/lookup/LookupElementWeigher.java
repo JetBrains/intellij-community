@@ -20,8 +20,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public interface LookupElementWeigher {
+public abstract class LookupElementWeigher {
+  private final String myId;
 
-  Comparable weigh(@NotNull LookupElement element);
+  protected LookupElementWeigher(String id) {
+    myId = id;
+  }
+
+  @Override
+  public String toString() {
+    return myId;
+  }
+
+  public abstract Comparable weigh(@NotNull LookupElement element);
 
 }

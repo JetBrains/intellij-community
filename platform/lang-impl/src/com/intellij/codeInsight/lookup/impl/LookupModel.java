@@ -139,4 +139,13 @@ public class LookupModel {
       myRelevanceClassifier = myArranger.createRelevanceClassifier();
     }
   }
+
+  LinkedHashMap<LookupElement,StringBuilder> getRelevanceStrings() {
+    final LinkedHashMap<LookupElement,StringBuilder> map = new LinkedHashMap<LookupElement, StringBuilder>();
+    for (LookupElement item : myItems) {
+      map.put(item, new StringBuilder());
+    }
+    myRelevanceClassifier.describeItems(map);
+    return map;
+  }
 }

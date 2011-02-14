@@ -1210,4 +1210,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       });
     }
   }
+
+  public LinkedHashMap<LookupElement,StringBuilder> getRelevanceStrings() {
+    return myModel.getRelevanceStrings();
+  }
+
 }

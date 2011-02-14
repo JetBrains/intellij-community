@@ -26,9 +26,11 @@ import java.util.*;
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final Map<T, Comparable> myWeights = new HashMap<T, Comparable>();
   private final Classifier<T> myNext;
+  private final String myName;
 
-  public ComparingClassifier(Classifier<T> next) {
+  public ComparingClassifier(Classifier<T> next, String name) {
     myNext = next;
+    myName = name;
   }
 
   public abstract Comparable getWeight(T t);
@@ -39,9 +41,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     myNext.addElement(t);
   }
 
-  @Override
-  public Iterable<List<T>> classify(List<T> source) {
-    List<List<T>> result = new ArrayList<List<T>>();
+  private TreeMap<Comparable, List<T>> groupByWeights(List<T> source) {
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
       final Comparable weight = myWeights.get(t);
@@ -51,9 +51,33 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       }
       list.add(t);
     }
-    for (List<T> list : map.values()) {
+    return map;
+  }
+
+  @Override
+  public Iterable<List<T>> classify(List<T> source) {
+    List<List<T>> result = new ArrayList<List<T>>();
+    for (List<T> list : groupByWeights(source).values()) {
       ContainerUtil.addAll(result, myNext.classify(list));
     }
     return result;
+  }
+
+  @Override
+  public void describeItems(LinkedHashMap<T, StringBuilder> map) {
+    final TreeMap<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
+    if (treeMap.size() > 1) {
+      for (Map.Entry<Comparable, List<T>> entry: treeMap.entrySet()){
+        for (T t : entry.getValue()) {
+          final StringBuilder builder = map.get(t);
+          if (builder.length() > 0) {
+            builder.append(", ");
+          }
+
+          builder.append(myName).append("=").append(entry.getKey());
+        }
+      }
+    }
+    myNext.describeItems(map);
   }
 }

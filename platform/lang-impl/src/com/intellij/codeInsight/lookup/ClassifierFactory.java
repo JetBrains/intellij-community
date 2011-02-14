@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -46,6 +43,10 @@ public abstract class ClassifierFactory<T> {
       public Iterable<List<T>> classify(List<T> source) {
         return Collections.singleton(source);
       }
+
+      @Override
+      public void describeItems(LinkedHashMap<T, StringBuilder> map) {
+      }
     };
   }
 
@@ -60,6 +61,14 @@ public abstract class ClassifierFactory<T> {
         final List<T> copy = new ArrayList<T>(source);
         Collections.sort(source, comparator);
         return Collections.singletonList(copy);
+      }
+
+      @Override
+      public void describeItems(LinkedHashMap<T, StringBuilder> map) {
+        final String str = "sorted by " + comparator;
+        for (StringBuilder builder : map.values()) {
+          builder.append(str);
+        }
       }
     };
   }

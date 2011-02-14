@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -24,4 +25,7 @@ public abstract class Classifier<T> {
   public abstract void addElement(T t);
 
   public abstract Iterable<List<T>> classify(List<T> source);
+
+  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map);
+
 }

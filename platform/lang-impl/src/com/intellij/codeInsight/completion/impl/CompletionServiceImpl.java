@@ -233,7 +233,7 @@ public class CompletionServiceImpl extends CompletionService{
 
     CompletionSorterImpl sorter = emptySorter();
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
-      sorter = sorter.weigh(new LookupElementWeigher() {
+      sorter = sorter.weigh(new LookupElementWeigher(weigher.toString()) {
         @Override
         public Comparable weigh(@NotNull LookupElement element) {
           return new NegatingComparable(weigher.weigh(element, location));

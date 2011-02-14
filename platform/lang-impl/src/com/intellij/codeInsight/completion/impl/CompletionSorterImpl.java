@@ -38,7 +38,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return new ClassifierFactory<LookupElement>(weigher.getClass().getName()) {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new ComparingClassifier<LookupElement>(next) {
+        return new ComparingClassifier<LookupElement>(next, weigher.toString()) {
           @Override
           public Comparable getWeight(LookupElement element) {
             return weigher.weigh(element);
