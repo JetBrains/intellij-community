@@ -29,11 +29,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -125,6 +128,7 @@ public final class IntentionActionMetaData {
     return myDescription;
   }
 
+  @NotNull
   private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
     List<TextDescriptor> urls = new ArrayList<TextDescriptor>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
@@ -146,7 +150,19 @@ public final class IntentionActionMetaData {
         }
       }
     }
-    return urls.isEmpty() ? null : urls.toArray(new TextDescriptor[urls.size()]);
+    if (urls.isEmpty()) {
+      String[] children;
+      try {
+        children = new File(descriptionDirectory.toURI()).list();
+      }
+      catch (URISyntaxException e) {
+        children = null;
+      }
+      LOG.error("URLs not found for prefix: '"+prefix+"', suffix: '"+suffix+"'; in directory: '"+descriptionDirectory+"'; directory contents: "+
+                (children == null ? null : Arrays.asList(children)));
+      return new TextDescriptor[0];
+    }
+    return urls.toArray(new TextDescriptor[urls.size()]);
   }
 
   @Nullable
