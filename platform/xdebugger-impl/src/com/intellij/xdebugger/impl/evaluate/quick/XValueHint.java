@@ -52,7 +52,6 @@ import java.awt.*;
  */
 public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.XValueHint");
-  private static final int MAX_HINT_LENGTH = 512;
 
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
@@ -129,18 +128,20 @@ public class XValueHint extends AbstractValueHint {
     text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     text.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
-    JComponent component;
     if (!hasChildren) {
-      component = HintUtil.createInformationLabel(text);
+      showHint(HintUtil.createInformationLabel(text));
+    }
+    else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+      showTree(xValue, myExpression);
     }
     else {
-      component = createExpandableHintComponent(text, new Runnable() {
+      JComponent component = createExpandableHintComponent(text, new Runnable() {
         public void run() {
           showTree(xValue, myExpression);
         }
       });
+      showHint(component);
     }
-    showHint(component);
   }
 
   private void showTree(final XValue value, final String name) {
