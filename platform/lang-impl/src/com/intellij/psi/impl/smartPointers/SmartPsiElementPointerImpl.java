@@ -106,10 +106,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   public PsiFile getContainingFile() {
-    E element = getCachedElement();
-    if (element != null) {
-      return element.getContainingFile();
-    }
     VirtualFile virtualFile = myElementInfo.getVirtualFile();
     if (virtualFile != null && virtualFile.isValid()) {
       PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
