@@ -627,25 +627,30 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     PsiLocalVariable thisVar = null;
-    if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = myMethod.getContainingClass();
-
-      if (containingClass != null) {
-        PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
-        String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
-          .names;
-        String thisVarName = names[0];
-        thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
-        PsiExpression initializer = myFactory.createExpressionFromText("null", null);
-        PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
-        declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
-        thisVar = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      }
+    PsiClass containingClass = myMethod.getContainingClass();
+    if (!myMethod.hasModifierProperty(PsiModifier.STATIC) && containingClass != null) {
+      PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
+      String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
+        .names;
+      String thisVarName = names[0];
+      thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
+      PsiExpression initializer = myFactory.createExpressionFromText("null", null);
+      PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
+      declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
+      thisVar = (PsiLocalVariable)declaration.getDeclaredElements()[0];
     }
 
-    if (thisVar != null && syncNeeded(ref)) {
+    String lockName = null;
+    if (thisVar != null) {
+      lockName = thisVar.getName();
+    }
+    else if (myMethod.hasModifierProperty(PsiModifier.STATIC) && containingClass != null ) {
+      lockName = containingClass.getQualifiedName() + ".class";
+    }
+
+    if (lockName != null && syncNeeded(ref)) {
       PsiSynchronizedStatement synchronizedStatement =
-        (PsiSynchronizedStatement)myFactory.createStatementFromText("synchronized(" + thisVar.getName() + "){}", block);
+        (PsiSynchronizedStatement)myFactory.createStatementFromText("synchronized(" + lockName + "){}", block);
       synchronizedStatement = (PsiSynchronizedStatement)CodeStyleManager.getInstance(myProject).reformat(synchronizedStatement);
       synchronizedStatement = (PsiSynchronizedStatement)block.add(synchronizedStatement);
       final PsiCodeBlock synchronizedBody = synchronizedStatement.getBody();
