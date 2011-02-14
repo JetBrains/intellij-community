@@ -317,23 +317,17 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     final Runnable[] resultRunnable = new Runnable[1];
-    // TODO den unwrap
-    try {
-      runLayoutCodeProcess(new Runnable() {
-        public void run() {
-          resultRunnable[0] = preprocessFiles(array);
+    runLayoutCodeProcess(new Runnable() {
+      public void run() {
+        resultRunnable[0] = preprocessFiles(array);
+      }
+    }, new Runnable() {
+      public void run() {
+        if (resultRunnable[0] != null) {
+          resultRunnable[0].run();
         }
-      }, new Runnable() {
-        public void run() {
-          if (resultRunnable[0] != null) {
-            resultRunnable[0].run();
-          }
-        }
-      }, array.size() > 1);
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-    }
+      }
+    }, array.size() > 1);
   }
 
   private static boolean isFormatable(PsiFile file) {

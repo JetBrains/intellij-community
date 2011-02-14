@@ -18,11 +18,10 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FormatterEx{
@@ -114,8 +113,6 @@ public abstract class FormatterEx{
                                        CodeStyleSettings.IndentOptions indentOptions,
                                        TextRange affectedRange);
 
-  public abstract void setProgressIndicator(@NotNull FormattingProgressIndicatorImpl progressIndicator);
-  
   public interface IndentInfoStorage {
     void saveIndentInfo(IndentInfo info, int startOffset);
 

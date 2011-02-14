@@ -24,12 +24,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.apache.commons.collections.Unmodifiable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,87 +39,47 @@ import java.util.Map;
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
+  private WhiteSpace myCurrentWhiteSpace;
+  private final FormattingDocumentModel myModel;
+  private final FormatTextRanges myAffectedRanges;
+  private final int myPositionOfInterest;
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
-
-  private final FormattingDocumentModel         myModel;
-  private final FormatTextRanges                myAffectedRanges;
-  private final int                             myPositionOfInterest;
-  @NotNull
-  private final FormattingProgressIndicator     myProgressIndicator;
+  private CompositeBlockWrapper myRootBlockWrapper;
+  private LeafBlockWrapper myPreviousBlock;
+  private LeafBlockWrapper myFirstTokenBlock;
+  private LeafBlockWrapper myLastTokenBlock;
+  private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
-
-  private final Stack<State> myStates = new Stack<State>();
-  
-  private WhiteSpace                       myCurrentWhiteSpace;
-  private CompositeBlockWrapper            myRootBlockWrapper;
-  private LeafBlockWrapper                 myPreviousBlock;
-  private LeafBlockWrapper                 myFirstTokenBlock;
-  private LeafBlockWrapper                 myLastTokenBlock;
-  private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
-  private boolean                          mySequential;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final FormatTextRanges affectedRanges,
                              final CodeStyleSettings.IndentOptions options,
-                             final int positionOfInterest,
-                             @NotNull FormattingProgressIndicator progressIndicator)
-  {
+                             final int positionOfInterest
+  ) {
     myModel = model;
     myAffectedRanges = affectedRanges;
-    myProgressIndicator = progressIndicator;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
   }
 
-  //TODO den remove
-  //public static InitialInfoBuilder buildBlocks(Block root,
-  //                                             FormattingDocumentModel model,
-  //                                             final FormatTextRanges affectedRanges,
-  //                                             final CodeStyleSettings.IndentOptions options,
-  //                                             int interestingOffset,
-  //                                             @NotNull FormattingProgressIndicator progressIndicator)
-  //{
-  //  final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressIndicator);
-  //  final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, null, true);
-  //  wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
-  //  return builder;
-  //}
-
-  public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
-                                                                    FormattingDocumentModel model,
-                                                                    final FormatTextRanges affectedRanges,
-                                                                    final CodeStyleSettings.IndentOptions options,
-                                                                    int interestingOffset,
-                                                                    @NotNull FormattingProgressIndicator progressIndicator)
-  {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressIndicator);
-    builder.mySequential = true;
-    builder.buildFrom(root, 0, null, null, null, true);
+  public static InitialInfoBuilder buildBlocks(Block root,
+                                               FormattingDocumentModel model,
+                                               final FormatTextRanges affectedRanges,
+                                               final CodeStyleSettings.IndentOptions options,
+                                               int interestingOffset) {
+    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset);
+    final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, null, true);
+    wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
   }
 
-  //TODO den add doc
-  public boolean doIteration() {
-    if (myStates.isEmpty()) {
-      return true;
-    }
-
-    State state = myStates.peek();
-    doIteration(state);
-    if (myStates.isEmpty()) {
-      state.wrappedBlock.setIndent((IndentImpl)Indent.getNoneIndent());
-      return true;
-    }
-    return false;
-  }
-  
   /**
    * Wraps given root block and all of its descendants and returns root block wrapper.
    * <p/>
    * This method performs necessary infrastructure actions and delegates actual processing to
-   * {@link #buildCompositeBlock(Block, CompositeBlockWrapper, int, WrapImpl, boolean)} and
+   * {@link #processCompositeBlock(Block, CompositeBlockWrapper, int, WrapImpl, boolean)} and
    * {@link #processSimpleBlock(Block, CompositeBlockWrapper, boolean, int, Block)}.
    *
    * @param rootBlock             block to wrap
@@ -190,71 +147,67 @@ class InitialInfoBuilder {
         }
         return wrapper;
       }
-      return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
+      return processCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
     }
     finally {
       myReadOnlyBlockInformationProvider = previousProvider;
     }
   }
 
-  private CompositeBlockWrapper buildCompositeBlock(final Block rootBlock,
-                                   final CompositeBlockWrapper parent,
-                                   final int index,
-                                   final WrapImpl currentWrapParent,
-                                   boolean rootBlockIsRightBlock)
-  {
-    final CompositeBlockWrapper wrappedRootBlock = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
+  private AbstractBlockWrapper processCompositeBlock(final Block rootBlock,
+                                                     final CompositeBlockWrapper parent,
+                                                     final int index,
+                                                     final WrapImpl currentWrapParent,
+                                                     boolean rootBlockIsRightBlock
+  ) {
+    final CompositeBlockWrapper info = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
-      wrappedRootBlock.arrangeParentTextRange();
+      info.arrangeParentTextRange();
     }
 
-    if (myRootBlockWrapper == null) myRootBlockWrapper = wrappedRootBlock;
+    if (myRootBlockWrapper == null) myRootBlockWrapper = info;
     boolean blocksMayBeOfInterest = false;
 
     if (myPositionOfInterest != -1) {
-      myResult.put(wrappedRootBlock, rootBlock);
+      myResult.put(info, rootBlock);
       blocksMayBeOfInterest = true;
     }
-    final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
-    
-    State state = new State(rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);
-    myStates.push(state);
-    return wrappedRootBlock;
-  }
 
-  private void doIteration(@NotNull State state) {
-    List<Block> subBlocks = state.parentBlock.getSubBlocks();
+    Block previous = null;
+    List<Block> subBlocks = rootBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
-    int childBlockIndex = state.getIndexOfChildBlockToProcess();
-    final Block block = subBlocks.get(childBlockIndex);
-    if (state.previousBlock != null) {
-      myCurrentSpaceProperty = (SpacingImpl)state.parentBlock.getSpacing(state.previousBlock, block);
-    }
+    List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>(subBlocksCount);
+    final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
 
-    boolean childBlockIsRightBlock = false;
+    for (int i = 0; i < subBlocksCount; i++) {
+      final Block block = subBlocks.get(i);
+      if (previous != null) {
+        myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(previous, block);
+      }
 
-    if (childBlockIndex == subBlocksCount - 1 && state.parentBlockIsRightBlock) {
-      childBlockIsRightBlock = true;
-    }
+      boolean childBlockIsRightBlock = false;
 
-    final AbstractBlockWrapper wrapper = buildFrom(
-      block, childBlockIndex, state.wrappedBlock, state.parentBlockWrap, state.parentBlock, childBlockIsRightBlock
-    );
+      if (i == subBlocksCount - 1 && rootBlockIsRightBlock) {
+        childBlockIsRightBlock = true;
+      }
 
-    if (wrapper.getIndent() == null) {
-      wrapper.setIndent((IndentImpl)block.getIndent());
-    }
-    if (!state.readOnly && !(subBlocks instanceof Unmodifiable) && !(subBlocks instanceof ImmutableCollection)) {
-      subBlocks.set(childBlockIndex, null); // to prevent extra strong refs during model building
-    }
-    
-    if (state.childBlockProcessed(block, wrapper)) {
-      while (!myStates.isEmpty() && myStates.peek().isProcessed()) {
-        myStates.pop();
+      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, rootBlock, childBlockIsRightBlock);
+      list.add(wrapper);
+
+      if (wrapper.getIndent() == null) {
+        wrapper.setIndent((IndentImpl)block.getIndent());
+      }
+      previous = block;
+
+      if (!blocksAreReadOnly && !(subBlocks instanceof Unmodifiable) && !(subBlocks instanceof ImmutableCollection)) {
+        subBlocks.set(i, null); // to prevent extra strong refs during model building
       }
     }
+    setDefaultIndents(list);
+    info.setChildren(list);
+    return info;
   }
-  
+
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {
@@ -269,19 +222,9 @@ class InitialInfoBuilder {
                                                   final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
                                                   final int index,
-                                                  Block parentBlock) 
-  {
-    LeafBlockWrapper result = doProcessSimpleBlock(rootBlock, parent, readOnly, index, parentBlock);
-    myProgressIndicator.afterWrappingBlock(result);
-    return result;
-  }
+                                                  Block parentBlock
 
-  private LeafBlockWrapper doProcessSimpleBlock(final Block rootBlock,
-                                                final CompositeBlockWrapper parent,
-                                                final boolean readOnly,
-                                                final int index,
-                                                Block parentBlock)
-  {
+  ) {
     final LeafBlockWrapper info =
       new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     if (index == 0) {
@@ -390,68 +333,5 @@ class InitialInfoBuilder {
     }
 
     LOG.error(buffer);
-  }
-  
-  //TODO den add doc
-  private class State {
-    
-    //TODO den add doc
-    public final Block parentBlock;
-    public final WrapImpl parentBlockWrap;
-    
-    //TODO den add doc
-    public final CompositeBlockWrapper wrappedBlock;
-    
-    public final boolean readOnly;
-    public final boolean parentBlockIsRightBlock;
-    
-    //TODO den add doc
-    public Block previousBlock;
-    
-    private final List<AbstractBlockWrapper> myWrappedChildren = new ArrayList<AbstractBlockWrapper>();
-
-    State(@NotNull Block parentBlock, @NotNull CompositeBlockWrapper wrappedBlock, @Nullable WrapImpl parentBlockWrap,
-          boolean readOnly, boolean parentBlockIsRightBlock)
-    {
-      this.parentBlock = parentBlock;
-      this.wrappedBlock = wrappedBlock;
-      this.parentBlockWrap = parentBlockWrap;
-      this.readOnly = readOnly;
-      this.parentBlockIsRightBlock = parentBlockIsRightBlock;
-    }
-
-    /**
-     * @return    index of the first non-processed {@link Block#getSubBlocks() child block} of the {@link #parentBlock target block}
-     */
-    public int getIndexOfChildBlockToProcess() {
-      return myWrappedChildren.size();
-    }
-    
-    /**
-     * Notifies current state that child block is processed.
-     * 
-     * @return    <code>true</code> if all child blocks of the block denoted by the current state are processed;
-     *            <code>false</code> otherwise
-     */
-    public boolean childBlockProcessed(@NotNull Block child, @NotNull AbstractBlockWrapper wrappedChild) {
-      myWrappedChildren.add(wrappedChild);
-      previousBlock = child;
-      
-      int subBlocksNumber = parentBlock.getSubBlocks().size();
-      if (myWrappedChildren.size() > subBlocksNumber) {
-        return true;
-      }
-      else if (myWrappedChildren.size() == subBlocksNumber) {
-        setDefaultIndents(myWrappedChildren);
-        wrappedBlock.setChildren(myWrappedChildren);
-        return true;
-      }
-      return false;
-    }
-    
-    //TODO den add doc
-    public boolean isProcessed() {
-      return myWrappedChildren.size() == parentBlock.getSubBlocks().size();
-    }
   }
 }
