@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -107,8 +108,8 @@ public class ExceptionUtil {
       }
 
       PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-      for (PsiParameter parm : parameters) {
-        PsiType exception = parm.getType();
+      for (PsiParameter parameter : parameters) {
+        PsiType exception = parameter.getType();
         for (int j = array.size() - 1; j >= 0; j--) {
           PsiClassType exception1 = array.get(j);
           if (exception.isAssignableFrom(exception1)) {
@@ -124,7 +125,7 @@ public class ExceptionUtil {
 
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
       if (finallyBlock != null) {
-        // if finally block completes normally, exception not catched
+        // if finally block completes normally, exception not caught
         // if finally block completes abruptly, exception gets lost
         try {
           ControlFlow flow = ControlFlowFactory.getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
@@ -383,7 +384,7 @@ public class ExceptionUtil {
     final PsiClass aClass = type.resolve();
     if (aClass == null) return false;
     final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
+        new NullableComputable<PsiClass>() {
           public PsiClass compute() {
             return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.RuntimeException", searchScope);
           }
@@ -395,7 +396,7 @@ public class ExceptionUtil {
     }
 
     final PsiClass errorClass = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
+        new NullableComputable<PsiClass>() {
           public PsiClass compute() {
             return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Error", searchScope);
           }
@@ -441,7 +442,7 @@ public class ExceptionUtil {
     }
     else if (parent instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)parent;
-      if (tryStatement.getTryBlock() == element && isCatched(tryStatement, exceptionType)) {
+      if (tryStatement.getTryBlock() == element && isCaught(tryStatement, exceptionType)) {
         return true;
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -464,7 +465,7 @@ public class ExceptionUtil {
     else if (parent instanceof PsiField && ((PsiField)parent).getInitializer() == element) {
       final PsiClass aClass = ((PsiField)parent).getContainingClass();
       if (aClass != null && !(aClass instanceof PsiAnonymousClass) && !((PsiField)parent).hasModifierProperty(PsiModifier.STATIC)) {
-        // exceptions thrown in field initalizers should be thrown in all class constructors
+        // exceptions thrown in field initializers should be thrown in all class constructors
         return areAllConstructorsThrow(aClass, exceptionType);
       }
     }
@@ -484,12 +485,12 @@ public class ExceptionUtil {
     return thrown;
   }
 
-  private static boolean isCatched(PsiTryStatement tryStatement, PsiClassType exceptionType) {
+  private static boolean isCaught(PsiTryStatement tryStatement, PsiClassType exceptionType) {
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
       List<PsiClassType> exceptions = getUnhandledExceptions(finallyBlock);
       if (exceptions.contains(exceptionType)) return false;
-      // if finally block completes normally, exception not catched
+      // if finally block completes normally, exception not caught
       // if finally block completes abruptly, exception gets lost
       if (blockCompletesAbruptly(finallyBlock)) return true;
     }
