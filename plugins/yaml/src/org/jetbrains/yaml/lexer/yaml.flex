@@ -55,8 +55,8 @@ WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
 LINE =                          .*
 COMMENT =                       "#"{LINE}
 
-ID =                            [a-zA-Z_][a-zA-Z0-9\-_ ]*
-KEY =                           {ID}:
+ID =                            [a-zA-Z_]([a-zA-Z0-9\-_ ]*[a-zA-Z0-9_])?
+KEY =                           {ID}":"
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
@@ -67,58 +67,67 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%state VALUE, VALUE_OR_KEY, INDENT_VALUE
+%xstate BRACES, VALUE, VALUE_OR_KEY, INDENT_VALUE
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// RULES declarations ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-<YYINITIAL, VALUE, VALUE_OR_KEY> {
+<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
 
 {COMMENT}                       {   return COMMENT; }
 
 {EOL}                           {   yybegin(YYINITIAL);
                                     return EOL;
                                 }
-"{"                             {   yybegin(YYINITIAL);
-                                    braceCount++;
+"{"                             {   braceCount++;
+                                    yybegin(braceCount == 0 ? YYINITIAL: BRACES);
                                     return LBRACE;
                                 }
 "}"                             {   braceCount--;
+                                    if (yystate() == BRACES && braceCount == 0){
+                                      yybegin(YYINITIAL);
+                                    }
                                     return RBRACE;
                                 }
-"["                             {   yybegin(YYINITIAL);
-                                    braceCount++;
+"["                             {   braceCount++;
+                                    yybegin(braceCount == 0 ? YYINITIAL: BRACES);
                                     return LBRACKET;
                                 }
 "]"                             {   braceCount--;
-                                    return RBRACKET; }
-","                             {   if (braceCount > 0) {
+                                    if (yystate() == BRACES && braceCount == 0){
                                       yybegin(YYINITIAL);
+                                    }
+                                    return RBRACKET;
+                                }
+
+","                             {   if (braceCount > 0) {
+                                      yybegin(braceCount == 0 ? YYINITIAL: BRACES);
                                       return COMMA;
                                     }
                                     return TEXT;
                                 }
-":"                             {   yybegin(YYINITIAL);
+":"                             {   yybegin(braceCount == 0 ? YYINITIAL: BRACES);
                                     return COLON;
                                 }
-"?"                             {   yybegin(YYINITIAL);
+"?"                             {   yybegin(braceCount == 0 ? YYINITIAL: BRACES);
                                     return QUESTION;
                                 }
 
 }
 
-<YYINITIAL, VALUE_OR_KEY> {
+<YYINITIAL, BRACES, VALUE_OR_KEY> {
 
-{KEY} / ({LINE}?)               {   yybegin(VALUE);
+{KEY}                           {   yybegin(VALUE);
                                     return SCALAR_KEY;
                                 }
 }
 
-<YYINITIAL>{
+<YYINITIAL, BRACES>{
 
 "---"                           {   braceCount = 0;
+                                    yybegin(YYINITIAL);
                                     return DOCUMENT_MARKER; }
 
 {WHITE_SPACE}                   {   final char prev = previousChar();
