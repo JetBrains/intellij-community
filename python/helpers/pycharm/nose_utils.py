@@ -96,8 +96,38 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
         else:
           suite = strclass(test.__class__)
           suite_location = "python_uttestid://" + suite
-          location = "python_uttestid://" + str(test.id())
+          try:
+            from nose_helper.util import func_lineno
+
+            if hasattr(test.test, "descriptor") and test.test.descriptor:
+              location = "file://"+self.test_address(test.test.descriptor)+":"+str(func_lineno(test.test.descriptor))
+            else:
+              location = "file://"+self.test_address(test.test.test)+":"+str(func_lineno(test.test.test))
+          except:
+              location = "python_uttestid://" + str(test.id())
         return (location, suite_location)
+
+    def test_address(self, test):
+        """Find the test address for a test, which may be a module, filename,
+        class, method or function.
+        """
+        if hasattr(test, "address"):
+            return test.address()[0]
+        t = type(test)
+        file = None
+        import types, os
+        if (t == types.FunctionType or issubclass(t, type) or t == type
+            or isclass(test)):
+            module = getattr(test, '__module__', None)
+            if module is not None:
+                m = sys.modules[module]
+                file = getattr(m, '__file__', None)
+                if file is not None:
+                    file = os.path.abspath(file)
+            if file.endswith("pyc"):
+              file = file[:-1]
+            return file
+        raise TypeError("I don't know what %s is (%s)" % (test, t))
 
     def getSuiteName(self, test):
         test_name_full = str(test)
