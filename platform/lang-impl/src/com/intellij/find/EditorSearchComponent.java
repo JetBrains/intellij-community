@@ -785,7 +785,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     public void actionPerformed(final AnActionEvent e) {
       final FindModel model = FindManager.getInstance(myProject).getFindInFileModel();
       final FindModel realModel = (FindModel)model.clone();
-      realModel.setStringToFind(getTextInField());
+      String text = getTextInField();
+      if (StringUtil.isEmpty(text)) return;
+      realModel.setStringToFind(text);
       FindUtil.findAll(myProject, myEditor, realModel);
     }
   }
