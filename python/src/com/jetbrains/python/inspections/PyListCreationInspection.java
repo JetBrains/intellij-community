@@ -44,9 +44,10 @@ public class PyListCreationInspection extends PyInspection {
           return;
         }
         PyExpression statement = null;
-        PyExpressionStatement expressionStatement = PsiTreeUtil.getNextSiblingOfType(node, PyExpressionStatement.class);
-        if (expressionStatement != null)
-          statement = expressionStatement.getExpression();
+        PyStatement expressionStatement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
+        if (!(expressionStatement instanceof PyExpressionStatement))
+          return;
+        statement = ((PyExpressionStatement)expressionStatement).getExpression();
         ListCreationQuickFix quickFix = null;
         boolean availableFix = false;
 loop:
@@ -68,16 +69,16 @@ loop:
                   }
                 }
                 if(availableFix)
-                  quickFix.addStatement(expressionStatement);
+                  quickFix.addStatement((PyExpressionStatement)expressionStatement);
               }
             }
           }
           if (quickFix == null) {
             return;
           }
-          expressionStatement = PsiTreeUtil.getNextSiblingOfType(expressionStatement, PyExpressionStatement.class);
-          if (expressionStatement != null)
-            statement = expressionStatement.getExpression();
+          expressionStatement = PsiTreeUtil.getNextSiblingOfType(expressionStatement, PyStatement.class);
+          if (expressionStatement instanceof PyExpressionStatement)
+            statement = ((PyExpressionStatement)expressionStatement).getExpression();
           else
             statement = null;
         }
