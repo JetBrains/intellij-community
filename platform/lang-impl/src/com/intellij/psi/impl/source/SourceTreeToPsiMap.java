@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SourceTreeToPsiMap {
@@ -31,10 +31,25 @@ public class SourceTreeToPsiMap {
     return element.getPsi();
   }
 
+  @NotNull
+  public static <T extends PsiElement> T treeToPsiNotNull(@NotNull final ASTNode element) {
+    final PsiElement psi = element.getPsi();
+    assert psi != null : element;
+    //noinspection unchecked
+    return (T)psi;
+  }
+
   @Nullable
   public static ASTNode psiElementToTree(@Nullable final PsiElement psiElement) {
     if (psiElement == null) return null;
     return psiElement.getNode();
+  }
+
+  @NotNull
+  public static TreeElement psiToTreeNotNull(@NotNull final PsiElement psiElement) {
+    final ASTNode node = psiElement.getNode();
+    assert node instanceof TreeElement : psiElement + ", " + node;
+    return (TreeElement)node;
   }
 
   public static boolean hasTreeElement(@Nullable final PsiElement psiElement) {
