@@ -1,7 +1,7 @@
 import org.jetbrains.jps.Jps
+import org.jetbrains.jps.LayoutInfo
 import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
-import org.jetbrains.jps.LayoutInfo
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
@@ -24,7 +24,9 @@ setProperty("pluginFilter", [
             "JSInspections",
             "JSIntentionPowerPack",
             "SpellChecker", "spellchecker",
-            "less", "sass", "haml",
+            "less", "sass",
+            "yaml", "yaml-plugin",
+            "haml", "haml-plugin",
             "hg4idea",
             "tasks", "tasks-core", "tasks-api", "jira-connector",
             "github",
@@ -48,7 +50,6 @@ private List platformImplementationModules() {
           "xml",
           "lvcs-impl",
           "images",
-          "yaml",
           "dom-impl"
   ]
 }
