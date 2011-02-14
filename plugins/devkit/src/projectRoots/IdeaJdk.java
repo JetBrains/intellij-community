@@ -171,7 +171,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, "idea.jar", result);
+    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, null, result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, "javaee-impl.jar",
                       result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, "jsf-impl.jar", result);
