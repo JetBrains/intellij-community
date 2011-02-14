@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -144,7 +143,7 @@ public class CompletionLookupArranger extends LookupArranger {
       public Iterable<List<LookupElement>> classify(List<LookupElement> source) {
         MultiMap<CompletionSorter, LookupElement> inputBySorter = new MultiMap<CompletionSorter, LookupElement>();
         for (LookupElement element : source) {
-          inputBySorter.put(obtainSorter(element), source);
+          inputBySorter.putValue(obtainSorter(element), element);
         }
 
         final ArrayList<List<LookupElement>> result = new ArrayList<List<LookupElement>>();
