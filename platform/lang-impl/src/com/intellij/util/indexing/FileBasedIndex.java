@@ -149,13 +149,17 @@ public class FileBasedIndex implements ApplicationComponent {
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
-          myTransactionMap.put(doc, file);
+          synchronized (myTransactionMap) {
+            myTransactionMap.put(doc, file);
+          }
           myUpToDateIndices.clear();
         }
       }
 
       public void transactionCompleted(final Document doc, final PsiFile file) {
-        myTransactionMap.remove(doc);
+        synchronized (myTransactionMap) {
+          myTransactionMap.remove(doc);
+        }
       }
     });
 
@@ -1050,7 +1054,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private Set<Document> getUnsavedOrTransactedDocuments() {
     Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
-    docs.addAll(myTransactionMap.keySet());
+    synchronized (myTransactionMap) {
+      docs.addAll(myTransactionMap.keySet());
+    }
     return docs;
   }
 
@@ -1210,8 +1216,10 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @Nullable
   private PsiFile findDominantPsiForDocument(final Document document, @Nullable Project project) {
-    if (myTransactionMap.containsKey(document)) {
-      return myTransactionMap.get(document);
+    synchronized (myTransactionMap) {
+      if (myTransactionMap.containsKey(document)) {
+        return myTransactionMap.get(document);
+      }
     }
 
     return project == null? null : findLatestKnownPsiForUncomittedDocument(document, project);
