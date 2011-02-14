@@ -18,13 +18,12 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Runs backgroundable tasks one by one.
@@ -35,116 +34,78 @@ import org.jetbrains.annotations.NotNull;
  * @author Kirill Likhodedov
  */
 @SomeQueue
-public class BackgroundTaskQueue implements Consumer<Task.Backgroundable> {
+public class BackgroundTaskQueue {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskQueue.class.getName());
-  private final Project myProject;
-  private final QueueProcessor<Task.Backgroundable> myProcessor = new QueueProcessor<Task.Backgroundable>(this);
-  private final String myTitle;
+  //private final Project myProject;
+  private final QueueProcessor<Task.Backgroundable> myProcessor;
+  private Boolean myForcedTestMode;
 
-  public BackgroundTaskQueue(String title) {
-    this(null, title);
-  }
-
-  public BackgroundTaskQueue(Project project, String title) {
-    myProject = project;
-    myTitle = title;
+  public BackgroundTaskQueue(final Project project, String title) {
+    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
+    myProcessor = new QueueProcessor<Task.Backgroundable>(headless ?
+      new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title), true,
+      headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT, new Condition<Object>() {
+        @Override
+        public boolean value(Object o) {
+          return (! ApplicationManager.getApplication().isUnitTestMode()) && (! project.isOpen()) || project.isDisposed();
+        }
+      });
   }
 
   public void clear() {
     myProcessor.clear();
   }
 
+  public boolean isEmpty() {
+    return myProcessor.isEmpty();
+  }
+
   public void run(Task.Backgroundable task) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) { // test tasks are executed in this thread without the progress manager
-      final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-      task.run(indicator);
-      if (indicator.isCanceled()) {
-        task.onCancel();
-      } else {
-        task.onSuccess();
-      }
+    if (isTestMode()) { // test tasks are executed in this thread without the progress manager
+      RunBackgroundable.runIfBackgroundThread(task, new EmptyProgressIndicator(), null);
     } else {
       myProcessor.add(task);
     }
   }
 
-  @Override
-  public void consume(final Task.Backgroundable task) {
-    if (task.isConditionalModal() && !task.shouldStartInBackground()) { // modal tasks are executed synchronously
-        ProgressManager.getInstance().run(task);
-    } else {
-      final Object LOCK = new Object();
-      String title = task.getTitle();
-      if (StringUtil.isEmptyOrSpaces(title)) {
-        title = myTitle;
-      }
-      final Task.Backgroundable container = new Task.Backgroundable(myProject, title, task.isCancellable()) {
-        // we wrap the task into this container to override onSuccess and onCancel to notify when the task will be completed.
-        @Override
-        public void onSuccess() {
-          task.onSuccess();
-          synchronized (LOCK) {
-            LOCK.notifyAll();
-          }
-        }
-
-        @Override
-        public void onCancel() {
-          task.onCancel();
-          synchronized (LOCK) {
-            LOCK.notifyAll();
-          }
-        }
-
-        @Override
-        public boolean shouldStartInBackground() {
-          return task.shouldStartInBackground();
-        }
-
-        @Override
-        public void processSentToBackground() {
-          task.processSentToBackground();
-        }
-
-        @Override
-        public boolean isConditionalModal() {
-          return task.isConditionalModal();
-        }
-
-        @Override
-        public DumbModeAction getDumbModeAction() {
-          return task.getDumbModeAction();
-        }
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          task.run(indicator);
-        }
-
-        @Override
-        public boolean isHeadless() {
-          return task.isHeadless();
-        }
-      };
-
-      // start the task
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          if (myProject == null || !myProject.isDisposed()) {
-            ProgressManager.getInstance().run(container);
-          }
-        }
-      });
-
-      // wait for task completion - next task shouldn't be started before the previous completes.
-      try {
-        synchronized (LOCK) {
-          LOCK.wait();
-        }
-      } catch (InterruptedException e) {
-        LOG.error(e);
-      }
+  private static class BackgroundableHeadlessRunner implements PairConsumer<Task.Backgroundable, Runnable> {
+    @Override
+    public void consume(Task.Backgroundable backgroundable, Runnable runnable) {
+      // synchronously
+      ProgressManager.getInstance().run(backgroundable);
+      runnable.run();
     }
   }
 
+  private static class BackgroundableUnderProgressRunner implements PairConsumer<Task.Backgroundable, Runnable> {
+    private final String myTitle;
+
+    public BackgroundableUnderProgressRunner(String title) {
+      myTitle = title;
+    }
+
+    @Override
+    public void consume(final Task.Backgroundable backgroundable, final Runnable runnable) {
+      final BackgroundableProcessIndicator pi = new BackgroundableProcessIndicator(backgroundable);
+      if (StringUtil.isEmptyOrSpaces(backgroundable.getTitle())) {
+        pi.setTitle(myTitle);
+      }
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
+        public void run() {
+          // calls task's run and onCancel() or onSuccess()
+          RunBackgroundable.runIfBackgroundThread(backgroundable, pi, runnable);
+        }
+      }, pi);
+    }
+  }
+
+  private boolean isTestMode() {
+    if (myForcedTestMode != null) return myForcedTestMode;
+    return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  public void setForcedTestMode(Boolean forcedTestMode) {
+    myForcedTestMode = forcedTestMode;
+  }
 }
