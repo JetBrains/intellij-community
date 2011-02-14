@@ -148,4 +148,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNumericLiterals() throws Exception {
     doTest(false, false);
   }
+
+  public void testMultiCatch() throws Exception {
+    doTest(false, false);
+  }
 }

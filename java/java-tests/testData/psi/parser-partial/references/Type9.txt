@@ -1,0 +1,13 @@
+PsiJavaFile:Type9.java
+  PsiTypeElement:A|B
+    PsiTypeElement:A
+      PsiJavaCodeReferenceElement:A
+        PsiIdentifier:A('A')
+        PsiReferenceParameterList
+          <empty list>
+    PsiJavaToken:OR('|')
+    PsiTypeElement:B
+      PsiJavaCodeReferenceElement:B
+        PsiIdentifier:B('B')
+        PsiReferenceParameterList
+          <empty list>

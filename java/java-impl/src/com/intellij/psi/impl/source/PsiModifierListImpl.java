@@ -174,6 +174,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         }
       }
     }
+    else if (parent instanceof PsiParameter) {
+      if (type == JavaTokenType.FINAL_KEYWORD && ((PsiParameter)parent).getType() instanceof PsiDisjunctionType) return true;
+    }
 
     if (type == null){ // package local
       return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
@@ -206,22 +209,22 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     if (value){
       if (parentTreeElement.getElementType() == JavaElementType.FIELD &&
           parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
-          ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
+          SourceTreeToPsiMap.<PsiClass>treeToPsiNotNull(parentTreeElement.getTreeParent()).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return;
       }
       else if (parentTreeElement.getElementType() == JavaElementType.METHOD &&
                parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
-               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
+               SourceTreeToPsiMap.<PsiClass>treeToPsiNotNull(parentTreeElement.getTreeParent()).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
       }
       else if (parentTreeElement.getElementType() == JavaElementType.CLASS &&
                parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
-               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
+               SourceTreeToPsiMap.<PsiClass>treeToPsiNotNull(parentTreeElement.getTreeParent()).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD) return;
       }
       else if (parentTreeElement.getElementType() == JavaElementType.ANNOTATION_METHOD &&
                parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
-               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isAnnotationType()) {
+               SourceTreeToPsiMap.<PsiClass>treeToPsiNotNull(parentTreeElement.getTreeParent()).isAnnotationType()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
       }
 
@@ -246,8 +249,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         TreeElement keyword = Factory.createSingleLeafElement(type, name, null, getManager());
         treeElement.addInternal(keyword, keyword, null, null);
       }
-      if ((type == JavaTokenType.ABSTRACT_KEYWORD || type == JavaTokenType.NATIVE_KEYWORD) && parentTreeElement.getElementType() ==
-                                                                                              JavaElementType.METHOD){
+      if ((type == JavaTokenType.ABSTRACT_KEYWORD || type == JavaTokenType.NATIVE_KEYWORD) &&
+          parentTreeElement.getElementType() == JavaElementType.METHOD){
         //Q: remove body?
       }
     }
@@ -257,7 +260,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       }
       ASTNode child = treeElement.findChildByType(type);
       if (child != null){
-        SourceTreeToPsiMap.treeElementToPsi(child).delete();
+        SourceTreeToPsiMap.treeToPsiNotNull(child).delete();
       }
     }
   }

@@ -77,7 +77,7 @@ public class TypeConversionUtil {
 
 
   /**
-   * @return true iff fromType can be casted to toType
+   * @return true if fromType can be casted to toType
    */
   public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
     if (fromType == toType) return true;
@@ -114,7 +114,7 @@ public class TypeConversionUtil {
   }
 
   /**
-   * see JLS 5.1.5, JLS3 5.5
+   * see JLS 5.1.5, JLS3 5.1.6
    */
   private static boolean isNarrowingReferenceConversionAllowed(PsiType fromType, PsiType toType) {
     if (toType instanceof PsiPrimitiveType || fromType instanceof PsiPrimitiveType) return fromType.equals(toType);
@@ -154,7 +154,15 @@ public class TypeConversionUtil {
         if (isNarrowingReferenceConversionAllowed(conjunct, toType)) return true;
       }
       return false;
-    } else if (toType instanceof PsiIntersectionType) return false;
+    }
+    else if (toType instanceof PsiIntersectionType) return false;
+
+    if (fromType instanceof PsiDisjunctionType) {
+      return isNarrowingReferenceConversionAllowed(((PsiDisjunctionType)fromType).getLeastUpperBound(), toType);
+    }
+    if (toType instanceof PsiDisjunctionType) {
+      return false;
+    }
 
     if (fromType instanceof PsiWildcardType) {
       final PsiWildcardType fromWildcard = (PsiWildcardType)fromType;
@@ -663,6 +671,16 @@ public class TypeConversionUtil {
       else {
         return !(rCompType instanceof PsiPrimitiveType) && isAssignable(lCompType, rCompType, allowUncheckedConversion);
       }
+    }
+
+    if (left instanceof PsiDisjunctionType) {
+      for (PsiType type : ((PsiDisjunctionType)left).getDisjunctions()) {
+        if (isAssignable(type, right, allowUncheckedConversion)) return true;
+      }
+      return false;
+    }
+    if (right instanceof PsiDisjunctionType) {
+      return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion);
     }
 
     if (left instanceof PsiArrayType) return false;

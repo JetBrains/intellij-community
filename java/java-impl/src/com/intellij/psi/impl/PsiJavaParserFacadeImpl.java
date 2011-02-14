@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   private static final JavaParserUtil.ParserWrapper PARAMETER = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.parseParameter(builder, true);
+      DeclarationParser.parseParameter(builder, true, false);
     }
   };
 
@@ -68,6 +69,14 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     @Override
     public void parse(final PsiBuilder builder) {
       ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper DISJUNCTIVE_TYPE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                         ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
     }
   };
 
@@ -240,7 +249,11 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
  
   @NotNull
   public PsiTypeElement createTypeElementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, false), context);
+    final boolean multiCatch = context instanceof PsiParameter &&
+                               context.getParent() instanceof PsiCatchSection &&
+                               PsiUtil.isLanguageLevel7OrHigher(context);
+    final JavaParserUtil.ParserWrapper wrapper = multiCatch ? DISJUNCTIVE_TYPE : TYPE;
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeElement)) {
       throw new IncorrectOperationException("Incorrect type \"" + text + "\".");
@@ -261,7 +274,8 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final boolean isStaticImport = context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand();
+    final boolean isStaticImport = context instanceof PsiImportStaticStatement &&
+                                   !((PsiImportStaticStatement)context).isOnDemand();
     final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : REFERENCE;
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());

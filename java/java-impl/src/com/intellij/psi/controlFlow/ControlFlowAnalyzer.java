@@ -31,6 +31,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -63,11 +64,11 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   private final boolean myEnabledShortCircuit;
   // true if evaluate constant expression inside 'if' statement condition and alter control flow accordingly
   // in case of unreachable statement analysis must be false
-  private final boolean myEvaluateConstantIfConfition;
+  private final boolean myEvaluateConstantIfCondition;
   private final boolean myAssignmentTargetsAreElements;
 
   private final Stack<TIntArrayList> intArrayPool = new Stack<TIntArrayList>();
-  // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartoffset(element)
+  // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartOffset(element)
   private final Map<PsiElement,TIntArrayList> offsetsAddElementStart = new THashMap<PsiElement, TIntArrayList>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
   private final Map<PsiElement,TIntArrayList> offsetsAddElementEnd = new THashMap<PsiElement, TIntArrayList>();
@@ -78,19 +79,19 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
                       @NotNull ControlFlowPolicy policy,
                       boolean enabledShortCircuit,
-                      boolean evaluateConstantIfConfition) {
-    this(codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
+                      boolean evaluateConstantIfCondition) {
+    this(codeFragment, policy, enabledShortCircuit, evaluateConstantIfCondition, false);
   }
 
   private ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
                               @NotNull ControlFlowPolicy policy,
                               boolean enabledShortCircuit,
-                              boolean evaluateConstantIfConfition,
+                              boolean evaluateConstantIfCondition,
                               boolean assignmentTargetsAreElements) {
     myCodeFragment = codeFragment;
     myPolicy = policy;
     myEnabledShortCircuit = enabledShortCircuit;
-    myEvaluateConstantIfConfition = evaluateConstantIfConfition;
+    myEvaluateConstantIfCondition = evaluateConstantIfCondition;
     myAssignmentTargetsAreElements = assignmentTargetsAreElements;
     Project project = codeFragment.getProject();
     myControlFlowFactory = ControlFlowFactory.getInstance(project);
@@ -205,7 +206,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       ProgressManager.checkCanceled();
       ControlFlowSubRange subRange = entry.getValue();
       PsiElement element = entry.getKey();
-      myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfConfition, myPolicy);
+      myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfCondition, myPolicy);
     }
   }
 
@@ -730,7 +731,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
      *     [ generate (B) ]
      * :end
      */
-    if (myEvaluateConstantIfConfition) {
+    if (myEvaluateConstantIfCondition) {
       final Object value = myConstantEvaluationHelper.computeConstantExpression(conditionExpression);
       if (value instanceof Boolean) {
         boolean condition = ((Boolean)value).booleanValue();
@@ -928,7 +929,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
   /**
    * find offsets of catch(es) corresponding to this throw statement
-   * mycatchParameters and mycatchpoints arrays should be sorted in ascending scope order (from outermost to innermost)
+   * myCatchParameters and myCatchBlocks arrays should be sorted in ascending scope order (from outermost to innermost)
    *
    * @return offset or -1 if not found
    */
@@ -946,12 +947,9 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       final PsiType type = parameter.getType();
-      PsiClass catchedClass = PsiUtil.resolveClassInType(type);
-      if (catchedClass == null) continue;
-      if (type.isAssignableFrom(throwType)) {
-        blocks.add(myCatchBlocks.get(i));
-      }
-      else if (throwType.isAssignableFrom(type)) {
+      PsiClass caughtClass = PsiUtil.resolveClassInType(type);
+      if (caughtClass == null) continue;
+      if (type.isAssignableFrom(throwType) || throwType.isAssignableFrom(type)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }
@@ -996,7 +994,8 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitTryStatement(PsiTryStatement statement) {
+  @Override
+  public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
 
     PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
@@ -1010,7 +1009,8 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
       final PsiType type = catchBlockParameters[i].getType();
       // todo cast param
-      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
+      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type) ||
+          type instanceof PsiDisjunctionType && ExceptionUtil.isUncheckedExceptionOrSuperclass(((PsiDisjunctionType)type).getLeastUpperBound())) {
         myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
       }
     }
@@ -1028,6 +1028,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       tryBlock.accept(this);
     }
 
+    //noinspection StatementWithEmptyBody
     while (myUnhandledExceptionCatchBlocks.pop() != null) ;
 
     myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
@@ -1361,7 +1362,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   }
 
   private boolean shouldCalculateConstantExpression(PsiExpression expression) {
-    return myEvaluateConstantIfConfition || !isInsideIfCondition(expression);
+    return myEvaluateConstantIfCondition || !isInsideIfCondition(expression);
   }
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
@@ -1576,6 +1577,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     myCurrentFlow.addInstruction(instruction);
   }
 
+  @Nullable
   private PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
     if (refExpr.getParent() instanceof PsiMethodCallExpression) return null;
     return myPolicy.getUsedVariable(refExpr);

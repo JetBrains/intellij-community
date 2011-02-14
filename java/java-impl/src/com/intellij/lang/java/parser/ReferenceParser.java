@@ -36,6 +36,7 @@ public class ReferenceParser {
   public static final int ELLIPSIS = 0x02;
   public static final int WILDCARD = 0x04;
   public static final int DIAMONDS = 0x08;
+  public static final int DISJUNCTIONS = 0x10;
 
   public static class TypeInfo {
     public boolean isPrimitive = false;
@@ -58,7 +59,24 @@ public class ReferenceParser {
 
   @Nullable
   public static TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
-    return parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+    final TypeInfo typeInfo =
+      parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+
+    if (typeInfo != null && isSet(flags, DISJUNCTIONS) && builder.getTokenType() == JavaTokenType.OR) {
+      typeInfo.marker = typeInfo.marker.precede();
+
+      while (builder.getTokenType() == JavaTokenType.OR) {
+        builder.advanceLexer();
+        if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
+          error(builder, JavaErrorMessages.message("expected.identifier"));
+        }
+        parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+      }
+
+      typeInfo.marker.done(JavaElementType.TYPE);
+    }
+
+    return typeInfo;
   }
 
   @Nullable
