@@ -39,7 +39,7 @@ public class UsageInfo {
   public final boolean isNonCodeUsage;
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
-    LOG.assertTrue(element.isValid());
+    LOG.assertTrue(element.isValid(), element);
     element = element.getNavigationElement();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(element.getProject());
 
