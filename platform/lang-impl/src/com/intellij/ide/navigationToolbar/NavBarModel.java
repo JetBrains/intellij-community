@@ -51,7 +51,7 @@ public class NavBarModel {
   private int mySelectedIndex;
   private final Project myProject;
   private final NavBarModelListener myNotificator;
-  private int checker = 0;
+  private boolean myChanged = true;
 
   public NavBarModel(final Project project) {
     myProject = project;
@@ -91,7 +91,6 @@ public class NavBarModel {
 
   protected void updateModel(DataContext dataContext) {
     if (LaterInvocator.isInModalContext()) return;
-    //if (!UISettings.getInstance().SHOW_NAVIGATION_BAR && checker++ > 1) return;
 
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
@@ -99,6 +98,8 @@ public class NavBarModel {
     }
 
     psiElement = normalize(psiElement);
+    if (myModel.contains(psiElement) && !myChanged) return;
+
     if (psiElement != null && psiElement.isValid()) {
       updateModel(psiElement);
     }
@@ -114,7 +115,7 @@ public class NavBarModel {
         setModel(Collections.singletonList(moduleOrProject));
       }
     }
-
+    setChanged(false);
   }
 
   protected void updateModel(final PsiElement psiElement) {
@@ -234,6 +235,12 @@ public class NavBarModel {
     if (!isValid(object)) return false;
 
     return !getChildren(object).isEmpty();
+  }
+
+  //to avoid the following situation: element was taken from NavBarPanel via data context and all left children
+  // were truncated by traverseToRoot
+  public void setChanged(boolean changed) {
+    myChanged = changed;
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})

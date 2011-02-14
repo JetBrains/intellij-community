@@ -164,6 +164,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   private void updateModel() {
     if (myPanel.isShowing()) {
+      myPanel.getModel().setChanged(true);
       myPanel.getUpdateQueue().queueModelUpdateFromFocus();
     }
   }
