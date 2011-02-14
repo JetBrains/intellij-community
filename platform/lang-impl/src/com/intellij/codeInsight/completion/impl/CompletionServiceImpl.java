@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
@@ -34,7 +35,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author peter
@@ -231,7 +232,25 @@ public class CompletionServiceImpl extends CompletionService{
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters) {
     final CompletionLocation location = new CompletionLocation(parameters);
 
-    CompletionSorterImpl sorter = emptySorter();
+    CompletionSorterImpl sorter = emptySorter().weigh(new LookupElementWeigher("prefixHumps") {
+      @Override
+      public Boolean weigh(@NotNull LookupElement element) {
+        final String prefix = element.getPrefixMatcher().getPrefix();
+        if (!prefix.isEmpty()) {
+          final String prefixHumps = StringUtil.capitalsOnly(prefix);
+          if (prefixHumps.length() > 0) {
+            for (String itemString : element.getAllLookupStrings()) {
+              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps)) {
+                return false;
+              }
+            }
+          }
+        }
+        return true;
+      }
+    });
+
+
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       sorter = sorter.weigh(new LookupElementWeigher(weigher.toString()) {
         @Override
@@ -241,7 +260,12 @@ public class CompletionServiceImpl extends CompletionService{
       });
     }
 
-    return sorter;
+    return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
+      @Override
+      public Classifier<LookupElement> createClassifier(final Classifier<LookupElement> next) {
+        return new LiftShorterItemsClassifier(next);
+      }
+    });
   }
 
   public CompletionSorterImpl emptySorter() {

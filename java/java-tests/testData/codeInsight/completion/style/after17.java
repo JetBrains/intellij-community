@@ -1,7 +1,7 @@
 class A{
  {
   final String path = BASE_PATH;
-  path.toString()<caret>;
+  path.toCharArray()<caret>;
   sdkfjsdkhjfh();
  }
 }

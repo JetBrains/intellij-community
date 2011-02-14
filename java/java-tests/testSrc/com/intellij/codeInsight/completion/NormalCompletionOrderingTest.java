@@ -71,7 +71,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     try {
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
-      checkPreferredItems(0, "classLoader", "classBeforeLoader", "clone", "class");
+      checkPreferredItems(0, "classLoader", "class", "classBeforeLoader", "clone");
     }
     finally {
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old;
@@ -111,7 +111,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDispreferImpls() throws Throwable {
     myFixture.addClass("package foo; public class Xxx {}");
-    checkPreferredItems(0, "Xxy", "Xxx", "XxxEx", "XxxImpl");
+    checkPreferredItems(0, "Xxx", "XxxEx", "XxxImpl", "Xxy");
   }
 
   public void testPreferOwnInnerClasses() throws Throwable {
@@ -130,7 +130,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreferLessHumps() throws Throwable {
     myFixture.addClass("package foo; public interface XaYa {}");
     myFixture.addClass("package foo; public interface XyYa {}");
-    checkPreferredItems(0, "XaYa", "XyYa", "XaYaEx", "XaYaImpl", "XyYaXa");
+    checkPreferredItems(0, "XaYa", "XaYaEx", "XaYaImpl", "XyYa", "XyYaXa");
   }
 
   public void testPreferLessParameters() throws Throwable {
@@ -178,7 +178,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "value");
   }
 
-  public void _testCurrentClassBest() {
+  public void testCurrentClassBest() {
     checkPreferredItems(0, "XcodeProjectTemplate", "XcodeConfigurable");
   }
 

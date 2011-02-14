@@ -35,10 +35,11 @@ public class CompletionSorterImpl extends CompletionSorter {
   }
 
   private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
-    return new ClassifierFactory<LookupElement>(weigher.getClass().getName()) {
+    final String id = weigher.toString();
+    return new ClassifierFactory<LookupElement>(id) {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new ComparingClassifier<LookupElement>(next, weigher.toString()) {
+        return new ComparingClassifier<LookupElement>(next, id) {
           @Override
           public Comparable getWeight(LookupElement element) {
             return weigher.weigh(element);

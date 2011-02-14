@@ -7,13 +7,13 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.openapi.fileTypes.StdFileTypes
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -101,26 +101,17 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testQualifiedNew1() throws Exception {
-    configureByFile("QualifiedNew1.java");
-
-    assertEquals(2, myItems.length);
-    assertEquals("Inner", myItems[0].getLookupString());
-    assertEquals("IInner", myItems[1].getLookupString());
+    configure()
+    assertStringItems "IInner", "Inner"
   }
 
   public void testQualifiedNew2() throws Exception {
-    configureByFile("QualifiedNew2.java");
-
-    assertEquals(2, myItems.length);
-    assertEquals("AnInner", myItems[0].getLookupString());
-    assertEquals("Inner", myItems[1].getLookupString());
+    configure()
+    assertStringItems "AnInner", "Inner"
   }
 
   public void testKeywordsInName() throws Exception {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.completeBasic()
-    myFixture.type 'a\n'
-    checkResult()
+    doTest 'a\n'
   }
 
   public void testSimpleVariable() throws Exception { doTest() }

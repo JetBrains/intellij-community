@@ -16,7 +16,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "b", "fooBean239", "this", "getName");
+    checkPreferredItems(0, "name", "b", "foo", "fooBean239", "this");
   }
   
   public void testJComponentAddNew() throws Throwable {
