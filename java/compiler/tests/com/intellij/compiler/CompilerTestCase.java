@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -390,10 +392,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     compilerModuleExtension.inheritCompilerOutputPath(false);
     compilerModuleExtension.setExcludeOutput(shouldExcludeOutputFromProject());
 
-    // Mock JDK is used by default. Uncomment in order to use 'real' JDK if needed
-    //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
-    //rootManager.setJdk(jdk);
-    //final ProjectJdk jdk = rootModel.getJdk();
+    final Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    rootModel.setSdk(jdk);
     rootModel.commit();
   }
 
