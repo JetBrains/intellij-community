@@ -126,8 +126,8 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
       }
     }
     stringBuilder.append(")");
-    PyStatement callExpression = elementGenerator.createFromText(LanguageLevel.forElement(dictExpression),
-                                                     PyStatement.class, stringBuilder.toString());
+    PyCallExpression callExpression = (PyCallExpression)elementGenerator.createFromText(LanguageLevel.forElement(dictExpression),
+                                                     PyExpressionStatement.class, stringBuilder.toString()).getExpression();
     dictExpression.replace(callExpression);
   }
 }
