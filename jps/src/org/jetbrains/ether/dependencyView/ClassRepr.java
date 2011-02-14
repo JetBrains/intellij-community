@@ -18,8 +18,8 @@ public class ClassRepr implements RW.Writable {
     private MethodRepr[] dummyMethods = new MethodRepr[0];
     private String[] dummyStrings = new String[0];
 
-    public final String fileName;
-    public final String name;
+    public final StringCache.S fileName;
+    public final StringCache.S name;
     public final String superClass;
     public final String[] interfaces;
     public final String[] nestedClasses;
@@ -27,7 +27,7 @@ public class ClassRepr implements RW.Writable {
     public final MethodRepr[] methods;
     public final String signature;
 
-    public ClassRepr(final String fn, final String n, final String sig, final String sup, final String[] i, final String[] ns, final FieldRepr[] f, final MethodRepr[] m) {
+    public ClassRepr(final StringCache.S fn, final StringCache.S n, final String sig, final String sup, final String[] i, final String[] ns, final FieldRepr[] f, final MethodRepr[] m) {
         fileName = fn;
         name = n;
         superClass = sup;
@@ -39,8 +39,8 @@ public class ClassRepr implements RW.Writable {
     }
 
     public ClassRepr(final BufferedReader r) {
-        fileName = RW.readString(r);
-        name = RW.readString(r);
+        fileName = StringCache.get (RW.readString(r));
+        name = StringCache.get (RW.readString(r));
 
         final String s = RW.readString(r);
 
@@ -60,8 +60,8 @@ public class ClassRepr implements RW.Writable {
     };
 
     public void write(final BufferedWriter w) {
-        RW.writeln(w, fileName);
-        RW.writeln(w, name);
+        RW.writeln(w, fileName.value);
+        RW.writeln(w, name.value);
         RW.writeln(w, signature);
         RW.writeln(w, superClass);
         RW.writeln(w, interfaces, RW.fromString);

@@ -27,7 +27,17 @@ public class RW {
         writeln(w, Integer.toString(c.size()));
 
         for (T e : c) {
-                t.convert(e).write(w);
+            t.convert(e).write(w);
+        }
+    }
+
+    public static void writeEncodedString(final BufferedWriter w, final String val) {
+        final int size = val == null ? 0 : val.length();
+
+        writeln(w, Integer.toString(size));
+
+        for (int i = 0; i < size; i++) {
+            writeln(w, Integer.toString((int) val.charAt(i)));
         }
     }
 
@@ -145,6 +155,19 @@ public class RW {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static String readEncodedString(final BufferedReader r) {
+        final StringBuffer b = new StringBuffer();
+
+        final int size = readInt(r);
+
+        for (int i = 0; i < size; i++) {
+            final int c = readInt(r);
+            b.append((char) c);
+        }
+
+        return b.toString();
     }
 
     public static long readLong(final BufferedReader r) {

@@ -4,7 +4,6 @@ import com.sun.tools.javac.util.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +26,8 @@ public class ClassfileAnalyzer {
 
         Boolean takeIntoAccount = false;
 
-        final String fileName;
-        String name;
+        final StringCache.S fileName;
+        StringCache.S name;
         String superClass;
         String[] interfaces;
         String signature;
@@ -37,9 +36,9 @@ public class ClassfileAnalyzer {
         List<FieldRepr> fields = new ArrayList<FieldRepr>();
         List<String> nestedClasses = new ArrayList<String>();
 
-        Set<Usage> usages = new HashSet<Usage>();
+        Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
-        public ClassCrawler(final String fn) {
+        public ClassCrawler(final StringCache.S fn) {
             fileName = fn;
         }
 
@@ -47,18 +46,18 @@ public class ClassfileAnalyzer {
             return (access & Opcodes.ACC_PRIVATE) == 0;
         }
 
-        public Pair<ClassRepr, Set<Usage>> getResult() {
+        public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
                     new ClassRepr(fileName, name, signature, superClass, interfaces, nestedClasses.toArray(dummyStrings), fields.toArray(dummyFields), methods.toArray(dummyMethods)) : null;
 
-            return new Pair<ClassRepr, Set<Usage>>(repr, usages);
+            return new Pair<ClassRepr, Set<UsageRepr.Usage>>(repr, usages);
         }
 
         @Override
         public void visit(int version, int access, String n, String sig, String s, String[] i) {
             takeIntoAccount = notPrivate(access);
 
-            name = n;
+            name = StringCache.get (n);
             signature = sig;
             superClass = s;
             interfaces = i;
@@ -67,7 +66,7 @@ public class ClassfileAnalyzer {
         @Override
         public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
             if (notPrivate(access)) {
-                fields.add(new FieldRepr(name, desc, signature));
+                fields.add(new FieldRepr(access, name, desc, signature, value));
             }
 
             return null;
@@ -77,19 +76,19 @@ public class ClassfileAnalyzer {
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 
             if (notPrivate(access)) {
-                methods.add(new MethodRepr(name, signature, desc, exceptions));
+                methods.add(new MethodRepr(access, name, signature, desc, exceptions));
             }
 
             return new EmptyVisitor() {
 
                 @Override
                 public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-                    usages.add(Usage.createFieldUsage(name, owner, desc));
+                    usages.add(UsageRepr.createFieldUsage(name, owner, desc));
                 }
 
                 @Override
                 public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-                    usages.add(Usage.createMethodUsage(name, owner, desc));
+                    usages.add(UsageRepr.createMethodUsage(name, owner, desc));
                 }
             };
         }
@@ -102,7 +101,7 @@ public class ClassfileAnalyzer {
         }
     }
 
-    public static Pair<ClassRepr,Set<Usage>> analyze(final String fileName, final ClassReader cr) {
+    public static Pair<ClassRepr,Set<UsageRepr.Usage>> analyze(final StringCache.S fileName, final ClassReader cr) {
         final ClassCrawler visitor = new ClassCrawler(fileName);
 
         cr.accept(visitor, 0);

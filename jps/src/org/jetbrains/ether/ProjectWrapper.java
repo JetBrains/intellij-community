@@ -1,10 +1,7 @@
 package org.jetbrains.ether;
 
 import org.codehaus.gant.GantBinding;
-import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.ether.dependencyView.ClassRepr;
-import org.jetbrains.ether.dependencyView.SourceToClass;
-import org.jetbrains.ether.dependencyView.Usage;
+import org.jetbrains.ether.dependencyView.*;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.resolvers.PathEntry;
@@ -223,12 +220,12 @@ public class ProjectWrapper {
 
         FileWrapper(final BufferedReader r) {
             myName = RW.readString(r);
-            myModificationTime = 0; // readLong(r);
+            myModificationTime = RW.readLong(r);
 
             final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr> ());
-            final Set<Usage> usages = (Set<Usage>) RW.readMany(r, Usage.reader, new HashSet<Usage> ());
+            final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage> ());
 
-            myClassToSourceCallback.associate(classes, usages, myName);
+            mySourceToClassCallback.associate(classes, usages, myName);
         }
 
         public String getName() {
@@ -243,9 +240,10 @@ public class ProjectWrapper {
             final String name = getName();
 
             RW.writeln(w, name);
+            RW.writeln(w, Long.toString(getStamp()));
+
             RW.writeln(w, mySourceToClass.getClasses(name));
             RW.writeln(w, mySourceToClass.getUsages(name));
-            // writeln(w, Long.toString(getStamp()));
         }
 
         @Override
@@ -277,7 +275,7 @@ public class ProjectWrapper {
 
         private class Properties implements RW.Writable {
             final Set<String> myRoots;
-            final Set<FileWrapper> mySources;
+            final Map<FileWrapper, FileWrapper> mySources;
 
             final String myOutput;
             String myOutputStatus;
@@ -288,12 +286,26 @@ public class ProjectWrapper {
             long myLatestOutput;
             long myEarliestOutput;
 
+            public Set<FileWrapper> getAffectedFiles (final Properties past) {
+                final Set<FileWrapper> result = new HashSet<FileWrapper>();
+
+                for (FileWrapper now : mySources.keySet()) {
+                    final FileWrapper than = past.mySources.get(now);
+
+                    if (than == null || than.getStamp() < now.getStamp()){
+                        result.add(now);
+                    }
+                }
+
+                return result;
+            }
+
             public void write(final BufferedWriter w) {
                 RW.writeln(w, "Roots:");
                 RW.writeln(w, myRoots, RW.fromString);
 
                 RW.writeln(w, "Sources:");
-                RW.writeln(w, mySources);
+                RW.writeln(w, mySources.keySet());
 
                 RW.writeln(w, "Output:");
                 RW.writeln(w, myOutput == null ? "" : myOutput);
@@ -318,7 +330,12 @@ public class ProjectWrapper {
                 myRoots = (Set<String>) RW.readMany(r, RW.myStringReader, new HashSet<String>());
 
                 RW.readTag(r, "Sources:");
-                mySources = (Set<FileWrapper>) RW.readMany(r, myFileWrapperReader, new HashSet<FileWrapper>());
+
+                mySources = new HashMap<FileWrapper, FileWrapper> ();
+
+                for (FileWrapper fw : (Set<FileWrapper>) RW.readMany(r, myFileWrapperReader, new HashSet<FileWrapper>())) {
+                    mySources.put(fw, fw);
+                }
 
                 RW.readTag(r, "Output:");
                 final String s = RW.readString(r);
@@ -344,7 +361,13 @@ public class ProjectWrapper {
 
                 {
                     final DirectoryScanner.Result result = DirectoryScanner.getFiles(myRoots, excludes, ProjectWrapper.this);
-                    mySources = result.getFiles();
+
+                    mySources = new HashMap<FileWrapper, FileWrapper> ();
+
+                    for (FileWrapper fw : result.getFiles()) {
+                        mySources.put(fw, fw);
+                    }
+
                     myEarliestSource = result.getEarliest();
                     myLatestSource = result.getLatest();
                 }
@@ -373,7 +396,7 @@ public class ProjectWrapper {
             }
 
             public Set<FileWrapper> getSources() {
-                return mySources;
+                return mySources.keySet();
             }
 
             public String getOutputPath() {
@@ -660,8 +683,8 @@ public class ProjectWrapper {
 
     final ProjectWrapper myHistory;
 
-    final SourceToClass mySourceToClass = new SourceToClass(this);
-    final Callbacks.Backend myClassToSourceCallback = mySourceToClass.getCallback();
+    final Mappings mySourceToClass = new Mappings(this);
+    final Callbacks.Backend mySourceToClassCallback = mySourceToClass.getCallback();
 
     private void rescan() {
         for (ModuleWrapper m : myModules.values()) {
@@ -686,7 +709,7 @@ public class ProjectWrapper {
     }
 
     private ProjectWrapper(final String prjDir, final String setupScript) {
-        myProject = new Project(new GantBinding(), mySourceToClass.getCallback());
+        myProject = new Project(new GantBinding(), mySourceToClassCallback);
         myRoot = new File(prjDir).getAbsolutePath();
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
