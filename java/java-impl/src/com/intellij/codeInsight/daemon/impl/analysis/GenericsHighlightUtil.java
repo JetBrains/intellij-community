@@ -1109,7 +1109,7 @@ public class GenericsHighlightUtil {
     }
   }
 
-  static boolean isReifiableType(PsiType type) {
+  public static boolean isReifiableType(PsiType type) {
     if (type instanceof PsiArrayType) {
       return isReifiableType(((PsiArrayType)type).getComponentType());
     }
