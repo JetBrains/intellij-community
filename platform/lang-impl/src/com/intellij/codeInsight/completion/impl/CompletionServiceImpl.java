@@ -19,8 +19,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
@@ -232,24 +231,44 @@ public class CompletionServiceImpl extends CompletionService{
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters) {
     final CompletionLocation location = new CompletionLocation(parameters);
 
-    return emptySorter().weigh(new LookupElementWeigher() {
-      @Override
-      public Comparable weigh(@NotNull LookupElement item) {
-        LookupItemWeightComparable result = CompletionLookupArranger.getCachedRelevance(item);
-        if (result != null) return result;
+    CompletionSorterImpl sorter = emptySorter();
+    for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
+      sorter = sorter.weigh(new LookupElementWeigher() {
+        @Override
+        public Comparable weigh(@NotNull LookupElement element) {
+          return new NegatingComparable(weigher.weigh(element, location));
+        }
+      });
+    }
 
-        final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-        result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, location));
-
-        item.putUserData(CompletionLookupArranger.RELEVANCE_KEY, result);
-
-        return result;
-      }
-    });
+    return sorter;
   }
 
   public CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
+  private static class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T> {
+    private final Comparable myWeigh;
+
+    public NegatingComparable(Comparable weigh) {
+      myWeigh = weigh;
+    }
+
+    @Override
+    public int compareTo(T o) {
+      final Comparable w1 = myWeigh;
+      final Comparable w2 = o.myWeigh;
+      if (w1 == null && w2 == null) return 0;
+      if (w1 == null) return 1;
+      if (w2 == null) return -1;
+
+      return -w1.compareTo(w2);
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(myWeigh);
+    }
+  }
 }
