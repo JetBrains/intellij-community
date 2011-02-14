@@ -216,12 +216,11 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   }
 
   @NotNull
-  public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level)
-      throws IncorrectOperationException {
+  public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level) throws IncorrectOperationException {
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, false, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiMethod)) {
-      throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
+      throw new IncorrectOperationException("Incorrect method \"" + text + "\" (" + element + ").");
     }
     return (PsiMethod)element;
   }
