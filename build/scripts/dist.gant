@@ -167,7 +167,7 @@ private def layoutMac(Map args, String home, Paths paths) {
     replacefilter(token: "@@year@@", value: "$todayYear")
 
     replacefilter(token: "@@version@@", value: version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS")
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOops")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
