@@ -67,7 +67,13 @@ public class JavacRunner {
       System.arraycopy(args, 2, newArgs, 0, newArgs.length);
     }
     expandClasspath(newArgs);
-    mainMethod.invoke(null, new Object[] {newArgs});
+    try {
+      mainMethod.invoke(null, new Object[] {newArgs});
+    }
+    catch (Throwable e) {
+      System.err.print(e.getMessage());
+      e.printStackTrace(System.err);
+    }
   }
 
   private static void addFilesToCompile(Vector arguments, String path) throws IOException {
