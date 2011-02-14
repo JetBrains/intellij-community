@@ -28,6 +28,9 @@
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="com.intellij.coverage.listeners.IDEATestNGCoverageListener"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
+  </extensionPoints>
   <project-components>
     <component>
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>

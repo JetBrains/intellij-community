@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -17,6 +16,7 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -73,20 +73,26 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public boolean isApplicableTo(@Nullable final RunConfigurationBase conf) {
-    return conf instanceof CommonJavaRunConfigurationParameters;
+    if (conf instanceof CommonJavaRunConfigurationParameters) {
+      return true;
+    }
+    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      if (extension.isApplicableTo(conf)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public boolean canHavePerTestCoverage(@Nullable RunConfigurationBase conf) {
-    return !(conf instanceof ApplicationConfiguration);
+    return !(conf instanceof ApplicationConfiguration) && conf instanceof CommonJavaRunConfigurationParameters;
   }
 
+  @NotNull
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf) {
-    if (isApplicableTo(conf)) {
-      return new JavaCoverageEnabledConfiguration(conf, this);
-    }
-    return null;
+    return new JavaCoverageEnabledConfiguration(conf, this);
   }
 
   @Nullable
@@ -291,6 +297,15 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     });
     final Set<String> qNames = new HashSet<String>();
+    for (final JavaCoverageEngineExtension nameExtension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return nameExtension.suggestQualifiedName(sourceFile, classes, qNames);
+        }
+      })) {
+        return qNames;
+      }
+    }
     for (final PsiClass aClass : classes) {
       final String qName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Nullable
@@ -300,12 +315,6 @@ public class JavaCoverageEngine extends CoverageEngine {
       });
       if (qName == null) continue;
       qNames.add(qName);
-    }
-    if (qNames.isEmpty()) {
-      final VirtualFile virtualFile = sourceFile.getVirtualFile();
-      if (virtualFile != null) {
-        qNames.add(getQualifiedName(virtualFile, sourceFile));
-      }
     }
     return qNames;
   }
@@ -317,8 +326,13 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (module == null) {
       return Collections.emptySet();
     }
+    final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+
+    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      if (extension.collectOutputFiles(srcFile, outputpath, testOutputpath, suite, classFiles)) return classFiles;
+    }
 
     final String packageFQName = getPackageName(srcFile);
     final String packageVmName = packageFQName.replace('.', '/');
@@ -336,7 +350,6 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
 
-    final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
     final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
       public PsiClass[] compute() {
         return ((PsiClassOwner)srcFile).getClasses();
@@ -511,7 +524,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return hasDefault;
   }
 
-  private JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
+  protected JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
                                         String name, CoverageFileProvider coverageDataFileProvider,
                                         String[] filters,
                                         long lastCoverageTimeStamp,
