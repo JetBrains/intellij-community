@@ -120,6 +120,7 @@ libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm", 
 libraryLicense(name: "Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/", licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/axis-1.4.0/axis.LICENSE")
 libraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2", license: "Apache", url: "http://cglib.sourceforge.net/", licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html")
 libraryLicense(name: "classworlds", libraryName: "classworlds-1.1.jar", version: "1.1", license: "codehaus", url: "http://classworlds.codehaus.org/", licenseUrl: "http://classworlds.codehaus.org/license.html")
+libraryLicense(name: "Android SDK Tools", libraryName: "android-sdk-tools", license: "Apache 2.0", url: "http://source.android.com/")
 libraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0", url: "http://commons.apache.org/beanutils/")
 libraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.3", license: "Apache 2.0", url: "http://commons.apache.org/codec/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons Collections", libraryName: "commons-collections", version: "3.1", license: "Apache 2.0", url: "http://commons.apache.org/collections/", licenseUrl: "http://commons.apache.org/license.html")
