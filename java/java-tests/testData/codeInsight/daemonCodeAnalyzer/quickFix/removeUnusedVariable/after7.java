@@ -1,4 +1,5 @@
 // "Remove variable 'i'" "true"
+import java.io.*;
 
 class a {
     int k;
