@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -33,6 +34,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     myName = name;
   }
 
+  @NotNull
   public abstract Comparable getWeight(T t);
 
   @Override
@@ -45,7 +47,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
       final Comparable weight = myWeights.get(t);
-      assert weight != null : myName;
+      assert weight != null : myName + "; " + myWeights.containsKey(t);
       List<T> list = map.get(weight);
       if (list == null) {
         map.put(weight, list = new SmartList<T>());

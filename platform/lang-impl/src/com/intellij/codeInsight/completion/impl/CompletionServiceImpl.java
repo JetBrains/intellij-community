@@ -233,6 +233,7 @@ public class CompletionServiceImpl extends CompletionService{
     final CompletionLocation location = new CompletionLocation(parameters);
 
     CompletionSorterImpl sorter = emptySorter().weigh(new LookupElementWeigher("prefixHumps") {
+      @NotNull
       @Override
       public Boolean weigh(@NotNull LookupElement element) {
         final String prefix = element.getPrefixMatcher().getPrefix();
@@ -253,6 +254,7 @@ public class CompletionServiceImpl extends CompletionService{
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       sorter = sorter.weigh(new LookupElementWeigher(weigher.toString()) {
+        @NotNull
         @Override
         public Comparable weigh(@NotNull LookupElement element) {
           return new NegatingComparable(weigher.weigh(element, location));

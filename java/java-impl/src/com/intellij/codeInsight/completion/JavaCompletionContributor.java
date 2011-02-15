@@ -210,8 +210,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition());
     final ExpectedTypeInfo[] expectedTypes = afterNew ? JavaSmartCompletionContributor.getExpectedTypes(parameters) : ExpectedTypeInfo.EMPTY_ARRAY;
     return result.withRelevanceSorter(CompletionSorter.defaultSorter(parameters).weighBefore("liftShorter", new LookupElementWeigher("expectedAfterNew") {
+        @NotNull
         @Override
-        @Nullable
         public Comparable weigh(@NotNull LookupElement element) {
           return -((Enum)PreferExpectedTypeWeigher.weigh(element, expectedTypes)).ordinal();
         }

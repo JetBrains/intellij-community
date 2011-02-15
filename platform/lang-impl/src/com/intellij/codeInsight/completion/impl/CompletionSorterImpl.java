@@ -40,6 +40,7 @@ public class CompletionSorterImpl extends CompletionSorter {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new ComparingClassifier<LookupElement>(next, id) {
+          @NotNull
           @Override
           public Comparable getWeight(LookupElement element) {
             return weigher.weigh(element);

@@ -32,6 +32,7 @@ public abstract class LookupElementWeigher {
     return myId;
   }
 
+  @NotNull
   public abstract Comparable weigh(@NotNull LookupElement element);
 
 }
