@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
+  public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
   private static final byte DIRTY_FLAG = 0x01;
   private static final String EMPTY = "";

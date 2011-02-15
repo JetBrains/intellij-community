@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.util.*;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
+  private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42);
   private final NewVirtualFileSystem myFS;
 
   // guarded by this
@@ -58,33 +59,33 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile findChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
-    final VirtualFile result = doFindChild(name, createIfNotFound, ensureCanonicalName);
-    if (result == NullVirtualFile.INSTANCE) {
+  private VirtualFileSystemEntry findChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
+    final VirtualFileSystemEntry result = doFindChild(name, createIfNotFound, ensureCanonicalName);
+    if (result == NULL_VIRTUAL_FILE) {
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
     }
 
     if (result == null) {
       synchronized (this) {
-        Map<String, VirtualFile> map = asMap();
+        Map<String, VirtualFileSystemEntry> map = asMap();
         if (map != null) {
-          map.put(name, NullVirtualFile.INSTANCE);
+          map.put(name, NULL_VIRTUAL_FILE);
         }
       }
     }
 
-    return (NewVirtualFile)result;
+    return result;
   }
 
   @Nullable
-  private VirtualFile doFindChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
+  private VirtualFileSystemEntry doFindChild(@NotNull String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
     if (name.length() == 0) {
       return null;
     }
 
-    final VirtualFile[] array;
-    final Map<String, VirtualFile> map;
-    final VirtualFile file;
+    final VirtualFileSystemEntry[] array;
+    final Map<String, VirtualFileSystemEntry> map;
+    final VirtualFileSystemEntry file;
     synchronized (this) {
       array = asArray();
       if (array == null) {
@@ -99,7 +100,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (array != null) {
       Object encoded = encodeName(name);
       byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
-      for (VirtualFile vf : array) {
+      for (VirtualFileSystemEntry vf : array) {
         if (namesEqual(name, bytes, vf)) return vf;
       }
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
@@ -119,11 +120,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int id = PersistentFS.getId(this, name);
       if (id > 0) {
         // maybe another doFindChild() sneaked in the middle
-        VirtualFile lastTry = map.get(name);
+        VirtualFileSystemEntry lastTry = map.get(name);
         if (lastTry != null) return lastTry;
 
         final String shorty = new String(name);
-        NewVirtualFile child = createChild(shorty, id); // So we don't hold whole char[] buffer of a lengthy path
+        VirtualFileSystemEntry child = createChild(shorty, id); // So we don't hold whole char[] buffer of a lengthy path
         map.put(shorty, child);
         return child;
       }
@@ -132,9 +133,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
-  private boolean namesEqual(String name, byte[] encoded, VirtualFile file) {
-    if (encoded != null && file instanceof VirtualFileSystemEntry) {
-      Object o = ((VirtualFileSystemEntry)file).rawName();
+  private boolean namesEqual(String name, byte[] encoded, VirtualFileSystemEntry file) {
+    if (encoded != null) {
+      Object o = file.rawName();
       if (!(o instanceof byte[])) return false;
 
       if (encoded.length != ((byte[])o).length) return false;
@@ -166,7 +167,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile createAndFindChildWithEventFire(@NotNull String name) {
+  private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(this, name);
     if (delegate.exists(fake)) {
@@ -187,21 +188,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public synchronized NewVirtualFile findChildIfCached(@NotNull String name) {
-    final VirtualFile[] a = asArray();
+    final VirtualFileSystemEntry[] a = asArray();
     if (a != null) {
       Object encoded = encodeName(name);
       byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
-      for (VirtualFile file : a) {
-        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
+      for (VirtualFileSystemEntry file : a) {
+        if (namesEqual(name, bytes, file)) return file;
       }
 
       return null;
     }
 
-    final Map<String, VirtualFile> map = asMap();
+    final Map<String, VirtualFileSystemEntry> map = asMap();
     if (map != null) {
-      final VirtualFile file = map.get(name);
-      return file instanceof NewVirtualFile ? (NewVirtualFile)file : null;
+      final VirtualFileSystemEntry file = map.get(name);
+      return file != NULL_VIRTUAL_FILE ? file : null;
     }
 
     return null;
@@ -212,14 +213,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public Iterable<VirtualFile> iterInDbChildren() {
     return ContainerUtil.iterate(getInDbChildren(), new Condition<VirtualFile>() {
       public boolean value(VirtualFile file) {
-        return file != NullVirtualFile.INSTANCE;
+        return file != NULL_VIRTUAL_FILE;
       }
     });
   }
 
   @NotNull
   private synchronized Collection<VirtualFile> getInDbChildren() {
-    if (myChildren instanceof VirtualFile[]) {
+    if (myChildren instanceof VirtualFileSystemEntry[]) {
       return Arrays.asList((VirtualFile[])myChildren);
     }
 
@@ -242,26 +243,26 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public synchronized VirtualFile[] getChildren() {
-    if (myChildren instanceof VirtualFile[]) {
-      return (VirtualFile[])myChildren;
+    if (myChildren instanceof VirtualFileSystemEntry[]) {
+      return (VirtualFileSystemEntry[])myChildren;
     }
 
     Pair<String[],int[]> pair = PersistentFS.listAll(this);
     final int[] childrenIds = pair.second;
-    VirtualFile[] children;
+    VirtualFileSystemEntry[] children;
     if (childrenIds.length == 0) {
       children = EMPTY_ARRAY;
     }
     else {
-      children = new VirtualFile[childrenIds.length];
+      children = new VirtualFileSystemEntry[childrenIds.length];
       String[] names = pair.first;
-      final Map<String, VirtualFile> map = asMap();
+      final Map<String, VirtualFileSystemEntry> map = asMap();
       for (int i = 0; i < children.length; i++) {
         final int childId = childrenIds[i];
         final String name = names[i];
-        VirtualFile child = map != null ? map.get(name) : null;
+        VirtualFileSystemEntry child = map != null ? map.get(name) : null;
 
-        children[i] = child != null && child != NullVirtualFile.INSTANCE ? child : createChild(name, childId);
+        children[i] = child != null && child != NULL_VIRTUAL_FILE ? child : createChild(name, childId);
       }
     }
 
@@ -273,7 +274,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  public NewVirtualFile findChild(@NotNull final String name) {
+  public VirtualFileSystemEntry findChild(@NotNull final String name) {
     return findChild(name, false, true);
   }
 
@@ -299,11 +300,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
     synchronized (this) {
-      final Map<String, VirtualFile> map = asMap();
+      final Map<String, VirtualFileSystemEntry> map = asMap();
       if (map != null) {
-        for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
+        for (Map.Entry<String, VirtualFileSystemEntry> entry : map.entrySet()) {
           VirtualFile file = entry.getValue();
-          if (file == NullVirtualFile.INSTANCE) continue;
+          if (file == NULL_VIRTUAL_FILE) continue;
           NewVirtualFile withId = (NewVirtualFile)file;
           if (withId.getId() == id) return withId;
         }
@@ -313,69 +314,67 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private VirtualFile[] asArray() {
-    if (myChildren instanceof VirtualFile[]) return (VirtualFile[])myChildren;
+  private VirtualFileSystemEntry[] asArray() {
+    if (myChildren instanceof VirtualFileSystemEntry[]) return (VirtualFileSystemEntry[])myChildren;
     return null;
   }
 
   @Nullable
-  private Map<String, VirtualFile> asMap() {
+  private Map<String, VirtualFileSystemEntry> asMap() {
     if (myChildren instanceof Map) {
       //noinspection unchecked
-      return (Map<String, VirtualFile>)myChildren;
+      return (Map<String, VirtualFileSystemEntry>)myChildren;
     }
     return null;
   }
 
   @NotNull
-  private Map<String, VirtualFile> ensureAsMap() {
-    Map<String, VirtualFile> map;
+  private Map<String, VirtualFileSystemEntry> ensureAsMap() {
+    Map<String, VirtualFileSystemEntry> map;
     if (myChildren == null) {
       map = createMap();
       myChildren = map;
     }
     else {
       //noinspection unchecked
-      map = (Map<String, VirtualFile>)myChildren;
+      map = (Map<String, VirtualFileSystemEntry>)myChildren;
     }
 
     return map;
   }
 
-  public synchronized void addChild(@NotNull VirtualFile file) {
-    final VirtualFile[] a = asArray();
+  public synchronized void addChild(@NotNull VirtualFileSystemEntry file) {
+    final VirtualFileSystemEntry[] a = asArray();
     if (a != null) {
       myChildren = ArrayUtil.append(a, file);
     }
     else {
-      final Map<String, VirtualFile> m = ensureAsMap();
-      m.put(file.getName(), file);
+      ensureAsMap().put(file.getName(), file);
     }
   }
 
   public synchronized void removeChild(@NotNull VirtualFile file) {
-    final VirtualFile[] a = asArray();
+    final VirtualFileSystemEntry[] a = asArray();
     if (a != null) {
       myChildren = ArrayUtil.remove(a, file);
     }
     else {
-      final Map<String, VirtualFile> m = ensureAsMap();
-      m.put(file.getName(), NullVirtualFile.INSTANCE);
+      ensureAsMap().put(file.getName(), NULL_VIRTUAL_FILE);
     }
   }
 
   public synchronized boolean allChildrenLoaded() {
-    return myChildren instanceof VirtualFile[];
+    return myChildren instanceof VirtualFileSystemEntry[];
   }
 
   @NotNull
   public synchronized List<String> getSuspiciousNames() {
-    final Map<String, VirtualFile> map = asMap();
+    final Map<String, VirtualFileSystemEntry> map = asMap();
     if (map == null) return Collections.emptyList();
 
     List<String> names = new ArrayList<String>();
-    for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
-      if (entry.getValue() == NullVirtualFile.INSTANCE) {
+    for (Map.Entry<String, VirtualFileSystemEntry> entry : map.entrySet()) {
+      if (entry.getValue() == NULL_VIRTUAL_FILE) {
         names.add(entry.getKey());
       }
     }
@@ -389,10 +388,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public synchronized Collection<VirtualFile> getCachedChildren() {
-    final Map<String, VirtualFile> map = asMap();
+    final Map<String, VirtualFileSystemEntry> map = asMap();
     if (map != null) {
       Set<VirtualFile> files = new THashSet<VirtualFile>(map.values());
-      files.remove(NullVirtualFile.INSTANCE);
+      files.remove(NULL_VIRTUAL_FILE);
       return files;
     }
 
@@ -403,10 +402,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  private Map<String, VirtualFile> createMap() {
+  private Map<String, VirtualFileSystemEntry> createMap() {
     return getFileSystem().isCaseSensitive()
-           ? new THashMap<String, VirtualFile>()
-           : new THashMap<String, VirtualFile>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+           ? new THashMap<String, VirtualFileSystemEntry>()
+           : new THashMap<String, VirtualFileSystemEntry>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   @TestOnly
