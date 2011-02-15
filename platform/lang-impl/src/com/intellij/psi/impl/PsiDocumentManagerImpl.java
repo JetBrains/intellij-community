@@ -155,7 +155,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   @Nullable
-  public FileViewProvider getCachedViewProvider(Document document) {
+  public FileViewProvider getCachedViewProvider(@NotNull Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
@@ -521,13 +521,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void beforeDocumentChange(DocumentEvent event) {
     final Document document = event.getDocument();
 
-    final FileViewProvider provider = getCachedViewProvider(document);
-    if (provider == null) return;
+    final FileViewProvider viewProvider = getCachedViewProvider(document);
+    if (viewProvider == null) return;
+    if (!isRelevant(viewProvider)) return;
 
-    VirtualFile virtualFile = provider.getVirtualFile();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
     if (virtualFile.getFileType().isBinary()) return;
 
-    final List<PsiFile> files = provider.getAllFiles();
+    final List<PsiFile> files = viewProvider.getAllFiles();
     boolean hasLockedBlocks = false;                                                      
     for (PsiFile file : files) {
       if (file == null) continue;
@@ -556,7 +557,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     if (!hasLockedBlocks) {
-      ((SingleRootFileViewProvider)provider).beforeDocumentChanged();
+      ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged();
     }
   }
 
@@ -564,9 +565,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final Document document = event.getDocument();
     final FileViewProvider viewProvider = getCachedViewProvider(document);
     if (viewProvider == null) return;
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    if (virtualFile.getFileType().isBinary()) return;
-    if (viewProvider.getManager() != myPsiManager) return;
+    if (!isRelevant(viewProvider)) return;
 
     final List<PsiFile> files = viewProvider.getAllFiles();
     boolean commitNecessary = false;
@@ -595,6 +594,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
       commitDocument(document);
     }
+  }
+
+  private boolean isRelevant(FileViewProvider viewProvider) {
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed();
   }
 
   public TextBlock getTextBlock(Document document, PsiFile file) {
