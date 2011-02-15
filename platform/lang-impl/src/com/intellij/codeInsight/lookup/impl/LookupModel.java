@@ -61,9 +61,10 @@ public class LookupModel {
 
   public void addItem(LookupElement item) {
     synchronized (lock) {
-      myItems.add(item);
-      mySortedItems.add(item);
       myRelevanceClassifier.addElement(item);
+      mySortedItems.add(item); // ProcessCanceledException may occur in these two lines, then this element is considered not added
+
+      myItems.add(item);
     }
   }
 

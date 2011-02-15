@@ -47,7 +47,9 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
       final Comparable weight = myWeights.get(t);
-      assert weight != null : myName + "; " + myWeights.containsKey(t);
+      if (weight == null) {
+        throw new AssertionError(myName + "; " + myWeights.containsKey(t));
+      }
       List<T> list = map.get(weight);
       if (list == null) {
         map.put(weight, list = new SmartList<T>());
