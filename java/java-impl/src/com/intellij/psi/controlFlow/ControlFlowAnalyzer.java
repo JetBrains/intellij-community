@@ -1009,9 +1009,22 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
       final PsiType type = catchBlockParameters[i].getType();
       // todo cast param
-      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type) ||
-          type instanceof PsiDisjunctionType && ExceptionUtil.isUncheckedExceptionOrSuperclass(((PsiDisjunctionType)type).getLeastUpperBound())) {
+      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
         myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
+      }
+      else if (type instanceof PsiDisjunctionType) {
+        final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
+        if (lub instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)lub)) {
+          myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
+        }
+        else if (lub instanceof PsiIntersectionType) {
+          for (PsiType conjunct : ((PsiIntersectionType)lub).getConjuncts()) {
+            if (conjunct instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)conjunct)) {
+              myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
+              break;
+            }
+          }
+        }
       }
     }
 
