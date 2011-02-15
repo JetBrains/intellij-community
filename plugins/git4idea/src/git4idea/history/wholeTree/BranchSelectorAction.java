@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -20,6 +21,7 @@ import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.history.browser.SymbolicRefs;
 
+import java.awt.*;
 import java.util.TreeSet;
 
 /**
@@ -30,7 +32,7 @@ public class BranchSelectorAction extends BasePopupAction {
   private final Consumer<String> myConsumer;
 
   public BranchSelectorAction(final Project project, Consumer<String> consumer) {
-    super(project, "Branch:");
+    super(project, "Branch:", "Branch");
     myConsumer = consumer;
     myLabel.setText(getText("All"));
   }
@@ -53,18 +55,17 @@ public class BranchSelectorAction extends BasePopupAction {
     mySymbolicRefs = symbolicRefs;
   }
 
-  protected DefaultActionGroup createActionGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-
-    group.add(new SelectBranchAction("All", null));
+  @Override
+  protected void createActions(Consumer<AnAction> actionConsumer) {
+    actionConsumer.consume(new SelectBranchAction("All", null));
     final GitBranch current = mySymbolicRefs.getCurrent();
     if (current != null) {
-      group.add(new SelectBranchAction("*" + minusRefs(current.getFullName()), current.getFullName()));
+      actionConsumer.consume(new SelectBranchAction("*" + minusRefs(current.getFullName()), current.getFullName()));
     }
     final TreeSet<String> locals = mySymbolicRefs.getLocalBranches();
     if (locals != null && (! locals.isEmpty())) {
       final DefaultActionGroup local = new DefaultActionGroup("Local", true);
-      group.add(local);
+      actionConsumer.consume(local);
       for (String s : locals) {
         final String presentation = s.equals(current.getName()) ? ("*" + s) : s;
         local.add(new SelectBranchAction(presentation, s));
@@ -73,13 +74,12 @@ public class BranchSelectorAction extends BasePopupAction {
     final TreeSet<String> remotes = mySymbolicRefs.getRemoteBranches();
     if (remotes != null && (! remotes.isEmpty())) {
       final DefaultActionGroup remote = new DefaultActionGroup("Remote", true);
-      group.add(remote);
+      actionConsumer.consume(remote);
       for (String s : remotes) {
         final String presentation = s.equals(current.getName()) ? ("*" + s) : s;
         remote.add(new SelectBranchAction(presentation, GitBranch.REFS_REMOTES_PREFIX + s));
       }
     }
-    return group;
   }
 
   @Override
