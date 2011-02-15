@@ -104,13 +104,12 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, PsiElement roof) {
-    if (elt == null) return null; // can't find anyway.
+    if (elt == null || !elt.isValid()) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
-      if (!seeker.isValid()) return null;
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
         seeker = getPrevNodeOf(PsiTreeUtil.getDeepestLast(seeker), processor);
