@@ -32,7 +32,7 @@ def loadSource(fileName):
   settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
   if settings_file and moduleName=="models":
     baseName = os.path.realpath(fileName)
-    moduleName = ".".join(baseName.split('/')[-2:])[:-3]
+    moduleName = ".".join((baseName.split(os.sep)[-2], "models"))
 
   if moduleName in modules: # add unique number to prevent name collisions
     cnt = 2
