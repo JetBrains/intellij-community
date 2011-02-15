@@ -55,7 +55,8 @@ public class StatisticsConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     final UsageStatisticsPersistenceComponent persistenceComponent = UsageStatisticsPersistenceComponent.getInstance();
     return myConfig.isAllowed() != persistenceComponent.isAllowed() ||
-           myConfig.getPeriod() != persistenceComponent.getPeriod();
+           myConfig.getPeriod() != persistenceComponent.getPeriod() ||
+           persistenceComponent.isShowNotification();
   }
 
   public void apply() throws ConfigurationException {
@@ -63,6 +64,7 @@ public class StatisticsConfigurable implements SearchableConfigurable {
 
     persistenceComponent.setPeriod(myConfig.getPeriod());
     persistenceComponent.setAllowed(myConfig.isAllowed());
+    persistenceComponent.setShowNotification(false);
   }
 
   public void reset() {
