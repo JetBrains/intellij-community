@@ -4,13 +4,12 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 /**
  * PSI element that (re)defnies names in following namespace, e.g. as assignment statement does.
- * User: dcheryasov
- * Date: Jul 3, 2008
+ *
+ * NOTE: When declaring additional elements as name definers, please also adjust the PyResolveUtil.NAME_DEFINERS token set
+ *
+ * @author dcheryasov
  */
 public interface NameDefiner extends PsiElement {
   /**

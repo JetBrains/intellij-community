@@ -6,17 +6,18 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.django.util.PythonDataflowUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -347,11 +348,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private static final Condition<PsiElement> IS_STAR_IMPORT = new Condition<PsiElement>() {
-    public boolean value(PsiElement psiElement) {
-      return psiElement instanceof PyStarImportElement;
-    }
-  };
+  private static final TokenSet IS_STAR_IMPORT = TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT);
 
   @NotNull
   public Object[] getVariants() {
