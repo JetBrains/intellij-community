@@ -237,7 +237,7 @@ public class FormatterUtil {
   }
 
   public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
-    LeafElement lastWS = TreeUtil.findLastLeaf(astNode);
+    ASTNode lastWS = TreeUtil.findLastLeaf(astNode);
     if (lastWS.getElementType() != TokenType.WHITE_SPACE) {
       lastWS = null;
     }

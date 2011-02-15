@@ -227,7 +227,7 @@ public class CodeEditUtil {
   @Nullable
   private static ASTNode findLastLeaf(ASTNode first, ASTNode last) {
     do{
-      final LeafElement leaf = TreeUtil.findLastLeaf(last);
+      final ASTNode leaf = TreeUtil.findLastLeaf(last);
       if(leaf != null) return leaf;
       last = last.getTreePrev();
       if (last == null) return null;
