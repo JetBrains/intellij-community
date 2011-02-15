@@ -156,6 +156,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private Runnable myContinuation;
 
+  private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
+
   public Runnable getContinuation() {
     return myContinuation;
   }
@@ -174,7 +176,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   public LivePreview(Project project) {
     myProject = project;
-//    updateEditorReference();
+  }
+
+  public LivePreview(Project project, int delay) {
+    this(project);
+    myUserActivityDelay = delay;
   }
 
   public Delegate getDelegate() {
@@ -223,7 +229,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         public void run() {
           updateInBackground();
         }
-      }, USER_ACTIVITY_TRIGGERING_DELAY);
+      }, myUserActivityDelay);
     }
   }
 

@@ -166,7 +166,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     myProject = project;
     myEditor = editor;
 
-    myLivePreview = new LivePreview(myEditor.getProject());
+    myLivePreview = new LivePreview(myEditor.getProject(), 0);
     myLivePreview.addCursorListener(this);
     myLivePreview.setDelegate(myLivePreviewController);
 
@@ -378,7 +378,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     replacement.add(myPreserveCase);
     for (Component comp : replacement.getComponents()) {
       if (comp instanceof JComponent) {
-        setSmallerFont((JComponent)comp);
+        setSmallerFontAndOpaque((JComponent)comp);
       }
     }
   }
