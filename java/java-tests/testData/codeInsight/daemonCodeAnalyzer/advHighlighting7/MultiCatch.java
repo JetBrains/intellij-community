@@ -1,6 +1,6 @@
 abstract class C {
   private static class NE { }
-  private static class E extends Exception { }
+  private static class E extends Exception { public String s; }
   private static class E1 extends E { }
   private static class E2 extends E { }
   private static class E3 extends E { }
@@ -14,7 +14,7 @@ abstract class C {
 
   void m() {
     try { f(); } catch (E1 | E2 e) { }
-    try { f(); } catch (E2 | E e) { e.printStackTrace(); }
+    try { f(); } catch (E2 | E e) { e.printStackTrace(); System.out.println(e.s); }
     try { f(); } catch (E2 | E1 e) { } catch (E e) { } catch (RE e) { }
     try { f(); } catch (E1 | E e) { E ee = e; }
     try { g(); } catch (IE1 | IE2 e) { E ee = e; I ii = e; }

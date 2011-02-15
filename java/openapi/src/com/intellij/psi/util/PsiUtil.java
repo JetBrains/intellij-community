@@ -98,6 +98,12 @@ public final class PsiUtil extends PsiUtilBase {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
+    if (type instanceof PsiDisjunctionType) {
+      final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
+      if (lub instanceof PsiClassType) {
+        return ((PsiClassType)lub).resolveGenerics();
+      }
+    }
     if (type == null && expression instanceof PsiReferenceExpression) {
       JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
       if (resolveResult.getElement() instanceof PsiClass) {
@@ -387,6 +393,12 @@ public final class PsiUtil extends PsiUtilBase {
     }
     if (type instanceof PsiArrayType) {
       return resolveGenericsClassInType(((PsiArrayType) type).getComponentType());
+    }
+    if (type instanceof PsiDisjunctionType) {
+      final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
+      if (lub instanceof PsiClassType) {
+        return ((PsiClassType)lub).resolveGenerics();
+      }
     }
     return PsiClassType.ClassResolveResult.EMPTY;
   }
