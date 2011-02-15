@@ -53,6 +53,8 @@ public class SystemInfo {
   public static final boolean is64Bit = !is32Bit;
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
+  public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
+
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
    *
