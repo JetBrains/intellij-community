@@ -59,6 +59,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    */
   public abstract void refreshIoFiles(Iterable<File> files);
 
+  public abstract void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+
   /**
    * Performs a nonrecursive synchronous refresh of specified files
    * @param files files to refresh
@@ -66,6 +68,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    */
   public abstract void refreshFiles(Iterable<VirtualFile> files);
 
+  public abstract void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
   public abstract long physicalLength(final VirtualFile virtualFile) throws IOException;

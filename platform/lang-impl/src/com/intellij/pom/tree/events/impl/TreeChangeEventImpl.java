@@ -186,14 +186,16 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   private void insertAtList(ASTNode node){
-    final int[] nodeRoute = getRoute(node);
-    int index = 0;
-    while(index < myChangedInOrder.size()){
-      final ASTNode current = myChangedInOrder.get(index++);
-      final int[] route = getRoute(current);
-      if(compareRouts(nodeRoute, route) < 0) {
-        myChangedInOrder.add(index, node);
-        return;
+    if (!myChangedInOrder.isEmpty()) {
+      final int[] nodeRoute = getRoute(node);
+      int index = 0;
+      while(index < myChangedInOrder.size()){
+        final ASTNode current = myChangedInOrder.get(index++);
+        final int[] route = getRoute(current);
+        if(compareRouts(nodeRoute, route) < 0) {
+          myChangedInOrder.add(index, node);
+          return;
+        }
       }
     }
     myChangedInOrder.add(node);

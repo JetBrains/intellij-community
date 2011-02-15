@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -89,44 +90,41 @@ public class ShutDownTracker implements Runnable {
     }
   }
 
-  private synchronized boolean isRegistered(Thread thread) {
+  private synchronized boolean isRegistered(@NotNull Thread thread) {
     return myThreads.contains(thread);
   }
 
+  @NotNull
   private synchronized Thread[] getStopperThreads() {
     return myThreads.toArray(new Thread[myThreads.size()]);
   }
 
-  public synchronized void registerStopperThread(Thread thread) {
+  public synchronized void registerStopperThread(@NotNull Thread thread) {
     myThreads.add(thread);
   }
 
-  public synchronized void unregisterStopperThread(Thread thread) {
+  public synchronized void unregisterStopperThread(@NotNull Thread thread) {
     myThreads.remove(thread);
   }
 
-  public synchronized void registerShutdownThread(final Thread thread) {
+  public synchronized void registerShutdownThread(@NotNull Thread thread) {
     myShutdownThreads.addLast(thread);
   }
 
-  public synchronized void registerShutdownThread(int index, final Thread thread) {
+  public synchronized void registerShutdownThread(int index, @NotNull Thread thread) {
     myShutdownThreads.add(index, thread);
   }
 
-  public synchronized void registerShutdownTask(Runnable task) {
+  public synchronized void registerShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.addLast(task);
   }
 
-  public synchronized void unregisterShutdownTask(Runnable task) {
+  public synchronized void unregisterShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.remove(task);
   }
   
   @Nullable
   private synchronized <T> T removeLast(LinkedList<T> list) {
     return list.isEmpty()? null : list.removeLast();
-  }
-
-  private synchronized <T> boolean isEmpty(LinkedList<T> list) {
-    return list.isEmpty();
   }
 }

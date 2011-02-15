@@ -20,6 +20,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +33,18 @@ public class MessageListenerList<T> {
   private final Topic<T> myTopic;
   private final Map<T, MessageBusConnection> myListenerToConnectionMap = new HashMap<T, MessageBusConnection>();
 
-  public MessageListenerList(MessageBus messageBus, Topic<T> topic) {
+  public MessageListenerList(@NotNull MessageBus messageBus, @NotNull Topic<T> topic) {
     myTopic = topic;
     myMessageBus = messageBus;
   }
 
-  public void add(T listener) {
+  public void add(@NotNull T listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(myTopic, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
-  public void add(final T listener, Disposable parentDisposable) {
+  public void add(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
@@ -54,7 +55,7 @@ public class MessageListenerList<T> {
     myListenerToConnectionMap.put(listener, connection);
   }
 
-  public void remove(T listener) {
+  public void remove(@NotNull T listener) {
     final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
     if (connection != null) {
       connection.disconnect();

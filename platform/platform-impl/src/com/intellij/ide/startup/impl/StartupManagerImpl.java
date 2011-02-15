@@ -151,7 +151,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
     }
 
-    if (SystemInfo.isMac && SystemInfo.is64Bit && "10.6".compareTo(SystemInfo.OS_VERSION) <= 0) {
+    if (SystemInfo.isMac && SystemInfo.isMacIntel64 && "10.6".compareTo(SystemInfo.OS_VERSION) <= 0) {
       if (Registry.is("ide.firstStartup")) {
         String productName = ApplicationNamesInfo.getInstance().getProductName();
         Notification n =
@@ -164,9 +164,10 @@ public class StartupManagerImpl extends StartupManagerEx {
             }
           });
         Notifications.Bus.notify(n, NotificationDisplayType.STICKY_BALLOON, null);
-        Registry.get("ide.firstStartup").setValue(false);
       }
     }
+
+    Registry.get("ide.firstStartup").setValue(false);
   }
 
   private void startCacheUpdate() {
