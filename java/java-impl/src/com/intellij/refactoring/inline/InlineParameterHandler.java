@@ -108,35 +108,35 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         return true;
       }
     });
-    if (occurrences.isEmpty()) {
-      final int offset = editor.getCaretModel().getOffset();
-      final PsiElement refExpr = psiElement.getContainingFile().findElementAt(offset);
-      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
-      if (codeBlock != null) {
-        final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, psiParameter, refExpr);
-        if (defs.length == 1) {
-          final PsiElement def = defs[0];
-          if (def instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)def)) {
-            final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
-            if (rExpr != null) {
-              final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, refExpr);
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement refExpr = psiElement.getContainingFile().findElementAt(offset);
+    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
+    if (codeBlock != null) {
+      final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, psiParameter, refExpr);
+      if (defs.length == 1) {
+        final PsiElement def = defs[0];
+        if (def instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)def)) {
+          final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
+          if (rExpr != null) {
+            final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, refExpr);
 
-              if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs) == null) {
-                new WriteCommandAction(project) {
-                  @Override
-                  protected void run(Result result) throws Throwable {
-                    for (final PsiElement ref : refs) {
-                      InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
-                    }
-                    def.getParent().delete();
+            if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs) == null) {
+              new WriteCommandAction(project) {
+                @Override
+                protected void run(Result result) throws Throwable {
+                  for (final PsiElement ref : refs) {
+                    InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
                   }
-                }.execute();
-                return;
-              }
+                  def.getParent().delete();
+                }
+              }.execute();
+              return;
             }
           }
         }
       }
+    }
+    if (occurrences.isEmpty()) {
       CommonRefactoringUtil
         .showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
@@ -180,6 +180,14 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     if (!isNotConstantAccessible.isNull() && isNotConstantAccessible.get()) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Constant initializer is not accessible in method body", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
+    }
+
+    for (PsiReference psiReference : ReferencesSearch.search(psiParameter)) {
+      final PsiElement element = psiReference.getElement();
+      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        CommonRefactoringUtil.showErrorHint(project, editor, "Inline parameter which has write usages is not supported", RefactoringBundle.message("inline.parameter.refactoring"), null);
+        return;
+      }
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
