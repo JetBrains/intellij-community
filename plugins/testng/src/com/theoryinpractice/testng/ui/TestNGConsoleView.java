@@ -26,6 +26,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -46,6 +47,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   private final TestNGConfiguration myConfiguration;
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
+  private final TreeRootNode myUnboundOutput;
 
   public TestNGConsoleView(TestNGConfiguration config,
                            final RunnerSettings runnerSettings,
@@ -56,11 +58,16 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     myConfiguration = config;
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+    myUnboundOutput = unboundOutputRoot;
   }
 
   protected TestResultsPanel createTestResultsPanel() {
     testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this, myRunnerSettings, myConfigurationPerRunnerSettings);
     return testNGResults;
+  }
+
+  public TreeRootNode getUnboundOutput() {
+    return myUnboundOutput;
   }
 
   @Override
