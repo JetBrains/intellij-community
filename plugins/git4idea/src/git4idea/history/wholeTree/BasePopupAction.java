@@ -24,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.tools.SimpleActionGroup;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,8 +42,9 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
   protected final JLabel myLabel;
   protected final JPanel myPanel;
   protected final Project myProject;
+  protected DefaultActionGroup myAsTextAction;
 
-  public BasePopupAction(final Project project, final String labeltext) {
+  public BasePopupAction(final Project project, final String labeltext, final String asTextLabel) {
     myProject = project;
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
@@ -78,6 +81,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
       }
     };
     myPanel.addMouseListener(mouseAdapter);
+    myAsTextAction = new DefaultActionGroup(asTextLabel, true);
   }
 
   protected void doAction(MouseEvent e) {
@@ -101,7 +105,18 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
     }
   }
 
-  protected abstract DefaultActionGroup createActionGroup();
+  protected DefaultActionGroup createActionGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    createActions(new Consumer<AnAction>() {
+      @Override
+      public void consume(AnAction anAction) {
+        group.add(anAction);
+      }
+    });
+    return group;
+  }
+
+  protected abstract void createActions(final Consumer<AnAction> actionConsumer);
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -110,5 +125,16 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     return myPanel;
+  }
+
+  public AnAction asTextAction() {
+    myAsTextAction.removeAll();
+    createActions(new Consumer<AnAction>() {
+      @Override
+      public void consume(AnAction anAction) {
+        myAsTextAction.add(anAction);
+      }
+    });
+    return myAsTextAction;
   }
 }

@@ -192,7 +192,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 
+  @Override
   public void refreshIoFiles(Iterable<File> files) {
+    refreshIoFiles(files, false, false, null);
+  }
+
+  public void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     Application app = ApplicationManager.getApplication();
@@ -209,7 +214,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
 
-      RefreshQueue.getInstance().refresh(false, false, null, VfsUtil.toVirtualFileArray(filesToRefresh));
+      RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(filesToRefresh));
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
@@ -217,16 +222,16 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
-    refreshFiles(files, false, false);
+    refreshFiles(files, false, false, null);
   }
 
-  protected static void refreshFiles(final Iterable<VirtualFile> files, final boolean recursive, final boolean async) {
+  public void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     List<VirtualFile> list = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       list.add(file);
     }
 
-    RefreshQueue.getInstance().refresh(async, recursive, null, VfsUtil.toVirtualFileArray(list));
+    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(list));
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {

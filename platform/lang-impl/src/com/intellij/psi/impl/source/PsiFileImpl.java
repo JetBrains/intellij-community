@@ -619,20 +619,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      setStubTree(stubHolder);
-
-      return derefStub();
-    }
-  }
-
-  public void setStubTree(StubTree stubHolder) {
-    synchronized (myStubLock) {
-      assert getTreeElementNoLock() == null;
       myStub = new SoftReference<StubTree>(stubHolder);
       StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
       base.setPsi(this);
-
       base.putUserData(STUB_TREE_IN_PARSED_TREE, stubHolder); // This will prevent soft reference myStub to be collected before all of the stubs are collected.
+      return stubHolder;
     }
   }
 
@@ -890,7 +881,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final FileElement fileElement = calcTreeElement();
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
       if (tree == null) {
-        final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
+        IElementType contentElementType = getContentElementType();
+        if (!(contentElementType instanceof IStubFileElementType)) {
+          LOG.error("ContentElementType: "+contentElementType+"; file: "+this);
+        }
+        final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
         tree = new StubTree((PsiFileStub)currentStubTree);
         bindFakeStubsToTree(tree);
         fileElement.putUserData(STUB_TREE_IN_PARSED_TREE, tree);

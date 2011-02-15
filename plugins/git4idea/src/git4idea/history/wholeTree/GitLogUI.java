@@ -18,6 +18,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -38,10 +39,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
@@ -60,6 +58,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -71,6 +70,7 @@ public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new Color(255,128,0));
+  public static final String GIT_LOG_TABLE_PLACE = "git log table";
   private final Project myProject;
   private BigTableTableModel myTableModel;
   private DetailsCache myDetailsCache;
@@ -96,13 +96,15 @@ public class GitLogUI implements Disposable {
   private BranchSelectorAction myBranchSelectorAction;
   private MySpecificDetails myDetails;
   private final DescriptionRenderer myDescriptionRenderer;
-  private FilterAction myFilterAction;
   private final Speedometer mySelectionSpeedometer;
 
   private StepType myState;
   private MoreAction myMoreAction;
   private UsersFilterAction myUsersFilterAction;
   private MyFilterUi myUserFilterI;
+  private MyCherryPick myCherryPickAction;
+  private MyRefreshAction myRefreshAction;
+  private AnAction myCopyHashAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -438,40 +440,7 @@ public class GitLogUI implements Disposable {
   }
 
   private JPanel createMainTable() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    myBranchSelectorAction = new BranchSelectorAction(myProject, new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        mySelectedBranch = s;
-        reloadRequest();
-      }
-    });
-    myUserFilterI = new MyFilterUi(new Runnable() {
-      @Override
-      public void run() {
-        reloadRequest();
-      }
-    });
-    myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
-    myFilterAction = new FilterAction(myProject);
-    group.add(new MyTextFieldAction());
-    group.add(myBranchSelectorAction);
-    group.add(myUsersFilterAction);
-    // first create filters...
-    //group.add(myFilterAction);
-    group.add(new MyCherryPick());
-    group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
-    group.add(new MyRefreshAction());
-    myMoreAction = new MoreAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myMediator.continueLoading();
-        myState = StepType.CONTINUE;
-        updateMoreVisibility();
-      }
-    };
-    group.add(myMoreAction);
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Git log", group, true);
+    final ActionToolbar actionToolbar = createToolbar();
 
     myJBTable = new JBTable(myTableModel) {
       @Override
@@ -494,17 +463,16 @@ public class GitLogUI implements Disposable {
     };
     tableLinkListener.install(myJBTable);
     myJBTable.getExpandableItemsHandler().setEnabled(false);
-    //myJBTable.setTableHeader(null);
     myJBTable.setShowGrid(false);
     myJBTable.setModel(myTableModel);
+    myJBTable.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        createContextMenu().getComponent().show(comp,x,y);
+      }
+    });
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
-    /*final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.add(scrollPane, BorderLayout.CENTER);
-    JPanel buttonPanel = new JPanel(new GridBagLayout());
-    buttonPanel
-    buttonPanel.add(myMoreButton);
-    jPanel.add(buttonPanel, BorderLayout.SOUTH);*/
 
     new AdjustComponentWhenShown() {
       @Override
@@ -544,6 +512,84 @@ public class GitLogUI implements Disposable {
     return splitter;
   }
 
+  private ActionPopupMenu createContextMenu() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(myCopyHashAction);
+    final Point location = MouseInfo.getPointerInfo().getLocation();
+    SwingUtilities.convertPointFromScreen(location, myJBTable);
+    final int row = myJBTable.rowAtPoint(location);
+    if (row >= 0) {
+      final GitCommit commit = getCommitAtRow(row);
+      if (commit != null) {
+        myUsersFilterAction.setPreselectedUser(commit.getCommitter());
+      }
+    }
+    group.add(myBranchSelectorAction.asTextAction());
+    group.add(myUsersFilterAction.asTextAction());
+    group.add(myCherryPickAction);
+    group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+    group.add(myRefreshAction);
+    return ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
+  }
+
+  private ActionToolbar createToolbar() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    myBranchSelectorAction = new BranchSelectorAction(myProject, new Consumer<String>() {
+      @Override
+      public void consume(String s) {
+        mySelectedBranch = s;
+        reloadRequest();
+      }
+    });
+    myUserFilterI = new MyFilterUi(new Runnable() {
+      @Override
+      public void run() {
+        reloadRequest();
+      }
+    });
+    myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
+    group.add(new MyTextFieldAction());
+    group.add(myBranchSelectorAction);
+    group.add(myUsersFilterAction);
+    myCherryPickAction = new MyCherryPick();
+    group.add(myCherryPickAction);
+    group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
+    myRefreshAction = new MyRefreshAction();
+    group.add(myRefreshAction);
+    myMoreAction = new MoreAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myMediator.continueLoading();
+        myState = StepType.CONTINUE;
+        updateMoreVisibility();
+      }
+    };
+    group.add(myMoreAction);
+    // just created here
+    myCopyHashAction = new AnAction("Copy Hash") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int[] selectedRows = myJBTable.getSelectedRows();
+        final StringBuilder sb = new StringBuilder();
+        for (int row : selectedRows) {
+          final CommitI commitAt = myTableModel.getCommitAt(row);
+          if (commitAt == null) continue;
+          if (sb.length() > 0) {
+            sb.append(' ');
+          }
+          sb.append(commitAt.getHash().getString());
+        }
+        CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(myJBTable.getSelectedRowCount() > 0);
+      }
+    };
+    return ActionManager.getInstance().createActionToolbar("Git log", group, true);
+  }
+
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
     private DataProviderPanel(LayoutManager layout) {
       super(layout);
@@ -556,9 +602,7 @@ public class GitLogUI implements Disposable {
         if (rows.length != 1) return;
         final List<Change> changes = new ArrayList<Change>();
         for (int row : rows) {
-          final CommitI commitAt = myTableModel.getCommitAt(row);
-          if (commitAt == null) return;
-          final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+          final GitCommit gitCommit = getCommitAtRow(row);
           if (gitCommit == null) return;
           changes.addAll(gitCommit.getChanges());
         }
@@ -573,6 +617,15 @@ public class GitLogUI implements Disposable {
         sink.put(key, gitCommit.getDescription());
       }
     }
+  }
+
+  @Nullable
+  private GitCommit getCommitAtRow(int row) {
+    final CommitI commitAt = myTableModel.getCommitAt(row);
+    if (commitAt == null) return null;
+    final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+    if (gitCommit == null) return null;
+    return gitCommit;
   }
 
   private boolean adjustColumnSizes(JScrollPane scrollPane) {
