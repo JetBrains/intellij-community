@@ -29,15 +29,12 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
@@ -105,6 +102,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     return myCursor;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
   public interface CursorListener {
     void cursorMoved();
   }
@@ -131,6 +136,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     void performReplaceAll(Editor e);
 
     void getFocusBack();
+
+    Editor getEditor(Ref<Boolean> needToUpdate);
   }
 
   private static final int USER_ACTIVITY_TRIGGERING_DELAY = 300;
@@ -167,7 +174,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   public LivePreview(Project project) {
     myProject = project;
-    updateEditorReference();
+//    updateEditorReference();
   }
 
   public Delegate getDelegate() {
@@ -179,49 +186,27 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   @Nullable
-  public Editor updateEditorReference() {
+  private Editor updateEditorReference() {
     if (myProject == null) return null;
-    FileEditorManagerEx instanceEx = FileEditorManagerEx.getInstanceEx(myProject);
-    if (instanceEx != null) {
-      VirtualFile currentFile = instanceEx.getCurrentFile();
-      if (currentFile != null) {
-        FileEditor[] editors = instanceEx.getEditors(currentFile);
-        if (editors.length > 0) {
-          FileEditor fileEditor = editors[0];
-          boolean focusedFound = false;
-          for (FileEditor e : editors) {
-            if (e instanceof TextEditor && ((TextEditor)e).getEditor().getContentComponent().hasFocus()) {
-              fileEditor = e;
-              focusedFound = true;
-            }
-          }
-          boolean needToUpdate = true;
-          if (!focusedFound) {
-            for (FileEditor e : editors) {
-              if (e instanceof TextEditor && ((TextEditor)e).getEditor() == myEditor) {
-                needToUpdate = false;
-              }
-            }
-          }
-          if (needToUpdate && fileEditor instanceof TextEditor) {
-            Editor editor1 = ((TextEditor) fileEditor).getEditor();
-            if (editor1 != myEditor) {
-              doInternalCleanUp();
-            }
-            if (myEditor != null) {
-              myEditor.getDocument().removeDocumentListener(this);
-            }
-            myEditor = editor1;
-            myEditor.getDocument().addDocumentListener(this);
-          }
-        } else {
-          myEditor = null;
-        }
-      } else {
-        myEditor = null;
-      }
+    Ref<Boolean> needToUpdate = new Ref<Boolean>();
+    Editor result = myDelegate.getEditor(needToUpdate);
+    if (!needToUpdate.isNull() && needToUpdate.get()) {
+      setEditor(result);
     }
     return myEditor;
+  }
+
+  private void setEditor(Editor editor) {
+    if (editor != myEditor) {
+      doInternalCleanUp();
+    }
+    if (myEditor != null) {
+      myEditor.getDocument().removeDocumentListener(this);
+    }
+    myEditor = editor;
+    if (myEditor != null) {
+      myEditor.getDocument().addDocumentListener(this);
+    }
   }
 
   @Override

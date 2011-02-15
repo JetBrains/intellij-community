@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,6 +105,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
       mySearchField.requestFocus();
     }
 
+    @Override
+    public Editor getEditor(Ref<Boolean> needToUpdate) {
+      needToUpdate.set(true);
+      return myEditor;
+    }
+
     public void notFound() {
       setNotFoundBackground();
     }
@@ -136,11 +143,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
     myIsReplace = isReplace;
 
+
     GRADIENT_C1 = getBackground();
     GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18), Math.max(0, GRADIENT_C1.getBlue() - 0x18));
-    
+
     myProject = project;
     myEditor = editor;
+
+    myLivePreview = new LivePreview(myEditor.getProject());
+    myLivePreview.addCursorListener(this);
+    myLivePreview.setDelegate(myLivePreviewController);
 
     JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
@@ -306,9 +318,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
 
-    myLivePreview = new LivePreview(myEditor.getProject());
-    myLivePreview.addCursorListener(this);
-    myLivePreview.setDelegate(myLivePreviewController);
+
   }
 
   private void configureReplacementPane() {
@@ -551,7 +561,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
       setRegularBackground();
       myMatchInfoLabel.setText("");
       myClickToHighlightLabel.setVisible(false);
-      myLivePreview.cleanUp();
+      if (myLivePreview != null) {
+        myLivePreview.cleanUp();
+      }
     }
     else {
       final FindModel model = new FindModel();
