@@ -4,13 +4,14 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.run.PythonProcessHandler;
 
 import java.nio.charset.Charset;
 
 /**
  * @author oleg
  */
-public class PyConsoleProcessHandler extends ColoredProcessHandler {
+public class PyConsoleProcessHandler extends PythonProcessHandler {
   private final LanguageConsoleImpl myLanguageConsole;
 
   public PyConsoleProcessHandler(final Process process,
