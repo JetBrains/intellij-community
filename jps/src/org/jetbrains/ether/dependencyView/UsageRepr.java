@@ -34,16 +34,25 @@ public class UsageRepr {
     }
 
     public static abstract class Usage implements RW.Writable {
+        public abstract StringCache.S getOwner ();
+    }
+
+    public static abstract class FMUsage extends Usage {
         public final StringCache.S name;
         public final StringCache.S owner;
 
-        private Usage(final String n, final String o) {
+        @Override
+        public StringCache.S getOwner () {
+            return owner;
+        }
+
+        private FMUsage(final String n, final String o) {
             name = StringCache.get(n);
             owner = StringCache.get(o);
         }
     }
 
-    public static class FieldUsage extends Usage {
+    public static class FieldUsage extends FMUsage {
         public final TypeRepr.AbstractType type;
 
         private FieldUsage (final String n, final String o, final String d) {
@@ -86,7 +95,7 @@ public class UsageRepr {
         }
     }
 
-    public static class MethodUsage extends Usage {
+    public static class MethodUsage extends FMUsage {
         public final TypeRepr.AbstractType[] argumentTypes;
         public final TypeRepr.AbstractType returnType;
 
@@ -133,6 +142,50 @@ public class UsageRepr {
             return result * 31 + (owner != null ? owner.hashCode() : 0);
         }
     }
+
+    public static class ClassUsage extends Usage {
+        final StringCache.S className;
+
+        @Override
+        public StringCache.S getOwner() {
+            return className;
+        }
+
+        private ClassUsage (final String n) {
+            className = StringCache.get (n);
+        }
+
+        private ClassUsage (final StringCache.S n) {
+            className = n;
+        }
+
+        private ClassUsage (final BufferedReader r) {
+            className = StringCache.get (RW.readString(r));
+        }
+
+        public void write(BufferedWriter w) {
+            RW.writeln (w, "classUsage");
+            RW.writeln (w, className.value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ClassUsage that = (ClassUsage) o;
+
+            if (className != null ? !className.equals(that.className) : that.className != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return className != null ? className.hashCode() : 0;
+        }
+    }
+
     public static Usage createFieldUsage(final String name, final String owner, final String descr) {
         return getUsage(new FieldUsage(name, owner, descr));
     }
@@ -141,11 +194,22 @@ public class UsageRepr {
         return getUsage(new MethodUsage(name, owner, descr));
     }
 
+    public static Usage createClassUsage(final String name) {
+        return getUsage(new ClassUsage (name));
+    }
+
+    public static Usage createClassUsage(final StringCache.S name) {
+        return getUsage(new ClassUsage (name));
+    }
+
     public static RW.Reader<Usage> reader = new RW.Reader<Usage>() {
         public Usage read(final BufferedReader r) {
             final String tag = RW.readString(r);
 
-            if (tag.equals("fieldUsage")) {
+            if (tag.equals("classUsage")) {
+                return getUsage(new ClassUsage (r));
+            }
+            else if (tag.equals("fieldUsage")) {
                 return getUsage(new FieldUsage(r));
             }
 

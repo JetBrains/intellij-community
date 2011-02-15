@@ -5,6 +5,7 @@ import org.jetbrains.ether.RW;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,23 +17,39 @@ import java.util.ArrayList;
 public class ClassRepr implements RW.Writable {
     private FieldRepr[] dummyFields = new FieldRepr[0];
     private MethodRepr[] dummyMethods = new MethodRepr[0];
-    private String[] dummyStrings = new String[0];
+    private TypeRepr.AbstractType[] dummyTypes = new TypeRepr.AbstractType[0];
 
     public final StringCache.S fileName;
     public final StringCache.S name;
-    public final String superClass;
-    public final String[] interfaces;
-    public final String[] nestedClasses;
+    public final TypeRepr.AbstractType superClass;
+    public final TypeRepr.AbstractType[] interfaces;
+    public final TypeRepr.AbstractType[] nestedClasses;
     public final FieldRepr[] fields;
     public final MethodRepr[] methods;
     public final String signature;
 
+    public void updateClassUsages (final Set<UsageRepr.Usage> s) {
+        superClass.updateClassUsages(s);
+
+        for (TypeRepr.AbstractType t : interfaces) {
+            t.updateClassUsages(s);
+        }
+
+        for (MethodRepr m : methods) {
+            m.updateClassUsages(s);
+        }
+
+        for (FieldRepr f : fields) {
+            f.updateClassUsages(s);
+        }
+    }
+
     public ClassRepr(final StringCache.S fn, final StringCache.S n, final String sig, final String sup, final String[] i, final String[] ns, final FieldRepr[] f, final MethodRepr[] m) {
         fileName = fn;
         name = n;
-        superClass = sup;
-        interfaces = i;
-        nestedClasses = ns;
+        superClass = TypeRepr.createClassType(sup);
+        interfaces = TypeRepr.createClassType (i);
+        nestedClasses = TypeRepr.createClassType (ns);
         fields = f;
         methods = m;
         signature = sig;
@@ -40,15 +57,15 @@ public class ClassRepr implements RW.Writable {
 
     public ClassRepr(final BufferedReader r) {
         fileName = StringCache.get (RW.readString(r));
-        name = StringCache.get (RW.readString(r));
+        name = StringCache.get(RW.readString(r));
 
         final String s = RW.readString(r);
 
         signature = s.length() == 0 ? null : s;
 
-        superClass = RW.readString(r);
-        interfaces = RW.readMany(r, RW.myStringReader, new ArrayList<String>()).toArray(dummyStrings);
-        nestedClasses = RW.readMany(r, RW.myStringReader, new ArrayList<String>()).toArray(dummyStrings);
+        superClass = TypeRepr.reader.read(r);
+        interfaces = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyTypes);
+        nestedClasses = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyTypes);
         fields = RW.readMany(r, FieldRepr.reader, new ArrayList<FieldRepr>()).toArray(dummyFields);
         methods = RW.readMany(r, MethodRepr.reader, new ArrayList<MethodRepr>()).toArray(dummyMethods);
     }
@@ -63,9 +80,9 @@ public class ClassRepr implements RW.Writable {
         RW.writeln(w, fileName.value);
         RW.writeln(w, name.value);
         RW.writeln(w, signature);
-        RW.writeln(w, superClass);
-        RW.writeln(w, interfaces, RW.fromString);
-        RW.writeln(w, nestedClasses, RW.fromString);
+        superClass.write(w);
+        RW.writeln(w, interfaces, TypeRepr.fromAbstractType);
+        RW.writeln(w, nestedClasses, TypeRepr.fromAbstractType);
         RW.writeln(w, fields, RW.fromWritable);
         RW.writeln(w, methods, RW.fromWritable);
     }

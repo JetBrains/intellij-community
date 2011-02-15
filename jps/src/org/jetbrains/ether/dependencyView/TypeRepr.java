@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,10 +19,16 @@ import java.util.Map;
 public class TypeRepr {
 
     public static abstract class AbstractType implements RW.Writable {
+        public abstract void updateClassUsages (Set<UsageRepr.Usage> s);
     }
 
     public static class PrimitiveType extends AbstractType {
         public final StringCache.S type;
+
+        @Override
+        public void updateClassUsages(Set<UsageRepr.Usage> s) {
+
+        }
 
         public void write(final BufferedWriter w) {
             RW.writeln(w, "primitive");
@@ -52,6 +59,11 @@ public class TypeRepr {
 
     public static class ArrayType extends AbstractType {
         public final AbstractType elementType;
+
+        @Override
+        public void updateClassUsages(Set<UsageRepr.Usage> s) {
+            elementType.updateClassUsages(s);
+        }
 
         ArrayType(final AbstractType elementType) {
             this.elementType = elementType;
@@ -84,6 +96,11 @@ public class TypeRepr {
     public static class ClassType extends AbstractType {
         public final StringCache.S className;
 
+        @Override
+        public void updateClassUsages(Set<UsageRepr.Usage> s) {
+            s.add(UsageRepr.createClassUsage(className));
+        }
+
         ClassType(final String className) {
             this.className = StringCache.get(className);
         }
@@ -109,6 +126,24 @@ public class TypeRepr {
             RW.writeln(w, "class");
             RW.writeln(w, className.value);
         }
+    }
+
+    public static ClassType createClassType (final String s) {
+        return (ClassType) getType (new ClassType (s));
+    }
+
+    public static ClassType[] createClassType (final String[] s) {
+        if (s == null) {
+            return null;
+        }
+
+        final ClassType[] types = new ClassType[s.length];
+
+        for (int i=0; i<types.length; i++) {
+            types[i] = createClassType(s[i]);
+        }
+
+        return types;
     }
 
     private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
@@ -151,6 +186,20 @@ public class TypeRepr {
             r[i] = getType (t[i]);
 
         return r;
+    }
+
+    public static AbstractType[] getType (final String[] t) {
+        if (t == null) {
+            return null;
+        }
+
+        final AbstractType[] types = new AbstractType[t.length];
+
+        for (int i=0; i<types.length; i++) {
+            types[i] = getType (Type.getType (t[i]));
+        }
+
+        return types;
     }
 
     public static RW.Reader<AbstractType> reader = new RW.Reader<AbstractType>() {

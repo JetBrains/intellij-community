@@ -4,6 +4,7 @@ import com.sun.tools.javac.util.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -17,8 +18,44 @@ public class Mappings {
 
     private Map<StringCache.S, Set<ClassRepr>> sourceFileToClasses = new HashMap<StringCache.S, Set<ClassRepr>>();
     private Map<StringCache.S, Set<UsageRepr.Usage>> sourceFileToUsages = new HashMap<StringCache.S, Set<UsageRepr.Usage>>();
-    private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S> ();
-    private Map<StringCache.S, Set<StringCache.S>> fileToFileDependency = new HashMap<StringCache.S, Set<StringCache.S>> ();
+    private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
+    private Map<StringCache.S, Set<Depender>> fileToFileDependency = new HashMap<StringCache.S, Set<Depender>>();
+
+    public class Depender {
+        boolean resolved;
+        StringCache.S value;
+
+        private Depender(StringCache.S value) {
+            this.resolved = false;
+            this.value = value;
+        }
+
+        public StringCache.S getSourceFile() {
+            if (!resolved) {
+                value = classToSourceFile.get(value);
+                resolved = true;
+            }
+
+            return value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Depender depender = (Depender) o;
+
+            if (value != null ? !value.equals(depender.value) : depender.value != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return value != null ? value.hashCode() : 0;
+        }
+    }
 
     public void inherit(final Mappings c) {
         sourceFileToClasses = c.sourceFileToClasses;
@@ -47,16 +84,16 @@ public class Mappings {
             d.addAll(b);
     }
 
-    private void updateSourceToUsages (final StringCache.S source, final Set<UsageRepr.Usage> usages) {
-        updateMap (sourceFileToUsages, source, usages);
+    private void updateSourceToUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
+        updateMap(sourceFileToUsages, source, usages);
     }
 
     private void updateSourceToClasses(final StringCache.S source, final ClassRepr classRepr) {
         updateMap(sourceFileToClasses, source, classRepr);
     }
 
-    private void updateDependency(final StringCache.S a, final StringCache.S b) {
-        updateMap (fileToFileDependency, a, b);
+    private void updateDependency(final StringCache.S a, final Depender b) {
+        updateMap(fileToFileDependency, a, b);
     }
 
     public Callbacks.Backend getCallback() {
@@ -84,7 +121,7 @@ public class Mappings {
                 final Set<UsageRepr.Usage> localUsages = result.snd;
 
                 for (UsageRepr.Usage u : localUsages) {
-                    updateDependency(sourceFileNameS, classToSourceFile.get(u.owner));
+                    updateDependency(sourceFileNameS, new Depender(u.getOwner()));
                 }
 
                 if (repr != null) {
@@ -92,7 +129,7 @@ public class Mappings {
                     updateSourceToClasses(sourceFileNameS, repr);
                 }
 
-                if (! localUsages.isEmpty()) {
+                if (!localUsages.isEmpty()) {
                     updateSourceToUsages(sourceFileNameS, localUsages);
                 }
             }
@@ -108,7 +145,7 @@ public class Mappings {
                 }
 
                 for (UsageRepr.Usage u : usages) {
-                    updateDependency(sourceFileNameS, classToSourceFile.get(u.owner));
+                    updateDependency(sourceFileNameS, new Depender(u.getOwner ()));
                 }
             }
         };
@@ -124,23 +161,48 @@ public class Mappings {
         return sourceFileToClasses.get(sourceFileName);
     }
 
-    public Set<ClassRepr> getClasses (final String sourceFileName) {
+    public Set<ClassRepr> getClasses(final String sourceFileName) {
         return sourceFileToClasses.get(StringCache.get(sourceFileName));
     }
 
     public Set<UsageRepr.Usage> getUsages(final String sourceFileName) {
-        return sourceFileToUsages.get(StringCache.get (sourceFileName));
+        return sourceFileToUsages.get(StringCache.get(sourceFileName));
     }
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {
         return sourceFileToUsages.get(sourceFileName);
     }
 
-    public Set<StringCache.S> getDependentFiles (final StringCache.S sourceFileName) {
+    public Set<Depender> getDependentFiles(final StringCache.S sourceFileName) {
         return fileToFileDependency.get(sourceFileName);
     }
 
-    public Set<StringCache.S> getDependentFiles (final String sourceFileName) {
+    public Set<Depender> getDependentFiles(final String sourceFileName) {
         return fileToFileDependency.get(StringCache.get(sourceFileName));
+    }
+
+    public void print() {
+        try {
+            final BufferedWriter w = new BufferedWriter(new FileWriter("dep.txt"));
+            for (Map.Entry<StringCache.S, Set<Depender>> e : fileToFileDependency.entrySet()) {
+                w.write(e.getKey().value + " -->");
+                w.newLine();
+
+                for (Depender s : e.getValue()) {
+                    final StringCache.S r = s.getSourceFile();
+
+                    if (r == null)
+                        w.write("  <null>");
+                    else
+                        w.write("  " + r.value);
+
+                    w.newLine();
+                }
+            }
+
+            w.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

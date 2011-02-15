@@ -883,6 +883,7 @@ public class ProjectWrapper {
     public void rebuild() {
         myProject.makeAll();
         rescan();
+        mySourceToClass.print();
     }
 
     public void make(final boolean force, final boolean tests) {

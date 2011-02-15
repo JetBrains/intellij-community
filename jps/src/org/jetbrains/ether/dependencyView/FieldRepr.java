@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,6 +20,10 @@ public class FieldRepr implements RW.Writable {
     public final Object value;
     public final TypeRepr.AbstractType type;
     public final String signature;
+
+    public void updateClassUsages (final Set<UsageRepr.Usage> s) {
+        type.updateClassUsages(s);
+    }
 
     public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {
         name = StringCache.get (n);
@@ -55,7 +60,7 @@ public class FieldRepr implements RW.Writable {
     }
 
     public FieldRepr(final BufferedReader r) {
-        name = StringCache.get (RW.readString(r));
+        name = StringCache.get(RW.readString(r));
         access = RW.readInt(r);
 
         final String s = RW.readString(r);
