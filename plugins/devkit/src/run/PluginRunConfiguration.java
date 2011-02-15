@@ -129,6 +129,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
         params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
         params.getClassPath().addFirst(libPath + File.separator + "jdom.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "trove4j.jar");
         params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
         params.getClassPath().addFirst(libPath + File.separator + "util.jar");
         params.getClassPath().addFirst(libPath + File.separator + "extensions.jar");
