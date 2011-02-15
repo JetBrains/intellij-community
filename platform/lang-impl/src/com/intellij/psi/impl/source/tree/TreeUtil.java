@@ -142,12 +142,12 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static LeafElement findLastLeaf(ASTNode element) {
+  public static ASTNode findLastLeaf(ASTNode element) {
     if (element instanceof LeafElement) {
-      return (LeafElement)element;
+      return element;
     }
     for (ASTNode child = element.getLastChildNode(); child != null; child = child.getTreePrev()) {
-      LeafElement leaf = findLastLeaf(child);
+      ASTNode leaf = findLastLeaf(child);
       if (leaf != null) return leaf;
     }
     return null;
@@ -304,7 +304,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
+  public static ASTNode prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
     while (true) {
       if (start == null) return null;
       if (commonParent != null) {
@@ -314,7 +314,7 @@ public class TreeUtil {
         commonParent.nextLeafBranchStart = start;
       }
       ASTNode prevTree = start;
-      LeafElement prev = null;
+      ASTNode prev = null;
       while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
         prev = findLastLeaf(prevTree);
       }

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
@@ -406,7 +407,7 @@ public class ExpressionParsing extends Parsing {
 
       final CompositeElement expr = parseUnaryExpression(lexer);
       if (expr == null) {
-        final TreeElement lastNode = TreeUtil.findLastLeaf(type);
+        final ASTNode lastNode = TreeUtil.findLastLeaf(type);
         if (lastNode.getElementType() != JavaTokenType.GT) { //cannot parse correct parenthesized expression if we already parsed correct parameterized type
           lexer.restore(pos);
           return parsePostfixExpression(lexer);
