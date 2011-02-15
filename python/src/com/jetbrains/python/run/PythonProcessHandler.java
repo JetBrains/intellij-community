@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Scanner;
+
 /**
  * @author traff
  */
