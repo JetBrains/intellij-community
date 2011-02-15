@@ -1014,8 +1014,16 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       }
       else if (type instanceof PsiDisjunctionType) {
         final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
-        if (ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)lub)) {
+        if (lub instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)lub)) {
           myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
+        }
+        else if (lub instanceof PsiIntersectionType) {
+          for (PsiType conjunct : ((PsiIntersectionType)lub).getConjuncts()) {
+            if (conjunct instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)conjunct)) {
+              myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
+              break;
+            }
+          }
         }
       }
     }
