@@ -185,7 +185,7 @@ public class ExecutionHelper {
   public static void executeExternalProcess(@Nullable final Project myProject,
                                             @NotNull final OSProcessHandler processHandler,
                                             @NotNull final ExecutionMode mode) {
-    final String title = mode.getTitle() != null ? mode.getTitle() : "Running. Please wait...";
+    final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
     assert title != null;
 
     final Runnable process;
@@ -275,7 +275,7 @@ public class ExecutionHelper {
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (myProgressIndicator != null && StringUtil.isEmpty(myProgressIndicator.getText())) {
-          myProgressIndicator.setText("Please wait");
+          myProgressIndicator.setText("Please wait...");
         }
 
         LOG.assertTrue(myProgressIndicator != null || cancelableFun != null,

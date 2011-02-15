@@ -388,7 +388,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
           ((NewVirtualFile)file).markDirtyRecursively();
         }
       }
-      refreshFiles(filesToSynchronize, toWatchRecursively, true);
+      refreshFiles(filesToSynchronize, true, toWatchRecursively, null);
     }
 
     return result;
