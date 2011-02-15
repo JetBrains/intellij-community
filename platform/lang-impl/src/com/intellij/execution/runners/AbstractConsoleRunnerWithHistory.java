@@ -108,14 +108,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
-        myRunAction.getTemplatePresentation().setEnabled(false);
-        myConsoleView.getConsole().setPrompt("");
-        myConsoleView.getConsole().getConsoleEditor().setRendererMode(true);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myConsoleView.getConsole().getConsoleEditor().getComponent().updateUI();
-          }
-        });
+        finishConsole();
       }
     });
 
@@ -153,6 +146,17 @@ public abstract class AbstractConsoleRunnerWithHistory {
     });
 // Run
     myProcessHandler.startNotify();
+  }
+
+  protected void finishConsole() {
+    myRunAction.getTemplatePresentation().setEnabled(false);
+    myConsoleView.getConsole().setPrompt("");
+    myConsoleView.getConsole().getConsoleEditor().setRendererMode(true);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        myConsoleView.getConsole().getConsoleEditor().getComponent().updateUI();
+      }
+    });
   }
 
   protected abstract LanguageConsoleViewImpl createConsoleView();

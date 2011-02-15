@@ -155,13 +155,18 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     private PersistentAuthenticationProviderProxy(File authDir, String userName) {
       ISVNAuthenticationStorageOptions delegatingOptions = new ISVNAuthenticationStorageOptions() {
-            public boolean isNonInteractive() throws SVNException {
-                return getAuthenticationStorageOptions().isNonInteractive();
-            }
+        public boolean isNonInteractive() throws SVNException {
+          return getAuthenticationStorageOptions().isNonInteractive();
+        }
 
-            public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
-                return getAuthenticationStorageOptions().getAuthStoreHandler();
-            }
+        public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
+          return getAuthenticationStorageOptions().getAuthStoreHandler();
+        }
+
+        @Override
+        public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
+          return getAuthenticationStorageOptions().getGnomeKeyringPasswordProvider();
+        }
 
         @Override
         public boolean isSSLPassphrasePromptSupported() {

@@ -30,7 +30,7 @@ import java.util.List;
 public class PsiDisjunctionType extends PsiType {
   private final PsiTypeElement myTypeElement;
   private final List<PsiType> myTypes;
-  private final CachedValue<PsiClassType> myLubCache;
+  private final CachedValue<PsiType> myLubCache;
 
   public PsiDisjunctionType(final PsiTypeElement typeElement) {
     super(PsiAnnotation.EMPTY_ARRAY);
@@ -46,19 +46,18 @@ public class PsiDisjunctionType extends PsiType {
     }));
 
     final CachedValuesManager cacheManager = CachedValuesManager.getManager(myTypeElement.getProject());
-    myLubCache = cacheManager.createCachedValue(new CachedValueProvider<PsiClassType>() {
-      public Result<PsiClassType> compute() {
+    myLubCache = cacheManager.createCachedValue(new CachedValueProvider<PsiType>() {
+      public Result<PsiType> compute() {
         PsiType lub = myTypes.get(0);
         for (int i = 1; i < myTypes.size(); i++) {
           lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), myTypeElement.getManager());
         }
-        assert lub instanceof PsiClassType : getCanonicalText() + ", " + lub;
-        return Result.create((PsiClassType)lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
 
-  public PsiClassType getLeastUpperBound() {
+  public PsiType getLeastUpperBound() {
     return myLubCache.getValue();
   }
 
@@ -102,7 +101,11 @@ public class PsiDisjunctionType extends PsiType {
 
   @Override
   public <A> A accept(final PsiTypeVisitor<A> visitor) {
-    return visitor.visitClassType(getLeastUpperBound());
+    final PsiType lub = getLeastUpperBound();
+    if (lub instanceof PsiClassType) {
+      return visitor.visitClassType((PsiClassType)lub);
+    }
+    return visitor.visitType(lub);
   }
 
   @Override
