@@ -93,8 +93,13 @@ public class BackgroundTaskQueue {
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
         public void run() {
-          // calls task's run and onCancel() or onSuccess()
-          RunBackgroundable.runIfBackgroundThread(backgroundable, pi, runnable);
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              // calls task's run and onCancel() or onSuccess()
+              RunBackgroundable.runIfBackgroundThread(backgroundable, pi, runnable);
+            }
+          });
         }
       }, pi);
     }
