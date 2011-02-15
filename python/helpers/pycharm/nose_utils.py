@@ -108,9 +108,6 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
         return (location, suite_location)
 
     def test_address(self, test):
-        """Find the test address for a test, which may be a module, filename,
-        class, method or function.
-        """
         if hasattr(test, "address"):
             return test.address()[0]
         t = type(test)

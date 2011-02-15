@@ -26,6 +26,14 @@ def getModuleName(prefix, cnt):
 def loadSource(fileName):
   baseName = os.path.basename(fileName)
   moduleName = os.path.splitext(baseName)[0]
+
+  # for users wanted to run unittests under django
+  #because of django took advantage of module name
+  settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
+  if settings_file and moduleName=="models":
+    baseName = os.path.realpath(fileName)
+    moduleName = ".".join(baseName.split('/')[-2:])[:-3]
+
   if moduleName in modules: # add unique number to prevent name collisions
     cnt = 2
     prefix = moduleName
