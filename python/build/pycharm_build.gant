@@ -25,7 +25,6 @@ setProperty("pluginFilter", [
             "JSIntentionPowerPack",
             "SpellChecker", "spellchecker",
             "less", "sass",
-            "yaml", "yaml-plugin",
             "haml", "haml-plugin",
             "hg4idea",
             "tasks", "tasks-core", "tasks-api", "jira-connector",
@@ -50,7 +49,8 @@ private List platformImplementationModules() {
           "xml",
           "lvcs-impl",
           "images",
-          "dom-impl"
+          "dom-impl",
+          "yaml"
   ]
 }
 
