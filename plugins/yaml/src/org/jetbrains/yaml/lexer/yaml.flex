@@ -165,7 +165,7 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     yypushback(yylength());
                                 }
 
-({INJECTION} | [^ \t\n,{\[|>]) ({INJECTION} | [^\n#,}\]])* ({INJECTION} | [^ \t\n#,}\]])
+({INJECTION} | [^ :\t\n,{\[|>]) ({INJECTION} | [^:\n#,}\]])* ({INJECTION} | [^ :\t\n#,}\]])
                                 {   if (braceCount <= 0) {
                                       char c;
                                       while ((c = getCharAfter(0)) == ' ' || c == ','){

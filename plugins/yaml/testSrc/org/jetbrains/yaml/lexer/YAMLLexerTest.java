@@ -149,4 +149,14 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testComma(){
     doTest("key: Hello, how are you?");
   }
+
+  public void testIndex(){
+    doTest("indexes:\n" +
+           "\n" +
+           "- kind: MessageIndex\n" +
+           "  properties:\n" +
+           "  - name: group_name\n" +
+           "  - name: created_at\n" +
+           "    direction: desc");
+  }
 }
