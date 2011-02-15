@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -144,6 +145,11 @@ public class LivePreviewControllerBase implements LivePreview.Delegate {
 
   @Override
   public void getFocusBack() {}
+
+  @Override
+  public Editor getEditor(Ref<Boolean> needToUpdate) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
   public void notFound() {}
 }

@@ -18,21 +18,16 @@ package com.intellij.lang.java.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -45,19 +40,8 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     IdeaTestCase.initPlatformPrefix();
   }
 
-  public static JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(ourProject);
-  }
-
   protected static void withLevel(final LanguageLevel level, final Runnable r) {
-    final LanguageLevel current = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
-    try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
-      r.run();
-    }
-    finally {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(current);
-    }
+    IdeaTestUtil.withLevel(getModule(), level, r);
   }
 
   protected interface TestParser {
@@ -78,7 +62,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   private static IFileElementType TEST_FILE_ELEMENT_TYPE = null;
   private static TestParser TEST_PARSER;
 
-  protected PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
+  private PsiFile createPsiFile(final String name, final String text, final TestParser parser) {
     if (TEST_FILE_ELEMENT_TYPE == null) {
       TEST_FILE_ELEMENT_TYPE = new IFileElementType("test.java.file", StdLanguages.JAVA) {
         @Override
@@ -116,19 +100,5 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     builder.setDebugMode(true);
     return builder;
-  }
-
-  @Override
-  protected void doTest(final boolean checkResult) {
-    final boolean parser = JavaParserDefinition.USE_NEW_PARSER;
-    try {
-      JavaParserDefinition.USE_NEW_PARSER = false;
-      super.doTest(checkResult);
-      JavaParserDefinition.USE_NEW_PARSER = true;
-      super.doTest(checkResult);
-    }
-    finally {
-      JavaParserDefinition.USE_NEW_PARSER = parser;
-    }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaFileStubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
@@ -59,7 +60,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static java.util.Arrays.sort]\n");
   }
 
-  public void testClassDeclaration() throws Exception {
+  public void testClassDeclaration() {
     doTest("package p;" +
            "class A implements I, J { }\n" +
            "class B<K,V extends X> extends a/*skip*/.A { class I { } }\n" +
@@ -100,7 +101,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
-  public void testMethods() throws Exception {
+  public void testMethods() {
     doTest("public @interface Anno {\n" +
            "  int i() default 42;\n" +
            "  public static String s();\n" +
@@ -160,7 +161,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
-  public void testFields() throws Exception {
+  public void testFields() {
     doTest("static class C {\n" +
            "  strictfp float f;\n" +
            "  int j[] = {0}, k;\n" +
@@ -196,7 +197,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=17]\n");
   }
 
-  public void testAnonymousClasses() throws Exception {
+  public void testAnonymousClasses() {
     doTest("class C { {\n" +
            "  new O.P() { };\n" +
            "  X.new Y() { }\n" +
@@ -215,7 +216,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n");
   }
 
-  public void testEnums() throws Exception {
+  public void testEnums() {
     doTest("enum E {\n" +
            "  E1() { }" +
            "  abstract void m();\n" +
@@ -248,10 +249,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=25]\n");
   }
 
-  public void testLocalVariables() throws Exception {
+  public void testLocalVariables() {
     doTest("class C {\n" +
            "  void m() {\n" +
            "    int local = 0;\n" +
+           "    for (int loop = 0; loop < 10; loop++) ;\n" +
            "  }\n" +
            "}",
 
@@ -269,7 +271,32 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
-  public void testSOEProof() throws Exception {
+  public void testNonListParameters() {
+    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
+      @Override public void run() {
+        doTest("class C {\n" +
+               "  {\n" +
+               "    for (int i : arr) ;\n" +
+               "    try { }\n" +
+               "      catch (Throwable t) { }\n" +
+               "      catch (E1|E2 e) { }\n" +
+               "  }\n" +
+               "}",
+
+               "PsiJavaFileStub []\n" +
+               "  IMPORT_LIST:PsiImportListStub\n" +
+               "  CLASS:PsiClassStub[name=C fqn=C]\n" +
+               "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+               "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+               "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+               "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+               "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
+               "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n");
+      }
+    });
+  }
+
+  public void testSOEProof() {
     final StringBuilder sb = new StringBuilder();
     final SecureRandom random = new SecureRandom();
     sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
@@ -345,7 +372,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
       }
     }
     else {
-      assertEquals(originalStr, lightStr);
+      assertEquals("Light stub tree differs from heavy one", originalStr, lightStr);
     }
   }
 }

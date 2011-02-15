@@ -493,7 +493,7 @@ public class DeclarationParser {
         }
       }
       else {
-        final PsiBuilder.Marker param = parseParameter(builder, true);
+        final PsiBuilder.Marker param = parseParameter(builder, true, false);
         if (param != null) {
           commaExpected = true;
           if (invalidElements != null) {
@@ -533,23 +533,25 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis) {
+  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunctiveType) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
     int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
     if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
+    if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
     final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseTypeInfo(builder, flags);
 
-    if (typeInfo == null && modListInfo.second) {
-      param.rollbackTo();
-      return null;
-    }
-
     if (typeInfo == null) {
-      error(builder, JavaErrorMessages.message("expected.type"));
-      emptyElement(builder, JavaElementType.TYPE);
+      if (modListInfo.second) {
+        param.rollbackTo();
+        return null;
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.type"));
+        emptyElement(builder, JavaElementType.TYPE);
+      }
     }
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {

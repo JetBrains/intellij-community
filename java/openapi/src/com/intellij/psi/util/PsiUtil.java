@@ -371,6 +371,9 @@ public final class PsiUtil extends PsiUtilBase {
     if (type instanceof PsiArrayType) {
       return resolveClassInType(((PsiArrayType) type).getComponentType());
     }
+    if (type instanceof PsiDisjunctionType) {
+      return ((PsiDisjunctionType)type).getLeastUpperBound().resolve();
+    }
     return null;
   }
 

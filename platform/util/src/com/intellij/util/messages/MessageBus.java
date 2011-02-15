@@ -26,7 +26,7 @@ import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Use ComponentManager.getMessageBus() to obtain one.
+ * Use {@link com.intellij.openapi.components.ComponentManager#getMessageBus()} to obtain one.
  */
 public interface MessageBus {
   @NotNull
@@ -36,7 +36,9 @@ public interface MessageBus {
 
   @NotNull
   <L> L syncPublisher(@NotNull Topic<L> topic);
+
   @NotNull
+  @Deprecated // use syncPublisher instead
   <L> L asyncPublisher(@NotNull Topic<L> topic);
 
   void dispose();

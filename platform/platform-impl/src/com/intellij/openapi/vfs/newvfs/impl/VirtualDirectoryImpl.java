@@ -82,25 +82,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
 
-    final VirtualFile[] a;
-    synchronized (this) {
-      a = asArray();
-    }
-    if (a != null) {
-      Object encoded = encodeName(name);
-      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
-      for (VirtualFile file : a) {
-        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
-      }
-
-      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
-    }
-
+    final VirtualFile[] array;
     final Map<String, VirtualFile> map;
     final VirtualFile file;
     synchronized (this) {
-      map = ensureAsMap();
-      file = map.get(name);
+      array = asArray();
+      if (array == null) {
+        map = ensureAsMap();
+        file = map.get(name);
+      }
+      else {
+        file = null;
+        map = null;
+      }
+    }
+    if (array != null) {
+      Object encoded = encodeName(name);
+      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
+      for (VirtualFile vf : array) {
+        if (namesEqual(name, bytes, vf)) return vf;
+      }
+      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
     }
 
     if (file != null) return file;
@@ -113,9 +115,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     synchronized (this) {
-      // do not extract getId from under the synchronized block since it will cause a concurrency problem.
-      int id = ourPersistence.getId(this, name);
+      // do not extract getId outside the synchronized block since it will cause a concurrency problem.
+      int id = PersistentFS.getId(this, name);
       if (id > 0) {
+        // maybe another doFindChild() sneaked in the middle
+        VirtualFile lastTry = map.get(name);
+        if (lastTry != null) return lastTry;
+
         final String shorty = new String(name);
         NewVirtualFile child = createChild(shorty, id); // So we don't hold whole char[] buffer of a lengthy path
         map.put(shorty, child);
@@ -145,7 +151,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
-    if (ourPersistence.isDirectory(id)) {
+    if (PersistentFS.isDirectory(id)) {
       child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
@@ -225,7 +231,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Arrays.asList(getChildren());
     }
 
-    final String[] names = ourPersistence.listPersisted(this);
+    final String[] names = PersistentFS.listPersisted(this);
     for (String name : names) {
       findChild(name, false, false);
     }
@@ -313,14 +319,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  @SuppressWarnings({"unchecked"})
   private Map<String, VirtualFile> asMap() {
-    if (myChildren instanceof Map) return (Map<String, VirtualFile>)myChildren;
+    if (myChildren instanceof Map) {
+      //noinspection unchecked
+      return (Map<String, VirtualFile>)myChildren;
+    }
     return null;
   }
 
   @NotNull
-  @SuppressWarnings({"unchecked"})
   private Map<String, VirtualFile> ensureAsMap() {
     Map<String, VirtualFile> map;
     if (myChildren == null) {
@@ -328,6 +335,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
+      //noinspection unchecked
       map = (Map<String, VirtualFile>)myChildren;
     }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredText;
@@ -250,13 +251,17 @@ public abstract class AbstractValueHint {
     myCurrentHint = new LightweightHint(component);
 
     //Editor may be disposed before later invokator process this action
-    if(getEditor().getComponent().getRootPane() == null) return false;
+    final Editor editor = getEditor();
+    final JRootPane rootPane = editor.getComponent().getRootPane();
+    if(rootPane == null) return false;
 
     short constraint = HintManagerImpl.UNDER;
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), constraint);
-    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, getEditor(), p,
+    Point p = HintManagerImpl.getHintPosition(myCurrentHint, editor, editor.xyToLogicalPosition(myPoint), constraint);
+    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, constraint, true);
+
+    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,
-                               constraint);
+                               hintHint);
     return true;
   }
 

@@ -21,11 +21,11 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.compiler.*;
 import com.intellij.compiler.classParsing.AnnotationConstantValue;
 import com.intellij.compiler.classParsing.MethodInfo;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.Cache;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -348,7 +348,7 @@ public class BackendCompilerWrapper {
 
     int exitValue = 0;
     try {
-      Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
+      final Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
       final long compilationStart = System.currentTimeMillis();
       final ClassParsingThread classParsingThread = new ClassParsingThread(isJdk6(chunk.getJdk()), outputDir);
       final Future<?> classParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(classParsingThread);
@@ -377,10 +377,17 @@ public class BackendCompilerWrapper {
         exitValue = process.waitFor();
       }
       catch (InterruptedException e) {
+        if (CompileDriver.ourDebugMode) {
+          System.out.println("Compiler interrupted; ");
+          e.printStackTrace();
+        }
         process.destroy();
         exitValue = process.exitValue();
       }
       finally {
+        if (CompileDriver.ourDebugMode) {
+          System.out.println("Compiler exit code is " + exitValue);
+        }
         if (errorParsingThread != null) {
           errorParsingThread.setProcessTerminated(true);
         }

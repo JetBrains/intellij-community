@@ -25,7 +25,6 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
 import com.intellij.psi.impl.source.PsiParameterImpl;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.ParameterElement;
 import com.intellij.psi.stubs.IndexSink;
@@ -90,16 +89,6 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
     boolean isEll = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
-  }
-
-  public boolean shouldCreateStub(final ASTNode node) {
-    return node.getTreeParent().getElementType() == JavaElementType.PARAMETER_LIST;
-  }
-
-  @Override
-  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
-    final LighterASTNode parent = tree.getParent(node);
-    return parent != null && parent.getTokenType() == JavaElementType.PARAMETER_LIST;
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {

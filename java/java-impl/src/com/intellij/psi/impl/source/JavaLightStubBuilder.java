@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
@@ -26,6 +25,7 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.SourceUtil;
 import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 
 
@@ -45,5 +45,14 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     }
 
     return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);
+  }
+
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
+    if (childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST) {
+      return true;
+    }
+
+    return false;
   }
 }

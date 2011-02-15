@@ -51,20 +51,18 @@ public class MoveCatchUpFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return
-           myCatchSection != null
-        && myCatchSection.isValid()
-        && myCatchSection.getManager().isInProject(myCatchSection)
-        && myMoveBeforeSection != null
-        && myMoveBeforeSection.isValid()
-        && myCatchSection.getCatchType() != null
-        && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null
-        && myMoveBeforeSection.getCatchType() != null
-        && PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()) != null
-        && !myCatchSection.getManager().areElementsEquivalent(
-                PsiUtil.resolveClassInType(myCatchSection.getCatchType()),
-                PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()))
-        ;
+    return myCatchSection != null
+           && myCatchSection.isValid()
+           && myCatchSection.getManager().isInProject(myCatchSection)
+           && myMoveBeforeSection != null
+           && myMoveBeforeSection.isValid()
+           && myCatchSection.getCatchType() != null
+           && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null
+           && myMoveBeforeSection.getCatchType() != null
+           && PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()) != null
+           && !myCatchSection.getManager().areElementsEquivalent(
+                  PsiUtil.resolveClassInType(myCatchSection.getCatchType()),
+                  PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()));
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
@@ -82,5 +80,4 @@ public class MoveCatchUpFix implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
-
 }

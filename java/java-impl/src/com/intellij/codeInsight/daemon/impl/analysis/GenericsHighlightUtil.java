@@ -559,6 +559,10 @@ public class GenericsHighlightUtil {
       return false;
     }
 
+    if (rType instanceof PsiDisjunctionType || lType instanceof PsiDisjunctionType) {
+      return false;
+    }
+
     if (lType instanceof PsiCapturedWildcardType || rType instanceof PsiCapturedWildcardType) {
       return false;
     }

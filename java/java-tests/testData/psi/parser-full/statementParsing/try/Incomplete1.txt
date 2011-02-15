@@ -1,4 +1,4 @@
-PsiJavaFile:Uncomplete3.java
+PsiJavaFile:Incomplete1.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -23,13 +23,8 @@ PsiJavaFile:Uncomplete3.java
         PsiWhiteSpace('\n    ')
         PsiTryStatement
           PsiKeyword:try('try')
-          PsiCodeBlock
-            PsiJavaToken:LBRACE('{')
-            PsiJavaToken:RBRACE('}')
-          PsiCatchSection
-            PsiKeyword:catch('catch')
-            PsiErrorElement:'(' expected
-              <empty list>
+          PsiErrorElement:'{' expected
+            <empty list>
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')

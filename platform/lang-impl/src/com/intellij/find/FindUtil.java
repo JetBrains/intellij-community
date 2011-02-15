@@ -153,7 +153,10 @@ public class FindUtil {
     String s = editor.getSelectionModel().getSelectedText();
 
     final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
-    if (s != null) {
+    if (StringUtil.isEmpty(s)) {
+      model.setGlobal(true);
+    }
+    else {
       if (s.indexOf('\n') >= 0) {
         model.setGlobal(false);
       }
@@ -161,9 +164,6 @@ public class FindUtil {
         model.setStringToFind(s);
         model.setGlobal(true);
       }
-    }
-    else {
-      model.setGlobal(true);
     }
 
     model.setReplaceState(false);

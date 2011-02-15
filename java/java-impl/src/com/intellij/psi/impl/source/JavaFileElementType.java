@@ -13,41 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.*;
-import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.parser.FileParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.impl.source.parsing.FileTextParsing;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.ILightStubFileElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
+/**
+ * @author max
+ */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static boolean USE_NEW_STUB_BUILDER = true & JavaParserDefinition.USE_NEW_PARSER;
+  public static boolean USE_NEW_STUB_BUILDER = true;
 
-  public static final int STUB_VERSION = JavaParserDefinition.USE_NEW_PARSER ? USE_NEW_STUB_BUILDER ? 6 : 5 : 4;
+  public static final int STUB_VERSION = (USE_NEW_STUB_BUILDER ? 6 : 5) + 1;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
@@ -83,18 +79,9 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public ASTNode parseContents(final ASTNode chameleon) {
-    if (JavaParserDefinition.USE_NEW_PARSER) {
-      final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      doParse(builder);
-      return builder.getTreeBuilt().getFirstChildNode();
-    }
-
-    FileElement node = (FileElement)chameleon;
-    final CharSequence seq = node.getChars();
-
-    final PsiManager manager = node.getManager();
-    final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(node.getPsi()));
-    return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
+    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    doParse(builder);
+    return builder.getTreeBuilt().getFirstChildNode();
   }
 
   private void doParse(final PsiBuilder builder) {

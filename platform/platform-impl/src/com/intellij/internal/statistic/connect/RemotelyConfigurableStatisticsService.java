@@ -39,7 +39,7 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
       sender.send(serviceUrl, content);
       StatisticsUploadAssistant.persistSentPatch(content);
 
-      return new StatisticsResult(StatisticsResult.ResultCode.SEND, "SUCCESS");
+      return new StatisticsResult(StatisticsResult.ResultCode.SEND, content);
     }
     catch (Exception e) {
       return new StatisticsResult(StatisticsResult.ResultCode.SEND_WITH_ERRORS, e.getMessage() != null ? e.getMessage() : "NPE");

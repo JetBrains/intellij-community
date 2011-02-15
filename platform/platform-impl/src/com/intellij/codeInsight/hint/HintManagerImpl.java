@@ -710,16 +710,29 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
-    HintHint hintInfo = new HintHint(editor, p);
+    return createHintHint(editor, p, hint, constraint, false);
+  }
+
+  //todo[nik,kirillk] perhaps 'createInEditorComponent' parameter should always be 'true'
+  //old 'createHintHint' method uses LayeredPane as original component for HintHint so IdeTooltipManager.eventDispatched()
+  //wasn't able to correctly hide tooltip after mouse move.
+  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint, boolean createInEditorComponent) {
+    JRootPane rootPane = editor.getComponent().getRootPane();
+    if (rootPane == null) {
+      return new HintHint(editor, p);
+    }
+
+    JLayeredPane lp = rootPane.getLayeredPane();
+    HintHint hintInfo = new HintHint(editor, SwingUtilities.convertPoint(lp, p, editor.getContentComponent()));
     boolean showByBalloon = Registry.is("editor.balloonHints");
     if (showByBalloon) {
-      JRootPane rootPane = editor.getComponent().getRootPane();
-      if (rootPane != null) {
-        JLayeredPane lp = rootPane.getLayeredPane();
+      if (!createInEditorComponent) {
         hintInfo = new HintHint(lp, p);
-        hintInfo.setAwtTooltip(true).setHighlighterType(true);
       }
+      hintInfo.setAwtTooltip(true).setHighlighterType(true);
     }
+
+
     hintInfo.initStyleFrom(hint.getComponent());
     if (showByBalloon) {
       hintInfo.setBorderColor(Color.gray);

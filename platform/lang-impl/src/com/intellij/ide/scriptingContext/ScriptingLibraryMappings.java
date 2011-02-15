@@ -44,7 +44,7 @@ import java.util.*;
 public abstract class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> implements LibraryTable.Listener,
                                                                                                                      Disposable {
 
-  private final ScriptingLibraryManager myLibraryManager;
+  protected final ScriptingLibraryManager myLibraryManager;
   private final Map<VirtualFile, CompoundLibrary> myCompoundLibMap = new HashMap<VirtualFile, CompoundLibrary>();
   private CompoundLibrary myProjectLibs = new CompoundLibrary();
 

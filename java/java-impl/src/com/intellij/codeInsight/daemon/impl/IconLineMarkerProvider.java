@@ -21,7 +21,10 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -107,7 +110,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   @Nullable
   private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer, PsiElement bindingElement) {
     if (initializer != null && initializer.isValid() && isIconClassType(type)) {
-
+      final Project project = initializer.getProject();
       final List<FileReference> refs = new ArrayList<FileReference>();
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -146,9 +149,10 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
         final Icon icon = getIcon(file);
 
         if (icon != null) {
+          final Ref<VirtualFile> f = Ref.create(file);
           final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
             public void navigate(MouseEvent e, PsiElement elt) {
-              psiFileSystemItem.navigate(true);
+              FileEditorManager.getInstance(project).openFile(f.get(), true);
             }
           };
           return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,

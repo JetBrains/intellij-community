@@ -1,4 +1,4 @@
-PsiJavaFile:Uncomplete2.java
+PsiJavaFile:Incomplete2.java
   PsiImportList
     <empty list>
   PsiClass:A

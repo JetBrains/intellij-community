@@ -15,11 +15,17 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
@@ -33,10 +39,15 @@ import java.util.LinkedList;
 public class QueueProcessor<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.QueueProcessor");
 
-  private final Consumer<T> myProcessor;
+  private final PairConsumer<T, Runnable> myProcessor;
   private final LinkedList<T> myQueue = new LinkedList<T>();
+  private final Runnable myContinuationContext;
+
   private boolean isProcessing;
   private boolean myStarted;
+
+  private final ThreadToUse myThreadToUse;
+  private final Condition<?> myDeathCondition;
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
@@ -47,16 +58,48 @@ public class QueueProcessor<T> {
    *                  If <code>false</code>, then it will wait for the {@link #start()} command.
    *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
-  public QueueProcessor(Consumer<T> processor, boolean autostart) {
+
+  public QueueProcessor(final PairConsumer<T, Runnable> processor, boolean autostart, final ThreadToUse threadToUse,
+                        final Condition<?> deathCondition) {
     myProcessor = processor;
     myStarted = autostart;
+    myThreadToUse = threadToUse;
+    myDeathCondition = deathCondition;
+
+    myContinuationContext = new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myQueue) {
+          isProcessing = false;
+          if (myQueue.isEmpty()) {
+            myQueue.notifyAll();
+          } else {
+            startProcessing();
+          }
+        }
+      }
+    };
+  }
+
+  public QueueProcessor(final Consumer<T> processor, final Condition<?> deathCondition, boolean autostart) {
+    this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
+  }
+
+  private static<T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
+    return new PairConsumer<T, Runnable>() {
+      @Override
+      public void consume(T item, Runnable runnable) {
+        processor.consume(item);
+        runnable.run();
+      }
+    };
   }
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
    */
-  public QueueProcessor(Consumer<T> processor) {
-    this(processor, true);
+  public QueueProcessor(Consumer<T> processor, final Condition<?> deathCondition) {
+    this(processor, deathCondition, true);
   }
 
   /**
@@ -69,8 +112,8 @@ public class QueueProcessor<T> {
     synchronized (myQueue) {
       if (myStarted) return;
       myStarted = true;
-      if (!myQueue.isEmpty()) {
-        startProcessing(myQueue.poll());
+      if (! myQueue.isEmpty()) {
+        startProcessing();
       }
     }
   }
@@ -85,16 +128,12 @@ public class QueueProcessor<T> {
 
   private void doAdd(T element, boolean atHead) {
     synchronized (myQueue) {
-      if (startProcessing(element)) {
-        return;
-      }
-
       if (atHead) {
         myQueue.addFirst(element);
-      }
-      else {
+      } else {
         myQueue.add(element);
       }
+      startProcessing();
     }
   }
 
@@ -104,47 +143,54 @@ public class QueueProcessor<T> {
     }
   }
 
-  public void waitFor() throws InterruptedException {
+  public void waitFor() {
     synchronized (myQueue) {
       while (isProcessing) {
-        myQueue.wait();
-      }
-    }
-  }
-
-  private boolean startProcessing(final T element) {
-    LOG.assertTrue(Thread.holdsLock(myQueue));
-
-    if (isProcessing || !myStarted) {
-      return false;
-    }
-    isProcessing = true;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        doProcess(element);
-      }
-    });
-    return true;
-  }
-
-  private void doProcess(T next) {
-    while (true) {
-      try {
-        myProcessor.consume(next);
-      }
-      catch (Throwable e) {
-        LOG.warn(e);
-      }
-      finally {
-        synchronized (myQueue) {
-          next = myQueue.poll();
-          if (next == null) {
-            isProcessing = false;
-            myQueue.notifyAll();
-            return;
-          }
+        try {
+          myQueue.wait();
+        } catch (InterruptedException e) {
+          //ok
         }
       }
     }
+  }
+
+  private boolean startProcessing() {
+    LOG.assertTrue(Thread.holdsLock(myQueue));
+
+    if (isProcessing || ! myStarted) {
+      return false;
+    }
+    isProcessing = true;
+    final T item = myQueue.removeFirst();
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        if (myDeathCondition.value(null)) return;
+        try {
+          myProcessor.consume(item, myContinuationContext);
+        } catch (Throwable t) {
+          LOG.warn(t);
+        }
+      }
+    };
+    final Application application = ApplicationManager.getApplication();
+    if (ThreadToUse.AWT.equals(myThreadToUse)) {
+      application.invokeLater(runnable);
+    } else {
+      application.executeOnPooledThread(runnable);
+    }
+    return true;
+  }
+
+  public boolean isEmpty() {
+    synchronized (myQueue) {
+      return myQueue.isEmpty() && (! isProcessing);
+    }
+  }
+
+  public static enum ThreadToUse {
+    AWT,
+    POOLED
   }
 }

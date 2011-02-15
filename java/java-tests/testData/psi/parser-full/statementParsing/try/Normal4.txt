@@ -1,4 +1,4 @@
-PsiJavaFile:Uncomplete7.java
+PsiJavaFile:Normal4.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -32,16 +32,24 @@ PsiJavaFile:Uncomplete7.java
             PsiParameter:e
               PsiModifierList:
                 <empty list>
-              PsiTypeElement:E
-                PsiJavaCodeReferenceElement:E
-                  PsiIdentifier:E('E')
-                  PsiReferenceParameterList
-                    <empty list>
+              PsiTypeElement:E1|E2
+                PsiTypeElement:E1
+                  PsiJavaCodeReferenceElement:E1
+                    PsiIdentifier:E1('E1')
+                    PsiReferenceParameterList
+                      <empty list>
+                PsiJavaToken:OR('|')
+                PsiTypeElement:E2
+                  PsiJavaCodeReferenceElement:E2
+                    PsiIdentifier:E2('E2')
+                    PsiReferenceParameterList
+                      <empty list>
               PsiWhiteSpace(' ')
               PsiIdentifier:e('e')
             PsiJavaToken:RPARENTH(')')
-            PsiErrorElement:'{' expected
-              <empty list>
+            PsiCodeBlock
+              PsiJavaToken:LBRACE('{')
+              PsiJavaToken:RBRACE('}')
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')

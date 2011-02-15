@@ -141,7 +141,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return pair.first;
   }
 
-  public String[] listPersisted(final VirtualFile file) {
+  public static String[] listPersisted(final VirtualFile file) {
     return listPersisted(FSRecords.list(getFileId(file)));
   }
 
@@ -300,12 +300,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return isDirectory(id);
   }
 
-  public boolean isDirectory(final int id) {
+  public static boolean isDirectory(final int id) {
     assert id > 0;
     return (FSRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
-  public int getParent(final int id) {
+  private static int getParent(final int id) {
     assert id > 0;
     return FSRecords.getParent(id);
   }
@@ -349,7 +349,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, isWritable(file), writableFlag, false));
   }
 
-  public int getId(final VirtualFile parent, final String childName) {
+  public static int getId(final VirtualFile parent, final String childName) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     final int parentId = getFileId(parent);
 
@@ -429,7 +429,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }
 
-  private static final boolean noCaching = Boolean.getBoolean("idea.no.content.caching" );
+  private static final boolean noCaching = Boolean.parseBoolean(System.getProperty("idea.no.content.caching"));
 
   @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
@@ -977,7 +977,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private void cleanPersistedContentsRecursively(int id) {
+  private static void cleanPersistedContentsRecursively(int id) {
     if (isDirectory(id)) {
       for (int child : FSRecords.list(id)) {
         cleanPersistedContentsRecursively(child);

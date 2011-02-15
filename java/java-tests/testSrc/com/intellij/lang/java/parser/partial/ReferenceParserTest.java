@@ -42,6 +42,8 @@ public class ReferenceParserTest extends JavaParsingTestCase {
     }});
   }
   public void testType7() { doTypeParserTest("Diamond<>"); }
+  public void testType8() { doTypeParserTest("A|"); }
+  public void testType9() { doTypeParserTest("A|B"); }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }
@@ -65,7 +67,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
     doParserTest(text, new TestParser() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseType(builder, ReferenceParser.DIAMONDS | ReferenceParser.ELLIPSIS);
+        ReferenceParser.parseType(builder, ReferenceParser.ELLIPSIS | ReferenceParser.DIAMONDS | ReferenceParser.DISJUNCTIONS);
       }
     });
   }

@@ -291,6 +291,9 @@ public class PsiScopesUtil {
               if (!processQualifierType(conjunct, processor, manager, methodCall)) break;
             }
           }
+          else if (type instanceof PsiDisjunctionType) {
+            processQualifierType(((PsiDisjunctionType)type).getLeastUpperBound(), processor, manager, methodCall);
+          }
           else {
             processQualifierType(type, processor, manager, methodCall);
           }

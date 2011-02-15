@@ -29,9 +29,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.IntentionProvider;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInspection.IntentionProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -854,25 +854,64 @@ public class HighlightUtil {
 
 
   @Nullable
-  static HighlightInfo checkExceptionThrownInTry(PsiParameter parameter) {
-    PsiElement declarationScope = parameter.getDeclarationScope();
+  static HighlightInfo checkExceptionThrownInTry(final PsiParameter parameter) {
+    final PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiCatchSection)) return null;
-    PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
-    Collection<PsiClassType> classes = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
 
-    PsiType caughtType = parameter.getType();
-    if (!(caughtType instanceof PsiClassType)) return null;
-    if (ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)caughtType)) return null;
+    final PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
+    final PsiCodeBlock tryBlock = statement.getTryBlock();
+    assert tryBlock != null : statement;
+    final Collection<PsiClassType> thrownTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
 
-    for (PsiClassType exceptionType : classes) {
+    final PsiType caughtType = parameter.getType();
+    if (caughtType instanceof PsiClassType) {
+      return checkSimpleCatchParameter(parameter, thrownTypes, (PsiClassType)caughtType);
+    }
+    else if (caughtType instanceof PsiDisjunctionType) {
+      return checkMultiCatchParameter(parameter, thrownTypes);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static HighlightInfo checkSimpleCatchParameter(final PsiParameter parameter,
+                                                         final Collection<PsiClassType> thrownTypes,
+                                                         final PsiClassType caughtType) {
+    if (ExceptionUtil.isUncheckedExceptionOrSuperclass(caughtType)) return null;
+
+    for (PsiClassType exceptionType : thrownTypes) {
       if (exceptionType.isAssignableFrom(caughtType) || caughtType.isAssignableFrom(exceptionType)) return null;
     }
 
-    String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, description);
-
+    final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
+    final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, description);
     QuickFixAction.registerQuickFixAction(errorResult, new DeleteCatchFix(parameter));
     return errorResult;
+  }
+
+  @Nullable
+  private static HighlightInfo checkMultiCatchParameter(final PsiParameter parameter, final Collection<PsiClassType> thrownTypes) {
+    for (PsiTypeElement typeElement : PsiTreeUtil.getChildrenOfTypeAsList(parameter.getTypeElement(), PsiTypeElement.class)) {
+      final PsiType catchType = typeElement.getType();
+      if (catchType instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)catchType)) continue;
+
+      boolean used = false;
+      for (PsiClassType exceptionType : thrownTypes) {
+        if (exceptionType.isAssignableFrom(catchType) || catchType.isAssignableFrom(exceptionType)) {
+          used = true;
+          break;
+        }
+      }
+      if (used) continue;
+
+      final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(catchType));
+      final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+      QuickFixAction.registerQuickFixAction(errorResult, new DeleteMultiCatchFix(typeElement));
+      return errorResult;
+    }
+
+    return null;
   }
 
 
@@ -1596,34 +1635,79 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkExceptionAlreadyCaught(PsiJavaCodeReferenceElement element, PsiElement resolved) {
+  public static HighlightInfo checkExceptionAlreadyCaught(final PsiJavaCodeReferenceElement element, final PsiElement resolved) {
     if (!(resolved instanceof PsiClass)) return null;
-    PsiClass catchClass = (PsiClass)resolved;
     if (!(element.getParent() instanceof PsiTypeElement)) return null;
+
     PsiElement catchParameter = element.getParent().getParent();
+    boolean isInMultiCatch = false;
+    if (catchParameter instanceof PsiTypeElement && ((PsiTypeElement)catchParameter).getType() instanceof PsiDisjunctionType) {
+      isInMultiCatch = true;
+      catchParameter = catchParameter.getParent();
+    }
     if (!(catchParameter instanceof PsiParameter) || !(((PsiParameter)catchParameter).getDeclarationScope() instanceof PsiCatchSection)) {
       return null;
     }
-    PsiCatchSection catchSection = (PsiCatchSection)((PsiParameter)catchParameter).getDeclarationScope();
-    PsiTryStatement statement = catchSection.getTryStatement();
-    PsiCatchSection[] catchSections = statement.getCatchSections();
-    int i = ArrayUtil.find(catchSections, catchSection);
-    for (i--; i >= 0; i--) {
-      PsiCatchSection section = catchSections[i];
-      PsiType type = section.getCatchType();
-      PsiClass upCatchClass = PsiUtil.resolveClassInType(type);
-      if (upCatchClass == null) continue;
-      if (InheritanceUtil.isInheritorOrSelf(catchClass, upCatchClass, true)) {
-        String description = JavaErrorMessages
-          .message("exception.already.caught", PsiFormatUtil.formatClass(catchClass, PsiFormatUtilBase.SHOW_NAME |
-                                                                                     PsiFormatUtilBase.SHOW_FQ_NAME));
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new MoveCatchUpFix(catchSection, section));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteCatchFix((PsiParameter)catchParameter));
-        return highlightInfo;
+
+    final PsiClass catchClass = (PsiClass)resolved;
+    final PsiCatchSection catchSection = (PsiCatchSection)((PsiParameter)catchParameter).getDeclarationScope();
+    final PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
+    final int startFrom = ArrayUtil.find(allCatchSections, catchSection) - (isInMultiCatch ? 0 : 1); // check the same multi-catch section
+    for (int i = startFrom; i >= 0; i--) {
+      final PsiCatchSection upperCatchSection = allCatchSections[i];
+      final PsiType upperCatchType = upperCatchSection.getCatchType();
+      final boolean highlight = upperCatchType instanceof PsiDisjunctionType
+                                ? checkMultiCatchSection(catchSection, element.getParent(), catchClass, upperCatchSection)
+                                : checkSimpleCatchSection(catchClass, upperCatchType);
+      if (highlight) {
+        final String className = PsiFormatUtil.formatClass(catchClass, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
+        final String description = JavaErrorMessages.message("exception.already.caught", className);
+        final HighlightInfo result = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
+
+        if (catchSection != upperCatchSection) {
+          QuickFixAction.registerQuickFixAction(result, new MoveCatchUpFix(catchSection, upperCatchSection));
+        }
+        if (isInMultiCatch) {
+          QuickFixAction.registerQuickFixAction(result, new DeleteMultiCatchFix((PsiTypeElement)element.getParent()));
+        }
+        else {
+          QuickFixAction.registerQuickFixAction(result, new DeleteCatchFix((PsiParameter)catchParameter));
+        }
+
+        return result;
       }
     }
+
     return null;
+  }
+
+  private static boolean checkSimpleCatchSection(final PsiClass catchClass, final PsiType upperCatchType) {
+    final PsiClass upperCatchClass = PsiUtil.resolveClassInType(upperCatchType);
+    return upperCatchClass != null && InheritanceUtil.isInheritorOrSelf(catchClass, upperCatchClass, true);
+  }
+
+  private static boolean checkMultiCatchSection(final PsiCatchSection catchSection,
+                                                final PsiElement catchTypeElement,
+                                                final PsiClass catchClass,
+                                                final PsiCatchSection upperCatchSection) {
+    final PsiManager manager = upperCatchSection.getManager();
+    final PsiParameter parameter = upperCatchSection.getParameter();
+    assert parameter != null : upperCatchSection;
+    final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(parameter.getTypeElement(), PsiTypeElement.class);
+    boolean skipElements = manager.areElementsEquivalent(catchSection, upperCatchSection);
+
+    for (int i = typeElements.size() - 1; i >= 0; i--) {
+      final PsiTypeElement typeElement = typeElements.get(i);
+      if (skipElements) {
+        if (manager.areElementsEquivalent(typeElement, catchTypeElement)) skipElements = false;
+        continue;
+      }
+
+      final PsiClass upperCatchClass = PsiUtil.resolveClassInType(typeElement.getType());
+      if (upperCatchClass != null && InheritanceUtil.isInheritorOrSelf(catchClass, upperCatchClass, true)) return true;
+    }
+
+    return false;
   }
 
 

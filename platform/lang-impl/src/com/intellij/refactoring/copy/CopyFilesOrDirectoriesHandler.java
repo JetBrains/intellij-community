@@ -43,6 +43,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFileSystemItem)) return false;
+      if (!element.isValid()) return false;
 
       String name = ((PsiFileSystemItem) element).getName();
       if (names.contains(name)) {
@@ -53,7 +54,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       if (element instanceof PsiFile && !canCopyFile((PsiFile) element)) {
         return false;
       }
-      else if (element instanceof PsiDirectory && !canCopyDirectory((PsiDirectory)element)) {
+      if (element instanceof PsiDirectory && !canCopyDirectory((PsiDirectory)element)) {
         return false;
       }
     }
@@ -106,7 +107,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       targetDirectory = ((PsiFile)element).getContainingDirectory();
     }
 
-    PsiElement[] elements = new PsiElement[]{element};
+    PsiElement[] elements = {element};
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, null, element.getProject(), true);
     dialog.show();
     if (dialog.isOK()) {
@@ -266,7 +267,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       }
       if (newName == null) newName = directory.getName();
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
-      final PsiDirectory subdirectory = (existing!=null) ? existing : targetDirectory.createSubdirectory(newName);
+      final PsiDirectory subdirectory = existing == null ? targetDirectory.createSubdirectory(newName) : existing;
       VfsUtil.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
         public VirtualFile compute() {
           return subdirectory.getVirtualFile();

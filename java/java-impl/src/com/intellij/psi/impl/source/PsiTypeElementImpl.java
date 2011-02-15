@@ -34,6 +34,7 @@ import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
+
   private volatile PsiType myCachedType = null;
   private volatile PatchedSoftReference<PsiType> myCachedDetachedType = null;
 
@@ -78,26 +80,36 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (cachedType != null) {
       return cachedType;
     }
+
+    final List<PsiAnnotation> typeAnnotations = new ArrayList<PsiAnnotation>();
     TreeElement element = getFirstChildNode();
-    List<PsiAnnotation> typeAnnos = new ArrayList<PsiAnnotation>();
     while (element != null) {
       IElementType elementType = element.getElementType();
       if (element.getTreeNext() == null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
-        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnos);
-        PsiAnnotation[] array = toAnnotationsArray(typeAnnos);
-
+        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
+        final PsiAnnotation[] array = toAnnotationsArray(typeAnnotations);
         cachedType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(element.getText(), array);
         assert cachedType != null;
       }
       else if (elementType == JavaElementType.TYPE) {
-        PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(element)).getType();
-        cachedType = getLastChildNode().getElementType() == JavaTokenType.ELLIPSIS ? new PsiEllipsisType(componentType)
-                                                                                   : componentType.createArrayType();
+        final IElementType tailType = getLastChildNode().getElementType();
+        if (tailType == JavaTokenType.ELLIPSIS) {
+          final PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeToPsiNotNull(element)).getType();
+          cachedType = new PsiEllipsisType(componentType);
+        }
+        else if (tailType == JavaTokenType.RBRACKET) {
+          final PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeToPsiNotNull(element)).getType();
+          cachedType = componentType.createArrayType();
+        }
+        else {
+          cachedType = new PsiDisjunctionType(this);
+        }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
-        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnos);
-        PsiAnnotation[] array = toAnnotationsArray(typeAnnos);
-        cachedType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)element.getPsi(), null,array);
+        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
+        final PsiAnnotation[] array = toAnnotationsArray(typeAnnotations);
+        final PsiJavaCodeReferenceElement reference = SourceTreeToPsiMap.treeToPsiNotNull(element);
+        cachedType = new PsiClassReferenceType(reference, null, array);
       }
       else if (elementType == JavaTokenType.QUEST) {
         cachedType = createWildcardType();
@@ -107,8 +119,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         continue;
       }
       else if (elementType == JavaElementType.ANNOTATION) {
-        PsiAnnotation annotation = JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText(element.getText(), this);
-        typeAnnos.add(annotation);
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        final PsiAnnotation annotation = elementFactory.createAnnotationFromText(element.getText(), this);
+        typeAnnotations.add(annotation);
         element = element.getTreeNext();
         continue;
       }
@@ -128,18 +141,18 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return cachedType;
   }
 
-  private static PsiAnnotation[] toAnnotationsArray(List<PsiAnnotation> typeAnnos) {
-    final int size = typeAnnos.size();
-    return size == 0 ? PsiAnnotation.EMPTY_ARRAY : typeAnnos.toArray(new PsiAnnotation[size]);
+  private static PsiAnnotation[] toAnnotationsArray(List<PsiAnnotation> typeAnnotations) {
+    final int size = typeAnnotations.size();
+    return size == 0 ? PsiAnnotation.EMPTY_ARRAY : typeAnnotations.toArray(new PsiAnnotation[size]);
   }
 
-  public static void addTypeUseAnnotationsFromModifierList(PsiElement member, List<PsiAnnotation> typeAnnos) {
+  public static void addTypeUseAnnotationsFromModifierList(PsiElement member, List<PsiAnnotation> typeAnnotations) {
     if (!(member instanceof PsiModifierListOwner)) return;
     PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
-    PsiAnnotation[] gluedAnnos = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
-    for (PsiAnnotation anno : gluedAnnos) {
+    PsiAnnotation[] gluedAnnotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
+    for (PsiAnnotation anno : gluedAnnotations) {
       if (AnnotationsHighlightUtil.isAnnotationApplicableTo(anno, false, "TYPE_USE")) {
-        typeAnnos.add(anno);
+        typeAnnotations.add(anno);
       }
     }
   }
@@ -149,8 +162,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType type = cached == null ? null : cached.get();
     if (type != null) return type;
     try {
-      String combinedAnnos = getCombinedAnnosText();
-      String text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
+      String combinedAnnotations = getCombinedAnnotationsText();
+      String text = combinedAnnotations.length() == 0 ? getText().trim() : combinedAnnotations + " " + getText().trim();
       type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
       myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
     }
@@ -161,7 +174,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @NotNull
-  private String getCombinedAnnosText() {
+  private String getCombinedAnnotationsText() {
     final boolean typeAnnotationsSupported = PsiUtil.isLanguageLevel8OrHigher(this);
     if (!typeAnnotationsSupported) return "";
     return StringUtil.join(getApplicableAnnotations(), ANNOTATION_TEXT, " ");
@@ -177,8 +190,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiFile file = getContainingFile();
     String text;
     if (PsiUtil.isLanguageLevel8OrHigher(file)) {
-      String combinedAnnos = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
-      text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
+      String combinedAnnotations = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
+      text = combinedAnnotations.length() == 0 ? getText().trim() : combinedAnnotations + " " + getText().trim();
     }
     else {
       text = getText().trim();
@@ -201,7 +214,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       temp = PsiWildcardType.createUnbounded(getManager());
     }
     else if (getLastChildNode().getElementType() == JavaElementType.TYPE) {
-      PsiTypeElement bound = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getLastChildNode());
+      PsiTypeElement bound = SourceTreeToPsiMap.treeToPsiNotNull(getLastChildNode());
       ASTNode keyword = getFirstChildNode();
       while (keyword != null &&
              keyword.getElementType() != JavaTokenType.EXTENDS_KEYWORD &&
@@ -235,7 +248,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     TreeElement firstChildNode = getFirstChildNode();
     if (firstChildNode == null) return null;
     if (firstChildNode.getElementType() == JavaElementType.TYPE) {
-      return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(firstChildNode)).getInnermostComponentReferenceElement();
+      return SourceTreeToPsiMap.<PsiTypeElement>treeToPsiNotNull(firstChildNode).getInnermostComponentReferenceElement();
     }
     else {
       return getReferenceElement();
@@ -245,12 +258,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
     PsiElement next = PsiTreeUtil.skipSiblingsForward(annotation, PsiComment.class, PsiWhiteSpace.class);
     if (next != null && next.getNode().getElementType() == JavaTokenType.LBRACKET) {
-      PsiType type = getType();
-      return type;  // annotation belongs to array type dimension
+      return getType();  // annotation belongs to array type dimension
     }
     return this;
   }
 
+  @Nullable
   private PsiJavaCodeReferenceElement getReferenceElement() {
     ASTNode ref = findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
     if (ref == null) return null;
@@ -337,4 +350,3 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return result;
   }
 }
-

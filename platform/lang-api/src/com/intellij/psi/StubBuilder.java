@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 
+/**
+ * @author max
+ */
 public interface StubBuilder {
   StubElement buildStubTree(PsiFile file);
   boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType);

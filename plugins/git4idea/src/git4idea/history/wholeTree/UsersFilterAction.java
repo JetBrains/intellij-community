@@ -30,9 +30,11 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import git4idea.history.NewGitUsersComponent;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,9 +65,11 @@ public class UsersFilterAction extends BasePopupAction {
   private ComponentPopupBuilder myComponentPopupBuilder;
   private AnAction mySelectOkAction;
   private TextFieldCompletionProvider myTextFieldCompletionProvider;
+  private String myPreselectedUser;
+  private DumbAwareAction myPresetUserAction;
 
   public UsersFilterAction(final Project project, final UserFilterI userFilterI) {
-    super(project, USER);
+    super(project, USER, "User");
     myUserFilterI = userFilterI;
     myCurrentText = "";
     myUsers = NewGitUsersComponent.getInstance(myProject);
@@ -75,6 +80,7 @@ public class UsersFilterAction extends BasePopupAction {
         myUserFilterI.allSelected();
         myCurrentText = "";
         myPanel.setToolTipText(USER + " " + ALL);
+        myPreselectedUser = null;
       }
     };
     mySelectMe = new DumbAwareAction() {
@@ -85,6 +91,7 @@ public class UsersFilterAction extends BasePopupAction {
         myPanel.setToolTipText(USER + " " + meText);
         myUserFilterI.meSelected();
         myCurrentText = "";
+        myPreselectedUser = null;
       }
 
       @Override
@@ -92,6 +99,24 @@ public class UsersFilterAction extends BasePopupAction {
         super.update(e);
         e.getPresentation().setVisible(myUserFilterI.isMeKnown());
         e.getPresentation().setText(getMeText());
+      }
+    };
+    myPresetUserAction = new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myLabel.setText(myPreselectedUser);
+        myPanel.setToolTipText(USER + " " + myPreselectedUser);
+        myUserFilterI.filter(myPreselectedUser);
+        myCurrentText = myPreselectedUser;
+        myPreselectedUser = null;
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible((! StringUtil.isEmptyOrSpaces(myPreselectedUser)) &&
+                                       (! Comparing.equal(myPreselectedUser, myUserFilterI.getMe())));
+        e.getPresentation().setText(myPreselectedUser);
       }
     };
     createPopup(project);
@@ -110,6 +135,7 @@ public class UsersFilterAction extends BasePopupAction {
         SwingUtilities.convertPointToScreen(point, myLabel);
         myPopup.setMinimumSize(new Dimension(200, 90));
         myPopup.showInScreenCoordinates(myLabel, point);
+        myPreselectedUser = null;
       }
     };
     myLabel.setText(ALL);
@@ -182,11 +208,14 @@ public class UsersFilterAction extends BasePopupAction {
   }
 
   @Override
-  protected DefaultActionGroup createActionGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(myAllAction);
-    group.add(mySelectMe);
-    group.add(mySelect);
-    return group;
+  protected void createActions(Consumer<AnAction> actionConsumer) {
+    actionConsumer.consume(myPresetUserAction);
+    actionConsumer.consume(myAllAction);
+    actionConsumer.consume(mySelectMe);
+    actionConsumer.consume(mySelect);
+  }
+
+  public void setPreselectedUser(String preselectedUser) {
+    myPreselectedUser = preselectedUser;
   }
 }

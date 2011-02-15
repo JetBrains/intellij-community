@@ -465,8 +465,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
             }
             else {
-              LOG.error("Unknown type:" + type);
-              return null;
+              if (type instanceof PsiDisjunctionType) {
+                return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
+              }
+              else {
+                LOG.error("Unknown type:" + type);
+                return null;
+              }
             }
           }
         }
@@ -474,8 +479,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
   }
 
-  @Nullable private static
-  String getLongTypeName(PsiType type) {
+  @Nullable
+  private static String getLongTypeName(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass aClass = ((PsiClassType)type).resolve();
       if( aClass == null )
@@ -525,8 +530,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                 return getLongTypeName(((PsiIntersectionType)type).getRepresentative());
               }
               else {
-                LOG.error("Unknown type:" + type);
-                return null;
+                if (type instanceof PsiDisjunctionType) {
+                  return getLongTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
+                }
+                else {
+                  LOG.error("Unknown type:" + type);
+                  return null;
+                }
               }
             }
           }
