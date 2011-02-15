@@ -117,7 +117,7 @@ public class StatementParser {
     final PsiBuilder.Marker codeBlock = builder.mark();
     builder.advanceLexer();
 
-    parseStatements(builder, (parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST));
+    parseStatements(builder, parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST);
 
     final boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
     builder.getTokenType(); // eat spaces

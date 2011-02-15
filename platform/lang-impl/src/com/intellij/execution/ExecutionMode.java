@@ -27,7 +27,7 @@ import java.util.List;
 /**
 * @author Roman.Chernyatchik
 */
-public abstract class ExecutionMode {
+public class ExecutionMode {
   private final boolean myCancelable;
   private final String myTitle;
   private final String myTitle2;
