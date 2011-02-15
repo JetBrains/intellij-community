@@ -107,13 +107,6 @@ public class RedundantUncheckedSuppressWarningsInspection extends BaseJavaLocalI
   private static void checkIfSafeToRemoveWarning(PsiElement suppressElement, PsiElement placeToCheckWarningsIn, ProblemsHolder holder) {
     final HashSet<PsiReferenceExpression> warningsElements = new HashSet<PsiReferenceExpression>();
     collectUncheckedWarnings(placeToCheckWarningsIn, true, warningsElements);
-    for (Iterator<PsiReferenceExpression> iterator = warningsElements.iterator(); iterator.hasNext(); ) {
-      PsiReferenceExpression element = iterator.next();
-      final PsiElement resolve = element.resolve();
-      if (resolve instanceof PsiMethod && AnnotationUtil.isAnnotated((PsiMethod)resolve, "java.lang.SafeVarargs", false)) {
-        iterator.remove();
-      }
-    }
     if (warningsElements.isEmpty()) {
       final int uncheckedIdx = suppressElement.getText().indexOf(RemoveUncheckedWarningFix.UNCHECKED);
       holder.registerProblem(suppressElement,
@@ -127,28 +120,8 @@ public class RedundantUncheckedSuppressWarningsInspection extends BaseJavaLocalI
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
-        if (!ignoreSuppressed && SuppressManager.getInstance().isSuppressedFor(expression, RemoveUncheckedWarningFix.UNCHECKED)) return;
-
-        final PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiMethod) {
-          final PsiMethod psiMethod = (PsiMethod)resolve;
-          if (psiMethod.isVarArgs()) {
-            final int parametersCount = psiMethod.getParameterList().getParametersCount();
-            final PsiParameter varargParameter =
-              psiMethod.getParameterList().getParameters()[parametersCount - 1];
-            final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
-            if (!GenericsHighlightUtil.isReifiableType(componentType)) {
-              final PsiElement parent = expression.getParent();
-              if (parent instanceof PsiMethodCallExpression) {
-                final PsiExpression[] args = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
-                if (args.length >= parametersCount) {
-                  if (!GenericsHighlightUtil.isReifiableType(args[args.length - 1].getType())){
-                    warningsElements.add(expression);
-                  }
-                }
-              }
-            }
-          }
+        if (GenericsHighlightUtil.isUncheckedWarning(expression, expression.resolve(), ignoreSuppressed)) {
+          warningsElements.add(expression);
         }
       }
     });
