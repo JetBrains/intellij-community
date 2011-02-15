@@ -32,7 +32,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       return;
     }
     if (availableRepos.isEmpty()){
-      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.", "Cannot clone");
+      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.\nOnly your own or watched repositories can be cloned.", "Cannot clone");
       return;
     }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
