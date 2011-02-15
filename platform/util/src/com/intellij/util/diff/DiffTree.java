@@ -120,7 +120,6 @@ public class DiffTree<OT, NT> {
       NT newChild2 = newIndex < newSize-1 ? newChildren[newIndex+1] : null;
 
       CompareResult c11 = looksEqual(comparator, oldChild1, newChild1);
-
       if (c11 == CompareResult.EQUAL || c11 == CompareResult.DRILL_DOWN_NEEDED) {
         if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
           build(oldChild1, newChild1, level+1);
@@ -129,32 +128,32 @@ public class DiffTree<OT, NT> {
         newIndex++;
         continue;
       }
-      CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
-      CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
       if (c11 == CompareResult.TYPE_ONLY) {
+        CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
         if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED) {
           myConsumer.nodeDeleted(oldNode, oldChild1);
           oldIndex++;
           continue;
         }
-        else if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) {
+        CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
+        if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) {
           myConsumer.nodeInserted(oldNode, newChild1, newIndex);
           newIndex++;
           continue;
         }
-        else {
-          myConsumer.nodeReplaced(oldChild1, newChild1);
-          oldIndex++;
-          newIndex++;
-          continue;
-        }
+        myConsumer.nodeReplaced(oldChild1, newChild1);
+        oldIndex++;
+        newIndex++;
+        continue;
       }
+      CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
       if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED || c12 == CompareResult.TYPE_ONLY) {
         myConsumer.nodeInserted(oldNode, newChild1, newIndex);
         newIndex++;
         continue;
       }
 
+      CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
       if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED || c21 == CompareResult.TYPE_ONLY) {
         myConsumer.nodeDeleted(oldNode, oldChild1);
         oldIndex++;

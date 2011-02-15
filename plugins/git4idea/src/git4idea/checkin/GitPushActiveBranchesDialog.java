@@ -759,12 +759,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
 
         if (postUiTask != null) {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
               postUiTask.run(roots);
             }
-          }, ModalityState.stateForComponent(getRootPane()));
+          });
         }
       }
     };

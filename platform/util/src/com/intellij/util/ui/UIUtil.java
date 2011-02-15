@@ -761,9 +761,15 @@ public class UIUtil {
                                         final int startX,
                                         final int endX,
                                         final int height) {
+    Color c1 = new Color(255, 234, 162);
+    Color c2 = new Color(255, 208, 66);
+    drawSearchMatch(g, startX, endX, height, c1, c2);
+  }
+
+  public static void drawSearchMatch(Graphics2D g, int startX, int endX, int height, Color c1, Color c2) {
     final boolean drawRound = endX - startX > 4;
 
-    g.setPaint(new GradientPaint(startX, 2, new Color(255, 234, 162), startX, height - 5, new Color(255, 208, 66)));
+    g.setPaint(new GradientPaint(startX, 2, c1, startX, height - 5, c2));
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {

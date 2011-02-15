@@ -63,7 +63,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate {
       }
       int offset = r.getStartOffset();
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-      ArrayList<FindResult> results = new ArrayList<FindResult>();
+      final ArrayList<FindResult> results = new ArrayList<FindResult>();
 
       while (true) {
         FindManager findManager = FindManager.getInstance(editor.getProject());
@@ -77,28 +77,24 @@ public class LivePreviewControllerBase implements LivePreview.Delegate {
         if (results.size() > myMatchesLimit) break;
       }
       if (results.size() < myMatchesLimit) {
-        if (results.isEmpty()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              notFound();
-            }
-          });
-        }
+
         findResultsToOccurrences(results, occurrences);
-      } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            tooManyMatches();
-          }
-        });
       }
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          searchEndsWith(results.size());
+        }
+      });
     }
     return occurrences;
   }
 
-  protected void tooManyMatches() {  }
+  protected void searchEndsWith(int size) {
+
+  }
+
 
   @Override
   public String getReplacementPreviewText(Editor editor, LiveOccurrence liveOccurrence) {
@@ -148,8 +144,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate {
 
   @Override
   public Editor getEditor(Ref<Boolean> needToUpdate) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
-  public void notFound() {}
 }

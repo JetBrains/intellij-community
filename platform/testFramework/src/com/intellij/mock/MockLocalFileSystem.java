@@ -73,6 +73,14 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
+  public void refreshIoFiles(Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  }
+
+  @Override
+  public void refreshFiles(Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  }
+
+  @Override
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
     throw new UnsupportedOperationException("'physicalContentsToByteArray' not implemented in " + getClass().getName());
   }
@@ -109,6 +117,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public void unregisterAuxiliaryFileOperationsHandler(final LocalFileOperationsHandler handler) {
   }
+
 
   @Override
   public boolean processCachedFilesInSubtree(final VirtualFile file, final Processor<VirtualFile> processor) {

@@ -24,4 +24,14 @@ public class LiveOccurrence {
   public void setSecondaryRanges(Collection<TextRange> secondaryRanges) {
     this.mySecondaryRanges = secondaryRanges;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof LiveOccurrence) {
+      if (myPrimaryRange.equals(((LiveOccurrence)o).getPrimaryRange())) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
