@@ -34,7 +34,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -47,9 +50,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -121,6 +122,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private Alarm myHintAlarm = new Alarm();
   private JLabel mySortingLabel;
   private final JScrollPane myScrollPane;
+  private boolean myHintMode;
+  private LightweightHint myAutopopupHint;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -474,6 +477,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     model.addElement(item);
   }
 
+  public void setHintMode(final boolean hintMode) {
+    if (!hintMode) {
+      hideAutopopupHint();
+    }
+    myHintMode = hintMode;
+  }
+
   private static LookupElementPresentation renderItemApproximately(LookupElement item) {
     final LookupElementPresentation p = new LookupElementPresentation();
     item.renderElement(p);
@@ -531,7 +541,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return ContainerUtil.flatten(classifier.classify(better));
   }
 
-  private String itemPrefix(LookupElement element) {
+  String itemPrefix(LookupElement element) {
     return element.getPrefixMatcher().getPrefix() + myAdditionalPrefix;
   }
 
@@ -1067,6 +1077,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert myHidden;
     assert !myDisposed : disposeTrace;
 
+    hideAutopopupHint();
+
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
 
@@ -1100,20 +1112,116 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateList();
 
+    final Editor editor = myEditor;
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
 
-      if (myEditor.getComponent().getRootPane() == null) {
+      if (editor.getComponent().getRootPane() == null) {
         LOG.error("Null root pane");
       }
 
       updateScrollbarVisibility();
-      HintManagerImpl.adjustEditorHintPosition(this, myEditor, calculatePosition());
+      HintManagerImpl.adjustEditorHintPosition(this, editor, calculatePosition());
       layoutStatusIcons();
 
       if (reused) {
         ensureSelectionVisible();
       }
+    }
+    else if (myHintMode) {
+      hideAutopopupHint();
+
+      final int itemTextPadding = 2;
+      final int borderWidth = 1;
+
+      Point bestPoint = calculatePosition();
+      bestPoint.x += myCellRenderer.getIconIndent() - itemTextPadding - borderWidth;
+      Point editorPoint = SwingUtilities.convertPoint(
+        editor.getComponent().getRootPane().getLayeredPane(),
+        bestPoint,
+        editor.getContentComponent()
+      );
+
+      final HintHint hintHint = new HintHint(editor, editorPoint).setHighlighterType(true).setContentActive(true);
+
+      final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+      myAutopopupHint = new LightweightHint(createAutopopupHintComponent(itemTextPadding, borderWidth));
+      hintManager.showEditorHint(myAutopopupHint, editor, bestPoint, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
+    }
+  }
+
+  private JPanel createAutopopupHintComponent(int itemTextPadding, int borderWidth) {
+    int maxAutopopupItems = 10;
+    JPanel pane = new JPanel(new GridBagLayout());
+    pane.setBackground(HintUtil.INFORMATION_COLOR);
+
+    final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+
+    final List<LookupElement> items = getItems();
+    for (int i = 0; i < Math.min(maxAutopopupItems, items.size()); i++) {
+      LookupElement element = items.get(i);
+      final LookupElementPresentation presentation = new LookupElementPresentation();
+      element.renderElement(presentation);
+
+      {
+        final GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = i;
+        c.ipadx = itemTextPadding;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        final SimpleColoredComponent comp = new SimpleColoredComponent();
+        comp.setFont(editorFont);
+        final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
+        myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
+                                      StringUtil.notNullize(presentation.getItemText()), comp);
+
+        final JPanel p1 = new JPanel(new BorderLayout());
+        p1.setBackground(pane.getBackground());
+        p1.add(comp, BorderLayout.WEST);
+        final JLabel label = new JLabel(presentation.getTailText());
+        label.setFont(label.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+        p1.add(label, BorderLayout.CENTER);
+        pane.add(p1, c);
+      }
+
+      {
+        final GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 1;
+        c.gridy = i;
+        c.ipadx = 4;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        final JLabel comp = new JLabel(" " + StringUtil.notNullize(presentation.getTypeText()));
+        comp.setFont(comp.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+        comp.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        pane.add(comp, c);
+      }
+    }
+
+    if (items.size() > maxAutopopupItems) {
+      {
+        final GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = maxAutopopupItems;
+        c.gridwidth = 2;
+        c.ipadx = 5;
+        c.ipady = 2;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        final String moreText = " ... (" +
+                            KeymapUtil
+                              .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
+                            " for more suggestions)";
+        pane.add(new JLabel(moreText), c);
+      }
+    }
+
+    pane.setBorder(new LineBorder(Color.darkGray, borderWidth));
+    return pane;
+  }
+
+  private void hideAutopopupHint() {
+    if (myAutopopupHint != null) {
+      myAutopopupHint.hide();
     }
   }
 

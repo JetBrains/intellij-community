@@ -243,6 +243,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       existing.markReused();
       if (!autopopup) {
         existing.setFocused(true);
+        existing.setHintMode(false);
       }
       return existing;
     }

@@ -46,13 +46,13 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final int myMaxWidth;
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
-  private static final Color FOREGROUND_COLOR = Color.black;
+  static final Color FOREGROUND_COLOR = Color.black;
   private static final Color GRAYED_FOREGROUND_COLOR = new Color(160, 160, 160);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
   private static final Color SELECTED_FOREGROUND_COLOR = Color.white;
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = Color.white;
 
-  private static final Color PREFIX_FOREGROUND_COLOR = new Color(176, 0, 176);
+  static final Color PREFIX_FOREGROUND_COLOR = new Color(176, 0, 176);
   private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = new Color(249, 236, 204);
 
   private static final Color EMPTY_ITEM_FOREGROUND_COLOR = FOREGROUND_COLOR;
@@ -232,20 +232,30 @@ public class LookupCellRenderer implements ListCellRenderer {
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
     int used = RealLookupElementPresentation.getStringWidth(name, metrics);
 
+    renderItemName(item, foreground, selected, style, name, myNameComponent);
+    return used;
+  }
+
+  void renderItemName(LookupElement item,
+                      Color foreground,
+                      boolean selected,
+                      int style,
+                      String name,
+                      final SimpleColoredComponent nameComponent) {
     final SimpleTextAttributes baseAttrs = new SimpleTextAttributes(style, foreground);
 
-    final String prefix = item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix();
+    final String prefix = myLookup.itemPrefix(item);
     if (prefix.length() > 0){
       final int i = StringUtil.indexOfIgnoreCase(name, prefix, 0);
       if (i >= 0 && !(item instanceof EmptyLookupItem)) {
-        myNameComponent.append(name.substring(0, i), baseAttrs);
-        myNameComponent.append(name.substring(i, i + prefix.length()), new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
-        myNameComponent.append(name.substring(i + prefix.length()), baseAttrs);
-        return used;
+        nameComponent.append(name.substring(0, i), baseAttrs);
+        nameComponent.append(name.substring(i, i + prefix.length()),
+                             new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
+        nameComponent.append(name.substring(i + prefix.length()), baseAttrs);
+        return;
       }
     }
-    myNameComponent.append(name, baseAttrs);
-    return used;
+    nameComponent.append(name, baseAttrs);
   }
 
   private int setTypeTextLabel(LookupElement item,
