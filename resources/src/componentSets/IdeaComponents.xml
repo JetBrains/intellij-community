@@ -50,10 +50,6 @@
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
-    </component>
   </project-components>
 
   <module-components>
