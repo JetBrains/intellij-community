@@ -20,13 +20,20 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,7 +45,10 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull PsiTypeElement element) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(element.getType());
+    final PsiType type = element.getType();
+    if (type instanceof PsiDisjunctionType) return tokenizeComplexType(element);
+
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
 
     if (psiClass == null || psiClass.getContainingFile() == null || psiClass.getContainingFile().getVirtualFile() == null) {
       return null;
@@ -55,6 +65,19 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
            : new Token[]{
              new Token<PsiTypeElement>(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
                                        SplitterFactory.getInstance().getIdentifierSplitter())};
+  }
+
+  @Nullable
+  private Token[] tokenizeComplexType(PsiTypeElement element) {
+    final List<PsiTypeElement> subTypes = PsiTreeUtil.getChildrenOfTypeAsList(element, PsiTypeElement.class);
+    final List<Token> result = new ArrayList<Token>(subTypes.size());
+    for (PsiTypeElement subType : subTypes) {
+      final Token[] tokens = tokenize(subType);
+      if (tokens != null) {
+        result.addAll(Arrays.asList(tokens));
+      }
+    }
+    return result.size() != 0 ? result.toArray(new Token[result.size()]) : null;
   }
 
   @NotNull
