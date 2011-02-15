@@ -657,7 +657,21 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         try {
           final int rootId = FSRecords.findRootRecord(rootUrl);
           if (basePath.length() > 0) {
-            root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+            root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
+              @NotNull
+              @Override
+              public String getName() {
+                final String name = super.getName();
+
+                // TODO: HACK!!! Get to simpler solution.
+                if (fs instanceof JarFileSystem) {
+                  String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
+                  return jarName.substring(jarName.lastIndexOf('/') + 1);
+                }
+
+                return name;
+              }
+            };
           }
           else {
             // fake root for windows

@@ -69,18 +69,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   public String getName() {
-    String name = decodeName();
-
-    // TODO: HACK!!! Get to simpler solution.
-    if (myParent == null && getFileSystem() instanceof JarFileSystem) {
-      String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
-      return jarName.substring(jarName.lastIndexOf('/') + 1);
-    }
-
-    return name;
-  }
-
-  private String decodeName() {
     Object name = rawName();
     if (name instanceof String) {
       return (String)name;
@@ -298,7 +286,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myParent.addChild(this);
   }
 
-  public void setParent(final VirtualFile newParent) {
+  public void setParent(@NotNull final VirtualFile newParent) {
     myParent.removeChild(this);
     myParent = (VirtualDirectoryImpl)newParent;
     myParent.addChild(this);
