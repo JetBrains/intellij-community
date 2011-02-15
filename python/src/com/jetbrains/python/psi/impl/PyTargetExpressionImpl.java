@@ -249,8 +249,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public PyExpression getQualifier() {
-    final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-    return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
+    ASTNode qualifier = getNode().findChildByType(PyElementTypes.EXPRESSIONS);
+    return qualifier != null ? (PyExpression) qualifier.getPsi() : null;
   }
 
   public String toString() {

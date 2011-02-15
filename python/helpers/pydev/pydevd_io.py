@@ -12,8 +12,22 @@ class IORedirector:
             except:
                 pass
 
+    def isatty(self):
+        return False #not really a file
+
     def flush(self):
         pass
+
+    def __getattr__(self, name):
+        for r in self._redirectTo:
+            if hasattr(r, name):
+                t = type(r.__getattribute__(name)).__name__
+                if t == 'builtin_function_or_method' or t == 'method':
+                    def foo(*args):
+                        return r.__getattribute__(name)(*args)
+                    return foo
+        raise AttributeError(name)
+
     
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
@@ -31,5 +45,11 @@ class IOBuf:
     
     def write(self, s):
         self.buflist.append(s)
+
+    def isatty(self):
+        return False #not really a file
+
+    def flush(self):
+        pass
 
         

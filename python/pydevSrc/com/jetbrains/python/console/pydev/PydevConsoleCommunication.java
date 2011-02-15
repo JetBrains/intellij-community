@@ -89,6 +89,15 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     this.client = client;
   }
 
+  public boolean handshake() throws XmlRpcException {
+    Object ret = client.execute("handshake", new Object[]{});
+    if (ret instanceof String) {
+      String retVal = (String) ret;
+      return "PyCharm".equals(retVal);
+    }
+    return false;
+  }
+
   /**
    * Stops the communication with the client (passes message for it to quit).
    */

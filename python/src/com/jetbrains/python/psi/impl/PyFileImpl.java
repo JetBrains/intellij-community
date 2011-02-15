@@ -194,23 +194,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         final List<PyExceptPartStub> exceptParts = new ArrayList<PyExceptPartStub>();
         for (int i=children.size()-1; i >= 0; i--) {
           Object child = children.get(i);
-          if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
-            return ((NamedStub) child).getPsi();
-          }
-          else if (child instanceof PyFromImportStatementStub) {
-            final PsiElement result = findNameInFromImportStatementStub(name, (PyFromImportStatementStub)child);
-            if (result != null) {
-              return result;
-            }
-          }
-          else if (child instanceof PyImportStatementStub) {
-            final PsiElement result = findNameInImportStatementStub(name, (PyImportStatementStub)child);
-            if (result != null) {
-              return result;
-            }
-          }
-          else if (child instanceof PyExceptPartStub) {
+          if (child instanceof PyExceptPartStub) {
             exceptParts.add((PyExceptPartStub) child);
+          }
+          else {
+            PsiElement element = findNameInStub(child, name);
+            if (element != null) {
+              return element;
+            }
           }
         }
         for (int i = exceptParts.size() - 1; i >= 0; i--) {
@@ -218,8 +209,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           final List<StubElement> exceptChildren = part.getChildrenStubs();
           for (int j = exceptChildren.size() - 1; j >= 0; j--) {
             Object child = exceptChildren.get(j);
-            if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
-              return ((NamedStub) child).getPsi();
+            PsiElement element = findNameInStub(child, name);
+            if (element != null) {
+              return element;
             }
           }
         }
@@ -241,6 +233,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     finally {
       stack.remove(name);
     }
+  }
+
+  @Nullable
+  private PsiElement findNameInStub(Object child, String name) {
+    if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
+      return ((NamedStub) child).getPsi();
+    }
+    else if (child instanceof PyFromImportStatementStub) {
+      return findNameInFromImportStatementStub(name, (PyFromImportStatementStub)child);
+    }
+    else if (child instanceof PyImportStatementStub) {
+      return findNameInImportStatementStub(name, (PyImportStatementStub)child);
+    }
+    return null;
   }
 
   @Nullable

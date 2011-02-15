@@ -1,8 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,11 +11,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyClassScopeProcessor extends PsiScopeProcessor {
   /**
-   * @return condition on nodes that might be interesting for the processor.
-   * 
-   * ??? Instances of NameDefiner are always considered interesting.
-   * @see com.jetbrains.python.psi.NameDefiner
+   * @return set of element types that might be interesting for the processor.
    */
   @NotNull
-  Condition<PsiElement> getTargetCondition();
+  TokenSet getTargetTokenSet();
 }

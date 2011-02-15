@@ -182,6 +182,12 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   }
 
   public PyElement getElementNamed(final String the_name) {
+    // performance: check simple case first
+    PyExpression[] targets = getTargets();
+    if (targets.length == 1 && targets[0] instanceof PyTargetExpression) {
+      PyTargetExpression target = (PyTargetExpression)targets[0];
+      return target.getQualifier() == null && the_name.equals(target.getName()) ? target : null;
+    }
     return IterHelper.findName(iterateNames(), the_name);
   }
 

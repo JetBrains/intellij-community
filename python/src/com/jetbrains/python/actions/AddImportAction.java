@@ -14,9 +14,9 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -103,8 +103,9 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     }
 
     @NotNull
-    public Condition<PsiElement> getTargetCondition() {
-      return PyResolveUtil.IS_NAME_DEFINER;
+    @Override
+    public TokenSet getTargetTokenSet() {
+      return PyResolveUtil.NAME_DEFINERS;
     }
   }
 

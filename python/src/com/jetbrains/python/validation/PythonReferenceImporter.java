@@ -10,12 +10,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -63,11 +64,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return false;
   }
 
-  private static Condition<PsiElement> IS_IMPORT_STATEMENT = new Condition<PsiElement>() {
-    public boolean value(PsiElement psiElement) {
-      return psiElement instanceof PyImportStatement;
-    }
-  };
+  private static TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
   public static ImportFromExistingFix proposeImportFix(final PyElement node, String ref_text) {

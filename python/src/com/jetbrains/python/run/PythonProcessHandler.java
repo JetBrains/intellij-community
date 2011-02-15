@@ -8,6 +8,9 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.charset.Charset;
 
 /**
  * @author traff
@@ -15,6 +18,10 @@ import org.jetbrains.annotations.NotNull;
 public class PythonProcessHandler extends ColoredProcessHandler {
   private PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString());
+  }
+
+  public PythonProcessHandler(Process process, String commandLine, @Nullable Charset charset) {
+    super(process, commandLine, charset);
   }
 
   @Override

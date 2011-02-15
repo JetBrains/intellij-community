@@ -1,13 +1,18 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,23 +41,27 @@ public class PyResolveUtil {
    * @return previous statement, or null.
    */
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt, Condition<PsiElement> condition) {
-    PsiElement seeker = elt;
+  public static PsiElement getPrevNodeOf(PsiElement elt, TokenSet elementTypes) {
+    ASTNode seeker = elt.getNode();
     while (seeker != null) {
-      PsiElement feeler = seeker.getPrevSibling();
-      if ((feeler instanceof PyFunction || feeler instanceof PyClass) && condition.value(feeler)) {
-        return feeler;
+      ASTNode feeler = seeker.getTreePrev();
+      if (feeler != null &&
+          (feeler.getElementType() == PyElementTypes.FUNCTION_DECLARATION ||
+           feeler.getElementType() == PyElementTypes.CLASS_DECLARATION) &&
+          elementTypes.contains(feeler.getElementType())) {
+        return feeler.getPsi();
       }
       if (feeler != null) {
-        seeker = PsiTreeUtil.getDeepestLast(feeler);
+        seeker = TreeUtil.getLastChild(feeler);
       }
       else { // we were the first subnode
         // find something above the parent node we've not exhausted yet
-        seeker = seeker.getParent();
-        if (seeker instanceof PsiFile) return null; // all file nodes have been looked up, in vain
+        seeker = seeker.getTreeParent();
+        if (seeker instanceof FileASTNode) return null; // all file nodes have been looked up, in vain
       }
-      // ??? if (seeker instanceof NameDefiner) return seeker;
-      if (condition.value(seeker)) return seeker;
+      if (seeker != null && elementTypes.contains(seeker.getElementType())) {
+        return seeker.getPsi();
+      }
     }
     // here elt is null or a PsiFile is not up in the parent chain.
     return null;
@@ -62,18 +71,27 @@ public class PyResolveUtil {
   public static PsiElement getPrevNodeOf(PsiElement elt, PsiScopeProcessor proc) {
     if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
     if (proc instanceof PyClassScopeProcessor) {
-      return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetCondition());
+      return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetTokenSet());
     }
     else {
-      return getPrevNodeOf(elt, IS_NAME_DEFINER);
+      return getPrevNodeOf(elt, NAME_DEFINERS);
     }
   }
 
-  public static final Condition<PsiElement> IS_NAME_DEFINER = new Condition<PsiElement>() {
-    public boolean value(PsiElement psiElement) {
-      return psiElement instanceof NameDefiner;
-    }
-  };
+  public static final TokenSet NAME_DEFINERS = TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT,
+                                                               PyElementTypes.IMPORT_ELEMENT,
+                                                               PyElementTypes.CLASS_DECLARATION,
+                                                               PyElementTypes.GLOBAL_STATEMENT,
+                                                               PyElementTypes.GENERATOR_EXPRESSION,
+                                                               PyElementTypes.DICT_COMP_EXPRESSION,
+                                                               PyElementTypes.LIST_COMP_EXPRESSION,
+                                                               PyElementTypes.SET_COMP_EXPRESSION,
+                                                               PyElementTypes.WITH_STATEMENT,
+                                                               PyElementTypes.FUNCTION_DECLARATION,
+                                                               PyElementTypes.ASSIGNMENT_STATEMENT,
+                                                               PyElementTypes.PARAMETER_LIST,
+                                                               PyElementTypes.EXCEPT_PART,
+                                                               PyElementTypes.FOR_STATEMENT);
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
@@ -86,13 +104,13 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, PsiElement roof) {
-    if (elt == null) return null; // can't find anyway.
+    if (elt == null || !elt.isValid()) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
+    PyFunction capFunction = cap != null ? PsiTreeUtil.getParentOfType(cap, PyFunction.class, false) : null;
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
-      if (!seeker.isValid()) return null;
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
         seeker = getPrevNodeOf(PsiTreeUtil.getDeepestLast(seeker), processor);
@@ -128,7 +146,7 @@ public class PyResolveUtil {
       // are we still under the roof?
       if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
       // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
-      if (is_outside_param_list && refersFromMethodToClass(cap, seeker)) continue;
+      if (is_outside_param_list && refersFromMethodToClass(capFunction, seeker)) continue;
       // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {
@@ -164,6 +182,7 @@ public class PyResolveUtil {
     PsiElement ret = null;
     PsiElement our_cap = PsiTreeUtil.getParentOfType(start, Callable.class);
     if (our_cap != null) {
+      PyFunction innerFunction = PsiTreeUtil.getParentOfType(our_cap, PyFunction.class);
       PsiElement cap = our_cap;
       while (true) {
         cap = PsiTreeUtil.getParentOfType(cap, PyFunction.class);
@@ -171,7 +190,7 @@ public class PyResolveUtil {
         ret = treeCrawlUp(processor, true, cap);
         if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
           // maybe we're in a method, and what we found is in its class context?
-          if (!refersFromMethodToClass(our_cap, ret)) {
+          if (!refersFromMethodToClass(innerFunction, ret)) {
             break; // not in method -> must be all right
           }
         }
@@ -183,21 +202,19 @@ public class PyResolveUtil {
 
 
   /**
-   * @param inner an element presumably inside a method within a class, or a method itself.
+   * @param innerFunction a method, presumably inside the class
    * @param outer an element presumably in the class context.
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
    * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
-  protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
-    if (inner == null) {
+  protected static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
+    if (innerFunction == null) {
       return false;
     }
     PsiElement outerClass = PyUtil.getConcealingParent(outer);
-    if (outerClass instanceof PyClass) {   // outer is in a class context
-      PyFunction innerFunction = PsiTreeUtil.getParentOfType(inner, PyFunction.class, false);
-      if (innerFunction != null && innerFunction.getContainingClass() == outerClass) {   // inner is a function or method within the class
-        return true;
-      }
+    if (outerClass instanceof PyClass &&   // outer is in a class context
+       innerFunction.getContainingClass() == outerClass) {   // inner is a function or method within the class
+      return true;
     }
     return false;
   }

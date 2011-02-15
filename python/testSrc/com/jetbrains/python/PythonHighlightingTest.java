@@ -74,6 +74,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testAssignmentTargets() {
+    setLanguageLevel(LanguageLevel.PYTHON26);
     doTest(true, false);
   }
 

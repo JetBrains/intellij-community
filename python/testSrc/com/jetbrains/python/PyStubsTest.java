@@ -282,6 +282,13 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals(0, PyVariableNameIndex.find("__all__", myFixture.getProject(), scope).size());
   }
 
+  public void testImportInExcept() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PsiElement element = file.findExportedName("tmxxx");
+    assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
+    assertNotParsed(file);
+  }
+
   private PyFile getTestFile() {
     return getTestFile(getTestName(false) + ".py");
   }

@@ -22,6 +22,7 @@ import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +37,13 @@ import java.util.Map;
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
+  private PyConsoleProcessHandler myProcessHandler;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
+
+  private static final long APPROPRIATE_TO_WAIT = 10000;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -117,8 +121,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected PyConsoleProcessHandler createProcessHandler(final Process process, final String commandLine) {
-    return new PyConsoleProcessHandler(process, getConsoleView().getConsole(), commandLine,
-                                       CharsetToolkit.UTF8_CHARSET);
+    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView().getConsole(), commandLine,
+                                                   CharsetToolkit.UTF8_CHARSET);
+    return myProcessHandler;
   }
 
   public void initAndRun(final String... statements2execute) throws ExecutionException {
@@ -127,22 +132,54 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     // Propagate console communication to language console
     ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
 
-    // Required timeout for establishing socket connection
-    try {
-      Thread.sleep(3000);
-    }
-    catch (InterruptedException e) {
-      // Ignore
-    }
-
-    // Make executed statements visible to developers
     final LanguageConsoleImpl console = getConsoleView().getConsole();
-    PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-    getConsoleExecuteActionHandler().processLine(PYTHON_ENV_COMMAND);
-    for (String statement : statements2execute) {
-      PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-      getConsoleExecuteActionHandler().processLine(statement + "\n");
+
+    if (handshake()) {
+      // Make executed statements visible to developers
+      PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
+      getConsoleExecuteActionHandler().processLine(PYTHON_ENV_COMMAND);
+
+      for (String statement : statements2execute) {
+        PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
+        getConsoleExecuteActionHandler().processLine(statement + "\n");
+      }
     }
+    else {
+      PyConsoleHighlightingUtil.processOutput(console, "Couldn't connect to console process.", ProcessOutputTypes.STDERR);
+      myProcessHandler.destroyProcess();
+      finishConsole();
+    }
+  }
+
+  private boolean handshake() {
+    boolean res;
+    long started = System.currentTimeMillis();
+    do {
+      try {
+        res = myPydevConsoleCommunication.handshake();
+      }
+      catch (XmlRpcException e) {
+        res = false;
+      }
+      if (res) {
+        break;
+      }
+      else {
+        long now = System.currentTimeMillis();
+        if (now - started > APPROPRIATE_TO_WAIT) {
+          break;
+        }
+        else {
+          try {
+            Thread.sleep(100);
+          }
+          catch (InterruptedException e) {
+          }
+        }
+      }
+    }
+    while (true);
+    return res;
   }
 
   @Override
