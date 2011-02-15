@@ -64,6 +64,7 @@ public class CreatePatchConfigurationPanel {
         final VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
         if (fileWrapper != null) {
           myFileNameField.setText(fileWrapper.getFile().getPath());
+          checkName();
         }
       }
     });
