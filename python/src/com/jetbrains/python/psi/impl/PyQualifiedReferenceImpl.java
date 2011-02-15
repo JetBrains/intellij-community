@@ -6,9 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
@@ -226,6 +228,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
+    // performance: a qualified reference can never resolve to a local variable or parameter
+    if (isLocalScope(element)) {
+      return false;
+    }
+
     if (resolve() == element) {
       return true;
     }
@@ -236,6 +243,17 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean isLocalScope(PsiElement element) {
+    if (element instanceof PyParameter) {
+      return true;
+    }
+    if (element instanceof PyTargetExpression) {
+      return ((PyTargetExpression)element).getQualifier() == null &&
+             PsiTreeUtil.getParentOfType(element, ScopeOwner.class) instanceof PyFunction;
     }
     return false;
   }
