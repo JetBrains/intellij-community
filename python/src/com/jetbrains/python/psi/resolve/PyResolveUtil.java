@@ -107,6 +107,7 @@ public class PyResolveUtil {
     if (elt == null || !elt.isValid()) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
+    PyFunction capFunction = cap != null ? PsiTreeUtil.getParentOfType(cap, PyFunction.class, false) : null;
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
@@ -145,7 +146,7 @@ public class PyResolveUtil {
       // are we still under the roof?
       if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
       // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
-      if (is_outside_param_list && refersFromMethodToClass(cap, seeker)) continue;
+      if (is_outside_param_list && refersFromMethodToClass(capFunction, seeker)) continue;
       // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {
@@ -181,6 +182,7 @@ public class PyResolveUtil {
     PsiElement ret = null;
     PsiElement our_cap = PsiTreeUtil.getParentOfType(start, Callable.class);
     if (our_cap != null) {
+      PyFunction innerFunction = PsiTreeUtil.getParentOfType(our_cap, PyFunction.class);
       PsiElement cap = our_cap;
       while (true) {
         cap = PsiTreeUtil.getParentOfType(cap, PyFunction.class);
@@ -188,7 +190,7 @@ public class PyResolveUtil {
         ret = treeCrawlUp(processor, true, cap);
         if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
           // maybe we're in a method, and what we found is in its class context?
-          if (!refersFromMethodToClass(our_cap, ret)) {
+          if (!refersFromMethodToClass(innerFunction, ret)) {
             break; // not in method -> must be all right
           }
         }
@@ -200,21 +202,19 @@ public class PyResolveUtil {
 
 
   /**
-   * @param inner an element presumably inside a method within a class, or a method itself.
+   * @param innerFunction a method, presumably inside the class
    * @param outer an element presumably in the class context.
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
    * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
-  protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
-    if (inner == null) {
+  protected static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
+    if (innerFunction == null) {
       return false;
     }
     PsiElement outerClass = PyUtil.getConcealingParent(outer);
-    if (outerClass instanceof PyClass) {   // outer is in a class context
-      PyFunction innerFunction = PsiTreeUtil.getParentOfType(inner, PyFunction.class, false);
-      if (innerFunction != null && innerFunction.getContainingClass() == outerClass) {   // inner is a function or method within the class
-        return true;
-      }
+    if (outerClass instanceof PyClass &&   // outer is in a class context
+       innerFunction.getContainingClass() == outerClass) {   // inner is a function or method within the class
+      return true;
     }
     return false;
   }
