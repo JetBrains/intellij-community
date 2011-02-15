@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
@@ -150,10 +151,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
   private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
     private final ISVNAuthenticationProvider myDelegate;
+    private final ISVNGnomeKeyringPasswordProvider myISVNGnomeKeyringPasswordProvider;
     private final File myAuthDir;
     private Project myProject;
 
     private PersistentAuthenticationProviderProxy(File authDir, String userName) {
+      myISVNGnomeKeyringPasswordProvider = new MyKeyringMasterKeyProvider(myProject);
       ISVNAuthenticationStorageOptions delegatingOptions = new ISVNAuthenticationStorageOptions() {
         public boolean isNonInteractive() throws SVNException {
           return getAuthenticationStorageOptions().isNonInteractive();
@@ -165,7 +168,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
         @Override
         public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
-          return getAuthenticationStorageOptions().getGnomeKeyringPasswordProvider();
+          return myISVNGnomeKeyringPasswordProvider;
         }
 
         @Override
@@ -788,6 +791,26 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     @Override
     public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
       return myDelegate.readPassphrase(realm, authParameters);
+    }
+  }
+
+  private static class MyKeyringMasterKeyProvider implements ISVNGnomeKeyringPasswordProvider {
+    private final Project myProject;
+
+    public MyKeyringMasterKeyProvider(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public String getKeyringPassword(final String keyringName) throws SVNException {
+      final String[] s = new String[1];
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          s[0] = Messages.showInputDialog(myProject, "Please provide '" + keyringName + "' GNOME Keyring password", "Subversion", Messages.getQuestionIcon());
+        }
+      });
+      return s[0];
     }
   }
 }
