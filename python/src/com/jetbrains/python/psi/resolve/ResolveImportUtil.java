@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Sets;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -13,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -226,11 +229,18 @@ public class ResolveImportUtil {
           }
           List<PsiElement> found_in_roots = resolveModulesInRoots(qualifiedName, source_file);
           if (found_in_roots.size() > 0) return found_in_roots;
-          // TODO: resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
-          // TODO: move this to project settings some day
-          ResolveInRootVisitor visitor = new ResolveInRootAsTopPackageVisitor(qualifiedName, source_file.getManager(), source_file, true);
-          visitRoots(source_file, visitor);
-          return visitor.results;
+          // resolve the name considering every source root as a package dir, as if it's a deployed package. django console does so.
+          boolean has_djando_facet = false;
+          final Module source_module = ModuleUtil.findModuleForPsiElement(source_file);
+          if (source_module != null) {
+            has_djando_facet = FacetManager.getInstance(source_module).getFacetByType(DjangoFacetType.ID) != null;
+          }
+          if (has_djando_facet) {
+            ResolveInRootVisitor visitor = new ResolveInRootAsTopPackageVisitor(qualifiedName, source_file.getManager(), source_file, true);
+            visitRoots(source_file, visitor);
+            return visitor.results;
+          }
+          return Collections.emptyList();
         }
       }
     }

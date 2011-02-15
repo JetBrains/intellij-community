@@ -224,11 +224,6 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertNull(psiElement);
   }
 
-  public void testStandaloneRootPackage() { // PY-2846
-    PsiElement psiElement = doResolve();
-    assertNotNull(psiElement);
-  }
-
   private PsiFile prepareFile() {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
