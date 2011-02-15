@@ -1,0 +1,1 @@
+import <warning descr="Python version 3.0, 3.1 do not have module Bastion">Bastion</warning>

@@ -1,24 +1,24 @@
-print(<warning descr="<> is not supported in Python 3, use != instead">a <> 3</warning>)
-<warning descr="Backquote is not supported in Python 3, use repr() instead">`foo()`</warning>
-a = <warning descr="Integer literals do not support a trailing 'l' or 'L' in Python 3">123l</warning>
-a = <warning descr="Python 3 requires '0o' prefix for octal literals">043</warning>
+print(<error descr="Python version 3.0 does not support <>, use != instead.">a <> 3</error>)
+<error descr="Python version 3.0 does not support backquotes, use repr() instead">`foo()`</error>
+a = <error descr="Python version 3.0 does not support a trailing 'l' or 'L'.">123l</error>
+a = <error descr="Python version 3.0 does not support this syntax. It requires '0o' prefix for octal literals">043</error>
 a = 0X43
 a = 0b1
 a = 0.0
-s = <warning descr="String literals do not support a leading 'u' or 'U' in Python 3">u"text"</warning>
-<warning descr="Python 3 does not support this syntax">raise a, b, c</warning>
-<warning descr="Python 3 does not support this syntax">raise a, b</warning>
+s = <error descr="Python version 3.0 does not support a leading 'u' or 'U'.">u"text"</error>
+<error descr="Python version 3.0 does not support this syntax.">raise a, b, c</error>
+<error descr="Python version 3.0 does not support this syntax.">raise a, b</error>
 
 try:
   pass
-<warning descr="Python 3 does not support this syntax">except a, name:
-  pass</warning>
+<error descr="Python version 3.0 does not support this syntax.">except a, name:
+  pass</error>
 
-[x * 2 for x in <warning descr="List comprehensions do not support this syntax in Python 3">vec1, vec2</warning>]
+[x * 2 for x in <error descr="Python version 3.0 does not support this syntax in list comprehensions.">vec1, vec2</error>]
 
-<warning descr="Module __builtin__ renamed to builtins">import __builtin__</warning>
+<error descr="Python version 3.0 does not have module __builtin__">import __builtin__</error>
 
-<error descr="raise with no arguments can only be used in an except block">raise</error>
+<error descr="Python version 3.0 does not support this syntax. Raise with no arguments can only be used in an except block">raise</error>
 
 try:
     pass
