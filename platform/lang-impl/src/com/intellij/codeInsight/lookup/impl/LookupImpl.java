@@ -1150,13 +1150,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         panel.add(hintComponent);
         myAutopopupHint = new LightweightHint(panel);
         myAutopopupHint.setForceShowAsPopup(true);
-        myAutopopupHint.setForceLightweightPopup(true);
         hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint),
                                    HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
       } else {
         final JComponent panel = myAutopopupHint.getComponent();
         panel.remove(0);
         panel.add(hintComponent);
+        HintManagerImpl.adjustEditorHintPosition(myAutopopupHint, editor, bestPoint);
       }
     }
   }
