@@ -6,12 +6,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.Arrays;
 
 /**
  * @author mike
  */
+@PlatformTestCase.WrapInCommand
 public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
   protected String myPrefix;
   protected LookupElement[] myItems;

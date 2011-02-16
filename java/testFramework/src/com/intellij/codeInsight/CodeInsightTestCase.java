@@ -68,10 +68,6 @@ import java.util.List;
 public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor myEditor;
 
-  public CodeInsightTestCase() {
-    myRunCommandForTest = true;
-  }
-
   protected Editor createEditor(VirtualFile file) {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
 

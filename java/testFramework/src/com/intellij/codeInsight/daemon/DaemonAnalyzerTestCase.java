@@ -89,8 +89,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
@@ -170,8 +172,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
-
-    myRunCommandForTest = !annotatedWith(DoNotWrapInCommand.class);
 
     if (isPerformanceTest()) {
       IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
@@ -357,32 +357,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   private boolean canChangeDocumentDuringHighlighting() {
     return annotatedWith(CanChangeDocumentDuringHighlighting.class);
-  }
-
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.METHOD, ElementType.TYPE})
-  public @interface DoNotWrapInCommand {}
-
-  private boolean annotatedWith(Class annotationClass) {
-    Class aClass = getClass();
-    if (aClass.getAnnotation(annotationClass) != null) return true;
-    Method method = null;
-    String methodName = "test" + getTestName(false);
-    while (aClass != null) {
-      try {
-        method = aClass.getDeclaredMethod(methodName);
-        break;
-      }
-      catch (NoSuchMethodException e) {
-        aClass = aClass.getSuperclass();
-      }
-    }
-    if (method == null) {
-      fail(methodName);
-    }
-
-    Object annotation = method.getAnnotation(annotationClass);
-    return annotation != null;
   }
 
   public static List<HighlightInfo> filter(final List<HighlightInfo> infos, HighlightSeverity minSeverity) {
