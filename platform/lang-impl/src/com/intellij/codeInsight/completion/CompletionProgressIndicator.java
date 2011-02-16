@@ -348,7 +348,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     updateFocus();
   }
 
-  private static boolean showHintAutopopup() {
+   public static boolean showHintAutopopup() {
     return "true".equals(Registry.stringValue("hint.autopopup"));
   }
 

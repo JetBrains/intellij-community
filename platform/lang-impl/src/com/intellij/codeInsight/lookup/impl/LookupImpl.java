@@ -484,6 +484,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myHintMode = hintMode;
   }
 
+  public boolean isHintMode() {
+    return myHintMode;
+  }
+
   private static LookupElementPresentation renderItemApproximately(LookupElement item) {
     final LookupElementPresentation p = new LookupElementPresentation();
     item.renderElement(p);
