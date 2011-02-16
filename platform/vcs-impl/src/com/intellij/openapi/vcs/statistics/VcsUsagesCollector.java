@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.statistics;
 
+import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -28,77 +28,25 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-public class VcsUsagesCollector extends UsagesCollector {
-  private static final String GROUP_ID = "vcs";
+public class VcsUsagesCollector extends AbstractApplicationUsagesCollector {
+    private static final String GROUP_ID = "vcs";
 
-  public static void persistProjectUsages(@NotNull Project project) {
-    persistProjectUsages(project, getProjectUsages(project));
-  }
-
-  public static void persistProjectUsages(@NotNull Project project, @NotNull Set<UsageDescriptor> usages) {
-    persistProjectUsages(project, usages, VcsStatisticsPersistenceComponent.getInstance());
-  }
-
-  public static void persistProjectUsages(@NotNull Project project,
-                                          @NotNull Set<UsageDescriptor> usages,
-                                          @NotNull VcsStatisticsPersistenceComponent persistence) {
-    persistence.persist(project, usages);
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages() {
-    return getApplicationUsages(VcsStatisticsPersistenceComponent.getInstance());
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> getApplicationUsages(@NotNull final VcsStatisticsPersistenceComponent persistence) {
-    final Map<String, Integer> vcsUsagesMap = new HashMap<String, Integer>();
-
-    for (Set<UsageDescriptor> descriptors : persistence.getVcsUsageMap().values()) {
-      for (UsageDescriptor descriptor : descriptors) {
-        final String key = descriptor.getKey();
-        final Integer count = vcsUsagesMap.get(key);
-        vcsUsagesMap.put(key, count == null ? 1 : count.intValue() + 1);
-      }
+    @NotNull
+    public GroupDescriptor getGroupId() {
+        return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
     }
 
-    return ContainerUtil.map2Set(vcsUsagesMap.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(Map.Entry<String, Integer> vcsUsage) {
-        return new UsageDescriptor(createGroupDescriptor(), vcsUsage.getKey(), vcsUsage.getValue());
-      }
-    });
-  }
-
-  @NotNull
-  public String getGroupId() {
-    return GROUP_ID;
-  }
-
-  @NotNull
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) {
-    if (project != null) {
-      persistProjectUsages(project, getProjectUsages(project));
+    @NotNull
+    public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+        return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), new Function<AbstractVcs, UsageDescriptor>() {
+            @Override
+            public UsageDescriptor fun(AbstractVcs vcs) {
+                return new UsageDescriptor(vcs.getName(), 1);
+            }
+        });
     }
-
-    return getApplicationUsages();
-  }
-
-  public static Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), new Function<AbstractVcs, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(AbstractVcs vcs) {
-        return new UsageDescriptor(createGroupDescriptor(), vcs.getName(), 1);
-      }
-    });
-  }
-
-  public static GroupDescriptor createGroupDescriptor() {
-    return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
-  }
 }
 

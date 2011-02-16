@@ -44,6 +44,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private final boolean myIsUnitTestMode;
   private FileObject myClassFileToProcess = null;
   private String myLastReadLine = null;
+  private String myPushBackLine = null;
   private volatile boolean myProcessExited = false;
   private final CompileContext myContext;
 
@@ -104,6 +105,12 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   }
 
   public final String getNextLine() {
+    final String pushBack = myPushBackLine;
+    if (pushBack != null) {
+      myPushBackLine = null;
+      myLastReadLine = pushBack;
+      return pushBack;
+    }
     final String line = readLine(myCompilerOutStreamReader);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LIne read: #" + line + "#");
@@ -120,6 +127,12 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
     return myLastReadLine;
   }
 
+  @Override
+  public void pushBack(String line) {
+    myLastReadLine = null;
+    myPushBackLine = line;
+  }
+
   public final void fileGenerated(FileObject path) {
     // javac first logs file generated, then starts to write the file to disk,
     // so this thread sometimes can stumble on not yet existing file,
@@ -131,6 +144,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
         processCompiledClass(previousPath);
       }
       catch (CacheCorruptedException e) {
+        if (CompileDriver.ourDebugMode) {
+          e.printStackTrace();
+        }
         myError = e;
         LOG.info(e);
         killProcess();
@@ -164,6 +180,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       buffer = StringBuilderSpinAllocator.alloc();
     }
     catch (SpinAllocator.AllocatorExhaustedException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       LOG.info(e);
       buffer = new StringBuilder();
       releaseBuffer = false;
@@ -207,6 +226,16 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
     try {
       while(!reader.ready()) {
         if (isProcessTerminated()) {
+          if (CompileDriver.ourDebugMode) {
+            String text;
+            try {
+              text = reader.ready()? "ready" : "not ready";
+            }
+            catch (IOException e) {
+              text = "Exception " + e.getMessage();
+            }
+            System.out.println("COMPILER PARSING THREAD: reader not ready before isTerminatedCheck(), after the check: isReady= " + text);
+          }
           return -1;
         }
         try {
@@ -218,7 +247,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       return reader.read();
     }
     catch (IOException e) {
-      return -1; // When process terminated Process.getInputStream()'s underlaying stream becomes closed on Linux.
+      return -1; // When process terminated Process.getInputStream()'s underlying stream becomes closed on Linux.
     }
   }
 

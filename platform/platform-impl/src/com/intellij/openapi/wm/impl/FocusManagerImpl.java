@@ -16,12 +16,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.focus.FocusTracesAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.EdtRunnable;
@@ -60,6 +62,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
+  private final boolean isInternalMode = ApplicationManagerEx.getApplicationEx().isInternal();
+  private List<FocusRequestInfo> myRequests = new ArrayList<FocusRequestInfo>();
 
   private final IdeEventQueue myQueue;
   private final KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
@@ -156,6 +160,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
+    if (isInternalMode) {
+      recordCommand(command, new Throwable(), forced);
+    }
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
@@ -181,6 +188,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     });
 
     return result;
+  }
+
+  public List<FocusRequestInfo> getRequests() {
+    return myRequests;
+  }
+
+  private void recordCommand(FocusCommand command, Throwable trace, boolean forced) {
+    if (FocusTracesAction.isActive()) {
+      myRequests.add(new FocusRequestInfo(command.getDominationComponent(), trace, forced));
+    }
   }
 
   private void _requestFocus(final FocusCommand command, final boolean forced, final ActionCallback result) {

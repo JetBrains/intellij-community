@@ -27,7 +27,7 @@ import java.util.List;
  * (after update is done)
  */
 public class Modifier implements ChangeListsWriteOperations {
-  private final ChangeListWorker myWorker;
+  private ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
@@ -112,5 +112,9 @@ public class Modifier implements ChangeListsWriteOperations {
       command.apply(worker);
       myNotificator.callNotify(command);
     }
+  }
+
+  public void setWorker(ChangeListWorker worker) {
+    myWorker = worker;
   }
 }

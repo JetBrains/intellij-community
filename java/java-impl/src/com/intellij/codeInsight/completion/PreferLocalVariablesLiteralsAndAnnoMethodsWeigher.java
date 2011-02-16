@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends CompletionWeigher {
 
   enum MyResult {
+    className,
     classLiteral,
     normal,
     superMethodParameters,
@@ -53,6 +54,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends Completio
 
       if (object instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)object).getContainingClass().isAnnotationType()) {
         return MyResult.annoMethod;
+      }
+
+      if (object instanceof PsiClass) {
+        return MyResult.className;
       }
     }
 

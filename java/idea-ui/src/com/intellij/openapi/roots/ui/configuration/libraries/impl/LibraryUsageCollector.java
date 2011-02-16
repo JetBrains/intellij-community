@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
+import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -34,12 +35,13 @@ import java.util.*;
 /**
  * @author nik
  */
-public class LibraryUsageCollector extends UsagesCollector {
+public class LibraryUsageCollector extends AbstractApplicationUsagesCollector {
+
   @NonNls private static final String GROUP_ID = "libraries";
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) {
+  public Set<UsageDescriptor> getProjectUsages(@Nullable Project project) {
     if (project == null) return Collections.emptySet();
 
     final Set<LibraryKind<?>> usedKinds = new HashSet<LibraryKind<?>>();
@@ -56,15 +58,13 @@ public class LibraryUsageCollector extends UsagesCollector {
 
     final HashSet<UsageDescriptor> usageDescriptors = new HashSet<UsageDescriptor>();
     for (LibraryKind<?> kind : usedKinds) {
-      final GroupDescriptor group = GroupDescriptor.create(GROUP_ID);
-      usageDescriptors.add(new UsageDescriptor(group, kind.getKindId(), 1));
+      usageDescriptors.add(new UsageDescriptor(kind.getKindId(), 1));
     }
     return usageDescriptors;
   }
 
   @NotNull
   @Override
-  public String getGroupId() {
-    return GROUP_ID;
-  }
+  public GroupDescriptor getGroupId() {
+    return GroupDescriptor.create(GROUP_ID);  }
 }

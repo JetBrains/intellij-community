@@ -79,7 +79,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private FileHolderComposite myComposite;
 
-  private final ChangeListWorker myWorker;
+  private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -117,7 +117,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
-    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);
+    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
 
     myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm));
@@ -421,10 +421,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
-          myWorker.takeData(dataHolder.getChangeListWorker());
-        }
-
-        if (takeChanges) {
+          myWorker = dataHolder.getChangeListWorker();
+          myModifier.setWorker(myWorker);
           if (LOG.isDebugEnabled()) {
             LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
           }
@@ -996,8 +994,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final IgnoredFilesComponent ignoredFilesComponent;
       final ChangeListWorker worker;
       synchronized (myDataLock) {
-        ignoredFilesComponent = new IgnoredFilesComponent(myProject);
-        ignoredFilesComponent.add(myIgnoredIdeaLevel.getFilesToIgnore());
+        ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
         worker = myWorker.copy();
       }
       new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);

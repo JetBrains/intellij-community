@@ -16,25 +16,18 @@
 package com.intellij.internal.statistic.beans;
 public class UsageDescriptor implements Comparable<UsageDescriptor> {
 
-    private final GroupDescriptor myGroup;
     private final String myKey;
     private int myValue;
 
-    public UsageDescriptor(GroupDescriptor group, String key, int value) {
-        assert group != null;
-        assert key != null;
+    public UsageDescriptor(String key, int value) {
+       assert key != null;
 
-        myGroup = group;
         myKey = key;
         myValue = value;
     }
 
     public String getKey() {
         return myKey;
-    }
-
-    public GroupDescriptor getGroup() {
-        return myGroup;
     }
 
     public int getValue() {
@@ -45,29 +38,15 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
         myValue = i;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UsageDescriptor)) return false;
-
-        UsageDescriptor that = (UsageDescriptor) o;
-
-        if (!myGroup.equals(that.myGroup)) return false;
-        if (!myKey.equals(that.myKey)) return false;
-
-        return true;
+    public int getMyValue() {
+        return myValue;
     }
 
-    @Override
-    public int hashCode() {
-        int result = myGroup.hashCode();
-        result = 31 * result + myKey.hashCode();
-        return result;
+    public void setMyValue(int myValue) {
+        this.myValue = myValue;
     }
 
     public int compareTo(UsageDescriptor ud) {
-        final int byGroup = this.getGroup().compareTo(ud.getGroup());
-
-        return byGroup == 0 ? this.getKey().compareTo(ud.myKey) : byGroup;
+        return this.getKey().compareTo(ud.myKey);
     }
 }
