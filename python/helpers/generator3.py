@@ -2084,7 +2084,8 @@ if __name__ == "__main__":
             try:
                 __import__(name) # sys.modules will fill up with what we want
             except ImportError:
-                report("Name %r failed to import", name)
+                exctype, value = sys.exc_info()[:2]
+                report("Name %r failed to import: %r", name, str(value))
                 if debug_mode:
                     sys.exit(1)
                 continue
