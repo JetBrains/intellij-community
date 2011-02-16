@@ -1433,7 +1433,8 @@ class ModuleRedeclarator(object):
         @param p_class the class that contains this function as a method
         @param p_modname module name
         @param seen {id(func): name} map of functions already seen in the same namespace;
-              id() because *some* functions are unhashable (eg _elementtree.Comment in py2.7) """
+               id() because *some* functions are unhashable (eg _elementtree.Comment in py2.7)
+        """
         action("redoing func %r of class %r", p_name, p_class)
         if seen is not None:
             other_func = seen.get(id(p_func), None)
