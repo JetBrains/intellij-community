@@ -1703,11 +1703,15 @@ class ModuleRedeclarator(object):
         Intended for built-in modules and thus does not handle import statements.
         @param p_name name of module
         """
-        action("redong module %r", p_name)
+        action("redoing module %r", p_name)
         self.redoSimpleHeader(p_name)
         # find whatever other self.imported_modules the module knows; effectively these are imports
         module_type = type(sys)
-        for item_name, item in self.module.__dict__.items():
+        for item_name in self.module.__dict__.keys():
+            try:
+                item = self.module.__dict__[item_name]
+            except:
+                continue
             if isinstance(item, module_type):
                 self.imported_modules[item_name] = item
                 self.addImportHeaderIfNeeded()
