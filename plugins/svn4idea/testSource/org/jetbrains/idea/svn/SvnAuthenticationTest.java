@@ -1248,7 +1248,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
 
     @Override
-    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile) {
+    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile, String certificateName) {
       ++ myNumSSLPlaintextPrompt;
       return mySSLPlaintextAnswer;
     }

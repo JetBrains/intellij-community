@@ -23,7 +23,7 @@ public interface SvnAuthenticationInteraction {
   void warnOnAuthStorageDisabled(final SVNURL url);
   void warnOnPasswordStorageDisabled(final SVNURL url);
   void warnOnSSLPassphraseStorageDisabled(final SVNURL url);
-  boolean promptForSSLPlaintextPassphraseSaving(final SVNURL url, String realm, File certificateFile);
+  boolean promptForSSLPlaintextPassphraseSaving(final SVNURL url, String realm, File certificateFile, String certificateName);
   boolean promptForPlaintextPasswordSaving(final SVNURL url, String realm);
   boolean promptInAwt();
 }
