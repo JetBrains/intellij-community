@@ -1,1 +1,1 @@
-from package1.submodule2
+from package1.submodule2 import <caret>
