@@ -344,16 +344,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Arrays.asList(files));
   }
 
-  private void doImportProjects(List<VirtualFile> files, String... profiles) {
+  private void doImportProjects(final List<VirtualFile> files, String... profiles) {
     initProjectsManager(false);
 
     readProjects(files, profiles);
-    myProjectsManager.waitForResolvingCompletion();
-    myProjectsManager.scheduleImportInTests(files);
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        myProjectsManager.waitForResolvingCompletion();
+        myProjectsManager.scheduleImportInTests(files);
         myProjectsManager.importProjects();
       }
     });
@@ -386,7 +386,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void waitForReadingCompletion() {
-    myProjectsManager.waitForReadingCompletion();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          myProjectsManager.waitForReadingCompletion();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   protected void readProjects() {
@@ -403,10 +413,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
-    myProjectsManager.waitForResolvingCompletion();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        myProjectsManager.waitForResolvingCompletion();
         myProjectsManager.performScheduledImportInTests();
       }
     });

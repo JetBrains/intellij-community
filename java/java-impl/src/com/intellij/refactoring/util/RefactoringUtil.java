@@ -56,6 +56,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -1269,10 +1270,47 @@ public class RefactoringUtil {
       public void visitExpression(final PsiExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
-        final PsiClass resolved = PsiUtil.resolveClassInType(type);
-        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, false) && filter.value(
-          (PsiTypeParameter)resolved)){
-          used.add((PsiTypeParameter)resolved);
+        if (type != null) {
+          final TypeParameterSearcher searcher = new TypeParameterSearcher();
+          type.accept(searcher);
+          for (PsiTypeParameter typeParam : searcher.myTypeParams) {
+            if (PsiTreeUtil.isAncestor(typeParam.getOwner(), element, false) && filter.value(typeParam)){
+              used.add(typeParam);
+            }
+          }
+        }
+      }
+
+      class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
+        private final Set<PsiTypeParameter> myTypeParams = new java.util.HashSet<PsiTypeParameter>();
+
+        public Boolean visitType(final PsiType type) {
+          return false;
+        }
+
+        public Boolean visitArrayType(final PsiArrayType arrayType) {
+          return arrayType.getComponentType().accept(this);
+        }
+
+        public Boolean visitClassType(final PsiClassType classType) {
+          final PsiClass aClass = classType.resolve();
+          if (aClass instanceof PsiTypeParameter) {
+            myTypeParams.add((PsiTypeParameter)aClass);
+          }
+
+          final PsiType[] types = classType.getParameters();
+          for (final PsiType psiType : types) {
+            psiType.accept(this);
+          }
+          return false;
+        }
+
+        public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+          final PsiType bound = wildcardType.getBound();
+          if (bound != null) {
+            bound.accept(this);
+          }
+          return false;
         }
       }
     });

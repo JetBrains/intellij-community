@@ -286,9 +286,9 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   private static void dumpCallStack(final ThreadInfo info, final Writer f, final StackTraceElement[] stackTraceElements) {
     try {
-      StringBuilder sb = new StringBuilder("\"" + info.getThreadName() + "\"" +
-                                           " Id=" + info.getThreadId() + " " +
-                                           info.getThreadState());
+      StringBuilder sb = new StringBuilder("\"").append(info.getThreadName()).append("\"");
+      sb.append(" prio=0 tid=0x0 nid=0x0 Id=").append(info.getThreadId());
+      sb.append("\n").append(" java.lang.Thread.State: ").append(info.getThreadState()).append("\n");
       if (info.getLockName() != null) {
           sb.append(" on " + info.getLockName());
       }

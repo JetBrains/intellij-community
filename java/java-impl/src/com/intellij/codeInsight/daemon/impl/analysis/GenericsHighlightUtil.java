@@ -15,17 +15,20 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHightlightInfoTypes;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -38,6 +41,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
@@ -1067,6 +1071,115 @@ public class GenericsHighlightUtil {
     catch (IndexNotReadyException e) {
       return null;
     }
+  }
+
+  @Nullable
+  public static HighlightInfo checkSafeVarargsAnnotation(PsiMethod method) {
+    PsiModifierList list = method.getModifierList();
+    final PsiAnnotation safeVarargsAnnotation = list.findAnnotation("java.lang.SafeVarargs");
+    if (safeVarargsAnnotation == null) {
+      return null;
+    }
+    try {
+      if (!method.isVarArgs()) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on methods with fixed arity");
+      }
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.FINAL)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on non-final instance methods");
+      }
+
+      final PsiParameter varParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
+
+      for (PsiReference reference : ReferencesSearch.search(varParameter)) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, element, "@SafeVarargs do not suppress potentially unsafe operations");
+        }
+      }
+
+
+
+      LOG.assertTrue(varParameter.isVarArgs());
+      final PsiEllipsisType ellipsisType = (PsiEllipsisType)varParameter.getType();
+      final PsiType componentType = ellipsisType.getComponentType();
+      if (isReifiableType(componentType)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, varParameter.getTypeElement(), "@SafeVarargs is not applicable for reifiable types");
+      }
+      return null;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static HighlightInfo checkUncheckedGenericsArrayCreation(PsiReferenceExpression referenceExpression, PsiElement resolved){
+    if (isUncheckedWarning(referenceExpression, resolved, false)) {
+      final HighlightInfo highlightInfo =
+        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, referenceExpression, "Unchecked generics array creation for varargs parameter");
+      QuickFixAction.registerQuickFixAction(highlightInfo, new SuppressFix("unchecked"));
+      return highlightInfo;
+    }
+    return null;
+  }
+
+  public static boolean isUncheckedWarning(PsiReferenceExpression expression, PsiElement resolve, boolean ignoreSuppressed) {
+    if (resolve instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)resolve;
+
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+      if (!ignoreSuppressed) {
+        if (SuppressManager.getInstance().isSuppressedFor(expression, "unchecked")) return false;
+      }
+
+      if (psiMethod.isVarArgs()) {
+        if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false)) {
+          final int parametersCount = psiMethod.getParameterList().getParametersCount();
+          final PsiParameter varargParameter =
+            psiMethod.getParameterList().getParameters()[parametersCount - 1];
+          final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
+          if (!isReifiableType(componentType)) {
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiMethodCallExpression) {
+              final PsiExpression[] args = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
+              for (int i = parametersCount - 1; i < args.length; i++) {
+                if (!isReifiableType(args[i].getType())){
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean isReifiableType(PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return isReifiableType(((PsiArrayType)type).getComponentType());
+    }
+
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+
+    if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) {
+      return false;
+    }
+
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      if (classType.isRaw()) {
+        return true;
+      }
+      if (!classType.hasParameters()) {
+        return true;
+      }
+      return !classType.hasNonTrivialParameters();
+    }
+
+    return false;
   }
 
   static void checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, final HighlightInfoHolder holder) {

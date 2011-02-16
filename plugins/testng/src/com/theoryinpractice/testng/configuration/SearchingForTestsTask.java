@@ -115,7 +115,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     return DumbModeAction.WAIT;
   }
 
-  private void connect() {
+  public void connect() {
     DataOutputStream os = null;
     try {
       os = new DataOutputStream(mySocket.getOutputStream());

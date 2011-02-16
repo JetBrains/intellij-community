@@ -13,19 +13,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
+@PlatformTestCase.WrapInCommand
 public class ClsRepositoryUseTest extends PsiTestCase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ClsRepositoryUseTest");
   private static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls";
   private GlobalSearchScope RESOLVE_SCOPE;
-
-  public ClsRepositoryUseTest() {
-    myRunCommandForTest = true;
-  }
 
   @Override
   protected void setUp() throws Exception {

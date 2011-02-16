@@ -4,17 +4,15 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
+@PlatformTestCase.WrapInCommand
 public class NormalizeDeclarationTest extends PsiTestCase{
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/normalizeDeclaration";
-
-  public NormalizeDeclarationTest() {
-    myRunCommandForTest = true;
-  }
 
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }

@@ -52,6 +52,7 @@ import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -66,10 +67,7 @@ import java.io.Writer;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -78,7 +76,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
-  private final Set<Document> myUnsavedDocuments = new THashSet<Document>();
+  private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
   private final EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
 
   private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
@@ -196,6 +194,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void saveAllDocuments() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeAllDocumentsSaving();
 
     if (myUnsavedDocuments.isEmpty()) return;
@@ -219,6 +219,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void saveDocument(@NotNull final Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myUnsavedDocuments.contains(document)) return;
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
@@ -349,7 +350,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @NotNull
   public Document[] getUnsavedDocuments() {
-    return myUnsavedDocuments.toArray(new Document[myUnsavedDocuments.size()]);
+    List<Document> list = new ArrayList<Document>(myUnsavedDocuments);
+    return list.toArray(new Document[list.size()]);
   }
 
   public boolean isDocumentUnsaved(@NotNull Document document) {
@@ -458,6 +460,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void reloadFromDisk(@NotNull final Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final VirtualFile file = getFile(document);
     try {
       fireBeforeFileContentReload(file, document);
@@ -497,6 +500,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   protected boolean askReloadFromDisk(final VirtualFile file, final Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDocumentUnsaved(document)) return true;
 
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());

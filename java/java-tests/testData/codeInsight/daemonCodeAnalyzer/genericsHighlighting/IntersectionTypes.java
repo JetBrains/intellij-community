@@ -112,7 +112,7 @@ class Maps {
 class Client {
     void f(Date d) {
         //this call should be OK
-        Maps.asMap(Maps.entry(fieldName(), "Test"),
+        <warning descr="Unchecked generics array creation for varargs parameter">Maps.asMap</warning>(Maps.entry(fieldName(), "Test"),
                    Maps.entry(fieldName(), 1),
                    Maps.entry(fieldName(), d));
     }
@@ -136,7 +136,7 @@ Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);</error>
 
 
       public static final List<Class<? extends Serializable>> SIMPLE_TYPES_INFERRED =
-  asList(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
+  <warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
   Boolean.class, Boolean.TYPE ,String[].class  /*,BigDecimal.class*/);
 
 
@@ -157,7 +157,7 @@ public class MaximalType  {
        return null;
     }
     {
-        getParentOfType(M2.class, M.class);
+        <warning descr="Unchecked generics array creation for varargs parameter">getParentOfType</warning>(M2.class, M.class);
     }
 }
 class M extends MaximalType implements L{}

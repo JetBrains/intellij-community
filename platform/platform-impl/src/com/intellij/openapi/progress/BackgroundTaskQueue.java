@@ -41,9 +41,13 @@ public class BackgroundTaskQueue {
   private Boolean myForcedTestMode;
 
   public BackgroundTaskQueue(final Project project, String title) {
-    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
+    this(project, title, null);
+  }
+
+  public BackgroundTaskQueue(final Project project, String title, final Boolean forcedHeadlessMode) {
+    final boolean headless = forcedHeadlessMode != null ? forcedHeadlessMode : ApplicationManager.getApplication().isHeadlessEnvironment();
     myProcessor = new QueueProcessor<Task.Backgroundable>(headless ?
-      new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title), true,
+      new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project), true,
       headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT, new Condition<Object>() {
         @Override
         public boolean value(Object o) {
@@ -79,29 +83,44 @@ public class BackgroundTaskQueue {
 
   private static class BackgroundableUnderProgressRunner implements PairConsumer<Task.Backgroundable, Runnable> {
     private final String myTitle;
+    private final Project myProject;
 
-    public BackgroundableUnderProgressRunner(String title) {
+    public BackgroundableUnderProgressRunner(String title, final Project project) {
       myTitle = title;
+      myProject = project;
     }
 
     @Override
     public void consume(final Task.Backgroundable backgroundable, final Runnable runnable) {
-      final BackgroundableProcessIndicator pi = new BackgroundableProcessIndicator(backgroundable);
-      if (StringUtil.isEmptyOrSpaces(backgroundable.getTitle())) {
-        pi.setTitle(myTitle);
-      }
-      ProgressManager.getInstance().runProcess(new Runnable() {
+      final ProgressIndicator[] pi = new ProgressIndicator[1];
+      final boolean taskTitleIsEmpty = StringUtil.isEmptyOrSpaces(backgroundable.getTitle());
+
+      final Runnable wrappedTask = new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              // calls task's run and onCancel() or onSuccess()
-              RunBackgroundable.runIfBackgroundThread(backgroundable, pi, runnable);
-            }
-          });
+          // calls task's run and onCancel() or onSuccess(); call continuation after task.run()
+          RunBackgroundable.runIfBackgroundThread(backgroundable,
+            pi[0] == null ? ProgressManager.getInstance().getProgressIndicator() : pi[0], runnable);
         }
-      }, pi);
+      };
+
+      final ProgressManager pm = ProgressManager.getInstance();
+      if (backgroundable.isConditionalModal() && ! backgroundable.shouldStartInBackground()) {
+        pm.runProcessWithProgressSynchronously(wrappedTask, taskTitleIsEmpty ? myTitle : backgroundable.getTitle(),
+                                               backgroundable.isCancellable(), myProject);
+      } else {
+        pi[0] = new BackgroundableProcessIndicator(backgroundable);
+        if (taskTitleIsEmpty) {
+          ((BackgroundableProcessIndicator) pi[0]).setTitle(myTitle);
+        }
+
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            pm.runProcess(wrappedTask, pi[0]);
+          }
+        });
+      }
     }
   }
 

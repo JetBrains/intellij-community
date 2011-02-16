@@ -40,13 +40,13 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     measure(4000, new Runnable() {
       @Override
       public void run() {
-        myProjectsManager.waitForReadingCompletion();
+        waitForReadingCompletion();
       }
     });
   }
 
   public void testImporting() throws Exception {
-    myProjectsManager.waitForReadingCompletion();
+    waitForReadingCompletion();
     measure(8, new Runnable() {
       @Override
       public void run() {
@@ -56,7 +56,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   }
 
   public void testReImporting() throws Exception {
-    myProjectsManager.waitForReadingCompletion();
+    waitForReadingCompletion();
     myProjectsManager.importProjects();
     measure(2, new Runnable() {
       @Override
@@ -67,7 +67,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   }
 
   public void testResolving() throws Exception {
-    myProjectsManager.waitForReadingCompletion();
+    waitForReadingCompletion();
     List<MavenProject> mavenProjects = myProjectsManager.getProjects();
     Collections.sort(mavenProjects, new Comparator<MavenProject>() {
       @Override

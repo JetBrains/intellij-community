@@ -112,8 +112,9 @@ public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
     int selectedRow = myLibraryTable.getSelectedRow();
     if (selectedRow >= 0) {
       mySelectedLibName = myLibTableModel.getLibNameAt(selectedRow);
-      myEditLibraryButton.setEnabled(true);
-      myRemoveLibraryButton.setEnabled(true);
+      boolean isEditable = !myProvider.isPredefinedLibrary(myProject, myLibTableModel.getLibNameAt(selectedRow)); 
+      myEditLibraryButton.setEnabled(isEditable);
+      myRemoveLibraryButton.setEnabled(isEditable);
     }
     else {
       myEditLibraryButton.setEnabled(false);
