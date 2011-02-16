@@ -1158,8 +1158,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         panel.remove(0);
         panel.add(hintComponent);
       }
-      //todo[kirillk] comment the following line
-      HintManagerImpl.adjustEditorHintPosition(myAutopopupHint, editor, bestPoint);
     }
   }
 
