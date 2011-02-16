@@ -19,11 +19,6 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
-  @Override
   protected void setUp() throws Exception {
     final String compilerHome = CompilerConfigurationImpl.getTestsExternalCompilerHome();
     if (compilerHome == null || compilerHome.length() == 0) {
