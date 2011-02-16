@@ -44,6 +44,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private final boolean myIsUnitTestMode;
   private FileObject myClassFileToProcess = null;
   private String myLastReadLine = null;
+  private String myPushBackLine = null;
   private volatile boolean myProcessExited = false;
   private final CompileContext myContext;
 
@@ -104,6 +105,12 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   }
 
   public final String getNextLine() {
+    final String pushBack = myPushBackLine;
+    if (pushBack != null) {
+      myPushBackLine = null;
+      myLastReadLine = pushBack;
+      return pushBack;
+    }
     final String line = readLine(myCompilerOutStreamReader);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LIne read: #" + line + "#");
@@ -118,6 +125,12 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
     }
     return myLastReadLine;
+  }
+
+  @Override
+  public void pushBack(String line) {
+    myLastReadLine = null;
+    myPushBackLine = line;
   }
 
   public final void fileGenerated(FileObject path) {
