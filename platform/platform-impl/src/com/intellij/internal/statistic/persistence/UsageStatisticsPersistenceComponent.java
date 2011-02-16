@@ -76,7 +76,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
       String valueData = groupElement.getAttributeValue(DATA_ATTR);
       if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(valueData)) {
-        getSentUsages().addAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
+        getSentUsages().putAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
       }
     }
 
@@ -99,7 +99,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.groupDescriptors(getSentUsages())
+    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.sortDescriptorsByPriority(getSentUsages())
       .entrySet()) {
       Element projectElement = new Element(GROUP_TAG);
       projectElement.setAttribute(GROUP_ID_ATTR, entry.getKey().getId());

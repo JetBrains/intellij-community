@@ -40,10 +40,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.ISVNProxyManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -568,8 +565,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     @Override
-    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile) {
-      final int answer = Messages.showYesNoDialog(myProject, String.format("Your passphrase for client certificate:\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
+    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile, String certificateName) {
+      final int answer = Messages.showYesNoDialog(myProject,
+        String.format("Your passphrase for " + certificateName + ":\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
                                                             certificateFile.getPath()),
         "Store the passphrase in plaintext?", Messages.getQuestionIcon());
       return answer == 0;
@@ -655,8 +653,19 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         promptAndSaveWhenWeLackEncryption(realm, auth, new Getter<Boolean>() {
                                                 @Override
                                                 public Boolean get() {
+                                                  File file = null;
+                                                  String certificateName = null;
+                                                  if (auth instanceof SVNSSLAuthentication) {
+                                                    file = ((SVNSSLAuthentication) auth).getCertificateFile();
+                                                    certificateName = "client certificate";
+                                                  } else if (auth instanceof SVNSSHAuthentication) {
+                                                    file = ((SVNSSHAuthentication) auth).getPrivateKeyFile();
+                                                    certificateName = "private key file";
+                                                  } else {
+                                                    assert false;
+                                                  }
                                                   return myInteraction.promptForSSLPlaintextPassphraseSaving(myUrl, realm,
-                                                           ((SVNSSLAuthentication) auth).getCertificateFile());
+                                                           file, certificateName);
                                                 }
                                               });
       }

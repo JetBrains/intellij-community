@@ -127,6 +127,14 @@ public class JavacOutputParser extends OutputParser {
               final CharSequence chars = prevLine == null ? line : prevLine;
               final int offset = Math.max(0, Math.min(chars.length(), nextLine.indexOf('^')));
               colNum = EditorUtil.calcColumnNumber(null, chars,0, offset, myTabSize);
+              String messageEnd = callback.getNextLine();
+              while (isMessageEnd(messageEnd)) {
+                messages.add(messageEnd.trim());
+                messageEnd = callback.getNextLine();
+              }
+              if (messageEnd != null) {
+                callback.pushBack(messageEnd);
+              }
               break;
             }
             if (prevLine != null) {
@@ -166,6 +174,10 @@ public class JavacOutputParser extends OutputParser {
 
     addMessage(callback, CompilerMessageCategory.INFORMATION, line);
     return true;
+  }
+
+  private static boolean isMessageEnd(String line) {
+    return line != null && line.length() > 0 && Character.isWhitespace(line.charAt(0));
   }
 
 

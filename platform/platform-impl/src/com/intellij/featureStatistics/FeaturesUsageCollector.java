@@ -29,8 +29,8 @@ public class FeaturesUsageCollector extends UsagesCollector {
 
   @NotNull
   @Override
-  public String getGroupId() {
-    return "productivity";
+  public GroupDescriptor getGroupId() {
+    return GroupDescriptor.create("productivity",  GroupDescriptor.LOWER_PRIORITY);
   }
 
   @NotNull
@@ -44,8 +44,7 @@ public class FeaturesUsageCollector extends UsagesCollector {
     for (String featureId : registry.getFeatureIds()) {
       final FeatureDescriptor featureDescriptor = registry.getFeatureDescriptor(featureId);
       if (featureDescriptor != null) {
-        usages.add(new UsageDescriptor(
-           GroupDescriptor.create(getGroupId(),  GroupDescriptor.LOWER_PRIORITY), featureId, featureDescriptor.getUsageCount()));
+        usages.add(new UsageDescriptor(featureId, featureDescriptor.getUsageCount()));
       }
     }
 

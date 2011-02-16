@@ -15,9 +15,9 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -29,6 +29,7 @@ public abstract class OutputParser {
   public interface Callback {
     @NonNls String getNextLine();        
     @NonNls String getCurrentLine();
+    void pushBack(String line);
     void setProgressText(String text);
     void fileProcessed(@NonNls String path);
     void fileGenerated(@NonNls FileObject path);
