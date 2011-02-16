@@ -1114,6 +1114,8 @@ public class GenericsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkUncheckedGenericsArrayCreation(PsiJavaCodeReferenceElement referenceExpression, PsiElement resolved){
+    final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
+    if (!InspectionProjectProfileManager.getInstance(referenceExpression.getProject()).getInspectionProfile().isToolEnabled(key, referenceExpression)) return null;
     if (isUncheckedWarning(referenceExpression, resolved, false)) {
       final HighlightInfo highlightInfo =
         HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, referenceExpression, "Unchecked generics array creation for varargs parameter");
