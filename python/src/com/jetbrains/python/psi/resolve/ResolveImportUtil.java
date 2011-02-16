@@ -437,7 +437,7 @@ public class ResolveImportUtil {
     // no module, another way to look in SDK roots
     final PsiFile elt_psifile = elt.getContainingFile();
     if (elt_psifile != null) {  // formality
-      final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
+      final VirtualFile elt_vfile = elt_psifile.getOriginalFile().getVirtualFile();
       if (elt_vfile != null) { // reality
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
         final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);

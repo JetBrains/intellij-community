@@ -75,7 +75,7 @@ public class PyBuiltinCache {
       sdk = PythonSdkType.findPythonSdk(module);
     }
     else {
-      final VirtualFile vfile = psifile.getVirtualFile();
+      final VirtualFile vfile = psifile instanceof PsiFile ? ((PsiFile) psifile).getOriginalFile().getVirtualFile() : psifile.getVirtualFile();
       if (vfile != null) { // reality
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
         sdk = projectRootManager.getProjectSdk();
