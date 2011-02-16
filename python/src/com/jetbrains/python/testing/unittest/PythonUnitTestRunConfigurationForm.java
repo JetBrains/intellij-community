@@ -28,6 +28,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myIsPureUnittest.setSelected(configuration.isPureUnittest());
 
     final JRadioButton functionRB = myTestRunConfigurationForm.getFunctionRB();
+    functionRB.setEnabled(!myIsPureUnittest.isSelected());
 
     myIsPureUnittest.addActionListener(new ActionListener() {
       @Override
