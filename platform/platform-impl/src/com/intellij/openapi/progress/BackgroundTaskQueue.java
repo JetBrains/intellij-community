@@ -114,12 +114,12 @@ public class BackgroundTaskQueue {
           ((BackgroundableProcessIndicator) pi[0]).setTitle(myTitle);
         }
 
-        pm.runProcess(new Runnable() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            ApplicationManager.getApplication().executeOnPooledThread(wrappedTask);
+            pm.runProcess(wrappedTask, pi[0]);
           }
-        }, pi[0]);
+        });
       }
     }
   }
