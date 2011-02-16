@@ -459,8 +459,7 @@ public class HighlightUtil {
       if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
     }
     else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression)) {
-      if (lType == null || rType == null) return null;
-      return GenericsHighlightUtil.checkRawToGenericAssignment(lType, rType, expression);
+      return null;
     }
     if (rType == null) {
       rType = expression.getType();
@@ -1131,7 +1130,7 @@ public class HighlightUtil {
     return null;
   }
 
-  private static PsiType sameType(PsiExpression[] expressions) {
+  public static PsiType sameType(PsiExpression[] expressions) {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
       final PsiType currentType;

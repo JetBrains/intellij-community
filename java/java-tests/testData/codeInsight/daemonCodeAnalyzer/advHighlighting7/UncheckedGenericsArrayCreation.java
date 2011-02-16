@@ -86,12 +86,12 @@ class SemKey<T extends String> {
   }
 
   public static <T> T[] append(final T[] src, final T element) {
-    return append(src, element, (Class<T>)src.getClass().getComponentType());
+    return append(src, element, <warning descr="Unchecked cast: 'java.lang.Class<capture<?>>' to 'java.lang.Class<T>'">(Class<T>)src.getClass().getComponentType()</warning>);
   }
 
    public static <T> T[] append(T[] src, final T element, Class<T> componentType) {
     int length = src.length;
-    T[] result = (T[])java.lang.reflect.Array.newInstance(componentType, length + 1);
+    T[] result = <warning descr="Unchecked cast: 'java.lang.Object' to 'T[]'">(T[])java.lang.reflect.Array.newInstance(componentType, length + 1)</warning>;
     System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
