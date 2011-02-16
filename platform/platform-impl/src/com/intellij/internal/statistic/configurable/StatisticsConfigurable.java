@@ -29,7 +29,18 @@ import javax.swing.*;
 
 public class StatisticsConfigurable implements SearchableConfigurable {
 
-  private StatisticsConfigurationComponent myConfig;
+    private boolean modifiedByDefault;
+
+    public StatisticsConfigurable() {
+        this(false);
+    }
+
+    public StatisticsConfigurable(boolean isModifiedByDefault) {
+        modifiedByDefault = isModifiedByDefault;
+    }
+
+
+    private StatisticsConfigurationComponent myConfig;
 
   @Nls
   public String getDisplayName() {
@@ -56,7 +67,7 @@ public class StatisticsConfigurable implements SearchableConfigurable {
     final UsageStatisticsPersistenceComponent persistenceComponent = UsageStatisticsPersistenceComponent.getInstance();
     return myConfig.isAllowed() != persistenceComponent.isAllowed() ||
            myConfig.getPeriod() != persistenceComponent.getPeriod() ||
-           persistenceComponent.isShowNotification();
+           modifiedByDefault;
   }
 
   public void apply() throws ConfigurationException {
@@ -65,6 +76,7 @@ public class StatisticsConfigurable implements SearchableConfigurable {
     persistenceComponent.setPeriod(myConfig.getPeriod());
     persistenceComponent.setAllowed(myConfig.isAllowed());
     persistenceComponent.setShowNotification(false);
+    modifiedByDefault = false;
   }
 
   public void reset() {

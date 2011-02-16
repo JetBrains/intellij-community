@@ -119,19 +119,15 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.openapi.util.FoundationLoader</implementation-class>
       <headless-implementation-class/>
     </component>
 
-    <component>
-      <interface-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.facet.impl.statistics.FrameworkStatisticsPersistenceComponent</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.vcs.statistics.VcsStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.statistics.VcsStatisticsPersistenceComponent</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
