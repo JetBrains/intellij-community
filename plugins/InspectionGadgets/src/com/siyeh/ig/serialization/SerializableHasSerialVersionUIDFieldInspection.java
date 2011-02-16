@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public class SerializableHasSerialVersionUIDFieldInspection
         extends SerializableInspection {
 
+    @Pattern("[a-zA-Z_0-9.-]+")
     @Override
     @NotNull
     public String getID() {
@@ -68,6 +70,10 @@ public class SerializableHasSerialVersionUIDFieldInspection
             }
             if (aClass instanceof PsiTypeParameter ||
                     aClass instanceof PsiEnumConstantInitializer) {
+                return;
+            }
+            if (ignoreAnonymousInnerClasses &&
+                    aClass instanceof PsiAnonymousClass) {
                 return;
             }
             final PsiField serialVersionUIDField = aClass.findFieldByName(

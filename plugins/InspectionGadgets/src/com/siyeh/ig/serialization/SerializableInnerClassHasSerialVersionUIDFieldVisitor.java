@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -28,7 +29,8 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
 
     private final SerializableInspection inspection;
 
-    public SerializableInnerClassHasSerialVersionUIDFieldVisitor(SerializableInspection inspection) {
+    public SerializableInnerClassHasSerialVersionUIDFieldVisitor(
+            SerializableInspection inspection) {
         this.inspection = inspection;
     }
 
@@ -36,6 +38,10 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
         // no call to super, so it doesn't drill down
         if (aClass.isInterface() || aClass.isAnnotationType() ||
                 aClass.isEnum()) {
+            return;
+        }
+        if (inspection.ignoreAnonymousInnerClasses &&
+                aClass instanceof PsiAnonymousClass) {
             return;
         }
         if (hasSerialVersionUIDField(aClass)) {
@@ -57,7 +63,7 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
         registerClassError(aClass);
     }
 
-    private boolean hasSerialVersionUIDField(PsiClass aClass) {
+    private static boolean hasSerialVersionUIDField(PsiClass aClass) {
         final PsiField[] fields = aClass.getFields();
         boolean hasSerialVersionUID = false;
         for (PsiField field : fields) {

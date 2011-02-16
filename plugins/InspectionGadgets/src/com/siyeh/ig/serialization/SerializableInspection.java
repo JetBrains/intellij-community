@@ -19,22 +19,29 @@ import com.intellij.codeInspection.ui.AddAction;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.RemoveAction;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SerializableInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreAnonymousInnerClasses = false;
+    @SuppressWarnings({"PublicField"})
     public String superClassString = "java.awt.Component";
     protected List<String> superClassList = new ArrayList();
 
@@ -44,8 +51,41 @@ public abstract class SerializableInspection extends BaseInspection {
 
     @Override
     public JComponent createOptionsPanel() {
-        final Form form = new Form();
-        return form.getContentPanel();
+        final JComponent panel = new JPanel(new GridBagLayout());
+
+        final ListTable table = new ListTable(new ListWrappingTableModel(
+                superClassList, InspectionGadgetsBundle.message(
+                "ignore.classes.in.hierarchy.column.name")));
+        final JScrollPane scrollPane =
+                ScrollPaneFactory.createScrollPane(table);
+        final ActionToolbar toolbar =
+                UiUtils.createAddRemoveTreeAnnotationChooserToolbar(table,
+                        InspectionGadgetsBundle.message(
+                                "choose.super.class.to.ignore"));
+        final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
+                "ignore.anonymous.inner.classes"), this,
+                "ignoreAnonymousInnerClasses");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(toolbar.getComponent(), constraints);
+
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        constraints.gridy = 2;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(checkBox, constraints);
+
+        return panel;
     }
 
     @Override
@@ -70,28 +110,5 @@ public abstract class SerializableInspection extends BaseInspection {
             }
         }
         return false;
-    }
-
-    private class Form {
-
-        private JPanel contentPanel;
-        private ListTable table;
-        private JButton addButton;
-        private JButton removeButton;
-
-        Form() {
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(new ListWrappingTableModel(superClassList,
-                    InspectionGadgetsBundle.message(
-                            "ignore.classes.in.hierarchy.column.name")));
-        }
-
-        public JPanel getContentPanel() {
-            return contentPanel;
-        }
     }
 }
