@@ -376,11 +376,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
 
     replacement.add(mySelectionOnly);
     replacement.add(myPreserveCase);
-    for (Component comp : replacement.getComponents()) {
-      if (comp instanceof JComponent) {
-        setSmallerFontAndOpaque((JComponent)comp);
-      }
-    }
+    setSmallerFontAndOpaque(mySelectionOnly);
+    setSmallerFontAndOpaque(myPreserveCase);
+    setSmallerFont(myReplaceField);
   }
 
   private void updateModelWithSelectionMode(FindModel findInFileModel) {
