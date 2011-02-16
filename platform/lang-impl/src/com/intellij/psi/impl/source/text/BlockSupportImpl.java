@@ -87,11 +87,10 @@ public class BlockSupportImpl extends BlockSupport {
     file.getViewProvider().beforeContentsSynchronized();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
-    final FileElement treeFileElement = fileImpl.getTreeElement();
-    final CharTable charTable = treeFileElement.getCharTable();
-    // hack
-    final int textLength = file.getTextLength() + lengthShift;
+    final CharTable charTable = fileImpl.getTreeElement().getCharTable();
 
+    final FileElement treeFileElement = fileImpl.getTreeElement();
+    final int textLength = treeFileElement.getTextLength() + lengthShift;
 
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
       // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
