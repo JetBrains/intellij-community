@@ -566,9 +566,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   /**
    * @return point in layered pane coordinate system.
+   * @param component
    */
-  public Point calculatePosition(){
-    Dimension dim = getComponent().getPreferredSize();
+  public Point calculatePosition(final JComponent component){
+    Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0) {
       LOG.error(lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
@@ -587,7 +588,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
-    layeredPanePoint.x -= getComponent().getInsets().left;
+    layeredPanePoint.x -= component.getInsets().left;
 
     int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
     int shiftHigh = layeredPanePoint.y - dim.height;
@@ -684,7 +685,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().setBorder(null);
     updateScrollbarVisibility();
 
-    Point p = calculatePosition();
+    Point p = calculatePosition(getComponent());
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
 
     final JLayeredPane layeredPane = getComponent().getRootPane().getLayeredPane();
@@ -1121,7 +1122,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       updateScrollbarVisibility();
-      HintManagerImpl.adjustEditorHintPosition(this, editor, calculatePosition());
+      HintManagerImpl.adjustEditorHintPosition(this, editor, calculatePosition(getComponent()));
       layoutStatusIcons();
 
       if (reused) {
@@ -1134,7 +1135,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final int itemTextPadding = 2;
       final int borderWidth = 1;
 
-      Point bestPoint = calculatePosition();
+      final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding, borderWidth);
+      Point bestPoint = calculatePosition(hintComponent);
       bestPoint.x += myCellRenderer.getIconIndent() - itemTextPadding - borderWidth;
       Point editorPoint = SwingUtilities.convertPoint(
         editor.getComponent().getRootPane().getLayeredPane(),
@@ -1145,8 +1147,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final HintHint hintHint = new HintHint(editor, editorPoint).setHighlighterType(true).setContentActive(true);
 
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      myAutopopupHint = new LightweightHint(createAutopopupHintComponent(itemTextPadding, borderWidth));
-      hintManager.showEditorHint(myAutopopupHint, editor, bestPoint, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      myAutopopupHint = new LightweightHint(hintComponent);
+      myAutopopupHint.setForceShowAsPopup(true);
+      myAutopopupHint.setForceLightweightPopup(true);
+      hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      HintManagerImpl.adjustEditorHintPosition(myAutopopupHint, editor, bestPoint);
     }
   }
 
@@ -1189,11 +1194,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         final GridBagConstraints c = new GridBagConstraints();
         c.gridx = 1;
         c.gridy = i;
-        c.ipadx = 4;
         c.fill = GridBagConstraints.HORIZONTAL;
-        final JLabel comp = new JLabel(" " + StringUtil.notNullize(presentation.getTypeText()));
+        final JLabel comp = new JLabel(" " + StringUtil.notNullize(presentation.getTypeText()) + " ");
         comp.setFont(comp.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-        comp.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        comp.setHorizontalAlignment(SwingConstants.RIGHT);
         pane.add(comp, c);
       }
     }
@@ -1215,13 +1219,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
 
-    pane.setBorder(new LineBorder(Color.darkGray, borderWidth));
+    //pane.setBorder(new LineBorder(Color.darkGray, borderWidth));
     return pane;
   }
 
   private void hideAutopopupHint() {
     if (myAutopopupHint != null) {
       myAutopopupHint.hide();
+      myPositionedAbove = null;
     }
   }
 
