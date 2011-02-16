@@ -2,6 +2,8 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,18 +62,20 @@ public class PythonUnitTestUtil {
   }
 
   private static boolean hasAssertOrYield(PyStatementList list) {
-    for (PyStatement st : list.getStatements()) {
-      if (st instanceof PyAssertStatement) return true;
-      else if (st instanceof PyForStatement)
-        return hasAssertOrYield(((PyForStatement)st).getForPart().getStatementList());
-      else if (st instanceof PyWhileStatement)
-        return hasAssertOrYield(((PyWhileStatement)st).getWhilePart().getStatementList());
-      else if (st instanceof PyExpressionStatement) {
-        if (((PyExpressionStatement)st).getExpression() instanceof PyYieldExpression)
-          return true;
+    Stack<PsiElement> stack = new Stack<PsiElement>();
+      if (list != null) {
+        for (PyStatement st : list.getStatements()) {
+          stack.push(st);
+          while (!stack.isEmpty()) {
+            PsiElement e = stack.pop();
+            if (e instanceof PyAssertStatement || e instanceof PyYieldExpression) return true;
+            for (PsiElement psiElement : e.getChildren()) {
+              stack.push(psiElement);
+            }
+          }
+        }
       }
-    }
-   return false; 
+    return false;
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls) {
