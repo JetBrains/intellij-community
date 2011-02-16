@@ -24,10 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ChangeListsIndexes {
   private final Map<String, FileStatus> myFileToStatus;
@@ -104,6 +101,22 @@ public class ChangeListsIndexes {
       } else {
         add(beforeRevision.getFile(), change.getFileStatus(), key);
       }
+    }
+  }
+
+  public void getDelta(final ChangeListsIndexes newIndexes, final Set<Pair<String,VcsKey>> toRemove, Set<Pair<String,VcsKey>> toAdd) {
+    // this is old
+    final Set<String> oldKeySet = myFileToVcs.keySet();
+    final Set<String> toRemoveSet = new HashSet<String>(oldKeySet);
+    final Set<String> newKeySet = newIndexes.myFileToVcs.keySet();
+    final Set<String> toAddSet = new HashSet<String>(newKeySet);
+    toRemoveSet.removeAll(newKeySet);
+    toAddSet.removeAll(oldKeySet);
+    for (String s : toRemoveSet) {
+      toRemove.add(new Pair<String, VcsKey>(s, myFileToVcs.get(s)));
+    }
+    for (String s : toAddSet) {
+      toAdd.add(new Pair<String, VcsKey>(s, newIndexes.myFileToVcs.get(s)));
     }
   }
 

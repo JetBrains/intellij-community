@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.impl.CollectionsDelta;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,18 +45,16 @@ public class ChangesDelta {
       myInitialized = true;
       return true;  //+-
     }
-    final List<Pair<String, VcsKey>> becameAffected = became.getAffectedFilesUnderVcs();
 
-    final Set<Pair<String,VcsKey>> toRemove = CollectionsDelta.notInSecond(wasAffected, becameAffected);
-    final Set<Pair<String, VcsKey>> toAdd = CollectionsDelta.notInSecond(becameAffected, wasAffected);
+    final Set<Pair<String,VcsKey>> toRemove = new HashSet<Pair<String,VcsKey>>();
+    final Set<Pair<String, VcsKey>> toAdd = new HashSet<Pair<String,VcsKey>>();
+    was.getDelta(became, toRemove, toAdd);
 
-    if (toRemove != null) {
-      for (Pair<String, VcsKey> pair : toRemove) {
-        myDeltaListener.minus(convertPair(pair));
-      }
+    for (Pair<String, VcsKey> pair : toRemove) {
+      myDeltaListener.minus(convertPair(pair));
     }
     sendPlus(toAdd);
-    return toRemove != null || toAdd != null;
+    return ! toRemove.isEmpty() || ! toAdd.isEmpty();
   }
 
   private void sendPlus(final Collection<Pair<String, VcsKey>> toAdd) {
