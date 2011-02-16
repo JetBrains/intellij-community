@@ -117,7 +117,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
-    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);
+    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
 
     myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm));
@@ -993,10 +993,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (! myProject.isDefault()) {
-      final IgnoredFilesComponent ignoredFilesComponent;
+      final IgnoredFilesComponent ignoredFilesComponent = new IgnoredFilesComponent(myProject, false);
       final ChangeListWorker worker;
       synchronized (myDataLock) {
-        ignoredFilesComponent = new IgnoredFilesComponent(myProject);
         ignoredFilesComponent.add(myIgnoredIdeaLevel.getFilesToIgnore());
         worker = myWorker.copy();
       }

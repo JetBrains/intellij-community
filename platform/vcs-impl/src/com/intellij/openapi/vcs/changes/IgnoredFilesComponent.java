@@ -28,20 +28,20 @@ import java.util.List;
 import java.util.Set;
 
 public class IgnoredFilesComponent {
-  private final Project myProject;
   private final Set<IgnoredFileBean> myFilesToIgnore;
 
-  public IgnoredFilesComponent(final Project project) {
-    myProject = project;
+  public IgnoredFilesComponent(final Project project, final boolean registerListener) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
 
-    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      public void before(List<? extends VFileEvent> events) {}
+    if (registerListener) {
+      project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        public void before(List<? extends VFileEvent> events) {}
 
-      public void after(List<? extends VFileEvent> events) {
-        resetCaches();
-      }
-    });
+        public void after(List<? extends VFileEvent> events) {
+          resetCaches();
+        }
+      });
+    }
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
