@@ -44,6 +44,10 @@ public class IgnoredFilesComponent {
     }
   }
 
+  public IgnoredFilesComponent(final IgnoredFilesComponent other) {
+    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>(other.myFilesToIgnore);
+  }
+
   public void add(final IgnoredFileBean... filesToIgnore) {
     synchronized(myFilesToIgnore) {
       Collections.addAll(myFilesToIgnore, filesToIgnore);

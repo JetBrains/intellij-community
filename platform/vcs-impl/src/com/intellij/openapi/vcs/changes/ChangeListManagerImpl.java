@@ -993,10 +993,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (! myProject.isDefault()) {
-      final IgnoredFilesComponent ignoredFilesComponent = new IgnoredFilesComponent(myProject, false);
+      final IgnoredFilesComponent ignoredFilesComponent;
       final ChangeListWorker worker;
       synchronized (myDataLock) {
-        ignoredFilesComponent.add(myIgnoredIdeaLevel.getFilesToIgnore());
+        ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
         worker = myWorker.copy();
       }
       new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
