@@ -169,10 +169,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   public List<Module> chooseModules(final List<Module> modules, final String title) {
-    ChooseModulesDialog dialog = new ChooseModulesDialog(getProject(), modules, title, null);
-    dialog.show();
-    List<Module> selected = dialog.getChosenElements();
-    return dialog.isOK() ? selected : Collections.<Module>emptyList();
+    return new ChooseModulesDialog(getProject(), modules, title, null).showAndGetResult();
   }
 
   public List<Library> chooseLibraries(final String title) {
