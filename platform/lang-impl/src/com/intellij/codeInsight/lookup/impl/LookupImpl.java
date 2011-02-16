@@ -1130,8 +1130,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
     else if (myHintMode) {
-      hideAutopopupHint();
-
       final int itemTextPadding = 2;
       final int borderWidth = 1;
 
@@ -1147,10 +1145,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final HintHint hintHint = new HintHint(editor, editorPoint).setHighlighterType(true).setContentActive(true);
 
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      myAutopopupHint = new LightweightHint(hintComponent);
-      myAutopopupHint.setForceShowAsPopup(true);
-      myAutopopupHint.setForceLightweightPopup(true);
-      hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      if (myAutopopupHint == null) {
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.add(hintComponent);
+        myAutopopupHint = new LightweightHint(panel);
+        myAutopopupHint.setForceShowAsPopup(true);
+        myAutopopupHint.setForceLightweightPopup(true);
+        hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint),
+                                   HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
+      } else {
+        final JComponent panel = myAutopopupHint.getComponent();
+        panel.remove(0);
+        panel.add(hintComponent);
+      }
       HintManagerImpl.adjustEditorHintPosition(myAutopopupHint, editor, bestPoint);
     }
   }
