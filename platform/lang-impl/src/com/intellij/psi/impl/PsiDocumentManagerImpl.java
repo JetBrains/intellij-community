@@ -458,18 +458,18 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
             }
             throw new AssertionError(msg);
           }
-        } else if (document.getTextLength() - textBlock.getTextEndOffset() != file.getTextLength() - psiEndOffset) {
+        } else if (document.getTextLength() - textBlock.getTextEndOffset() != myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
           throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
         }
       }
       else {
         startOffset = 0;
         endOffset = document.getTextLength();
-        lengthShift = document.getTextLength() - file.getTextLength();
+        lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
       }
       myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
 
-      if (file.getTextLength() != document.getTextLength()) {
+      if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal()) {
           boolean x = false;
           if (x) {
@@ -477,7 +477,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           }
           String fileText = file.getText();
           String documentText = document.getText();
-          throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
+          throw new AssertionError("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
                                    "; doc len=" + document.getTextLength() +
                                    "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
                                    ";\n file text=" + fileText +
