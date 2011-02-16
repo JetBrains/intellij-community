@@ -224,12 +224,17 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     myShouldStop = false;
     myLivePreviewAlarm.cancelAllRequests();
     if (updateEditorReference() != null) {
-      myLivePreviewAlarm.addRequest(new Runnable() {
+      Runnable request = new Runnable() {
         @Override
         public void run() {
           updateInBackground();
         }
-      }, myUserActivityDelay);
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        request.run();
+      } else {
+        myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
+      }
     }
   }
 
@@ -270,7 +275,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       }
     });
     if (mySearchResults != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      Runnable highlightUsagesBlock = new Runnable() {
         @Override
         public void run() {
           doInternalCleanUp();
@@ -280,7 +285,12 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
             myContinuation = null;
           }
         }
-      });
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        highlightUsagesBlock.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(highlightUsagesBlock);
+      }
     }
   }
 
