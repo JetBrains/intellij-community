@@ -16,8 +16,6 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -26,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -136,16 +135,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   public RunContentDescriptor attachToSession(final @NotNull XDebugSession session, final @Nullable ProgramRunner runner,
-                                              final @Nullable  ExecutionEnvironment env,
-                                              final @NotNull XDebugSessionData sessionData) {
-    return initUI(session, sessionData, env, runner);
-  }
-
-  @NotNull
-  private static ExecutionResult createExecutionResult(@NotNull final XDebugSession session) {
-    final XDebugProcess debugProcess = session.getDebugProcess();
-    ProcessHandler processHandler = debugProcess.getProcessHandler();
-    return new DefaultExecutionResult(debugProcess.createConsole(), processHandler);
+                                              final @Nullable ExecutionEnvironment env,
+                                              final @NotNull XDebugSessionData sessionData, ConsoleView consoleView) {
+    return initUI(session, sessionData, env, runner, consoleView);
   }
 
   public XWatchesView getWatchesView() {
@@ -153,10 +145,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private RunContentDescriptor initUI(final @NotNull XDebugSession session, final @NotNull XDebugSessionData sessionData,
-                                      final @Nullable ExecutionEnvironment environment, final @Nullable ProgramRunner runner) {
-    ExecutionResult executionResult = createExecutionResult(session);
-    myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
+                                      final @Nullable ExecutionEnvironment environment,
+                                      final @Nullable ProgramRunner runner,
+                                      ConsoleView consoleView) {
+    final XDebugProcess debugProcess = session.getDebugProcess();
+    ProcessHandler processHandler = debugProcess.getProcessHandler();
+    myConsole = consoleView;
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), getSessionName());
 
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
