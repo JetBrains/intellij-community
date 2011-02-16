@@ -9,6 +9,9 @@
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
       <implementation-class>com.intellij.openapi.components.impl.stores.PlatformProjectStoreClassProvider</implementation-class>
     </component>
