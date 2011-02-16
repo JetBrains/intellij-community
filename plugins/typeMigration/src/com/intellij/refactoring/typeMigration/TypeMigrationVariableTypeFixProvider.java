@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
   private static final Logger LOG1 = Logger.getInstance("#" + TypeMigrationVariableTypeFixProvider.class.getName());
@@ -26,13 +27,13 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
   public IntentionAction[] getFixes(PsiVariable variable, PsiType toReturn) {
     return new IntentionAction[]{new VariableTypeFix(variable, toReturn) {
       @NotNull
-      public String getText() {
+      @Override
+      public String getName() {
         return "Migrate \'" + getVariable().getName() + "\' type to \'" + getReturnType().getCanonicalText() + "\'";
       }
 
-
       @Override
-      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
+      public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
         if (!CodeInsightUtilBase.prepareFileForWrite(getVariable().getContainingFile())) return;
         try {
           getVariable().normalizeDeclaration();
