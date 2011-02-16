@@ -76,27 +76,21 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 
   /**
-   * Call this method when a breakpoint is reached. If the method returns <code>true</code> the underlying debugging process should be
-   * suspended.
+   * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.
+   * <p>
+   * <strong>The underlying debugging process should be suspended only if the method returns {@code true}. </strong>
    *
-   * Note that this method should be called only if {@link XBreakpoint#getCondition()} evaluates to <code>true</code>.
-   * @param breakpoint reached breakpoint
-   * @param suspendContext context
-   * @return <code>true</code> if the debug process should be suspended
-   */
-  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
-
-  /**
-   * Call this method when a breakpoint is reached. If the method returns <code>true</code> the underlying debugging process should be
-   * suspended.
-   *
-   * Note that this method should be called only if {@link XBreakpoint#getCondition()} evaluates to <code>true</code>.
    * @param breakpoint reached breakpoint
    * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
    * @param suspendContext context
    * @return <code>true</code> if the debug process should be suspended
    */
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression, @NotNull XSuspendContext suspendContext);
+
+  /**
+   * @deprecated use {@link #breakpointReached(com.intellij.xdebugger.breakpoints.XBreakpoint, String, com.intellij.xdebugger.frame.XSuspendContext)} instead
+   */
+  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
   /**
    * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
