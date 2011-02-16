@@ -18,11 +18,11 @@ package com.intellij.internal.statistic.beans;
 public class PatchedUsage extends UsageDescriptor {
 
   public PatchedUsage(UsageDescriptor descriptor) {
-    super(descriptor.getGroup(), descriptor.getKey(), descriptor.getValue());
+    super(descriptor.getKey(), descriptor.getValue());
   }
 
-  public PatchedUsage(GroupDescriptor group, String key, int value) {
-    super(group, key, value);
+  public PatchedUsage(String key, int value) {
+    super(key, value);
   }
 
   public int getDelta() {

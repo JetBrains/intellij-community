@@ -72,7 +72,7 @@ public class StatisticsNotificationManager {
         else if ("settings".equals(description)) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-          util.editConfigurable((JFrame)ideFrame, new StatisticsConfigurable());
+          util.editConfigurable((JFrame)ideFrame, new StatisticsConfigurable(true));
           notification.expire();
         }
       }
