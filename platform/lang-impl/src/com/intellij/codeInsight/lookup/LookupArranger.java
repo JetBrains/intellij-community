@@ -26,17 +26,13 @@ import java.util.List;
  */
 public abstract class LookupArranger {
   public static final LookupArranger DEFAULT = new LookupArranger() {
-    @Override
-    public Comparable getRelevance(LookupElement element) {
-      return 0;
-    }
 
+    @Override
+    public Classifier<LookupElement> createRelevanceClassifier() {
+      return ClassifierFactory.listClassifier();
+    }
   };
   public static final LookupArranger LEXICOGRAPHIC = new LookupArranger() {
-    @Override
-    public Comparable getRelevance(LookupElement element) {
-      return 0;
-    }
 
     @Override
     public Comparator<LookupElement> getItemComparator() {
@@ -47,9 +43,12 @@ public abstract class LookupArranger {
         }
       };
     }
-  };
 
-  public abstract Comparable getRelevance(LookupElement element);
+    @Override
+    public Classifier<LookupElement> createRelevanceClassifier() {
+      return ClassifierFactory.sortingListClassifier(getItemComparator());
+    }
+  };
 
   public void itemSelected(LookupElement item, final Lookup lookup) {
   }
@@ -57,6 +56,8 @@ public abstract class LookupArranger {
   public int suggestPreselectedItem(List<LookupElement> sorted) {
     return 0;
   }
+
+  public abstract Classifier<LookupElement> createRelevanceClassifier();
 
   @Nullable
   public Comparator<LookupElement> getItemComparator() {

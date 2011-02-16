@@ -50,11 +50,13 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   public JavaClassNameCompletionContributor() {
     extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
         if (shouldShowSecondSmartCompletionHint(parameters) &&
             CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
           CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
+
+        final CompletionResultSet result = JavaCompletionContributor.addJavaSorting(parameters, _result);
 
         final PsiElement insertedElement = parameters.getPosition();
 

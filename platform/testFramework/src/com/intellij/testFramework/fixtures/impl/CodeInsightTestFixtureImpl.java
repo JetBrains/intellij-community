@@ -20,7 +20,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -1694,6 +1693,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void assertPreferredCompletionItems(final int selected, @NonNls final String... expected) {
     final LookupImpl lookup = getLookup();
     assertNotNull(lookup);
+
+    final LinkedHashMap<LookupElement,StringBuilder> relevanceStrings = lookup.getRelevanceStrings();
+
     final JList list = lookup.getList();
     final List<LookupElement> model = lookup.getItems();
     final List<String> actual = new ArrayList<String>();
@@ -1705,7 +1707,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       final List<String> strings = new ArrayList<String>();
       for (int i = 0; i < model.size(); i++) {
         final LookupElement item = model.get(i);
-        strings.add(item.getLookupString() + CompletionLookupArranger.getCachedRelevance(item));
+        strings.add(item.getLookupString() + " " + relevanceStrings.get(item));
         if (i == count - 1) {
           strings.add("---");
         }

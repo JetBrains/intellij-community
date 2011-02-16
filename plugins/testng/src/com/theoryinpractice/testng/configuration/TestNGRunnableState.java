@@ -133,9 +133,16 @@ public class TestNGRunnableState extends JavaCommandLineState {
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(config, processHandler);
     }
+    final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
+        unboundOutputRoot.flush();
+
+        if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
+          mySearchForTestIndicator.cancel();
+          task.connect();
+        }
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -164,7 +171,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
       public void startNotified(final ProcessEvent event) {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
         client.prepareListening(listener, port);
-        final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
           @Override
           public void cancel() {

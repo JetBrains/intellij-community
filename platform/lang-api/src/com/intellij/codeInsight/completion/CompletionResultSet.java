@@ -64,6 +64,9 @@ public abstract class CompletionResultSet {
    */
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
+  @NotNull
+  public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
+
   /**
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.

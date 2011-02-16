@@ -251,7 +251,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       initializer.replace(localVarInitializer);
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
-        body.addAfter(localDeclaration, body.getLBrace());
+        PsiElement anchor = findAnchorForLocalVariableDeclaration(body);
+        body.addAfter(localDeclaration, anchor);
       }
     } else {
       for (PsiJavaCodeReferenceElement paramRef : paramRefsToInline) {
@@ -278,6 +279,24 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         }
       }
     }
+  }
+
+  @Nullable
+  private PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
+    PsiElement anchor = body.getLBrace();
+    if (myMethod.isConstructor()) {
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+        final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          final String referenceName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
+          if (PsiKeyword.SUPER.equals(referenceName) || PsiKeyword.THIS.equals(referenceName)) {
+            anchor = statements[0];
+          }
+        }
+      }
+    }
+    return anchor;
   }
 
   private static class LocalReplacementUsageInfo extends UsageInfo {

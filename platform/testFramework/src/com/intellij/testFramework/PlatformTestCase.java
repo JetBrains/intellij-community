@@ -81,6 +81,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -93,7 +97,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static final String TEST_DIR_PREFIX = "idea_test_";
 
   protected static IdeaTestApplication ourApplication;
-  protected boolean myRunCommandForTest = false;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
@@ -227,7 +230,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static String getCreationPlace(Project project) {
     String place = project.getUserData(CREATION_PLACE);
-    return project.toString() + (place != null ? place : project.getBaseDir());
+    return project.toString() + (place != null ? place : "") + (project.isDisposed() ? "" : project.getBaseDir());
   }
 
   protected void runStartupActivities() {
@@ -401,6 +404,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       if (projectManager != null) {
         projectManager.setCurrentTestProject(null);
       }
+      myProject = null;
     }
   }
 
@@ -539,7 +543,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       throw throwables[0];
     }
 
-    // just to make sure all deffered Runnable's to finish
+    // just to make sure all deferred Runnable's to finish
     waitForAllLaters();
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
@@ -580,7 +584,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     };
 
-    if (myRunCommandForTest) {
+    if (annotatedWith(WrapInCommand.class)) {
       CommandProcessor.getInstance().executeCommand(myProject, runnable1, "", null);
     }
     else {
@@ -647,4 +651,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
   }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.METHOD, ElementType.TYPE})
+  public @interface WrapInCommand {}
 }

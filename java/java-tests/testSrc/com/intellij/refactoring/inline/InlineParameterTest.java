@@ -135,6 +135,19 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testLocalVarDeclarationInConstructor() throws Exception {
+    doTest(true);
+  }
+
+  public void testParameterWithWriteAccess() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Inline parameter which has write usages is not supported", e.getMessage());
+    }
+  }
+
   public void testRefNewInnerFromMethod() throws Exception {
     try {
       doTest(false);

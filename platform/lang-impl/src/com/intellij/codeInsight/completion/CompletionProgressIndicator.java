@@ -102,6 +102,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
+  private static final boolean ourHintAutopopup = "true".equals(System.getProperty("hint.autopopup", "false"));
 
   private volatile int myCount;
 
@@ -335,7 +336,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      myLookup.show();
+      if (isAutopopupCompletion() && ourHintAutopopup) {
+        myLookup.setHintMode(true);
+      }
+      else {
+        myLookup.show();
+      }
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
@@ -457,6 +463,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean hideAutopopupIfMeaningless() {
+    if (ourHintAutopopup) {
+      return false;
+    }
+
     if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
       for (LookupElement item : myLookup.getItems()) {

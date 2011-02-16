@@ -30,7 +30,7 @@ public class AnnotatedMembersSearch {
   private AnnotatedMembersSearch() {}
 
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
-    return AnnotatedElementsSearch.searchPsiMetmbers(annotationClass, scope);
+    return AnnotatedElementsSearch.searchPsiMembers(annotationClass, scope);
   }
 
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {

@@ -44,6 +44,12 @@ public class KnownElementWeigher extends ProximityWeigher {
           return -1;
         }
       }
+      if ("subSequence".equals(method.getName())) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
+          return -1;
+        }
+      }
     }
     return 0;
   }

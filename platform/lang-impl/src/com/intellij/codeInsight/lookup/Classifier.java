@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.filters;
+package com.intellij.codeInsight.lookup;
 
-import com.intellij.psi.PsiElement;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.02.2003
- * Time: 17:31:05
- * To change this template use Options | File Templates.
+ * @author peter
  */
-public class FalseFilter implements ElementFilter{
+public abstract class Classifier<T> {
+  public abstract void addElement(T t);
 
-  public boolean isClassAcceptable(Class hintClass){
-    return true;
-  }
+  public abstract Iterable<List<T>> classify(List<T> source);
 
-  public boolean isAcceptable(Object element, PsiElement context){
-    return false;
-  }
+  public abstract void describeItems(LinkedHashMap<T, StringBuilder> map);
 
-  public String toString(){
-    return "false";
-  }
 }

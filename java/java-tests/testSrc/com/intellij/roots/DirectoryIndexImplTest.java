@@ -17,6 +17,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+@PlatformTestCase.WrapInCommand
 public class DirectoryIndexImplTest extends IdeaTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexTest");
 
@@ -49,11 +51,6 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
   private VirtualFile myModule1OutputDir;
-
-  public DirectoryIndexImplTest() {
-    myRunCommandForTest = true;
-  }
-
 
   @Override
   protected void setUp() throws Exception {
@@ -447,17 +444,18 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     }.execute().throwException();
 
 
-    new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
+    boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
+    assertTrue(created);
 
-    final List<Boolean> isExcluded = new ArrayList<Boolean>();
+    final List<Boolean> toAssert = new ArrayList<Boolean>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());
 
-        isExcluded.add(myIndex.getInfoForDirectory(e.getFile()) == null);
-        isExcluded.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded")) == null);
-        isExcluded.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded/foo")) == null);
+        toAssert.add(myIndex.getInfoForDirectory(e.getFile()) != null);
+        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded")) == null);
+        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded/foo")) == null);
       }
     };
 
@@ -469,7 +467,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
       VirtualFileManager.getInstance().removeVirtualFileListener(l);
     }
 
-    assertEquals(Arrays.asList(false, true, true), isExcluded);
+    assertEquals(Arrays.asList(true, true, true), toAssert);
   }
 
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {

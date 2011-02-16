@@ -16,27 +16,29 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.google.common.collect.Maps;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
-  public static final Key<LookupItemWeightComparable> RELEVANCE_KEY = Key.create("RELEVANCE_KEY");
+  public static final Key<CompletionSorterImpl> SORTER_KEY = Key.create("SORTER_KEY");
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
@@ -47,6 +49,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   @Override
+  @NotNull
   public Comparator<LookupElement> getItemComparator() {
     return new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
@@ -106,25 +109,69 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
 
-  @Override
-  public LookupItemWeightComparable getRelevance(LookupElement item) {
-    LookupItemWeightComparable result = getCachedRelevance(item);
-    if (result != null) return result;
+  public Classifier<LookupElement> createRelevanceClassifier() {
+    return new Classifier<LookupElement>() {
+      @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
+      private final FactoryMap<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new FactoryMap<CompletionSorterImpl, Classifier<LookupElement>>() {
+        @Override
+        protected Map<CompletionSorterImpl, Classifier<LookupElement>> createMap() {
+          return Maps.newLinkedHashMap();
+        }
 
-    final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    result = new LookupItemWeightComparable(priority, WeighingService.weigh(CompletionService.RELEVANCE_KEY, item, myLocation));
+        @Override
+        protected Classifier<LookupElement> create(CompletionSorterImpl key) {
+          return key.buildClassifier();
+        }
+      };
 
-    item.putUserData(RELEVANCE_KEY, result);
+      @Override
+      public void addElement(LookupElement element) {
+        myClassifiers.get(obtainSorter(element)).addElement(element);
+      }
 
-    return result;
+      @Override
+      public Iterable<List<LookupElement>> classify(List<LookupElement> source) {
+        MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(source);
+
+        final ArrayList<List<LookupElement>> result = new ArrayList<List<LookupElement>>();
+        for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
+          ContainerUtil.addAll(result, myClassifiers.get(sorter).classify((List<LookupElement>)inputBySorter.get(sorter)));
+        }
+        return result;
+      }
+
+      private MultiMap<CompletionSorterImpl, LookupElement> groupInputBySorter(List<LookupElement> source) {
+        MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
+        for (LookupElement element : source) {
+          inputBySorter.putValue(obtainSorter(element), element);
+        }
+        return inputBySorter;
+      }
+
+      @NotNull
+      private CompletionSorterImpl obtainSorter(LookupElement element) {
+        return element.getUserData(SORTER_KEY);
+      }
+
+      @Override
+      public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map) {
+        final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(new ArrayList<LookupElement>(map.keySet()));
+
+        if (inputBySorter.size() > 1) {
+          for (LookupElement element : map.keySet()) {
+            map.get(element).append(obtainSorter(element)).append(": ");
+          }
+        }
+
+        for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
+          final LinkedHashMap<LookupElement, StringBuilder> subMap = new LinkedHashMap<LookupElement, StringBuilder>();
+          for (LookupElement element : inputBySorter.get(sorter)) {
+            subMap.put(element, map.get(element));
+          }
+          myClassifiers.get(sorter).describeItems(subMap);
+        }
+      }
+    };
   }
 
-  public static LookupItemWeightComparable getCachedRelevance(LookupElement item) {
-    return item.getUserData(RELEVANCE_KEY);
-  }
-
-  @TestOnly
-  public static void clearRelevanceCache(LookupElement item) {
-    item.putUserData(RELEVANCE_KEY, null);
-  }
 }

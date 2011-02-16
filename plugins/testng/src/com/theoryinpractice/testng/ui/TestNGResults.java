@@ -117,6 +117,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       }
     });
     rootNode = new TreeRootNode();
+    console.getUnboundOutput().addChild(rootNode);
   }
 
   protected JComponent createTestTreeView() {
