@@ -185,11 +185,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myTitle != null)
         .setTitle(myTitle)
         .setModalContext(false)
-        .setShowShadow(!myForceLightweightPopup && myForceShowAsPopup)
+        .setShowShadow(isRealPopup())
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
-        .setForceHeavyweight(!myForceLightweightPopup && myForceShowAsPopup)
+        .setForceHeavyweight(!myForceLightweightPopup && isRealPopup())
         .createPopup();
 
       beforeShow();
@@ -241,7 +241,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public final boolean isRealPopup() {
-    return myIsRealPopup;
+    return myIsRealPopup | myForceShowAsPopup;
   }
 
   public void hide() {

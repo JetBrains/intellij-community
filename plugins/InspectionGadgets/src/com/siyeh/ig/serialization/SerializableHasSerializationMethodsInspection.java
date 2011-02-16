@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiTypeParameter;
@@ -26,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableHasSerializationMethodsInspection
         extends SerializableInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.has.serialization.methods.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
@@ -48,6 +51,7 @@ public class SerializableHasSerializationMethodsInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableHasSerializationMethodsVisitor();
     }
@@ -63,6 +67,10 @@ public class SerializableHasSerializationMethodsInspection
             }
             if (aClass instanceof PsiTypeParameter ||
                     aClass instanceof PsiEnumConstantInitializer) {
+                return;
+            }
+            if (ignoreAnonymousInnerClasses &&
+                    aClass instanceof PsiAnonymousClass) {
                 return;
             }
             if (!SerializationUtils.isSerializable(aClass)) {

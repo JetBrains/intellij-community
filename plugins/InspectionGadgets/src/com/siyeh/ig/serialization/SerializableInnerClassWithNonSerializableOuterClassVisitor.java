@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,16 +25,20 @@ import org.jetbrains.annotations.NotNull;
 class SerializableInnerClassWithNonSerializableOuterClassVisitor
         extends BaseInspectionVisitor {
 
-    private final SerializableInnerClassWithNonSerializableOuterClassInspection inspection;
+    private final SerializableInspection inspection;
 
     public SerializableInnerClassWithNonSerializableOuterClassVisitor(
-            SerializableInnerClassWithNonSerializableOuterClassInspection inspection) {
+            SerializableInspection inspection) {
         this.inspection = inspection;
     }
 
     @Override public void visitClass(@NotNull PsiClass aClass) {
         if (aClass.isInterface() || aClass.isAnnotationType() ||
                 aClass.isEnum()) {
+            return;
+        }
+        if (inspection.ignoreAnonymousInnerClasses &&
+                aClass instanceof PsiAnonymousClass) {
             return;
         }
         final PsiClass containingClass = aClass.getContainingClass();
