@@ -463,13 +463,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean hideAutopopupIfMeaningless() {
-    if (ourHintAutopopup) {
-      return false;
-    }
-
     if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
-      for (LookupElement item : myLookup.getItems()) {
+      final List<LookupElement> items = myLookup.getItems();
+      if (!items.isEmpty() && ourHintAutopopup) {
+        return false;
+      }
+
+      for (LookupElement item : items) {
         if (!(item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           return false;
         }
