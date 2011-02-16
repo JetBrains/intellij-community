@@ -45,7 +45,7 @@ public interface PsiParameter extends PsiVariable {
   /**
    * Checks if the parameter accepts a variable number of arguments.
    *
-   * @return true if the parameter is varargs, false otherwise
+   * @return true if the parameter is a vararg, false otherwise
    */
   boolean isVarArgs();
 

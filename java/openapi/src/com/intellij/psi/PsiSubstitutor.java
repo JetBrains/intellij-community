@@ -38,7 +38,7 @@ public interface PsiSubstitutor {
 
   /**
    * Empty, or natural, substitutor. For any type parameter <code>T</code>,
-   * substitues type <code>T</code>.
+   * substitutes type <code>T</code>.
    * <b>Example:</b> consider class <code>List&lt;E&gt;</code>. <code>this</code>
    * inside class <code>List</code> has type List with EMPTY substitutor.
    */
@@ -56,7 +56,7 @@ public interface PsiSubstitutor {
   PsiType substitute(@NotNull PsiTypeParameter typeParameter);
 
   /**
-   * Substitutes type parameters occuring in <code>type</code> with their values.
+   * Substitutes type parameters occurring in <code>type</code> with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
    *
    * @param type the type to substitute the type parameters for.
@@ -98,7 +98,7 @@ public interface PsiSubstitutor {
   PsiSubstitutor putAll(PsiSubstitutor another);
 
   /**
-   * Returns the map from type parameters to types used for substution by this substitutor.
+   * Returns the map from type parameters to types used for substitution by this substitutor.
    *
    * @return the substitution map instance.
    */

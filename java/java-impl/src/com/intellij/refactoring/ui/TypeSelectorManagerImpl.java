@@ -40,7 +40,7 @@ import java.util.*;
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private SmartTypePointer myPointer;
   private PsiType myDefaultType;
-  private final PsiExpression myMainOccurence;
+  private final PsiExpression myMainOccurrence;
   private final PsiExpression[] myOccurrences;
   private final PsiType[] myTypesForMain;
   private final PsiType[] myTypesForAll;
@@ -51,8 +51,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
   private ExpectedTypesProvider myExpectedTypesProvider;
 
-  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurence, PsiExpression[] occurrences) {
-    this(project, type, null, mainOccurence, occurrences);
+  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurrence, PsiExpression[] occurrences) {
+    this(project, type, null, mainOccurrence, occurrences);
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
@@ -63,7 +63,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
-    myMainOccurence = null;
+    myMainOccurrence = null;
     myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
     myOccurrenceClassProvider = createOccurrenceClassProvider();
@@ -83,12 +83,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   public TypeSelectorManagerImpl(Project project,
                                  PsiType type,
                                  PsiMethod containingMethod,
-                                 PsiExpression mainOccurence,
+                                 PsiExpression mainOccurrence,
                                  PsiExpression[] occurrences) {
     myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
-    myMainOccurence = mainOccurence;
+    myMainOccurrence = mainOccurrence;
     myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
 
@@ -160,7 +160,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private PsiType[] getTypesForMain() {
-    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurence, false, myOccurrenceClassProvider,
+    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider,
                                                                                     false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
@@ -259,8 +259,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       result.add(0, unboxedType);
     }
 
-    if (defaultType instanceof PsiPrimitiveType && myMainOccurence != null) {
-      final PsiClassType boxedType = ((PsiPrimitiveType)defaultType).getBoxedType(myMainOccurence);
+    if (defaultType instanceof PsiPrimitiveType && myMainOccurrence != null) {
+      final PsiClassType boxedType = ((PsiPrimitiveType)defaultType).getBoxedType(myMainOccurrence);
       if (boxedType != null) {
         result.remove(boxedType);
         result.add(0, boxedType);
