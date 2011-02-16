@@ -42,4 +42,80 @@ public class Test {
     final ArrayList<String> list = new ArrayList<String>();
     <warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(list);
   }
+
+  public static <V> void join(V[] list) {
+    Arrays.asList(list);
+  }
+}
+
+class NoWarngs {
+    static final SemKey<String> FILE_DESCRIPTION_KEY = <warning descr="Unchecked generics array creation for varargs parameter">SemKey.createKey</warning>("FILE_DESCRIPTION_KEY");
+
+    void f() {
+        OCM<String> o =
+                new <warning descr="Unchecked generics array creation for varargs parameter">OCM<></warning>("", true, new Condition<String>(){
+            @Override
+            public boolean val(String s) {
+                return false;
+            }
+        }, Condition.TRUE);
+      System.out.println(o);
+    }
+}
+
+class SemKey<T extends String> {
+  private final String myDebugName;
+  private final SemKey<? super T>[] mySupers;
+
+  private SemKey(String debugName, SemKey<? super T>... supers) {
+    myDebugName = debugName;
+    System.out.println(myDebugName);
+    mySupers = supers;
+    System.out.println(mySupers);
+  }
+
+  public static <T extends String> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
+    return new SemKey<T>(debugName, supers);
+  }
+
+  public <K extends T> SemKey<K> subKey(String debugName, SemKey<? super T>... otherSupers) {
+    if (otherSupers.length == 0) {
+      return new <warning descr="Unchecked generics array creation for varargs parameter">SemKey<K></warning>(debugName, this);
+    }
+    return new SemKey<K>(debugName, append(otherSupers, this));
+  }
+
+  public static <T> T[] append(final T[] src, final T element) {
+    return append(src, element, (Class<T>)src.getClass().getComponentType());
+  }
+
+   public static <T> T[] append(T[] src, final T element, Class<T> componentType) {
+    int length = src.length;
+    T[] result = (T[])java.lang.reflect.Array.newInstance(componentType, length + 1);
+    System.arraycopy(src, 0, result, 0, length);
+    result[length] = element;
+    return result;
+  }
+}
+
+interface Condition<T> {
+   boolean val(T t);
+
+   Condition TRUE = new Condition() {
+       @Override
+       public boolean val(Object o) {
+           return true;
+       }
+   };
+}
+class OCM<T> {
+    OCM(T s, boolean b, Condition<T>... c) {
+      System.out.println(s);
+      System.out.println(b);
+      System.out.println(c);
+    }
+
+    OCM(T s, Condition<T>... c) {
+      this(s, false, c);
+    }
 }

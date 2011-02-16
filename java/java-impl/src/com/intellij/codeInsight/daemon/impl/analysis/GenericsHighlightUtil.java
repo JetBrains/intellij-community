@@ -1113,7 +1113,7 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkUncheckedGenericsArrayCreation(PsiReferenceExpression referenceExpression, PsiElement resolved){
+  public static HighlightInfo checkUncheckedGenericsArrayCreation(PsiJavaCodeReferenceElement referenceExpression, PsiElement resolved){
     if (isUncheckedWarning(referenceExpression, resolved, false)) {
       final HighlightInfo highlightInfo =
         HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, referenceExpression, "Unchecked generics array creation for varargs parameter");
@@ -1123,7 +1123,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static boolean isUncheckedWarning(PsiReferenceExpression expression, PsiElement resolve, boolean ignoreSuppressed) {
+  public static boolean isUncheckedWarning(PsiJavaCodeReferenceElement expression, PsiElement resolve, boolean ignoreSuppressed) {
     if (resolve instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)resolve;
 
@@ -1140,12 +1140,31 @@ public class GenericsHighlightUtil {
           final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
           if (!isReifiableType(componentType)) {
             final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiMethodCallExpression) {
-              final PsiExpression[] args = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
-              for (int i = parametersCount - 1; i < args.length; i++) {
-                if (!isReifiableType(args[i].getType())){
-                  return true;
+            if (parent instanceof PsiCall) {
+              final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
+              if (argumentList != null) {
+                final PsiExpression[] args = argumentList.getExpressions();
+                if (args.length == parametersCount) {
+                  final PsiExpression lastArg = args[args.length - 1];
+                  if (lastArg instanceof PsiReferenceExpression) {
+                    final PsiElement lastArgsResolve = ((PsiReferenceExpression)lastArg).resolve();
+                    if (lastArgsResolve instanceof PsiParameter) {
+                      if (((PsiParameter)lastArgsResolve).getType() instanceof PsiArrayType) {
+                        return false;
+                      }
+                    }
+                  } else if (lastArg instanceof PsiMethodCallExpression) {
+                    if (lastArg.getType() instanceof PsiArrayType) {
+                      return false;
+                    }
+                  }
                 }
+                for (int i = parametersCount - 1; i < args.length; i++) {
+                  if (!isReifiableType(args[i].getType())){
+                    return true;
+                  }
+                }
+                return args.length < parametersCount;
               }
             }
           }
@@ -1169,14 +1188,22 @@ public class GenericsHighlightUtil {
     }
 
     if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+      final PsiClassType classType = (PsiClassType)PsiUtil.convertAnonymousToBaseType(type);
       if (classType.isRaw()) {
         return true;
       }
-      if (!classType.hasParameters()) {
-        return true;
+      PsiType[] parameters = classType.getParameters();
+
+      for (PsiType parameter : parameters) {
+        if (parameter instanceof PsiWildcardType && ((PsiWildcardType)parameter).getBound() == null) {
+          return true;
+        }
       }
-      return !classType.hasNonTrivialParameters();
+      final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
+      if (resolved instanceof PsiTypeParameter) {
+        return false;
+      }
+      return parameters.length == 0;
     }
 
     return false;

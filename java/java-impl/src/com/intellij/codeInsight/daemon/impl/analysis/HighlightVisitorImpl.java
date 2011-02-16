@@ -686,6 +686,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedGenericsArrayCreation(expression.getClassOrAnonymousClassReference(), expression.resolveConstructor()));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
