@@ -79,7 +79,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private FileHolderComposite myComposite;
 
-  private final ChangeListWorker myWorker;
+  private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -421,10 +421,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
-          myWorker.takeData(dataHolder.getChangeListWorker());
-        }
-
-        if (takeChanges) {
+          myWorker = dataHolder.getChangeListWorker();
+          myModifier.setWorker(myWorker);
           if (LOG.isDebugEnabled()) {
             LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
           }
