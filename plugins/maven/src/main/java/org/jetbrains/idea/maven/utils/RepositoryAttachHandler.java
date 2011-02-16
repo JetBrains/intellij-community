@@ -157,7 +157,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
             FileUtil.copy(repoFile, toFile);
           }
         }
-        String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath()));
+        final String url = VfsUtil.getUrlForLibraryRoot(toFile);
         manager.refreshAndFindFileByUrl(url);
         if (MavenExtraArtifactType.DOCS.getDefaultClassifier().equals(each.getClassifier())) {
           libraryEditor.addRoot(url, JavadocOrderRootType.getInstance());
