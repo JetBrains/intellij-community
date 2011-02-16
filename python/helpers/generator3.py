@@ -1432,18 +1432,18 @@ class ModuleRedeclarator(object):
         @param indent indentation level
         @param p_class the class that contains this function as a method
         @param p_modname module name
-        @param seen {func: name} map of functions already seen in the same namespace
-        """
+        @param seen {id(func): name} map of functions already seen in the same namespace;
+              id() because *some* functions are unhashable (eg _elementtree.Comment in py2.7) """
         action("redoing func %r of class %r", p_name, p_class)
         if seen is not None:
-            other_func = seen.get(p_func, None)
+            other_func = seen.get(id(p_func), None)
             if other_func and getattr(other_func, "__doc__", None) is getattr(p_func, "__doc__", None):
                 # _bisect.bisect == _bisect.bisect_right in py31, but docs differ
-                out(indent, p_name, " = ", seen[p_func])
+                out(indent, p_name, " = ", seen[id(p_func)])
                 out(indent, "")
                 return
             else:
-                seen[p_func] = p_name
+                seen[id(p_func)] = p_name
         # real work
         classname = p_class and p_class.__name__ or None
         if p_class and hasattr(p_class, '__mro__'):
