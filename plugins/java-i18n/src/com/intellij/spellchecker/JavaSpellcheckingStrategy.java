@@ -38,10 +38,8 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiMethod) return new MethodNameTokenizerJava();
     if (element instanceof PsiDocComment) return new DocCommentTokenizer();
-    if (element instanceof PsiLiteralExpression) return
-      new LiteralExpressionTokenizer();
-    if (element instanceof PsiNamedElement)
-      return new NamedElementTokenizer();
+    if (element instanceof PsiLiteralExpression) return new LiteralExpressionTokenizer();
+    if (element instanceof PsiNamedElement) return new NamedElementTokenizer();
     return super.getTokenizer(element);
   }
 
