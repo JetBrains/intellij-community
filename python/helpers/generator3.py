@@ -1692,20 +1692,8 @@ class ModuleRedeclarator(object):
             out(0, "# from file " + self.module.__file__)
         self.outDocAttr(out, self.module, 0)
 
-    def addImportHeaderIfNeeded(self):
-        if self.imports_buf.isEmpty():
-            self.imports_buf.out(0, "")
-            self.imports_buf.out(0, "# imports")
 
-    def redo(self, p_name, imported_module_names):
-        """
-        Restores module declarations.
-        Intended for built-in modules and thus does not handle import statements.
-        @param p_name name of module
-        """
-        action("redoing module %r", p_name)
-        self.redoSimpleHeader(p_name)
-        # find whatever other self.imported_modules the module knows; effectively these are imports
+    def redoImports(self):
         module_type = type(sys)
         for item_name in self.module.__dict__.keys():
             try:
@@ -1720,6 +1708,28 @@ class ModuleRedeclarator(object):
                     self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
                 else:
                     self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
+
+    def addImportHeaderIfNeeded(self):
+        if self.imports_buf.isEmpty():
+            self.imports_buf.out(0, "")
+            self.imports_buf.out(0, "# imports")
+
+    def redo(self, p_name, imported_module_names):
+        """
+        Restores module declarations.
+        Intended for built-in modules and thus does not handle import statements.
+        @param p_name name of module
+        """
+        action("redoing module %r %r", p_name, str(self.module))
+        self.redoSimpleHeader(p_name)
+
+        # find whatever other self.imported_modules the module knows; effectively these are imports
+        try:
+            self.redoImports()
+        except:
+            pass
+
+        module_type = type(sys)
 
         # group what else we have into buckets
         vars_simple = {}
