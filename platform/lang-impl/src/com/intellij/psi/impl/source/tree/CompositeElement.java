@@ -20,7 +20,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,13 +30,13 @@ import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -56,7 +55,7 @@ public class CompositeElement extends TreeElement {
   private volatile int myCachedLength = NOT_CACHED;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
-  private static final boolean ASSERT_THREADING = DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
+  private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
@@ -105,10 +104,16 @@ public class CompositeElement extends TreeElement {
   public void clearCaches() {
     if (ASSERT_THREADING) {
       PsiElement wrapper = myWrapper;
+      FileElement fileElement;
+      PsiFile psiFile;
       LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed() ||
-                     Thread.holdsLock(PsiLock.LOCK) ||
+                     Thread.holdsLock(START_OFFSET_LOCK) ||
                      wrapper != null && !wrapper.isPhysical() ||
-                     TreeUtil.getFileElement(this).getElementType() == TokenType.DUMMY_HOLDER
+                     (fileElement = TreeUtil.getFileElement(this)) == null ||
+                     (psiFile = (PsiFile)fileElement.getPsi()) == null ||
+                     psiFile instanceof DummyHolder ||
+                     psiFile.getViewProvider() instanceof InjectedFileViewProvider ||
+                     !psiFile.isPhysical()
       );
     }
     super.clearCaches();
