@@ -36,12 +36,20 @@ public class Doo extends groovy.lang.GroovyObjectSupport implements java.io.Seri
   }
 }
 ---
-public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject, DelegateFoo, java.lang.Runnable, java.io.Serializable {
+public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements DelegateFoo, java.lang.Runnable, java.io.Serializable, groovy.lang.GroovyObject {
   public DelegateFoo getFoo() {
     return null;
   }
 
   public void setFoo(DelegateFoo foo) {
+    return ;
+  }
+
+  public java.lang.Object foo() {
+    return null;
+  }
+
+  public void run() {
     return ;
   }
 
@@ -62,14 +70,6 @@ public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements 
   }
 
   public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
-
-  public java.lang.Object foo() {
-    return null;
-  }
-
-  public void run() {
     return ;
   }
 

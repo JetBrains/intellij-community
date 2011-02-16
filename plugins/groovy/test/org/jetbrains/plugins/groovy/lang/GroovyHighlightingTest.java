@@ -311,4 +311,12 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testSOFInDelegate() {
+    doTest();
+  }
+
+  public void testInheritInterfaceInDelegate() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
 }
