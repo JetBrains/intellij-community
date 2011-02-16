@@ -26,11 +26,6 @@ public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
     return PathManager.getHomePath() + "/plugins/typeMigration/testData";
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   public void test() throws Exception {
     doAllTests();
   }

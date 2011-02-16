@@ -152,11 +152,6 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase{
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   interface RulesProvider {
     TypeMigrationRules provide() throws Exception;
 
