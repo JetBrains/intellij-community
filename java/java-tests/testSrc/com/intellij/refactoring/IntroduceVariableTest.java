@@ -256,9 +256,4 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(baseName + ".after.java");
   }
-
-  @Override
-   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
 }

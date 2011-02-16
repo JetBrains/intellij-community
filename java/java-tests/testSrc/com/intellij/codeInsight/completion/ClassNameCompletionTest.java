@@ -35,11 +35,6 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myOldSetting;
     super.tearDown();

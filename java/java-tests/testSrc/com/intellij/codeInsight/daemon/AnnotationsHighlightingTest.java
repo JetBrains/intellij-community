@@ -37,8 +37,4 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageAnnotationNotInPackageInfo() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false);
   }
-
-  @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
 }

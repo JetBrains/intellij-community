@@ -29,11 +29,6 @@ public class InlineConstantFieldTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";

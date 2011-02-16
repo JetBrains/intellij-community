@@ -23,9 +23,4 @@ public class SurroundWithIfFixTest extends LightQuickFixTestCase {
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithIf";
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

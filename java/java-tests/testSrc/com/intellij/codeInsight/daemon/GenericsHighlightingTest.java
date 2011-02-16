@@ -36,11 +36,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
   }
 
-  @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
-
   public void testReferenceTypeParams() throws Exception { doTest(false); }
   public void testOverridingMethods() throws Exception { doTest(false); }
   public void testTypeParameterBoundsList() throws Exception { doTest(false); }

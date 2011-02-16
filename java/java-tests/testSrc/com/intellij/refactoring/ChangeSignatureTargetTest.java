@@ -35,11 +35,6 @@ public class ChangeSignatureTargetTest extends LightCodeInsightTestCase {
     doTest("A1");
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   private void doTest(String expectedMemberName) throws Exception {
     String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
     @NonNls final String filePath = basePath + ".java";

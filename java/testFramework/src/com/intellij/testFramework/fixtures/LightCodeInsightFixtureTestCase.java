@@ -19,8 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -42,15 +40,10 @@ import java.io.File;
  * @author peter
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
-  public static final LightProjectDescriptor JAVA_1_4 = new LightProjectDescriptor() {
-    @Override
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
+  public static final LightProjectDescriptor JAVA_1_4 = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk17();
+      return JavaSdkImpl.getMockJdk14();
     }
 
     @Override
@@ -59,31 +52,11 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   };
   public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor() {
     @Override
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk17("java 1.5");
-    }
-
-    @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
   };
   public static final LightProjectDescriptor JAVA_1_6 = new DefaultLightProjectDescriptor() {
-    @Override
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk17("java 1.6");
-    }
-
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_6);
