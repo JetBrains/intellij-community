@@ -207,6 +207,11 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
+  @Override
+  public ConsoleView getConsoleView() {
+    return myConsoleView;
+  }
+
   public XDebugSessionTab getSessionTab() {
     return mySessionTab;
   }

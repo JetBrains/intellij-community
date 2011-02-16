@@ -17,6 +17,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -125,4 +126,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
 
   void updateExecutionPosition();
+
+  ConsoleView getConsoleView();
 }
