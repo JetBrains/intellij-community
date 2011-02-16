@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -355,7 +356,7 @@ public class GroovyToJavaGenerator {
           final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
           final PsiClass baseClass = method.getContainingClass();
           if (isAbstractInJava(method) && baseClass != null && typeDefinition.isInheritor(baseClass, true)) {
-            methods.add(mirrorMethod(typeDefinition, method, baseClass, JAVA_MODIFIERS));
+            methods.add(mirrorMethod(typeDefinition, method, baseClass, PsiSubstitutor.EMPTY, JAVA_MODIFIERS));
           }
         }
       }
@@ -368,20 +369,22 @@ public class GroovyToJavaGenerator {
       methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
     }
 
-    for (PsiClass resolve : collectDelegateTypes(typeDefinition)) {
-      for (PsiMethod method : resolve.getAllMethods()) {
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC)) {
-          methods.add(mirrorMethod(typeDefinition, method, typeDefinition, PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE));
-        }
+    if (typeDefinition instanceof GrTypeDefinition) {
+      for (PsiMethod delegatedMethod : GrClassImplUtil.getDelegatedMethods((GrTypeDefinition)typeDefinition)) {
+        methods.add(delegatedMethod);
       }
     }
 
     return methods;
   }
 
-  private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition, PsiMethod method, PsiClass baseClass, String... modifierFilter) {
+  private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition,
+                                                 PsiMethod method,
+                                                 PsiClass baseClass,
+                                                 PsiSubstitutor substitutor,
+                                                 String... modifierFilter) {
     final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
-    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY);
+    substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(parameter.getType()));
     }
@@ -392,20 +395,6 @@ public class GroovyToJavaGenerator {
       }
     }
     return builder;
-  }
-
-  private static List<PsiClass> collectDelegateTypes(PsiClass typeDefinition) {
-    final ArrayList<PsiClass> result = new ArrayList<PsiClass>();
-    for (PsiField field : typeDefinition.getFields()) {
-      final PsiModifierList modifierList = field.getModifierList();
-      if (modifierList != null && modifierList.findAnnotation("groovy.lang.Delegate") != null) {
-        final PsiType type = field.getType();
-        if (type instanceof PsiClassType) {
-          ContainerUtil.addIfNotNull(result, ((PsiClassType)type).resolve());
-        }
-      }
-    }
-    return result;
   }
 
   private static boolean isAbstractInJava(PsiMethod method) {
