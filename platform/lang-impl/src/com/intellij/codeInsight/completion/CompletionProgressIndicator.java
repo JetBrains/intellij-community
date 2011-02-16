@@ -470,13 +470,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
       final List<LookupElement> items = myLookup.getItems();
-      if (!items.isEmpty() && showHintAutopopup()) {
-        return false;
-      }
 
       for (LookupElement item : items) {
         if (!(item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           return false;
+        }
+
+        if (showHintAutopopup()) {
+          final LookupElementPresentation presentation = new LookupElementPresentation();
+          item.renderElement(presentation);
+          if (StringUtil.isNotEmpty(presentation.getTailText())) {
+            return false;
+          }
         }
       }
 
