@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,10 +83,10 @@ public abstract class ScriptingLibraryMappings extends LanguagePerFileMappings<S
     Map<VirtualFile,ScriptingLibraryTable.LibraryModel> map = getMappings();
     myCompoundLibMap.clear();
     myProjectLibs = new CompoundLibrary();
-    for (VirtualFile file : map.keySet().toArray(new VirtualFile[map.size()])) {
+    for (VirtualFile file : VfsUtil.toVirtualFileArray(map.keySet())) {
       ScriptingLibraryTable.LibraryModel value = getImmediateMapping(file);
       if (value instanceof CompoundLibrary) {
-        CompoundLibrary container = (CompoundLibrary) value;
+        CompoundLibrary container = (CompoundLibrary)value;
         ScriptingLibraryTable.LibraryModel[] libModels =
           container.getLibraries().toArray(new ScriptingLibraryTable.LibraryModel[container.getLibraryCount()]);
         CompoundLibrary newContainer = new CompoundLibrary();

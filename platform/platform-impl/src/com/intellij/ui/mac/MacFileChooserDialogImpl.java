@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.MacFileChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -73,7 +74,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
         try {
           if (myResultFiles != null) {
-            final VirtualFile[] chosenFiles = myResultFiles.toArray(new VirtualFile[myResultFiles.size()]);
+            final VirtualFile[] chosenFiles = VfsUtil.toVirtualFileArray(myResultFiles);
             final MacFileChooserCallback callback = mySheetCallback;
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
@@ -309,7 +310,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       if (myResultFiles == null) {
         return new VirtualFile[0];
       } else {
-        return myResultFiles.toArray(new VirtualFile[myResultFiles.size()]);
+        return VfsUtil.toVirtualFileArray(myResultFiles);
       }
     }
     finally {

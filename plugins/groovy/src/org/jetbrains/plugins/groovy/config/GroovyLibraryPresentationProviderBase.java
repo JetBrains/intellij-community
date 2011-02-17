@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
 
   @Override
   public GroovyLibraryProperties detect(@NotNull List<VirtualFile> classesRoots) {
-    final VirtualFile[] libraryFiles = classesRoots.toArray(new VirtualFile[classesRoots.size()]);
+    final VirtualFile[] libraryFiles = VfsUtil.toVirtualFileArray(classesRoots);
     if (managesLibrary(libraryFiles)) {
       final String version = getLibraryVersion(libraryFiles);
       return new GroovyLibraryProperties(version);

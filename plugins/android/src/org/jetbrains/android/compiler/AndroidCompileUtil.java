@@ -269,7 +269,7 @@ public class AndroidCompileUtil {
         }
       }
     }
-    return filesToCheck.toArray(new VirtualFile[filesToCheck.size()]);
+    return VfsUtil.toVirtualFileArray(filesToCheck);
   }
 
   private static void collectModules(Module module, Set<Module> result, Module[] allModules) {

@@ -939,7 +939,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       openFiles.addAll(Arrays.asList(each.getOpenFiles()));
     }
 
-    return openFiles.toArray(new VirtualFile[openFiles.size()]);
+    return VfsUtil.toVirtualFileArray(openFiles);
   }
 
   @NotNull
@@ -949,7 +949,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
     }
 
-    return selectedFiles.toArray(new VirtualFile[selectedFiles.size()]);
+    return VfsUtil.toVirtualFileArray(selectedFiles);
   }
 
   @NotNull

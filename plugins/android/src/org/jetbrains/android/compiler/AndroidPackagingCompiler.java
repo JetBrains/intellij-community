@@ -57,7 +57,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     AndroidPlatform platform = configuration.getAndroidPlatform();
     if (platform != null) {
       List<VirtualFile> externalLibsAndModules = AndroidRootUtil.getExternalLibraries(module, platform.getLibrary());
-      return externalLibsAndModules.toArray(new VirtualFile[externalLibsAndModules.size()]);
+      return VfsUtil.toVirtualFileArray(externalLibsAndModules);
     }
     return VirtualFile.EMPTY_ARRAY;
   }
@@ -163,7 +163,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         result.add(depLibsDir);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   private static String[] getPaths(@NotNull VirtualFile[] vFiles) {

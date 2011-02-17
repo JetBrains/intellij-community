@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -176,7 +177,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         if (vf != null) virtualFiles.add(vf);
       }
 
-      return virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
+      return VfsUtil.toVirtualFileArray(virtualFiles);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,

@@ -19,6 +19,7 @@ package com.intellij.history.integration;
 import com.intellij.history.core.Paths;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
@@ -89,7 +90,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    return myChildren.toArray(new VirtualFile[0]);
+    return VfsUtil.toVirtualFileArray(myChildren);
   }
 
   public void addChild(TestVirtualFile f) {
