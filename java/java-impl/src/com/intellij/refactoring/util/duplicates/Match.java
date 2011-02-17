@@ -48,16 +48,18 @@ public final class Match {
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<PsiVariable, List<PsiElement>>();
-  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurences = new HashMap<PsiVariable, ArrayList<PsiElement>>();
+  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurrences = new HashMap<PsiVariable, ArrayList<PsiElement>>();
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<PsiElement, PsiElement>();
   private ReturnValue myReturnValue = null;
   private Ref<PsiExpression> myInstanceExpression = null;
   private final Map<PsiVariable, PsiType> myChangedParams = new HashMap<PsiVariable, PsiType>();
+  private final boolean myIgnoreParameterTypes;
 
-  Match(PsiElement start, PsiElement end) {
+  Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
     LOG.assertTrue(start.getParent() == end.getParent());
     myMatchStart = start;
     myMatchEnd = end;
+    myIgnoreParameterTypes = ignoreParameterTypes;
   }
 
 
@@ -135,14 +137,14 @@ public final class Match {
             myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
           }
         } else {
-          if (!parameterType.isAssignableFrom(type)) return false;  //todo
+          if (!myIgnoreParameterTypes && !parameterType.isAssignableFrom(type)) return false;  //todo
         }
       }
       final List<PsiElement> values = new ArrayList<PsiElement>();
       values.add(value);
       myParameterValues.put(psiVariable, values);
       final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-      myParameterOccurences.put(psiVariable, elements);
+      myParameterOccurrences.put(psiVariable, elements);
       return true;
     }
     else {
@@ -157,7 +159,7 @@ public final class Match {
           currentValue.add(value);
         }
       }
-      myParameterOccurences.get(psiVariable).add(value);
+      myParameterOccurrences.get(psiVariable).add(value);
       return true;
     }
   }
