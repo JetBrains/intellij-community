@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
@@ -304,7 +305,7 @@ public class TokenBasedSearcher {
         });
       }
       assert elementList != null;
-      final PsiElement[] elements = elementList.toArray(new PsiElement[elementList.size()]);
+      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(elementList);
       if (elements.length > 0) {
         context.setResult(null);
         myBound = occurence + myPatternLength;

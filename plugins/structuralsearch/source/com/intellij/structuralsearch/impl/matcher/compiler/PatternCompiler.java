@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -252,7 +253,7 @@ public class PatternCompiler {
         }
       }
       context.getPattern().setNodes(
-        new ArrayBackedNodeIterator(elements.toArray(new PsiElement[elements.size()]))
+        new ArrayBackedNodeIterator(PsiUtilBase.toPsiElementArray(elements))
       );
 
       // delete last brace
@@ -280,7 +281,7 @@ public class PatternCompiler {
           throw new MalformedPatternException(SSRBundle.message("ssr.will.not.find.anything"));
         }
         result.setScope(
-          new LocalSearchScope( filesToScan.toArray(new PsiElement[filesToScan.size()]) )
+          new LocalSearchScope(PsiUtilBase.toPsiElementArray(filesToScan))
         );
       }
     } finally {

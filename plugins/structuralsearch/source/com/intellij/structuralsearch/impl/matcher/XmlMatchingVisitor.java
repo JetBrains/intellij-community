@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
@@ -101,7 +102,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
         result.add(c);
       }
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 
   @Override public void visitXmlText(XmlText text) {
