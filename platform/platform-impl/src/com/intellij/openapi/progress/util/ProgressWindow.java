@@ -51,6 +51,13 @@ import java.io.File;
 public class ProgressWindow extends BlockingProgressIndicator implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
+  /**
+   * This constant defines default delay for showing progress dialog (in millis).
+   * 
+   * @see #setDelayInMillis(int) 
+   */
+  public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
+
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   private MyDialog myDialog;
@@ -71,6 +78,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private boolean myWasShown;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
+  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -124,6 +132,20 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myStarted = true;
   }
 
+  /**
+   * There is a possible case that many short (in terms of time) progress tasks are executed in a small amount of time.
+   * Problem: UI blinks and looks ugly if we show progress dialog for every such task (every dialog disappears shortly).
+   * Solution is to postpone showing progress dialog in assumption that the task may be already finished when it's
+   * time to show the dialog.
+   * <p/>
+   * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
+   * 
+   * @param delayInMillis   new delay time in milliseconds
+   */
+  public void setDelayInMillis(int delayInMillis) {
+    myDelayInMillis = delayInMillis;
+  }
+
   private synchronized boolean isStarted() {
     return myStarted;
   }
@@ -136,7 +158,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
         // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
         // if the task is already finished when the time comes.
-        Timer timer = new Timer(300, new ActionListener() {
+        Timer timer = new Timer(myDelayInMillis, new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
             if (isRunning()) {

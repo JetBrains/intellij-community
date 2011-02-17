@@ -99,11 +99,7 @@ class InitialInfoBuilder {
 
     State state = myStates.peek();
     doIteration(state);
-    if (myStates.isEmpty()) {
-      state.wrappedBlock.setIndent((IndentImpl)Indent.getNoneIndent());
-      return true;
-    }
-    return false;
+    return myStates.isEmpty();
   }
   
   /**
@@ -196,7 +192,10 @@ class InitialInfoBuilder {
       wrappedRootBlock.arrangeParentTextRange();
     }
 
-    if (myRootBlockWrapper == null) myRootBlockWrapper = wrappedRootBlock;
+    if (myRootBlockWrapper == null) {
+      myRootBlockWrapper = wrappedRootBlock;
+      myRootBlockWrapper.setIndent((IndentImpl)Indent.getNoneIndent());
+    }
     boolean blocksMayBeOfInterest = false;
 
     if (myPositionOfInterest != -1) {

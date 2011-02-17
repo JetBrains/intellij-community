@@ -204,6 +204,13 @@ class FormatProcessor {
     return myCurrentState.isDone();
   }
 
+  /**
+   * Asks current processor to stop any active sequential processing if any.
+   */
+  public void stopSequentialProcessing() {
+    myCurrentState.stop();
+  }
+  
   public void formatWithoutRealModifications() {
     formatWithoutRealModifications(false);
   }
@@ -212,7 +219,7 @@ class FormatProcessor {
   public void formatWithoutRealModifications(boolean sequentially) {
     myCurrentState.setNext(new AdjustWhiteSpacesState());
     
-    if (!sequentially) {
+    if (sequentially) {
       return;
     }
     
@@ -1347,10 +1354,13 @@ class FormatProcessor {
     public FormattingStateId getStateId() {
       return myStateId;
     }
+
+    public void stop() {
+    }
     
     protected abstract void doIteration();
     protected abstract void prepare();
-
+    
     private void shiftStateIfNecessary() {
       if (isDone() && myNextState != null) {
         myCurrentState = myNextState;
@@ -1519,6 +1529,13 @@ class FormatProcessor {
       }
       
       if (done) {
+        myModel.commitChanges();
+      }
+    }
+
+    @Override
+    public void stop() {
+      if (myIndex > 0) {
         myModel.commitChanges();
       }
     }

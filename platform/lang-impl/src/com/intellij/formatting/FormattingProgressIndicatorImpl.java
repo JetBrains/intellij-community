@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   static {
     ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.WRAPPING_BLOCKS, 500);
     ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.PROCESSING_BLOCKS, 500);
-    ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.APPLYING_CHANGES, 3000);
+    ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.APPLYING_CHANGES, 1000);
     assert ITERATION_MIN_TIMES_MILLIS.size() == FormattingStateId.values().length;
   }
   
@@ -95,7 +97,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   private int               myModifiedBlocksNumber;
   
   public FormattingProgressIndicatorImpl(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
-    super(project, getTitle(file), false);
+    super(project, getTitle(file), true);
     myFile = file.getVirtualFile();
     myDocument = document;
     myFileTextLength = file.getTextLength();
@@ -121,6 +123,11 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     catch (Exception e) {
       LOG.info("Unexpected exception occurred during reformatting file " + myFile, e);
     }
+    finally {
+      if (myIndicator != null) {
+        myIndicator.stop();
+      }
+    }
   }
 
   @SuppressWarnings({"SSBasedInspection"})
@@ -130,7 +137,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
       return;
     }
 
-    SwingUtilities.invokeAndWait(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         myDocumentModificationStampBefore = myDocument.getModificationStamp();
@@ -143,26 +150,32 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     final Condition condition = lock.newCondition();
     myIndicator = indicator;
     
-    while (myRunning && !myTask.isDone()) {
+    while (myRunning && !task.isDone()) {
+      if (indicator.isCanceled()) {
+        task.stop();
+        break;
+      }
       lock.lock();
       try {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            long start = System.currentTimeMillis();
-            while (System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
-              task.iteration();
-            }
             lock.lock();
             try {
-              condition.signal();
+              long start = System.currentTimeMillis();
+              while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
+                task.iteration();
+              }
             }
             finally {
+              condition.signal();
               lock.unlock();
             }
           }
         });
-        condition.await();
+        if (!task.isDone()) {
+          condition.await();
+        }
       }
       finally {
         lock.unlock();
@@ -213,6 +226,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   public void beforeApplyingFormatChanges(@NotNull Collection<LeafBlockWrapper> modifiedBlocks) {
     myBlocksToModifyNumber = modifiedBlocks.size();
     updateTextIfNecessary(FormattingStateId.APPLYING_CHANGES);
+    setCancelText(IdeBundle.message("action.stop"));
   }
   
   @Override

@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -203,7 +204,8 @@ public class FormatterImpl extends FormatterEx
    */
   private void execute(@NotNull SequentialTask task) {
     disableFormatting();
-    if (myProgressIndicator == null || !ApplicationManager.getApplication().isDispatchThread()) {
+    Application application = ApplicationManager.getApplication();
+    if (myProgressIndicator == null || !application.isDispatchThread() || application.isUnitTestMode()) {
       try {
         task.prepare();
         while (!task.isDone()) {
@@ -757,7 +759,12 @@ public class FormatterImpl extends FormatterEx
     public boolean iteration() {
       return myDone = myProcessor.iteration();
     }
-    
+
+    @Override
+    public void stop() {
+      myProcessor.stopSequentialProcessing();
+    }
+
     @NotNull
     protected abstract FormatProcessor buildProcessor();
   }

@@ -354,8 +354,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testBraces() throws Exception {
     final CodeStyleSettings settings = getSettings();
 
-    final String text = "class Foo {\n" + "void foo () {\n" + "if (a) {\n" + "int i = 0;\n" + "}\n" + "}\n" + "}";
-
+    final String text =
+      "class Foo {\n" +
+      "void foo () {\n" +
+      "if (a) {\n" +
+      "int i = 0;\n" +
+      "}\n" +
+      "}\n" +
+      "}";
 
     settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
     settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
@@ -2199,7 +2205,14 @@ public void testSCR260() throws Exception {
     getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
 
     doTextTest(
-      "public class ZZZZ \n" + "   { \n" + "   public ZZZZ() \n" + "      { \n" + "      if (a){\n" + "foo();}\n" + "      } \n" + "   }",
+      "public class ZZZZ \n" +
+      "   { \n" +
+      "   public ZZZZ() \n" +
+      "      { \n" +
+      "      if (a){\n" +
+      "foo();}\n" +
+      "      } \n" +
+      "   }",
       "public class ZZZZ\n" +
       "    {\n" +
       "    public ZZZZ()\n" +
