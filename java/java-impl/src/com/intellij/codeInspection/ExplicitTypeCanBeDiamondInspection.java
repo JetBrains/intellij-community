@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -71,34 +72,36 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
               final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
               if (typeElements.length > 0) {
                 if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return;
-                holder.registerProblem(parameterList, "Redundant type argument #ref #loc",
-                                       new LocalQuickFix() {
-                  @NotNull
-                  @Override
-                  public String getName() {
-                    return "Replace with <>";
-                  }
-
-                  @NotNull
-                  @Override
-                  public String getFamilyName() {
-                    return getName();
-                  }
-
-                  @Override
-                  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                    final PsiElement psiElement = descriptor.getPsiElement();
-                    if (psiElement instanceof PsiReferenceParameterList) {
-                      final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
-                      psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
-                    }
-                  }
-                });
+                holder.registerProblem(parameterList,  "Redundant type argument #ref #loc",
+                                       ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithDiamondFix());
               }
             }
           }
         }
       }
     };
+  }
+
+  private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Replace with <>";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement instanceof PsiReferenceParameterList) {
+        final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
+        psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
+      }
+    }
   }
 }
