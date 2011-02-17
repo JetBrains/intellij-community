@@ -348,9 +348,4 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, null, parametersToRemove).run();
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

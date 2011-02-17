@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
@@ -98,8 +97,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    * @param file     file affected by the revision
    */
   public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file) {
-    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
-      
+    new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {
@@ -122,7 +120,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
           });
         }
       }
-    });
+    }.queue();
   }
 
 

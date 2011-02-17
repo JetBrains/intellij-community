@@ -41,6 +41,7 @@ import com.intellij.util.pico.IdeaPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -211,7 +212,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public <T> T getComponent(Class<T> interfaceClass) {
-    assert !myDisposeCompleted : "Already disposed";
+    assert !myDisposeCompleted : "Already disposed: "+this;
     return getComponent(interfaceClass, null);
   }
 
@@ -375,9 +376,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public boolean isDisposed() {
-    return myDisposed;
+    return myDisposed || temporarilyDisposed;
   }
 
+  private volatile boolean temporarilyDisposed = false;
+  @TestOnly
+  public void setTemporarilyDisposed(boolean disposed) {
+    temporarilyDisposed = disposed;
+  }
 
   public void initComponents() {
     createComponents();
@@ -391,7 +397,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected void boostrapPicoContainer() {
     myPicoContainer = createPicoContainer();
 
-    myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager != null ? myParentComponentManager.getMessageBus() : null);
+    myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
     final MutablePicoContainer picoContainer = getPicoContainer();
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
     /*

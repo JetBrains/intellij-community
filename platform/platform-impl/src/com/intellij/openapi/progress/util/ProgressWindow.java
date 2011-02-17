@@ -51,26 +51,34 @@ import java.io.File;
 public class ProgressWindow extends BlockingProgressIndicator implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
+  /**
+   * This constant defines default delay for showing progress dialog (in millis).
+   * 
+   * @see #setDelayInMillis(int) 
+   */
+  public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
+
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   private MyDialog myDialog;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final Project myProject;
   private final boolean myShouldShowCancel;
-  private String myCancelText;
+  private       String  myCancelText;
 
   private String myTitle = null;
 
   private boolean myStoppedAlready = false;
   protected final FocusTrackback myFocusTrackback;
-  private boolean myStarted = false;
+  private boolean myStarted      = false;
   private boolean myBackgrounded = false;
   private boolean myWasShown;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
+  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -84,7 +92,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, JComponent parentComponent, String cancelText) {
+  public ProgressWindow(boolean shouldShowCancel,
+                        boolean shouldShowBackground,
+                        @Nullable Project project,
+                        JComponent parentComponent,
+                        String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
@@ -120,40 +132,59 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myStarted = true;
   }
 
+  /**
+   * There is a possible case that many short (in terms of time) progress tasks are executed in a small amount of time.
+   * Problem: UI blinks and looks ugly if we show progress dialog for every such task (every dialog disappears shortly).
+   * Solution is to postpone showing progress dialog in assumption that the task may be already finished when it's
+   * time to show the dialog.
+   * <p/>
+   * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
+   * 
+   * @param delayInMillis   new delay time in milliseconds
+   */
+  public void setDelayInMillis(int delayInMillis) {
+    myDelayInMillis = delayInMillis;
+  }
+
   private synchronized boolean isStarted() {
     return myStarted;
   }
 
   protected void prepareShowDialog() {
-    SwingUtilities.invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
-        myShowWindowAlarm.addRequest(new Runnable() {
-          public void run() {
+        // We know at least about one use-case the requires special treatment here: many short (in terms of time) progress tasks are
+        // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
+        // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
+        // if the task is already finished when the time comes.
+        Timer timer = new Timer(myDelayInMillis, new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             if (isRunning()) {
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  if (myDialog != null) {
-                    final DialogWrapper popup = myDialog.myPopup;
-                    if (popup != null) {
-                      myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                        public Component getComponent() {
-                          return popup.getPreferredFocusedComponent();
-                        }
-                      });
-                      if (popup.isShowing()) {
-                        myWasShown = true;
-                      }
+              if (myDialog != null) {
+                final DialogWrapper popup = myDialog.myPopup;
+                if (popup != null) {
+                  myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+                    @SuppressWarnings({"ConstantConditions"})
+                    public Component getComponent() {
+                      return popup.getPreferredFocusedComponent();
                     }
+                  });
+                  if (popup.isShowing()) {
+                    myWasShown = true;
                   }
                 }
-              });
+              }
               showDialog();
             }
             else {
               Disposer.dispose(ProgressWindow.this);
             }
           }
-        }, 300, getModalityState());
+        });
+        timer.setRepeats(false);
+        timer.start();
       }
     });
   }
@@ -204,7 +235,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Runnable installer = new Runnable() {
         public void run() {
-          if (isRunning() && !isCanceled() && getFraction() < 0.15 && myDialog!=null) {
+          if (isRunning() && !isCanceled() && getFraction() < 0.15 && myDialog != null) {
             final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, getProcessId());
             if (cmp != null) {
               setFunComponent(cmp);
@@ -237,7 +268,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myDialog.hide();
       if (myDialog.wasShown()) {
         myFocusTrackback.restoreFocus();
-      } else {
+      }
+      else {
         myFocusTrackback.consume();
       }
     }
@@ -378,18 +410,18 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     private JProgressBar myProgressBar;
     private boolean myRepaintedFlag = true;
-    private JPanel myFunPanel;
-    private TitlePanel myTitlePanel;
-    private DialogWrapper myPopup;
-    private final Window myParentWindow;
-    private Point myLastClicked;
+    private       JPanel        myFunPanel;
+    private       TitlePanel    myTitlePanel;
+    private       DialogWrapper myPopup;
+    private final Window        myParentWindow;
+    private       Point         myLastClicked;
 
     public MyDialog(boolean shouldShowBackground, Project project, String cancelText) {
       Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
       if (parentWindow == null) {
         parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
       }
-      myParentWindow =parentWindow;
+      myParentWindow = parentWindow;
 
       initDialog(shouldShowBackground, cancelText);
     }
@@ -448,7 +480,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           }
         }
       });
-
     }
 
     public void dispose() {
@@ -470,7 +501,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       });
     }
 
-    public void changeCancelButtonText(String text){
+    public void changeCancelButtonText(String text) {
       myCancelButton.setText(text);
     }
 
@@ -550,7 +581,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
 
-      myPopup = myParentWindow.isShowing() ? new MyDialogWrapper(myParentWindow, myShouldShowCancel) : new MyDialogWrapper(myProject, myShouldShowCancel);
+      myPopup = myParentWindow.isShowing()
+                ? new MyDialogWrapper(myParentWindow, myShouldShowCancel)
+                : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
 
       SwingUtilities.invokeLater(new Runnable() {
@@ -606,7 +639,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
             return super.createPeer(parent, canBeParent);
           }
-        } else {
+        }
+        else {
           return super.createPeer(parent, canBeParent);
         }
       }
@@ -620,7 +654,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
             return super.createPeer(canBeParent, toolkitModalIfPossible);
           }
-        } else {
+        }
+        else {
           return super.createPeer(canBeParent, toolkitModalIfPossible);
         }
       }
@@ -634,7 +669,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
             return super.createPeer(project, canBeParent);
           }
-        } else {
+        }
+        else {
           return super.createPeer(project, canBeParent);
         }
       }
@@ -659,7 +695,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       }
 
       @Nullable
-        protected Border createContentPaneBorder() {
+      protected Border createContentPaneBorder() {
         return null;
       }
     }
@@ -670,7 +706,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myDialog.setShouldShowBackground(backgroundHandler != null);
   }
 
-  public void setCancelButtonText(String text){
+  public void setCancelButtonText(String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }
@@ -691,7 +727,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       if (wnd != null) { // Can be null if just hidden
         wnd.pack();
       }
-    } else if (myDialog.myPopup != null) {
+    }
+    else if (myDialog.myPopup != null) {
       myDialog.myPopup.validate();
     }
   }

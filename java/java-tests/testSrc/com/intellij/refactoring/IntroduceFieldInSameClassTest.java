@@ -18,11 +18,6 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   public void testInClassInitializer () throws Exception {
     configureByFile("/refactoring/introduceField/before1.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, true);

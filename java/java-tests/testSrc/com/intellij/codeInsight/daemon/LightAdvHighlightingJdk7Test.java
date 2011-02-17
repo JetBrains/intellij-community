@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -30,7 +31,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};
+    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection()};
   }
 
   public void testDuplicateAnnotations() throws Exception {

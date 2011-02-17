@@ -124,9 +124,4 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
       }
     }.invoke(getProject(), getEditor(), getFile(), null);
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

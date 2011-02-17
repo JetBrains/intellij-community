@@ -81,8 +81,4 @@ public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
     LookupManager.getInstance(myProject).hideActiveLookup();
     super.tearDown();
   }
-
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

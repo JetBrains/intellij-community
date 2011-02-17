@@ -55,6 +55,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -87,6 +88,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -98,7 +100,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -340,6 +341,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
+    ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
 
@@ -490,17 +492,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
     ((HintManagerImpl)HintManager.getInstance()).cleanup();
 
-    Runnable runnable = new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
       }
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      SwingUtilities.invokeAndWait(runnable);
-    }
+    });
 
     TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
@@ -513,6 +510,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     if (checkForEditors) {
       checkEditorsReleased();
+    }
+    if (isLight(project)) {
+      ((ProjectImpl)project).setTemporarilyDisposed(true); // mark temporarily as disposed so that rogue component trying to access it will fail
     }
   }
 
@@ -654,6 +654,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
+      ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
       final File projectFile = projFile == null ? null : VfsUtil.virtualToIoFile(projFile);
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
@@ -674,20 +675,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              closeAndDeleteProject();
-            }
-          });
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
-          e.printStackTrace();
-        }
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            closeAndDeleteProject();
+          }
+        });
       }
     });
   }

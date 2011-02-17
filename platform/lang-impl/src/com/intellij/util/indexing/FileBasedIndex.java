@@ -1052,10 +1052,25 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private Set<Document> getUnsavedOrTransactedDocuments() {
+  private Set<Document> getUnsavedOrTransactedDocuments(Project project) {
     Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
     synchronized (myTransactionMap) {
       docs.addAll(myTransactionMap.keySet());
+    }
+
+    if (project != null) {
+      // filter out foreign documents
+      Iterator<Document> iterator = docs.iterator();
+      ProjectLocator projectLocator = ProjectLocator.getInstance();
+      while (iterator.hasNext()) {
+        Document document = iterator.next();
+        VirtualFile virtualFile = myFileDocumentManager.getFile(document);
+        if (virtualFile == null) continue;
+        Project guessed = projectLocator.guessProjectForFile(virtualFile);
+        if (guessed != null && guessed != project) {
+          iterator.remove();
+        }
+      }
     }
     return docs;
   }
@@ -1066,7 +1081,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return; // no need to index unsaved docs
     }
 
-    final Set<Document> documents = getUnsavedOrTransactedDocuments();
+    final Set<Document> documents = getUnsavedOrTransactedDocuments(project);
     if (!documents.isEmpty()) {
       // now index unsaved data
       final StorageGuard.Holder guard = setDataBufferingEnabled(true);
@@ -1075,8 +1090,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
         assert semaphore != null : "Semaphore for unsaved data indexing was not initialized for index " + indexId;
 
-        boolean allDocsProcessed = true;
         semaphore.down();
+        boolean allDocsProcessed = true;
         try {
           for (Document document : documents) {
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter);
@@ -1215,14 +1230,13 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
 
   @Nullable
-  private PsiFile findDominantPsiForDocument(final Document document, @Nullable Project project) {
+  private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {
     synchronized (myTransactionMap) {
-      if (myTransactionMap.containsKey(document)) {
-        return myTransactionMap.get(document);
-      }
+      PsiFile psiFile = myTransactionMap.get(document);
+      if (psiFile != null) return psiFile;
     }
 
-    return project == null? null : findLatestKnownPsiForUncomittedDocument(document, project);
+    return project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
   }
 
   private final StorageGuard myStorageLock = new StorageGuard();
@@ -1873,7 +1887,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @Nullable
-  private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc, Project project) {
+  private static PsiFile findLatestKnownPsiForUncomittedDocument(@NotNull Document doc, @NotNull Project project) {
     return PsiDocumentManager.getInstance(project).getCachedPsiFile(doc);
   }
   

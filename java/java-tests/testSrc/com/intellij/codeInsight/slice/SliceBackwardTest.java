@@ -33,11 +33,6 @@ import java.util.*;
 public class SliceBackwardTest extends DaemonAnalyzerTestCase {
   private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<IntArrayList>();
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   private void dotest() throws Exception {
     configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = extractSliceOffsetsFromDocument(getEditor().getDocument());

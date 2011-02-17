@@ -306,7 +306,7 @@ public class GitChangeUtils {
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(parameters);
-    h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", "\"" + anyReference + "\"", "--");
+    h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", anyReference, "--");
     try {
       final String output = h.run().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;

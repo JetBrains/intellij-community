@@ -32,12 +32,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 //todo test3 should be checked if it compiles - as now javac infers Object instead of String?!
 public class Simplify2DiamondInspectionsTest extends LightQuickFixTestCase {
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

@@ -22,12 +22,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 
 public class SafeVarargsCanBeUsedTest extends LightQuickFixTestCase {
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

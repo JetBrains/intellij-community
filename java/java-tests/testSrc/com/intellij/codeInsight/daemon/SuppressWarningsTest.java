@@ -17,10 +17,6 @@ public class SuppressWarningsTest extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
-  @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedSymbolLocalInspection()};

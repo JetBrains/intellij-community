@@ -27,12 +27,13 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   private static final Icon NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
   private static final Icon NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
   @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
-  private static final EmptyModuleType ourInstance = new EmptyModuleType();
+  //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 
   public static EmptyModuleType getInstance() {
-    return ourInstance;
+    return (EmptyModuleType)ModuleType.EMPTY;
   }
 
+  @SuppressWarnings({"UnusedDeclaration"}) // implicitly instantiated from ModuleType
   public EmptyModuleType() {
     this(EMPTY_MODULE);
   }
