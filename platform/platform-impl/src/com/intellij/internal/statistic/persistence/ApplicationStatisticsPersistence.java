@@ -24,9 +24,10 @@ public abstract class ApplicationStatisticsPersistence {
 
   @NotNull
   public Map<String, Set<UsageDescriptor>> getApplicationData(@NotNull GroupDescriptor groupDescriptor) {
-      final Map<String, Set<UsageDescriptor>> map = myApplicationData.get(groupDescriptor);
-
-      return map == null ? new HashMap<String, Set<UsageDescriptor>>(): map;
+      if (!myApplicationData.containsKey(groupDescriptor)) {
+          myApplicationData.put(groupDescriptor, new HashMap<String, Set<UsageDescriptor>>());
+      }
+      return myApplicationData.get(groupDescriptor);
   }
 
   @NotNull

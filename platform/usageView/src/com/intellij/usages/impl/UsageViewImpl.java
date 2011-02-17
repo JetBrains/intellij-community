@@ -663,7 +663,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private final TransferToEDTQueue<Usage> myTransferToEDTQueue;
-  public void appendUsageLater(Usage usage) {
+  public void appendUsageLater(@NotNull Usage usage) {
     myTransferToEDTQueue.offer(usage);
   }
   

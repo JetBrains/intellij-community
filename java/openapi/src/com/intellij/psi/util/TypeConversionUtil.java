@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -33,10 +34,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
@@ -75,6 +73,7 @@ public class TypeConversionUtil {
     TYPE_TO_RANK_MAP.put(PsiType.BOOLEAN, BOOL_RANK);
   }
 
+  private TypeConversionUtil() { }
 
   /**
    * @return true if fromType can be casted to toType
@@ -1077,6 +1076,10 @@ public class TypeConversionUtil {
     return type != null && isPrimitiveWrapper(type.getCanonicalText());
   }
 
+  public static boolean isComposite(final PsiType type) {
+    return type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType;
+  }
+
   public static PsiType typeParameterErasure(@NotNull PsiTypeParameter typeParameter) {
     return typeParameterErasure(typeParameter, PsiSubstitutor.EMPTY);
   }
@@ -1122,9 +1125,10 @@ public class TypeConversionUtil {
     return erasure(type, PsiSubstitutor.EMPTY);
   }
 
-  public static PsiType erasure(PsiType type, final PsiSubstitutor beforeSubstitutor) {
+  public static PsiType erasure(final PsiType type, final PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
+      @Override
       public PsiType visitClassType(PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiTypeParameter) {
@@ -1135,14 +1139,17 @@ public class TypeConversionUtil {
         }
       }
 
+      @Override
       public PsiType visitWildcardType(PsiWildcardType wildcardType) {
         return wildcardType.getExtendsBound().accept(this);
       }
 
+      @Override
       public PsiType visitPrimitiveType(PsiPrimitiveType primitiveType) {
         return primitiveType;
       }
 
+      @Override
       public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
         final PsiType componentType = ellipsisType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);
@@ -1150,11 +1157,20 @@ public class TypeConversionUtil {
         return new PsiArrayType(newComponentType);
       }
 
+      @Override
       public PsiType visitArrayType(PsiArrayType arrayType) {
         final PsiType componentType = arrayType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);
         if (newComponentType == componentType) return arrayType;
         return newComponentType.createArrayType();
+      }
+
+      @Override
+      public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+        final List<PsiType> erased = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
+          @Override public PsiType fun(PsiType psiType) { return erasure(psiType, beforeSubstitutor); }
+        });
+        return new PsiDisjunctionType(erased, disjunctionType.getManager());
       }
     });
   }
@@ -1539,6 +1555,5 @@ public class TypeConversionUtil {
     }
 
     return new ClassCandidateInfo(clazz, result.getSubstitutor());
-
   }
 }

@@ -214,6 +214,7 @@ public class FormatterImpl extends FormatterEx
       }
       finally {
         enableFormatting();
+        myProgressIndicator = null;
       }
     }
     else {

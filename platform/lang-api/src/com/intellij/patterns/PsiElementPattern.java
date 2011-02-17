@@ -66,11 +66,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
   
   public Self afterLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
-    return afterLeafSkipping(psiElement().whitespaceCommentOrError(), pattern);
+    return afterLeafSkipping(psiElement().whitespaceCommentEmptyOrError(), pattern);
   }
 
   public Self beforeLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
-    return beforeLeafSkipping(psiElement().whitespaceCommentOrError(), pattern);
+    return beforeLeafSkipping(psiElement().whitespaceCommentEmptyOrError(), pattern);
   }
 
   public Self whitespace() {
@@ -79,6 +79,10 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self whitespaceCommentOrError() {
     return andOr(psiElement().whitespace(), psiElement(PsiComment.class), psiElement(PsiErrorElement.class));
+  }
+
+  public Self whitespaceCommentEmptyOrError() {
+    return andOr(psiElement().whitespace(), psiElement(PsiComment.class), psiElement(PsiErrorElement.class), psiElement().withText(""));
   }
 
   public Self withFirstNonWhitespaceChild(@NotNull final ElementPattern<? extends PsiElement> pattern) {

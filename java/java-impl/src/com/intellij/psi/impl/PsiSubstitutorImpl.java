@@ -18,6 +18,8 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -25,10 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ik, dsl
@@ -99,11 +98,13 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private abstract static class SubstitutionVisitorBase extends PsiTypeVisitorEx<PsiType> {
+    @Override
     public PsiType visitType(PsiType type) {
       LOG.assertTrue(false);
       return null;
     }
 
+    @Override
     public PsiType visitWildcardType(PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound == null) {
@@ -135,10 +136,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return PsiWildcardType.createUnbounded(wildcardType.getManager());
     }
 
+    @Override
     public PsiType visitPrimitiveType(PsiPrimitiveType primitiveType) {
       return primitiveType;
     }
 
+    @Override
     public PsiType visitArrayType(PsiArrayType arrayType) {
       final PsiType componentType = arrayType.getComponentType();
       final PsiType substitutedComponentType = componentType.accept(this);
@@ -147,6 +150,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return new PsiArrayType(substitutedComponentType);
     }
 
+    @Override
     public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
       final PsiType componentType = ellipsisType.getComponentType();
       final PsiType substitutedComponentType = componentType.accept(this);
@@ -155,15 +159,26 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return new PsiEllipsisType(substitutedComponentType);
     }
 
+    @Override
     public PsiType visitTypeVariable(final PsiTypeVariable var) {
       return var;
     }
 
+    @Override
     public PsiType visitBottom(final Bottom bottom) {
       return bottom;
     }
 
+    @Override
     public abstract PsiType visitClassType(PsiClassType classType);
+
+    @Override
+    public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+      final List<PsiType> substituted = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
+        @Override public PsiType fun(PsiType psiType) { return psiType.accept(SubstitutionVisitorBase.this); }
+      });
+      return new PsiDisjunctionType(substituted, disjunctionType.getManager());
+    }
   }
 
   private final SubstitutionVisitor myAddingBoundsSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.ADD_BOUNDS);
