@@ -105,6 +105,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   }
 
   public final String getNextLine() {
+    if (CompileDriver.ourDebugMode) {
+      System.out.println("Before reading line");
+    }
     final String pushBack = myPushBackLine;
     if (pushBack != null) {
       myPushBackLine = null;
@@ -227,7 +230,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       if (!CompileDriver.ourDebugMode) {
         while(!reader.ready()) {
           if (isProcessTerminated()) {
-            return -1;
+            //if (!reader.ready()) {
+              return -1;
+            //}
           }
           try {
             Thread.sleep(1L);
