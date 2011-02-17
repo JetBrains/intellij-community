@@ -313,11 +313,9 @@ class ParameterInfoComponent extends JPanel{
       Dimension normalPreferredSize = super.getPreferredSize();
 
       // some fonts (for example, Arial Black Cursiva) have NORMAL characters wider than BOLD characters
-      Dimension d = new Dimension(Math.max(boldPreferredSize.width, normalPreferredSize.width),
-                                          Math.max(boldPreferredSize.height, normalPreferredSize.height));
 
-      System.out.println("d = " + d);
-      return d;
+      return new Dimension(Math.max(boldPreferredSize.width, normalPreferredSize.width),
+                                          Math.max(boldPreferredSize.height, normalPreferredSize.height));
     }
   }
 }
