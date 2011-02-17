@@ -70,7 +70,7 @@ public class TransferToEDTQueue<T> {
     myShutUpCondition = shutUpCondition;
   }
 
-  public void offer(final T thing) {
+  public void offer(@NotNull T thing) {
     myQueue.offer(thing);
     scheduleUpdate();
   }
