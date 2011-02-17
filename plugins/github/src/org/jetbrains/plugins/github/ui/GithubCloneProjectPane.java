@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.RepositoryInfo;
@@ -120,7 +121,7 @@ public class GithubCloneProjectPane {
   }
 
   public void setAvailableRepos(final List<RepositoryInfo> repos) {
-    mySelectRepositoryComboBox.setModel(new DefaultComboBoxModel(repos.toArray(new Object[repos.size()])));
+    mySelectRepositoryComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(repos)));
     final RepositoryInfo preselectedRepository = (RepositoryInfo)mySelectRepositoryComboBox.getSelectedItem();
     if (preselectedRepository != null) {
       myProjectNameText.setText(preselectedRepository.getName());

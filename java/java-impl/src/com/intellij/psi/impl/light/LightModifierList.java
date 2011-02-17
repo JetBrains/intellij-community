@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
@@ -95,7 +96,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
   }
 
   public String[] getModifiers() {
-    return myModifiers.toArray(new String[myModifiers.size()]);
+    return ArrayUtil.toStringArray(myModifiers);
   }
 
 }

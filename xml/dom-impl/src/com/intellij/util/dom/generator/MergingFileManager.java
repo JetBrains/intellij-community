@@ -22,6 +22,8 @@
  */
 package com.intellij.util.dom.generator;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +131,7 @@ public class MergingFileManager implements FileManager {
         prevIdx++;
       }
     }
-    String[] mergedLines = merged.toArray(new String[merged.size()]);
+    String[] mergedLines = ArrayUtil.toStringArray(merged);
     if (compareLines(mergedLines, prevLines, 2) == 0) {
       return prevLines;
     } else if (compareLines(mergedLines, curLines, 2) == 0) {
@@ -221,7 +223,7 @@ public class MergingFileManager implements FileManager {
 
 
   private static String[] loadFile(File f1) {
-    if (!f1.exists()) return new String[0];
+    if (!f1.exists()) return ArrayUtil.EMPTY_STRING_ARRAY;
     ArrayList<String> list = new ArrayList<String>();
     BufferedReader in = null;
     try {
@@ -240,7 +242,7 @@ public class MergingFileManager implements FileManager {
         }
       }
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
 }

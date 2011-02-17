@@ -15,6 +15,7 @@
  */
 package com.intellij.util.dom.generator;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
@@ -133,7 +134,7 @@ public class ModelGen {
       if (packageS != null) nsDesc.pkgName = packageS;
       if (packageEnumS != null) nsDesc.enumPkg = packageEnumS;
       if (interfaces != null) nsDesc.intfs = interfaces;
-      if (!list.isEmpty()) nsDesc.pkgNames = list.toArray(new String[list.size()]);
+      if (!list.isEmpty()) nsDesc.pkgNames = ArrayUtil.toStringArray(list);
       if (name.length() == 0) def = nsDesc;
       model.nsdMap.put(name, nsDesc);
     }

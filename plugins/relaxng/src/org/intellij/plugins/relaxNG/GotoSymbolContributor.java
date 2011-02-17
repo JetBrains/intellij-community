@@ -19,6 +19,7 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxSymbolIndex;
 
 import java.util.Collection;
@@ -36,6 +37,6 @@ public class GotoSymbolContributor implements ChooseByNameContributor {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     final Collection<String> names = RelaxSymbolIndex.getSymbolNames(project);
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 }

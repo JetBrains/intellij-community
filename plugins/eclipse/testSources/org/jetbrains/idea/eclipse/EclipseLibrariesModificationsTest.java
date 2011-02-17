@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 
 public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
 
@@ -78,7 +79,7 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
   }
 
   public void testReplacedExistingWithVariablesCantReplaceSrc() throws Exception {
-    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, new String[0]);
+    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void testReplacedExistingWithMultipleJavadocs() throws Exception {

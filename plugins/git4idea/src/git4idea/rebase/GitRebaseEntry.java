@@ -75,7 +75,7 @@ class GitRebaseEntry {
    */
   public void setAction(final Action action) {
     if (action == null) {
-      log.assertTrue(false, "The action must not be null");
+      log.error("The action must not be null");
     }
     else {
       myAction = action;

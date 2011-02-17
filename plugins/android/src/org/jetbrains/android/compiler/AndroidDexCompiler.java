@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidDx1;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -285,7 +286,8 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           }*/
 
           Map<CompilerMessageCategory, List<String>> messages =
-            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, dexItem.myExcludedFiles.toArray(new String[dexItem.myExcludedFiles.size()]));
+            dxTool.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files,
+                           ArrayUtil.toStringArray(dexItem.myExcludedFiles));
           addMessages(messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(dexItem);
