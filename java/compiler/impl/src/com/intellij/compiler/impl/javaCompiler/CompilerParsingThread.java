@@ -224,29 +224,24 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
 
   private int readNextByte(final Reader reader) {
     try {
-      while(!reader.ready()) {
-        if (isProcessTerminated()) {
-          if (CompileDriver.ourDebugMode) {
-            String text;
-            try {
-              text = reader.ready()? "ready" : "not ready";
-            }
-            catch (IOException e) {
-              text = "Exception " + e.getMessage();
-            }
-            System.out.println("COMPILER PARSING THREAD: reader not ready before isTerminatedCheck(), after the check: isReady= " + text);
+      if (!CompileDriver.ourDebugMode) {
+        while(!reader.ready()) {
+          if (isProcessTerminated()) {
+            return -1;
           }
-          return -1;
-        }
-        try {
-          Thread.sleep(1L);
-        }
-        catch (InterruptedException ignore) {
+          try {
+            Thread.sleep(1L);
+          }
+          catch (InterruptedException ignore) {
+          }
         }
       }
       return reader.read();
     }
     catch (IOException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       return -1; // When process terminated Process.getInputStream()'s underlying stream becomes closed on Linux.
     }
   }
