@@ -1692,6 +1692,23 @@ class ModuleRedeclarator(object):
             out(0, "# from file " + self.module.__file__)
         self.outDocAttr(out, self.module, 0)
 
+
+    def redoImports(self):
+        module_type = type(sys)
+        for item_name in self.module.__dict__.keys():
+            try:
+                item = self.module.__dict__[item_name]
+            except:
+                continue
+            if isinstance(item, module_type):
+                self.imported_modules[item_name] = item
+                self.addImportHeaderIfNeeded()
+                ref_notice = getattr(item, "__file__", str(item))
+                if hasattr(item, "__name__"):
+                    self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
+                else:
+                    self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
+
     def addImportHeaderIfNeeded(self):
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "")
@@ -1703,9 +1720,15 @@ class ModuleRedeclarator(object):
         Intended for built-in modules and thus does not handle import statements.
         @param p_name name of module
         """
-        action("redong module %r", p_name)
+        action("redoing module %r %r", p_name, str(self.module))
         self.redoSimpleHeader(p_name)
+
         # find whatever other self.imported_modules the module knows; effectively these are imports
+        try:
+            self.redoImports()
+        except:
+            pass
+
         module_type = type(sys)
         for item_name, item in self.module.__dict__.items():
             if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
@@ -2084,7 +2107,10 @@ if __name__ == "__main__":
             try:
                 __import__(name) # sys.modules will fill up with what we want
             except ImportError:
-                report("Name %r failed to import", name)
+                exctype, value = sys.exc_info()[:2]
+                report("Name %r failed to import: %r", name, str(value))
+                if debug_mode:
+                    sys.exit(1)
                 continue
 
             if my_finder:
