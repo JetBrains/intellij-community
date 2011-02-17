@@ -48,7 +48,7 @@ public abstract class StructuralSearchProfile {
     for (FileType fileType : getFileTypes()) {
       result.add(getTypeName(fileType));
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @NotNull
