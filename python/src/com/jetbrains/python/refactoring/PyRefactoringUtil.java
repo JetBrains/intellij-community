@@ -234,7 +234,7 @@ public class PyRefactoringUtil {
         return PsiElement.EMPTY_ARRAY;
       }
     }
-    return array.toArray(new PsiElement[array.size()]);
+    return PsiUtilBase.toPsiElementArray(array);
   }
 
   private PyRefactoringUtil() {

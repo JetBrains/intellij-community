@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +93,7 @@ public class StatementMover extends LineMover {
         return PsiElement.EMPTY_ARRAY;
       }
     }
-    return array.toArray(new PsiElement[array.size()]);
+    return PsiUtilBase.toPsiElementArray(array);
   }
 
   private static boolean isNotValidStatementRange(Pair<PsiElement, PsiElement> range) {
