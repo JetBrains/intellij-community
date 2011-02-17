@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,10 +82,9 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   
   private final Map<EventType, Collection<Runnable>> myCallbacks = new HashMap<EventType, Collection<Runnable>>();
 
-  @Nullable
-  private final VirtualFile myFile;
-  private final Document    myDocument;
-  private final int         myFileTextLength;
+  private final WeakReference<VirtualFile> myFile;
+  private final WeakReference<Document>    myDocument;
+  private final int                        myFileTextLength;
 
   @NotNull
   private          FormattingStateId myLastState                       = FormattingStateId.WRAPPING_BLOCKS;
@@ -98,8 +98,8 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   
   public FormattingProgressIndicatorImpl(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
     super(project, getTitle(file), true);
-    myFile = file.getVirtualFile();
-    myDocument = document;
+    myFile = new WeakReference<VirtualFile>(file.getVirtualFile());
+    myDocument = new WeakReference<Document>(document);
     myFileTextLength = file.getTextLength();
     addCallback(EventType.CANCEL, new MyCancelCallback());
   }
@@ -140,7 +140,10 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myDocumentModificationStampBefore = myDocument.getModificationStamp();
+        Document document = myDocument.get();
+        if (document != null) {
+          myDocumentModificationStampBefore = document.getModificationStamp();
+        }
         task.prepare();
       }
     });
@@ -282,16 +285,18 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     @Override
     public void run() {
       myRunning = false;
-      if (myFile == null || myDocumentModificationStampBefore < 0) {
+      VirtualFile file = myFile.get();
+      Document document = myDocument.get();
+      if (file == null || document == null || myDocumentModificationStampBefore < 0) {
         return;
       }
-      FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(myFile);
+      FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
       if (editor == null) {
         return;
       }
       
       UndoManager manager = UndoManager.getInstance(myProject);
-      while (manager.isUndoAvailable(editor) && myDocument.getModificationStamp() != myDocumentModificationStampBefore) {
+      while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
         manager.undo(editor);
       }
     }
