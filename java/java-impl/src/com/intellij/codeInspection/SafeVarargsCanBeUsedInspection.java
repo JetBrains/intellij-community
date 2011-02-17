@@ -68,43 +68,22 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
         if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
         if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
         if (!method.isVarArgs()) return;
-        if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.FINAL)) {
-          final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
-          final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
-          if (GenericsHighlightUtil.isReifiableType(componentType)) {
+        final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
+        final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
+        if (GenericsHighlightUtil.isReifiableType(componentType)) {
+          return;
+        }
+        for (PsiReference reference : ReferencesSearch.search(psiParameter)) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
             return;
           }
-          for (PsiReference reference : ReferencesSearch.search(psiParameter)) {
-            final PsiElement element = reference.getElement();
-            if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
-              return;
-            }
-          }
-          final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-          if (nameIdentifier != null) {
-            holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", new LocalQuickFix() {
-              @NotNull
-              @Override
-              public String getName() {
-                return "Annotate as @SafeVarargs";
-              }
-
-              @NotNull
-              @Override
-              public String getFamilyName() {
-                return getName();
-              }
-
-              @Override
-              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                final PsiElement psiElement = descriptor.getPsiElement();
-                if (psiElement instanceof PsiIdentifier) {
-                  final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
-                  new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
-                }
-              }
-            });
-          }
+        }
+        final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+        if (nameIdentifier != null) {
+          holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
+                                 //todo check if can be final or static
+                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) ? new AnnotateAsSafeVarargsQuickFix() : null);
         }
       }
 
@@ -112,5 +91,28 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     };
+  }
+
+  private static class AnnotateAsSafeVarargsQuickFix implements LocalQuickFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Annotate as @SafeVarargs";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement instanceof PsiIdentifier) {
+        final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
+        new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+      }
+    }
   }
 }
