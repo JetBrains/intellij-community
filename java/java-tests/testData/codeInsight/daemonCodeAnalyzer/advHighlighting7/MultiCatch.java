@@ -5,9 +5,10 @@ abstract class C {
   private static class E2 extends E { }
   private static class E3 extends E { }
   private static class RE extends RuntimeException { }
-  private interface I { }
-  private static class IE1 extends E implements I { }
-  private static class IE2 extends E implements I { }
+  private interface I<T> { }
+  private static class IE1 extends E implements I<Integer> { }
+  private static class IE2 extends E implements I<Long> { }
+  private static class F<X> { F(X x) { } }
 
   abstract void f() throws E1, E2;
   abstract void g() throws IE1, IE2;
@@ -18,6 +19,8 @@ abstract class C {
     try { f(); } catch (E2 | E1 e) { } catch (E e) { } catch (RE e) { }
     try { f(); } catch (E1 | E e) { E ee = e; }
     try { g(); } catch (IE1 | IE2 e) { E ee = e; I ii = e; }
+    try { g(); } catch (IE1 | IE2 e) { F<?> f = new F<>(e); }
+    try { g(); } catch (IE1 | IE2 e) { new F<I<? extends Number>>(e); }
 
     try { f(); } catch (E1 | E2 | <error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> e) { }
     try { f(); } catch (<error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> | E e) { }

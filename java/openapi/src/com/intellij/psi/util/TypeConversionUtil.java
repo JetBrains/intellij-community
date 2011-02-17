@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -1166,11 +1167,9 @@ public class TypeConversionUtil {
 
       @Override
       public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-        final List<PsiType> original = disjunctionType.getDisjunctions();
-        final List<PsiType> erased = new ArrayList<PsiType>(original.size());
-        for (PsiType psiType : original) {
-          erased.add(erasure(psiType, beforeSubstitutor));
-        }
+        final List<PsiType> erased = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
+          @Override public PsiType fun(PsiType psiType) { return erasure(psiType, beforeSubstitutor); }
+        });
         return new PsiDisjunctionType(erased, disjunctionType.getManager());
       }
     });
