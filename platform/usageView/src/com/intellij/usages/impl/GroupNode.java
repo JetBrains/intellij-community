@@ -26,6 +26,7 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -43,7 +44,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final List<UsageNode> myUsageNodes = new ArrayList<UsageNode>();
   private volatile int myRecursiveUsageCount = 0;
 
-  public GroupNode(@NotNull UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
+  public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);
     setUserObject(group);
     myGroup = group;
