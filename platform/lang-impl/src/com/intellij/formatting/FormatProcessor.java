@@ -223,9 +223,7 @@ class FormatProcessor {
       return;
     }
     
-    while (myCurrentState.getStateId() == FormattingStateId.PROCESSING_BLOCKS && !myCurrentState.isDone()) {
-      myCurrentState.iteration();
-    }
+    doIterationsSynchronously(FormattingStateId.PROCESSING_BLOCKS);
   }
 
   private void reset() {
@@ -246,15 +244,27 @@ class FormatProcessor {
     assert !myDisposed;
     myCurrentState.setNext(new ApplyChangesState(model));
     
-    if (!sequentially) {
+    if (sequentially) {
       return;
     }
 
-    while (myCurrentState.getStateId() == FormattingStateId.APPLYING_CHANGES && !myCurrentState.isDone()) {
+    doIterationsSynchronously(FormattingStateId.APPLYING_CHANGES);
+  }
+
+  /**
+   * Perform iterations against the {@link #myCurrentState current state} until it's {@link FormattingStateId type} 
+   * is {@link FormattingStateId#getPreviousStates() less} or equal to the given state.
+   * 
+   * @param state   target state to process
+   */
+  private void doIterationsSynchronously(@NotNull FormattingStateId state) {
+    while ((myCurrentState.getStateId() == state || state.getPreviousStates().contains(myCurrentState.getStateId()))
+           && !myCurrentState.isDone())
+    {
       myCurrentState.iteration();
     }
   }
-
+  
   public void setJavaIndentOptions(final CodeStyleSettings.IndentOptions javaIndentOptions) {
     myJavaIndentOptions = javaIndentOptions;
   }
