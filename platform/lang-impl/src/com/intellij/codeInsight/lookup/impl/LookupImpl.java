@@ -1135,11 +1135,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     else if (myHintMode) {
       final int itemTextPadding = 2;
-      final int borderWidth = 0;
 
-      final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding, borderWidth);
+      final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding);
       Point bestPoint = calculatePosition(hintComponent);
-      bestPoint.x += myCellRenderer.getIconIndent() - itemTextPadding - borderWidth;
+      bestPoint.x += myCellRenderer.getIconIndent() - itemTextPadding;
       Point editorPoint = SwingUtilities.convertPoint(
         editor.getComponent().getRootPane().getLayeredPane(),
         bestPoint,
@@ -1165,7 +1164,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private JPanel createAutopopupHintComponent(int itemTextPadding, int borderWidth) {
+  private JPanel createAutopopupHintComponent(int itemTextPadding) {
     int maxAutopopupItems = 7;
     JPanel pane = new JPanel(new GridBagLayout());
     pane.setBackground(HintUtil.INFORMATION_COLOR);
@@ -1185,30 +1184,38 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         c.ipadx = itemTextPadding;
         c.fill = GridBagConstraints.HORIZONTAL;
 
-        final SimpleColoredComponent comp = new SimpleColoredComponent();
-        comp.setFont(editorFont);
-        final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
-        myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
-                                      StringUtil.notNullize(presentation.getItemText()), comp);
 
-        final JPanel p1 = new JPanel(new BorderLayout());
-        p1.setBackground(pane.getBackground());
-        p1.add(comp, BorderLayout.WEST);
-        final JLabel label = new JLabel(presentation.getTailText());
-        label.setFont(label.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-        p1.add(label, BorderLayout.CENTER);
-        pane.add(p1, c);
-      }
+        {
+          final GridBagLayout gridBagLayout = new GridBagLayout();
+          final JPanel row = new JPanel(gridBagLayout);
+          row.setBackground(pane.getBackground());
 
-      {
-        final GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 1;
-        c.gridy = i;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        final JLabel comp = new JLabel(" " + StringUtil.notNullize(presentation.getTypeText()) + " ");
-        comp.setFont(comp.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-        comp.setHorizontalAlignment(SwingConstants.RIGHT);
-        pane.add(comp, c);
+          GridBagConstraints c1 = new GridBagConstraints();
+          c1.anchor = GridBagConstraints.BASELINE;
+
+          final SimpleColoredComponent nameLabel = new SimpleColoredComponent();
+          nameLabel.setFont(editorFont);
+          final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
+          myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
+                                        StringUtil.notNullize(presentation.getItemText()), nameLabel);
+          row.add(nameLabel, c1);
+
+          c1 = new GridBagConstraints();
+          c1.weightx = 1;
+          c1.anchor = GridBagConstraints.BASELINE;
+          c1.fill = GridBagConstraints.HORIZONTAL;
+          final JLabel tailLabel = new JLabel(presentation.getTailText());
+          tailLabel.setFont(tailLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+          row.add(tailLabel, c1);
+
+          c1 = new GridBagConstraints();
+          c1.fill = GridBagConstraints.NONE;
+          final JLabel typeLabel = new JLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ");
+          typeLabel.setFont(typeLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+          row.add(typeLabel, c1);
+
+          pane.add(row, c);
+        }
       }
     }
 
@@ -1231,7 +1238,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
 
-    //pane.setBorder(new LineBorder(Color.darkGray, borderWidth));
     return pane;
   }
 
