@@ -39,7 +39,10 @@ public class InsertLiteralUnderscoresAction extends PsiElementBaseIntentionActio
         !PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) return false;
 
     final String text = literalExpression.getText();
-    return text != null && !text.contains("_");
+    if (text == null || text.contains("_")) return false;
+
+    final String converted = LiteralFormatUtil.format(text, type);
+    return converted.length() != text.length();
   }
 
   @Override
