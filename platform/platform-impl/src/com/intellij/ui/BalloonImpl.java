@@ -786,7 +786,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
-      return new Point(targetPoint.x, targetPoint.y - shift);
+      return new Point(targetPoint.x, targetPoint.y + shift);
     }
 
     @Override
