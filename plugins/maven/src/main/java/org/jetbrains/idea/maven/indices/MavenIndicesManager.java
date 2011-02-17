@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -46,7 +45,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.*;
 
 public class MavenIndicesManager {
@@ -73,8 +71,7 @@ public class MavenIndicesManager {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
   private volatile MavenIndex myUpdatingIndex;
-  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(ProjectManager.getInstance().getDefaultProject(),
-                                                                              IndicesBundle.message("maven.indices.updating"));
+  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<MavenArchetype>();
 
@@ -102,7 +99,7 @@ public class MavenIndicesManager {
     myIndexer = MavenFacadeManager.getInstance().createIndexer();
 
     myDownloadListener = new MavenFacadeDownloadListener() {
-      public void artifactDownloaded(File file, String relativePath) throws RemoteException {
+      public void artifactDownloaded(File file, String relativePath) {
         addArtifact(file, relativePath);
       }
     };
@@ -205,7 +202,7 @@ public class MavenIndicesManager {
     }
   }
 
-  private String getRepositoryUrl(File artifactFile, String name) {
+  private static String getRepositoryUrl(File artifactFile, String name) {
     List<String> parts = getArtifactParts(name);
 
     File result = artifactFile;
@@ -215,7 +212,7 @@ public class MavenIndicesManager {
     return result.getPath();
   }
 
-  private List<String> getArtifactParts(String name) {
+  private static List<String> getArtifactParts(String name) {
     return StringUtil.split(name, "/");
   }
 
@@ -284,11 +281,10 @@ public class MavenIndicesManager {
     }
   }
 
-  private MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
+  private static MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    MavenGeneralSettings settings;
 
-    settings = ApplicationManager.getApplication().runReadAction(new Computable<MavenGeneralSettings>() {
+    MavenGeneralSettings settings = ApplicationManager.getApplication().runReadAction(new Computable<MavenGeneralSettings>() {
       @Override
       public MavenGeneralSettings compute() {
         if (project.isDisposed()) return null;

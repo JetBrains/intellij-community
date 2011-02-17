@@ -106,9 +106,4 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   protected void doTest() throws Exception {
     super.doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

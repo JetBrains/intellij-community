@@ -51,12 +51,6 @@ public class PullUpMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
-
   private void doTest(final String... conflicts) throws Exception {
     final MultiMap<PsiElement, String> conflictsMap = new MultiMap<PsiElement, String>();
     doTest(new PerformAction() {

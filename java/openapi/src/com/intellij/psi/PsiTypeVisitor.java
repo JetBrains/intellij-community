@@ -48,4 +48,8 @@ public class PsiTypeVisitor<A> {
   public A visitEllipsisType(PsiEllipsisType ellipsisType) {
     return visitArrayType(ellipsisType);
   }
+
+  public A visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+    return visitType(disjunctionType);
+  }
 }

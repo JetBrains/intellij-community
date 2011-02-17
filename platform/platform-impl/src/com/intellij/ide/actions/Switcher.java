@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -588,7 +589,12 @@ public class Switcher extends AnAction implements DumbAware {
       }
       else if (value instanceof VirtualFile) {
         final VirtualFile file = (VirtualFile)value;
-        FileEditorManager.getInstance(project).openFile(file, true, true);
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+          @Override
+          public void run() {
+            FileEditorManager.getInstance(project).openFile(file, true, true);
+          }
+        });
       }
     }
 

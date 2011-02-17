@@ -177,6 +177,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (AFTER_NUMBER_LITERAL.accepts(position)) {
+      _result.stopHere();
       return;
     }
 

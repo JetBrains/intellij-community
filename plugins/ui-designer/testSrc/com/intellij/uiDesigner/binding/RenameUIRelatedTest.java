@@ -42,11 +42,6 @@ public class RenameUIRelatedTest extends MultiFileTestCase {
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
-  @Override
   protected void setupProject(VirtualFile rootDir) {
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     super.setupProject(rootDir);

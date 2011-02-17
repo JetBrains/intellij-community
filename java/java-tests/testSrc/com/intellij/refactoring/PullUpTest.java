@@ -136,11 +136,6 @@ public class PullUpTest extends LightCodeInsightTestCase {
   }
 
   @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("50");
-  }
-
-  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }

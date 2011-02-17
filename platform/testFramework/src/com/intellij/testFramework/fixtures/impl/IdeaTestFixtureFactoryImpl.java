@@ -16,12 +16,6 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -69,13 +63,14 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourEmptyProjectDescriptor));
+    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(
+      LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR));
   }
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
     if (projectDescriptor == null) {
-      projectDescriptor = ourEmptyProjectDescriptor;
+      projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
     }
     return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(projectDescriptor));
   }
@@ -105,20 +100,4 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       return new ModuleFixtureImpl(this);
     }
   }
-
-  private static final LightProjectDescriptor ourEmptyProjectDescriptor = new LightProjectDescriptor() {
-    @Override
-    public ModuleType getModuleType() {
-      return EmptyModuleType.getInstance();
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return null;
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    }
-  };
 }

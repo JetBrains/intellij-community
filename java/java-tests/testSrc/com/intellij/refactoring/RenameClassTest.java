@@ -113,9 +113,4 @@ public class RenameClassTest extends MultiFileTestCase {
   protected String getTestRoot() {
     return "/refactoring/renameClass/";
   }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

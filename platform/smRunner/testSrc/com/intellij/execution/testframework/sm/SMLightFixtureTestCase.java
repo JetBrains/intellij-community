@@ -15,12 +15,7 @@
  */
 package com.intellij.execution.testframework.sm;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -43,22 +38,6 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
-  protected static final LightProjectDescriptor ourDescriptor = new LightProjectDescriptor() {
-    @Override
-    public ModuleType getModuleType() {
-      return ModuleType.EMPTY;
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return null;
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      //Do nothing
-    }
-  };
   protected CodeInsightTestFixture myFixture;
 
   @Override
