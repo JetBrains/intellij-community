@@ -108,14 +108,12 @@ public class ThreeStateCheckBox extends JCheckBox {
     return myState;
   }
 
+
   @Override
-  public void paint(final Graphics g) {
-    super.paint(g);
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
     switch (getState()) {
       case DONT_CARE:
-        final Rectangle r = getBounds();
-        final Insets i = getInsets();
-
         Icon icon = getIcon();
         if (icon == null) {
           icon = UIManager.getIcon("CheckBox.icon");
@@ -126,13 +124,24 @@ public class ThreeStateCheckBox extends JCheckBox {
           //if (selected != null) {
           //  g.setColor(selected);
           //}
+          final Insets i = getInsets();
+          final Rectangle r = getBounds();
+          final Rectangle r1 = new Rectangle();
+          r1.x = i.left;
+          r1.y = i.top;
+          r1.width = r.width - (i.right + r1.x);
+          r1.height = r.height - (i.bottom + r1.y);
 
-          final int width1 = icon.getIconWidth();
-          final int height1 = r.height - i.top - i.bottom;
-          final int yoffset = height1 / 2 - 1;
-          final int xoffset = width1 / 2 - width1 / 5;
+          final Rectangle r2 = new Rectangle();
+          final Rectangle r3 = new Rectangle();
+          SwingUtilities.layoutCompoundLabel(
+            this, getFontMetrics(getFont()), getText(), icon,
+            getVerticalAlignment(), getHorizontalAlignment(),
+            getVerticalTextPosition(), getHorizontalTextPosition(),
+            r1, r2, r3,
+            getText() == null ? 0 : getIconTextGap());
 
-          g.fillRect(xoffset + i.left, yoffset + i.top, width1 / 3, 2);
+          g.fillRect(r2.x + r2.width / 2 - r2.width / 5, r2.y + r2.height / 2 -1, r2.width / 3, 2);
         }
         break;
       default:
