@@ -89,7 +89,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
-  private Position myPosition;
+  private AbstractPosition myPosition;
   private Point myTargetPoint;
   private final boolean myHideOnFrameResize;
 
@@ -237,7 +237,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
   public void show(final RelativePoint target, final Balloon.Position position) {
-    Position pos = BELOW;
+    AbstractPosition pos = getAbstractPositionFor(position);
+
+    show(target, pos);
+  }
+
+  private static AbstractPosition getAbstractPositionFor(Position position) {
+    AbstractPosition pos = BELOW;
     switch (position) {
       case atLeft:
         pos = AT_LEFT;
@@ -252,12 +258,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         pos = ABOVE;
         break;
     }
-
-    show(target, pos);
+    return pos;
   }
 
   public void show(PositionTracker<Balloon> tracker, Balloon.Position position) {
-    Position pos = BELOW;
+    AbstractPosition pos = BELOW;
     switch (position) {
       case atLeft:
         pos = AT_LEFT;
@@ -277,11 +282,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   }
 
 
-  private void show(RelativePoint target, Position position) {
+  private void show(RelativePoint target, AbstractPosition position) {
     show(new PositionTracker.Static<Balloon>(target), position);
   }
 
-  private void show(PositionTracker<Balloon> tracker, Position position) {
+  private void show(PositionTracker<Balloon> tracker, AbstractPosition position) {
     assert !myDisposed : "Balloon is already disposed";
 
     if (isVisible()) return;
@@ -290,7 +295,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myTracker = tracker;
     myTracker.init(this);
 
-    Position originalPreferred = position;
+    AbstractPosition originalPreferred = position;
 
     JRootPane root = null;
     JDialog dialog = IJSwingUtilities.findParentOfType(tracker.getComponent(), JDialog.class);
@@ -334,9 +339,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           Rectangle2D currentSquare = lp.createIntersection(rec);
 
           double maxSquare = currentSquare.getWidth() * currentSquare.getHeight();
-          Position targetPosition = myPosition;
+          AbstractPosition targetPosition = myPosition;
 
-          for (Position eachPosition : myPosition.getOtherPositions()) {
+          for (AbstractPosition eachPosition : myPosition.getOtherPositions()) {
             Rectangle2D eachIntersection = lp.createIntersection(getRecForPosition(eachPosition, false));
             double eachSquare = eachIntersection.getWidth() * eachIntersection.getHeight();
             if (maxSquare < eachSquare) {
@@ -393,7 +398,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }, this);
   }
 
-  private Rectangle getRecForPosition(Position position, boolean adjust) {
+  private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
     Dimension size = getContentSizeFor(position);
 
     Rectangle rec = new Rectangle(new Point(0, 0), size);
@@ -408,7 +413,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     return rec;
   }
 
-  private Dimension getContentSizeFor(Position position) {
+  private Dimension getContentSizeFor(AbstractPosition position) {
     Insets insets = position.createBorder(this).getBorderInsets();
     if (insets == null) {
       insets = new Insets(0, 0, 0, 0);
@@ -524,17 +529,22 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     return 3;
   }
 
-  int getPointerWidth(Position position) {
+  int getPointerWidth(AbstractPosition position) {
     return position.isTopBottomPointer() ? 14 : 11;
   }
 
-  int getNormalInset() {
+  public static int getNormalInset() {
     return 3;
   }
 
-  int getPointerLength(Position position) {
+  static int getPointerLength(AbstractPosition position) {
     return position.isTopBottomPointer() ? 10 : 8;
   }
+
+  public static int getPointerLength(Position position) {
+    return getPointerLength((getAbstractPositionFor(position)));
+  }
+
 
   public void hide() {
     Disposer.dispose(this);
@@ -606,14 +616,14 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
   }
 
-  public abstract static class Position {
+  public abstract static class AbstractPosition {
 
     abstract EmptyBorder createBorder(final BalloonImpl balloon);
 
 
     abstract void setRecToRelativePosition(Rectangle rec, Point targetPoint);
 
-    abstract int getChangeShift(Position original, int xShift, int yShift);
+    abstract int getChangeShift(AbstractPosition original, int xShift, int yShift);
 
     public void updateBounds(final BalloonImpl balloon) {
       balloon.myComp._setBounds(getUpdatedBounds(balloon.myLayeredPane.getSize(),
@@ -700,8 +710,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     protected abstract Rectangle getPointlessContentRec(Rectangle bounds, int pointerLength);
 
-    public Set<Position> getOtherPositions() {
-      HashSet<Position> all = new HashSet<Position>();
+    public Set<AbstractPosition> getOtherPositions() {
+      HashSet<AbstractPosition> all = new HashSet<AbstractPosition>();
       all.add(BELOW);
       all.add(ABOVE);
       all.add(AT_RIGHT);
@@ -715,13 +725,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     public abstract Point getShiftedPoint(Point targetPoint, int shift);
   }
 
-  public static final Position BELOW = new Below();
-  public static final Position ABOVE = new Above();
-  public static final Position AT_RIGHT = new AtRight();
-  public static final Position AT_LEFT = new AtLeft();
+  public static final AbstractPosition BELOW = new Below();
+  public static final AbstractPosition ABOVE = new Above();
+  public static final AbstractPosition AT_RIGHT = new AtRight();
+  public static final AbstractPosition AT_LEFT = new AtLeft();
 
 
-  private static class Below extends Position {
+  private static class Below extends AbstractPosition {
 
 
     @Override
@@ -730,7 +740,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    int getChangeShift(Position original, int xShift, int yShift) {
+    int getChangeShift(AbstractPosition original, int xShift, int yShift) {
       return original == ABOVE ? yShift : 0;
     }
 
@@ -782,7 +792,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   }
 
-  private static class Above extends Position {
+  private static class Above extends AbstractPosition {
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
@@ -790,7 +800,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    int getChangeShift(Position original, int xShift, int yShift) {
+    int getChangeShift(AbstractPosition original, int xShift, int yShift) {
       return original == BELOW ? -yShift : 0;
     }
 
@@ -844,7 +854,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
   }
 
-  private static class AtRight extends Position {
+  private static class AtRight extends AbstractPosition {
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
@@ -852,7 +862,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    int getChangeShift(Position original, int xShift, int yShift) {
+    int getChangeShift(AbstractPosition original, int xShift, int yShift) {
       return original == AT_LEFT ? xShift : 0;
     }
 
@@ -902,7 +912,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
   }
 
-  private static class AtLeft extends Position {
+  private static class AtLeft extends AbstractPosition {
 
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
@@ -910,7 +920,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
-    int getChangeShift(Position original, int xShift, int yShift) {
+    int getChangeShift(AbstractPosition original, int xShift, int yShift) {
       return original == AT_RIGHT ? -xShift : 0;
     }
 

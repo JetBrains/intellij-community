@@ -29,9 +29,9 @@ public interface PopupBorder extends Border {
     private Factory() {
     }
 
-    public static PopupBorder create(boolean active) {
+    public static PopupBorder create(boolean active, boolean windowWithShadow) {
       final BaseBorder border =
-        SystemInfo.isMac ? new BaseBorder() : new BaseBorder(true, CaptionPanel.getBorderColor(true), CaptionPanel.getBorderColor(false));
+        SystemInfo.isMac && windowWithShadow ? new BaseBorder() : new BaseBorder(true, CaptionPanel.getBorderColor(true), CaptionPanel.getBorderColor(false));
       border.setActive(active);
       return border;
     }
