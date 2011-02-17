@@ -3,8 +3,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -248,6 +246,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
         assertEquals("Cannot perform refactoring.\n" + "Selected block should represent an expression.", message);
       }
     });
+  }
+
+  public void testMultiCatchSimple() throws Exception {
+    doTest(new MockIntroduceVariableHandler("e", true, true, false, "C.E1 | C.E2"));
+  }
+
+  public void testMultiCatchTyped() throws Exception {
+    doTest(new MockIntroduceVariableHandler("b", true, true, false, "C.E1 | C.E2"));
   }
 
   private void doTest(IntroduceVariableBase testMe) throws Exception {
