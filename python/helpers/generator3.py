@@ -1708,7 +1708,7 @@ class ModuleRedeclarator(object):
         # find whatever other self.imported_modules the module knows; effectively these are imports
         module_type = type(sys)
         for item_name, item in self.module.__dict__.items():
-            if isinstance(item, module_type):
+            if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
                 self.imported_modules[item_name] = item
                 self.addImportHeaderIfNeeded()
                 ref_notice = getattr(item, "__file__", str(item))
@@ -1960,7 +1960,7 @@ def redoModule(name, fname, imported_module_names):
     # sys.modules
     mod = sys.modules[name]
     if not mod:
-        sys.stderr.write("Failed to find imported module in sys.modules")
+        report("Failed to find imported module in sys.modules")
         #sys.exit(0)
 
     if update_mode and hasattr(mod, "__file__"):
@@ -2101,7 +2101,7 @@ if __name__ == "__main__":
                     # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
                     if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
                         if not quiet:
-                            sys.stdout.write(m + "\n")
+                            say(m)
                             sys.stdout.flush()
                         fname = buildOutputName(subdir, m)
                         redoModule(m, fname, imported_module_names)
