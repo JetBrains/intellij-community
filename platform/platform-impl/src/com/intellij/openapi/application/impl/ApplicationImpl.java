@@ -1209,6 +1209,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public String toString() {
-    return "Application";
+    return "Application" +
+           (isDisposed() ? " (Disposed)" : "") +
+           (isUnitTestMode() ? " (Unit test)" : "") +
+           (isInternal() ? " (Internal)" : "") +
+           (isHeadlessEnvironment() ? " (Headless)" : "") +
+           (isCommandLine() ? " (Command line)" : "");
   }
 }

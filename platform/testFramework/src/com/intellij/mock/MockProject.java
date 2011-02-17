@@ -38,7 +38,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   }
 
   @Override
-  public void setProjectName(String name) {
+  public void setProjectName(@NotNull String name) {
   }
 
   @Override
