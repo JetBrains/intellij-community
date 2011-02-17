@@ -67,6 +67,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -1220,23 +1221,37 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
 
-    if (items.size() > maxAutopopupItems) {
-      {
-        final GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = maxAutopopupItems;
-        c.gridwidth = 2;
-        c.ipadx = 5;
-        c.ipady = 2;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        final String moreText = " ... (" +
-                            KeymapUtil
-                              .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
-                            " for more suggestions)";
-        final JLabel label = new JLabel(moreText);
-        label.setFont(label.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-        pane.add(label, c);
+    {
+      final GridBagConstraints c = new GridBagConstraints();
+      c.gridx = 0;
+      c.gridy = maxAutopopupItems;
+      c.gridwidth = 2;
+      c.ipadx = 5;
+      c.ipady = 2;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      final JPanel ad = new JPanel(new BorderLayout());
+      ad.setBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray));
+      ad.setOpaque(false);
+
+      if (items.size() > maxAutopopupItems) {
+        final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+        if (StringUtil.isNotEmpty(ctrlSpace)) {
+          final String moreText = ctrlSpace + " for more";
+          final JLabel moreLabel = new JLabel(moreText);
+          moreLabel.setFont(moreLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+          ad.add(moreLabel, BorderLayout.WEST);
+        }
       }
+
+      final String tab = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
+      if (StringUtil.isNotEmpty(tab)) {
+        final String enter = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
+        String message = tab + (isFocused() ? ", " + enter : "") + " for the first item";
+        final JLabel fstLabel = new JLabel(message);
+        fstLabel.setFont(fstLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+        ad.add(fstLabel, BorderLayout.EAST);
+      }
+      pane.add(ad, c);
     }
 
     return pane;
