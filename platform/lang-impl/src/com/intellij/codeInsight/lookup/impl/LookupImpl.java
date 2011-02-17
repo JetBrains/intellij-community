@@ -342,6 +342,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
+    assert !myDisposed;
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
