@@ -22,11 +22,8 @@ class TryIdenticalCatches {
         throw new NumberFormatException();
       }
     }
-    catch(ClassNotFoundException cnfe) {
+    catch(ClassNotFoundException | NumberFormatException cnfe) {
       log(cnfe);
-    }
-    <warning descr="Identical 'catch' branches in 'try' statement">catch(NumberFormatException n<caret>fe)</warning> {
-      log(nfe);
     }
   }
 

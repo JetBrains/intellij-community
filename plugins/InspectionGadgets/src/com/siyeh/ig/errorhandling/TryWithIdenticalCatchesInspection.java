@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -22,9 +24,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +67,11 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     return null;
   }
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new CollapseCatchSectionsFix((Integer) infos[0]);
+  }
+
   private static class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
     @Override
     public void visitTryStatement(PsiTryStatement statement) {
@@ -84,12 +93,46 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           if (i == j || duplicates[j]) continue;
           Match match = finder.isDuplicate(catchSections[j].getCatchBlock(), true);
           if (match != null) {
-            registerError(catchSections[j]);
+            registerError(catchSections[j], i);
             duplicates[i] = true;
             duplicates[j] = true;
           }
         }
       }
+    }
+  }
+
+  private static class CollapseCatchSectionsFix extends InspectionGadgetsFix {
+    private final int myCollapseIntoIndex;
+
+    public CollapseCatchSectionsFix(int collapseIntoIndex) {
+      myCollapseIntoIndex = collapseIntoIndex;
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      PsiCatchSection section = (PsiCatchSection) descriptor.getPsiElement();
+      PsiTryStatement stmt = (PsiTryStatement) section.getParent();
+      PsiCatchSection[] catchSections = stmt.getCatchSections();
+      if (myCollapseIntoIndex >= catchSections.length) {
+        return;   // something has gone stale
+      }
+      PsiCatchSection collapseInto = catchSections[myCollapseIntoIndex];
+      PsiParameter parameter1 = collapseInto.getParameter();
+      PsiParameter parameter2 = section.getParameter();
+      if (parameter1 == null || parameter2 == null) {
+        return;
+      }
+      String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
+      PsiTryStatement newTryCatch = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, stmt);
+      parameter1.getTypeElement().replace(newTryCatch.getCatchSections() [0].getParameter().getTypeElement());
+      section.delete();
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return"Collapse catch blocks into multi-catch";
     }
   }
 }

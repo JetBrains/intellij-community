@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -26,6 +27,10 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
     myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/TryIdenticalCatches.java");
     myFixture.checkHighlighting(true, false, false);
+    IntentionAction intention = myFixture.findSingleIntention("Collapse catch blocks into multi-catch");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/TryIdenticalCatches.after.java");
   }
 
   @Override
