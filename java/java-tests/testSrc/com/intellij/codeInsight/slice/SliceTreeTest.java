@@ -24,10 +24,6 @@ import java.util.*;
  * @author cdr
  */
 public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
-  @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+ name +".java");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

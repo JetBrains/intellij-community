@@ -484,6 +484,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myHintMode = hintMode;
   }
 
+  public boolean isHintMode() {
+    return myHintMode;
+  }
+
   private static LookupElementPresentation renderItemApproximately(LookupElement item) {
     final LookupElementPresentation p = new LookupElementPresentation();
     item.renderElement(p);
@@ -1131,7 +1135,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     else if (myHintMode) {
       final int itemTextPadding = 2;
-      final int borderWidth = 1;
+      final int borderWidth = 0;
 
       final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding, borderWidth);
       Point bestPoint = calculatePosition(hintComponent);
@@ -1150,19 +1154,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         panel.add(hintComponent);
         myAutopopupHint = new LightweightHint(panel);
         myAutopopupHint.setForceShowAsPopup(true);
-        myAutopopupHint.setForceLightweightPopup(true);
         hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint),
                                    HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
       } else {
         final JComponent panel = myAutopopupHint.getComponent();
         panel.remove(0);
         panel.add(hintComponent);
+        HintManagerImpl.adjustEditorHintPosition(myAutopopupHint, editor, bestPoint);
       }
     }
   }
 
   private JPanel createAutopopupHintComponent(int itemTextPadding, int borderWidth) {
-    int maxAutopopupItems = 10;
+    int maxAutopopupItems = 7;
     JPanel pane = new JPanel(new GridBagLayout());
     pane.setBackground(HintUtil.INFORMATION_COLOR);
 
@@ -1221,7 +1225,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
                             KeymapUtil
                               .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
                             " for more suggestions)";
-        pane.add(new JLabel(moreText), c);
+        final JLabel label = new JLabel(moreText);
+        label.setFont(label.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+        pane.add(label, c);
       }
     }
 

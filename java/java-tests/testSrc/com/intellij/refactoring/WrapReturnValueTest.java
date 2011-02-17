@@ -26,11 +26,6 @@ public class WrapReturnValueTest extends MultiFileTestCase{
     return "/refactoring/wrapReturnValue/";
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   private void doTest(final boolean existing) throws Exception {
     doTest(existing, null);
   }

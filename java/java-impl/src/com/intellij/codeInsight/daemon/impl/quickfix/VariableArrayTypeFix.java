@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VariableArrayTypeFix implements IntentionAction {
+public class VariableArrayTypeFix extends IntentionAndQuickFixAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix");
 
   private final PsiVariable myVariable;
@@ -93,11 +94,14 @@ public class VariableArrayTypeFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  @Override
+  public String getName() {
     return myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
            QuickFixBundle.message("change.new.operator.type.text", getNewText(), myTargetType.getCanonicalText(), "") :
            QuickFixBundle.message("fix.variable.type.text", myVariable.getName(), myTargetType.getCanonicalText());
   }
+
+
 
   @NotNull
   public String getFamilyName() {
@@ -113,7 +117,8 @@ public class VariableArrayTypeFix implements IntentionAction {
         && myInitializer.isValid();
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();

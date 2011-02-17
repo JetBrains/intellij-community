@@ -144,6 +144,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
         processCompiledClass(previousPath);
       }
       catch (CacheCorruptedException e) {
+        if (CompileDriver.ourDebugMode) {
+          e.printStackTrace();
+        }
         myError = e;
         LOG.info(e);
         killProcess();
@@ -177,6 +180,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       buffer = StringBuilderSpinAllocator.alloc();
     }
     catch (SpinAllocator.AllocatorExhaustedException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       LOG.info(e);
       buffer = new StringBuilder();
       releaseBuffer = false;
@@ -218,20 +224,25 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
 
   private int readNextByte(final Reader reader) {
     try {
-      while(!reader.ready()) {
-        if (isProcessTerminated()) {
-          return -1;
-        }
-        try {
-          Thread.sleep(1L);
-        }
-        catch (InterruptedException ignore) {
+      if (!CompileDriver.ourDebugMode) {
+        while(!reader.ready()) {
+          if (isProcessTerminated()) {
+            return -1;
+          }
+          try {
+            Thread.sleep(1L);
+          }
+          catch (InterruptedException ignore) {
+          }
         }
       }
       return reader.read();
     }
     catch (IOException e) {
-      return -1; // When process terminated Process.getInputStream()'s underlaying stream becomes closed on Linux.
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
+      return -1; // When process terminated Process.getInputStream()'s underlying stream becomes closed on Linux.
     }
   }
 

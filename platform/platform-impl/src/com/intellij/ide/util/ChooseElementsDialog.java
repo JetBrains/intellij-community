@@ -88,10 +88,18 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     init();
   }
 
+  public List<T> showAndGetResult() {
+    show();
+    return getChosenElements();
+  }
+
   protected abstract String getItemText(T item);
 
+  @Nullable
+  protected abstract Icon getItemIcon(T item);
+
   public List<T> getChosenElements() {
-    return myChooser.getSelectedElements();
+    return isOK() ? myChooser.getSelectedElements() : Collections.<T>emptyList();
   }
 
   public void selectElements(@NotNull List<T> elements) {
@@ -130,7 +138,4 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
       }
     };
   }
-
-  @Nullable 
-  protected abstract Icon getItemIcon(T item);
 }

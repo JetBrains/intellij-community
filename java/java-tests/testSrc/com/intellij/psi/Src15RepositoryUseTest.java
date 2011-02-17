@@ -38,11 +38,6 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("mock 1.5");
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     super.tearDown();

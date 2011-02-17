@@ -20,13 +20,11 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -185,11 +183,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myTitle != null)
         .setTitle(myTitle)
         .setModalContext(false)
-        .setShowShadow(isRealPopup())
+        .setShowShadow(!myForceLightweightPopup && myForceShowAsPopup)
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
-        .setForceHeavyweight(!myForceLightweightPopup && isRealPopup())
+        .setForceHeavyweight(!myForceLightweightPopup && myForceShowAsPopup)
         .createPopup();
 
       beforeShow();

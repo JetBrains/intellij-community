@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   @Override
   public void describeItems(LinkedHashMap<T, StringBuilder> map) {
     final TreeMap<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
-    if (treeMap.size() > 1) {
+    if (treeMap.size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (Map.Entry<Comparable, List<T>> entry: treeMap.entrySet()){
         for (T t : entry.getValue()) {
           final StringBuilder builder = map.get(t);

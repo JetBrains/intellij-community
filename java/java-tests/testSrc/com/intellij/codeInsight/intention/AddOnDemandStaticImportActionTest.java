@@ -12,9 +12,4 @@ public class AddOnDemandStaticImportActionTest extends LightIntentionActionTestC
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addOnDemandStaticImport";
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
 }

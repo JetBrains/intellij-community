@@ -300,9 +300,4 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath(getClass());
   }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17();
-  }
 }

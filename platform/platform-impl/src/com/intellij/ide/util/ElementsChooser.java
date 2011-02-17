@@ -34,6 +34,9 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
+/**
+ * @see ChooseElementsDialog
+ */
 public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private JBTable myTable = null;
   private MyTableModel myTableModel = null;
@@ -42,7 +45,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
   private final Map<T, Boolean> myDisabledMap = new HashMap<T, Boolean>();
 
-  public static interface ElementsMarkListener<T> {
+  public interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
   }
 

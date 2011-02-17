@@ -513,7 +513,8 @@ public class GrClassImplUtil {
             final PsiType type = field.getDeclaredType();
             if (!(type instanceof PsiClassType)) continue;
 
-            final PsiClass psiClass = ((PsiClassType)type).resolve();
+            final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+            final PsiClass psiClass = resolveResult.getElement();
             if (psiClass == null) continue;
 
             final boolean deprecated = shouldDelegateDeprecated(delegate);
@@ -527,7 +528,7 @@ public class GrClassImplUtil {
             for (PsiMethod method : methods) {
               if (method.isConstructor()) continue;
               if (!deprecated && getAnnotation(method, "java.lang.Deprecated") != null) continue;
-              result.add(generateDelegateMethod(method, clazz));
+              result.add(generateDelegateMethod(method, clazz, resolveResult.getSubstitutor()));
             }
           }
           return new Result<Collection<PsiMethod>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -538,15 +539,15 @@ public class GrClassImplUtil {
     return cachedValue.getValue();
   }
 
-  private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass clazz) {
+  private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass clazz, PsiSubstitutor substitutor) {
     final LightMethodBuilder builder = new LightMethodBuilder(clazz.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     builder.setContainingClass(clazz);
-    builder.setReturnType(method.getReturnType());
+    builder.setReturnType(substitutor.substitute(method.getReturnType()));
     builder.setNavigationElement(method);
     builder.addModifier(PsiModifier.PUBLIC);
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
     for (PsiParameter originalParameter : originalParameters) {
-      builder.addParameter(originalParameter);
+      builder.addParameter(originalParameter.getName(), substitutor.substitute(originalParameter.getType()));
     }
     builder.setBaseIcon(GroovyIcons.METHOD);
     return builder;

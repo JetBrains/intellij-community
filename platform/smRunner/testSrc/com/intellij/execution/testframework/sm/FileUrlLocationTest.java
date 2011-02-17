@@ -25,7 +25,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 public class FileUrlLocationTest extends SMLightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourDescriptor;
+    return LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
   }
 
   public void testSpecNavigation() throws Throwable {

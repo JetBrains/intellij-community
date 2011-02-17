@@ -497,7 +497,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         if (file != myFile.getVirtualFile()) return;
         if (myConsoleEditor != null) {
           queueUiUpdate(false);
-          for (FileEditor fileEditor : source.getAllEditors()) {
+          for (FileEditor fileEditor : source.getAllEditors(file)) {
             if (!(fileEditor instanceof TextEditor)) continue;
             final Editor editor = ((TextEditor)fileEditor).getEditor();
             registerActionShortcuts(editor.getComponent());

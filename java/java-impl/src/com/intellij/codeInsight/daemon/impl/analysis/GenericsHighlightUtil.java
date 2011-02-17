@@ -16,29 +16,18 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaHightlightInfoTypes;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -48,7 +37,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -529,21 +517,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
-  public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, @NotNull final PsiElement elementToHighlight) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(elementToHighlight)) return null;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile().isToolEnabled(key,
-                                                                                                                                             elementToHighlight)) return null;
-    if (!isRawToGeneric(lType, rType)) return null;
-    String description = JavaErrorMessages.message("generics.unchecked.assignment",
-                                                   HighlightUtil.formatType(rType),
-                                                   HighlightUtil.formatType(lType));
-
-    return createUncheckedWarning(elementToHighlight, key, description, elementToHighlight);
-  }
-
-  private static boolean isRawToGeneric(PsiType lType, PsiType rType) {
+  public static boolean isRawToGeneric(PsiType lType, PsiType rType) {
     if (lType instanceof PsiPrimitiveType || rType instanceof PsiPrimitiveType) return false;
     if (lType.equals(rType)) return false;
     if (lType instanceof PsiArrayType && rType instanceof PsiArrayType) {
@@ -628,27 +602,7 @@ public class GenericsHighlightUtil {
     return false;
   }
 
-  public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) return null;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile().isToolEnabled(key, typeCast)) return null;
-    final PsiTypeElement typeElement = typeCast.getCastType();
-    if (typeElement == null) return null;
-    final PsiType castType = typeElement.getType();
-    final PsiExpression expression = typeCast.getOperand();
-    if (expression == null) return null;
-    final PsiType exprType = expression.getType();
-    if (exprType == null) return null;
-    if (isUncheckedCast(castType, exprType)) {
-      String description = JavaErrorMessages.message("generics.unchecked.cast",
-                                                     HighlightUtil.formatType(exprType),
-                                                     HighlightUtil.formatType(castType));
-      return createUncheckedWarning(expression, key, description, typeCast);
-    }
-    return null;
-  }
-
-  private static boolean isUncheckedCast(PsiType castType, PsiType operandType) {
+  public static boolean isUncheckedCast(PsiType castType, PsiType operandType) {
     if (TypeConversionUtil.isAssignable(castType, operandType, false)) return false;
 
     castType = castType.getDeepComponentType();
@@ -727,74 +681,7 @@ public class GenericsHighlightUtil {
            ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
 
-  public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(call)) return null;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile().isToolEnabled(key, call)) return null;
-
-    final PsiMethod method = (PsiMethod)resolveResult.getElement();
-    if (method == null) return null;
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (final PsiParameter parameter : parameters) {
-      final PsiType parameterType = parameter.getType();
-      if (parameterType.accept(new PsiTypeVisitor<Boolean>() {
-        public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
-          return Boolean.FALSE;
-        }
-
-        public Boolean visitArrayType(PsiArrayType arrayType) {
-          return arrayType.getComponentType().accept(this);
-        }
-
-        public Boolean visitClassType(PsiClassType classType) {
-          PsiClass psiClass = classType.resolve();
-          if (psiClass instanceof PsiTypeParameter) {
-            return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
-          }
-          PsiType[] parameters = classType.getParameters();
-          for (PsiType parameter : parameters) {
-            if (parameter.accept(this).booleanValue()) return Boolean.TRUE;
-
-          }
-          return Boolean.FALSE;
-        }
-
-        public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-          PsiType bound = wildcardType.getBound();
-          if (bound != null) return bound.accept(this);
-          return Boolean.FALSE;
-        }
-
-        public Boolean visitEllipsisType(PsiEllipsisType ellipsisType) {
-          return ellipsisType.getComponentType().accept(this);
-        }
-      }).booleanValue()) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-        PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
-        String description = JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
-                                                       HighlightUtil.formatMethod(method),
-                                                       HighlightUtil.formatType(type));
-        PsiElement element = call instanceof PsiMethodCallExpression
-                             ? ((PsiMethodCallExpression)call).getMethodExpression()
-                             : call;
-        return createUncheckedWarning(call, key, description, element);
-      }
-    }
-    return null;
-  }
-
-  private static HighlightInfo createUncheckedWarning(PsiElement context, HighlightDisplayKey key, String description, PsiElement elementToHighlight) {
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
-    final LocalInspectionTool tool =
-      ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME, elementToHighlight)).getTool();
-    if (InspectionManagerEx.inspectionResultSuppressed(context, tool)) return null;
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNCHECKED_WARNING, elementToHighlight, description);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), key);
-    return highlightInfo;
-  }
-
+  @Nullable
   public static HighlightInfo checkForeachLoopParameterType(PsiForeachStatement statement) {
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression expression = statement.getIteratedValue();
@@ -811,14 +698,12 @@ public class GenericsHighlightUtil {
     HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
       HighlightUtil.registerChangeVariableTypeFixes(parameter, itemType, highlightInfo);
-    } else {
-      highlightInfo = checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }
     return highlightInfo;
   }
 
   @Nullable
-  private static PsiType getCollectionItemType(PsiExpression expression) {
+  public static PsiType getCollectionItemType(PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type == null) return null;
     if (type instanceof PsiArrayType) {
@@ -1112,25 +997,11 @@ public class GenericsHighlightUtil {
     }
   }
 
-  @Nullable
-  public static HighlightInfo checkUncheckedGenericsArrayCreation(PsiReferenceExpression referenceExpression, PsiElement resolved){
-    if (isUncheckedWarning(referenceExpression, resolved, false)) {
-      final HighlightInfo highlightInfo =
-        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, referenceExpression, "Unchecked generics array creation for varargs parameter");
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SuppressFix("unchecked"));
-      return highlightInfo;
-    }
-    return null;
-  }
-
-  public static boolean isUncheckedWarning(PsiReferenceExpression expression, PsiElement resolve, boolean ignoreSuppressed) {
+  public static boolean isUncheckedWarning(PsiJavaCodeReferenceElement expression, PsiElement resolve) {
     if (resolve instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)resolve;
 
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
-      if (!ignoreSuppressed) {
-        if (SuppressManager.getInstance().isSuppressedFor(expression, "unchecked")) return false;
-      }
 
       if (psiMethod.isVarArgs()) {
         if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false)) {
@@ -1140,12 +1011,31 @@ public class GenericsHighlightUtil {
           final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
           if (!isReifiableType(componentType)) {
             final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiMethodCallExpression) {
-              final PsiExpression[] args = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
-              for (int i = parametersCount - 1; i < args.length; i++) {
-                if (!isReifiableType(args[i].getType())){
-                  return true;
+            if (parent instanceof PsiCall) {
+              final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
+              if (argumentList != null) {
+                final PsiExpression[] args = argumentList.getExpressions();
+                if (args.length == parametersCount) {
+                  final PsiExpression lastArg = args[args.length - 1];
+                  if (lastArg instanceof PsiReferenceExpression) {
+                    final PsiElement lastArgsResolve = ((PsiReferenceExpression)lastArg).resolve();
+                    if (lastArgsResolve instanceof PsiParameter) {
+                      if (((PsiParameter)lastArgsResolve).getType() instanceof PsiArrayType) {
+                        return false;
+                      }
+                    }
+                  } else if (lastArg instanceof PsiMethodCallExpression) {
+                    if (lastArg.getType() instanceof PsiArrayType) {
+                      return false;
+                    }
+                  }
                 }
+                for (int i = parametersCount - 1; i < args.length; i++) {
+                  if (!isReifiableType(args[i].getType())){
+                    return true;
+                  }
+                }
+                return args.length < parametersCount;
               }
             }
           }
@@ -1169,14 +1059,22 @@ public class GenericsHighlightUtil {
     }
 
     if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+      final PsiClassType classType = (PsiClassType)PsiUtil.convertAnonymousToBaseType(type);
       if (classType.isRaw()) {
         return true;
       }
-      if (!classType.hasParameters()) {
-        return true;
+      PsiType[] parameters = classType.getParameters();
+
+      for (PsiType parameter : parameters) {
+        if (parameter instanceof PsiWildcardType && ((PsiWildcardType)parameter).getBound() == null) {
+          return true;
+        }
       }
-      return !classType.hasNonTrivialParameters();
+      final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
+      if (resolved instanceof PsiTypeParameter) {
+        return false;
+      }
+      return parameters.length == 0;
     }
 
     return false;
@@ -1253,29 +1151,6 @@ public class GenericsHighlightUtil {
     return list;
   }
 
-  public static HighlightInfo checkGenericCallWithRawArguments(JavaResolveResult resolveResult, PsiCallExpression callExpression) {
-    final PsiMethod method = (PsiMethod)resolveResult.getElement();
-    if (method == null) return null;
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiExpressionList argumentList = callExpression.getArgumentList();
-    if (argumentList == null) return null;
-    final PsiExpression[] expressions = argumentList.getExpressions();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) {
-      for (int i = 0; i < expressions.length; i++) {
-        PsiParameter parameter = parameters[Math.min(i, parameters.length - 1)];
-        final PsiExpression expression = expressions[i];
-        final PsiType parameterType = substitutor.substitute(parameter.getType());
-        final PsiType expressionType = substitutor.substitute(expression.getType());
-        if (expressionType != null) {
-          final HighlightInfo highlightInfo = checkRawToGenericAssignment(parameterType, expressionType, expression);
-          if (highlightInfo != null) return highlightInfo;
-        }
-      }
-    }
-    return null;
-  }
-
   public static HighlightInfo checkParametersOnRaw(PsiReferenceParameterList refParamList) {
     if (refParamList.getTypeArguments().length == 0) return null;
     JavaResolveResult resolveResult = null;
@@ -1328,42 +1203,6 @@ public class GenericsHighlightUtil {
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElement, message);
         PsiClassType classType = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType((PsiClass)resolved);
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(aClass, classType, false));
-        return highlightInfo;
-      }
-    }
-    return null;
-  }
-
-  public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<HierarchicalMethodSignature> superMethodSignatures) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(overrider)) return null;
-    final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile();
-    if (!inspectionProfile.isToolEnabled(key, overrider)) return null;
-    final LocalInspectionTool tool =
-      ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME, overrider)).getTool();
-    if (InspectionManagerEx.inspectionResultSuppressed(overrider, tool)) return null;
-    final MethodSignature signature = overrider.getSignature(PsiSubstitutor.EMPTY);
-    for (MethodSignatureBackedByPsiMethod superSignature : superMethodSignatures) {
-      PsiMethod baseMethod = superSignature.getMethod();
-      PsiSubstitutor substitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(signature, superSignature);
-      if (substitutor == null) substitutor = superSignature.getSubstitutor();
-      if (PsiUtil.isRawSubstitutor(baseMethod, superSignature.getSubstitutor())) continue;
-      final PsiType baseReturnType = substitutor.substitute(baseMethod.getReturnType());
-      final PsiType overriderReturnType = overrider.getReturnType();
-      if (baseReturnType == null || overriderReturnType == null) return null;
-      if (isRawToGeneric(baseReturnType, overriderReturnType)) {
-        final String message = JavaErrorMessages.message("unchecked.overriding.incompatible.return.type",
-                                                         HighlightUtil.formatType(overriderReturnType),
-                                                         HighlightUtil.formatType(baseReturnType));
-
-        final PsiTypeElement returnTypeElement = overrider.getReturnTypeElement();
-        LOG.assertTrue(returnTypeElement != null);
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNCHECKED_WARNING, returnTypeElement, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding")),
-                                              key);
-
         return highlightInfo;
       }
     }

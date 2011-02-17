@@ -64,10 +64,4 @@ public class ProjectViewSwitchingTest extends TestSourceBasedTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
 }

@@ -182,11 +182,6 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   public void testAllUsagesInCode() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.QueueProcessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Runs backgroundable tasks one by one.
@@ -40,18 +42,19 @@ public class BackgroundTaskQueue {
   private final QueueProcessor<Task.Backgroundable> myProcessor;
   private Boolean myForcedTestMode;
 
-  public BackgroundTaskQueue(final Project project, String title) {
+  public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
     this(project, title, null);
   }
 
-  public BackgroundTaskQueue(final Project project, String title, final Boolean forcedHeadlessMode) {
+  public BackgroundTaskQueue(@Nullable final Project project, @NotNull String title, final Boolean forcedHeadlessMode) {
     final boolean headless = forcedHeadlessMode != null ? forcedHeadlessMode : ApplicationManager.getApplication().isHeadlessEnvironment();
     myProcessor = new QueueProcessor<Task.Backgroundable>(headless ?
       new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project), true,
       headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT, new Condition<Object>() {
         @Override
         public boolean value(Object o) {
-          return (! ApplicationManager.getApplication().isUnitTestMode()) && (! project.isOpen()) || project.isDisposed();
+          if (project == null) return ApplicationManager.getApplication().isDisposed();
+          return !ApplicationManager.getApplication().isUnitTestMode() && !project.isOpen() || project.isDisposed();
         }
       });
   }
