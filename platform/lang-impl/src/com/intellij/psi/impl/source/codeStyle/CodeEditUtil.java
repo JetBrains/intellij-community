@@ -47,6 +47,12 @@ public class CodeEditUtil {
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENT_INFO");
   private static final Key<Boolean> REFORMAT_BEFORE_KEY = new Key<Boolean>("REFORMAT_BEFORE_KEY");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT_KEY");
+  private static final ThreadLocal<Boolean> ALLOW_TO_MARK_NODES_TO_REFORMAT = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.TRUE;
+    }
+  };
 
   public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
 
@@ -430,6 +436,34 @@ public class CodeEditUtil {
    * @param value     <code>true</code> if the element should be reformatted; <code>false</code> otherwise
    */
   public static void markToReformat(final ASTNode node, boolean value) {
-    node.putCopyableUserData(REFORMAT_KEY, value ? true : null);
+    if (ALLOW_TO_MARK_NODES_TO_REFORMAT.get()) {
+      node.putCopyableUserData(REFORMAT_KEY, value ? true : null);
+    }
+  }
+
+  /**
+   * We allow to mark particular {@link ASTNode AST nodes} to be reformatted later (e.g. we may want method definition and calls
+   * to be reformatted when we perform <code>'change method signature'</code> refactoring. Hence, we mark corresponding expressions
+   * to be reformatted).
+   * <p/>
+   * For convenience that is made automatically on AST/PSI level, i.e. every time target element change it automatically marks itself
+   * to be reformatted.
+   * <p/>
+   * However, there is a possible case that particular element is changed because of formatting, hence, there is no need to mark
+   * itself for postponed formatting one more time. This method allows to configure allowance of reformat markers processing
+   * for the calling thread. I.e. this method may be called with <code>'false'</code> as an argument, hence, all further attempts
+   * to {@link #markToReformat(ASTNode, boolean) mark node for postponed formatting} will have no effect until current method is
+   * called with <code>'true'</code> as an argument. Hence, following usage scenario is expected:
+   * <ol>
+   *   <li>this method is called with <code>'false'</code> argument;</li>
+   *   <li>formatting is performed at dedicated <code>'try'</code> block;</li>
+   *   <li>this method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
+   * </ol>
+   *
+   * @param allow     flag that defines if new reformat markers can be added from the current thread
+   * @see #markToReformat(ASTNode, boolean) 
+   */
+  public static void allowToMarkNodesForPostponedFormatting(boolean allow) {
+    ALLOW_TO_MARK_NODES_TO_REFORMAT.set(allow);
   }
 }
