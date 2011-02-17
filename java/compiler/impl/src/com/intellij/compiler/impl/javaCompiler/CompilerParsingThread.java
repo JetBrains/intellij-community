@@ -244,6 +244,12 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       }
       return -1; // When process terminated Process.getInputStream()'s underlying stream becomes closed on Linux.
     }
+    catch (Throwable t) {
+      if (CompileDriver.ourDebugMode) {
+        t.printStackTrace();
+      }
+      return -1;
+    }
   }
 
   private boolean isProcessTerminated() {
