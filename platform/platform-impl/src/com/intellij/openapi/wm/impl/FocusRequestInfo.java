@@ -28,22 +28,18 @@ public final class FocusRequestInfo {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss.SSS");
   private final String when;
   private final Throwable trace;
-  private final String component;
   private final boolean forced;
+  private Component component;
 
-  public FocusRequestInfo(Component component, Throwable trace, boolean forced) {
+  public FocusRequestInfo(Component c, Throwable trace, boolean forced) {
     this.forced = forced;
-    this.component = component == null ? "null" : component.toString();
     this.trace = trace;
     when = DATE_FORMAT.format(new Date());
+    component = c;
   }
 
   public String getStackTrace() {
     return ExceptionUtil.getThrowableText(trace);
-  }
-
-  public String getComponent() {
-    return component;
   }
 
   public boolean isForced() {
@@ -52,5 +48,9 @@ public final class FocusRequestInfo {
 
   public String getDate() {
     return when;
+  }
+
+  public Component getComponent() {
+    return component;
   }
 }
