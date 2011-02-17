@@ -358,7 +358,7 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    return elements.toArray(new PsiElement[elements.size()]);
+    return PsiUtilBase.toPsiElementArray(elements);
   }
 
   private static Object getValueAtIndex(AbstractTreeNode node) {
@@ -510,7 +510,7 @@ public class CommanderPanel extends JPanel {
         validElements.add(element);
       }
     }
-    return validElements.size() == elements.length ? elements : validElements.toArray(new PsiElement[validElements.size()]);
+    return validElements.size() == elements.length ? elements : PsiUtilBase.toPsiElementArray(validElements);
   }
 
   protected final Navigatable createEditSourceDescriptor() {

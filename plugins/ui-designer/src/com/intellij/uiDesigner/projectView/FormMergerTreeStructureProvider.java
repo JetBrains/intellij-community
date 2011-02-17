@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
@@ -165,7 +166,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
           result.add((PsiElement) node.getValue());
         }
       }
-      return result.toArray(new PsiElement[result.size()]);
+      return PsiUtilBase.toPsiElementArray(result);
     }
   }
 }

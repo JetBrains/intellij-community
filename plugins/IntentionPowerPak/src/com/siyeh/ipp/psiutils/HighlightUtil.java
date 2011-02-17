@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -49,9 +50,8 @@ public class HighlightUtil {
         final Application application = ApplicationManager.getApplication();
         application.invokeLater(new Runnable() {
             public void run() {
-                final PsiElement[] elements =
-                        elementCollection.toArray(
-                                new PsiElement[elementCollection.size()]);
+              final PsiElement[] elements =
+                PsiUtilBase.toPsiElementArray(elementCollection);
                 final PsiElement firstElement = elements[0];
                 if (!firstElement.isValid()) {
                     return;

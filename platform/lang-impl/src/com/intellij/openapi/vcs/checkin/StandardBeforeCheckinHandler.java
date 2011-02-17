@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -136,7 +137,7 @@ public class StandardBeforeCheckinHandler extends CheckinHandler implements Chec
         if (psiFile != null) result.add(psiFile);
       }
     }
-    return result.toArray(new PsiFile[result.size()]);
+    return PsiUtilBase.toPsiFileArray(result);
   }
 
 

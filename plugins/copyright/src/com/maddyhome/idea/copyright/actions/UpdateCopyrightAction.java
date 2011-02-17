@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
@@ -125,7 +126,7 @@ public class UpdateCopyrightAction extends AnAction {
         for (Module mod : modules) {
           AbstractFileProcessor.findFiles(mod, psiFiles);
         }
-        new UpdateCopyrightProcessor(project, null, psiFiles.toArray(new PsiFile[psiFiles.size()])).run();
+        new UpdateCopyrightProcessor(project, null, PsiUtilBase.toPsiFileArray(psiFiles)).run();
         return;
       }
 

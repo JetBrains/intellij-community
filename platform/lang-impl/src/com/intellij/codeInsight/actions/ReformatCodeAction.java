@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -203,7 +204,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       final PsiFile psiFile = manager.findFile(virtualFile);
       if (psiFile != null) result.add(psiFile);
     }
-    return result.toArray(new PsiFile[result.size()]);
+    return PsiUtilBase.toPsiFileArray(result);
   }
 
   public void update(AnActionEvent event){

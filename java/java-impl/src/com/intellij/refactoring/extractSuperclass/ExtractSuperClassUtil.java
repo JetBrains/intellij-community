@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
@@ -164,12 +165,20 @@ public class ExtractSuperClassUtil {
     for (final MemberInfo info : selectedMembers) {
       movedElements.add(info.getMember());
     }
-    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(null, new Condition<PsiTypeParameter>() {
-      @Override
-      public boolean value(PsiTypeParameter parameter) {
-        return findTypeParameterInDerived(derivedClass, parameter.getName()) != null;
-      }
-    },  movedElements.toArray(new PsiElement[movedElements.size()]));
+    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(null,
+                                                                                                                 new Condition<PsiTypeParameter>() {
+                                                                                                                   @Override
+                                                                                                                   public boolean value(
+                                                                                                                     PsiTypeParameter parameter) {
+                                                                                                                     return
+                                                                                                                       findTypeParameterInDerived(
+                                                                                                                         derivedClass,
+                                                                                                                         parameter
+                                                                                                                           .getName()) !=
+                                                                                                                       null;
+                                                                                                                   }
+                                                                                                                 }, PsiUtilBase
+      .toPsiElementArray(movedElements));
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;
     final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;

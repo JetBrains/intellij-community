@@ -48,6 +48,7 @@ import com.intellij.psi.targets.AliasingPsiTargetMapper;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
@@ -189,7 +190,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
             }
-            return elements.toArray(new PsiElement[elements.size()]);
+            return PsiUtilBase.toPsiElementArray(elements);
           }
         }
       }

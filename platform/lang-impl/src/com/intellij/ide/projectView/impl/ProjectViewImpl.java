@@ -987,7 +987,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
+      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {

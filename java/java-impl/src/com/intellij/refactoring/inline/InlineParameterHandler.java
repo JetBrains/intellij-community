@@ -31,6 +31,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -209,7 +210,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
 
     new WriteCommandAction(project,
                            RefactoringBundle.message("inline.parameter.command.name", psiParameter.getName()),
-                           containingFiles.toArray(new PsiFile[containingFiles.size()]) ) {
+                           PsiUtilBase.toPsiFileArray(containingFiles)) {
       protected void run(final Result result) throws Throwable {
         SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
       }

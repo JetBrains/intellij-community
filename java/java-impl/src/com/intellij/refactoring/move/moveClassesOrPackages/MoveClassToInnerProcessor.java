@@ -30,6 +30,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -185,7 +186,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         elementsToMakeWritable.add(element);
       }
     }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, elementsToMakeWritable.toArray(new PsiElement[elementsToMakeWritable.size()]))) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilBase.toPsiElementArray(elementsToMakeWritable))) {
       return false;
     }
     return true;

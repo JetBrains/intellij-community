@@ -35,6 +35,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -128,7 +129,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
-    final PsiElement[] refsToInline = refsToInlineList.toArray(new PsiElement[refsToInlineList.size()]);
+    final PsiElement[] refsToInline = PsiUtilBase.toPsiElementArray(refsToInlineList);
 
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);

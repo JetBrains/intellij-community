@@ -31,6 +31,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
@@ -85,7 +86,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         toMove.add(element);
       }
     }
-    myElementsToMove = toMove.toArray(new PsiElement[toMove.size()]);
+    myElementsToMove = PsiUtilBase.toPsiElementArray(toMove);
     Arrays.sort(myElementsToMove, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {

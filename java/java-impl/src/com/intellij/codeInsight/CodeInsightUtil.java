@@ -33,6 +33,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -147,7 +148,7 @@ public class CodeInsightUtil {
       }
     }
 
-    return array.toArray(new PsiElement[array.size()]);
+    return PsiUtilBase.toPsiElementArray(array);
   }
 
   @Nullable

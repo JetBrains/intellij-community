@@ -74,7 +74,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       }
     }
 
-    return new GotoData(sourceElement, candidates.toArray(new PsiElement[candidates.size()]), actions);
+    return new GotoData(sourceElement, PsiUtilBase.toPsiElementArray(candidates), actions);
   }
 
   @NotNull

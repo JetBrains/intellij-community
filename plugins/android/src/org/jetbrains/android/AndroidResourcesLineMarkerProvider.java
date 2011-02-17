@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -285,7 +286,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             else {
               targets = AndroidResourceUtil.findResourcesByField(manager, resField);
             }
-            return targets.toArray(new PsiElement[targets.size()]);
+            return PsiUtilBase.toPsiElementArray(targets);
           }
         };
         if (lazy) {

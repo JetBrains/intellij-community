@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 
 import java.awt.datatransfer.DataFlavor;
@@ -71,7 +72,7 @@ public class FileListPasteProvider implements PasteProvider {
     if (elements.size() > 0) {
       final PsiDirectory dir = ideView.getOrChooseDirectory();
       if (dir != null) {
-        new CopyFilesOrDirectoriesHandler().doCopy(elements.toArray(new PsiElement[elements.size()]), dir);
+        new CopyFilesOrDirectoriesHandler().doCopy(PsiUtilBase.toPsiElementArray(elements), dir);
       }
     }
   }

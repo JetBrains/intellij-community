@@ -37,6 +37,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +71,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       }
       psiChild = psiChild.getNextSibling();
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 
   public PsiElement getFirstChild() {

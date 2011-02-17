@@ -208,7 +208,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 
   public FavoritesTreeStructure getFavoritesTreeStructure() {
@@ -255,7 +255,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           result.add(element);
         }
       }
-      return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
+      return result.isEmpty() ? null : PsiUtilBase.toPsiElementArray(result);
     }
 
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
@@ -405,7 +405,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
+      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
@@ -440,7 +440,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
 
-      return result.toArray(new PsiElement[result.size()]);
+      return PsiUtilBase.toPsiElementArray(result);
     }
   }
 

@@ -37,6 +37,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
@@ -206,7 +207,7 @@ public class ShowImplementationsAction extends AnAction {
             break;
           }
         }
-        return unique.toArray(new PsiElement[unique.size()]);
+        return PsiUtilBase.toPsiElementArray(unique);
       }
     };
 

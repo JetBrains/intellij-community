@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -248,7 +249,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   private static boolean ensureFilesWritable(final Project project, Collection<? extends PsiElement> elements) {
-    PsiElement[] psiElements = elements.toArray(new PsiElement[elements.size()]);
+    PsiElement[] psiElements = PsiUtilBase.toPsiElementArray(elements);
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
   }
 

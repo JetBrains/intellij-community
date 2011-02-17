@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -97,7 +98,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
 
-    final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
+    final PsiElement[] elementsToDelete = PsiUtilBase.toPsiElementArray(fullElementsSet);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       RefactoringSettings settings = RefactoringSettings.getInstance();

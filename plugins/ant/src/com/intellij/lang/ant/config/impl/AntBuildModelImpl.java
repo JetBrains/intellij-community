@@ -30,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
       public Result<List<AntBuildTargetBase>> compute() {
         final Pair<List<AntBuildTargetBase>, Collection<PsiFile>> result = getTargetListImpl(AntBuildModelImpl.this);
         final Collection<PsiFile> deps = result.getSecond();
-        return Result.create(result.getFirst(), deps.toArray(new PsiFile[deps.size()]));
+        return Result.create(result.getFirst(), PsiUtilBase.toPsiFileArray(deps));
       }
     });    
   }

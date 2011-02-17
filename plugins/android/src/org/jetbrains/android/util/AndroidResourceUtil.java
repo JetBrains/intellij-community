@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -396,6 +397,6 @@ public class AndroidResourceUtil {
     assert facet != null;
     LocalResourceManager manager = facet.getLocalResourceManager();
     List<PsiElement> targets = findResourcesByField(manager, resField);
-    return targets.toArray(new PsiElement[targets.size()]);
+    return PsiUtilBase.toPsiElementArray(targets);
   }
 }

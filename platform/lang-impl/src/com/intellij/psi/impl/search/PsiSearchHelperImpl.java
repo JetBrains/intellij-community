@@ -41,6 +41,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.IndexPatternSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
@@ -151,7 +152,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     });
     synchronized (results) {
-      return results.toArray(new PsiElement[results.size()]);
+      return PsiUtilBase.toPsiElementArray(results);
     }
   }
 

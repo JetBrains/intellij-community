@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +83,6 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
         }
       }
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 }

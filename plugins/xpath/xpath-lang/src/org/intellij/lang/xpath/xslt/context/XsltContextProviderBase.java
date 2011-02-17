@@ -20,10 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -195,7 +192,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
       }
     });
 
-    return files.toArray(new PsiFile[files.size()]);
+    return PsiUtilBase.toPsiFileArray(files);
   }
 
   @Nullable

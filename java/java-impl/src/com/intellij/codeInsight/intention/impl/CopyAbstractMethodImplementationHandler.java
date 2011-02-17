@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -199,7 +200,7 @@ public class CopyAbstractMethodImplementationHandler {
     for(PsiClass psiClass: myTargetClasses) {
       fileList.add(psiClass.getContainingFile());
     }
-    return fileList.toArray(new PsiFile[fileList.size()]);
+    return PsiUtilBase.toPsiFileArray(fileList);
   }
 
 }

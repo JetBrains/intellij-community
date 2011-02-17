@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo;
@@ -278,7 +279,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
               }
             }
             if(!elements.isEmpty()) {
-              SafeDeleteHandler.invoke(myProject, elements.toArray(new PsiElement[elements.size()]), true);
+              SafeDeleteHandler.invoke(myProject, PsiUtilBase.toPsiElementArray(elements), true);
             }
           }
         });
@@ -412,7 +413,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     return new SafeDeleteProcessor(project, prepareSuccessfulCallBack,
-                                   elements.toArray(new PsiElement[elements.size()]),
+                                   PsiUtilBase.toPsiElementArray(elements),
                                    isSearchInComments, isSearchNonJava);
   }
 

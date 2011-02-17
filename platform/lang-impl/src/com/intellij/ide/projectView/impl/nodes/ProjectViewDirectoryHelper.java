@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +190,7 @@ public class ProjectViewDirectoryHelper {
       }
     }
 
-    return directoriesOnTheWayToContentRoots.toArray(new PsiElement[directoriesOnTheWayToContentRoots.size()]);
+    return PsiUtilBase.toPsiElementArray(directoriesOnTheWayToContentRoots);
   }
 
   // used only for non-flatten packages mode

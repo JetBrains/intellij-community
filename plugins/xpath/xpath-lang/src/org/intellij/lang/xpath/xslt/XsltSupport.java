@@ -22,10 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.SmartList;
@@ -97,7 +94,7 @@ public class XsltSupport {
             }
           }
         });
-        return files.isEmpty() ? PsiFile.EMPTY_ARRAY : files.toArray(new PsiFile[files.size()]);
+        return files.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilBase.toPsiFileArray(files);
       }
       return PsiFile.EMPTY_ARRAY;
     }

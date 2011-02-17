@@ -44,6 +44,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -194,7 +195,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         psiElements.add((PsiElement)selectedElement);
       }
     }
-    return psiElements.toArray(new PsiElement[psiElements.size()]);
+    return PsiUtilBase.toPsiElementArray(psiElements);
   }
 
   private Object[] getSelectedElements() {
@@ -690,7 +691,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         psiElements.add((PsiElement)selectedElement);
       }
     }
-    return psiElements.toArray(new PsiElement[psiElements.size()]);
+    return PsiUtilBase.toPsiElementArray(psiElements);
   }
 
   @Nullable

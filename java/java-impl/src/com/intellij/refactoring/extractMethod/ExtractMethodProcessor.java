@@ -55,6 +55,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -179,7 +180,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 
   /**
@@ -530,11 +531,14 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), new ArrayList<PsiVariable>());
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilBase.toPsiElementArray(elements), myInputVariables.copy(),
+                                                new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else if (elements.size() > 0){
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables.copy(), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
+      myDuplicatesFinder = new DuplicatesFinder(PsiUtilBase.toPsiElementArray(elements), myInputVariables.copy(),
+                                                myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null,
+                                                Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     } else {
       myDuplicates = new ArrayList<Match>();

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,7 @@ public class LocalSearchScope extends SearchScope {
         localScope.add(element);
       }
     }
-    myScope = localScope.toArray(new PsiElement[localScope.size()]);
+    myScope = PsiUtilBase.toPsiElementArray(localScope);
   }
 
   public boolean isIgnoreInjectedPsi() {
@@ -130,7 +131,7 @@ public class LocalSearchScope extends SearchScope {
         }
       }
     }
-    return new LocalSearchScope(result.toArray(new PsiElement [result.size()]), null, scope1.myIgnoreInjectedPsi || scope2.myIgnoreInjectedPsi);
+    return new LocalSearchScope(PsiUtilBase.toPsiElementArray(result), null, scope1.myIgnoreInjectedPsi || scope2.myIgnoreInjectedPsi);
   }
 
   @NotNull
@@ -195,7 +196,7 @@ public class LocalSearchScope extends SearchScope {
         result.add(elements2[i]);
       }
     }
-    return new LocalSearchScope(result.toArray(new PsiElement[result.size()]));
+    return new LocalSearchScope(PsiUtilBase.toPsiElementArray(result));
   }
 
   private static PsiElement scopeElementsUnion(PsiElement element1, PsiElement element2) {

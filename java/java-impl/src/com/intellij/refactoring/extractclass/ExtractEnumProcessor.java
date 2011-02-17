@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -151,7 +152,7 @@ public class ExtractEnumProcessor {
       rules.setMigrationRootType(
         JavaPsiFacade.getElementFactory(myProject).createType(myClass));
       rules.setBoundScope(GlobalSearchScope.projectScope(myProject));
-      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject, myEnumConstants.toArray(new PsiElement[myEnumConstants.size()]), rules);
+      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject, PsiUtilBase.toPsiElementArray(myEnumConstants), rules);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {

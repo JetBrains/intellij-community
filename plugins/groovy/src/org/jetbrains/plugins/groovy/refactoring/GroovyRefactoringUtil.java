@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
@@ -147,7 +148,7 @@ public abstract class GroovyRefactoringUtil {
     } else {
       collectOccurrences(expr, scope, occurrences, comparator, scope instanceof GrTypeDefinition || scope instanceof GroovyFileBase);
     }
-    return occurrences.toArray(new PsiElement[occurrences.size()]);
+    return PsiUtilBase.toPsiElementArray(occurrences);
   }
 
 
@@ -317,7 +318,7 @@ public abstract class GroovyRefactoringUtil {
         result.add(psiChild);
         psiChild = psiChild.getNextSibling();
       }
-      children = result.toArray(new PsiElement[result.size()]);
+      children = PsiUtilBase.toPsiElementArray(result);
     }
 
 
@@ -344,7 +345,7 @@ public abstract class GroovyRefactoringUtil {
       }
     }
 
-    return possibleStatements.toArray(new PsiElement[possibleStatements.size()]);
+    return PsiUtilBase.toPsiElementArray(possibleStatements);
   }
 
   public static boolean isSuperOrThisCall(GrStatement statement, boolean testForSuper, boolean testForThis) {
