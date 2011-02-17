@@ -1206,6 +1206,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
           c1.fill = GridBagConstraints.HORIZONTAL;
           final JLabel tailLabel = new JLabel(presentation.getTailText());
           tailLabel.setFont(tailLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
+          tailLabel.setForeground(LookupCellRenderer.getTailTextColor(false, presentation, tailLabel.getForeground()));
           row.add(tailLabel, c1);
 
           c1 = new GridBagConstraints();
