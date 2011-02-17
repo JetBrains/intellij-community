@@ -30,7 +30,16 @@ import java.util.Map;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class Disposer {
-  private static final ObjectTree<Disposable> ourTree = new ObjectTree<Disposable>();
+  private static final ObjectTree<Disposable> ourTree;
+
+  static {
+    try {
+      ourTree = new ObjectTree<Disposable>();
+    }
+    catch (NoClassDefFoundError e) {
+      throw new RuntimeException("loader=" + Disposer.class.getClassLoader(), e);
+    }
+  }
 
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
     public void execute(final Disposable each) {
