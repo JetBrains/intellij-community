@@ -82,7 +82,7 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
           }
           final PsiIdentifier nameIdentifier = method.getNameIdentifier();
           if (nameIdentifier != null) {
-            holder.registerProblem(nameIdentifier, "Possible heap pollution from parametrized vararg type #loc", new LocalQuickFix() {
+            holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", new LocalQuickFix() {
               @NotNull
               @Override
               public String getName() {
