@@ -476,5 +476,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
   }
 
+  public void testDoubleLiteralInField() {
+    myFixture.configureByText "a.java", """
+public interface Test {
+  double FULL = 1.0<caret>
+}"""
+    type 'd'
+    assert !lookup
+  }
+
 
 }
