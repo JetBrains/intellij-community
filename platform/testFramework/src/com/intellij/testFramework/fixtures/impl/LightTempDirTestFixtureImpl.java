@@ -54,7 +54,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   @Override
-  public VirtualFile copyFile(final VirtualFile file, final String targetPath) {
+  public VirtualFile copyFile(@NotNull final VirtualFile file, final String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override

@@ -40,7 +40,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   private File myTempDir;
 
   @Override
-  public VirtualFile copyFile(VirtualFile file, String targetPath) {
+  public VirtualFile copyFile(@NotNull VirtualFile file, String targetPath) {
     try {
       createTempDirectory();
       VirtualFile tempDir =
