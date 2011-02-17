@@ -84,7 +84,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         else if (descr instanceof IdeaPluginDescriptorImpl) {
           pluginNode = new PluginNode(descr.getPluginId());
           pluginNode.setName(descr.getName());
-          pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()));
+          pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()), descr.getOptionalDependentPluginIds());
           pluginNode.setSize("-1");
         }
 
