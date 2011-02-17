@@ -389,7 +389,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (!model.isEmpty()) {
       myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
 
-      if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched)) {
+      if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched) && !isHintMode()) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant);
       }
       else {
