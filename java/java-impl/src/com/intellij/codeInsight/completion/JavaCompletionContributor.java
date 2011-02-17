@@ -536,6 +536,15 @@ public class JavaCompletionContributor extends CompletionContributor {
         final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null && !(ref instanceof PsiReferenceExpression)) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+
+          if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
+            final PsiReferenceParameterList paramList = ref.getParameterList();
+            if (paramList != null && paramList.getTextLength() > 0) {
+              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_START, paramList.getTextRange().getStartOffset());
+              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_END, paramList.getTextRange().getEndOffset());
+            }
+          }
+
           return;
         }
 
