@@ -17,15 +17,18 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
@@ -48,6 +51,7 @@ public class QueueProcessor<T> {
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
+  private final Map<MyOverrideEquals, ModalityState> myModalityState;
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
@@ -65,6 +69,7 @@ public class QueueProcessor<T> {
     myStarted = autostart;
     myThreadToUse = threadToUse;
     myDeathCondition = deathCondition;
+    myModalityState = new HashMap<MyOverrideEquals, ModalityState>();
 
     myContinuationContext = new Runnable() {
       @Override
@@ -83,6 +88,11 @@ public class QueueProcessor<T> {
 
   public QueueProcessor(final Consumer<T> processor, final Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
+  }
+
+  public void add(T t, ModalityState state) {
+    myModalityState.put(new MyOverrideEquals(t), state);
+    doAdd(t, false);
   }
 
   private static<T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
@@ -176,7 +186,12 @@ public class QueueProcessor<T> {
     };
     final Application application = ApplicationManager.getApplication();
     if (ThreadToUse.AWT.equals(myThreadToUse)) {
-      application.invokeLater(runnable);
+      final ModalityState state = myModalityState.remove(new MyOverrideEquals(item));
+      if (state != null) {
+        application.invokeLater(runnable, state);
+      } else {
+        application.invokeLater(runnable);
+      }
     } else {
       application.executeOnPooledThread(runnable);
     }
@@ -192,5 +207,23 @@ public class QueueProcessor<T> {
   public static enum ThreadToUse {
     AWT,
     POOLED
+  }
+
+  private static class MyOverrideEquals {
+    private final Object myDelegate;
+
+    private MyOverrideEquals(Object delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public int hashCode() {
+      return myDelegate.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return ((MyOverrideEquals) obj).myDelegate == myDelegate;
+    }
   }
 }
