@@ -26,7 +26,7 @@ but seemingly no one uses them in C extensions yet anyway.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2011, 2, 13, 1, 55, 0) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2011, 2, 17, 15, 30, 0) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -1922,7 +1922,7 @@ class ModuleRedeclarator(object):
                 if names:
                     self._defined[mod_name] = True
                     right_pos = 0 # tracks width of list to fold it at right margin
-                    import_heading = "from % s import " % mod_name
+                    import_heading = "from % s import (" % mod_name
                     right_pos += len(import_heading)
                     names_pack = [import_heading]
                     indent_level = 0
@@ -1939,10 +1939,15 @@ class ModuleRedeclarator(object):
                             names_pack.append(n)
                             names_pack.append(", ")
                             right_pos += (len_n + 2)
-                    if names_pack: # last line
-                        self.imports_buf.out(indent_level, *names_pack[:-1]) # cut last comma
+                    # last line is...
+                    if indent_level == 0: # one line
+                        names_pack[0] = names_pack[0][:-1] # cut off lpar
+                        names_pack[-1] = "" # cut last comma
+                    else: # last line of multiline
+                        names_pack[-1] = ")" # last comma -> rpar
+                    self.imports_buf.out(indent_level, *names_pack)
 
-            self.imports_buf.out(0, "") # empty line after group
+                    self.imports_buf.out(0, "") # empty line after group
 
 
 def hasRegularPythonExt(name):
