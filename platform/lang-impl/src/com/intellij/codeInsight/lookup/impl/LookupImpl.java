@@ -1230,7 +1230,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       c.ipady = 2;
       c.fill = GridBagConstraints.HORIZONTAL;
       final JPanel ad = new JPanel(new BorderLayout());
-      ad.setBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray));
+      ad.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(0, 2, 0, 7)));
       ad.setOpaque(false);
 
       if (items.size() > maxAutopopupItems) {
