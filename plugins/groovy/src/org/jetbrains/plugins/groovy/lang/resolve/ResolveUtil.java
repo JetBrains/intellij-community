@@ -521,6 +521,7 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(PsiElement context) {
+    if (!context.isValid()) return false;
     if (context instanceof GrMethodCall) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
