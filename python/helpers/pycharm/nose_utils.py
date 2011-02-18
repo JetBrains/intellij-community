@@ -100,11 +100,16 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
             from nose_helper.util import func_lineno
 
             if hasattr(test.test, "descriptor") and test.test.descriptor:
-              location = "file://"+self.test_address(test.test.descriptor)+":"+str(func_lineno(test.test.descriptor))
+              suite_location = "file://"+self.test_address(test.test.descriptor)
+              location = suite_location+":"+str(func_lineno(test.test.descriptor))
             else:
+              suite_location = "file://"+self.test_address(test.test.test)
               location = "file://"+self.test_address(test.test.test)+":"+str(func_lineno(test.test.test))
           except:
-              location = "python_uttestid://" + str(test.id())
+            test_id = test.id()
+            suite_id = test_id[:test_id.rfind(".")]
+            suite_location = "python_uttestid://"+str(suite_id)
+            location = "python_uttestid://" + str(test_id)
         return (location, suite_location)
 
     def test_address(self, test):
