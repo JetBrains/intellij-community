@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -45,7 +44,7 @@ import java.util.Properties;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 
-/*
+/**
  * @author max
  */
 public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJavaParserFacade {
@@ -61,7 +60,14 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   private static final JavaParserUtil.ParserWrapper PARAMETER = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      DeclarationParser.parseParameter(builder, true, false);
+      DeclarationParser.parseParameter(builder, true, false, false);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper RESOURCE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseParameter(builder, true, false, true);
     }
   };
 
@@ -233,7 +239,10 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   public PsiParameter createParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, PARAMETER, false), context);
+    final boolean resource = context instanceof PsiParameterList &&
+                             context.getParent() instanceof PsiTryStatement;
+    final JavaParserUtil.ParserWrapper wrapper = resource ? RESOURCE : PARAMETER;
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiParameter)) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");

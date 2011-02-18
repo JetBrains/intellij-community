@@ -8,8 +8,9 @@ PsiJavaFile:TryNormal1.java
       PsiKeyword:catch('catch')
       PsiJavaToken:LPARENTH('(')
       PsiParameter:e
-        PsiModifierList:
-          <empty list>
+        PsiModifierList:final
+          PsiKeyword:final('final')
+        PsiWhiteSpace(' ')
         PsiTypeElement:E
           PsiJavaCodeReferenceElement:E
             PsiIdentifier:E('E')

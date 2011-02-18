@@ -447,26 +447,43 @@ public class DeclarationParser {
 
   @NotNull
   public static PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
+    return parseParameterList(builder, false);
+  }
+
+  @NotNull
+  public static PsiBuilder.Marker parseResourceList(final PsiBuilder builder) {
+    return parseParameterList(builder, true);
+  }
+
+  @NotNull
+  private static PsiBuilder.Marker parseParameterList(final PsiBuilder builder, final boolean resources) {
     assert builder.getTokenType() == JavaTokenType.LPARENTH : builder.getTokenType();
     final PsiBuilder.Marker paramList = builder.mark();
     builder.advanceLexer();
 
+    final IElementType delimiter = resources ? JavaTokenType.SEMICOLON : JavaTokenType.COMMA;
+    final String noDelimiterMsg = JavaErrorMessages.message(resources ? "expected.semicolon" : "expected.comma");
+    final String noParameterMsg = JavaErrorMessages.message(resources ? "expected.resource" : "expected.parameter");
+
     PsiBuilder.Marker invalidElements = null;
     String errorMessage = null;
-    boolean commaExpected = false;
+    boolean delimiterExpected = false;
     int paramCount = 0;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null || tokenType == JavaTokenType.RPARENTH) {
-        boolean noLastParam = !commaExpected && paramCount > 0;
+      if (tokenType == null || tokenType == JavaTokenType.RPARENTH || tokenType == JavaTokenType.LBRACE) {
+        boolean noLastParam = !delimiterExpected && paramCount > 0;
         if (noLastParam) {
           error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
         }
         if (tokenType == JavaTokenType.RPARENTH) {
           if (invalidElements != null) {
             invalidElements.error(errorMessage);
+            invalidElements = null;
           }
-          invalidElements = null;
+          else if (resources && paramCount == 0) {
+            error(builder, JavaErrorMessages.message("expected.resource"));
+          }
           builder.advanceLexer();
         }
         else {
@@ -481,9 +498,9 @@ public class DeclarationParser {
         break;
       }
 
-      if (commaExpected) {
-        if (builder.getTokenType() == JavaTokenType.COMMA) {
-          commaExpected = false;
+      if (delimiterExpected) {
+        if (builder.getTokenType() == delimiter) {
+          delimiterExpected = false;
           if (invalidElements != null) {
             invalidElements.error(errorMessage);
             invalidElements = null;
@@ -493,9 +510,9 @@ public class DeclarationParser {
         }
       }
       else {
-        final PsiBuilder.Marker param = parseParameter(builder, true, false);
+        final PsiBuilder.Marker param = parseParameter(builder, true, false, resources);
         if (param != null) {
-          commaExpected = true;
+          delimiterExpected = true;
           if (invalidElements != null) {
             invalidElements.errorBefore(errorMessage, param);
             invalidElements = null;
@@ -506,14 +523,14 @@ public class DeclarationParser {
       }
 
       if (invalidElements == null) {
-        if (builder.getTokenType() == JavaTokenType.COMMA) {
-          error(builder, JavaErrorMessages.message("expected.parameter"));
+        if (builder.getTokenType() == delimiter) {
+          error(builder, noParameterMsg);
           builder.advanceLexer();
           continue;
         }
         else {
           invalidElements = builder.mark();
-          errorMessage = commaExpected ? JavaErrorMessages.message("expected.comma") : JavaErrorMessages.message("expected.parameter");
+          errorMessage = delimiterExpected ? noDelimiterMsg : noParameterMsg;
         }
       }
 
@@ -533,14 +550,14 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunctiveType) {
+  public static PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunction, final boolean value) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
     int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
     if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
-    if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
+    if (disjunction) flags |= ReferenceParser.DISJUNCTIONS;
     final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseTypeInfo(builder, flags);
 
     if (typeInfo == null) {
@@ -555,15 +572,23 @@ public class DeclarationParser {
     }
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
-      eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, JavaErrorMessages.message("expected.rparen"));
-      done(param, JavaElementType.PARAMETER);
-      return param;
+      eatBrackets(builder, typeInfo != null && typeInfo.isVarArg || value, JavaErrorMessages.message("expected.rparen"));
+      if (value) {
+        if (expectOrError(builder, JavaTokenType.EQ, JavaErrorMessages.message("expected.eq"))) {
+          if (ExpressionParser.parse(builder) == null) {
+            error(builder, JavaErrorMessages.message("expected.expression"));
+          }
+        }
+      }
     }
     else {
       error(builder, JavaErrorMessages.message("expected.identifier"));
       param.drop();
       return modListInfo.first;
     }
+
+    done(param, JavaElementType.PARAMETER);
+    return param;
   }
 
   @Nullable

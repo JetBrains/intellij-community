@@ -64,4 +64,12 @@ public interface PsiTryStatement extends PsiStatement {
    */
   @Nullable
   PsiCodeBlock getFinallyBlock();
+
+  /**
+   * Returns a resource list of try-with-resources statement.
+   *
+   * @return resource list, or null if the statement doesn't have it.
+   */
+  @Nullable
+  PsiParameterList getResourceList();
 }

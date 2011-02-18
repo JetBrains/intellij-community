@@ -1,0 +1,18 @@
+PsiJavaFile:TryIncomplete14.java
+  PsiTryStatement
+    PsiKeyword:try('try')
+    PsiParameterList:(R)
+      PsiJavaToken:LPARENTH('(')
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:R
+        PsiJavaCodeReferenceElement:R
+          PsiIdentifier:R('R')
+          PsiReferenceParameterList
+            <empty list>
+      PsiErrorElement:Identifier expected
+        <empty list>
+      PsiJavaToken:RPARENTH(')')
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiJavaToken:RBRACE('}')

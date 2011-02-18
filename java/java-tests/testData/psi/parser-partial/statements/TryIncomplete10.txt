@@ -1,0 +1,10 @@
+PsiJavaFile:TryIncomplete10.java
+  PsiTryStatement
+    PsiKeyword:try('try')
+    PsiParameterList:(
+      PsiJavaToken:LPARENTH('(')
+      PsiErrorElement:')' expected
+        <empty list>
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiJavaToken:RBRACE('}')
