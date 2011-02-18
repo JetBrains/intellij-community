@@ -27,7 +27,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.apache.velocity.runtime.parser.TemplateParseException;
+import org.apache.velocity.runtime.parser.ParseException;
 
 import javax.swing.*;
 
@@ -58,7 +58,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
         return psiFile;
       }
     }
-    catch (TemplateParseException e) {
+    catch (ParseException e) {
       Messages.showErrorDialog(dir.getProject(), "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
       return null;
     }
