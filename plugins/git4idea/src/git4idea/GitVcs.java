@@ -164,6 +164,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myIndexChangeListener = new RepositoryChangeListener(myProject, ".git/index");
   }
 
+
+  public BackgroundTaskQueue getTaskQueue() {
+    return myTaskQueue;
+  }
+
   public GitVFSListener getVFSListener() {
     return myVFSListener;
   }
