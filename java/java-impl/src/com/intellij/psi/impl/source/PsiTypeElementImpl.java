@@ -104,7 +104,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         }
         else {
           final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
-          if (typeElements.size() < 2) LOG.error("Incorrect nested type: " + this);
           final List<PsiType> types = ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
               @Override public PsiType fun(final PsiTypeElement psiTypeElement) { return psiTypeElement.getType(); }
           });
