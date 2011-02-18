@@ -237,9 +237,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   private void setModifierPropertyInternal(String name, boolean doSet) {
     if (doSet) {
-      final ASTNode modifierNode = GroovyPsiElementFactory.getInstance(getProject()).createModifierFromText(name).getNode();
+      PsiElement modifier = GroovyPsiElementFactory.getInstance(getProject()).createModifierFromText(name);
       PsiElement anchor = findAnchor(name);
-      addInternal(modifierNode, modifierNode, anchor == null ? null : anchor.getNode(), false);
+      addAfter(modifier, anchor);
     }
     else {
       final PsiElement[] modifiers = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
@@ -247,6 +247,13 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
         if (name.equals(modifier.getText())) {
           deleteChildRange(modifier, modifier);
           break;
+        }
+      }
+
+      if (getTextLength() == 0) {
+        final PsiElement nextSibling = getNextSibling();
+        if (nextSibling != null && GroovyTokenTypes.WHITE_SPACES_SET.contains(nextSibling.getNode().getElementType())) {
+          nextSibling.delete();
         }
       }
     }
