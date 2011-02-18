@@ -904,7 +904,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
-    if (myEditor == null) return;
     printHyperlink(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
   }
 
