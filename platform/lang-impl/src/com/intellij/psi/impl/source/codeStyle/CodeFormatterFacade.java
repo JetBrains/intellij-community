@@ -36,7 +36,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -189,9 +188,7 @@ public class CodeFormatterFacade {
                                                                          project, mySettings, file.getFileType(), file);
 
           FormatterEx formatter = FormatterEx.getInstanceEx();
-          if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
-            formatter.setProgressIndicator(new FormattingProgressIndicatorImpl(project, file, document));
-          }
+          formatter.setProgressIndicator(new FormattingProgressIndicatorImpl(project, file, document));
           formatter.format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();

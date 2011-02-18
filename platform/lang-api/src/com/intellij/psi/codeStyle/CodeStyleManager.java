@@ -216,20 +216,4 @@ public abstract class CodeStyleManager  {
    *                                     the file is read-only).
    */
   public abstract void reformatNewlyAddedElement(@NotNull final ASTNode block, @NotNull final ASTNode addedElement) throws IncorrectOperationException;
-
-  /**
-   * Formatting may be executed sequentially, i.e. the whole (re)formatting task is split into a number of smaller sub-tasks
-   * that are executed sequentially. That is done primarily for ability to show progress dialog during formatting (formatting
-   * is always performed from EDT, hence, the GUI freezes if we perform formatting as a single big iteration).
-   * <p/>
-   * However, there are situation when we don't want to use such an approach - for example, IntelliJ IDEA sometimes inserts dummy
-   * text into file in order to calculate formatting-specific data and removes it after that. We don't want to allow Swing events
-   * dispatching during that in order to not show that dummy text to the end-user.
-   * <p/>
-   * It's possible to configure that (implementation details are insignificant here) and current method serves as a read-only
-   * facade for obtaining information if 'sequential' processing is allowed at the moment.
-   * 
-   * @return      <code>true</code> if 'sequential' formatting is allowed now; <code>false</code> otherwise
-   */
-  public abstract boolean isSequentialProcessingAllowed();
 }
