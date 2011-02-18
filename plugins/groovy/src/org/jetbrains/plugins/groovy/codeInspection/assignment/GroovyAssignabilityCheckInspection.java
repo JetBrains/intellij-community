@@ -277,7 +277,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
           String message = GroovyBundle.message("method.call.is.ambiguous");
           PsiElement elementToHighlight = PsiUtil.getArgumentsList(referenceExpression);
-          if (elementToHighlight == null) elementToHighlight = referenceExpression;
+          if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = referenceExpression;
           registerError(elementToHighlight, message);
         }
       }
