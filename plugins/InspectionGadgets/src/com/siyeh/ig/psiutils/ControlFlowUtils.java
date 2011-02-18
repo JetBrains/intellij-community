@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowUtils{
 
-    private ControlFlowUtils(){
-        super();
-    }
+    private ControlFlowUtils(){}
 
     public static boolean statementMayCompleteNormally(
             @Nullable PsiStatement statement){
@@ -503,6 +501,67 @@ public class ControlFlowUtils{
         return !codeBlockMayCompleteNormally(body);
     }
 
+    public static boolean statementContainsNakedBreak(PsiStatement statement){
+        if(statement == null){
+            return false;
+        }
+        final NakedBreakFinder breakFinder = new NakedBreakFinder();
+        statement.accept(breakFinder);
+        return breakFinder.breakFound();
+    }
+
+    private static class NakedBreakFinder
+            extends JavaRecursiveElementWalkingVisitor{
+
+        private boolean m_found = false;
+
+        public boolean breakFound(){
+            return m_found;
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+            if (m_found) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
+        @Override public void visitReferenceExpression(
+                PsiReferenceExpression expression){
+        }
+
+        @Override public void visitBreakStatement(PsiBreakStatement statement){
+            if(statement.getLabelIdentifier() != null){
+                return;
+            }
+            m_found = true;
+        }
+
+        @Override public void visitDoWhileStatement(
+                PsiDoWhileStatement statement){
+            // don't drill down
+        }
+
+        @Override public void visitForStatement(PsiForStatement statement){
+            // don't drill down
+        }
+
+        @Override
+        public void visitForeachStatement(PsiForeachStatement statement) {
+            // don't drill down
+        }
+
+        @Override public void visitWhileStatement(PsiWhileStatement statement){
+            // don't drill down
+        }
+
+        @Override public void visitSwitchStatement(
+                PsiSwitchStatement statement){
+            // don't drill down
+        }
+    }
+
     private static class SystemExitFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
@@ -599,7 +658,6 @@ public class ControlFlowUtils{
         private String m_label = null;
 
         private ContinueFinder(@NotNull PsiStatement target){
-            super();
             if(target.getParent() instanceof PsiLabeledStatement){
                 final PsiLabeledStatement labeledStatement =
                         (PsiLabeledStatement) target.getParent();
@@ -694,8 +752,12 @@ public class ControlFlowUtils{
             this.parameterTypeNames = parameterTypeNames;
         }
 
-        public boolean containsCallToMethod() {
-            return containsCallToMethod;
+        @Override
+        public void visitElement(PsiElement element) {
+            if (containsCallToMethod) {
+                return;
+            }
+            super.visitElement(element);
         }
 
         @Override public void visitMethodCallExpression(
@@ -710,6 +772,10 @@ public class ControlFlowUtils{
             }
             containsCallToMethod = true;
         }
+
+        public boolean containsCallToMethod() {
+            return containsCallToMethod;
+        }
     }
 
     private static class ContinueToAncestorFinder
@@ -720,6 +786,14 @@ public class ControlFlowUtils{
 
         public ContinueToAncestorFinder(PsiStatement statement) {
             this.statement = statement;
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+            if (found) {
+                return;
+            }
+            super.visitElement(element);
         }
 
         @Override
