@@ -32,6 +32,11 @@ public class JavaIdentifier extends LightIdentifier {
     myElement = element;
   }
 
+  @Override
+  public boolean isValid() {
+    return myElement.isValid();
+  }
+
   public TextRange getTextRange() {
     return myElement.getTextRange();
   }
