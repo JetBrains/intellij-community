@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
+  public static final String COMMAND_NAME = CodeInsightBundle.message("progress.reformat.code.prepare");
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
-  private static final String COMMAND_NAME = CodeInsightBundle.message("progress.reformat.code.prepare");
 
   private final OptimizeImportsProcessor myOptimizeImportsProcessor;
   private final ReformatCodeProcessor myReformatCodeProcessor;
