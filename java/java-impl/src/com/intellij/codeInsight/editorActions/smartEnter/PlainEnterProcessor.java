@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,30 +33,39 @@ import com.intellij.psi.*;
 public class PlainEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
+    EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
     if (block != null) {
       PsiElement firstElement = block.getFirstBodyElement();
-      if (firstElement == null) firstElement = block.getRBrace();
+      if (firstElement == null) {
+        firstElement = block.getRBrace();
+        // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with 
+        // the empty braces block. So, we get the following in case of default handler usage:
+        //     Before:
+        //         if (condition[caret]) {}
+        //     After:
+        //         if (condition) {}
+        //             [caret]
+        enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_ENTER);
+      }
       editor.getCaretModel().moveToOffset(firstElement != null ?
                                           firstElement.getTextRange().getStartOffset() :
                                           block.getTextRange().getEndOffset());
     }
 
-    getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());
+    enterHandler.execute(editor, ((EditorEx)editor).getDataContext());
     return true;
   }
 
-  private EditorActionHandler getEnterHandler() {
-    EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-        IdeActions.ACTION_EDITOR_START_NEW_LINE
-    );
-    return enterHandler;
+  private static EditorActionHandler getEnterHandler(String actionId) {
+    return EditorActionManager.getInstance().getActionHandler(actionId);
   }
 
-  private PsiCodeBlock getControlStatementBlock(int caret, PsiElement element) {
+  @Nullable
+  private static PsiCodeBlock getControlStatementBlock(int caret, PsiElement element) {
     PsiStatement body = null;
     if (element instanceof PsiIfStatement) {
       body =  ((PsiIfStatement)element).getThenBranch();
-      if (caret > body.getTextRange().getEndOffset()) {
+      if (body != null && caret > body.getTextRange().getEndOffset()) {
         body = ((PsiIfStatement)element).getElseBranch();
       }
     }
