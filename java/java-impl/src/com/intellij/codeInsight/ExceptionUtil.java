@@ -338,9 +338,9 @@ public class ExceptionUtil {
 
   @NotNull
   private static List<PsiClassType> getUnhandledExceptions(PsiMethod method,
-                                                       PsiElement element,
-                                                       PsiElement topElement,
-                                                       PsiSubstitutor substitutor) {
+                                                           PsiElement element,
+                                                           PsiElement topElement,
+                                                           PsiSubstitutor substitutor) {
     if (method == null || isArrayClone(method, element)) {
       return Collections.emptyList();
     }
@@ -443,6 +443,9 @@ public class ExceptionUtil {
     else if (parent instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)parent;
       if (tryStatement.getTryBlock() == element && isCaught(tryStatement, exceptionType)) {
+        return true;
+      }
+      if (tryStatement.getResourceList() == element && isCaught(tryStatement, exceptionType)) {
         return true;
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();

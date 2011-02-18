@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 30, 2002
- */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -60,6 +55,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author cdr
+ * Date: Jul 30, 2002
+ */
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
@@ -857,10 +856,19 @@ public class HighlightUtil {
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiCatchSection)) return null;
 
+    final Set<PsiClassType> thrownTypes = Sets.newHashSet();
+
     final PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
     final PsiCodeBlock tryBlock = statement.getTryBlock();
     assert tryBlock != null : statement;
-    final Collection<PsiClassType> thrownTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+    thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
+
+    final PsiParameterList resources = statement.getResourceList();
+    if (resources != null) {
+      thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(resources, resources));
+    }
+
+    // todo: add exceptions from resource's close() method
 
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
