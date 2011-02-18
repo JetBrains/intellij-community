@@ -1246,7 +1246,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (items.size() > maxAutopopupItems) {
         final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
         if (StringUtil.isNotEmpty(ctrlSpace)) {
-          final String moreText = ctrlSpace + " for more";
+          final String moreText = ctrlSpace + " for more  ";
           final JLabel moreLabel = new JLabel(moreText);
           moreLabel.setFont(moreLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
           ad.add(moreLabel, BorderLayout.WEST);
@@ -1256,7 +1256,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final String tab = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
       if (StringUtil.isNotEmpty(tab)) {
         final String enter = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
-        String message = tab + (isFocused() ? ", " + enter : "") + " for the first item";
+        String message = "  " + tab + (isFocused() ? ", " + enter : "") + " for the first item";
         final JLabel fstLabel = new JLabel(message);
         fstLabel.setFont(fstLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
         ad.add(fstLabel, BorderLayout.EAST);
