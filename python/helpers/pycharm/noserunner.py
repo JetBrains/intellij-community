@@ -59,7 +59,19 @@ def process_args():
     config.configure(argv)
     config.plugins.loadPlugins()
 
-    TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
+    ind = [argv.index(x) for x in argv if x.startswith('--processes')]
+    if ind:
+      processes = argv.pop(ind[0]).split('=')[-1]
+      ind_timeout = [argv.index(x) for x in argv if x.startswith('--process-timeout')]
+      if ind_timeout:
+          timeout = argv.pop(ind_timeout[0]).split('=')[-1]
+      else:
+          timeout = 10
+      from nose_multiprocess import MultiProcessTeamcityNoseRunner
+      TestProgram(argv=argv, testRunner=MultiProcessTeamcityNoseRunner(verbosity=config.verbosity, config=config, processes=processes,
+                                                                       timeout=timeout))
+    else:
+      TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
 
 if __name__ == "__main__":
   process_args()
