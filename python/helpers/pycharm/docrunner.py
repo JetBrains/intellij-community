@@ -27,7 +27,12 @@ class TeamcityDocTestResult(TeamcityTestResult):
       return name
 
     def getTestId(self, test):
-        return "file://" + self.current_suite.filename + ":" + str( self.current_suite.lineno + test.lineno)
+        file = os.path.realpath(self.current_suite.filename)
+        return "file://" + file + ":" + str( self.current_suite.lineno + test.lineno)
+
+    def getSuiteLocation(self):
+      file = os.path.realpath(self.current_suite.filename)
+      return "file://" + file + ":" + str(self.current_suite.lineno)
 
     def startTest(self, test):
         setattr(test, "startTime", datetime.datetime.now())
@@ -36,7 +41,7 @@ class TeamcityDocTestResult(TeamcityTestResult):
 
     def startSuite(self, suite):
         self.current_suite = suite
-        self.messages.testSuiteStarted(suite.name)
+        self.messages.testSuiteStarted(suite.name, location=self.getSuiteLocation())
 
     def stopSuite(self, suite):
         self.messages.testSuiteFinished(suite.name)
