@@ -410,6 +410,15 @@ public class FindUtil {
   }
 
   public static boolean replace(Project project, Editor editor, int offset, FindModel model) {
+    return replace(project, editor, offset, model, new ReplaceDelegate() {
+      @Override
+      public boolean shouldReplace(TextRange range, String replace) {
+        return true;
+      }
+    });
+  }
+
+  public static boolean replace(Project project, Editor editor, int offset, FindModel model, ReplaceDelegate delegate) {
     Document document = editor.getDocument();
 
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -423,7 +432,7 @@ public class FindUtil {
       ((DocumentEx) document).setInBulkUpdate(true);
     }
     try {
-      toPrompt = doReplace(project, editor, model, document, offset, toPrompt);
+      toPrompt = doReplace(project, editor, model, document, offset, toPrompt, delegate);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -438,7 +447,8 @@ public class FindUtil {
     return true;
   }
 
-  private static boolean doReplace(Project project, Editor editor, FindModel model, final Document document, int caretOffset, boolean toPrompt) {
+  private static boolean doReplace(Project project, Editor editor, FindModel model, final Document document, int caretOffset,
+                                   boolean toPrompt, ReplaceDelegate delegate) {
     FindManager findManager = FindManager.getInstance(project);
     model = (FindModel)model.clone();
     int occurrences = 0;
@@ -517,7 +527,11 @@ public class FindUtil {
           TextRange range = pair.getFirst();
           String replace = pair.getSecond();
           newText.append(text, offsetBefore, range.getStartOffset()); //before change
-          newText.append(replace);
+          if (delegate.shouldReplace(range, replace)) {
+            newText.append(replace);
+          } else {
+            newText.append(text.subSequence(range.getStartOffset(), range.getEndOffset()));
+          }
           offsetBefore = range.getEndOffset();
           if (offsetBefore < caretOffset) {
             caretOffset += replace.length() - range.getLength();
@@ -760,5 +774,9 @@ public class FindUtil {
     LogicalPosition pos = editor.offsetToLogicalPosition(offset);
     editor.getCaretModel().moveToLogicalPosition(pos);
     editor.getScrollingModel().scrollToCaret(scrollType);
+  }
+
+  public interface ReplaceDelegate {
+    boolean shouldReplace(TextRange range, String replace) ;
   }
 }

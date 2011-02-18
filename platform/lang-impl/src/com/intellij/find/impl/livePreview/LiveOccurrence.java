@@ -1,4 +1,4 @@
-package com.intellij.find.impl;
+package com.intellij.find.impl.livePreview;
 
 import com.intellij.openapi.util.TextRange;
 
@@ -33,5 +33,10 @@ public class LiveOccurrence {
       }
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return myPrimaryRange.hashCode();
   }
 }

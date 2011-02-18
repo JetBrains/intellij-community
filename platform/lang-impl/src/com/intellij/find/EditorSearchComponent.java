@@ -21,9 +21,10 @@ package com.intellij.find;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.find.impl.LiveOccurrence;
-import com.intellij.find.impl.LivePreview;
-import com.intellij.find.impl.LivePreviewControllerBase;
+import com.intellij.find.impl.livePreview.LiveOccurrence;
+import com.intellij.find.impl.livePreview.LivePreview;
+import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
+import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,8 +69,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class EditorSearchComponent extends JPanel implements DataProvider, LivePreview.CursorListener, SelectionListener {
-  private static final int MATCHES_LIMIT = 100;
+public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener {
+  private static final int MATCHES_LIMIT = 10000;
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
@@ -95,51 +95,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
   private final JCheckBox myCbInComments;
   private final JCheckBox myCbInLiterals;
 
-  private final LivePreviewControllerBase myLivePreviewController = new LivePreviewControllerBase() {
-    @Override
-    public void getFocusBack() {
-      mySearchField.requestFocus();
-    }
-
-    @Override
-    public Editor getEditor(Ref<Boolean> needToUpdate) {
-      needToUpdate.set(true);
-      return myEditor;
-    }
-
-    @Override
-    public void searchEndsWith(int count) {
-      if (count <= getMatchesLimit()) {
-        myClickToHighlightLabel.setVisible(false);
-
-        if (count > 0) {
-          setRegularBackground();
-          if (count > 1) {
-            myMatchInfoLabel.setText(count + " matches");
-          }
-          else {
-            myMatchInfoLabel.setText("1 match");
-          }
-        }
-        else {
-          setNotFoundBackground();
-          myMatchInfoLabel.setText("No matches");
-        }
-      }
-      else {
-        setRegularBackground();
-        myMatchInfoLabel.setText("More than 100 matches");
-        myClickToHighlightLabel.setVisible(true);
-        boldMatchInfo();
-      }
-    }
-  };
+  private final LivePreviewControllerBase myLivePreviewController;
   private final LivePreview myLivePreview;
 
 
   private boolean myIsReplace;
   private boolean myListeningSelection = false;
   private boolean myToChangeSelection = true;
+  private SearchResults mySearchResults;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -153,12 +116,71 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     this(e, p, false);
   }
 
+  @Override
+  public void searchResultsUpdated(SearchResults sr) {
+    int count = sr.getActualFound();
+    if (mySearchField.getText().isEmpty()) {
+      nothingToSearchFor();
+      return;
+    }
+
+    if (count <= mySearchResults.getMatchesLimit()) {
+      myClickToHighlightLabel.setVisible(false);
+
+      if (count > 0) {
+        setRegularBackground();
+        if (count > 1) {
+          myMatchInfoLabel.setText(count + " matches");
+        }
+        else {
+          myMatchInfoLabel.setText("1 match");
+        }
+      }
+      else {
+        setNotFoundBackground();
+        myMatchInfoLabel.setText("No matches");
+      }
+    }
+    else {
+      setRegularBackground();
+      myMatchInfoLabel.setText("More than " + mySearchResults.getMatchesLimit() + " matches");
+      myClickToHighlightLabel.setVisible(true);
+      boldMatchInfo();
+    }
+
+    updateSelection();
+  }
+
+  @Override
+  public void cursorMoved() {
+    updateSelection();
+  }
+
+  private void updateSelection() {
+    if (myToChangeSelection && (mySelectionOnly == null || !mySelectionOnly.isSelected())) {
+      LiveOccurrence cursor = mySearchResults.getCursor();
+      if (cursor != null) {
+        TextRange range = cursor.getPrimaryRange();
+        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+
+        myEditor.getCaretModel().moveToOffset(range.getEndOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+        myEditor.getCaretModel().moveToOffset(range.getStartOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+      myToChangeSelection = false;
+    }
+  }
+
+  @Override
+  public void editorChanged(SearchResults sr, Editor oldEditor) {  }
+
   public EditorSearchComponent(final Editor editor, final Project project, boolean isReplace) {
     super(new BorderLayout(0, 0));
 
     myIsReplace = isReplace;
 
-    setMatchesLimit(MATCHES_LIMIT);
 
     GRADIENT_C1 = getBackground();
     GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18), Math.max(0, GRADIENT_C1.getBlue() - 0x18));
@@ -166,9 +188,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     myProject = project;
     myEditor = editor;
 
-    myLivePreview = new LivePreview(myEditor.getProject(), 0);
-    myLivePreview.addCursorListener(this);
-    myLivePreview.setDelegate(myLivePreviewController);
+    mySearchResults = new SearchResults(myEditor);
+    myLivePreview = new LivePreview(mySearchResults);
+
+    myLivePreviewController = new LivePreviewControllerBase(mySearchResults, myLivePreview) {
+      @Override
+      public void getFocusBack() {
+        mySearchField.requestFocus();
+      }
+    };
+    mySearchResults.addListener(this);
+    setMatchesLimit(MATCHES_LIMIT);
+
 
     JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
@@ -338,7 +369,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
   }
 
   private void setMatchesLimit(int value) {
-    myLivePreviewController.setMatchesLimit(value);
+    mySearchResults.setMatchesLimit(value);
   }
 
   private void configureReplacementPane() {
@@ -484,24 +515,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
   }
 
   @Override
-  public void cursorMoved() {
-    if (myToChangeSelection && (mySelectionOnly == null || !mySelectionOnly.isSelected())) {
-      LiveOccurrence cursor = myLivePreview.getCursor();
-      if (cursor != null) {
-        TextRange range = cursor.getPrimaryRange();
-        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-
-        myEditor.getCaretModel().moveToOffset(range.getEndOffset());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-
-        myEditor.getCaretModel().moveToOffset(range.getStartOffset());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      }
-      myToChangeSelection = false;
-    }
-  }
-
-  @Override
   public void selectionChanged(SelectionEvent e) {
     updateResults(true);
   }
@@ -509,9 +522,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
   public void moveCursor(boolean forwardOrBackward) {
     myToChangeSelection = true;
     if (forwardOrBackward) {
-      myLivePreview.nextOccurrence();
+      mySearchResults.nextOccurrence();
     } else {
-      myLivePreview.prevOccurrence();
+      mySearchResults.prevOccurrence();
     }
   }
 
@@ -555,7 +568,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     myEditor.getDocument().addDocumentListener(myDocumentListener);
 
     if (myLivePreview != null) {
-      myLivePreview.update();
+      myLivePreviewController.updateInBackground(mySearchResults.getFindModel());
     }
   }
 
@@ -576,12 +589,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
     myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.PLAIN));
     final String text = mySearchField.getText();
     if (text.length() == 0) {
-      setRegularBackground();
-      myMatchInfoLabel.setText("");
-      myClickToHighlightLabel.setVisible(false);
-      if (myLivePreview != null) {
-        myLivePreview.cleanUp();
-      }
+      nothingToSearchFor();
     }
     else {
       final FindModel model = new FindModel();
@@ -628,9 +636,17 @@ public class EditorSearchComponent extends JPanel implements DataProvider, LiveP
         model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
       }
       myToChangeSelection = allowedToChangedEditorSelection;
-      myLivePreviewController.setFindModel(model);
-      myLivePreview.update();
 
+      myLivePreviewController.updateInBackground(model);
+    }
+  }
+
+  private void nothingToSearchFor() {
+    setRegularBackground();
+    myMatchInfoLabel.setText("");
+    myClickToHighlightLabel.setVisible(false);
+    if (myLivePreview != null) {
+      myLivePreview.cleanUp();
     }
   }
 
