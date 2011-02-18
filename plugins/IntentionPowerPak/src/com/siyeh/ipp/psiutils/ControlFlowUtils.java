@@ -171,16 +171,17 @@ public class ControlFlowUtils{
         return breakFinder.breakFound();
     }
 
-    public static boolean statementContainsExitingBreak(PsiStatement statement){
+    public static boolean statementContainsNakedBreak(PsiStatement statement){
         if(statement == null){
             return false;
         }
-        final ExitingBreakFinder breakFinder = new ExitingBreakFinder();
+        final NakedBreakFinder breakFinder = new NakedBreakFinder();
         statement.accept(breakFinder);
         return breakFinder.breakFound();
     }
 
-    private static class BreakTargetFinder extends JavaRecursiveElementWalkingVisitor{
+    private static class BreakTargetFinder
+            extends JavaRecursiveElementWalkingVisitor{
 
         private boolean m_found = false;
         private final PsiStatement m_target;
@@ -218,7 +219,7 @@ public class ControlFlowUtils{
         }
     }
 
-    private static class ExitingBreakFinder
+    private static class NakedBreakFinder
             extends JavaRecursiveElementWalkingVisitor{
 
         private boolean m_found = false;
@@ -235,7 +236,8 @@ public class ControlFlowUtils{
             super.visitElement(element);
         }
 
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(
+                PsiReferenceExpression expression){
         }
 
         @Override public void visitBreakStatement(PsiBreakStatement statement){
@@ -245,7 +247,8 @@ public class ControlFlowUtils{
             m_found = true;
         }
 
-        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement){
+        @Override public void visitDoWhileStatement(
+                PsiDoWhileStatement statement){
             // don't drill down
         }
 
@@ -262,7 +265,8 @@ public class ControlFlowUtils{
             // don't drill down
         }
 
-        @Override public void visitSwitchStatement(PsiSwitchStatement statement){
+        @Override public void visitSwitchStatement(
+                PsiSwitchStatement statement){
             // don't drill down
         }
     }

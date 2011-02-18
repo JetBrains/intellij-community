@@ -49,7 +49,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         boolean breaksNeedRelabeled = false;
         PsiStatement breakTarget = null;
         String labelString = "";
-        if (ControlFlowUtils.statementContainsExitingBreak(ifStatement)) {
+        if (ControlFlowUtils.statementContainsNakedBreak(ifStatement)) {
             breakTarget = PsiTreeUtil.getParentOfType(ifStatement,
                     PsiLoopStatement.class, PsiSwitchStatement.class);
             if (breakTarget != null) {
@@ -62,23 +62,23 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                     breakTarget = labeledStatement;
                     breaksNeedRelabeled = true;
                 } else {
-                    labelString = CaseUtil.findUniqueLabelName(ifStatement,
+                    labelString = SwitchUtils.findUniqueLabelName(ifStatement,
                             "label");
                     breaksNeedRelabeled = true;
                 }
             }
         }
         final PsiIfStatement statementToReplace = ifStatement;
-        final PsiExpression caseExpression =
-                CaseUtil.getSwitchExpression(ifStatement);
-        assert caseExpression != null;
+        final PsiExpression switchExpression =
+                SwitchUtils.getSwitchExpression(ifStatement);
+        assert switchExpression != null;
 
         final List<IfStatementBranch> branches =
                 new ArrayList<IfStatementBranch>(20);
         while (true) {
             final PsiExpression condition = ifStatement.getCondition();
             final List<PsiExpression> labels =
-                    getValuesFromExpression(condition, caseExpression,
+                    getValuesFromExpression(condition, switchExpression,
                             new ArrayList());
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             final IfStatementBranch ifBranch =
@@ -127,7 +127,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         @NonNls final StringBuilder switchStatementText =
                 new StringBuilder();
         switchStatementText.append("switch(");
-        switchStatementText.append(caseExpression.getText());
+        switchStatementText.append(switchExpression.getText());
         switchStatementText.append(')');
         switchStatementText.append('{');
         for (IfStatementBranch branch : branches) {

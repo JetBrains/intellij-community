@@ -27,11 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class CaseUtil{
+class SwitchUtils {
 
-    private CaseUtil(){
-        super();
-    }
+    private SwitchUtils(){}
 
     private static boolean canBeCaseLabel(PsiExpression expression,
                                           LanguageLevel languageLevel){

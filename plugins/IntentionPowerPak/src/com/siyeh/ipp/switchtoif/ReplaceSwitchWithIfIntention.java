@@ -92,7 +92,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         final PsiStatement[] statements = body.getStatements();
         boolean renameBreaks = false;
         for (int i = 1; i < statements.length - 1; i++) {
-            if (ControlFlowUtils.statementContainsExitingBreak(statements[i])) {
+            if (ControlFlowUtils.statementContainsNakedBreak(statements[i])) {
                 renameBreaks = true;
                 break;
             }
@@ -164,7 +164,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         String breakLabel = null;
         if (renameBreaks) {
             breakLabel =
-                    CaseUtil.findUniqueLabelName(switchStatement, "label");
+                    SwitchUtils.findUniqueLabelName(switchStatement, "label");
             ifStatementText.append(breakLabel);
             ifStatementText.append(':');
         }
@@ -298,7 +298,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
             @NonNls StringBuilder ifStatementString) {
         ifStatementString.append('{');
         for (PsiLocalVariable variable : variables) {
-            if (CaseUtil.isUsedByStatementList(variable, bodyStatements)) {
+            if (SwitchUtils.isUsedByStatementList(variable, bodyStatements)) {
                 final PsiType varType = variable.getType();
                 ifStatementString.append(varType.getPresentableText());
                 ifStatementString.append(' ');

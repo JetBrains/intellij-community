@@ -40,6 +40,6 @@ class IfToSwitchPredicate implements PsiElementPredicate{
         if(ErrorUtil.containsError(statement)){
             return false;
         }
-        return CaseUtil.getSwitchExpression(statement) != null;
+        return SwitchUtils.getSwitchExpression(statement) != null;
     }
 }
