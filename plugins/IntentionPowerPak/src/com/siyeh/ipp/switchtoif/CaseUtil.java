@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.switchtoif;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
@@ -32,63 +33,25 @@ class CaseUtil{
         super();
     }
 
-    private static boolean canBeCaseLabel(PsiExpression expression){
+    private static boolean canBeCaseLabel(PsiExpression expression,
+                                          LanguageLevel languageLevel){
         if(expression == null){
             return false;
         }
-        if(expression instanceof PsiReferenceExpression){
+        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0
+                && expression instanceof PsiReferenceExpression){
             final PsiElement referent = ((PsiReference) expression).resolve();
             if(referent instanceof PsiEnumConstant){
                 return true;
             }
         }
         final PsiType type = expression.getType();
-        if(type == null){
-            return false;
-        }
-        if(!type.equals(PsiType.INT) &&
-                !type.equals(PsiType.CHAR) &&
-                !type.equals(PsiType.LONG) &&
-                !type.equals(PsiType.SHORT)){
-            return false;
-        }
-        return PsiUtil.isConstantExpression(expression);
-    }
-
-    public static boolean containsHiddenBreak(PsiStatement statement){
-        return containsHiddenBreak(statement, true);
-    }
-
-    private static boolean containsHiddenBreak(PsiStatement statement,
-                                               boolean isTopLevel){
-        if(statement instanceof PsiBlockStatement){
-            final PsiCodeBlock codeBlock =
-                    ((PsiBlockStatement) statement).getCodeBlock();
-            final PsiStatement[] statements = codeBlock.getStatements();
-            for(final PsiStatement childStatement : statements){
-                if(containsHiddenBreak(childStatement, false)){
-                    return true;
-                }
-            }
-        } else if(statement instanceof PsiIfStatement){
-            final PsiIfStatement ifStatement = (PsiIfStatement) statement;
-            final PsiStatement thenBranch = ifStatement.getThenBranch();
-            final PsiStatement elseBranch = ifStatement.getElseBranch();
-            return containsHiddenBreak(thenBranch, false) ||
-                    containsHiddenBreak(elseBranch, false);
-        } else if(statement instanceof PsiBreakStatement){
-            if(isTopLevel){
-                return false;
-            }
-            final PsiIdentifier identifier =
-                    ((PsiBreakStatement) statement).getLabelIdentifier();
-            if(identifier == null){
-                return true;
-            }
-            final String text = identifier.getText();
-            return "".equals(text);
-        }
-        return false;
+        return type != null &&
+                (type.equals(PsiType.INT) ||
+                        type.equals(PsiType.CHAR) ||
+                        type.equals(PsiType.LONG) ||
+                        type.equals(PsiType.SHORT)) &&
+                PsiUtil.isConstantExpression(expression);
     }
 
     public static boolean isUsedByStatementList(PsiLocalVariable variable,
@@ -109,17 +72,10 @@ class CaseUtil{
         return visitor.isUsed();
     }
 
-    public static String findUniqueLabel(PsiStatement statement,
-                                         @NonNls String baseName){
-        PsiElement ancestor = statement;
-        while(ancestor.getParent() != null){
-            if(ancestor instanceof PsiMethod
-                    || ancestor instanceof PsiClass
-                    || ancestor instanceof PsiFile){
-                break;
-            }
-            ancestor = ancestor.getParent();
-        }
+    public static String findUniqueLabelName(PsiStatement statement,
+                                             @NonNls String baseName){
+        final PsiElement ancestor =
+                PsiTreeUtil.getParentOfType(statement, PsiMember.class);
         if(!checkForLabel(baseName, ancestor)){
             return baseName;
         }
@@ -140,37 +96,35 @@ class CaseUtil{
     }
 
     @Nullable
-    public static PsiExpression getCaseExpression(PsiIfStatement statement){
+    public static PsiExpression getSwitchExpression(PsiIfStatement statement){
         final PsiExpression condition = statement.getCondition();
         final LanguageLevel languageLevel =
                 PsiUtil.getLanguageLevel(statement);
-        final boolean stringSwitch =
-                languageLevel.compareTo(LanguageLevel.JDK_1_7) >= 0;
-        final PsiExpression possibleCaseExpression =
-                determinePossibleCaseExpressions(condition, stringSwitch);
-        if(possibleCaseExpression == null){
+        final PsiExpression possibleSwitchExpression =
+                determinePossibleSwitchExpressions(condition, languageLevel);
+        if(possibleSwitchExpression == null){
             return null;
         }
-        if (SideEffectChecker.mayHaveSideEffects(possibleCaseExpression)) {
+        if (SideEffectChecker.mayHaveSideEffects(possibleSwitchExpression)) {
             return null;
         }
         while(true){
             final PsiExpression caseCondition = statement.getCondition();
-            if (!canBeMadeIntoCase(caseCondition, possibleCaseExpression,
-                    stringSwitch)) {
+            if (!canBeMadeIntoCase(caseCondition, possibleSwitchExpression,
+                    languageLevel)) {
                 break;
             }
             final PsiStatement elseBranch = statement.getElseBranch();
             if(!(elseBranch instanceof PsiIfStatement)){
-                return possibleCaseExpression;
+                return possibleSwitchExpression;
             }
             statement = (PsiIfStatement) elseBranch;
         }
         return null;
     }
 
-    private static PsiExpression determinePossibleCaseExpressions(
-            PsiExpression expression, boolean stringSwitch){
+    private static PsiExpression determinePossibleSwitchExpressions(
+            PsiExpression expression, LanguageLevel languageLevel){
         while(expression instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)expression;
@@ -179,9 +133,9 @@ class CaseUtil{
         if (expression == null) {
             return null;
         }
-        if (stringSwitch) {
+        if (languageLevel.compareTo(LanguageLevel.JDK_1_7) >= 0) {
             final PsiExpression jdk17Expression =
-                    determinePossibleStringCaseExpression(expression);
+                    determinePossibleStringSwitchExpression(expression);
             if (jdk17Expression != null) {
                 return jdk17Expression;
             }
@@ -196,18 +150,18 @@ class CaseUtil{
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
-            return determinePossibleCaseExpressions(lhs, stringSwitch);
+            return determinePossibleSwitchExpressions(lhs, languageLevel);
         } else if(operation.equals(JavaTokenType.EQEQ)){
-            if(canBeCaseLabel(lhs)){
+            if(canBeCaseLabel(lhs, languageLevel)){
                 return rhs;
-            } else if (canBeCaseLabel(rhs)){
+            } else if (canBeCaseLabel(rhs, languageLevel)){
                 return lhs;
             }
         }
         return null;
     }
 
-    private static PsiExpression determinePossibleStringCaseExpression(
+    private static PsiExpression determinePossibleStringSwitchExpression(
             PsiExpression expression) {
         if (!(expression instanceof PsiMethodCallExpression)) {
             return null;
@@ -216,7 +170,8 @@ class CaseUtil{
                 (PsiMethodCallExpression) expression;
         final PsiReferenceExpression methodExpression =
                 methodCallExpression.getMethodExpression();
-        final String referenceName = methodExpression.getReferenceName();
+        @NonNls final String referenceName =
+                methodExpression.getReferenceName();
         if (!"equals".equals(referenceName)) {
             return null;
         }
@@ -251,15 +206,15 @@ class CaseUtil{
 
     private static boolean canBeMadeIntoCase(
             PsiExpression expression, PsiExpression caseExpression,
-            boolean stringSwitch) {
+            LanguageLevel languageLevel) {
         while(expression instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)expression;
             expression = parenthesizedExpression.getExpression();
         }
-        if (stringSwitch) {
+        if (languageLevel.compareTo(LanguageLevel.JDK_1_7) >=0 ) {
             final PsiExpression stringCaseExpression =
-                    determinePossibleStringCaseExpression(expression);
+                    determinePossibleStringSwitchExpression(expression);
             if (EquivalenceChecker.expressionsAreEquivalent(caseExpression,
                     stringCaseExpression)) {
                 return true;
@@ -275,20 +230,17 @@ class CaseUtil{
         final PsiExpression lOperand = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
-            return canBeMadeIntoCase(lOperand, caseExpression, stringSwitch) &&
-                    canBeMadeIntoCase(rhs, caseExpression, stringSwitch);
+            return canBeMadeIntoCase(lOperand, caseExpression, languageLevel) &&
+                    canBeMadeIntoCase(rhs, caseExpression, languageLevel);
         } else if(operation.equals(JavaTokenType.EQEQ)){
-            if(canBeCaseLabel(lOperand) &&
-                    EquivalenceChecker.expressionsAreEquivalent(caseExpression,
-                                                                rhs)){
-                return true;
-            } else if(canBeCaseLabel(rhs) &&
-                    EquivalenceChecker.expressionsAreEquivalent(caseExpression,
-                                                                lOperand)){
-                return true;
-            }
-            return false;
-        } else{
+            return (canBeCaseLabel(lOperand, languageLevel) &&
+                    EquivalenceChecker.expressionsAreEquivalent(
+                            caseExpression, rhs))
+                    ||
+                    (canBeCaseLabel(rhs, languageLevel) &&
+                            EquivalenceChecker.expressionsAreEquivalent(
+                                    caseExpression, lOperand));
+        } else {
             return false;
         }
     }

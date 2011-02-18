@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.switchtoif;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -52,26 +53,27 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         PsiStatement breakTarget = null;
         String labelString = "";
         if (ControlFlowUtils.statementContainsExitingBreak(ifStatement)) {
-            // what a pain.
-            PsiElement ancestor = ifStatement.getParent();
-            while (ancestor != null) {
-                if (ancestor instanceof PsiForStatement ||
-                        ancestor instanceof PsiDoWhileStatement ||
-                        ancestor instanceof PsiWhileStatement ||
-                        ancestor instanceof PsiSwitchStatement) {
-                    breakTarget = (PsiStatement)ancestor;
-                    break;
-                }
-                ancestor = ancestor.getParent();
-            }
+            breakTarget = PsiTreeUtil.getParentOfType(ifStatement,
+                    PsiLoopStatement.class, PsiSwitchStatement.class);
             if (breakTarget != null) {
-                labelString = CaseUtil.findUniqueLabel(ifStatement, "Label");
-                breaksNeedRelabeled = true;
+                final PsiElement parent = breakTarget.getParent();
+                if (parent instanceof PsiLabeledStatement) {
+                    final PsiLabeledStatement labeledStatement =
+                            (PsiLabeledStatement) parent;
+                    labelString =
+                            labeledStatement.getLabelIdentifier().getText();
+                    breakTarget = labeledStatement;
+                    breaksNeedRelabeled = true;
+                } else {
+                    labelString = CaseUtil.findUniqueLabelName(ifStatement,
+                            "label");
+                    breaksNeedRelabeled = true;
+                }
             }
         }
         final PsiIfStatement statementToReplace = ifStatement;
         final PsiExpression caseExpression =
-                CaseUtil.getCaseExpression(ifStatement);
+                CaseUtil.getSwitchExpression(ifStatement);
         assert caseExpression != null;
 
         final List<IfStatementBranch> branches =
@@ -181,8 +183,10 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         final PsiElementFactory factory = psiFacade.getElementFactory();
         if (breaksNeedRelabeled) {
             final StringBuilder out = new StringBuilder();
-            out.append(labelString);
-            out.append(':');
+            if (!(breakTarget instanceof PsiLabeledStatement)) {
+                out.append(labelString);
+                out.append(':');
+            }
             termReplace(out, breakTarget, statementToReplace,
                     switchStatementText);
             final String newStatementText = out.toString();
@@ -271,8 +275,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         if (target.equals(replace)) {
             out.append(stringToReplaceWith);
         } else if (target.getChildren().length == 0) {
-            final String text = target.getText();
-            out.append(text);
+            out.append(target.getText());
         } else {
             final PsiElement[] children = target.getChildren();
             for (final PsiElement child : children) {
@@ -322,35 +325,36 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 }
             }
         } else if (expression instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenExpression =
+            final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)expression;
-            final PsiExpression contents = parenExpression.getExpression();
+            final PsiExpression contents =
+                    parenthesizedExpression.getExpression();
             getValuesFromExpression(contents, caseExpression, values);
         }
         return values;
     }
 
-    private static void dumpBranch(StringBuilder switchStatementString,
+    private static void dumpBranch(StringBuilder switchStatementText,
                                    List<String> comments,
                                    List<String> labels,
                                    List<String> statementComments,
                                    PsiStatement body,
                                    boolean wrap, boolean renameBreaks,
                                    String breakLabelName) {
-        dumpComments(switchStatementString, comments);
-        dumpLabels(switchStatementString, labels);
-        dumpComments(switchStatementString, statementComments);
-        dumpBody(switchStatementString, body, wrap, renameBreaks,
+        dumpComments(switchStatementText, comments);
+        dumpLabels(switchStatementText, labels);
+        dumpComments(switchStatementText, statementComments);
+        dumpBody(switchStatementText, body, wrap, renameBreaks,
                 breakLabelName);
     }
 
-    private static void dumpComments(StringBuilder switchStatementString,
+    private static void dumpComments(StringBuilder switchStatementText,
                                      List<String> comments) {
         if (!comments.isEmpty()) {
-            switchStatementString.append('\n');
+            switchStatementText.append('\n');
             for (String comment : comments) {
-                switchStatementString.append(comment);
-                switchStatementString.append('\n');
+                switchStatementText.append(comment);
+                switchStatementText.append('\n');
             }
         }
     }
@@ -367,21 +371,21 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 breakLabelName);
     }
 
-    private static void dumpLabels(@NonNls StringBuilder switchStatementString,
+    private static void dumpLabels(@NonNls StringBuilder switchStatementText,
                                    List<String> labels) {
         for (String label : labels) {
-            switchStatementString.append("case ");
-            switchStatementString.append(label);
-            switchStatementString.append(": ");
+            switchStatementText.append("case ");
+            switchStatementText.append(label);
+            switchStatementText.append(": ");
         }
     }
 
-    private static void dumpBody(@NonNls StringBuilder switchStatementString,
+    private static void dumpBody(@NonNls StringBuilder switchStatementText,
                                  PsiStatement bodyStatement, boolean wrap,
                                  boolean renameBreaks, String breakLabelName) {
         if (bodyStatement instanceof PsiBlockStatement) {
             if (wrap) {
-                appendElement(switchStatementString, bodyStatement,
+                appendElement(switchStatementText, bodyStatement,
                         renameBreaks, breakLabelName);
             } else {
                 final PsiCodeBlock codeBlock =
@@ -390,60 +394,55 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 //skip the first and last members, to unwrap the block
                 for (int i = 1; i < children.length - 1; i++) {
                     final PsiElement child = children[i];
-                    appendElement(switchStatementString, child, renameBreaks,
+                    appendElement(switchStatementText, child, renameBreaks,
                             breakLabelName);
                 }
             }
         } else {
             if (wrap) {
-                switchStatementString.append('{');
-                appendElement(switchStatementString, bodyStatement,
+                switchStatementText.append('{');
+                appendElement(switchStatementText, bodyStatement,
                         renameBreaks, breakLabelName);
-                switchStatementString.append('}');
+                switchStatementText.append('}');
             } else {
-                appendElement(switchStatementString, bodyStatement,
+                appendElement(switchStatementText, bodyStatement,
                         renameBreaks, breakLabelName);
             }
         }
         if (ControlFlowUtils.statementMayCompleteNormally(bodyStatement)) {
-            switchStatementString.append("break; ");
+            switchStatementText.append("break; ");
         }
     }
 
     private static void appendElement(
-            @NonNls StringBuilder switchStatementString,
+            @NonNls StringBuilder switchStatementText,
             PsiElement element, boolean renameBreakElements,
             String breakLabelString) {
         final String text = element.getText();
         if (!renameBreakElements) {
-            switchStatementString.append(text);
+            switchStatementText.append(text);
         } else if (element instanceof PsiBreakStatement) {
+            final PsiBreakStatement breakStatement =
+                    (PsiBreakStatement) element;
             final PsiIdentifier identifier =
-                    ((PsiBreakStatement)element).getLabelIdentifier();
+                    breakStatement.getLabelIdentifier();
             if (identifier == null) {
-                switchStatementString.append("break ");
-                switchStatementString.append(breakLabelString);
-                switchStatementString.append(';');
+                switchStatementText.append("break ");
+                switchStatementText.append(breakLabelString);
+                switchStatementText.append(';');
             } else {
-                final String identifierText = identifier.getText();
-                if ("".equals(identifierText)) {
-                    switchStatementString.append("break ");
-                    switchStatementString.append(breakLabelString);
-                    switchStatementString.append(';');
-                } else {
-                    switchStatementString.append(text);
-                }
+                switchStatementText.append(text);
             }
         } else if (element instanceof PsiBlockStatement ||
                 element instanceof PsiCodeBlock ||
                 element instanceof PsiIfStatement) {
             final PsiElement[] children = element.getChildren();
             for (final PsiElement child : children) {
-                appendElement(switchStatementString, child, renameBreakElements,
+                appendElement(switchStatementText, child, renameBreakElements,
                         breakLabelString);
             }
         } else {
-            switchStatementString.append(text);
+            switchStatementText.append(text);
         }
     }
 }

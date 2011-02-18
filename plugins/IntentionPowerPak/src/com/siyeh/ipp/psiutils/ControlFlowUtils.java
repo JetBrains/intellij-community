@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
  */
 package com.siyeh.ipp.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiUtil;
 
 public class ControlFlowUtils{
 
-    private ControlFlowUtils(){
-        super();
-    }
+    private ControlFlowUtils(){}
 
     public static boolean statementMayCompleteNormally(PsiStatement statement){
         if(statement instanceof PsiBreakStatement ||
@@ -40,8 +37,10 @@ public class ControlFlowUtils{
         } else if(statement instanceof PsiForStatement){
             final PsiForStatement loopStatement = (PsiForStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
-            return test != null && !isBooleanConstant(test, false) ||
+            return test != null && !isBooleanConstant(test, true) ||
                     statementIsBreakTarget(loopStatement);
+        } else if (statement instanceof PsiForeachStatement) {
+            return true;
         } else if(statement instanceof PsiWhileStatement){
             final PsiWhileStatement loopStatement =
                     (PsiWhileStatement) statement;
@@ -144,14 +143,23 @@ public class ControlFlowUtils{
         return true;
     }
 
-    private static boolean isBooleanConstant(PsiExpression test, boolean value){
-        if(!PsiUtil.isConstantExpression(test)){
+    private static boolean isBooleanConstant(PsiExpression expression,
+                                             boolean b){
+        if (expression == null) {
             return false;
         }
-        final Boolean constantValue =
-                (Boolean) ConstantExpressionUtil.computeCastTo(test,
-                                                               PsiType.BOOLEAN);
-        return constantValue != null && constantValue.booleanValue() == value;
+        final Project project = expression.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiConstantEvaluationHelper constantEvaluationHelper =
+                psiFacade.getConstantEvaluationHelper();
+        final Object value =
+                constantEvaluationHelper.computeConstantExpression
+                        (expression, false);
+        if (!(value instanceof Boolean)) {
+            return false;
+        }
+        final Boolean aBoolean = (Boolean) value;
+        return aBoolean.booleanValue() == b;
     }
 
     private static boolean statementIsBreakTarget(PsiStatement statement){
@@ -178,12 +186,19 @@ public class ControlFlowUtils{
         private final PsiStatement m_target;
 
         private BreakTargetFinder(PsiStatement target){
-            super();
             m_target = target;
         }
 
         public  boolean breakFound(){
             return m_found;
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+            if (m_found) {
+                return;
+            }
+            super.visitElement(element);
         }
 
         @Override public void visitReferenceExpression(
@@ -212,6 +227,14 @@ public class ControlFlowUtils{
             return m_found;
         }
 
+        @Override
+        public void visitElement(PsiElement element) {
+            if (m_found) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
         @Override public void visitReferenceExpression(PsiReferenceExpression expression){
         }
 
@@ -227,6 +250,11 @@ public class ControlFlowUtils{
         }
 
         @Override public void visitForStatement(PsiForStatement statement){
+            // don't drill down
+        }
+
+        @Override
+        public void visitForeachStatement(PsiForeachStatement statement) {
             // don't drill down
         }
 

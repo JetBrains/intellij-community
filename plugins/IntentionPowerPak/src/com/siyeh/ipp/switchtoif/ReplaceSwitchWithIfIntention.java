@@ -92,7 +92,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         final PsiStatement[] statements = body.getStatements();
         boolean renameBreaks = false;
         for (int i = 1; i < statements.length - 1; i++) {
-            if (CaseUtil.containsHiddenBreak(statements[i])) {
+            if (ControlFlowUtils.statementContainsExitingBreak(statements[i])) {
                 renameBreaks = true;
                 break;
             }
@@ -163,7 +163,8 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         final StringBuilder ifStatementText = new StringBuilder();
         String breakLabel = null;
         if (renameBreaks) {
-            breakLabel = CaseUtil.findUniqueLabel(switchStatement, "Label");
+            breakLabel =
+                    CaseUtil.findUniqueLabelName(switchStatement, "label");
             ifStatementText.append(breakLabel);
             ifStatementText.append(':');
         }
