@@ -81,7 +81,7 @@ class PyDBFrame:
             line = frame.f_lineno
 
             if event == 'exception' and info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
-                (exception, value, traceback) = arg
+                (exception, value, trace) = arg
                 global exception_set
 
                 exception_breakpoint = get_exception_breakpoint(exception, tuple(exception_set), NOTIFY_ALWAYS)

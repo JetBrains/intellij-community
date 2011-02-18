@@ -281,11 +281,9 @@ def build_searchable_options() {
     arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
 
     classpath() {
-      pathelement(location: "$ch/lib/junit.jar")
       project["python-ide"].runtimeClasspath().each {
         pathelement(location: it)
       }
-      pathelement(location: project.builder.moduleOutput(project["testFramework"]))  // contains headless implementation classes
     }
   }
 }

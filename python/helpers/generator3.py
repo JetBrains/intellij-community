@@ -26,7 +26,7 @@ but seemingly no one uses them in C extensions yet anyway.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2011, 02, 13, 1, 55, 0) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2011, 2, 17, 15, 30, 0) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -1432,18 +1432,19 @@ class ModuleRedeclarator(object):
         @param indent indentation level
         @param p_class the class that contains this function as a method
         @param p_modname module name
-        @param seen {func: name} map of functions already seen in the same namespace
+        @param seen {id(func): name} map of functions already seen in the same namespace;
+               id() because *some* functions are unhashable (eg _elementtree.Comment in py2.7)
         """
         action("redoing func %r of class %r", p_name, p_class)
         if seen is not None:
-            other_func = seen.get(p_func, None)
+            other_func = seen.get(id(p_func), None)
             if other_func and getattr(other_func, "__doc__", None) is getattr(p_func, "__doc__", None):
                 # _bisect.bisect == _bisect.bisect_right in py31, but docs differ
-                out(indent, p_name, " = ", seen[p_func])
+                out(indent, p_name, " = ", seen[id(p_func)])
                 out(indent, "")
                 return
             else:
-                seen[p_func] = p_name
+                seen[id(p_func)] = p_name
         # real work
         classname = p_class and p_class.__name__ or None
         if p_class and hasattr(p_class, '__mro__'):
@@ -1691,6 +1692,23 @@ class ModuleRedeclarator(object):
             out(0, "# from file " + self.module.__file__)
         self.outDocAttr(out, self.module, 0)
 
+
+    def redoImports(self):
+        module_type = type(sys)
+        for item_name in self.module.__dict__.keys():
+            try:
+                item = self.module.__dict__[item_name]
+            except:
+                continue
+            if isinstance(item, module_type):
+                self.imported_modules[item_name] = item
+                self.addImportHeaderIfNeeded()
+                ref_notice = getattr(item, "__file__", str(item))
+                if hasattr(item, "__name__"):
+                    self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
+                else:
+                    self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
+
     def addImportHeaderIfNeeded(self):
         if self.imports_buf.isEmpty():
             self.imports_buf.out(0, "")
@@ -1702,12 +1720,18 @@ class ModuleRedeclarator(object):
         Intended for built-in modules and thus does not handle import statements.
         @param p_name name of module
         """
-        action("redong module %r", p_name)
+        action("redoing module %r %r", p_name, str(self.module))
         self.redoSimpleHeader(p_name)
+
         # find whatever other self.imported_modules the module knows; effectively these are imports
+        try:
+            self.redoImports()
+        except:
+            pass
+
         module_type = type(sys)
         for item_name, item in self.module.__dict__.items():
-            if isinstance(item, module_type):
+            if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
                 self.imported_modules[item_name] = item
                 self.addImportHeaderIfNeeded()
                 ref_notice = getattr(item, "__file__", str(item))
@@ -1898,7 +1922,7 @@ class ModuleRedeclarator(object):
                 if names:
                     self._defined[mod_name] = True
                     right_pos = 0 # tracks width of list to fold it at right margin
-                    import_heading = "from % s import " % mod_name
+                    import_heading = "from % s import (" % mod_name
                     right_pos += len(import_heading)
                     names_pack = [import_heading]
                     indent_level = 0
@@ -1915,10 +1939,15 @@ class ModuleRedeclarator(object):
                             names_pack.append(n)
                             names_pack.append(", ")
                             right_pos += (len_n + 2)
-                    if names_pack: # last line
-                        self.imports_buf.out(indent_level, *names_pack[:-1]) # cut last comma
+                    # last line is...
+                    if indent_level == 0: # one line
+                        names_pack[0] = names_pack[0][:-1] # cut off lpar
+                        names_pack[-1] = "" # cut last comma
+                    else: # last line of multiline
+                        names_pack[-1] = ")" # last comma -> rpar
+                    self.imports_buf.out(indent_level, *names_pack)
 
-            self.imports_buf.out(0, "") # empty line after group
+                    self.imports_buf.out(0, "") # empty line after group
 
 
 def hasRegularPythonExt(name):
@@ -1959,7 +1988,7 @@ def redoModule(name, fname, imported_module_names):
     # sys.modules
     mod = sys.modules[name]
     if not mod:
-        sys.stderr.write("Failed to find imported module in sys.modules")
+        report("Failed to find imported module in sys.modules")
         #sys.exit(0)
 
     if update_mode and hasattr(mod, "__file__"):
@@ -2083,7 +2112,10 @@ if __name__ == "__main__":
             try:
                 __import__(name) # sys.modules will fill up with what we want
             except ImportError:
-                report("Name %r failed to import", name)
+                exctype, value = sys.exc_info()[:2]
+                report("Name %r failed to import: %r", name, str(value))
+                if debug_mode:
+                    sys.exit(1)
                 continue
 
             if my_finder:
@@ -2100,7 +2132,7 @@ if __name__ == "__main__":
                     # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
                     if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
                         if not quiet:
-                            sys.stdout.write(m + "\n")
+                            say(m)
                             sys.stdout.flush()
                         fname = buildOutputName(subdir, m)
                         redoModule(m, fname, imported_module_names)

@@ -137,7 +137,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
-    return superClasses.toArray(new PsiElement[superClasses.size()]);
+    return PsiUtilBase.toPsiElementArray(superClasses);
   }
 
   /* The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.

@@ -11,10 +11,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -94,7 +91,23 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       // qualifier's type must be module, it should know how to complete
       PyType type = qualifier.getType(TypeEvalContext.fast());
       if (type != null) {
-        return getTypeCompletionVariants(myElement, type);
+        Object[] variants = getTypeCompletionVariants(myElement, type);
+        if (!alreadyHasImportKeyword()) {
+          for (int i=0; i < variants.length; i+=1) {
+            Object item = variants[i];
+            if (item instanceof LookupElementBuilder) {
+              variants[i] = ((LookupElementBuilder)item).setInsertHandler(ImportKeywordHandler.INSTANCE);
+            }
+            else if (item instanceof PsiNamedElement) {
+              final PsiNamedElement element = (PsiNamedElement)item;
+              variants[i] = LookupElementBuilder
+                .create(element.getName()) // it can't really have null name
+                .setIcon(element.getIcon(0))
+                .setInsertHandler(ImportKeywordHandler.INSTANCE);
+            }
+          }
+        }
+        return variants;
       }
       else {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -105,6 +118,19 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       return new ImportVariantCollector().execute();
     }
   }
+
+  private boolean alreadyHasImportKeyword() {
+    ASTNode node = myElement.getNode();
+    while (node != null) {
+      final IElementType node_type = node.getElementType();
+      if (node_type == PyTokenTypes.IMPORT_KEYWORD) {
+        return true;
+      }
+      node = node.getTreeNext();
+    }
+    return false;
+  }
+
 
   class ImportVariantCollector {
     private final PsiFile myCurrentFile;
@@ -207,18 +233,6 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           fillFromDir((PsiDirectory)dir, insertHandler);
         }
       }
-    }
-
-    private boolean alreadyHasImportKeyword() {
-      ASTNode node = myElement.getNode();
-      while (node != null) {
-        final IElementType node_type = node.getElementType();
-        if (node_type == PyTokenTypes.IMPORT_KEYWORD) {
-          return true;
-        }
-        node = node.getTreeNext();
-      }
-      return false;
     }
 
     private void addImportedNames(@NotNull PyImportElement[] import_elts) {
