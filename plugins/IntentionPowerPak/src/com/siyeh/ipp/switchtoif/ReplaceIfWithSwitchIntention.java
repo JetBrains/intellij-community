@@ -22,16 +22,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
-import com.siyeh.ipp.psiutils.DeclarationUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class ReplaceIfWithSwitchIntention extends Intention {
 
@@ -79,25 +76,17 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         final List<IfStatementBranch> branches =
                 new ArrayList<IfStatementBranch>(20);
         while (true) {
-            final Set<String> topLevelVariables = new HashSet<String>(5);
-            final Set<String> innerVariables = new HashSet<String>(5);
             final PsiExpression condition = ifStatement.getCondition();
             final List<PsiExpression> labels =
                     getValuesFromExpression(condition, caseExpression,
                             new ArrayList());
             final PsiStatement thenBranch = ifStatement.getThenBranch();
-            DeclarationUtils.calculateVariablesDeclared(thenBranch,
-                    topLevelVariables,
-                    innerVariables,
-                    true);
-            final IfStatementBranch ifBranch = new IfStatementBranch();
+            final IfStatementBranch ifBranch =
+                    new IfStatementBranch(thenBranch, false);
             if (!branches.isEmpty()) {
                 extractIfComments(ifStatement, ifBranch);
             }
-            ifBranch.setInnerVariables(innerVariables);
-            ifBranch.setTopLevelVariables(topLevelVariables);
             extractStatementComments(thenBranch, ifBranch);
-            ifBranch.setStatement(thenBranch);
             for (final PsiExpression label : labels) {
                 if (label instanceof PsiReferenceExpression) {
                     final PsiReferenceExpression reference =
@@ -118,26 +107,18 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 }
             }
             branches.add(ifBranch);
-            final PsiStatement elseBranch = ifStatement.getElseBranch();
 
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
             if (elseBranch instanceof PsiIfStatement) {
                 ifStatement = (PsiIfStatement)elseBranch;
             } else if (elseBranch == null) {
                 break;
             } else {
-                final Set<String> elseTopLevelVariables = new HashSet<String>(5);
-                final Set<String> elseInnerVariables = new HashSet<String>(5);
-                DeclarationUtils.calculateVariablesDeclared(
-                        elseBranch, elseTopLevelVariables, elseInnerVariables,
-                        true);
-                final IfStatementBranch elseIfBranch = new IfStatementBranch();
+                final IfStatementBranch elseIfBranch =
+                        new IfStatementBranch(elseBranch, true);
                 final PsiKeyword elseKeyword = ifStatement.getElseElement();
                 extractIfComments(elseKeyword, elseIfBranch);
                 extractStatementComments(elseBranch, elseIfBranch);
-                elseIfBranch.setInnerVariables(elseInnerVariables);
-                elseIfBranch.setTopLevelVariables(elseTopLevelVariables);
-                elseIfBranch.setElse();
-                elseIfBranch.setStatement(elseBranch);
                 branches.add(elseIfBranch);
                 break;
             }
@@ -152,7 +133,10 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         for (IfStatementBranch branch : branches) {
             boolean hasConflicts = false;
             for (IfStatementBranch testBranch : branches) {
-                if (branch.topLevelDeclarationsConfictWith(testBranch)) {
+                if (branch == testBranch) {
+                    continue;
+                }
+                if (branch.topLevelDeclarationsConflictWith(testBranch)) {
                     hasConflicts = true;
                 }
             }
@@ -164,8 +148,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                         branch.getStatementComments();
                 dumpDefaultBranch(switchStatementText, comments,
                         branchStatement, statementComments,
-                        hasConflicts,
-                        breaksNeedRelabeled, labelString);
+                        hasConflicts, breaksNeedRelabeled, labelString);
             } else {
                 final List<String> conditions = branch.getConditions();
                 final List<String> comments = branch.getComments();
@@ -383,34 +366,29 @@ public class ReplaceIfWithSwitchIntention extends Intention {
     private static void dumpBody(@NonNls StringBuilder switchStatementText,
                                  PsiStatement bodyStatement, boolean wrap,
                                  boolean renameBreaks, String breakLabelName) {
+        if (wrap) {
+            switchStatementText.append('{');
+        }
         if (bodyStatement instanceof PsiBlockStatement) {
-            if (wrap) {
-                appendElement(switchStatementText, bodyStatement,
-                        renameBreaks, breakLabelName);
-            } else {
-                final PsiCodeBlock codeBlock =
-                        ((PsiBlockStatement)bodyStatement).getCodeBlock();
-                final PsiElement[] children = codeBlock.getChildren();
-                //skip the first and last members, to unwrap the block
-                for (int i = 1; i < children.length - 1; i++) {
-                    final PsiElement child = children[i];
-                    appendElement(switchStatementText, child, renameBreaks,
-                            breakLabelName);
-                }
+            final PsiCodeBlock codeBlock =
+                    ((PsiBlockStatement)bodyStatement).getCodeBlock();
+            final PsiElement[] children = codeBlock.getChildren();
+            //skip the first and last members, to unwrap the block
+            for (int i = 1; i < children.length - 1; i++) {
+                final PsiElement child = children[i];
+                appendElement(switchStatementText, child, renameBreaks,
+                        breakLabelName);
             }
         } else {
-            if (wrap) {
-                switchStatementText.append('{');
-                appendElement(switchStatementText, bodyStatement,
-                        renameBreaks, breakLabelName);
-                switchStatementText.append('}');
-            } else {
-                appendElement(switchStatementText, bodyStatement,
-                        renameBreaks, breakLabelName);
-            }
+            appendElement(switchStatementText, bodyStatement,
+                    renameBreaks, breakLabelName);
         }
-        if (ControlFlowUtils.statementMayCompleteNormally(bodyStatement)) {
-            switchStatementText.append("break; ");
+        if (ControlFlowUtils.statementMayCompleteNormally(
+                bodyStatement)) {
+            switchStatementText.append("break;");
+        }
+        if (wrap) {
+            switchStatementText.append('}');
         }
     }
 
