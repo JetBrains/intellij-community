@@ -57,10 +57,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final EditorFactory myEditorFactory;
   private FileDocumentManager myFileDocumentManager;
   private final FileEditorManagerEx myEditorManager;
-  private VirtualFileManager myVfManager;
-  private CommandProcessor myCmdProcessor;
-  private VirtualFileListener myFileListener;
-  private ToolWindowManager myToolWindowManager;
+  private final VirtualFileManager myVfManager;
+  private final CommandProcessor myCmdProcessor;
+  private final ToolWindowManager myToolWindowManager;
 
   private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
@@ -80,8 +79,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<VirtualFile>();
   private boolean myCurrentCommandHasMoves = false;
 
-  private DocumentListener myDocumentListener;
-  private CaretListener myCaretListener;
   private final CommandListener myCommandListener = new CommandAdapter() {
     public void commandStarted(CommandEvent event) {
       onCommandStarted();
@@ -94,12 +91,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
 
-  public IdeDocumentHistoryImpl(Project project,
-                                EditorFactory editorFactory,
-                                FileEditorManager editorManager,
-                                VirtualFileManager vfManager,
-                                CommandProcessor cmdProcessor,
-                                ToolWindowManager toolWindowManager) {
+  public IdeDocumentHistoryImpl(@NotNull Project project,
+                                @NotNull EditorFactory editorFactory,
+                                @NotNull FileEditorManager editorManager,
+                                @NotNull VirtualFileManager vfManager,
+                                @NotNull CommandProcessor cmdProcessor,
+                                @NotNull ToolWindowManager toolWindowManager) {
     myProject = project;
     myEditorFactory = editorFactory;
     myEditorManager = (FileEditorManagerEx)editorManager;
@@ -107,49 +104,41 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCmdProcessor = cmdProcessor;
     myToolWindowManager = toolWindowManager;
   }
-  public IdeDocumentHistoryImpl(Project project,
-                                EditorFactory editorFactory,
-                                FileEditorManager editorManager,
-                                VirtualFileManager vfManager,
-                                CommandProcessor cmdProcessor
-                                ) {
-    this(project, editorFactory, editorManager, vfManager, cmdProcessor, null);
-  }
 
   public final void projectOpened() {
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
-    myDocumentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         onDocumentChanged(e);
       }
     };
-    eventMulticaster.addDocumentListener(myDocumentListener);
+    eventMulticaster.addDocumentListener(documentListener, myProject);
 
-    myCaretListener = new CaretListener() {
+    CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         onCaretPositionChanged(e);
       }
     };
-    eventMulticaster.addCaretListener(myCaretListener);
+    eventMulticaster.addCaretListener(caretListener,myProject);
 
-    myEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
 
-    myFileListener = new VirtualFileAdapter() {
+    VirtualFileListener fileListener = new VirtualFileAdapter() {
       public void fileDeleted(VirtualFileEvent event) {
         onFileDeleted();
       }
     };
-    myVfManager.addVirtualFileListener(myFileListener);
-    myCmdProcessor.addCommandListener(myCommandListener);
+    myVfManager.addVirtualFileListener(fileListener,myProject);
+    myCmdProcessor.addCommandListener(myCommandListener,myProject);
   }
 
   public static class RecentlyChangedFilesState {
-    private @Transient List<String> CHANGED_PATHS = new ArrayList<String>();
+    @Transient private List<String> CHANGED_PATHS = new ArrayList<String>();
 
     public List<String> getChangedFiles() {
       return CHANGED_PATHS;
@@ -221,9 +210,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (selectedEditorWithProvider != null) {
       return createPlaceInfo(selectedEditorWithProvider.getFirst (), selectedEditorWithProvider.getSecond ());
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public final void onCommandFinished(Object commandGroupId) {
@@ -252,12 +239,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
 
   public final void projectClosed() {
-    EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
-    eventMulticaster.removeDocumentListener(myDocumentListener);
-    eventMulticaster.removeCaretListener(myCaretListener);
-
-    myVfManager.removeVirtualFileListener(myFileListener);
-    myCmdProcessor.removeCommandListener(myCommandListener);
   }
 
   public final void includeCurrentCommandAsNavigation() {

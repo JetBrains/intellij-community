@@ -27,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -254,7 +255,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
       if ( psiElements.size() != 0) {
-        return psiElements.toArray(new PsiElement[psiElements.size()]);
+        return PsiUtilBase.toPsiElementArray(psiElements);
       } else {
         return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
       }

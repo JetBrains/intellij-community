@@ -80,7 +80,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
             super.visitAntDomElement(element);
           }
         });
-        return variants.size() > 0? variants.toArray(new Object[variants.size()]) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return variants.size() > 0 ? ArrayUtil.toObjectArray(variants) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       public String getUnresolvedMessagePattern() {

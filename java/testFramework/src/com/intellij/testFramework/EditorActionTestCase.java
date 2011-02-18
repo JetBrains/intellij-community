@@ -46,7 +46,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
   }
 
   /**
-   * Perform action test using text before and after action perform. Useas &lt;caret&gt; marker where caret should be
+   * Perform action test using text before and after action perform. Uses &lt;caret&gt; marker where caret should be
    * placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt; denoting selection bounds.
    * @param fileName  name of the file. Mostly used to create proper instance of the PsiFile
    * @param textBefore  text with markers before action
@@ -68,7 +68,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
   }
 
   /**
-   * Same as doTextTest but texts are retreived from the data files.
+   * Same as doTextTest but texts are retrieved from the data files.
    * @param filePathBefore source file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param filePathAfter expected file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
@@ -78,7 +78,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
   }
 
   /**
-   * Same as doTextTest but texts are retreived from the data files.
+   * Same as doTextTest but texts are retrieved from the data files.
    * @param filePathBefore source file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param filePathAfter expected file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces  true if trailing spaces should be ignored.

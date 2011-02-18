@@ -16,6 +16,7 @@
 
 package com.intellij.facet.frameworks.beans;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -59,7 +60,7 @@ public class ArtifactItem {
   }
 
   public String[] getRequiredClasses() {
-    if (myRequiredClasses == null) return new String[0];
+    if (myRequiredClasses == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     
     final List<String> classes = ContainerUtil.mapNotNull(myRequiredClasses, new Function<RequiredClass, String>() {
       @Override
@@ -67,7 +68,7 @@ public class ArtifactItem {
         return requiredClass.getFqn();
       }
     });
-    
-    return classes.toArray(new String[classes.size()]);
+
+    return ArrayUtil.toStringArray(classes);
   }
 }

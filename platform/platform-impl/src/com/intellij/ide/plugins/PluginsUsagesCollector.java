@@ -30,8 +30,8 @@ public class PluginsUsagesCollector extends UsagesCollector {
   private static final String GROUP_ID = "disabled-plugins";
 
   @NotNull
-  public String getGroupId() {
-    return GROUP_ID;
+  public GroupDescriptor getGroupId() {
+    return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
   }
 
   @NotNull
@@ -39,7 +39,7 @@ public class PluginsUsagesCollector extends UsagesCollector {
     return ContainerUtil.map2Set(PluginManager.getDisabledPlugins(), new Function<String, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(String descriptor) {
-        return new UsageDescriptor(GroupDescriptor.create(getGroupId(), GroupDescriptor.HIGHER_PRIORITY), descriptor, 1);
+        return new UsageDescriptor(descriptor, 1);
       }
     });
   }

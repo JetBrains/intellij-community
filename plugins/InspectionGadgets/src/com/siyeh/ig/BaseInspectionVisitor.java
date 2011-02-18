@@ -16,6 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +168,13 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor{
             fix.setOnTheFly(onTheFly);
         }
         final String description = inspection.buildErrorString(infos);
-        holder.registerProblem(location, description, fixes);
+        TextRange range = inspection.getProblemTextRange(location);
+        if (range != null) {
+            holder.registerProblem(location, range, description, fixes);
+        }
+        else {
+            holder.registerProblem(location, description, fixes);
+        }
     }
 
     @NotNull

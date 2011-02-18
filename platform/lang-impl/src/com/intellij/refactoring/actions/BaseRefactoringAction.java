@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -215,7 +216,7 @@ public abstract class BaseRefactoringAction extends AnAction {
         filtered.remove(element);
       }
     }
-    return filtered == null ? psiElements : filtered.toArray(new PsiElement[filtered.size()]);
+    return filtered == null ? psiElements : PsiUtilBase.toPsiElementArray(filtered);
   }
 
 }

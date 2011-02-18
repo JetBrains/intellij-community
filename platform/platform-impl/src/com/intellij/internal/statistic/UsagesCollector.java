@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic;
 
+import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -28,5 +29,5 @@ public abstract class UsagesCollector {
 
   public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project);
 
-  public abstract @NotNull String getGroupId();
+  public abstract @NotNull GroupDescriptor getGroupId();
 }

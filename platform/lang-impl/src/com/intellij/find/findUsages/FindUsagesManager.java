@@ -49,6 +49,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -209,7 +210,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    return elements.toArray(new PsiElement[elements.size()]);
+    return PsiUtilBase.toPsiElementArray(elements);
   }
 
   private void initLastSearchElement(final FindUsagesOptions findUsagesOptions,

@@ -17,10 +17,6 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,6 +24,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,17 +34,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  * @author peter
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
-  public static final LightProjectDescriptor GROOVY_DESCRIPTOR = new LightProjectDescriptor() {
-    @Override
-    public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk17("java 1.5");
-    }
-
+  public static final LightProjectDescriptor GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();

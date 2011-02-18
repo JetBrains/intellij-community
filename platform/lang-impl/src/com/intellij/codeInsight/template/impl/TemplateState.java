@@ -79,7 +79,7 @@ public class TemplateState implements Disposable {
   private Map<String, String> myPredefinedVariableValues;
 
   private RangeMarker myTemplateRange = null;
-  private final ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
+  private final List<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
   private boolean ourLookupShown = false;
@@ -89,7 +89,7 @@ public class TemplateState implements Disposable {
 
   private CommandAdapter myCommandListener;
 
-  private List<TemplateEditingListener> myListeners = new ArrayList<TemplateEditingListener>();
+  private final List<TemplateEditingListener> myListeners = new ArrayList<TemplateEditingListener>();
   private DocumentAdapter myEditorDocumentListener;
   private final Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
@@ -245,15 +245,14 @@ public class TemplateState implements Disposable {
     myPrevTemplate = myTemplate;
     myTemplate = null;
     releaseEditor();
-    myTabStopHighlighters.clear();
   }
 
   private void releaseEditor() {
     if (myEditor != null) {
       for (RangeHighlighter segmentHighlighter : myTabStopHighlighters) {
-        myEditor.getMarkupModel().removeHighlighter(segmentHighlighter);
+        segmentHighlighter.dispose();
       }
-
+      myTabStopHighlighters.clear();
       myEditor = null;
     }
   }
@@ -963,7 +962,7 @@ public class TemplateState implements Disposable {
       final int segmentNumber = getCurrentSegmentNumber();
       RangeHighlighter newSegmentHighlighter = getSegmentHighlighter(segmentNumber, toSelect, false);
       if (newSegmentHighlighter != null) {
-        myEditor.getMarkupModel().removeHighlighter(segmentHighlighter);
+        segmentHighlighter.dispose();
         myTabStopHighlighters.set(myCurrentVariableNumber, newSegmentHighlighter);
       }
     }

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
         }
       }
 
-      if (!types.isEmpty()) return types.toArray(new PsiElement[types.size()]);
+      if (!types.isEmpty()) return PsiUtilBase.toPsiElementArray(types);
     }
 
     return null;

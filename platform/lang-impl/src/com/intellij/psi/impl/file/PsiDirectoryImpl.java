@@ -46,6 +46,7 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -181,7 +182,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         psiFiles.add(psiFile);
       }
     }
-    return psiFiles.toArray(new PsiFile[psiFiles.size()]);
+    return PsiUtilBase.toPsiFileArray(psiFiles);
   }
 
   public PsiDirectory findSubdirectory(@NotNull String name) {
@@ -234,7 +235,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
     });
 
-    return children.toArray(new PsiElement[children.size()]);
+    return PsiUtilBase.toPsiElementArray(children);
   }
 
   private void checkValid() {

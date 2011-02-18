@@ -27,8 +27,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author yole
  */
@@ -44,7 +42,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   @Override
-  public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
+  public PsiClass addClass(@NotNull @NonNls final String classText) {
     assertInitialized();
     final PsiClass psiClass = addClass(getTempDirPath(), classText);
     final VirtualFile file = psiClass.getContainingFile().getVirtualFile();

@@ -16,9 +16,4 @@ public class SurroundWithArrayFixTest extends LightQuickFix15TestCase {
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithArray";
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

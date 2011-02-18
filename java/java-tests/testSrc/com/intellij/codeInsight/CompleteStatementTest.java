@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorActionTestCase;
@@ -190,6 +191,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testIDEA25139() throws Exception {
     doTestBracesNextLineStyle();
+  }
+  
+  public void testBeforeIfRBrace() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    doTest();
   }
 
   private void doTestBracesNextLineStyle() throws Exception {

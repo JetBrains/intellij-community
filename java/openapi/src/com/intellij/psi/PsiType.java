@@ -61,7 +61,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
   }
 
   /**
-   * Returns text of this type that can be presented to user.
+   * @return text of this type that can be presented to user.
    */
   public abstract String getPresentableText();
 
@@ -79,7 +79,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
   public abstract boolean isValid();
 
   /**
-   * Checks whether values of type <code>type</code> can be assigned to rvalues of this type.
+   * @return true if values of type <code>type</code> can be assigned to rvalues of this type.
    */
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return TypeConversionUtil.isAssignable(this, type);

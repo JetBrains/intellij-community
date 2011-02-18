@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -112,7 +113,7 @@ public class GroovyInlineVariableUtil {
       exprs.add(ref.getElement());
     }
 
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(new PsiElement[exprs.size()]));
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, PsiUtilBase.toPsiElementArray(exprs));
     if (variable.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
       CommonRefactoringUtil.showErrorHint(variable.getProject(), editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
@@ -180,7 +181,7 @@ public class GroovyInlineVariableUtil {
     for (PsiReference ref : refs) {
       exprs.add(ref.getElement());
     }
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(new PsiElement[exprs.size()]));
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, PsiUtilBase.toPsiElementArray(exprs));
     if (refs.isEmpty()) {
       String message = GroovyRefactoringBundle.message("field.is.never.used.0", field.getName());
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);

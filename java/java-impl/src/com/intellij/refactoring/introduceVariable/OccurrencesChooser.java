@@ -157,9 +157,8 @@ public class OccurrencesChooser {
   }
 
   private void dropHighlighters() {
-    final MarkupModel markupModel = myEditor.getMarkupModel();
     for (RangeHighlighter highlight : myRangeHighlighters) {
-      markupModel.removeHighlighter(highlight);
+      highlight.dispose();
     }
     myRangeHighlighters.clear();
   }

@@ -88,7 +88,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
       if (element instanceof PsiBinaryExpression || element instanceof PsiAssignmentExpression) {
         List<PsiElement> operandList = new ArrayList<PsiElement>();
         collectOperands(element, operandList);
-        operands = operandList.toArray(new PsiElement[operandList.size()]);
+        operands = PsiUtilBase.toPsiElementArray(operandList);
         anchor = element;
       }
       else {

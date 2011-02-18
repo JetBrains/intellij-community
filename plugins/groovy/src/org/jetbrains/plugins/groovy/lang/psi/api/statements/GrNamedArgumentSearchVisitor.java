@@ -45,7 +45,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   }
 
   public String[] getResult() {
-    return myResult == null ? ArrayUtil.EMPTY_STRING_ARRAY : myResult.toArray(new String[myResult.size()]);
+    return myResult == null ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(myResult);
   }
 
   private void extractArguments(GrArgumentList argumentList) {

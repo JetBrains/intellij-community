@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -133,7 +134,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     }
     Project project = editor.getProject();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    PsiElement[] elements = sideEffects.toArray(new PsiElement[sideEffects.size()]);
+    PsiElement[] elements = PsiUtilBase.toPsiElementArray(sideEffects);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, null);

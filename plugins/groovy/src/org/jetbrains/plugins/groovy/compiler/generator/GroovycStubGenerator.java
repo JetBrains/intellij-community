@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +78,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       }
 
       if (!excluded.isExcluded(virtualFile)) {
-        if (fileType == GroovyFileType.GROOVY_FILE_TYPE && !"package-info".equals(virtualFile.getNameWithoutExtension())) {
+        if (fileType == GroovyFileType.GROOVY_FILE_TYPE && GroovyNamesUtil.isIdentifier(virtualFile.getNameWithoutExtension())) {
           total.add(virtualFile);
         }
       }

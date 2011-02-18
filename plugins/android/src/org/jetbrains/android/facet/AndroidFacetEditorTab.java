@@ -280,7 +280,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         result.add(FileUtil.toSystemDependentName(buildDirectory + '/' + AndroidFacet.getApkName(module)));
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private boolean isUnderModuleDir(VirtualFile vFile) {

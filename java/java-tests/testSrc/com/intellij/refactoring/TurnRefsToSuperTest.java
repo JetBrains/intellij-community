@@ -159,9 +159,4 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

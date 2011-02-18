@@ -44,6 +44,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
@@ -233,7 +234,7 @@ public abstract class ChooseByNameBase {
               result.add((PsiElement)element);
             }
           }
-          return result.toArray(new PsiElement[result.size()]);
+          return PsiUtilBase.toPsiElementArray(result);
         }
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {

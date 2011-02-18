@@ -429,7 +429,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       List<T> classes = myTreeClassChooserDialog.getClassesByName(name, checkBoxState, pattern, myTreeClassChooserDialog.getScope());
       if (classes.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
       if (classes.size() == 1) {
-        return isAccepted(classes.get(0)) ? classes.toArray(new Object[classes.size()]) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return isAccepted(classes.get(0)) ? ArrayUtil.toObjectArray(classes) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
       List<T> list = new ArrayList<T>(classes.size());
       for (T aClass : classes) {
@@ -437,7 +437,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
           list.add(aClass);
         }
       }
-      return list.toArray(new Object[list.size()]);
+      return ArrayUtil.toObjectArray(list);
     }
 
     @Nullable
@@ -530,7 +530,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
           myInheritorsProvider.getBaseClass().getName() != null) {
         names.add(myInheritorsProvider.getBaseClass().getName());
       }
-      return names.toArray(new String[names.size()]);
+      return ArrayUtil.toStringArray(names);
     }
 
 

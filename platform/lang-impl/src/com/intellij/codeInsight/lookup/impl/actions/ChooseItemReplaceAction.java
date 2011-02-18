@@ -44,7 +44,7 @@ public class ChooseItemReplaceAction extends EditorAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       assert lookup != null;
-      lookup.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+      lookup.finishLookup(lookup.isHintMode() ? Lookup.NORMAL_SELECT_CHAR : Lookup.REPLACE_SELECT_CHAR);
     }
 
     @Override

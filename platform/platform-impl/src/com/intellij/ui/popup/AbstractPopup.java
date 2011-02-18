@@ -16,7 +16,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.JBAwtEventQueue;
@@ -27,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -50,16 +48,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.openapi.ui.impl.ShadowBorderPainter.*;
 
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
@@ -196,7 +190,7 @@ public class AbstractPopup implements JBPopup {
 
     myProject = project;
     myComponent = component;
-    myPopupBorder = PopupBorder.Factory.create(true);
+    myPopupBorder = PopupBorder.Factory.create(true, showShadow);
     myShadowed = showShadow;
     myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
@@ -301,7 +295,7 @@ public class AbstractPopup implements JBPopup {
 
   @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
-    return new MyContentPanel(resizable, border, isToDrawMacCorner, myPaintShadow);
+    return new MyContentPanel(resizable, border, isToDrawMacCorner);
   }
 
   public static boolean isToDrawMacCorner() {
@@ -1030,40 +1024,15 @@ public class AbstractPopup implements JBPopup {
   public static class MyContentPanel extends JPanel {
     private final boolean myResizable;
     private final boolean myDrawMacCorner;
-    private final boolean myPaintShadow;
 
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
-      this(resizable, border, drawMacCorner, false);
-    }
-
-    public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner, boolean shadowed) {
       super(new BorderLayout());
       myResizable = resizable;
       myDrawMacCorner = drawMacCorner;
-      myPaintShadow = shadowed && !UISettings.isRemoteDesktopConnected();
-      if (myPaintShadow) {
-        setOpaque(false);
-        setBorder(new EmptyBorder(POPUP_TOP_SIZE, POPUP_SIDE_SIZE, POPUP_BOTTOM_SIZE, POPUP_SIDE_SIZE) {
-          @Override
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            border.paintBorder(c, g,
-                               x + POPUP_SIDE_SIZE - 1,
-                               y + POPUP_TOP_SIZE - 1,
-                               width - 2 * POPUP_SIDE_SIZE + 2,
-                               height - POPUP_TOP_SIZE - POPUP_BOTTOM_SIZE + 2);
-          }
-        });
-      }
-      else {
-        setBorder(border);
-      }
+      setBorder(border);
     }
 
     public void paint(Graphics g) {
-      if (myPaintShadow) {
-        paintShadow(g);
-      }
-
       super.paint(g);
 
       if (myResizable && myDrawMacCorner) {
@@ -1072,21 +1041,6 @@ public class AbstractPopup implements JBPopup {
                     getY() + getHeight() - ourMacCorner.getHeight(this),
                     this);
       }
-    }
-
-    private void paintShadow(final Graphics g) {
-      BufferedImage capture = null;
-      try {
-        final Point onScreen = getLocationOnScreen();
-        capture = new Robot().createScreenCapture(
-          new Rectangle(onScreen.x, onScreen.y, getWidth() + 2 * POPUP_SIDE_SIZE, getHeight() + POPUP_TOP_SIZE + POPUP_BOTTOM_SIZE));
-        final BufferedImage shadow = ShadowBorderPainter.createPopupShadow(this, getWidth(), getHeight());
-        ((Graphics2D)capture.getGraphics()).drawImage(shadow, null, null);
-      }
-      catch (Exception e) {
-        LOG.info(e);
-      }
-      if (capture != null) g.drawImage(capture, 0, 0, null);
     }
   }
 

@@ -70,7 +70,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
         }
 
       });
-      return files.toArray(new VirtualFile[files.size()]);
+      return VfsUtil.toVirtualFileArray(files);
     }
   };
 
@@ -205,7 +205,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     public VirtualFile[] getAllFiles(VirtualFile file, boolean compileTimeOnly) {
       Set<VirtualFile> result = new HashSet<VirtualFile>();
       getFilesRecursively(file, compileTimeOnly, result);
-      return result.toArray(new VirtualFile[result.size()]);
+      return VfsUtil.toVirtualFileArray(result);
     }
 
     private void getFilesRecursively(VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {

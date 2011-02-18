@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
@@ -67,7 +68,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("--max-count=" + useMaxCnt);
     }
 
-    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
+    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, ArrayUtil.toStringArray(parameters));
   }
 
   @Override
@@ -145,7 +146,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     GitHistoryUtils.historyWithLinks(myProject, new FilePathImpl(myRoot),
-                                       refs, consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
+                                     refs, consumer, isCanceled, ArrayUtil.toStringArray(parameters));
   }
 
   public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {

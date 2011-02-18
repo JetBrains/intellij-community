@@ -66,7 +66,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
         PsiClass[] classes = classOwner.getClasses();
         if (fileInRoots(file)) {
-          if (classes.length == 1 && !(classes[0] instanceof SyntheticElement)) {
+          if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&
+              (file == null || file.getNameWithoutExtension().equals(classes[0].getName()))) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));
           } else {
             result.add(new PsiClassOwnerTreeNode(classOwner, settings1));

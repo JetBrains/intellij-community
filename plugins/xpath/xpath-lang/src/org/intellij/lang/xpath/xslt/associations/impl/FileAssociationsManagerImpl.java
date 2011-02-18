@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.psi.util.PsiUtilBase;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -231,7 +232,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
               list.add(psiFile);
             }
           }
-          return list.toArray(new PsiFile[list.size()]);
+          return PsiUtilBase.toPsiFileArray(list);
         }
         else {
           return PsiFile.EMPTY_ARRAY;

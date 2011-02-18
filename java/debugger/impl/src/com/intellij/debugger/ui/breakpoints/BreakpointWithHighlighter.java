@@ -112,8 +112,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   protected Breakpoint init() {
-    if(!isValid()) {
-      getDocument().getMarkupModel(myProject).removeHighlighter(myHighlighter);
+    if (!isValid()) {
+      myHighlighter.dispose();
       return null;
     }
 
@@ -379,12 +379,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       if (highlighter != null) {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
-            if (highlighter.isValid()) {
-              MarkupModel markupModel = highlighter.getDocument().getMarkupModel(myProject);
-              markupModel.removeHighlighter(highlighter);
-              //we should delete it here, so gutter will not fire events to deleted breakpoint
-              BreakpointWithHighlighter.super.delete();
-            }
+            highlighter.dispose();
+            //we should delete it here, so gutter will not fire events to deleted breakpoint
+            BreakpointWithHighlighter.super.delete();
           }
         });
       }
@@ -461,13 +458,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
     
     if(!isValid()) {
-      oldDocument.getMarkupModel(myProject).removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
       myHighlighter = oldHighlighter;
       reload();
       return false;
     }
 
-    oldDocument.getMarkupModel(myProject).removeHighlighter(oldHighlighter);
+    oldHighlighter.dispose();
 
     DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
     updateUI();

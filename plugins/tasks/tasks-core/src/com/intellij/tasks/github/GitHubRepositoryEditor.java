@@ -20,6 +20,9 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
                                 Consumer<GitHubRepository> changeListener) {
     super(project, repository, changeListener);
 
+    myUrlLabel.setVisible(false);
+    myURLText.setVisible(false);
+
     // project author, by default same as username
     myRepoAuthor = new JTextField();
     myRepoAuthor.setText(repository.getRepoAuthor());

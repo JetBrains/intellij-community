@@ -574,16 +574,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                            HighlightInfo toAdd) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    stripWarningsCoveredByErrors(project, markup, toAdd);
+    stripWarningsCoveredByErrors(project, toAdd, markup.getDocument());
   }
 
-  private static void stripWarningsCoveredByErrors(Project project, MarkupModel markup, final HighlightInfo toAdd) {
+  private static void stripWarningsCoveredByErrors(Project project, final HighlightInfo toAdd, Document document) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     final Set<HighlightInfo> covered = new THashSet<HighlightInfo>();
 
     // either toAdd is warning and covered by one of errors in highlightsToSet or toAdd is an error and covers warnings in highlightsToSet or it is OK
     final boolean addingError = severityRegistrar.compare(HighlightSeverity.ERROR, toAdd.getSeverity()) <= 0;
-    boolean toAddIsVisible = processHighlights(markup.getDocument(), project, null, toAdd.getActualStartOffset(),
+    boolean toAddIsVisible = processHighlights(document, project, null, toAdd.getActualStartOffset(),
                                                toAdd.getActualEndOffset(), new Processor<HighlightInfo>() {
         public boolean process(HighlightInfo interval) {
           boolean isError = severityRegistrar.compare(HighlightSeverity.ERROR, interval.getSeverity()) <= 0;
@@ -595,12 +595,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       });
     if (!toAddIsVisible) {
       // toAdd is covered by
-      markup.removeHighlighter(toAdd.highlighter);
+      toAdd.highlighter.dispose();
     }
     for (HighlightInfo warning : covered) {
       RangeHighlighter highlighter = warning.highlighter;
       if (highlighter != null) {
-        markup.removeHighlighter(highlighter);
+        highlighter.dispose();
       }
     }
   }

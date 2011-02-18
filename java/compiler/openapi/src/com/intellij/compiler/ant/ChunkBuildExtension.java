@@ -20,6 +20,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +43,10 @@ public abstract class ChunkBuildExtension {
   }
 
   public void generateProperties(final PropertyFileGenerator generator, final Project project, final GenerationOptions options) {
+  }
+
+  public void generateTasksForArtifact(Artifact artifact, boolean preprocessing, Project project, GenerationOptions genOptions,
+                                       CompositeGenerator generator) {
   }
 
   public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {

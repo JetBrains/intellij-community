@@ -17,6 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.TokenType;
@@ -64,7 +65,7 @@ public class PsiBuilderQuickTest {
 
   @BeforeClass
   public static void setUp() {
-    if (ApplicationManagerEx.getApplication() == null) {
+    if (ApplicationManager.getApplication() == null) {
       if (myMockApp == null) {
         myMockApp = createMock(ApplicationEx.class);
         expect(myMockApp.isInternal()).andReturn(true);
@@ -466,7 +467,7 @@ public class PsiBuilderQuickTest {
            "  PsiElement(OTHER)('}')\n");
   }
 
-  private static abstract class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
+  private abstract static class MyLazyElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
     protected MyLazyElementType(@NonNls String debugName) {
       super(debugName, Language.ANY);
     }

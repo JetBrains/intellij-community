@@ -210,7 +210,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
-    PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
+    PsiElement[] elements = PsiUtilBase.toPsiElementArray(otherOccurrences);
     doHighlightElements(editor, elements, attributes, clearHighlights);
   }
 

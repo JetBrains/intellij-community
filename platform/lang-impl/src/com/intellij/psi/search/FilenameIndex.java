@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -82,7 +83,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
         result.add(psiFile);
       }
     }
-    return result.toArray(new PsiFile[result.size()]);
+    return PsiUtilBase.toPsiFileArray(result);
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {

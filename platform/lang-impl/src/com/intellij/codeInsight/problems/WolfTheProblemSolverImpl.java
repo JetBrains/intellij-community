@@ -183,7 +183,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private void clearInvalidFiles() {
     VirtualFile[] files;
     synchronized (myProblems) {
-      files = myProblems.keySet().toArray(new VirtualFile[myProblems.size()]);
+      files = VfsUtil.toVirtualFileArray(myProblems.keySet());
     }
     for (VirtualFile problemFile : files) {
       if (!problemFile.isValid() || !isToBeHighlighted(problemFile)) {

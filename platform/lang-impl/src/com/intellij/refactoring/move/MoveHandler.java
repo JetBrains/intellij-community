@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -110,7 +111,7 @@ public class MoveHandler implements RefactoringActionHandler {
         }
       }
       MoveFilesOrDirectoriesUtil
-        .doMove(project, filesOrDirs.toArray(new PsiElement[filesOrDirs.size()]), new PsiElement[]{targetContainer}, null);
+        .doMove(project, PsiUtilBase.toPsiElementArray(filesOrDirs), new PsiElement[]{targetContainer}, null);
       return;
     }
     doMove(project, elements, targetContainer, dataContext, null);

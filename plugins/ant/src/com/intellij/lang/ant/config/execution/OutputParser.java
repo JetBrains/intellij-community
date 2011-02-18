@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesOutputParser;
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -240,7 +240,7 @@ public class OutputParser{
     }
 
     com.intellij.compiler.OutputParser.Callback callback = new com.intellij.compiler.OutputParser.Callback() {
-      private int myIndex = 0;
+      private int myIndex = -1;
 
       @Nullable
       public String getCurrentLine() {
@@ -251,7 +251,16 @@ public class OutputParser{
       }
 
       public String getNextLine() {
-        return javacMessages.get(myIndex++);
+        final int next = myIndex + 1;
+        if (next >= javacMessages.size()) {
+          return null;
+        }
+        return javacMessages.get(myIndex = next);
+      }
+
+      @Override
+      public void pushBack(String line) {
+        myIndex--;
       }
 
       public void message(final CompilerMessageCategory category,

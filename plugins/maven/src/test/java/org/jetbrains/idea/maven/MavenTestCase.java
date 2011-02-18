@@ -384,7 +384,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createProfilesFile(createProjectSubDir(relativePath), xml, false);
   }
 
-  private VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
+  private static VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
     return createProfilesFile(dir, createValidProfiles(xml, oldStyle));
   }
 
@@ -396,7 +396,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createProfilesFile(createProjectSubDir(relativePath), content);
   }
 
-  private VirtualFile createProfilesFile(final VirtualFile dir, String content) throws IOException {
+  private static VirtualFile createProfilesFile(final VirtualFile dir, String content) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       f = new WriteAction<VirtualFile>() {
@@ -411,6 +411,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
+  @Language("XML")
   private static String createValidProfiles(String xml, boolean oldStyle) {
     if (oldStyle) {
       return "<?xml version=\"1.0\"?>" +
@@ -478,15 +479,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertEquals(expected, actual);
   }
 
-  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+  protected static <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertUnorderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected <T, U> void assertUnorderedElementsAreEqual(U[] actual, T... expected) {
+  protected static <T, U> void assertUnorderedElementsAreEqual(U[] actual, T... expected) {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
@@ -514,7 +515,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     for (int i = 0; i < expected.length; i++) {
       T expectedElement = expected[i];
       U actualElement = actualList.get(i);
-      assertTrue(s, expectedElement.equals(actualElement));
+      assertEquals(s, expectedElement, actualElement);
     }
   }
 
@@ -526,7 +527,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected static <T> void assertDoNotContain(List<T> actual, T... expected) {
     List<T> actualCopy = new ArrayList<T>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
-    assertTrue(actual.toString(), actualCopy.size() == actual.size());
+    assertEquals(actual.toString(), actualCopy.size(), actual.size());
   }
 
   protected boolean ignore() {

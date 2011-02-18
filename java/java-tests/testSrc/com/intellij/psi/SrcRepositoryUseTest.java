@@ -22,19 +22,17 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
 
+@PlatformTestCase.WrapInCommand
 public class SrcRepositoryUseTest extends PsiTestCase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SrcRepositoryUseTest");
   private static final Key<String> TEST_KEY = Key.create("TEST");
-
-  public SrcRepositoryUseTest() {
-    myRunCommandForTest = true;
-  }
 
   @Override
   protected void setUp() throws Exception {

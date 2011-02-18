@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -114,7 +115,7 @@ public class MockDomElementsEditor {
               }
             }
         }
-        new WriteCommandAction(project, changedFiles.toArray(new PsiFile[changedFiles.size()])) {
+        new WriteCommandAction(project, PsiUtilBase.toPsiFileArray(changedFiles)) {
           protected void run(Result result) throws Throwable {
             for (EditedElementDescription description : descriptions) {
               final DomElement editedElement = myDomElements.get(description);

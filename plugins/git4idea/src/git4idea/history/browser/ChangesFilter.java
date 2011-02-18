@@ -44,7 +44,7 @@ public class ChangesFilter {
     for (Filter filter : filters) {
       filter.getCommandParametersFilter().applyToCommandLine(strings);
     }
-    return strings.toArray(new String[strings.size()]);
+    return ArrayUtil.toStringArray(strings);
   }
 
   public abstract static class Merger {

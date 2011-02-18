@@ -23,6 +23,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -208,7 +209,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       }
     }
 
-    new WriteCommandAction(getProject(), files.toArray(new PsiFile[files.size()])) {
+    new WriteCommandAction(getProject(), PsiUtilBase.toPsiFileArray(files)) {
       protected void run(Result result) throws Throwable {
         for (final T t : toDelete) {
           if (t.isValid()) {

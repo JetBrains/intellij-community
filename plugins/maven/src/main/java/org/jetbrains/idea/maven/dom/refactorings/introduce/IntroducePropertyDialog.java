@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.StringLenComparator;
 import com.intellij.util.xml.DomElement;
@@ -164,7 +165,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     result = new ArrayList<String>(result);
     Collections.sort((List)result, CodeStyleSettingsManager.getSettings(myProject).PREFER_LONGER_NAMES ?
                                    StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static String joinWords(@NotNull String s, @NotNull String delimiter) {

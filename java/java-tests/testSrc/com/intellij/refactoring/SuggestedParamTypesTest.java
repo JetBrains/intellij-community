@@ -46,11 +46,6 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   public void testPostfixExprUsedAsOutput() throws Exception {
     doTest("byte");
   }

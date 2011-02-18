@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -314,7 +315,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false);
+            SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false);
           }
         });
       }
@@ -350,9 +351,10 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false, new Runnable() {
+            SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false, new Runnable() {
               public void run() {
-                QuickFixAction.removeElements(refElements.toArray(new RefElement[refElements.size()]), project, (InspectionTool)myProcessor);
+                QuickFixAction
+                  .removeElements(refElements.toArray(new RefElement[refElements.size()]), project, (InspectionTool)myProcessor);
               }
             });
           }

@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 
 public class PsiUtilBase {
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
@@ -615,5 +616,16 @@ public class PsiUtilBase {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
+    if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
+    return collection.toArray(new PsiElement[collection.size()]);
+  }
+  @NotNull
+  public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
+    if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
+    return collection.toArray(new PsiFile[collection.size()]);
   }
 }

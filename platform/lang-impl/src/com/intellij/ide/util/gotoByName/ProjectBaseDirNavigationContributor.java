@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
         }
       }
     }
-    return list.toArray(new PsiFile[list.size()]);
+    return PsiUtilBase.toPsiFileArray(list);
   }
 
   private static boolean isEditable(VirtualFile file, final boolean checkboxState) {

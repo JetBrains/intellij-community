@@ -109,11 +109,6 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
-  @Override
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);

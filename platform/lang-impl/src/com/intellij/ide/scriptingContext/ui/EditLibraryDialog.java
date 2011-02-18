@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBList;
@@ -416,11 +417,11 @@ public class EditLibraryDialog extends DialogWrapper {
           sourceFiles.add(file);
         }
       }
-      return sourceFiles.toArray(new VirtualFile[sourceFiles.size()]);
+      return VfsUtil.toVirtualFileArray(sourceFiles);
     }
 
     public VirtualFile[] getCompactFiles() {
-      return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
+      return VfsUtil.toVirtualFileArray(myCompactFiles);
     }
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
@@ -162,7 +163,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
     }
-    return elements.toArray(new PsiElement[elements.size()]);
+    return PsiUtilBase.toPsiElementArray(elements);
   }
 
 

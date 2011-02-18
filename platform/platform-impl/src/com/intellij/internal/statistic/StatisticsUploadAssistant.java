@@ -30,7 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,173 +38,204 @@ import java.util.*;
 
 public class StatisticsUploadAssistant {
 
-  public String getData() {
-    return getData(Collections.<String>emptySet());
-  }
+    public String getData() {
+        return getData(Collections.<String>emptySet());
+    }
 
-  public static boolean showNotification() {
-    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification();
-  }
+    public static boolean showNotification() {
+        return UsageStatisticsPersistenceComponent.getInstance().isShowNotification();
+    }
 
-  public static boolean isTimeToSend() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+    public static boolean isTimeToSend() {
+        if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
 
-    return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
-  }
+        return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
+    }
 
-  public static boolean isTimeToSend(UsageStatisticsPersistenceComponent settings) {
-    final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
+    public static boolean isTimeToSend(UsageStatisticsPersistenceComponent settings) {
+        final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
 
-    return Math.abs(timeDelta) > settings.getPeriod().getMillis();
-  }
+        return Math.abs(timeDelta) > settings.getPeriod().getMillis();
+    }
 
-  public static boolean isSendAllowed() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
+    public static boolean isSendAllowed() {
+        if (ApplicationManagerEx.getApplicationEx().isInternal()) return true; // todo remove
 
-    return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
-  }
+        return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
+    }
 
-  public static boolean isSendAllowed(final SentUsagesPersistence settings) {
-    return settings != null && settings.isAllowed();
-  }
+    public static boolean isSendAllowed(final SentUsagesPersistence settings) {
+        return settings != null && settings.isAllowed();
+    }
 
-  public static String getData(@NotNull Set<String> disabledGroups) {
-    return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
-  }
+    public static String getData(@NotNull Set<String> disabledGroups) {
+        return getStringPatch(disabledGroups, ProjectManager.getInstance().getOpenProjects());
+    }
 
-  public static void persistSentPatch(@NotNull String patchStr) {
-    persistSentPatch(patchStr, UsageStatisticsPersistenceComponent.getInstance());
-  }
+    public static void persistSentPatch(@NotNull String patchStr) {
+        persistSentPatch(patchStr, UsageStatisticsPersistenceComponent.getInstance());
+    }
 
-  public static void persistSentPatch(@NotNull String patchStr, @NotNull SentUsagesPersistence persistenceComponent) {
-    Set<PatchedUsage> patchedUsages =
-      ContainerUtil.map2Set(ConvertUsagesUtil.convertString(patchStr), new Function<UsageDescriptor, PatchedUsage>() {
-        @Override
-        public PatchedUsage fun(UsageDescriptor usageDescriptor) {
-          return new PatchedUsage(usageDescriptor);
+    public static void persistSentPatch(@NotNull String patchStr, @NotNull SentUsagesPersistence persistenceComponent) {
+        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = mapToPatchedUsagesMap(ConvertUsagesUtil.convertString(patchStr));
+
+        if (patchedUsages.size() > 0) persistenceComponent.persistPatch(patchedUsages);
+    }
+
+    @NotNull
+    public static String getStringPatch(@NotNull Set<String> disabledGroups, Project... project) {
+        return getStringPatch(disabledGroups, project, UsageStatisticsPersistenceComponent.getInstance(), 0);
+    }
+
+    @NotNull
+    public static String getStringPatch(@NotNull Set<String> disabledGroups,
+                                        @NotNull Project[] projects,
+                                        @NotNull SentUsagesPersistence usagesPersistence,
+                                        int maxSize) {
+        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = getPatchedUsages(disabledGroups, projects, usagesPersistence);
+
+        return getStringPatch(patchedUsages, maxSize);
+    }
+
+    public static String getStringPatch(@NotNull Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages, int maxSize) {
+        if (patchedUsages.size() == 0) return "";
+
+        String patchStr = ConvertUsagesUtil.convertUsages(patchedUsages);
+        if (maxSize > 0 && patchStr.getBytes().length > maxSize) {
+            patchStr = ConvertUsagesUtil.cutPatchString(patchStr, maxSize);
         }
-      });
 
-    if (patchedUsages.size() > 0) persistenceComponent.persistPatch(patchedUsages);
-  }
-
-  @NotNull
-  public static String getStringPatch(@NotNull Set<String> disabledGroups, Project... project) {
-    return getStringPatch(disabledGroups, project, UsageStatisticsPersistenceComponent.getInstance(), 0);
-  }
-
-  @NotNull
-  public static String getStringPatch(@NotNull Set<String> disabledGroups,
-                                      @NotNull Project[] projects,
-                                      @NotNull SentUsagesPersistence usagesPersistence,
-                                      int maxSize) {
-    final Set<PatchedUsage> patchedUsages = getPatchedUsages(disabledGroups, projects, usagesPersistence);
-
-    return getStringPatch(patchedUsages, maxSize);
-  }
-
-  public static String getStringPatch(@NotNull Set<PatchedUsage> patchedUsages, int maxSize) {
-    if (patchedUsages.size() == 0) return "";
-
-    String patchStr = ConvertUsagesUtil.convertUsages(patchedUsages);
-    if (maxSize > 0 && patchStr.getBytes().length > maxSize) {
-      patchStr = ConvertUsagesUtil.cutPatchString(patchStr, maxSize);
+        return patchStr;
     }
 
-    return patchStr;
-  }
+    @NotNull
+    public static Map<GroupDescriptor, Set<PatchedUsage>> getPatchedUsages(@NotNull Set<String> disabledGroups,
+                                                                           @NotNull Project[] projects,
+                                                                           @NotNull SentUsagesPersistence usagesPersistence) {
+        Map<GroupDescriptor, Set<PatchedUsage>> usages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
 
-  @NotNull
-  public static Set<PatchedUsage> getPatchedUsages(@NotNull Set<String> disabledGroups,
-                                                   @NotNull Project[] projects,
-                                                   @NotNull SentUsagesPersistence usagesPersistence) {
-    Set<PatchedUsage> usages = new HashSet<PatchedUsage>();
+        for (Project project : projects) {
+            final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = getAllUsages(project, disabledGroups);
+            final Map<GroupDescriptor, Set<UsageDescriptor>> sentUsages = filterDisabled(disabledGroups, usagesPersistence.getSentUsages());
 
-    for (Project project : projects) {
-      final Set<UsageDescriptor> allUsages = getAllUsages(project, disabledGroups);
-      final Set<UsageDescriptor> sentUsages = filterDisabled(disabledGroups, usagesPersistence.getSentUsages());
-
-      usages.addAll(getPatchedUsages(allUsages, sentUsages));
-    }
-    return usages;
-  }
-
-  private static Set<UsageDescriptor> filterDisabled(@NotNull Set<String> disabledGroups, @NotNull Set<UsageDescriptor> usages) {
-    Set<UsageDescriptor> filtered = new HashSet<UsageDescriptor>();
-
-    for (UsageDescriptor usage : usages) {
-      if (!disabledGroups.contains(usage.getGroup().getId())) {
-        filtered.add(usage);
-      }
-    }
-    return filtered;
-  }
-
-  @NotNull
-  public static Set<PatchedUsage> getPatchedUsages(@NotNull final Set<UsageDescriptor> allUsages,
-                                                   @NotNull SentUsagesPersistence usagesPersistence) {
-    return getPatchedUsages(allUsages, usagesPersistence.getSentUsages());
-  }
-
-  @NotNull
-  public static Set<PatchedUsage> getPatchedUsages(@NotNull final Set<UsageDescriptor> allUsages, final Set<UsageDescriptor> sentUsages) {
-    final Set<PatchedUsage> patchedUsages = ContainerUtil.map2Set(allUsages, new Function<UsageDescriptor, PatchedUsage>() {
-      @Override
-      public PatchedUsage fun(UsageDescriptor usageDescriptor) {
-        return new PatchedUsage(usageDescriptor);
-      }
-    });
-
-    for (UsageDescriptor sentUsage : sentUsages) {
-      final PatchedUsage descriptor = findDescriptor(patchedUsages, Pair.create(sentUsage.getGroup(), sentUsage.getKey()));
-      if (descriptor == null) {
-        patchedUsages.add(new PatchedUsage(sentUsage.getGroup(), sentUsage.getKey(), -sentUsage.getValue()));
-      }
-      else {
-        descriptor.subValue(sentUsage.getValue());
-      }
+            usages.putAll(getPatchedUsages(allUsages, sentUsages));
+        }
+        return usages;
     }
 
-    return packCollection(patchedUsages, new Condition<PatchedUsage>() {
-      @Override
-      public boolean value(PatchedUsage patchedUsage) {
-        return patchedUsage.getDelta() != 0;
-      }
-    });
-  }
+    @NotNull
+    private static Map<GroupDescriptor, Set<UsageDescriptor>> filterDisabled(@NotNull Set<String> disabledGroups, @NotNull Map<GroupDescriptor, Set<UsageDescriptor>> usages) {
+        Map<GroupDescriptor, Set<UsageDescriptor>> filtered = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
 
-  @NotNull
-  private static <T> Set<T> packCollection(@NotNull Collection<T> set, @NotNull Condition<T> condition) {
-    final Set<T> result = new LinkedHashSet<T>();
-    for (T t : set) {
-      if (condition.value(t)) {
-        result.add(t);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  public static <T extends UsageDescriptor> T findDescriptor(@NotNull Set<T> descriptors,
-                                                             @NotNull final Pair<GroupDescriptor, String> id) {
-    return ContainerUtil.find(descriptors, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return id.getFirst().equals(t.getGroup()) && id.getSecond().equals(t.getKey());
-      }
-    });
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> getAllUsages(@Nullable Project project, @NotNull Set<String> disabledGroups) {
-    final Set<UsageDescriptor> usageDescriptors = new TreeSet<UsageDescriptor>();
-
-    for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
-      if (!disabledGroups.contains(usagesCollector.getGroupId())) {
-        usageDescriptors.addAll(usagesCollector.getUsages(project));
-      }
+        for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> usage : usages.entrySet()) {
+            if (!disabledGroups.contains(usage.getKey().getId())) {
+                filtered.put(usage.getKey(), usage.getValue());
+            }
+        }
+        return filtered;
     }
 
-    return usageDescriptors;
-  }
+    @NotNull
+    public static Map<GroupDescriptor, Set<PatchedUsage>> getPatchedUsages(@NotNull final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages,
+                                                                           @NotNull SentUsagesPersistence usagesPersistence) {
+        return getPatchedUsages(allUsages, usagesPersistence.getSentUsages());
+    }
+
+    @NotNull
+    public static Map<GroupDescriptor, Set<PatchedUsage>> getPatchedUsages(@NotNull final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages, final Map<GroupDescriptor, Set<UsageDescriptor>> sentUsageMap) {
+        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = mapToPatchedUsagesMap(allUsages);
+
+        for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> sentUsageEntry : sentUsageMap.entrySet()) {
+            final GroupDescriptor sentUsageGroupDescriptor = sentUsageEntry.getKey();
+
+            final Set<UsageDescriptor> sentUsages = sentUsageEntry.getValue();
+
+            for (UsageDescriptor sentUsage : sentUsages) {
+                final PatchedUsage descriptor = findDescriptor(patchedUsages, Pair.create(sentUsageGroupDescriptor, sentUsage.getKey()));
+                if (descriptor == null) {
+                    if (!patchedUsages.containsKey(sentUsageGroupDescriptor)) {
+                        patchedUsages.put(sentUsageGroupDescriptor, new HashSet<PatchedUsage>());
+                    }
+                    patchedUsages.get(sentUsageGroupDescriptor).add(new PatchedUsage(sentUsage.getKey(), -sentUsage.getValue()));
+                } else {
+                    descriptor.subValue(sentUsage.getValue());
+                }
+            }
+
+        }
+
+        return packCollection(patchedUsages, new Condition<PatchedUsage>() {
+            @Override
+            public boolean value(PatchedUsage patchedUsage) {
+                return patchedUsage.getDelta() != 0;
+            }
+        });
+    }
+
+    private static Map<GroupDescriptor, Set<PatchedUsage>> mapToPatchedUsagesMap(Map<GroupDescriptor, Set<UsageDescriptor>> allUsages) {
+        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : allUsages.entrySet()) {
+            patchedUsages.put(entry.getKey(), ContainerUtil.map2Set(entry.getValue(), new Function<UsageDescriptor, PatchedUsage>() {
+                @Override
+                public PatchedUsage fun(UsageDescriptor usageDescriptor) {
+                    return new PatchedUsage(usageDescriptor);
+                }
+            }));
+        }
+        return patchedUsages;
+    }
+
+    @NotNull
+    private static Map<GroupDescriptor, Set<PatchedUsage>> packCollection(@NotNull Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages, Condition<PatchedUsage> condition) {
+        Map<GroupDescriptor, Set<PatchedUsage>> result = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        for (GroupDescriptor descriptor : patchedUsages.keySet()) {
+            final Set<PatchedUsage> usages = packCollection(patchedUsages.get(descriptor), condition);
+            if (usages.size() > 0) {
+                result.put(descriptor, usages);
+            }
+        }
+
+        return result;
+    }
+
+    @NotNull
+    private static <T> Set<T> packCollection(@NotNull Collection<T> set, @NotNull Condition<T> condition) {
+        final Set<T> result = new LinkedHashSet<T>();
+        for (T t : set) {
+            if (condition.value(t)) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
+    @Nullable
+    public static <T extends UsageDescriptor> T findDescriptor(@NotNull Map<GroupDescriptor, Set<T>> descriptors,
+                                                               @NotNull final Pair<GroupDescriptor, String> id) {
+        final Set<T> usages = descriptors.get(id.getFirst());
+        if (usages == null) return null;
+
+        return ContainerUtil.find(usages, new Condition<T>() {
+            @Override
+            public boolean value(T t) {
+                return id.getSecond().equals(t.getKey());
+            }
+        });
+    }
+
+    @NotNull
+    public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@Nullable Project project, @NotNull Set<String> disabledGroups) {
+        Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+
+        for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
+            final GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
+
+            if (!disabledGroups.contains(groupDescriptor.getId())) {
+                usageDescriptors.put(groupDescriptor, usagesCollector.getUsages(project));
+            }
+        }
+
+        return usageDescriptors;
+    }
+
 }

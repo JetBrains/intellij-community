@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
@@ -209,7 +210,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     if (visitorClass != null) {
       psiFiles.add(visitorClass.getContainingFile());
     }
-    new WriteCommandAction(project, psiFiles.toArray(new PsiFile[psiFiles.size()])) {
+    new WriteCommandAction(project, PsiUtilBase.toPsiFileArray(psiFiles)) {
       protected void run(final Result result) throws Throwable {
         if (visitorClass == null) {
           final String shortClassName = PsiNameHelper.getShortClassName(visitorName);

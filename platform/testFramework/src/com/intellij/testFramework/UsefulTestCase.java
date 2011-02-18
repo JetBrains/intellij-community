@@ -676,4 +676,24 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
   }
+
+  protected boolean annotatedWith(@NotNull Class annotationClass) {
+    Class aClass = getClass();
+    String methodName = "test" + getTestName(false);
+    boolean methodChecked = false;
+    while (aClass != null && aClass != Object.class) {
+      if (aClass.getAnnotation(annotationClass) != null) return true;
+      if (!methodChecked) {
+        try {
+          Method method = aClass.getDeclaredMethod(methodName);
+          if (method.getAnnotation(annotationClass) != null) return true;
+          methodChecked = true;
+        }
+        catch (NoSuchMethodException e) {
+        }
+      }
+      aClass = aClass.getSuperclass();
+    }
+    return false;
+  }
 }

@@ -46,12 +46,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     synchronized (PsiLock.LOCK) {
-      clone.clearCaches();
-
       clone.myNextSibling = null;
       clone.myPrevSibling = null;
       clone.myParent = null;
       clone.myStartOffsetInParent = -1;
+      clone.clearCaches();
     }
 
     return clone;

@@ -38,6 +38,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -262,7 +263,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       }
     }
     final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
-    final PsiElement[] candidates = set.toArray(new PsiElement[set.size()]);
+    final PsiElement[] candidates = PsiUtilBase.toPsiElementArray(set);
 
     final Object[] variants = new Object[candidates.length];
     for (int i = 0; i < candidates.length; i++) {

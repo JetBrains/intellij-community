@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
@@ -90,7 +91,7 @@ public class ImplementAbstractMethodHandler {
               }
             }
           }
-          result[0] = enumConstants.toArray(new PsiElement[enumConstants.size()]);
+          result[0] = PsiUtilBase.toPsiElementArray(enumConstants);
         }
       }
     }, CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);

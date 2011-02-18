@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,8 +28,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class VariableTypeFix implements IntentionAction {
+public class VariableTypeFix extends IntentionAndQuickFixAction {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
 
   private final PsiVariable myVariable;
@@ -39,8 +41,10 @@ public class VariableTypeFix implements IntentionAction {
     myReturnType = toReturn != null ? GenericsUtil.getVariableTypeByExpressionType(toReturn) : null;
   }
 
+
   @NotNull
-  public String getText() {
+  @Override
+  public String getName() {
     return QuickFixBundle.message("fix.variable.type.text",
                                   getVariable().getName(),
                                   getReturnType().getCanonicalText());
@@ -61,7 +65,8 @@ public class VariableTypeFix implements IntentionAction {
         && !TypeConversionUtil.isVoidType(getReturnType());
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(getVariable().getContainingFile())) return;
     try {
       getVariable().normalizeDeclaration();

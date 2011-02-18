@@ -54,6 +54,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -667,7 +668,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
 
-    return psiElements.toArray(new PsiElement[psiElements.size()]);
+    return PsiUtilBase.toPsiElementArray(psiElements);
   }
 
   private void popupInvoked(Component component, int x, int y) {

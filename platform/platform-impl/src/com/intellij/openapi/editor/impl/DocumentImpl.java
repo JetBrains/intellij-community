@@ -69,7 +69,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
   private volatile long myModificationStamp;
-  private final ConcurrentMap<Project, MarkupModel> myProjectToMarkupModelMap = new ConcurrentHashMap<Project, MarkupModel>();
+  private final ConcurrentMap<Project, MarkupModelImpl> myProjectToMarkupModelMap = new ConcurrentHashMap<Project, MarkupModelImpl>();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private volatile MarkupModelEx myMarkupModel;
@@ -630,13 +630,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myReadOnlyListeners.remove(listener);
   }
 
-  public void removeMarkupModel(Project project) {
-    MarkupModel model = myProjectToMarkupModelMap.remove(project);
-    if (model != null) {
-      ((MarkupModelEx)model).dispose();
-    }
-  }
-
   @NotNull
   public MarkupModel getMarkupModel(Project project) {
     return getMarkupModel(project, true);
@@ -651,7 +644,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private final Object lock = new Object();
-  public MarkupModel getMarkupModel(@Nullable Project project, boolean create) {
+  public MarkupModel getMarkupModel(@Nullable final Project project, boolean create) {
     if (project == null) {
       MarkupModelEx markupModel = myMarkupModel;
       if (create && markupModel == null) {
@@ -665,19 +658,26 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return markupModel;
     }
 
-    final DocumentMarkupModelManager documentMarkupModelManager = project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
-    if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed()) {
+    if (project.isDisposed()) {
       return new EmptyMarkupModel(this);
     }
 
-    MarkupModel model = myProjectToMarkupModelMap.get(project);
+    MarkupModelImpl model = myProjectToMarkupModelMap.get(project);
     if (create && model == null) {
       synchronized (lock) {
         model = myProjectToMarkupModelMap.get(project);
         if (model == null) {
           model = new MarkupModelImpl(this);
           myProjectToMarkupModelMap.put(project, model);
-          documentMarkupModelManager.registerDocument(this);
+          Disposer.register(project, new Disposable() {
+            @Override
+            public void dispose() {
+              MarkupModelImpl removed = myProjectToMarkupModelMap.remove(project);
+              if (removed != null) {
+                removed.dispose();
+              }
+            }
+          });
         }
       }
     }
@@ -763,13 +763,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void normalizeRangeMarkers() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myRangeMarkers.normalize();
 
     MarkupModel model = getMarkupModel(null, false);
     if (model != null) ((MarkupModelImpl)model).normalize();
 
-    for (MarkupModel markupModel : myProjectToMarkupModelMap.values()) {
-      ((MarkupModelImpl)markupModel).normalize();
+    for (MarkupModelImpl markupModel : myProjectToMarkupModelMap.values()) {
+      markupModel.normalize();
     }
   }
 

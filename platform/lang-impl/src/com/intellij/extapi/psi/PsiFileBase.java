@@ -22,7 +22,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,9 +35,9 @@ public abstract class PsiFileBase extends PsiFileImpl {
   @NotNull private final Language myLanguage;
   @NotNull private final ParserDefinition myParserDefinition;
 
-  protected PsiFileBase(FileViewProvider viewProvider, @NotNull Language language) {
+  protected PsiFileBase(@NotNull FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider);
-    myLanguage = findLanguage(language);
+    myLanguage = findLanguage(language, viewProvider);
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
     if (parserDefinition == null) {
       throw new RuntimeException("PsiFileBase: language.getParserDefinition() returned null.");
@@ -49,8 +48,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     init(nodeType, nodeType);
   }
 
-  private Language findLanguage(Language baseLanguage) {
-    final FileViewProvider viewProvider = getViewProvider();
+  private static Language findLanguage(Language baseLanguage, FileViewProvider viewProvider) {
     final Set<Language> languages = viewProvider.getLanguages();
     for (final Language actualLanguage : languages) {
       if (actualLanguage.isKindOf(baseLanguage)) {

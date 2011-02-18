@@ -695,7 +695,7 @@ public class CompileDriver {
             outputsToRefresh.add(generated.getSecond());
           }
 
-          RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+          RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(outputsToRefresh));
           if (progressIndicator.isCanceled()) {
             return ExitStatus.CANCELLED;
           }

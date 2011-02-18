@@ -43,6 +43,7 @@ import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -110,7 +111,7 @@ public class ImplementationViewComponent extends JPanel {
       files.add(new FileDescriptor(file));
       candidates.add(element.getNavigationElement());
     }
-    myElements = candidates.toArray(new PsiElement[candidates.size()]);
+    myElements = PsiUtilBase.toPsiElementArray(candidates);
     if (myElements.length == 0) {
       myToolbar = null;
       myEditor = null;
@@ -474,6 +475,6 @@ public class ImplementationViewComponent extends JPanel {
         result.add(element);
       }
     }
-    return result.toArray(new PsiElement[result.size()]);
+    return PsiUtilBase.toPsiElementArray(result);
   }
 }

@@ -52,7 +52,7 @@ public class JdkScope extends GlobalSearchScope {
     if (object == this) return true;
     if (object.getClass() != JdkScope.class) return false;
 
-    final JdkScope that = ((JdkScope)object);
+    final JdkScope that = (JdkScope)object;
     return that.myJdkName.equals(myJdkName);
   }
 

@@ -52,5 +52,7 @@ public abstract class LangScriptingContextProvider {
   
   @Nullable
   public abstract VirtualFile downloadOfflineDoc(Project project, String offlineDocUrl, JComponent parent);
+  
+  public abstract boolean isPredefinedLibrary(Project project, String libName);
 
 }

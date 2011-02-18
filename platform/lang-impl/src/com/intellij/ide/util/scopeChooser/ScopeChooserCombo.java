@@ -42,6 +42,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -245,7 +246,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                     }
                   }
                   if (!elements.isEmpty()) {
-                    SearchScope local = new LocalSearchScope(elements.toArray(new PsiElement[elements.size()]), IdeBundle.message("scope.selection"));
+                    SearchScope local = new LocalSearchScope(PsiUtilBase.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
                     result.add(local);
                   }
                 }
@@ -338,7 +339,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           }
 
           if (!results.isEmpty()) {
-            result.add(new LocalSearchScope(results.toArray(new PsiElement[results.size()]), IdeBundle.message("scope.previous.search.results")));
+            result.add(new LocalSearchScope(PsiUtilBase.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")));
           }
         }
       }

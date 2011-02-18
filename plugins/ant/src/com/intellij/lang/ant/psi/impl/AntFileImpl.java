@@ -42,6 +42,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -179,7 +180,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         if (myEpilogueElement != null) {
           children.add(myEpilogueElement);
         }
-        myChildren = children.toArray(new PsiElement[children.size()]);
+        myChildren = PsiUtilBase.toPsiElementArray(children);
       }
       return myChildren;
     }

@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
@@ -72,7 +73,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
       navigateToFile(myProject, ContainerUtil.getFirstItem(files, null));
     }
     else {
-      final JList list = new JBList(files.toArray(new VirtualFile[files.size()]));
+      final JList list = new JBList(VfsUtil.toVirtualFileArray(files));
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {

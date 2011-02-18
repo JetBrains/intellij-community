@@ -24,6 +24,10 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class AntArtifactPreProcessingPropertiesProvider extends ArtifactPropertiesProvider {
+  public static AntArtifactPreProcessingPropertiesProvider getInstance() {
+    return EP_NAME.findExtension(AntArtifactPreProcessingPropertiesProvider.class);
+  }
+
   public AntArtifactPreProcessingPropertiesProvider() {
     super("ant-preprocessing");
   }

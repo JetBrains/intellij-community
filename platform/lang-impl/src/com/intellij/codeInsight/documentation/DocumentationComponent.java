@@ -719,6 +719,9 @@ public class DocumentationComponent extends JPanel implements Disposable {
     }
 
     public void hideSettings() {
+      if (!mySettingsPanel.isVisible()) {
+        return;
+      }
       AnActionEvent event = new AnActionEvent(
         null, EMPTY_DATA_CONTEXT, ActionPlaces.JAVADOC_INPLACE_SETTINGS, myPresentation, ActionManager.getInstance(), 0
       );

@@ -629,7 +629,7 @@ public class FindUtil {
 
     private void removeAll() {
       myEditor.getCaretModel().removeCaretListener(this);
-      myEditor.getMarkupModel().removeHighlighter(mySegmentHighlighter);
+      mySegmentHighlighter.dispose();
     }
   }
 

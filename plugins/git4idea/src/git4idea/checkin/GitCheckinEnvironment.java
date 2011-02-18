@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -581,7 +582,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final List<String> authors = usersList == null ? new ArrayList<String>() : new ArrayList<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       Collections.sort(authors);
-      myAuthor = new JComboBox(authors.toArray(new Object[authors.size()]));
+      myAuthor = new JComboBox(ArrayUtil.toObjectArray(authors));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);

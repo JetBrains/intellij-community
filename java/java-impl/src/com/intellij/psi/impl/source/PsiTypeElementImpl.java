@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +103,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           cachedType = componentType.createArrayType();
         }
         else {
-          cachedType = new PsiDisjunctionType(this);
+          final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
+          final List<PsiType> types = ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
+              @Override public PsiType fun(final PsiTypeElement psiTypeElement) { return psiTypeElement.getType(); }
+          });
+          cachedType = new PsiDisjunctionType(types, getManager());
         }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {

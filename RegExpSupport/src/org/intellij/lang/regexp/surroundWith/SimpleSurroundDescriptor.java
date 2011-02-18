@@ -19,6 +19,7 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
         }
 
         if (startOffset == endOffset && atoms.size() > 0) {
-            final PsiElement[] elements = atoms.toArray(new PsiElement[atoms.size()]);
+          final PsiElement[] elements = PsiUtilBase.toPsiElementArray(atoms);
             if ((atoms.size() == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent())) {
                 return elements;
             }

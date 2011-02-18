@@ -38,6 +38,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -160,7 +161,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         }
         });
     }
-    return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : allFiles.toArray(new PsiFile[allFiles.size()]);
+    return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilBase.toPsiFileArray(allFiles);
   }
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {

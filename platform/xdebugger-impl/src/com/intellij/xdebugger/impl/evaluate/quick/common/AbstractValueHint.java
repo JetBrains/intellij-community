@@ -168,7 +168,7 @@ public abstract class AbstractValueHint {
       myCurrentHint = null;
     }
     if(myHighlighter != null) {
-      myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
       myHighlighter = null;
     }
   }

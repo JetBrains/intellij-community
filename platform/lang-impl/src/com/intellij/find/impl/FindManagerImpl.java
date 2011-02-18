@@ -658,8 +658,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, boolean forwardOrBackward) {
     if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
       EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
-      searchComponent.moveCursor(forwardOrBackward);
-      return true;
+      if (searchComponent.hasMatches()) {
+        searchComponent.moveCursor(forwardOrBackward);
+        return true;
+      }
     }
     return false;
   }

@@ -31,12 +31,11 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 
 public abstract class Change {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.Change");
@@ -193,20 +192,17 @@ public abstract class Change {
         LOG.assertTrue(myMainHighlighter == null);
         return;
       }
-      MarkupModel markupModel = myEditor.getMarkupModel();
-      for (Iterator<RangeHighlighter> iterator = myHighlighters.iterator(); iterator.hasNext();) {
-        RangeHighlighter highlighter = iterator.next();
-        markupModel.removeHighlighter(highlighter);
-        iterator.remove();
+      for (RangeHighlighter highlighter : myHighlighters) {
+        highlighter.dispose();
       }
+      myHighlighters.clear();
       removeActionHighlighters();
       myMainHighlighter = null;
     }
 
     private void removeActionHighlighters() {
-      MarkupModel markupModel = myEditor.getMarkupModel();
       for (RangeHighlighter actionHighlighter : myActionHighlighters) {
-        markupModel.removeHighlighter(actionHighlighter);
+        actionHighlighter.dispose();
       }
       myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;
     }

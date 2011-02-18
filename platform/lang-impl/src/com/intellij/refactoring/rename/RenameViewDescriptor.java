@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -39,7 +40,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
 
   public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
 
-    myElements = renamesMap.keySet().toArray(new PsiElement[0]);
+    myElements = PsiUtilBase.toPsiElementArray(renamesMap.keySet());
 
     Set<String> processedElementsHeaders = new THashSet<String>();
     Set<String> codeReferences = new THashSet<String>();

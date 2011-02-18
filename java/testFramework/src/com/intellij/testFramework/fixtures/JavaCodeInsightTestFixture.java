@@ -29,7 +29,7 @@ import java.io.IOException;
 public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
   JavaPsiFacade getJavaFacade();
 
-  PsiClass addClass(@NotNull @NonNls final String classText) throws IOException;
+  PsiClass addClass(@NotNull @NonNls final String classText);
 
   @NotNull
   PsiClass findClass(@NotNull @NonNls String name);

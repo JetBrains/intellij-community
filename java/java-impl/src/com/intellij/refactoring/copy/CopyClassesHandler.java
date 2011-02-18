@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -85,7 +86,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
         if (className == null || className.length() == 0) return;
       }
     } else {
-      CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(classes.keySet().toArray(new PsiFile[classes.size()]), defaultTargetDirectory, project, false);
+      CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(PsiUtilBase.toPsiFileArray(classes.keySet()),
+                                                                             defaultTargetDirectory, project, false);
       dialog.show();
       if (dialog.isOK()) {
         targetDirectory = dialog.getTargetDirectory();

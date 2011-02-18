@@ -96,7 +96,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     MarkupModel markupModel = myEditor.getMarkupModel();
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       if (highlighter.getUserData(IN_PREVIEW_USAGE_FLAG) != null) {
-        markupModel.removeHighlighter(highlighter);
+        highlighter.dispose();
       }
     }
     for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there

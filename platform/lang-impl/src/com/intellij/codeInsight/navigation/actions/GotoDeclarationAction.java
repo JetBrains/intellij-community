@@ -135,7 +135,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return true;
     }
     if (candidates.size() > 1) {
-      PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
+      PsiElement[] elements = PsiUtilBase.toPsiElementArray(candidates);
       final TextRange range = reference.getRangeInElement();
       final String refText = range.substring(reference.getElement().getText());
       String title = MessageFormat.format(titlePattern, refText);

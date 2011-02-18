@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,7 +157,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    * @return array for commit authors
    */
   public String[] getCommitAuthors() {
-    return myCommitAuthors.toArray(new String[myCommitAuthors.size()]);
+    return ArrayUtil.toStringArray(myCommitAuthors);
   }
 
   public State getState() {

@@ -103,7 +103,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) myOldName = ""; // new project
   }
 
-  public void setProjectName(final String projectName) {
+  public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myOldName = myName;
       myName = projectName;
@@ -453,9 +453,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @Override
    public String toString() {
-    return "Project "
-           + (isDisposed() ? "(Disposed) " : "")
-           + (isDefault() ? "(Default) " : "'" + getLocation()+"'")
+    return "Project"
+           + (isDisposed() ? " (Disposed)" : isDefault() ? "" : " '" + getLocation()+"'")
+           + (isDefault() ? " (Default)" : "")
+           + " " + myName
       ;
   }
 

@@ -369,7 +369,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, layeredPane);
     }
-    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip()) {
+    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip() && !hint.isRealPopup()) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
 
@@ -691,9 +691,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     hint.addHintListener(new HintListener() {
       public void hintHidden(EventObject event) {
-        if (!editor.isDisposed()) {
-          editor.getMarkupModel().removeHighlighter(highlighter);
-        }
+        highlighter.dispose();
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;

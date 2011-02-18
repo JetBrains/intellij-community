@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
@@ -103,7 +104,7 @@ public class JBScrollPane extends JScrollPane {
       if (ui instanceof BasicScrollBarUI) {
         BasicScrollBarUI bui = (BasicScrollBarUI)ui;
         try {
-          Method m = BasicScrollBarUI.class.getDeclaredMethod("getThumbBounds", new Class[0]);
+          Method m = BasicScrollBarUI.class.getDeclaredMethod("getThumbBounds", ArrayUtil.EMPTY_CLASS_ARRAY);
           m.setAccessible(true);
           Rectangle rect = (Rectangle)m.invoke(bui);
           Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), bar);

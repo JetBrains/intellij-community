@@ -15,8 +15,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,6 +50,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     super.tearDown();
   }
 
+  @WrapInCommand
   public void testImportsInsertedAlphabetically() throws Throwable {
     @NonNls String text = "class I {}";
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
@@ -83,6 +82,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       }
     }, "", "");
   }
+  @WrapInCommand
   public void testStaticImportsGrouping() throws Throwable {
     @NonNls String text = "import static java.lang.Math.max;\n" +
                           "import java.util.Map;\n" +
@@ -140,11 +140,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       }, "", "");
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     ImportHelper importHelper = new ImportHelper(settings);
@@ -168,6 +163,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting/reimportConflictingClasses";
+  @WrapInCommand
   public void testReimportConflictingClasses() throws Exception {
     configureByFile(BASE_PATH+"/x/Usage.java", BASE_PATH);
     assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
@@ -193,6 +189,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     String text = LoadTextUtil.loadText(vFile).toString();
     assertEquals(text, getFile().getText());
   }
+  @WrapInCommand
   public void testConflictingClassesFromCurrentPackage() throws Throwable {
     final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
     assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
@@ -210,7 +207,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }.execute().throwException();
   }
 
-  @DoNotWrapInCommand
   public void testAutoImportCaretLocation() throws Throwable {
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     try {
@@ -243,7 +239,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @DoNotWrapInCommand
   public void testAutoImportCaretLocation2() throws Throwable {
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     try {
@@ -272,7 +267,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @DoNotWrapInCommand
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() throws Throwable {
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(StdFileTypes.JAVA, text);
@@ -301,7 +295,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @DoNotWrapInCommand
   public void testAutoImportWorks() throws Throwable {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(StdFileTypes.JAVA, text);
@@ -321,7 +314,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
   }
 
-  @DoNotWrapInCommand
   public void testAutoImportOfGenericReference() throws Throwable {
     @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
     configureByText(StdFileTypes.JAVA, text);
@@ -350,7 +342,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-   @DoNotWrapInCommand
    public void testAutoOptimizeUnresolvedImports() throws Throwable {
      @NonNls String text = "import xxx.yyy; class S { } <caret> ";
      configureByText(StdFileTypes.JAVA, text);

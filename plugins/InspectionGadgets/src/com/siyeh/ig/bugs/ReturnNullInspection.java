@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,43 +36,56 @@ import javax.swing.*;
 
 public class ReturnNullInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean m_reportObjectMethods = true;
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean m_reportArrayMethods = true;
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean m_reportCollectionMethods = true;
+    @SuppressWarnings({"PublicField"})
+    public boolean m_ignorePrivateMethods = false;
 
+    @Override
+    @Pattern("[a-zA-Z_0-9.-]+")
     @NotNull
     public String getID() {
         return "ReturnOfNull";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("return.of.null.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "return.of.null.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiElement elt = (PsiElement)infos[0];
         if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
             return null;
         }
-      final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
-      return new DelegatingFix(new AnnotateMethodFix(
-          manager.getDefaultNullable(), ArrayUtil.toStringArray(manager.getNotNulls())));
+        final NullableNotNullManager manager =
+                NullableNotNullManager.getInstance(elt.getProject());
+        return new DelegatingFix(new AnnotateMethodFix(
+                manager.getDefaultNullable(),
+                ArrayUtil.toStringArray(manager.getNotNulls())));
     }
 
-  public JComponent createOptionsPanel() {
+    @Override
+    public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "return.of.null.ignore.private.option"),
+                "m_ignorePrivateMethods");
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "return.of.null.arrays.option"), "m_reportArrayMethods");
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
@@ -82,6 +96,7 @@ public class ReturnNullInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ReturnNullVisitor();
     }
@@ -109,21 +124,32 @@ public class ReturnNullInspection extends BaseInspection {
             if (method == null) {
                 return;
             }
+            if (m_ignorePrivateMethods &&
+                    method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
             final PsiType returnType = method.getReturnType();
             if (returnType == null) {
                 return;
             }
             final boolean isArray = returnType.getArrayDimensions() > 0;
-            if (NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false)) {
+            final NullableNotNullManager nullableNotNullManager =
+                    NullableNotNullManager.getInstance(method.getProject());
+            if (nullableNotNullManager.isNullable(method, false)) {
                 return;
             }
-            if (m_reportCollectionMethods &&
-                    CollectionUtils.isCollectionClassOrInterface(returnType)) {
-                registerError(value, value);
-            } else if (m_reportArrayMethods && isArray) {
-                registerError(value, value);
-            } else if (m_reportObjectMethods && !isArray) {
-                registerError(value, value);
+            if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
+                if (m_reportCollectionMethods) {
+                    registerError(value, value);
+                }
+            } else if (isArray) {
+                if (m_reportArrayMethods) {
+                    registerError(value, value);
+                }
+            } else {
+                if (m_reportObjectMethods) {
+                    registerError(value, value);
+                }
             }
         }
     }

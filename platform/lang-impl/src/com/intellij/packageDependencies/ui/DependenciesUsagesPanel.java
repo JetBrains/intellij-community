@@ -30,6 +30,7 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.util.Consumer;
@@ -95,7 +96,8 @@ public class DependenciesUsagesPanel extends UsagesPanel {
 
                     if (!progress.isCanceled()) {
                       final UsageInfo[] finalUsages = usages;
-                      final PsiElement[] _elementsToSearch = elementsToSearch != null? elementsToSearch.toArray(new PsiElement[elementsToSearch.size()]) : PsiElement.EMPTY_ARRAY;
+                      final PsiElement[] _elementsToSearch =
+                        elementsToSearch != null ? PsiUtilBase.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
                       ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {
                           showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(_elementsToSearch), finalUsages);

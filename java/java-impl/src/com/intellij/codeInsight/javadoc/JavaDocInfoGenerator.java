@@ -1560,6 +1560,25 @@ public class JavaDocInfoGenerator {
       return length;
     }
 
+    if (type instanceof PsiDisjunctionType) {
+      if (!generateLink) {
+        final String text = type.getCanonicalText();
+        buffer.append(text);
+        return text.length();
+      }
+      else {
+        int length = 0;
+        for (PsiType psiType : ((PsiDisjunctionType)type).getDisjunctions()) {
+          if (length > 0) {
+            buffer.append(" | ");
+            length += 3;
+          }
+          length += generateType(buffer, psiType, context, generateLink);
+        }
+        return length;
+      }
+    }
+
     return 0;
   }
 

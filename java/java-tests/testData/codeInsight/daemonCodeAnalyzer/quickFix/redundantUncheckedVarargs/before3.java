@@ -9,7 +9,7 @@ public class Test {
 
   void foo() {
     //noinspection unc<caret>hecked
-    foo(new ArrayList<String>()).addAll(Arrays.asList(new ArrayList<String>);
+    foo(new ArrayList<String>()).addAll(Arrays.asList(new ArrayList<String>()));
   }
 }
 

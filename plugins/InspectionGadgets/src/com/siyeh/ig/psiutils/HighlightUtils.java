@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilBase;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,9 +64,8 @@ public class HighlightUtils {
         final Application application = ApplicationManager.getApplication();
         application.invokeLater(new Runnable() {
             public void run() {
-                final PsiElement[] elements =
-                        elementCollection.toArray(
-                                new PsiElement[elementCollection.size()]);
+              final PsiElement[] elements =
+                PsiUtilBase.toPsiElementArray(elementCollection);
                 final PsiElement firstElement = elements[0];
                 if (!firstElement.isValid()) {
                     return;

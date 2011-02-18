@@ -42,6 +42,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -403,7 +404,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
     }
-    return elements.toArray(new PsiElement[elements.size()]);
+    return PsiUtilBase.toPsiElementArray(elements);
   }
 
   public Object getData(final String dataId) {

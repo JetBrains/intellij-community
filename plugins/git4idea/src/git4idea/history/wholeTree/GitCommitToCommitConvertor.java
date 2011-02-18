@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import git4idea.history.browser.GitCommit;
 
@@ -30,7 +31,7 @@ public class GitCommitToCommitConvertor implements Convertor<GitCommit, CommitHa
   @Override
   public CommitHashPlusParents convert(GitCommit o) {
     final Set<String> parentsHashes = o.getParentsHashes();
-    return new CommitHashPlusParents(o.getShortHash(), parentsHashes.toArray(new String[parentsHashes.size()]), o.getDate().getTime(),
+    return new CommitHashPlusParents(o.getShortHash(), ArrayUtil.toStringArray(parentsHashes), o.getDate().getTime(),
                                      o.getAuthor());
   }
 }

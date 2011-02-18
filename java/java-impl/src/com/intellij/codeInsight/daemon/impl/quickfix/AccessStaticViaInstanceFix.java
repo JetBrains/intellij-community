@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +101,8 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     if (hasSideEffects && !ApplicationManager.getApplication().isUnitTestMode()) {
       final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, sideEffects.toArray(new PsiElement[sideEffects.size()]), attributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilBase.toPsiElementArray(sideEffects), attributes, true,
+                                                                    null);
       try {
         hasSideEffects = PsiUtil.isStatement(factory.createStatementFromText(qualifierExpression.getText(), qualifierExpression));
       }

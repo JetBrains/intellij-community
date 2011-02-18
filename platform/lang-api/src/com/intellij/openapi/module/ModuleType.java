@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
-  public static ModuleType EMPTY;
+  public static final ModuleType EMPTY;
 
   private final String myId;
 

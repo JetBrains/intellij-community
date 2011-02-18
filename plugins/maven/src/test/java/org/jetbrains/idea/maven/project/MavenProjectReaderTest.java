@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
@@ -1593,7 +1594,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
     MavenProjectReaderResult result =
-      readProject(myProjectPom, new NullProjectLocator(), explicitProfiles.toArray(new String[explicitProfiles.size()]));
+      readProject(myProjectPom, new NullProjectLocator(), ArrayUtil.toStringArray(explicitProfiles));
     assertUnorderedElementsAreEqual(result.activatedProfiles, expected);
   }
 

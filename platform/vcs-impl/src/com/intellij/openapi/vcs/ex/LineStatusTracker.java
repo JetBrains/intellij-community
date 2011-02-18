@@ -176,10 +176,9 @@ public class LineStatusTracker {
   }
 
   private void removeHighlightersFromMarkupModel() {
-    final MarkupModel markupModel = myDocument.getMarkupModel(myProject);
     synchronized (myLock) {
       for (Range range : myRanges) {
-        markupModel.removeHighlighter(range.getHighlighter());
+        range.getHighlighter().dispose();
       }
     }
   }
@@ -327,8 +326,6 @@ public class LineStatusTracker {
     }
 
     private List<Range> mergeRanges(List<Range> ranges) {
-      final MarkupModel markupModel = myDocument.getMarkupModel(myProject);
-
       ArrayList<Range> result = new ArrayList<Range>();
       Iterator<Range> iterator = ranges.iterator();
       if (!iterator.hasNext()) return result;
@@ -336,8 +333,8 @@ public class LineStatusTracker {
       while (iterator.hasNext()) {
         Range range = iterator.next();
         if (prev.canBeMergedWith(range)) {
-          markupModel.removeHighlighter(range.getHighlighter());
-          markupModel.removeHighlighter(prev.getHighlighter());
+          range.getHighlighter().dispose();
+          prev.getHighlighter().dispose();
           prev = prev.mergeWith(range, LineStatusTracker.this);
         }
         else {
@@ -350,10 +347,8 @@ public class LineStatusTracker {
     }
 
     private void replaceRanges(List<Range> rangesInChange, List<Range> newRangesInChange) {
-      final MarkupModel markupModel = myDocument.getMarkupModel(myProject);
-
       for (Range range : rangesInChange) {
-        markupModel.removeHighlighter(range.getHighlighter());
+        range.getHighlighter().dispose();
         range.setHighlighter(null);
       }
       for (Range range : newRangesInChange) {

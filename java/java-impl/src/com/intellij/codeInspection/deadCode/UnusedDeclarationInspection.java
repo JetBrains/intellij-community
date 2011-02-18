@@ -59,6 +59,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -762,7 +763,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           final Project project = getContext().getProject();
-          SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false, new Runnable(){
+          SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false, new Runnable() {
             public void run() {
               removeElements(refElements, project, UnusedDeclarationInspection.this);
             }

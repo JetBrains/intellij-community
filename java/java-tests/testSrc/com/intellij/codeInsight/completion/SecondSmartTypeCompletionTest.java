@@ -178,9 +178,4 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

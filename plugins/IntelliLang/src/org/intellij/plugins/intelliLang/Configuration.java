@@ -39,6 +39,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -545,7 +546,7 @@ public final class Configuration implements PersistentStateComponent<Element>, M
         return psiAnnotation instanceof PsiCompiledElement ? null : psiAnnotation.getContainingFile();
       }
     });
-    new WriteCommandAction.Simple(project, "Language Injection Configuration Update", psiFiles.toArray(new PsiFile[psiFiles.size()])) {
+    new WriteCommandAction.Simple(project, "Language Injection Configuration Update", PsiUtilBase.toPsiFileArray(psiFiles)) {
       public void run() {
         for (PsiElement annotation : psiElementsToRemove) {
           annotation.delete();

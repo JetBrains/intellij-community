@@ -137,7 +137,7 @@ public class IncrementalSearchHandler {
         super.hide();
 
         if (data.segmentHighlighter != null){
-          editor.getMarkupModel().removeHighlighter(data.segmentHighlighter);
+          data.segmentHighlighter.dispose();
         }
         PerEditorSearchData editorData = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
         editorData.hint = null;
@@ -281,7 +281,7 @@ public class IncrementalSearchHandler {
 
     if (nothingIfFailed && index < 0) return;
     if (data.segmentHighlighter != null) {
-      editor.getMarkupModel().removeHighlighter(data.segmentHighlighter);
+      data.segmentHighlighter.dispose();
       data.segmentHighlighter = null;
     }
     if (index < 0) {

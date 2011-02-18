@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiFile;
@@ -102,7 +103,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
-  private static final boolean ourHintAutopopup = "true".equals(System.getProperty("hint.autopopup", "false"));
 
   private volatile int myCount;
 
@@ -336,7 +336,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      if (isAutopopupCompletion() && ourHintAutopopup) {
+      if (isAutopopupCompletion() && showHintAutopopup()) {
         myLookup.setHintMode(true);
       }
       else {
@@ -346,6 +346,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
     updateFocus();
+  }
+
+   public static boolean showHintAutopopup() {
+    return "true".equals(Registry.stringValue("hint.autopopup"));
   }
 
   final boolean isInsideIdentifier() {
@@ -463,15 +467,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean hideAutopopupIfMeaningless() {
-    if (ourHintAutopopup) {
-      return false;
-    }
-
     if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
       myLookup.refreshUi();
-      for (LookupElement item : myLookup.getItems()) {
+      final List<LookupElement> items = myLookup.getItems();
+
+      for (LookupElement item : items) {
         if (!(item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           return false;
+        }
+
+        if (showHintAutopopup()) {
+          final LookupElementPresentation presentation = new LookupElementPresentation();
+          item.renderElement(presentation);
+          if (StringUtil.isNotEmpty(presentation.getTailText())) {
+            return false;
+          }
         }
       }
 

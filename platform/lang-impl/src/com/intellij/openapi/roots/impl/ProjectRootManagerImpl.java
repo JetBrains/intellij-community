@@ -53,6 +53,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +66,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author max
@@ -90,8 +92,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private final Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
-  private final Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
+  private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
+  private final ConcurrentMap<String, GlobalSearchScope> myJdkScopes = new ConcurrentHashMap<String, GlobalSearchScope>();
   private final OrderRootsCache myRootsCache;
 
   private boolean myStartupActivityPerformed = false;
@@ -314,12 +316,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public Sdk getProjectSdk() {
-    if (myProjectSdkName != null) {
-      return ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
-    }
-    else {
-      return null;
-    }
+    return myProjectSdkName == null ? null : ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
   }
 
   public String getProjectSdkName() {
@@ -328,13 +325,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void setProjectSdk(Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (sdk != null) {
-      myProjectSdkName = sdk.getName();
-      myProjectSdkType = sdk.getSdkType().getName();
-    }
-    else {
+    if (sdk == null) {
       myProjectSdkName = null;
       myProjectSdkType = null;
+    }
+    else {
+      myProjectSdkName = sdk.getName();
+      myProjectSdkType = sdk.getSdkType().getName();
     }
     mergeRootsChangesDuring(new Runnable() {
       public void run() {
@@ -570,16 +567,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
     GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
-    if (scope == null) {
-      if (!modulesLibraryIsUsedIn.isEmpty()) {
-        scope = new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
-      }
-      else {
-        scope = new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject));
-      }
-      myLibraryScopes.put(modulesLibraryIsUsedIn, scope);
+    if (scope != null) {
+      return scope;
     }
-    return scope;
+    GlobalSearchScope newScope = modulesLibraryIsUsedIn.isEmpty()
+                                 ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject))
+                                 : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
+    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
   }
 
   public GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry) {
@@ -587,8 +581,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (jdk == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = myJdkScopes.get(jdk);
     if (scope == null) {
-      scope = new JdkScope(myProject, jdkOrderEntry);
-      myJdkScopes.put(jdk, scope);
+      return ConcurrencyUtil.cacheOrGet(myJdkScopes,jdk, new JdkScope(myProject, jdkOrderEntry));
     }
     return scope;
   }
@@ -599,10 +592,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void doUpdateOnRefresh() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!myStartupActivityPerformed) {
-        return; // in test mode suppress addition to a queue unless project is properly initialized
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
+      return; // in test mode suppress addition to a queue unless project is properly initialized
     }
     DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
   }
@@ -749,10 +740,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         if (myInsideRefresh > 0) {
           clearScopesCaches();
         }
-        else {
-          if (affectsRoots(pointers)) {
-            rootsChanged(false);
-          }
+        else if (affectsRoots(pointers)) {
+          rootsChanged(false);
         }
       }
     }

@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,7 +112,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
               }
               childrenList.add(psiElement);
             }
-            result = childrenList.toArray(new PsiElement[childrenList.size()]);
+            result = PsiUtilBase.toPsiElementArray(childrenList);
           }
           else {
             result = elementChildren;

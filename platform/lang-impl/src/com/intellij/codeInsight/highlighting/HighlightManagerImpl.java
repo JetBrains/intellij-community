@@ -138,7 +138,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (info == null) return false;
     MarkupModel markupModel = info.editor.getMarkupModel();
     if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
-      markupModel.removeHighlighter(highlighter);
+      highlighter.dispose();
     }
     map.remove(highlighter);
     return true;

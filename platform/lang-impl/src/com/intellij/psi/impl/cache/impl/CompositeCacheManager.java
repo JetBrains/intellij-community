@@ -23,12 +23,14 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -66,7 +68,8 @@ public class CompositeCacheManager implements CacheManager{
   public PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
-    return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(new PsiFile[processor.getResults().size()]);
+    Collection<PsiFile> results = processor.getResults();
+    return PsiUtilBase.toPsiFileArray(results);
   }
 
   public boolean processFilesWithWord(@NotNull Processor<PsiFile> processor, @NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
@@ -86,7 +89,7 @@ public class CompositeCacheManager implements CacheManager{
         ContainerUtil.addAll(files, items);
       }
     }
-    return files == null ? PsiFile.EMPTY_ARRAY : files.toArray(new PsiFile[files.size()]);
+    return files == null ? PsiFile.EMPTY_ARRAY : PsiUtilBase.toPsiFileArray(files);
   }
 
   public int getTodoCount(@NotNull VirtualFile file, final IndexPatternProvider patternProvider) {

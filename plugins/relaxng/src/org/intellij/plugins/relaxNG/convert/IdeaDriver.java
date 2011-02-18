@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.thaiopensource.relaxng.edit.SchemaCollection;
 import com.thaiopensource.relaxng.input.InputFailedException;
 import com.thaiopensource.relaxng.input.InputFormat;
@@ -103,9 +104,9 @@ public class IdeaDriver {
           for (int i = 0; i < inputFiles.length; i++) {
             uris[i] = UriOrFile.toUri(inputFiles[i].getPath());
           }
-          sc = format.load(uris, inputParams.toArray(new String[inputParams.size()]), outputType, errorHandler);
+          sc = format.load(uris, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
         } else {
-          sc = inFormat.load(uri, inputParams.toArray(new String[inputParams.size()]), outputType, errorHandler);
+          sc = inFormat.load(uri, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
         }
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, uri, -1, -1, e));
@@ -150,7 +151,7 @@ public class IdeaDriver {
 
         final OutputFormat of = getOutputFormat(settings.getOutputType());
 
-        of.output(sc, od, outputParams.toArray(new String[outputParams.size()]), inputType.toString().toLowerCase(), errorHandler);
+        of.output(sc, od, ArrayUtil.toStringArray(outputParams), inputType.toString().toLowerCase(), errorHandler);
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, UriOrFile.fileToUri(outputFile), -1, -1, e));
       }

@@ -676,6 +676,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testReturningTypeVariable() throws Throwable { doTest(); }
   public void testReturningTypeVariable2() throws Throwable { doTest(); }
   public void testReturningTypeVariable3() throws Throwable { doTest(); }
+  public void testImportInGenericType() throws Throwable { doTest(); }
 
   public void testCaseTailType() throws Throwable { doTest(); }
 
@@ -808,6 +809,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
   public void testClassNameWithGenericsTab() throws Throwable {doTest('\t') }
+  public void testClassNameWithGenericsTab2() throws Throwable {doTest('\t') }
 
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 

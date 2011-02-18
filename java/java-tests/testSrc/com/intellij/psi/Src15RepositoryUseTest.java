@@ -1,6 +1,5 @@
 package com.intellij.psi;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -13,6 +12,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.AnnotatedPackagesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -25,12 +25,8 @@ import java.util.Set;
 /**
  * @author dsl
  */
+@PlatformTestCase.WrapInCommand
 public class Src15RepositoryUseTest extends PsiTestCase {
-
-  public Src15RepositoryUseTest() {
-    myRunCommandForTest = true;
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -39,11 +35,6 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("mock 1.5"));
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
-  }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("mock 1.5");
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
 import com.intellij.refactoring.typeMigration.ui.MigrationPanel;
@@ -62,7 +63,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                 result.add(element);
               }
             }
-            RefactoringUtil.highlightAllOccurences(project, result.toArray(new PsiElement[result.size()]), editor);
+            RefactoringUtil.highlightAllOccurences(project, PsiUtilBase.toPsiElementArray(result), editor);
           }
         });
       }

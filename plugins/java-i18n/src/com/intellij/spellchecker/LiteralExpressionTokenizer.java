@@ -16,6 +16,7 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,11 +38,15 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
   @Override
   @Nullable
   public Token[] tokenize(@NotNull PsiLiteralExpression element) {
-    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
-    boolean isNls = false;
-    if (listOwner != null) {
-      isNls = AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS));
+    if (!(element.getType() instanceof PsiClassType)) {
+      return null;  // not a string literal
     }
-    return !isNls ? new Token[]{new Token<PsiLiteralExpression>(element, SplitterFactory.getInstance().getStringLiteralSplitter())} : null;
+
+    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+    if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS))) {
+      return null;
+    }
+
+    return new Token[]{new Token<PsiLiteralExpression>(element, SplitterFactory.getInstance().getStringLiteralSplitter())};
   }
 }

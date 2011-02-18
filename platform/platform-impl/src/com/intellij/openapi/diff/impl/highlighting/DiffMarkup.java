@@ -119,7 +119,7 @@ public abstract class DiffMarkup implements EditorSource {
   }
 
   private void removeHighlighter(RangeHighlighter highlighter) {
-    getMarkupModel().removeHighlighter(highlighter);
+    highlighter.dispose();
     myHighLighters.remove(highlighter);
     myActionHighlighters.remove(highlighter);
   }
@@ -171,7 +171,7 @@ public abstract class DiffMarkup implements EditorSource {
     MarkupModel markupModel = getMarkupModel();
     if (markupModel != null) {
       for (RangeHighlighter highlighter : highlighters) {
-        markupModel.removeHighlighter(highlighter);
+        highlighter.dispose();
       }
     }
     highlighters.clear();

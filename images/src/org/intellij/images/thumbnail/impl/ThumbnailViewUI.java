@@ -32,6 +32,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -467,7 +468,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 psiElements.add(element);
             }
         }
-        return psiElements.toArray(new PsiElement[psiElements.size()]);
+      return PsiUtilBase.toPsiElementArray(psiElements);
     }
 
     @NotNull

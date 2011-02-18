@@ -96,7 +96,7 @@ public class ScopeHighlighter {
 
   public void dropHighlight() {
     for (RangeHighlighter h : myActiveHighliters) {
-      myEditor.getMarkupModel().removeHighlighter(h);
+      h.dispose();
     }
     myActiveHighliters.clear();
   }

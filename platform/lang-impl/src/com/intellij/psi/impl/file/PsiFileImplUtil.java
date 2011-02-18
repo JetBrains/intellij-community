@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
@@ -102,7 +103,7 @@ public class PsiFileImplUtil {
         psiFiles.add(psiFile);
       }
     }
-    return psiFiles.toArray(new PsiFile[psiFiles.size()]);
+    return PsiUtilBase.toPsiFileArray(psiFiles);
   }
 
   public static PsiFile[] getPsiFilesByVirtualFiles(List<VirtualFile> files, PsiManager manager) {
@@ -114,6 +115,6 @@ public class PsiFileImplUtil {
         psiFiles.add(psiFile);
       }
     }
-    return psiFiles.toArray(new PsiFile[psiFiles.size()]);
+    return PsiUtilBase.toPsiFileArray(psiFiles);
   }
 }

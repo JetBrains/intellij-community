@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.*;
 
@@ -62,7 +63,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public Object[][] data() {
     return new Object[][]{
        new Object[]{"private", new String[]{"data"}},
-       new Object[]{"privateinsuper", new String[0]},
+       new Object[]{"privateinsuper", ArrayUtil.EMPTY_STRING_ARRAY},
        new Object[]{"protectedinsuper", new String[]{"data"}},
        new Object[]{"privateindataproviderclass", new String[]{"data"}},
     };

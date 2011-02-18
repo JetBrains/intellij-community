@@ -24,11 +24,6 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("mock 1.5");
-  }
-
   public void testReplaceAnnotation() throws Exception {
     //be sure not to load tree
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);

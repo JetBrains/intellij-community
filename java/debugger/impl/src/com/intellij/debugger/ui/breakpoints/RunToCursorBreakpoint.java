@@ -56,7 +56,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     }
 
     RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, createHighlighter(project, document, lineIndex), restoreBreakpoints);
-    document.getMarkupModel(project).removeHighlighter(breakpoint.getHighlighter());
+    breakpoint.getHighlighter().dispose();
 
     return (RunToCursorBreakpoint)breakpoint.init();
   }

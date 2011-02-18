@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
@@ -308,7 +309,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         psiElements.add(psiElement);
       }
     }
-    return psiElements.toArray(new PsiElement[psiElements.size()]);
+    return PsiUtilBase.toPsiElementArray(psiElements);
   }
 
   @Nullable

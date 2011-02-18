@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public class SurroundWithUtil {
         }
         array.add(statement);
       }
-      return array.toArray(new PsiElement[array.size()]);
+      return PsiUtilBase.toPsiElementArray(array);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

@@ -408,9 +408,8 @@ public class BraceHighlightingHandler {
     List<RangeHighlighter> highlighters = myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) return;
     myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, null);
-    for (final Object highlighter : highlighters) {
-      RangeHighlighter rangeHighlighter = (RangeHighlighter)highlighter;
-      myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
+    for (final RangeHighlighter highlighter : highlighters) {
+      highlighter.dispose();
     }
   }
 
@@ -431,7 +430,7 @@ public class BraceHighlightingHandler {
     ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighter marker = myEditor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
     if (marker != null && ((MarkupModelEx)myEditor.getMarkupModel()).containsHighlighter(marker)) {
-      myEditor.getMarkupModel().removeHighlighter(marker);
+      marker.dispose();
     }
     myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
   }

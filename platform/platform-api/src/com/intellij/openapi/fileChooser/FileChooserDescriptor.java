@@ -33,12 +33,12 @@ import java.util.List;
 import java.util.Map;
 
 public class FileChooserDescriptor implements Cloneable{
-  private final boolean myChooseFiles;
-  private final boolean myChooseFolders;
-  private final boolean myChooseJars;
-  private final boolean myChooseJarsAsFiles;
-  private final boolean myChooseJarContents;
-  private final boolean myChooseMultiple;
+  private boolean myChooseFiles;
+  private boolean myChooseFolders;
+  private boolean myChooseJars;
+  private boolean myChooseJarsAsFiles;
+  private boolean myChooseJarContents;
+  private boolean myChooseMultiple;
 
   private String myTitle = UIBundle.message("file.chooser.default.title");
   private String myDescription;
@@ -72,6 +72,15 @@ public class FileChooserDescriptor implements Cloneable{
     myChooseJarsAsFiles = chooseJarsAsFiles;
     myChooseJarContents = chooseJarContents;
     myChooseMultiple = chooseMultiple;
+  }
+
+  public FileChooserDescriptor() {
+    this(false, false, false, false, false, false);
+  }
+
+  public FileChooserDescriptor chooseFolders() {
+    myChooseFolders = true;
+    return this;
   }
 
   public final String getTitle() {

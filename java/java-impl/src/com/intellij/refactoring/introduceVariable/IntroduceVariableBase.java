@@ -53,6 +53,7 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -599,7 +600,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
 
             if (editor != null) {
-              final PsiElement[] replacedOccurences = array.toArray(new PsiElement[array.size()]);
+              final PsiElement[] replacedOccurences = PsiUtilBase.toPsiElementArray(array);
               highlightReplacedOccurences(project, editor, replacedOccurences);
             }
           } else {

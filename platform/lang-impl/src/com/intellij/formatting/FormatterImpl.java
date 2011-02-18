@@ -16,16 +16,21 @@
 
 package com.intellij.formatting;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +47,8 @@ public class FormatterImpl extends FormatterEx
 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
+  private FormattingProgressIndicatorImpl myProgressIndicator;
+  
   private int myIsDisabledCount = 0;
   private final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(IndentImpl.Type.NONE, true, false);
@@ -82,20 +89,31 @@ public class FormatterImpl extends FormatterEx
   public Indent getNoneIndent() {
     return NONE_INDENT;
   }
+
+  @Override
+  public void setProgressIndicator(@NotNull FormattingProgressIndicatorImpl progressIndicator) {
+    myProgressIndicator = progressIndicator;
+  }
+
   public void format(final FormattingModel model, final CodeStyleSettings settings,
                      final CodeStyleSettings.IndentOptions indentOptions,
                      final CodeStyleSettings.IndentOptions javaIndentOptions,
-                     final FormatTextRanges affectedRanges) throws IncorrectOperationException {
-    disableFormatting();
-    try {
-      FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
-                                                      affectedRanges);
-      processor.setJavaIndentOptions(javaIndentOptions);
-      processor.format(model);
-    } finally {
-      enableFormatting();
-    }
+                     final FormatTextRanges affectedRanges) throws IncorrectOperationException
+  {
+    SequentialTask task = new MyFormattingTask() {
+      @NotNull
+      @Override
+      protected FormatProcessor buildProcessor() {
+        FormatProcessor processor = new FormatProcessor(
+          model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, FormattingProgressIndicator.EMPTY
+        );
+        processor.setJavaIndentOptions(javaIndentOptions);
 
+        processor.format(model);
+        return processor;
+      }
+    };
+    execute(task);
   }
 
   public Wrap createWrap(WrapType type, boolean wrapFirstElement) {
@@ -125,43 +143,110 @@ public class FormatterImpl extends FormatterEx
     return new DependantSpacingImpl(minOffset, maxOffset, dependence, keepLineBreaks, keepBlankLines);
   }
 
-  public void format(FormattingModel model,
-                     CodeStyleSettings settings,
-                     CodeStyleSettings.IndentOptions indentOptions,
-                     FormatTextRanges affectedRanges) throws IncorrectOperationException {
-    disableFormatting();
-    try {
-      FormatProcessor processor =
-        new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges);
-      processor.format(model);
-    } finally {
-      enableFormatting();
-    }
-
+  @NotNull
+  private FormattingProgressIndicator getProgressIndicator() {
+    FormattingProgressIndicator result = myProgressIndicator;
+    return result == null ? FormattingProgressIndicator.EMPTY : result;
+  }
+  
+  public void format(final FormattingModel model,
+                     final CodeStyleSettings settings,
+                     final CodeStyleSettings.IndentOptions indentOptions,
+                     final FormatTextRanges affectedRanges) throws IncorrectOperationException {
+    SequentialTask task = new MyFormattingTask() {
+      @NotNull
+      @Override
+      protected FormatProcessor buildProcessor() {
+        FormatProcessor processor = new FormatProcessor(
+          model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, getProgressIndicator()
+        );
+        processor.format(model, true);
+        return processor;
+      }
+    };
+    execute(task);
   }
 
-  public void formatWithoutModifications(FormattingDocumentModel model,
-                                         Block rootBlock,
-                                         CodeStyleSettings settings,
-                                         CodeStyleSettings.IndentOptions indentOptions,
-                                         TextRange affectedRange) throws IncorrectOperationException {
-    disableFormatting();
-    try {
-      new FormatProcessor(model, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true)).formatWithoutRealModifications();
-    } finally {
-      enableFormatting();
-    }
+  public void formatWithoutModifications(final FormattingDocumentModel model,
+                                         final Block rootBlock,
+                                         final CodeStyleSettings settings,
+                                         final CodeStyleSettings.IndentOptions indentOptions,
+                                         final TextRange affectedRange) throws IncorrectOperationException
+  {
+    SequentialTask task = new MyFormattingTask() {
+      @NotNull
+      @Override
+      protected FormatProcessor buildProcessor() {
+        FormatProcessor result = new FormatProcessor(
+          model, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true), FormattingProgressIndicator.EMPTY
+        );
+        result.formatWithoutRealModifications();
+        return result;
+      }
+    };
+    execute(task);
+  }
 
+  /**
+   * Execute given sequential formatting task. Two approaches are possible:
+   * <pre>
+   * <ul>
+   *   <li>
+   *      <b>synchronous</b> - the task is completely executed during the current method processing;
+   *   </li>
+   *   <li>
+   *       <b>asynchronous</b> - the task is executed at background thread under the progress dialog;
+   *   </li>
+   * </ul>
+   * </pre>
+   * 
+   * @param task    task to execute
+   */
+  private void execute(@NotNull SequentialTask task) {
+    disableFormatting();
+    Application application = ApplicationManager.getApplication();
+    if (myProgressIndicator == null || !application.isDispatchThread() || application.isUnitTestMode()) {
+      try {
+        task.prepare();
+        while (!task.isDone()) {
+          task.iteration();
+        }
+      }
+      finally {
+        enableFormatting();
+        myProgressIndicator = null;
+      }
+    }
+    else {
+      myProgressIndicator.setTask(task);
+      myProgressIndicator.addCallback(FormattingProgressIndicator.EventType.SUCCESS, new Runnable() {
+        @Override
+        public void run() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              // Reset current progress indicator.
+              myProgressIndicator = null;
+              enableFormatting();
+            }
+          });
+        }
+      });
+      ProgressManager.getInstance().run(myProgressIndicator);
+    }
   }
 
   public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
                                         final Block block,
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
-                                        final TextRange affectedRange, final boolean mayChangeLineFeeds) {
+                                        final TextRange affectedRange, final boolean mayChangeLineFeeds)
+  {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true));
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
+      );
       final LeafBlockWrapper blockBefore = processor.getBlockAfter(affectedRange.getStartOffset());
       LOG.assertTrue(blockBefore != null);
       WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
@@ -187,8 +272,9 @@ public class FormatterImpl extends FormatterEx
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
-                                                            new FormatTextRanges(rangeToAdjust, true));
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        documentModel, block, settings, indentOptions, new FormatTextRanges(rangeToAdjust, true)
+      );
       LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
@@ -215,8 +301,9 @@ public class FormatterImpl extends FormatterEx
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings,
-                                                            settings.getIndentOptions(fileType), null);
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        documentModel, block, settings, settings.getIndentOptions(fileType), null
+      );
       LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
@@ -256,9 +343,9 @@ public class FormatterImpl extends FormatterEx
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
-                                                            new FormatTextRanges(affectedRange, true),
-                                                            offset);
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
+      );
 
       final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
@@ -276,6 +363,54 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  /**
+   * Delegates to
+   * {@link #buildProcessorAndWrapBlocks(FormattingDocumentModel, Block, CodeStyleSettings, CodeStyleSettings.IndentOptions, FormatTextRanges, int)}
+   * with '-1' as an interested offset.
+   * 
+   * @param docModel
+   * @param rootBlock
+   * @param settings
+   * @param indentOptions
+   * @param affectedRanges
+   * @return
+   */
+  private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
+                                                             Block rootBlock,
+                                                             CodeStyleSettings settings,
+                                                             CodeStyleSettings.IndentOptions indentOptions,
+                                                             @Nullable FormatTextRanges affectedRanges)
+  {
+    return buildProcessorAndWrapBlocks(docModel, rootBlock, settings, indentOptions, affectedRanges, -1);
+  }
+
+  /**
+   * Builds {@link FormatProcessor} instance and asks it to wrap all {@link Block code blocks}
+   * {@link FormattingModel#getRootBlock() derived from the given model}. 
+   * 
+   * @param docModel            target model
+   * @param rootBlock           root block to process
+   * @param settings            code style settings to use
+   * @param indentOptions       indent options to use
+   * @param affectedRanges      ranges to reformat
+   * @param interestingOffset   interesting offset; <code>'-1'</code> if no particular offset has a special interest
+   * @return                    format processor instance with wrapped {@link Block code blocks}
+   */
+  @SuppressWarnings({"StatementWithEmptyBody"})
+  private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
+                                                             Block rootBlock,
+                                                             CodeStyleSettings settings,
+                                                             CodeStyleSettings.IndentOptions indentOptions,
+                                                             @Nullable FormatTextRanges affectedRanges,
+                                                             int interestingOffset)
+  {
+    FormatProcessor processor = new FormatProcessor(
+      docModel, rootBlock, settings, indentOptions, affectedRanges, interestingOffset, FormattingProgressIndicator.EMPTY
+    );
+    while (!processor.iteration()) ;
+    return processor;
+  }
+  
   private static int adjustLineIndent(
     final int offset,
     final FormattingDocumentModel documentModel,
@@ -323,9 +458,9 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
-                                                          new FormatTextRanges(affectedRange, true), offset);
-
+    final FormatProcessor processor = buildProcessorAndWrapBlocks(
+      documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
+    );
     final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
     if (blockAfterOffset != null) {
@@ -398,8 +533,9 @@ public class FormatterImpl extends FormatterEx
                               @Nullable final IndentInfoStorage indentInfoStorage) {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
-                                                            new FormatTextRanges(affectedRange, true));
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
+      );
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {
         WhiteSpace whiteSpace = current.getWhiteSpace();
@@ -462,8 +598,9 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
-                                                            new FormatTextRanges(affectedRange, true));
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(
+        model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
+      );
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {
         WhiteSpace whiteSpace = current.getWhiteSpace();
@@ -489,8 +626,10 @@ public class FormatterImpl extends FormatterEx
                           final CodeStyleSettings settings,
                           final CodeStyleSettings.IndentOptions indentOptions) {
     final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions,
-                                                          new FormatTextRanges(affectedRange, true));
+    
+    final FormatProcessor processor = buildProcessorAndWrapBlocks(
+      model.getDocumentModel(), block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
+    );
     LeafBlockWrapper current = processor.getFirstTokenBlock();
     while (current != null) {
       WhiteSpace whiteSpace = current.getWhiteSpace();
@@ -600,5 +739,34 @@ public class FormatterImpl extends FormatterEx
       }
       myIsDisabledCount--;
     }
+  }
+  
+  private abstract static class MyFormattingTask implements SequentialTask {
+
+    private FormatProcessor myProcessor;
+    private boolean         myDone;
+    
+    @Override
+    public void prepare() {
+      myProcessor = buildProcessor();
+    }
+
+    @Override
+    public boolean isDone() {
+      return myDone;
+    }
+
+    @Override
+    public boolean iteration() {
+      return myDone = myProcessor.iteration();
+    }
+
+    @Override
+    public void stop() {
+      myProcessor.stopSequentialProcessing();
+    }
+
+    @NotNull
+    protected abstract FormatProcessor buildProcessor();
   }
 }

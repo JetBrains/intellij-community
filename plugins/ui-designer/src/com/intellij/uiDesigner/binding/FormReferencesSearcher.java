@@ -22,6 +22,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -242,7 +243,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
           }
         }
       });
-      PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
+      PsiFile[] files = PsiUtilBase.toPsiFileArray(fileSet);
 
       for (PsiFile file : files) {
         ProgressManager.checkCanceled();

@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class MavenServicesManager implements PersistentStateComponent<Element> {
 
   public static String[] getServiceUrls() {
     final List<String> configured = getInstance().getUrls();
-    if (!configured.isEmpty()) return configured.toArray(new String[configured.size()]);
+    if (!configured.isEmpty()) return ArrayUtil.toStringArray(configured);
     return new String[]{
       "http://oss.sonatype.org/service/local/",
       "http://repo.jfrog.org/artifactory/api/",

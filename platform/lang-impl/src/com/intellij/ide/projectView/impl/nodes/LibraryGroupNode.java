@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -141,13 +142,13 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
           for (OrderRootType rootType : rootTypes) {
             files.addAll(Arrays.asList(library.getFiles(rootType)));
           }
-          return files.toArray(new VirtualFile[files.size()]);
+          return VfsUtil.toVirtualFileArray(files);
         }
       }
     }
     for (OrderRootType rootType : rootTypes) {
       files.addAll(Arrays.asList(orderEntry.getRootFiles(rootType)));
     }
-    return files.toArray(new VirtualFile[files.size()]);
+    return VfsUtil.toVirtualFileArray(files);
   }
 }

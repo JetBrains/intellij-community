@@ -240,7 +240,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
           curRange++;
         }
         else if (cmp > 0) {
-          mm.removeHighlighter(highlighter);
+          highlighter.dispose();
           curHighlight++;
         }
         else {
@@ -251,7 +251,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
 
       for (; curHighlight < oldHighlighters.size(); curHighlight++) {
-        mm.removeHighlighter(oldHighlighters.get(curHighlight));
+        RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
+        highlighter.dispose();
       }
     }
 

@@ -98,6 +98,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return new TemplateImpl(key, text, group);
   }
 
+  @Nullable
   public static TemplateState getTemplateState(Editor editor) {
     return editor.getUserData(TEMPLATE_STATE_KEY);
   }

@@ -16,9 +16,4 @@ public class ReplaceAddAllArrayToCollectionsFixTest extends LightQuickFixTestCas
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceAddAllArrayToCollections";
   }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }
