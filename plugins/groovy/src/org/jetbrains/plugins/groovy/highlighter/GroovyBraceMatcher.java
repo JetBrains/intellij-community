@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.highlighter;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType ibraceType, @Nullable IElementType tokenType) {
     return tokenType == null
         || GroovyTokenTypes.mWS == tokenType
+        || TokenType.WHITE_SPACE == tokenType
         || TokenSets.COMMENT_SET.contains(tokenType)
         || tokenType == GroovyTokenTypes.mSEMI
         || tokenType == GroovyTokenTypes.mCOMMA

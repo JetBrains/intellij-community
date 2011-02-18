@@ -17,27 +17,28 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.ParserDefinition;
-import static com.intellij.lang.ParserDefinition.SpaceRequirements.*;
-import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mWS;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST;
+import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * @author ilyas
@@ -83,7 +84,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    if (right.getElementType() == kIMPORT && left.getElementType() != mWS) {
+    if (right.getElementType() == kIMPORT && left.getElementType() != mWS && left.getElementType() != TokenType.WHITE_SPACE) {
       return MUST_LINE_BREAK;
     }
     else if (left.getElementType() == MODIFIERS && right.getElementType() == MODIFIERS) {

@@ -15,16 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
-import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author peter
@@ -61,7 +61,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     final IElementType type = element.getNode().getElementType();
-    if (type == GroovyTokenTypes.mNLS || type == GroovyTokenTypes.mWS) {
+    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(type)) {
       return element.getNextSibling();
     }
 

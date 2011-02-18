@@ -67,7 +67,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
     if (caret >= 1 && caret < text.length() && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       HighlighterIterator iterator = highlighter.createIterator(caret);
       iterator.retreat();
-      while (!iterator.atEnd() && mWS == iterator.getTokenType()) {
+      while (!iterator.atEnd() && (mWS == iterator.getTokenType() || TokenType.WHITE_SPACE == iterator.getTokenType())) {
         iterator.retreat();
       }
       boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == mCLOSABLE_BLOCK_OP;
@@ -78,7 +78,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
       }
 
       iterator = highlighter.createIterator(editor.getCaretModel().getOffset());
-      while (!iterator.atEnd() && mWS == iterator.getTokenType()) {
+      while (!iterator.atEnd() && (mWS == iterator.getTokenType() || TokenType.WHITE_SPACE == iterator.getTokenType())) {
         iterator.advance();
       }
       if (!iterator.atEnd() && mRCURLY == iterator.getTokenType()) {
