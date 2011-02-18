@@ -1,14 +1,19 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class LocalFileSystemTest extends IdeaTestCase{
@@ -218,5 +223,21 @@ public class LocalFileSystemTest extends IdeaTestCase{
       }
     );
 
+  }
+
+  public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
+    FileOutputStream stream = new FileOutputStream(file);
+    stream.write(bom);
+    OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
+    writer.write(content);
+    writer.close();
+  }
+
+  public static VirtualFile createTempFile(@NonNls String ext, byte[] bom, @NonNls String content, Charset charset) throws IOException {
+    File temp = FileUtil.createTempFile("copy", "." + ext);
+    setContentOnDisk(temp, bom, content, charset);
+
+    myFilesToDelete.add(temp);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
   }
 }
