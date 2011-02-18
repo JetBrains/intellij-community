@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -122,6 +124,8 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
       throw new IncorrectOperationException();
     }
 
+    final LeafElement nls = Factory.createSingleLeafElement(GroovyTokenTypes.mNLS, "\n", 0, 1, null, getManager());
+
     PsiElement actualAnchor = anchor == null ? getRBrace() : anchor;
     if (mayUseNewLinesAsSeparators()) {
       PsiElement prev = actualAnchor.getPrevSibling();
@@ -129,16 +133,15 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
         prev = prev.getPrevSibling();
       }
       if (!isNls(prev)) {
-        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", actualAnchor.getNode());
+        addBefore(nls.getPsi(), actualAnchor);
       }
     }
-    final ASTNode anchorNode = actualAnchor.getNode();
     element = (GrStatement)addBefore(element, actualAnchor);
     if (mayUseNewLinesAsSeparators()) {
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
+      addBefore(nls.getPsi(), actualAnchor);
     }
     else {
-      getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
+      addBefore(Factory.createSingleLeafElement(GroovyTokenTypes.mNLS, "\n", 0, 1, null, getManager()).getPsi(), actualAnchor);
     }
     return element;
   }

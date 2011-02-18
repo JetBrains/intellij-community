@@ -1,13 +1,13 @@
 class Foo {
-  final def <selection>foo</selection> = 2+2
+    final def <selection>foo</selection> = 2+2
 
-  def a() {
-    print foo.intValue()
-  }
+    def a() {
+        print foo.intValue()
+    }
 }
 -----
 class Foo {
-  <caret>def a() {
-    print((2+2).intValue())
-  }
+    <caret>def a() {
+        print((2+2).intValue())
+    }
 }

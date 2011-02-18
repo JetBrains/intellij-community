@@ -20,8 +20,6 @@ import com.intellij.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 
-import java.util.ArrayList;
-
 /**
  * @author ilyas
  */
@@ -36,7 +34,8 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     return HelpID.INTRODUCE_VARIABLE;
   }
 
-  protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context, Validator validator) {
+  protected GroovyIntroduceVariableDialog getDialog(GrIntroduceContext context) {
+    final GroovyVariableValidator validator = new GroovyVariableValidator(context);
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(context.expression, validator);
     return new GroovyIntroduceVariableDialog(context, validator, possibleNames);
   }

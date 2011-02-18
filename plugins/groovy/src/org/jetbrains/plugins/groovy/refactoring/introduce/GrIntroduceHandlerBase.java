@@ -38,6 +38,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -45,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,9 +63,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @NotNull
   protected abstract PsiElement findScope(GrExpression expression);
 
-  protected abstract void checkExpression(GrExpression selectedExpr);
+  protected abstract void checkExpression(GrExpression selectedExpr) throws GrIntroduceRefactoringError;
 
-  protected abstract GrIntroduceDialog<Settings> getDialog(GrIntroduceContext context, Validator validator);
+  protected abstract GrIntroduceDialog<Settings> getDialog(GrIntroduceContext context);
 
   public abstract void runRefactoring(GrIntroduceContext context, Settings settings);
 
@@ -156,9 +158,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return new GrIntroduceContext(project, editor, expression, occurences, scope);
   }
 
-  public static PsiElement[] findOccurences(GrExpression expression, PsiElement scope) {
-    final PsiElement[] occurrences =
-      GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
+  protected PsiElement[] findOccurences(GrExpression expression, PsiElement scope) {
+    final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
       throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("no.occurences.found"));
     }
@@ -179,7 +180,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       checkExpression(selectedExpr);
 
       final GrIntroduceContext context = getContext(project, editor, selectedExpr);
-      final Settings settings = showDialog(context, new GroovyVariableValidator(context));
+      final Settings settings = showDialog(context);
       if (settings == null) return false;
 
       CommandProcessor.getInstance().executeCommand(context.project, new Runnable() {
@@ -196,8 +197,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return true;
     }
     catch (GrIntroduceRefactoringError e) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(),
-                                          getHelpID());
+      CommonRefactoringUtil
+        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
   }
@@ -226,7 +227,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  private Settings showDialog(GrIntroduceContext context, Validator validator) {
+  private Settings showDialog(GrIntroduceContext context) {
 
     // Add occurences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
@@ -240,7 +241,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
     }
 
-    GrIntroduceDialog<Settings> dialog = getDialog(context, validator);
+    GrIntroduceDialog<Settings> dialog = getDialog(context);
 
     dialog.show();
     if (dialog.isOK()) {
@@ -258,6 +259,41 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiElement findAnchor(GrIntroduceContext context,
+                                       GrIntroduceSettings settings,
+                                       PsiElement[] occurrences,
+                                       final PsiElement container) {
+    if (occurrences.length == 0) return null;
+    PsiElement candidate;
+    if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
+      candidate = context.expression;
+    }
+    else {
+      GroovyRefactoringUtil.sortOccurrences(occurrences);
+      candidate = occurrences[0];
+    }
+    while (candidate != null && !container.equals(candidate.getParent())) {
+      candidate = candidate.getParent();
+    }
+    if (candidate == null) {
+      return null;
+    }
+    if ((container instanceof GrWhileStatement) &&
+        candidate.equals(((GrWhileStatement)container).getCondition())) {
+      return container;
+    }
+    if ((container instanceof GrIfStatement) &&
+        candidate.equals(((GrIfStatement)container).getCondition())) {
+      return container;
+    }
+    if ((container instanceof GrForStatement) &&
+        candidate.equals(((GrForStatement)container).getClause())) {
+      return container;
+    }
+    return candidate;
   }
 
 

@@ -1,3 +1,3 @@
-def protected newName(String s) {}
+protected def newName(String s) {}
 
 newName("a")

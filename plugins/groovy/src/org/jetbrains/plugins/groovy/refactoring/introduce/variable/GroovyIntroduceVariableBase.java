@@ -54,43 +54,6 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private PsiElement positionElement = null;
 
-  /**
-   * Calculates position to which new variable definition will be inserted.
-   */
-  @Nullable
-  public static PsiElement calculatePositionToInsertBefore(GrIntroduceContext context, GroovyIntroduceVariableSettings settings) {
-    final PsiElement[] occurrences = context.occurrences;
-    if (occurrences.length == 0) return null;
-    PsiElement candidate;
-    if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
-      candidate = context.expression;
-    }
-    else {
-      GroovyRefactoringUtil.sortOccurrences(occurrences);
-      candidate = occurrences[0];
-    }
-    final PsiElement container = context.scope;
-    while (candidate != null && !container.equals(candidate.getParent())) {
-      candidate = candidate.getParent();
-    }
-    if (candidate == null) {
-      return null;
-    }
-    if ((container instanceof GrWhileStatement) &&
-        candidate.equals(((GrWhileStatement)container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrIfStatement) &&
-        candidate.equals(((GrIfStatement)container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrForStatement) &&
-        candidate.equals(((GrForStatement)container).getClause())) {
-      return container;
-    }
-    return candidate;
-  }
-
   @NotNull
   @Override
   protected PsiElement findScope(GrExpression selectedExpr) {
@@ -275,7 +238,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
                                               GrVariableDeclaration varDecl) throws IncorrectOperationException {
     LOG.assertTrue(context.occurrences.length > 0);
 
-    GrStatement anchorElement = (GrStatement)calculatePositionToInsertBefore(context, settings);
+    GrStatement anchorElement = (GrStatement)findAnchor(context, settings, context.occurrences, context.scope);
     LOG.assertTrue(anchorElement != null);
     PsiElement realContainer = anchorElement.getParent();
 

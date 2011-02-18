@@ -14,8 +14,9 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +68,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private static final Logger LOG  = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantDialog");
 
   private final GrIntroduceContext myContext;
-  private final GrIntroduceHandlerBase.Validator myValidator;
   private JLabel myNameLabel;
   private JCheckBox myReplaceAllOccurences;
   private JPanel myPanel;
@@ -82,12 +82,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   @Nullable private PsiClass myTargetClass;
   @Nullable private PsiClass myDefaultTargetClass;
 
-  public GrIntroduceConstantDialog(GrIntroduceContext context,
-                                   GrIntroduceHandlerBase.Validator validator,
-                                   @Nullable PsiClass defaultTargetClass) {
+  public GrIntroduceConstantDialog(GrIntroduceContext context, @Nullable PsiClass defaultTargetClass) {
     super(context.project);
     myContext = context;
-    myValidator = validator;
     myTargetClass = defaultTargetClass;
     myDefaultTargetClass = defaultTargetClass;
 
@@ -199,7 +196,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, myValidator, true);
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyVariableValidator(myContext), true);
     for (String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
     }

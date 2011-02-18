@@ -81,8 +81,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
 
 
   @Override
-  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(GrIntroduceContext context, Validator validator) {
-    return new GrIntroduceConstantDialog(context, validator, findContainingClass(context));
+  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(GrIntroduceContext context) {
+    return new GrIntroduceConstantDialog(context, findContainingClass(context));
   }
 
   @Override
