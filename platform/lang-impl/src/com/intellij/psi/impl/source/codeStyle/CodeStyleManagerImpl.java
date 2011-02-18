@@ -48,8 +48,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 public class CodeStyleManagerImpl extends CodeStyleManager {
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
+  private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
+    = new ThreadLocal<ProcessingUnderProgressInfo>()
+  {
+    @Override
+    protected ProcessingUnderProgressInfo initialValue() {
+      return new ProcessingUnderProgressInfo();
+    }
+  };
+  
   private final Project myProject;
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
@@ -478,6 +490,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     document.deleteString(start, end);
     document.insertString(start, buffer);
     
+    setSequentialProcessingAllowed(false);
     document.insertString(offset, DUMMY_IDENTIFIER);
     return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
   }
@@ -506,6 +519,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
     ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
+    setSequentialProcessingAllowed(false);
     parent.addChild(marker, space1.getTreeNext());
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
     return psiElement == null ? null : psiElement.getTextRange();
@@ -560,5 +574,53 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   private CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(myProject);
+  }
+
+  @Override
+  public boolean isSequentialProcessingAllowed() {
+    return SEQUENTIAL_PROCESSING_ALLOWED.get().isAllowed();
+  }
+
+  /**
+   * Allows to define if {@link #isSequentialProcessingAllowed() sequential processing} should be allowed.
+   * <p/>
+   * Current approach is not allow to stop sequential processing for more than predefine amount of time (couple of seconds).
+   * That means that call to this method with <code>'true'</code> argument is not mandatory for successful processing even
+   * if this method is called with <code>'false'</code> argument before.
+   * 
+   * @param allowed     flag that defines if {@link #isSequentialProcessingAllowed() sequential processing} should be allowed
+   */
+  public static void setSequentialProcessingAllowed(boolean allowed) {
+    ProcessingUnderProgressInfo info = SEQUENTIAL_PROCESSING_ALLOWED.get();
+    if (allowed) {
+      info.decrement();
+    }
+    else {
+      info.increment();
+    }
+  }
+  
+  private static class ProcessingUnderProgressInfo {
+    
+    private static final long DURATION_TIME = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+    
+    private int  myCount;
+    private long myEndTime;
+    
+    public void increment() {
+      myCount++;
+      myEndTime = System.currentTimeMillis() + DURATION_TIME;
+    }
+    
+    public void decrement() {
+      if (myCount <= 0) {
+        return;
+      }
+      myCount--;
+    }
+    
+    public boolean isAllowed() {
+      return myCount <= 0 || System.currentTimeMillis() >= myEndTime;
+    }
   }
 }

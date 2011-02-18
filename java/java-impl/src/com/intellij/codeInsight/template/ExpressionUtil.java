@@ -23,6 +23,7 @@ package com.intellij.codeInsight.template;
  import com.intellij.psi.codeStyle.JavaCodeStyleManager;
  import com.intellij.psi.codeStyle.SuggestedNameInfo;
  import com.intellij.psi.codeStyle.VariableKind;
+ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
  import com.intellij.psi.text.BlockSupport;
  import com.intellij.util.IncorrectOperationException;
  import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,7 @@ package com.intellij.codeInsight.template;
        ApplicationManager.getApplication().runWriteAction(new Runnable() {
          public void run() {
            BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
+           CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
            try{
              blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
            }
