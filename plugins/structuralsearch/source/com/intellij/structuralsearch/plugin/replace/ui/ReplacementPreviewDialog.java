@@ -71,7 +71,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
   private void removeHilighter() {
     if (hilighter!=null && hilighter.isValid()) {
-      editor.getMarkupModel().removeHighlighter(hilighter);
+      hilighter.dispose();
       hilighter = null;
       editor = null;
     }

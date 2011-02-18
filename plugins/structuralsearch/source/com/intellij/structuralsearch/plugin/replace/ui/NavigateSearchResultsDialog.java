@@ -180,7 +180,7 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
   private void removeHilighter() {
     if (hilighter!=null && hilighter.isValid()) {
-      editor.getMarkupModel().removeHighlighter(hilighter);
+      hilighter.dispose();
       hilighter = null;
       editor = null;
     }
