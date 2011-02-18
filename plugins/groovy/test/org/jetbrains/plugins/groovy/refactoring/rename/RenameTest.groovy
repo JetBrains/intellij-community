@@ -169,8 +169,7 @@ class A {
     PsiElement field = myFixture.getElementAtCaret()
     myFixture.renameElement field, "ndame"
 
-    myFixture.checkResult """
-class A {
+    myFixture.checkResult """class A {
   String ndame;
 
   class X {

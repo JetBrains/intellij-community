@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
@@ -159,6 +160,23 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     getNode().addChild(elemNode, anchorNode);
     getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
     return (GrVariableDeclaration) elemNode.getPsi();
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement element = child.getPsi();
+    if (element instanceof GrTopStatement) {
+      PsiImplUtil.deleteStatementTail(this, element);
+    }
+    super.deleteChildInternal(child);
+  }
+
+  @Override
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    if (last instanceof GrTopStatement) {
+      PsiImplUtil.deleteStatementTail(this, last);
+    }
+    super.deleteChildRange(first, last);
   }
 
   public static class GrClassBody extends GrTypeDefinitionBodyBase implements StubBasedPsiElement<EmptyStub> {

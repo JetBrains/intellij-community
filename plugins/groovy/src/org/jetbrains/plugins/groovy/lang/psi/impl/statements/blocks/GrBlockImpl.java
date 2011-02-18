@@ -51,6 +51,23 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     myControlFlow = null;
   }
 
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement element = child.getPsi();
+    if (element instanceof GrStatement) {
+      PsiImplUtil.deleteStatementTail(this, element);
+    }
+    super.deleteChildInternal(child);
+  }
+
+  @Override
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    if (last instanceof GrStatement) {
+      PsiImplUtil.deleteStatementTail(this, last);
+    }
+    super.deleteChildRange(first, last);
+  }
+
   public Instruction[] getControlFlow() {
     CachedValue<Instruction[]> controlFlow = myControlFlow;
     if (controlFlow == null) {

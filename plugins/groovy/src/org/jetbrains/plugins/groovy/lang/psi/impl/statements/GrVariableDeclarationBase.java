@@ -10,14 +10,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.stubs.EmptyStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -28,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -137,24 +134,6 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     return findChildByClass(GrTypeElement.class);
-  }
-
-  @Override
-  public void delete() throws IncorrectOperationException {
-    PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclarationOwner) {
-      PsiElement next = PsiUtil.getNextNonSpace(this);
-      ASTNode astNode = parent.getNode();
-      if (astNode != null) {
-        astNode.removeChild(getNode());
-      }
-      if (next instanceof LeafPsiElement && next.getNode()!= null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
-        next.delete();
-      }
-      return;
-    }
-    throw new IncorrectOperationException("Invalid enclosing variable declaration owner");
-
   }
 
   public static class GrVariables extends GrVariableDeclarationBase implements StubBasedPsiElement<EmptyStub> {

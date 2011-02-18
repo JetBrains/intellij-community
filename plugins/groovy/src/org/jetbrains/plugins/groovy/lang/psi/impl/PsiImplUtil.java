@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,11 +53,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
@@ -368,5 +369,34 @@ public class PsiImplUtil {
         return expr.getType();
       }
     });
+  }
+
+  public static void deleteStatementTail(PsiElement container, @NotNull PsiElement statement) {
+    PsiElement next = statement.getNextSibling();
+    while (next != null) {
+      final ASTNode node = next.getNode();
+      final IElementType type = node.getElementType();
+      if (type == mSEMI) {
+        final PsiElement nnext = next.getNextSibling();
+        container.deleteChildRange(next, next);
+        next = nnext;
+      }
+      else if (type == mNLS) {
+        final String text = next.getText();
+        final int first = text.indexOf("\n");
+        final int second = text.indexOf("\n", first + 1);
+        if (second < 0) {
+          container.deleteChildRange(next, next);
+          return;
+        }
+        final String substring = text.substring(second);
+        container.getNode()
+          .replaceChild(node, createSingleLeafElement(mNLS, substring, 0, substring.length(), null, container.getManager()));
+        return;
+      }
+      else {
+        break;
+      }
+    }
   }
 }

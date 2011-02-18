@@ -1,8 +1,8 @@
 {
-  int a = 1
-  <selection>a</selection> + b
+    int a = 1
+    <selection>a</selection> + b
 }
 -----
 {
-  1<caret> + b
+    1<caret> + b
 }

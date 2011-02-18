@@ -201,4 +201,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
     return result;
   }
+
+  @Override
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    if (last instanceof GrTopStatement) {
+      PsiImplUtil.deleteStatementTail(this, last);
+    }
+    super.deleteChildRange(first, last);
+  }
 }
