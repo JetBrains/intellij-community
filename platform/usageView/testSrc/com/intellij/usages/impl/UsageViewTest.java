@@ -16,6 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -45,8 +46,9 @@ public class UsageViewTest extends LightPlatformCodeInsightTestCase{
 
     Disposer.register(getTestRootDisposable(), usageView);
 
-    UIUtil.dispatchAllInvocationEvents();
     ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
 
     LeakHunter.checkLeak(usageView, PsiFileImpl.class);
     LeakHunter.checkLeak(usageView, Document.class);
