@@ -918,9 +918,4 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
     return this;
   }
-
-  @Override
-  public void setQualifier(@Nullable GrExpression expression) {
-    setQualifier(expression);
-  }
 }
