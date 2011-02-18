@@ -1187,6 +1187,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         c.gridy = i;
         c.ipadx = itemTextPadding;
         c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
 
 
         {
