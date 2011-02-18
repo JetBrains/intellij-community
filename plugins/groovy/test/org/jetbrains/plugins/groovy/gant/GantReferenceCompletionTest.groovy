@@ -17,23 +17,20 @@ package org.jetbrains.plugins.groovy.gant;
 
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
-import org.jetbrains.annotations.NotNull
 
-/**
+ /**
  * @author ilyas
  */
 public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -178,15 +175,7 @@ target (default : '') {
 
 }
 
-class GantProjectDescriptor implements LightProjectDescriptor {
-  public ModuleType getModuleType() {
-      return StdModuleTypes.JAVA;
-    }
-
-    public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk17("java 1.5");
-    }
-
+class GantProjectDescriptor extends DefaultLightProjectDescriptor {
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
 

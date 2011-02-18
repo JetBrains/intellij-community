@@ -141,7 +141,7 @@ public abstract class FileEditorManager {
   /**
    * Adds specified <code>listener</code>
    * @param listener listener to be added
-   * @deprecated Use MessageBus instead
+   * @deprecated Use MessageBus instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 

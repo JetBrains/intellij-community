@@ -40,7 +40,7 @@ public interface PsiTryStatement extends PsiStatement {
   PsiCodeBlock[] getCatchBlocks();
 
   /**
-   * Returns the array of parametets for <code>catch</code> sections.
+   * Returns the array of parameters for <code>catch</code> sections.
    *
    * @return the array of parameters, or an empty array if the statement has no catch sections.
    */

@@ -8,6 +8,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 
 import java.util.List;
@@ -180,6 +181,24 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testCurrentClassBest() {
     checkPreferredItems(0, "XcodeProjectTemplate", "XcodeConfigurable");
+  }
+
+  public void testFqnStats() {
+    myFixture.addClass("public interface Baaaaaaar {}");
+    myFixture.addClass("package zoo; public interface Baaaaaaar {}");
+
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName());
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(1)).getQualifiedName());
+    incUseCount(lookup, 1);
+
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName());
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName());
+  }
+
+  public void testDispreferInnerClasses() {
+    checkPreferredItems(0); //no chosen items
+    assertFalse(getLookup().getItems().get(0).getObject() instanceof PsiClass);
   }
 
 }

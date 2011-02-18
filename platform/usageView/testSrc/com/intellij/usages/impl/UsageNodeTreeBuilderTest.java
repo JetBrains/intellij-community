@@ -18,11 +18,11 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,12 +30,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class UsageNodeTreeBuilderTest extends TestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
+public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   public void testNoGroupingRules() throws Exception {
     GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, new UsageGroupingRule[] {});
 
@@ -90,14 +85,13 @@ public class UsageNodeTreeBuilderTest extends TestCase {
       usages[i] = createUsage(indices[i]);
     }
 
-    //DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode("temp"));
     UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]);
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
     for (Usage usage : usages) {
       usageNodeTreeBuilder.appendUsage(usage);
-      UIUtil.pump();
+      UIUtil.dispatchAllInvocationEvents();
     }
 
     return rootNode;

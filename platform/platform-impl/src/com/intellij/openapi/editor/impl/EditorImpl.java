@@ -5552,7 +5552,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
         }
 
-        mySize = new Dimension(maxWidth, getLineHeight() * getVisibleLineCount());
+        mySize = new Dimension(maxWidth, getLineHeight() * Math.max(getVisibleLineCount(), 1));
 
         myIsDirty = false;
       }

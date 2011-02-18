@@ -24,6 +24,10 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class AntArtifactPostprocessingPropertiesProvider extends ArtifactPropertiesProvider {
+  public static AntArtifactPostprocessingPropertiesProvider getInstance() {
+    return EP_NAME.findExtension(AntArtifactPostprocessingPropertiesProvider.class);
+  }
+
   protected AntArtifactPostprocessingPropertiesProvider() {
     super("ant-postprocessing");
   }

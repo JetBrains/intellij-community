@@ -17,23 +17,25 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
  * @author Roman.Chernyatchik, oleg
  */
-public abstract class CommandLineArgumentsProvider {
+public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)
    */
-  public abstract String[] getArguments();
+  public String[] getArguments() { return ArrayUtil.EMPTY_STRING_ARRAY; }
 
-  public abstract boolean passParentEnvs();
+  public boolean passParentEnvs() { return false; }
 
   @Nullable
-  public abstract Map<String, String> getAdditionalEnvs();
+  public Map<String, String> getAdditionalEnvs() { return Collections.emptyMap(); }
 
 
   public String getCommandLineString() {

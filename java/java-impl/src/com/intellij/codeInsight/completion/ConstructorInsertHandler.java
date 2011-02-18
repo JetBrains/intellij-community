@@ -4,6 +4,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -34,6 +35,8 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
+  static final OffsetKey PARAM_LIST_START = OffsetKey.create("paramListStart");
+  static final OffsetKey PARAM_LIST_END = OffsetKey.create("paramListEnd");
   private final boolean mySmart;
 
   private ConstructorInsertHandler(boolean smart) {
@@ -50,6 +53,15 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
     boolean withTail = item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous;
     boolean isAbstract = ((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT);
+
+    if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
+      final int plStart = context.getOffset(PARAM_LIST_START);
+      final int plEnd = context.getOffset(PARAM_LIST_END);
+      if (plStart >= 0 && plEnd >= 0) {
+        context.getDocument().deleteString(plStart, plEnd);
+        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+      }
+    }
 
     insertParentheses(context, delegate, delegate.getObject(), withTail && isAbstract);
 

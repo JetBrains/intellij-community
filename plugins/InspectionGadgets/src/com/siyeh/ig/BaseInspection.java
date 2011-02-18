@@ -24,7 +24,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
@@ -282,5 +284,10 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         if (openProjects.length == 0) {
             inspectionGadgetsPlugin = null;
         }
+    }
+
+    @Nullable
+    public TextRange getProblemTextRange(PsiElement element) {
+        return null;
     }
 }

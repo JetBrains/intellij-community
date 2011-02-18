@@ -18,14 +18,19 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.actions.TypeCookAction;
 import org.jetbrains.annotations.NotNull;
 
-public class GenerifyFileFix implements IntentionAction {
+public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   private final PsiFile myFile;
 
   public GenerifyFileFix(PsiFile file) {
@@ -38,8 +43,25 @@ public class GenerifyFileFix implements IntentionAction {
   }
 
   @NotNull
+  @Override
+  public String getName() {
+    return getText();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("generify.family");
+  }
+
+  @Override
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    if (isAvailable(project, null, null)) {
+      new WriteCommandAction(project) {
+        protected void run(Result result) throws Throwable {
+          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), descriptor.getPsiElement().getContainingFile());
+        }
+      }.execute();
+    }
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

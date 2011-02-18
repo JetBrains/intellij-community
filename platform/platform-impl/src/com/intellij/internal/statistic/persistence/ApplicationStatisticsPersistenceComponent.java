@@ -16,10 +16,12 @@
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -30,9 +32,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +56,8 @@ import java.util.Set;
 )
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
         implements ApplicationComponent, PersistentStateComponent<Element> {
+    private boolean persistOnClosing = true;
+
     private static final String TOKENIZER = ",";
 
     @NonNls
@@ -152,6 +158,11 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     }
 
     public void initComponent() {
+        onAppClosing();
+        onProjectClosing();
+    }
+
+    private void onProjectClosing() {
         ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerListener() {
             @Override
             public void projectOpened(Project project) {
@@ -169,12 +180,52 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
             @Override
             public void projectClosing(Project project) {
                 if (project != null) {
-                    for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
-                        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-                            ((AbstractApplicationUsagesCollector) usagesCollector).persistProjectUsages(project);
-                        }
+                    if (persistOnClosing) {
+                        doPersistProjectUsages(project);
                     }
                 }
+            }
+        });
+    }
+
+    private static void doPersistProjectUsages(@NotNull Project project) {
+        for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
+            if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+                ((AbstractApplicationUsagesCollector) usagesCollector).persistProjectUsages(project);
+            }
+        }
+    }
+
+    private void onAppClosing() {
+        final MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
+
+        messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+            @Override
+            public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+            }
+
+            @Override
+            public void appStarting(Project projectFromCommandLine) {
+            }
+
+            @Override
+            public void projectFrameClosed() {
+            }
+
+            @Override
+            public void projectOpenFailed() {
+            }
+
+            @Override
+            public void welcomeScreenDisplayed() {
+            }
+
+            @Override
+            public void appClosing() {
+                for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+                    doPersistProjectUsages(project);
+                }
+                persistOnClosing = false;
             }
         });
     }

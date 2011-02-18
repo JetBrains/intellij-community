@@ -433,7 +433,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       }
       g.setColor(color);
 
-      final int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
+      final int textBaseline = getTextBaseLine(metrics, getHeight());
 
       if (!attributes.isSearchMatch()) g.drawString(fragment, xOffset, textBaseline);
 
@@ -495,6 +495,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.setColor(new Color(50, 50, 50));
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
+  }
+
+  @Override
+  public int getBaseline(int width, int height) {
+    super.getBaseline(width, height);
+    return getTextBaseLine(getFontMetrics(getFont()), height);
+  }
+
+  private static int getTextBaseLine(FontMetrics metrics, final int height) {
+    return (height - metrics.getHeight()) / 2 + metrics.getAscent();
   }
 
   private static void checkCanPaint(Graphics g) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -37,6 +38,8 @@ import java.util.*;
  * @author yole
  */
 public abstract class VcsVFSListener implements Disposable {
+  private VcsDirtyScopeManager myDirtyScopeManager;
+
   protected static class MovedFileInfo {
     public final String myOldPath;
     public String myNewPath;
@@ -59,6 +62,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
+  protected final List<VirtualFile> myDirtyFiles = new ArrayList<VirtualFile>();
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -66,6 +70,7 @@ public abstract class VcsVFSListener implements Disposable {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     final MyVirtualFileAdapter myVFSListener = new MyVirtualFileAdapter();
     final MyCommandAdapter myCommandListener = new MyCommandAdapter();
@@ -200,7 +205,14 @@ public abstract class VcsVFSListener implements Disposable {
 
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
-    if (FileStatusManager.getInstance(myProject).getStatus(file) != FileStatus.UNKNOWN) {
+    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
+    if (status == FileStatus.IGNORED) {
+      if (file.getParent() != null) {
+        myDirtyFiles.add(file.getParent());
+        myDirtyFiles.add(file); // will be at new path
+      }
+    }
+    if (status != FileStatus.UNKNOWN && status != FileStatus.IGNORED) {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
       for (MovedFileInfo info : myMovedFiles) {
@@ -359,7 +371,8 @@ public abstract class VcsVFSListener implements Disposable {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
       if (myCommandLevel == 0) {
-        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
+        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty() ||
+            ! myDirtyFiles.isEmpty()) {
           // avoid reentering commandFinished handler - saving the documents may cause a "before file deletion" event firing,
           // which will cause closing the text editor, which will itself run a command that will be caught by this listener
           myCommandLevel++;
@@ -378,6 +391,20 @@ public abstract class VcsVFSListener implements Disposable {
           }
           if (!myMovedFiles.isEmpty()) {
             executeMoveRename();
+          }
+          if (! myDirtyFiles.isEmpty()) {
+            final List<VirtualFile> files = new ArrayList<VirtualFile>();
+            final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
+            for (VirtualFile dirtyFile : myDirtyFiles) {
+              if (dirtyFile != null) {
+                if (dirtyFile.isDirectory()) {
+                  dirs.add(dirtyFile);
+                } else {
+                  files.add(dirtyFile);
+                }
+              }
+            }
+            myDirtyScopeManager.filesDirty(files, dirs);
           }
         }
       }

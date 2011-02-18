@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -49,12 +50,12 @@ public class DuplicatesFinder {
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints = false;
-  private final ReturnValue myReturnValue;
+  @Nullable private final ReturnValue myReturnValue;
 
   public DuplicatesFinder(PsiElement[] pattern,
                           InputVariables parameters,
-                          ReturnValue returnValue,
-                          List<? extends PsiVariable> outputParameters
+                          @Nullable ReturnValue returnValue,
+                          @NotNull List<? extends PsiVariable> outputParameters
   ) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
@@ -109,6 +110,14 @@ public class DuplicatesFinder {
     return result;
   }
 
+  @Nullable
+  public Match isDuplicate(PsiElement element, boolean ignoreParameterTypes) {
+    annotatePattern();
+    Match match = isDuplicateFragment(element, ignoreParameterTypes);
+    deannotatePattern();
+    return match;
+  }
+
   private void annotatePattern() {
     for (final PsiElement patternComponent : myPattern) {
       patternComponent.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -146,7 +155,7 @@ public class DuplicatesFinder {
   private void findPatternOccurrences(List<Match> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      final Match match = isDuplicateFragment(child);
+      final Match match = isDuplicateFragment(child, false);
       if (match != null) {
         array.add(match);
         continue;
@@ -157,7 +166,7 @@ public class DuplicatesFinder {
 
 
   @Nullable
-  private Match isDuplicateFragment(PsiElement candidate) {
+  private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypes) {
     if (PsiTreeUtil.isAncestor(myPattern[0], candidate, false)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
@@ -188,7 +197,7 @@ public class DuplicatesFinder {
       }
 
     }
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1));
+    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypes);
     for (int i = 0; i < myPattern.length; i++) {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }

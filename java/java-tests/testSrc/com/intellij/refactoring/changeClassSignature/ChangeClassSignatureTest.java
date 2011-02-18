@@ -21,11 +21,6 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   public void testNoParams() throws Exception {
     doTest(new GenParams() {
       @Override

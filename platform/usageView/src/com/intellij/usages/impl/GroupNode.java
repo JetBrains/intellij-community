@@ -26,6 +26,7 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -43,7 +44,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final List<UsageNode> myUsageNodes = new ArrayList<UsageNode>();
   private volatile int myRecursiveUsageCount = 0;
 
-  public GroupNode(UsageGroup group, int ruleIndex, UsageViewTreeModelBuilder treeModel) {
+  public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);
     setUserObject(group);
     myGroup = group;
@@ -73,7 +74,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
-  void addNode(final DefaultMutableTreeNode node) {
+  void addNode(@NotNull final DefaultMutableTreeNode node) {
     if (!getBuilder().isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
@@ -99,20 +100,21 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.reload(this);
   }
 
-  private UsageNode tryMerge(Usage usage) {
+  private UsageNode tryMerge(@NotNull Usage usage) {
     if (!(usage instanceof MergeableUsage)) return null;
-    if (!UsageViewSettings.getInstance().isFilterDuplicatedLine()) return null;
+    MergeableUsage mergeableUsage = (MergeableUsage)usage;
     for (UsageNode node : myUsageNodes) {
       Usage original = node.getUsage();
+      assert original != mergeableUsage : "Double add: " + usage +"; node: "+ node+"; already added: "+myUsageNodes;
       if (original instanceof MergeableUsage) {
-        if (((MergeableUsage)original).merge((MergeableUsage)usage)) return node;
+        if (((MergeableUsage)original).merge(mergeableUsage)) return node;
       }
     }
 
     return null;
   }
 
-  public boolean removeUsage(UsageNode usage) {
+  public boolean removeUsage(@NotNull UsageNode usage) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Collection<GroupNode> groupNodes = mySubgroupNodes.values();
     for(Iterator<GroupNode> iterator = groupNodes.iterator();iterator.hasNext();) {
@@ -129,7 +131,11 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       }
     }
 
-    if (myUsageNodes.remove(usage)) {
+    boolean removed;
+    synchronized (lock) {
+      removed = myUsageNodes.remove(usage);
+    }
+    if (removed) {
       doUpdate();
       return true;
     }
@@ -143,12 +149,14 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.nodeChanged(this);
   }
 
-  public UsageNode addUsage(Usage usage) {
+  public UsageNode addUsage(@NotNull Usage usage) {
     final UsageNode node;
     synchronized (lock) {
-      UsageNode mergedWith = tryMerge(usage);
-      if (mergedWith != null) {
-        return mergedWith;
+      if (UsageViewSettings.getInstance().isFilterDuplicatedLine()) {
+        UsageNode mergedWith = tryMerge(usage);
+        if (mergedWith != null) {
+          return mergedWith;
+        }
       }
       node = new UsageNode(usage, getBuilder());
       myUsageNodes.add(node);
@@ -165,12 +173,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return node;
   }
 
-  private int getNodeIndex(final UsageNode node) {
+  private int getNodeIndex(@NotNull UsageNode node) {
     int index = indexedBinarySearch(node);
     return index >= 0 ? index : -index-1;
   }
 
-  private int indexedBinarySearch(UsageNode key) {
+  private int indexedBinarySearch(@NotNull UsageNode key) {
     int low = 0;
     int high = getChildCount() - 1;
 
@@ -246,7 +254,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return false;
   }
 
-  private int getNodeInsertionIndex(DefaultMutableTreeNode node) {
+  private int getNodeInsertionIndex(@NotNull DefaultMutableTreeNode node) {
     Enumeration children = children();
     int idx = 0;
     while (children.hasMoreElements()) {

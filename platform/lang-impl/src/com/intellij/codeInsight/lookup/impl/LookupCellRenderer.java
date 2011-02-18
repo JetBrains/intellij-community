@@ -198,7 +198,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     return text.substring(0, i) + ELLIPSIS;
   }
 
-  private static Color getTailTextColor(boolean isSelected, LookupElementPresentation presentation, Color defaultForeground) {
+  public static Color getTailTextColor(boolean isSelected, LookupElementPresentation presentation, Color defaultForeground) {
     if (presentation.isTailGrayed()) {
       return getGrayedForeground(isSelected);
     }

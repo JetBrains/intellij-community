@@ -180,15 +180,18 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         return createType(original.getProject(), originalText, null, generated);
       }
       if (type instanceof PsiIntersectionType) {
-        PsiIntersectionType intersectionType = (PsiIntersectionType)type;
-        LightTypeElement te = new LightTypeElement(original.getManager(), intersectionType.getConjuncts()[0]);
+        LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiIntersectionType)type).getRepresentative());
+        return ChangeUtil.generateTreeElement(te, table, manager);
+      }
+      if (type instanceof PsiDisjunctionType) {
+        LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiDisjunctionType)type).getLeastUpperBound());
         return ChangeUtil.generateTreeElement(te, table, manager);
       }
       PsiClassType classType = (PsiClassType)type;
 
       String text = classType.getPresentableText();
       final TreeElement element = createType(original.getProject(), text, original, false);
-      PsiTypeElementImpl result = (PsiTypeElementImpl)SourceTreeToPsiMap.treeElementToPsi(element);
+      PsiTypeElementImpl result = SourceTreeToPsiMap.treeToPsiNotNull(element);
 
       CodeEditUtil.setNodeGenerated(result, generated);
       if (generated) {
@@ -397,7 +400,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
-        final PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
+        final PsiElement target = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(original).resolve();
         if (target instanceof PsiClass) {
           ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
         }

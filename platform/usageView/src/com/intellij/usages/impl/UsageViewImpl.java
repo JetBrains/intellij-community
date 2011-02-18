@@ -125,6 +125,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private JPanel myCentralPanel;
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
+  private final Object lock = new Object();
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -171,53 +172,56 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          if (isDisposed) return;
-          myTree.setModel(myModel);
+          // lock here to avoid concurrent execution of this init and dispose in other thread
+          synchronized (lock) {
+            if (isDisposed) return;
+            myTree.setModel(myModel);
 
-          myRootPanel.setLayout(new BorderLayout());
+            myRootPanel.setLayout(new BorderLayout());
 
-          final SimpleToolWindowPanel twPanel = new SimpleToolWindowPanel(false, true);
-          myRootPanel.add(twPanel, BorderLayout.CENTER);
+            final SimpleToolWindowPanel twPanel = new SimpleToolWindowPanel(false, true);
+            myRootPanel.add(twPanel, BorderLayout.CENTER);
 
-          JPanel toolbarPanel = new JPanel(new BorderLayout());
-          toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
-          toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-          twPanel.setToolbar(toolbarPanel);
+            JPanel toolbarPanel = new JPanel(new BorderLayout());
+            toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
+            toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
+            twPanel.setToolbar(toolbarPanel);
 
-          myCentralPanel = new JPanel();
-          myCentralPanel.setLayout(new BorderLayout());
-          setupCentralPanel();
+            myCentralPanel = new JPanel();
+            myCentralPanel.setLayout(new BorderLayout());
+            setupCentralPanel();
 
-          initTree();
-          twPanel.setContent(myCentralPanel);
+            initTree();
+            twPanel.setContent(myCentralPanel);
 
 
-          myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
-          collapseAll();
+            myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
+            collapseAll();
 
-          myModelTracker.addListener(UsageViewImpl.this);
+            myModelTracker.addListener(UsageViewImpl.this);
 
-          if (myPresentation.isShowCancelButton()) {
-            addButtonToLowerPane(new Runnable() {
-              public void run() {
-                close();
-              }
-            }, UsageViewBundle.message("usage.view.cancel.button"));
-          }
-
-          myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-            public void valueChanged(final TreeSelectionEvent e) {
-              SwingUtilities.invokeLater(new Runnable() {
+            if (myPresentation.isShowCancelButton()) {
+              addButtonToLowerPane(new Runnable() {
                 public void run() {
-                  if (isDisposed) return;
-                  List<UsageInfo> infos = getSelectedUsageInfos();
-                  if (infos != null && myUsagePreviewPanel != null) {
-                    myUsagePreviewPanel.updateLayout(infos);
-                  }
+                  close();
                 }
-              });
+              }, UsageViewBundle.message("usage.view.cancel.button"));
             }
-          });
+
+            myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+              public void valueChanged(final TreeSelectionEvent e) {
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    if (isDisposed) return;
+                    List<UsageInfo> infos = getSelectedUsageInfos();
+                    if (infos != null && myUsagePreviewPanel != null) {
+                      myUsagePreviewPanel.updateLayout(infos);
+                    }
+                  }
+                });
+              }
+            });
+          }
         }
       });
     }
@@ -659,7 +663,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private final TransferToEDTQueue<Usage> myTransferToEDTQueue;
-  public void appendUsageLater(Usage usage) {
+  public void appendUsageLater(@NotNull Usage usage) {
     myTransferToEDTQueue.offer(usage);
   }
   
@@ -783,17 +787,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void dispose() {
-    isDisposed = true;
-    ToolTipManager.sharedInstance().unregisterComponent(myTree);
-    myModelTracker.removeListener(this);
-    myUpdateAlarm.cancelAllRequests();
-    if (myUsagePreviewPanel != null) {
-      UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
-      myUsagePreviewPanel = null;
-    }
-    for (Usage usage : getUsages()) {
-      if (usage instanceof UsageInfo2UsageAdapter) {
-        ((UsageInfo2UsageAdapter)usage).dispose();
+    synchronized (lock) {
+      isDisposed = true;
+      ToolTipManager.sharedInstance().unregisterComponent(myTree);
+      myModelTracker.removeListener(this);
+      myUpdateAlarm.cancelAllRequests();
+      if (myUsagePreviewPanel != null) {
+        UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
+        myUsagePreviewPanel = null;
+      }
+      for (Usage usage : getUsages()) {
+        if (usage instanceof UsageInfo2UsageAdapter) {
+          ((UsageInfo2UsageAdapter)usage).dispose();
+        }
       }
     }
   }

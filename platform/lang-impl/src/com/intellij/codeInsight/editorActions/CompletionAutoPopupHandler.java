@@ -91,10 +91,12 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
 
-    final CharSequence text = editor.getDocument().getCharsSequence();
-    final int offset = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
-    if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
-      return Result.CONTINUE;
+    if (!CompletionProgressIndicator.showHintAutopopup()) {
+      final CharSequence text = editor.getDocument().getCharsSequence();
+      final int offset = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
+      if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
+        return Result.CONTINUE;
+      }
     }
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;

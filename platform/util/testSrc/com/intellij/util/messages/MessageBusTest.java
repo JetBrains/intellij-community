@@ -39,8 +39,8 @@ public class MessageBusTest extends TestCase {
     void t22();
   }
 
-  private final static Topic<T1Listener> T1 = new Topic<T1Listener>("T1", T1Listener.class);
-  private final static Topic<T2Listener> T2 = new Topic<T2Listener>("T1", T2Listener.class);
+  private static final Topic<T1Listener> TOPIC1 = new Topic<T1Listener>("T1", T1Listener.class);
+  private static final Topic<T2Listener> TOPIC2 = new Topic<T2Listener>("T2", T2Listener.class);
 
   private class T1Handler implements T1Listener {
     private final String id;
@@ -86,58 +86,57 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testNoListenersSubscribed() {
-    myBus.syncPublisher(T1).t11();
+    myBus.syncPublisher(TOPIC1).t11();
     assertEvents();
   }
 
   public void testSingleMessage() {
     final MessageBusConnection connection = myBus.connect();
-    connection.subscribe(T1, new T1Handler("c"));
-    myBus.syncPublisher(T1).t11();
+    connection.subscribe(TOPIC1, new T1Handler("c"));
+    myBus.syncPublisher(TOPIC1).t11();
     assertEvents("c:t11");
   }
 
   public void testSingleMessageToTwoConnections() {
     final MessageBusConnection c1 = myBus.connect();
-    c1.subscribe(T1, new T1Handler("c1"));
+    c1.subscribe(TOPIC1, new T1Handler("c1"));
 
     final MessageBusConnection c2 = myBus.connect();
-    c2.subscribe(T1, new T1Handler("c2"));
+    c2.subscribe(TOPIC1, new T1Handler("c2"));
 
-    myBus.syncPublisher(T1).t11();
+    myBus.syncPublisher(TOPIC1).t11();
     assertEvents("c1:t11", "c2:t11");
   }
 
   public void testTwoMessagesWithSingleSubscription() {
     final MessageBusConnection connection = myBus.connect();
-    connection.subscribe(T1, new T1Handler("c"));
-    myBus.syncPublisher(T1).t11();
-    myBus.syncPublisher(T1).t12();
+    connection.subscribe(TOPIC1, new T1Handler("c"));
+    myBus.syncPublisher(TOPIC1).t11();
+    myBus.syncPublisher(TOPIC1).t12();
 
     assertEvents("c:t11", "c:t12");
   }
 
   public void testTwoMessagesWithDoubleSubscription() {
     final MessageBusConnection c1 = myBus.connect();
-    c1.subscribe(T1, new T1Handler("c1"));
+    c1.subscribe(TOPIC1, new T1Handler("c1"));
 
     final MessageBusConnection c2 = myBus.connect();
-    c2.subscribe(T1, new T1Handler("c2"));
+    c2.subscribe(TOPIC1, new T1Handler("c2"));
 
-    myBus.syncPublisher(T1).t11();
-    myBus.syncPublisher(T1).t12();
+    myBus.syncPublisher(TOPIC1).t11();
+    myBus.syncPublisher(TOPIC1).t12();
 
     assertEvents("c1:t11", "c2:t11", "c1:t12", "c2:t12");
   }
 
   public void testEventFiresAnotherEvent() {
-    final MessageBusConnection c1 = myBus.connect();
-    c1.subscribe(T1, new T1Listener() {
+    myBus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        myLog.add("c1:t11");
-        myBus.syncPublisher(T2).t21();
-        myLog.add("c1:t11:done");
+        myLog.add("inside:t11");
+        myBus.syncPublisher(TOPIC2).t21();
+        myLog.add("inside:t11:done");
       }
 
       @Override
@@ -146,50 +145,62 @@ public class MessageBusTest extends TestCase {
       }
     });
 
-    final MessageBusConnection c2 = myBus.connect();
-    c2.subscribe(T1, new T1Handler("c2"));
-    c2.subscribe(T2, new T2Handler("c2"));
+    final MessageBusConnection conn = myBus.connect();
+    conn.subscribe(TOPIC1, new T1Handler("handler1"));
+    conn.subscribe(TOPIC2, new T2Handler("handler2"));
 
-    myBus.syncPublisher(T1).t12();
-    myBus.syncPublisher(T1).t11();
+    myBus.syncPublisher(TOPIC1).t12();
+    assertEvents("c1:t12", "handler1:t12");
 
-    assertEvents("c1:t12", "c2:t12", "c1:t11", "c2:t11", "c2:t21", "c1:t11:done");
+    myBus.syncPublisher(TOPIC1).t11();
+    assertEvents("c1:t12\n" +
+                 "handler1:t12\n" +
+                 "inside:t11\n" +
+                 "handler1:t11\n" +
+                 "handler2:t21\n" +
+                 "inside:t11:done");
   }
 
   public void testConnectionTerminatedInDispatch() {
-    final MessageBusConnection c1 = myBus.connect();
-    c1.subscribe(T1, new T1Listener() {
+    final MessageBusConnection conn1 = myBus.connect();
+    conn1.subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        c1.disconnect();
-        myLog.add("c1:t11");
-        myBus.syncPublisher(T2).t21();
-        myLog.add("c1:t11:done");
+        conn1.disconnect();
+        myLog.add("inside:t11");
+        myBus.syncPublisher(TOPIC2).t21();
+        myLog.add("inside:t11:done");
       }
 
       @Override
       public void t12() {
-        myLog.add("c1:t12");
+        myLog.add("inside:t12");
       }
     });
-    c1.subscribe(T2, new T2Handler("c1"));
+    conn1.subscribe(TOPIC2, new T2Handler("C1T2Handler"));
 
-    final MessageBusConnection c2 = myBus.connect();
-    c2.subscribe(T1, new T1Handler("c2"));
-    c2.subscribe(T2, new T2Handler("c2"));
+    final MessageBusConnection conn2 = myBus.connect();
+    conn2.subscribe(TOPIC1, new T1Handler("C2T1Handler"));
+    conn2.subscribe(TOPIC2, new T2Handler("C2T2Handler"));
 
-    myBus.syncPublisher(T1).t11();
-    myBus.syncPublisher(T1).t12();
+    myBus.syncPublisher(TOPIC1).t11();
+    assertEvents("inside:t11",
+                 "C2T1Handler:t11",
+                 "C2T2Handler:t21",
+                 "inside:t11:done");
+    myBus.syncPublisher(TOPIC1).t12();
 
-    assertEvents("c1:t11", "c2:t11", "c2:t21", "c1:t11:done", "c2:t12");
+    assertEvents("inside:t11",
+                 "C2T1Handler:t11",
+                 "C2T2Handler:t21",
+                 "inside:t11:done",
+                 "C2T1Handler:t12");
   }
   
   private void assertEvents(String... expected) {
     String joinExpected = StringUtil.join(expected, "\n");
-    String joinActual = StringUtil.join(myLog.toArray(new String[0]), "\n");
+    String joinActual = StringUtil.join(myLog, "\n");
 
     assertEquals("events mismatch", joinExpected, joinActual);
   }
-
-
 }

@@ -224,12 +224,17 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     myShouldStop = false;
     myLivePreviewAlarm.cancelAllRequests();
     if (updateEditorReference() != null) {
-      myLivePreviewAlarm.addRequest(new Runnable() {
+      Runnable request = new Runnable() {
         @Override
         public void run() {
           updateInBackground();
         }
-      }, myUserActivityDelay);
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        request.run();
+      } else {
+        myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
+      }
     }
   }
 
@@ -270,7 +275,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       }
     });
     if (mySearchResults != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      Runnable highlightUsagesBlock = new Runnable() {
         @Override
         public void run() {
           doInternalCleanUp();
@@ -280,7 +285,12 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
             myContinuation = null;
           }
         }
-      });
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        highlightUsagesBlock.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(highlightUsagesBlock);
+      }
     }
   }
 
@@ -297,9 +307,31 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private void highlightUsages(TextRange oldCursorRange) {
     if (myEditor == null || myShouldStop) return;
-    LiveOccurrence firstVisibleOccurrence = null;
-    LiveOccurrence firstOccurrence = null;
+    for (LiveOccurrence o : mySearchResults) {
+      for (TextRange textRange : o.getSecondaryRanges()) {
+        highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES, myHighlighters);
+      }
+      highlightRange(o.getPrimaryRange(), MAIN_TARGET_ATTRIBUTES, myHighlighters);
+    }
+
+    if (!tryToRepairOldCursor(oldCursorRange)) {
+      LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
+      if (afterCaret != null) {
+        setCursor(afterCaret);
+      } else {
+        LiveOccurrence occurrence = firstVisibleOccurrence();
+        if (occurrence != null) {
+          setCursor(occurrence);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private LiveOccurrence firstVisibleOccurrence() {
     int offset = Integer.MAX_VALUE;
+    LiveOccurrence firstOccurrence = null;
+    LiveOccurrence firstVisibleOccurrence = null;
     for (LiveOccurrence o : mySearchResults) {
       if (insideVisibleArea(myEditor, o.getPrimaryRange())) {
         if (firstVisibleOccurrence == null || o.getPrimaryRange().getStartOffset() < firstVisibleOccurrence.getPrimaryRange().getStartOffset()) {
@@ -310,16 +342,22 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         offset = o.getPrimaryRange().getStartOffset();
         firstOccurrence = o;
       }
+    }
+    return firstVisibleOccurrence != null ? firstVisibleOccurrence : firstOccurrence;
+  }
 
-      for (TextRange textRange : o.getSecondaryRanges()) {
-        highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES, myHighlighters);
+  @Nullable
+  private LiveOccurrence firstOccurrenceAfterCaret() {
+    LiveOccurrence afterCaret = null;
+    int caret = myEditor.getCaretModel().getOffset();
+    for (LiveOccurrence occurrence : mySearchResults) {
+      if (occurrence.getPrimaryRange().getStartOffset() >= caret) {
+        if (afterCaret == null || occurrence.getPrimaryRange().getStartOffset() < afterCaret.getPrimaryRange().getStartOffset() ) {
+          afterCaret = occurrence;
+        }
       }
-      highlightRange(o.getPrimaryRange(), MAIN_TARGET_ATTRIBUTES, myHighlighters);
     }
-
-    if (!tryToRepairOldCursor(oldCursorRange)) {
-      setCursor(firstVisibleOccurrence != null ? firstVisibleOccurrence : firstOccurrence);
-    }
+    return afterCaret;
   }
 
   private boolean tryToRepairOldCursor(TextRange oldCursorRange) {

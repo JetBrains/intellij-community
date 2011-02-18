@@ -17,7 +17,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -105,8 +107,8 @@ public class RedundantUncheckedSuppressWarningsInspection extends BaseJavaLocalI
   }
 
   private static void checkIfSafeToRemoveWarning(PsiElement suppressElement, PsiElement placeToCheckWarningsIn, ProblemsHolder holder) {
-    final HashSet<PsiReferenceExpression> warningsElements = new HashSet<PsiReferenceExpression>();
-    collectUncheckedWarnings(placeToCheckWarningsIn, true, warningsElements);
+    final HashSet<PsiElement> warningsElements = new HashSet<PsiElement>();
+    collectUncheckedWarnings(placeToCheckWarningsIn, warningsElements);
     if (warningsElements.isEmpty()) {
       final int uncheckedIdx = suppressElement.getText().indexOf(RemoveUncheckedWarningFix.UNCHECKED);
       holder.registerProblem(suppressElement,
@@ -115,14 +117,19 @@ public class RedundantUncheckedSuppressWarningsInspection extends BaseJavaLocalI
     }
   }
 
-  public static void collectUncheckedWarnings(final PsiElement place, final boolean ignoreSuppressed, final Collection<PsiReferenceExpression> warningsElements) {
-    place.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (GenericsHighlightUtil.isUncheckedWarning(expression, expression.resolve(), ignoreSuppressed)) {
-          warningsElements.add(expression);
+  public static void collectUncheckedWarnings(final PsiElement place, final Collection<PsiElement> warningsElements) {
+    final UncheckedWarningLocalInspection.UncheckedWarningsVisitor visitor =
+      new UncheckedWarningLocalInspection.UncheckedWarningsVisitor(false) {
+        @Override
+        protected void registerProblem(String message, PsiElement psiElement, LocalQuickFix... quickFix) {
+          warningsElements.add(psiElement);
         }
+      };
+    place.accept(new JavaRecursiveElementVisitor(){
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        element.accept(visitor);
       }
     });
   }

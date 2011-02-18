@@ -1,17 +1,17 @@
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -78,8 +78,18 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       return;
     }
 
-    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+    if (!LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
       return;
+    }
+
+    if (configuration instanceof ModuleBasedConfiguration) {
+      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+      if (module != null) {
+        final LanguageLevel level = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
+        if (level != null && !level.isAtLeast(LanguageLevel.JDK_1_5)) {
+          return;
+        }
+      }
     }
 
     Sdk jdk = javaParameters.getJdk();

@@ -28,11 +28,6 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
-
   private void doTest() throws Exception {
     doTest(false);
   }

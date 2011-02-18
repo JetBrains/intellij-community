@@ -79,13 +79,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       PsiElement parent = position.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
-        if (PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null) {
-          if (ref.isReferenceTo(psiClass)) {
-            return;
-          }
-        }
-        final PsiReferenceParameterList parameterList = ref.getParameterList();
-        if (parameterList != null && parameterList.getTextLength() > 0) {
+        if (PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null && ref.isReferenceTo(psiClass)) {
           return;
         }
       }
@@ -132,6 +126,15 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   private static boolean shouldInsertParentheses(PsiClass psiClass, PsiElement position) {
     final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(position, PsiJavaCodeReferenceElement.class);
+    if (ref == null) {
+      return false;
+    }
+
+    final PsiReferenceParameterList parameterList = ref.getParameterList();
+    if (parameterList != null && parameterList.getTextLength() > 0) {
+      return false;
+    }
+
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
 

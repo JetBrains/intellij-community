@@ -16,12 +16,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 
 public class Suppress15InspectionsTest extends LightQuickFixTestCase {
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

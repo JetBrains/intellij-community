@@ -472,7 +472,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           if (prefSizeOriginal.width > fitWidth) {
             setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
             Dimension fixedWidthSize = super.getPreferredSize();
-            prefSize.set(new Dimension(fitWidth, fixedWidthSize.height));
+            Dimension minSize = super.getMinimumSize();
+            prefSize.set(new Dimension(fitWidth > minSize.width ? fitWidth : minSize.width, fixedWidthSize.height));
           }
           else {
             prefSize.set(new Dimension(prefSizeOriginal));

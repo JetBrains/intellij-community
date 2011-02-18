@@ -30,8 +30,4 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromParameter";
   }
-
-  @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
-  }
 }

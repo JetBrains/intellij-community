@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,13 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   public void commitChanges() {
-    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+    CodeEditUtil.allowToMarkNodesForPostponedFormatting(false);
+    try {
+      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+    }
+    finally {
+      CodeEditUtil.allowToMarkNodesForPostponedFormatting(true);
+    }
   }
 
   private int shiftIndentInside(final TextRange elementRange, final int shift) {

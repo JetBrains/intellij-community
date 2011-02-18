@@ -18,39 +18,38 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Composite type resulting from Project Coin's multi-catch statements, * i.e. <code>FileNotFoundException | EOFException</code>.
+ * In most cases should be threatened via its least upper bound * (<code>IOException</code> in the example above).
+ */
 public class PsiDisjunctionType extends PsiType {
-  private final PsiTypeElement myTypeElement;
+  private final PsiManager myManager;
   private final List<PsiType> myTypes;
   private final CachedValue<PsiType> myLubCache;
 
-  public PsiDisjunctionType(final PsiTypeElement typeElement) {
+  public PsiDisjunctionType(final List<PsiType> types, final PsiManager psiManager) {
     super(PsiAnnotation.EMPTY_ARRAY);
 
-    myTypeElement = typeElement;
+    myManager = psiManager;
+    myTypes = Collections.unmodifiableList(types);
 
-    final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(myTypeElement, PsiTypeElement.class);
-    myTypes = Collections.unmodifiableList(ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
-      @Override
-      public PsiType fun(final PsiTypeElement psiTypeElement) {
-        return psiTypeElement.getType();
-      }
-    }));
-
-    final CachedValuesManager cacheManager = CachedValuesManager.getManager(myTypeElement.getProject());
+    final CachedValuesManager cacheManager = CachedValuesManager.getManager(psiManager.getProject());
     myLubCache = cacheManager.createCachedValue(new CachedValueProvider<PsiType>() {
       public Result<PsiType> compute() {
         PsiType lub = myTypes.get(0);
         for (int i = 1; i < myTypes.size(); i++) {
-          lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), myTypeElement.getManager());
+          lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), psiManager);
         }
         return Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
@@ -63,6 +62,10 @@ public class PsiDisjunctionType extends PsiType {
 
   public List<PsiType> getDisjunctions() {
     return myTypes;
+  }
+
+  public PsiManager getManager() {
+    return myManager;
   }
 
   @Override
@@ -101,11 +104,7 @@ public class PsiDisjunctionType extends PsiType {
 
   @Override
   public <A> A accept(final PsiTypeVisitor<A> visitor) {
-    final PsiType lub = getLeastUpperBound();
-    if (lub instanceof PsiClassType) {
-      return visitor.visitClassType((PsiClassType)lub);
-    }
-    return visitor.visitType(lub);
+    return visitor.visitDisjunctionType(this);
   }
 
   @Override

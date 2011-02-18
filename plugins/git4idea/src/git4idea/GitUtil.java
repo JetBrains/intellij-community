@@ -312,7 +312,14 @@ public class GitUtil {
    * @return timestamp as {@link Date} object
    */
   public static Date parseTimestamp(String value) {
-    return new Date(Long.parseLong(value.trim()) * 1000);
+    final long parsed;
+    try {
+      parsed = Long.parseLong(value.trim());
+      return new Date(parsed * 1000);
+    } catch (NumberFormatException e) {
+      LOG.error("Error parsing timestamp from " + value, e);
+      return new Date();
+    }
   }
 
   /**
@@ -743,7 +750,7 @@ public class GitUtil {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.setNoSSH(true);
-    h.addParameters("--pretty=format:%x00%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
+    h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
     String output = h.run();
@@ -753,7 +760,7 @@ public class GitUtil {
     boolean firstStep = true;
     while (s.hasMoreData()) {
       final String line = s.line();
-      final boolean lineIsAStart = line.startsWith("\u0000\u0001");
+      final boolean lineIsAStart = line.startsWith("\u0004\u0001");
       if ((!firstStep) && lineIsAStart) {
         final StringScanner innerScanner = new StringScanner(sb.toString());
         sb.setLength(0);

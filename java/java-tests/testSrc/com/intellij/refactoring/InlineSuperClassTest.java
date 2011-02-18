@@ -23,11 +23,6 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   private void doTest() throws Exception {
     doTest(false);
   }

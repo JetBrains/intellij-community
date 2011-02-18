@@ -317,13 +317,6 @@ public class HighlightMethodUtil {
     if (element instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
-
-      if (highlightInfo == null) {
-        highlightInfo = GenericsHighlightUtil.checkUncheckedCall(resolveResult, methodCall);
-      }
-      if (highlightInfo == null) {
-        highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(resolveResult, methodCall);
-      }
     }
     else {
       PsiMethod resolvedMethod = null;
@@ -1271,11 +1264,7 @@ public class HighlightMethodUtil {
           ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
         }
         else {
-          HighlightInfo highlightInfo = GenericsHighlightUtil.checkUncheckedCall(result, constructorCall);
-          if (highlightInfo != null) {
-            holder.add(highlightInfo);
-            return;
-          }
+          HighlightInfo highlightInfo;
           if (constructorCall instanceof PsiNewExpression) {
             highlightInfo = GenericsHighlightUtil.checkReferenceTypeArgumentList(constructor, 
                                                                                  ((PsiNewExpression)constructorCall).getTypeArgumentList(),
@@ -1284,13 +1273,7 @@ public class HighlightMethodUtil {
               holder.add(highlightInfo);
               return;
             }
-            highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(result, (PsiCallExpression)constructorCall);
-            if (highlightInfo != null) {
-              holder.add(highlightInfo);
-            }
-            //if (PsiUtil.isLanguageLevel7OrHigher(constructorCall)) {
-            //  // todo[anna] check if not diamond - apply corresponding fix
-            //}
+
           }
         }
       }

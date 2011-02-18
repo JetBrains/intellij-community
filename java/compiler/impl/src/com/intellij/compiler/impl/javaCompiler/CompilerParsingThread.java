@@ -27,6 +27,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,6 +49,8 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private String myPushBackLine = null;
   private volatile boolean myProcessExited = false;
   private final CompileContext myContext;
+  
+  private final BlockingQueue<String> myLines = new LinkedBlockingQueue<String>();
 
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines, CompileContext context) {
     myProcess = process;
@@ -60,6 +64,24 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
 
   volatile boolean processing;
   public void run() {
+    if (CompileDriver.ourDebugMode) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          while (true) {
+            final String line = readLine(myCompilerOutStreamReader);
+            if (CompileDriver.ourDebugMode) {
+              System.out.println("RAW_LIne read: #" + line + "#");
+            }
+            if (line == null) {
+              myLines.offer(TERMINATION_STRING);
+              break;
+            }
+            myLines.offer(line);
+          }
+        }
+      });
+    }
     processing = true;
     try {
       while (true) {
@@ -111,7 +133,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myLastReadLine = pushBack;
       return pushBack;
     }
-    final String line = readLine(myCompilerOutStreamReader);
+    final String line = getNextUnprocessedLine();
     if (LOG.isDebugEnabled()) {
       LOG.debug("LIne read: #" + line + "#");
     }
@@ -125,6 +147,28 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
     }
     return myLastReadLine;
+  }
+
+  private String getNextUnprocessedLine() {
+    if (CompileDriver.ourDebugMode) {
+      try {
+        if (TERMINATION_STRING.equals(myLines.peek())) {
+          return TERMINATION_STRING;
+        }
+        final String line = myLines.take();
+        if (TERMINATION_STRING.equals(line)) {
+          myLines.offer(TERMINATION_STRING); // pushback
+        }
+        return line;
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+        return TERMINATION_STRING;
+      }
+    }
+    else {
+      return readLine(myCompilerOutStreamReader);
+    }
   }
 
   @Override
@@ -144,6 +188,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
         processCompiledClass(previousPath);
       }
       catch (CacheCorruptedException e) {
+        if (CompileDriver.ourDebugMode) {
+          e.printStackTrace();
+        }
         myError = e;
         LOG.info(e);
         killProcess();
@@ -177,6 +224,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       buffer = StringBuilderSpinAllocator.alloc();
     }
     catch (SpinAllocator.AllocatorExhaustedException e) {
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
       LOG.info(e);
       buffer = new StringBuilder();
       releaseBuffer = false;
@@ -220,6 +270,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
     try {
       while(!reader.ready()) {
         if (isProcessTerminated()) {
+          if (reader.ready()) {
+            break;
+          }
           return -1;
         }
         try {
@@ -231,7 +284,16 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       return reader.read();
     }
     catch (IOException e) {
-      return -1; // When process terminated Process.getInputStream()'s underlaying stream becomes closed on Linux.
+      if (CompileDriver.ourDebugMode) {
+        e.printStackTrace();
+      }
+      return -1; // When process terminated Process.getInputStream()'s underlying stream becomes closed on Linux.
+    }
+    catch (Throwable t) {
+      if (CompileDriver.ourDebugMode) {
+        t.printStackTrace();
+      }
+      return -1;
     }
   }
 

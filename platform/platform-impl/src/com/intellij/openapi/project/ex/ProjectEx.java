@@ -37,5 +37,5 @@ public interface ProjectEx extends Project {
 
   void checkUnknownMacros(final boolean showDialog);
 
-  void setProjectName(String name);
+  void setProjectName(@NotNull String name);
 }
