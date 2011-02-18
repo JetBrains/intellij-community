@@ -65,7 +65,7 @@ import java.util.*;
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener, SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
-  private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
+  private static final Key<Boolean> KEY_COMMITTING = new Key<Boolean>("Committing");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   private final Project myProject;
@@ -252,7 +252,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document,myProject) {
       public void run() {
         if (isCommittingDocument(document)) return;
-        document.putUserData(KEY_COMMITING, Boolean.TRUE);
+        document.putUserData(KEY_COMMITTING, Boolean.TRUE);
 
         try {
           boolean hasCommits = false;
@@ -280,7 +280,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           }
         }
         finally {
-          document.putUserData(KEY_COMMITING, null);
+          document.putUserData(KEY_COMMITTING, null);
         }
       }
     });
@@ -703,7 +703,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private static boolean isCommittingDocument(final Document doc) {
-    return doc.getUserData(KEY_COMMITING) == Boolean.TRUE;
+    return doc.getUserData(KEY_COMMITTING) == Boolean.TRUE;
   }
 
   public void save() {
