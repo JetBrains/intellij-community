@@ -55,7 +55,7 @@ private List platformImplementationModules() {
 }
 
 private List<String> platformApiModules() {
-  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi", "dom-openapi"]
+  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi", "dom-openapi", "webide-api"]
 }
 
 def includeFile(String filepath) {

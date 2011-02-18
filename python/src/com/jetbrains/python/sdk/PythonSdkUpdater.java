@@ -27,7 +27,7 @@ import java.util.List;
 public class PythonSdkUpdater implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  public static int SKELETONS_VERSION = 16;
+  public static int SKELETONS_VERSION = 17;
 
   public PythonSdkUpdater(final Project project, StartupManager startupManager) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {

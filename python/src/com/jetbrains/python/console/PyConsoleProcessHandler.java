@@ -1,9 +1,9 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.run.PythonProcessHandler;
 
 import java.nio.charset.Charset;
@@ -13,13 +13,15 @@ import java.nio.charset.Charset;
  */
 public class PyConsoleProcessHandler extends PythonProcessHandler {
   private final LanguageConsoleImpl myLanguageConsole;
+  private final PydevConsoleCommunication myPydevConsoleCommunication;
 
   public PyConsoleProcessHandler(final Process process,
                                  final LanguageConsoleImpl languageConsole,
-                                 final String commandLine,
+                                 PydevConsoleCommunication pydevConsoleCommunication, final String commandLine,
                                  final Charset charset) {
     super(process, commandLine, charset);
     myLanguageConsole = languageConsole;
+    myPydevConsoleCommunication = pydevConsoleCommunication;
   }
 
 
@@ -42,18 +44,19 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     for (String prompt : PROMPTS) {
       if (string.startsWith(prompt)) {
         // Process multi prompts here
-        if (prompt != PyConsoleHighlightingUtil.HELP_PROMPT){
+        if (prompt != PyConsoleHighlightingUtil.HELP_PROMPT) {
           final StringBuilder builder = new StringBuilder();
           builder.append(prompt).append(prompt);
-          while (string.startsWith(builder.toString())){
+          while (string.startsWith(builder.toString())) {
             builder.append(prompt);
           }
           final String multiPrompt = builder.toString().substring(prompt.length());
-          if (prompt == PyConsoleHighlightingUtil.INDENT_PROMPT){
+          if (prompt == PyConsoleHighlightingUtil.INDENT_PROMPT) {
             prompt = multiPrompt;
           }
           string = string.substring(multiPrompt.length());
-        } else {
+        }
+        else {
           string = string.substring(prompt.length());
         }
 
@@ -68,4 +71,30 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     }
     return string;
   }
+
+  @Override
+  protected void destroyProcessImpl() {
+    doCloseCommunication();
+    super.destroyProcessImpl();
+  }
+
+  @Override
+  protected void detachProcessImpl() {
+    doCloseCommunication();
+    super.detachProcessImpl();
+  }
+
+  private void doCloseCommunication() {
+    if (myPydevConsoleCommunication != null) {
+      try {
+        myPydevConsoleCommunication.close();
+        // waiting for REPL communication before destroying process handler
+        Thread.sleep(300);
+      }
+      catch (Exception e1) {
+        // Ignore
+      }
+    }
+  }
 }
+

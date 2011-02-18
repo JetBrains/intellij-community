@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="python-pydev" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="css-api" />
-    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
   </component>
   <component name="copyright">
     <Base>

@@ -3,12 +3,14 @@ package com.jetbrains.python.console;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
+import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -121,7 +123,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected PyConsoleProcessHandler createProcessHandler(final Process process, final String commandLine) {
-    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView().getConsole(), commandLine,
+    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView().getConsole(), myPydevConsoleCommunication, commandLine,
                                                    CharsetToolkit.UTF8_CHARSET);
     return myProcessHandler;
   }
@@ -185,6 +187,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   @Override
   protected AnAction createStopAction() {
     final AnAction generalStopAction = super.createStopAction();
+    return createConsoleStoppingAction(generalStopAction);
+  }
+
+  @Override
+  protected AnAction createCloseAction(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
+    final AnAction generalCloseAction = super.createCloseAction(defaultExecutor, myDescriptor);
+    return createConsoleStoppingAction(generalCloseAction);
+  }
+
+
+  private AnAction createConsoleStoppingAction(final AnAction generalStopAction) {
     final AnAction stopAction = new AnAction() {
       @Override
       public void update(AnActionEvent e) {

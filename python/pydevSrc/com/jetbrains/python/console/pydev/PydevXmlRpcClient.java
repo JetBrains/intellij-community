@@ -44,6 +44,8 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    */
   private static final Logger LOG = Logger.getInstance(PydevXmlRpcClient.class.getName());
 
+  private static final long TIME_LIMIT = 5000;
+
 
   /**
    * Constructor (see fields description)
@@ -79,8 +81,9 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
       }
     });
 
+    long started = System.currentTimeMillis();
     //busy loop waiting for the answer (or having the console die).
-    while (result[0] == null) {
+    while (result[0] == null && System.currentTimeMillis() - started < TIME_LIMIT) {
       try {
         if (process != null) {
           final String errStream = stdErrReader.getContents();
@@ -112,6 +115,9 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
           }
         }
       }
+    }
+    if (result[0] == null) {
+      throw new XmlRpcException(-1, "Timeout while connecting to server");
     }
     return result[0];
   }

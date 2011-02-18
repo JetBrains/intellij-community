@@ -29,13 +29,9 @@ public class PyCompatibilityInspection extends PyInspection {
   public String fromVersion = LanguageLevel.PYTHON24.toString();
   public String toVersion = LanguageLevel.PYTHON27.toString();
 
-  private List<LanguageLevel> myVersionsToProcess;
-
   public PyCompatibilityInspection () {
     super();
     if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
-    myVersionsToProcess = new ArrayList<LanguageLevel>();
-    updateVersionsToProcess();
   }
 
   @Override
@@ -43,8 +39,8 @@ public class PyCompatibilityInspection extends PyInspection {
     return false;
   }
 
-  private void updateVersionsToProcess() {
-    myVersionsToProcess.clear();
+  private List<LanguageLevel> updateVersionsToProcess() {
+    List<LanguageLevel> result = new ArrayList<LanguageLevel>();
 
     boolean add = false;
     for (String version : UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS) {
@@ -52,12 +48,13 @@ public class PyCompatibilityInspection extends PyInspection {
       if (version.equals(fromVersion))
         add = true;
       if (version.equals(toVersion)) {
-        myVersionsToProcess.add(level);
+        result.add(level);
         add = false;
       }
       if (add)
-        myVersionsToProcess.add(level);
+        result.add(level);
     }
+    return result;
   }
 
   @Nls
@@ -102,8 +99,7 @@ public class PyCompatibilityInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    updateVersionsToProcess();
-    return new Visitor(holder, myVersionsToProcess);
+    return new Visitor(holder, updateVersionsToProcess());
   }
 
   private static class Visitor extends CompatibilityVisitor {
