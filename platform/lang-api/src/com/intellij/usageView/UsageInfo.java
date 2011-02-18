@@ -136,6 +136,13 @@ public class UsageInfo {
   }
 
   public int getNavigationOffset() {
+    if (mySmartPointer instanceof SmartPsiFileRange) {
+      final Segment range = mySmartPointer.getRange();
+      if (range != null) {
+        return range.getStartOffset();
+      }
+    }
+
     PsiElement element = getElement();
     if (element == null) return -1;
     TextRange range = element.getTextRange();
@@ -145,6 +152,7 @@ public class UsageInfo {
     return range.getStartOffset() + rangeInElement.getStartOffset();
   }
 
+  @Nullable
   public Segment getSegment() {
     PsiElement element = getElement();
     if (element == null) return null;
