@@ -56,6 +56,8 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
   };
 
+  private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<String>(16);
+
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.PUBLIC, GrModifierFlags.PUBLIC_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.PROTECTED, GrModifierFlags.PROTECTED_MASK);
@@ -70,6 +72,21 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.TRANSIENT, GrModifierFlags.TRANSIENT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.VOLATILE, GrModifierFlags.VOLATILE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEF, GrModifierFlags.DEF_MASK);
+
+
+    PRIORITY.put(GrModifier.PUBLIC,           0);
+    PRIORITY.put(GrModifier.PROTECTED,        0);
+    PRIORITY.put(GrModifier.PRIVATE,          0);
+    PRIORITY.put(GrModifier.PACKAGE_LOCAL,    0);
+    PRIORITY.put(GrModifier.STATIC,           1);
+    PRIORITY.put(GrModifier.ABSTRACT,         1);
+    PRIORITY.put(GrModifier.FINAL,            2);
+    PRIORITY.put(GrModifier.NATIVE,           3);
+    PRIORITY.put(GrModifier.SYNCHRONIZED,     3);
+    PRIORITY.put(GrModifier.STRICTFP,         3);
+    PRIORITY.put(GrModifier.TRANSIENT,        3);
+    PRIORITY.put(GrModifier.VOLATILE,         3);
+    PRIORITY.put(GrModifier.DEF,              4);
   }
 
   public GrModifierListImpl(@NotNull ASTNode node) {
@@ -221,7 +238,8 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   private void setModifierPropertyInternal(String name, boolean doSet) {
     if (doSet) {
       final ASTNode modifierNode = GroovyPsiElementFactory.getInstance(getProject()).createModifierFromText(name).getNode();
-      addInternal(modifierNode, modifierNode, null, null);
+      PsiElement anchor = findAnchor(name);
+      addInternal(modifierNode, modifierNode, anchor == null ? null : anchor.getNode(), false);
     }
     else {
       final PsiElement[] modifiers = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
@@ -232,6 +250,21 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
         }
       }
     }
+  }
+
+  @Nullable
+  private PsiElement findAnchor(String name) {
+    final int myPriority = PRIORITY.get(name);
+    final PsiElement[] modifiers = getModifiers();
+    PsiElement anchor = null;
+    for (int i = modifiers.length - 1; i >= 0; i--) {
+      PsiElement modifier = modifiers[i];
+      if (PRIORITY.get(modifier.getText()) <= myPriority) {
+        anchor = modifier;
+        break;
+      }
+    }
+    return anchor;
   }
 
   public void checkSetModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
