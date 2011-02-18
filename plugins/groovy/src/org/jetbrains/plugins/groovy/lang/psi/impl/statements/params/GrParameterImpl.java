@@ -93,7 +93,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
-
+      if (iteratedExpression == null) return null;
       PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, this);
       if (result != null) {
         return result;

@@ -215,7 +215,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Nullable
-  public static PsiType findTypeForIteration(GrExpression qualifier, PsiElement context) {
+  public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
     if (iterType instanceof PsiArrayType) {
