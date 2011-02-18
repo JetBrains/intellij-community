@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         if (switchExpressionType == null) {
             return;
         }
-        final boolean useEquals =
+        final boolean isSwitchOnString =
                 switchExpressionType.equalsToText("java.lang.String");
         final String declarationString;
         final boolean hadSideEffects;
@@ -67,9 +67,14 @@ public class ReplaceSwitchWithIfIntention extends Intention {
 
             final JavaCodeStyleManager javaCodeStyleManager =
                     JavaCodeStyleManager.getInstance(project);
-            final String variableName =
-                    javaCodeStyleManager.suggestUniqueVariableName("i",
-                            switchExpression, true);
+            final String variableName;
+            if (isSwitchOnString) {
+                variableName = javaCodeStyleManager.suggestUniqueVariableName(
+                        "s", switchExpression, true);
+            } else {
+                variableName = javaCodeStyleManager.suggestUniqueVariableName(
+                        "i", switchExpression, true);
+            }
             expressionText = variableName;
             declarationString =
                     switchExpressionType.getPresentableText() + ' ' +
@@ -174,7 +179,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                         branch.getPendingVariableDeclarations();
                 dumpBranch(expressionText, caseValues, bodyElements, breakLabel,
                         pendingVariableDeclarations, firstBranch, renameBreaks,
-                        useEquals, ifStatementText);
+                        isSwitchOnString, ifStatementText);
                 firstBranch = false;
             }
         }
