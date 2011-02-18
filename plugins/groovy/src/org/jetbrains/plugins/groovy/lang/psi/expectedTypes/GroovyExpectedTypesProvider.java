@@ -180,7 +180,9 @@ public class GroovyExpectedTypesProvider {
           public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
             if (returnValue == myExpression) {
               final PsiType returnType = method.getReturnType();
-              myResult = new TypeConstraint[]{new SubtypeConstraint(returnType, returnType)};
+              if (returnType != null) {
+                myResult = new TypeConstraint[]{new SubtypeConstraint(returnType, returnType)};
+              }
               return false;
             }
             return true;
@@ -219,16 +221,20 @@ public class GroovyExpectedTypesProvider {
     }
 
     private void addConstraintsFromMap(List<TypeConstraint> constraints,
-                                       Map<GrExpression, Pair<PsiParameter, PsiType>> map, boolean isLast) {
-      if (map != null) {
-        final Pair<PsiParameter, PsiType> pair = map.get(myExpression);
-        if (pair != null) {
-          final PsiType type = pair.second;
-          constraints.add(SubtypeConstraint.create(type));
-          if (type instanceof PsiArrayType && isLast) {
-            constraints.add(SubtypeConstraint.create(((PsiArrayType)type).getComponentType()));
-          }
-        }
+                                       Map<GrExpression, Pair<PsiParameter, PsiType>> map,
+                                       boolean isLast) {
+      if (map == null) return;
+
+      final Pair<PsiParameter, PsiType> pair = map.get(myExpression);
+      if (pair == null) return;
+
+      final PsiType type = pair.second;
+      if (type == null) return;
+
+      constraints.add(SubtypeConstraint.create(type));
+
+      if (type instanceof PsiArrayType && isLast) {
+        constraints.add(SubtypeConstraint.create(((PsiArrayType)type).getComponentType()));
       }
     }
 
