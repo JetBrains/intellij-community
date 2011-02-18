@@ -24,6 +24,7 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -404,12 +405,12 @@ public class FSRecords implements Forceable {
       }
 
       if (myAttributes != null) {
-        myAttributes.dispose();
+        Disposer.dispose(myAttributes);
         myAttributes = null;
       }
 
       if (myContents != null) {
-        myContents.dispose();
+        Disposer.dispose(myContents);
         myContents = null;
       }
 
