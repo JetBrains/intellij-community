@@ -204,7 +204,7 @@ public class ConvertClosureToMethodIntention extends Intention {
 
               if (qualifier != null) {
                 newRefText.append(qualifier.getText()).append('.');
-                ((GrReferenceExpression)usage).setQualifierExpression(null);
+                ((GrReferenceExpression)usage).setQualifier(null);
               }
               else {
                 newRefText.append("this.");

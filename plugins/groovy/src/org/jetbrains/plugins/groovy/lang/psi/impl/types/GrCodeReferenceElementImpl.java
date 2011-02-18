@@ -60,7 +60,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implements GrCodeReferenceElement {
+public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }

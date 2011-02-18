@@ -73,7 +73,26 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
 
   @NotNull
   @Override
-  public String getCanonicalText() {
+  public String getReferenceName() {
     return "this";
   }
+
+  @Override
+  protected PsiElement resolveInner() {
+    final PsiElement resolved = super.resolveInner();
+    if (resolved != null) return resolved;
+    final GrReferenceExpression qualifier = getQualifier();
+    if (qualifier != null) {
+      return qualifier.resolve();
+    }
+
+    final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, true, GroovyFile.class);
+    if (containingClass != null) return containingClass;
+    final PsiFile containingFile = getContainingFile();
+    if (containingFile instanceof GroovyFile) {
+      return ((GroovyFile)containingFile).getScriptClass();
+    }
+    return null;
+  }
+
 }

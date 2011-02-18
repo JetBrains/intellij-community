@@ -105,7 +105,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
           changeQualifier(refExpr, usage.qualifierClass);
         }
         else {
-          refExpr.setQualifierExpression(null);
+          refExpr.setQualifier(null);
         }
       }
       else { // no qualifier
@@ -198,12 +198,12 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
 
   private void changeQualifier(GrReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException {
     if (hasOnDemandStaticImport(refExpr, aClass)) {
-      refExpr.setQualifierExpression(null);
+      refExpr.setQualifier(null);
     }
     else {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(refExpr.getProject());
 
-      refExpr.setQualifierExpression(factory.createReferenceExpressionFromText(aClass.getName()));
+      refExpr.setQualifier(factory.createReferenceExpressionFromText(aClass.getName()));
       ((GrReferenceExpression)refExpr.getQualifierExpression()).bindToElement(aClass);
     }
   }

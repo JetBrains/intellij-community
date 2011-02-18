@@ -334,7 +334,7 @@ public class OldReferencesResolver {
         if (refMember.hasModifierProperty(PsiModifier.STATIC)) {
           PsiElement refElement = newExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)) {
-            newExpr.setQualifierExpression(factory.createReferenceExpressionFromText("" + containingClass.getQualifiedName()));
+            newExpr.setQualifier(factory.createReferenceExpressionFromText("" + containingClass.getQualifiedName()));
           }
         }
       }

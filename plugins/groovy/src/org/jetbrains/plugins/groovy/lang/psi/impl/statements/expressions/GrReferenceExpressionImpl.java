@@ -73,7 +73,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
+public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -274,7 +274,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @Nullable
-  public PsiElement getQualifier() {
+  public GrExpression getQualifier() {
     return getQualifierExpression();
   }
 
@@ -879,7 +879,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return RESOLVER.resolve(this, true);
   }
 
-  public void setQualifierExpression(GrExpression newQualifier) {
+  public void setQualifier(GrExpression newQualifier) {
     final GrExpression oldQualifier = getQualifierExpression();
     final ASTNode node = getNode();
     final PsiElement refNameElement = getReferenceNameElement();
@@ -917,5 +917,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       ((GroovyFile)file).addImport(statement);
     }
     return this;
+  }
+
+  @Override
+  public void setQualifier(@Nullable GrExpression expression) {
+    setQualifier(expression);
   }
 }

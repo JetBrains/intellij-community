@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiQualifiedReference;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 /**
  * @author ven
  */
-public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference, PsiQualifiedReference {
+public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiElement, PsiPolyVariantReference, GrQualifiedReference<Q> {
   @Nullable
   String getReferenceName();
 

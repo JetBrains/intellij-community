@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.types;
-
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiQualifiedReference;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Maxim.Medvedev
  */
-public interface GrCodeReferenceElement extends GrReferenceElement<GrCodeReferenceElement> {
-  GrCodeReferenceElement[] EMPTY_ARRAY = new GrCodeReferenceElement[0];
+public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReference {
+  @Nullable
+  Qualifier getQualifier();
+
+  void setQualifier(@Nullable Qualifier qualifier);
 }

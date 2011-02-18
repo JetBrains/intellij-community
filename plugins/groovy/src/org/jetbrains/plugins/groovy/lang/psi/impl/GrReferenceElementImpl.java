@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author ven
  */
-public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implements GrReferenceElement {
+public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
   public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
   }

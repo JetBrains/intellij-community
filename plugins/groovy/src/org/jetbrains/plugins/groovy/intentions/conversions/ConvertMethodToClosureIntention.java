@@ -132,7 +132,7 @@ public class ConvertMethodToClosureIntention extends Intention {
         for (GrReferenceExpression element : usagesToConvert) {
           final PsiElement qualifier = element.getQualifier();
           final StringBuilder text = new StringBuilder(qualifier.getText());
-          element.setQualifierExpression(null);
+          element.setQualifier(null);
           text.append('.').append(element.getText());
           element.replace(factory.createExpressionFromText(text.toString()));
         }

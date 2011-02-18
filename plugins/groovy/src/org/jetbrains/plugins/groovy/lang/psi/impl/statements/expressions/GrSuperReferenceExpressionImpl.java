@@ -17,9 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author ilyas
@@ -85,9 +83,8 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
     return superTypes[0];
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public String getReferenceName() {
     return "super";
   }
 }

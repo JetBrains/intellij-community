@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 /**
  * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement, PsiNamedElement {
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement<GrExpression>, PsiNamedElement {
 
   @Nullable
   GrExpression getQualifierExpression();
@@ -50,8 +50,6 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
   //not caching!
   @NotNull
   GroovyResolveResult[] getSameNameVariants();
-
-  void setQualifierExpression(GrExpression qualifierExpression);
 
   GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass);
 }

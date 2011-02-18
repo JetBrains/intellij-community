@@ -19,11 +19,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -78,7 +80,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
         final PsiElement newElement = newResult.getElement();
         if (oldElement != newElement || oldResult.getCurrentFileResolveContext() != newResult.getCurrentFileResolveContext()) {
           final GrReferenceExpression qualifier = GroovyPsiElementFactory.getInstance(ref.getProject()).createReferenceExpressionFromText("owner");
-          ref.setQualifierExpression(qualifier);
+          ref.setQualifier(qualifier);
         }
       }
       super.visitReferenceExpression(ref);

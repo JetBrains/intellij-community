@@ -108,7 +108,7 @@ public class GroovyChangeContextUtil {
               if (!manager.areElementsEquivalent(memberRef, resolvedElement)) {
                 final PsiElement qualifier = refExpr.getQualifier();
                 if (!(qualifier instanceof GrReferenceExpression)) {
-                  refExpr.setQualifierExpression(factory.createReferenceExpressionFromText(memberClass.getQualifiedName()));
+                  refExpr.setQualifier(factory.createReferenceExpressionFromText(memberClass.getQualifiedName()));
                   return;
                 }
               }
@@ -116,7 +116,7 @@ public class GroovyChangeContextUtil {
             else if (thisAccessExpr instanceof GrReferenceExpression) {
               final PsiElement qualifier = refExpr.getQualifier();
               if (!(qualifier instanceof GrReferenceExpression)) {
-                refExpr.setQualifierExpression((GrReferenceExpression)thisAccessExpr);
+                refExpr.setQualifier((GrReferenceExpression)thisAccessExpr);
                 return;
               }
             }

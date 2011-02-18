@@ -338,7 +338,7 @@ public class GroovyInlineMethodUtil {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(qualifier.getProject());
     for (GrReferenceExpression expr : exprs) {
       GrExpression qual = factory.createExpressionFromText(qualifier.getText());
-      expr.setQualifierExpression(qual);
+      expr.setQualifier(qual);
     }
   }
 

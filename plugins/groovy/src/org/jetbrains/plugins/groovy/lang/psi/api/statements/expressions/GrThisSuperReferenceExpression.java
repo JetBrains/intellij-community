@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 
 /**
  * @author Maxim.Medvedev
  */
-public interface GrThisSuperReferenceExpression extends GrExpression, PsiPolyVariantReference {
+public interface GrThisSuperReferenceExpression extends GrExpression, PsiPolyVariantReference, GrQualifiedReference<GrReferenceExpression> {
   @Nullable
   GrReferenceExpression getQualifier();
 }

@@ -291,8 +291,8 @@ public class PsiUtil {
       final TextRange range = child.getTextRange();
 
       if (start < range.getEndOffset() && range.getStartOffset() < end) {
-        if (child instanceof GrReferenceElement) {
-          shortenReference((GrReferenceElement)child);
+        if (child instanceof GrQualifiedReference) {
+          shortenReference((GrQualifiedReference)child);
         }
 
         doShorten(child, start, end);
@@ -302,8 +302,8 @@ public class PsiUtil {
   }
 
 
-  public static boolean shortenReference(GrReferenceElement ref) {
-    final PsiElement qualifier = ref.getQualifier();
+  public static <Qualifier extends PsiElement> boolean shortenReference(GrQualifiedReference<Qualifier> ref) {
+    final Qualifier qualifier = ref.getQualifier();
     if (qualifier != null &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
          PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
@@ -311,7 +311,7 @@ public class PsiUtil {
         PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
       final PsiElement resolved = ref.resolve();
       if (resolved != null) {
-        setQualifier(ref, null);
+        ref.setQualifier(null);
         if (ref.isReferenceTo(resolved)) return true;
 
         if (resolved instanceof PsiClass) {
@@ -329,7 +329,7 @@ public class PsiUtil {
         }
 
         if (!ref.isReferenceTo(resolved)) {
-          setQualifier(ref, qualifier.copy());
+          ref.setQualifier((Qualifier)qualifier.copy());
           return false;
         } else {
           return true;
@@ -339,17 +339,10 @@ public class PsiUtil {
     return false;
   }
 
-  private static void setQualifier(@NotNull GrReferenceElement ref, @Nullable PsiElement qualifier) {
-    if (ref instanceof GrReferenceExpression) {
-      ((GrReferenceExpression)ref).setQualifierExpression((GrExpression)qualifier);
-    }
-    else if (ref instanceof GrCodeReferenceElement) {
-      ((GrCodeReferenceElement)ref).setQualifier((GrCodeReferenceElement)qualifier);
-    }
-  }
-
-  private static boolean mayInsertImport(GrReferenceElement ref) {
-    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null && !(ref.getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
+  private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
+    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null &&
+           !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
+           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
   }
 
   @Nullable
