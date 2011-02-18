@@ -166,6 +166,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myVcsManager.registerCheckinHandlerFactory(new GitCheckinHandlerFactory());
   }
 
+
+  public BackgroundTaskQueue getTaskQueue() {
+    return myTaskQueue;
+  }
+
   public GitVFSListener getVFSListener() {
     return myVFSListener;
   }
