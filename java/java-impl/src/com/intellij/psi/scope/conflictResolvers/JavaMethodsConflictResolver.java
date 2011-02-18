@@ -59,9 +59,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkVarargMethods(conflicts, myActualParameterTypes.length);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
     boolean atLeastOneMatch = checkParametersNumber(conflicts, myActualParameterTypes.length, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -82,6 +79,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (!atLeastOneMatch) return null;
 
     checkSpecifics(conflicts, applicabilityLevel);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
+    checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
@@ -463,8 +463,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public void checkVarargMethods(final List<CandidateInfo> conflicts,
-                                 final int argumentsCount) {
+  public static void checkPrimitiveVarargs(final List<CandidateInfo> conflicts,
+                                           final int argumentsCount) {
     PsiMethod objectVararg = null;
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = (PsiMethod)conflict.getElement();
@@ -483,8 +483,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
         CandidateInfo conflict = iterator.next();
         PsiMethod method = (PsiMethod)conflict.getElement();
-        if (method != objectVararg && method.isVarArgs() && method.getParameterList().getParametersCount() - 1 == argumentsCount) {
-          iterator.remove();
+        if (method != objectVararg && method != null && method.isVarArgs()) {
+          final int paramsCount = method.getParameterList().getParametersCount();
+          final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
+          final PsiType componentType = ((PsiArrayType)type).getComponentType();
+          if (argumentsCount == paramsCount - 1 && componentType instanceof PsiPrimitiveType) {
+            iterator.remove();
+          }
         }
       }
     }
