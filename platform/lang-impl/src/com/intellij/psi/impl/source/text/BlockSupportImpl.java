@@ -87,9 +87,9 @@ public class BlockSupportImpl extends BlockSupport {
     file.getViewProvider().beforeContentsSynchronized();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
-    final CharTable charTable = fileImpl.getTreeElement().getCharTable();
-
     final FileElement treeFileElement = fileImpl.getTreeElement();
+    final CharTable charTable = treeFileElement.getCharTable();
+
     final int textLength = treeFileElement.getTextLength() + lengthShift;
 
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
@@ -112,21 +112,7 @@ public class BlockSupportImpl extends BlockSupport {
         if (reparseable.getLanguage() == baseLanguage) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
-          if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
-            String newTextBefore = newFileText.subSequence(0, start).toString();
-            String oldTextBefore = file.getText().subSequence(0, start).toString();
-            String message = "IOOBE: type=" + elementType +
-                             "; oldText=" + node.getText() +
-                             "; newText=" + newFileText.subSequence(start, newFileText.length()) +
-                             "; length=" + node.getTextLength();
-            if (oldTextBefore.equals(newTextBefore)) {
-              message += "; oldTextBefore==newTextBefore";
-            } else {
-              message += "; oldTextBefore=" + oldTextBefore +
-                         "; newTextBefore=" + newTextBefore;
-            }
-            throw new AssertionError(message);
-          }
+          assertFileLength(file, newFileText, node, elementType, start, end);
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
@@ -154,6 +140,24 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     makeFullParse(node, newFileText, textLength, fileImpl);
+  }
+
+  private static void assertFileLength(PsiFile file, CharSequence newFileText, ASTNode node, IElementType elementType, int start, int end) {
+    if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+      String newTextBefore = newFileText.subSequence(0, start).toString();
+      String oldTextBefore = file.getText().subSequence(0, start).toString();
+      String message = "IOOBE: type=" + elementType +
+                       "; oldText=" + node.getText() +
+                       "; newText=" + newFileText.subSequence(start, newFileText.length()) +
+                       "; length=" + node.getTextLength();
+      if (oldTextBefore.equals(newTextBefore)) {
+        message += "; oldTextBefore==newTextBefore";
+      } else {
+        message += "; oldTextBefore=" + oldTextBefore +
+                   "; newTextBefore=" + newTextBefore;
+      }
+      throw new AssertionError(message);
+    }
   }
 
   private static void makeFullParse(final ASTNode parent, final CharSequence newFileText, final int textLength, final PsiFileImpl fileImpl) {

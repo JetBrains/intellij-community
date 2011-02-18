@@ -230,7 +230,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  public void addRunOnCommit(Document document, Runnable action) {
+  public static void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
     synchronized (ACTION_AFTER_COMMIT) {
       List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list == null) {
@@ -412,7 +412,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @SuppressWarnings({"ALL"})
   private ASTNode myTreeElementBeingReparsedSoItWontBeCollected;
 
-  private boolean commit(final Document document, final PsiFile file) {
+  private boolean commit(@NotNull Document document, @NotNull PsiFile file) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document, file);
@@ -432,7 +432,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
-      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? myTreeElementBeingReparsedSoItWontBeCollected.getText() : null;
+      final String oldPsiText =
+        ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode()
+        ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
+        : null;
 
       int startOffset;
       int endOffset;
@@ -442,51 +445,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         int psiEndOffset = textBlock.getPsiEndOffset();
         endOffset = psiEndOffset;
         lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
-
-        if (oldText != null) {
-          String psiPrefix = oldText.substring(0, startOffset);
-          String docPrefix = chars.subSequence(0, startOffset).toString();
-          String psiSuffix = oldText.substring(psiEndOffset);
-          String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
-          if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
-            String msg = "PSI/document inconsistency before reparse: ";
-            if (!psiPrefix.equals(docPrefix)) {
-              msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
-            }
-            if (!psiSuffix.equals(docSuffix)) {
-              msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
-            }
-            throw new AssertionError(msg);
-          }
-        } else if (document.getTextLength() - textBlock.getTextEndOffset() != myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
-          throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
-        }
       }
       else {
         startOffset = 0;
         endOffset = document.getTextLength();
         lengthShift = document.getTextLength() - myTreeElementBeingReparsedSoItWontBeCollected.getTextLength();
       }
+      assertBeforeCommit(document, file, textBlock, chars, oldPsiText);
       myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
-
-      if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-          boolean x = false;
-          if (x) {
-            myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
-          }
-          String fileText = file.getText();
-          String documentText = document.getText();
-          throw new AssertionError("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                                   "; doc len=" + document.getTextLength() +
-                                   "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
-                                   ";\n file text=" + fileText +
-                                   ";\n doc text=" + documentText +
-                                   ";\n old file text=" + oldText);
-        }
-
-        throw new AssertionError("commitDocument left PSI inconsistent: " + file);
-      }
+      assertAfterCommit(document, file, oldPsiText);
     }
     finally {
       textBlock.unlock();
@@ -500,6 +467,52 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
     }
     return true;
+  }
+
+  private void assertAfterCommit(Document document, PsiFile file, String oldPsiText) {
+    if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        String fileText = file.getText();
+        String documentText = document.getText();
+        throw new AssertionError("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
+                                 "; doc len=" + document.getTextLength() +
+                                 "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
+                                 ";\n file psi text=" + fileText +
+                                 ";\n doc text=" + documentText +
+                                 ";\n old psi file text=" + oldPsiText);
+      }
+
+      throw new AssertionError("commitDocument left PSI inconsistent: " + file);
+    }
+  }
+
+  private void assertBeforeCommit(Document document,
+                                  PsiFile file,
+                                  TextBlock textBlock,
+                                  CharSequence chars,
+                                  String oldPsiText) {
+    int startOffset = textBlock.getStartOffset();
+    int psiEndOffset = textBlock.getPsiEndOffset();
+    if (oldPsiText != null) {
+      String psiPrefix = oldPsiText.substring(0, startOffset);
+      String docPrefix = chars.subSequence(0, startOffset).toString();
+      String psiSuffix = oldPsiText.substring(psiEndOffset);
+      String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
+      if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
+        String msg = "PSI/document inconsistency before reparse: ";
+        if (!psiPrefix.equals(docPrefix)) {
+          msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
+        }
+        if (!psiSuffix.equals(docSuffix)) {
+          msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
+        }
+        throw new AssertionError(msg);
+      }
+    }
+    else if (document.getTextLength() - textBlock.getTextEndOffset() !=
+             myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
+      throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
+    }
   }
 
   @NotNull
@@ -689,7 +702,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return mySynchronizer;
   }
 
-  public boolean isCommittingDocument(final Document doc) {
+  private static boolean isCommittingDocument(final Document doc) {
     return doc.getUserData(KEY_COMMITING) == Boolean.TRUE;
   }
 

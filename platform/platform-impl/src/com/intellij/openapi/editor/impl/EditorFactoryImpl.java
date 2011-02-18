@@ -50,7 +50,7 @@ public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-  private final ArrayList<Editor> myEditors = new ArrayList<Editor>();
+  private final List<Editor> myEditors = new ArrayList<Editor>();
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
 
   public EditorFactoryImpl(ProjectManager projectManager) {

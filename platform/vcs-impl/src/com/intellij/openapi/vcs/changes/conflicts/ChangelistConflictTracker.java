@@ -66,10 +66,10 @@ public class ChangelistConflictTracker {
   private final Set<VirtualFile> myCheckSet;
   private final Object myCheckSetLock;
 
-  public ChangelistConflictTracker(Project project,
-                                   ChangeListManager changeListManager, 
-                                   FileStatusManager fileStatusManager,
-                                   EditorNotifications editorNotifications) {
+  public ChangelistConflictTracker(@NotNull Project project,
+                                   @NotNull ChangeListManager changeListManager,
+                                   @NotNull FileStatusManager fileStatusManager,
+                                   @NotNull EditorNotifications editorNotifications) {
     myProject = project;
 
     myChangeListManager = changeListManager;
@@ -84,7 +84,7 @@ public class ChangelistConflictTracker {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (application.isDisposed() || myProject.isDisposed() || (! myProject.isOpen())) return;
+        if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) return;
         final Set<VirtualFile> localSet;
         synchronized (myCheckSetLock) {
           localSet = new HashSet<VirtualFile>();
@@ -170,10 +170,7 @@ public class ChangelistConflictTracker {
 
   public boolean isFromActiveChangelist(VirtualFile file) {
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    if (changeList == null || myChangeListManager.isDefaultChangeList(changeList)) {
-      return true;
-    }
-    return false;
+    return changeList == null || myChangeListManager.isDefaultChangeList(changeList);
   }
 
   private void checkList(ChangeList list) {
@@ -197,12 +194,11 @@ public class ChangelistConflictTracker {
 
   public void startTracking() {
     myChangeListManager.addChangeListListener(myChangeListListener);
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
   }
 
   public void stopTracking() {
     myChangeListManager.removeChangeListListener(myChangeListListener);
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
   }
 
   public void saveState(Element to) {
