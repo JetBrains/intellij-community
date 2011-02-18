@@ -184,7 +184,9 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (!PsiUtil.isLanguageLevel5OrHigher(statement)) return;
       final PsiParameter parameter = statement.getIterationParameter();
       final PsiType parameterType = parameter.getType();
-      final PsiType itemType = GenericsHighlightUtil.getCollectionItemType(statement.getIteratedValue());
+      final PsiExpression iteratedValue = statement.getIteratedValue();
+      if (iteratedValue == null) return;
+      final PsiType itemType = GenericsHighlightUtil.getCollectionItemType(iteratedValue);
       if (!PsiUtil.isLanguageLevel5OrHigher(statement)) return;
       checkRawToGenericsAssignment(parameter, parameterType, itemType, true, myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType) : null);
     }

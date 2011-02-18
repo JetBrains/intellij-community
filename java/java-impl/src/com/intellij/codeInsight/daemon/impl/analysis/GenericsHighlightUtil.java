@@ -37,6 +37,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -703,7 +704,7 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static PsiType getCollectionItemType(PsiExpression expression) {
+  public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type == null) return null;
     if (type instanceof PsiArrayType) {
