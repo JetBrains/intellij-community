@@ -45,7 +45,8 @@ public abstract class ChunkBuildExtension {
   public void generateProperties(final PropertyFileGenerator generator, final Project project, final GenerationOptions options) {
   }
 
-  public void generateTasksForArtifact(Project project, Artifact artifact, boolean preprocessing, CompositeGenerator generator) {
+  public void generateTasksForArtifact(Artifact artifact, boolean preprocessing, Project project, GenerationOptions genOptions,
+                                       CompositeGenerator generator) {
   }
 
   public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {

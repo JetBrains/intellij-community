@@ -47,8 +47,10 @@ public class ArtifactsGenerator {
   private final PackagingElementResolvingContext myResolvingContext;
   private final ArtifactAntGenerationContextImpl myContext;
   private final List<Artifact> myAllArtifacts;
+  private final GenerationOptions myGenOptions;
 
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
+    myGenOptions = genOptions;
     myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
 
     myAllArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
@@ -174,7 +176,7 @@ public class ArtifactsGenerator {
 
   private void generateTasksForArtifacts(Artifact artifact, Target artifactTarget, final boolean preprocessing) {
     for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
-      extension.generateTasksForArtifact(myResolvingContext.getProject(), artifact, preprocessing, artifactTarget);
+      extension.generateTasksForArtifact(artifact, preprocessing, myResolvingContext.getProject(), myGenOptions, artifactTarget);
     }
   }
 

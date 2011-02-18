@@ -16,54 +16,23 @@
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.compiler.ant.*;
-import com.intellij.compiler.ant.taskdefs.AntCall;
-import com.intellij.compiler.ant.taskdefs.Import;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * @author nik
  */
 public class AntArtifactBuildExtension extends ChunkBuildExtension {
   @Override
-  public void generateProjectTargets(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
-    final Artifact[] artifacts = ArtifactManager.getInstance(project).getSortedArtifacts();
-    Set<String> filesToImport = new LinkedHashSet<String>();
-    for (Artifact artifact : artifacts) {
-      for (Boolean value : Arrays.asList(true, false)) {
-        final AntArtifactProperties properties = getProperties(artifact, value);
-        if (properties != null) {
-          filesToImport.add(properties.getFileUrl());
-        }
-      }
-    }
-    for (String url : filesToImport) {
-      final String path = VfsUtil.urlToPath(url);
-      final String relativePath = GenerationUtils.toRelativePath(path, BuildProperties.getProjectBaseDir(project), BuildProperties.getProjectBaseDirProperty(), genOptions);
-      generator.add(new Import(relativePath));
-    }
-  }
-
-  @Override
-  public void generateTasksForArtifact(Project project, Artifact artifact, boolean preprocessing, CompositeGenerator generator) {
-    final AntArtifactProperties properties = getProperties(artifact, preprocessing);
-    if (properties != null) {
-      generator.add(new AntCall(properties.getTargetName()));
-    }
-  }
-
-  @Nullable
-  private static AntArtifactProperties getProperties(Artifact artifact, boolean preprocessing) {
+  public void generateTasksForArtifact(Artifact artifact,
+                                       boolean preprocessing, Project project,
+                                       GenerationOptions genOptions, CompositeGenerator generator) {
     final ArtifactPropertiesProvider provider;
     if (preprocessing) {
       provider = AntArtifactPreProcessingPropertiesProvider.getInstance();
@@ -72,7 +41,14 @@ public class AntArtifactBuildExtension extends ChunkBuildExtension {
       provider = AntArtifactPostprocessingPropertiesProvider.getInstance();
     }
     final AntArtifactProperties properties = (AntArtifactProperties)artifact.getProperties(provider);
-    return properties != null && properties.isEnabled() ? properties : null;
+    if (properties != null && properties.isEnabled()) {
+      final String path = VfsUtil.urlToPath(properties.getFileUrl());
+      String fileName = PathUtil.getFileName(path);
+      String dirPath = PathUtil.getParentPath(path);
+      final String relativePath = GenerationUtils.toRelativePath(dirPath, BuildProperties.getProjectBaseDir(project), BuildProperties.getProjectBaseDirProperty(), genOptions);
+      generator.add(new Tag("ant", Pair.create("antfile", fileName), Pair.create("target", properties.getTargetName()),
+                                   Pair.create("dir", relativePath)));
+    }
   }
 
   @NotNull
