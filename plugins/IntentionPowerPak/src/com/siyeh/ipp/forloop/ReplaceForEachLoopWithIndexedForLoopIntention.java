@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             PsiExpression expression, PsiElement context) {
         if (expression instanceof PsiMethodCallExpression ||
                 expression instanceof PsiTypeCastExpression ||
-                expression instanceof PsiArrayAccessExpression) {
+                expression instanceof PsiArrayAccessExpression ||
+                expression instanceof PsiNewExpression) {
             final String variableName = getVariableName(expression);
             return createVariable(variableName, expression, context);
         } else if (expression instanceof PsiParenthesizedExpression) {
