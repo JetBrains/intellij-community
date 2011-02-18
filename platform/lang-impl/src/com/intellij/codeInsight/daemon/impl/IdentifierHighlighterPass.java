@@ -161,7 +161,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       }
       HighlightInfo info = (HighlightInfo)tooltip;
       if (info.type == ourReadHighlightInfoType || info.type == ourWriteHighlightInfoType) {
-        markupModel.removeHighlighter(highlighter);
+        highlighter.dispose();
       }
     }
   }

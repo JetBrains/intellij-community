@@ -59,7 +59,7 @@ public class RangeBlinker {
     
     for (RangeHighlighter highlighter : myAddedHighlighters) {
       if (ArrayUtil.indexOf(allHighlighters, highlighter) != -1) {
-        markupModel.removeHighlighter(highlighter);
+        highlighter.dispose();
       }
     }
     myAddedHighlighters.clear();

@@ -691,9 +691,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     hint.addHintListener(new HintListener() {
       public void hintHidden(EventObject event) {
-        if (!editor.isDisposed()) {
-          editor.getMarkupModel().removeHighlighter(highlighter);
-        }
+        highlighter.dispose();
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;

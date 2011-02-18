@@ -129,7 +129,7 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
                 protected void run() throws Throwable {
                     if (extractImpl(expression, matchingExpressions, otherMatches, dlg)) {
                         for (RangeHighlighter highlighter : highlighters) {
-                            editor.getMarkupModel().removeHighlighter(highlighter);
+                            highlighter.dispose();
                         }
                     }
                 }

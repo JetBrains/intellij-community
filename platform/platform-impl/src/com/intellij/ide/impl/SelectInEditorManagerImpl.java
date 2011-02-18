@@ -138,7 +138,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
 
   private void releaseAll() {
     if (mySegmentHighlighter != null && myEditor != null){
-      myEditor.getMarkupModel().removeHighlighter(mySegmentHighlighter);
+      mySegmentHighlighter.dispose();
       myEditor.getContentComponent().removeFocusListener(this);
       myEditor.getCaretModel().removeCaretListener(this);
       mySegmentHighlighter = null;

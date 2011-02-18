@@ -73,14 +73,10 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
 
   private void removeHighlighters() {
     final MarkupModel model = myDocument.getMarkupModel(myProject);
-    ArrayList<RangeHighlighter> toRemove = new ArrayList<RangeHighlighter>();
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (highlighter.getUserData(KEY) == VALUE) {
-        toRemove.add(highlighter);
+        highlighter.dispose();
       }
-    }
-    for (RangeHighlighter highlighter : toRemove) {
-      model.removeHighlighter(highlighter);
     }
   }
 

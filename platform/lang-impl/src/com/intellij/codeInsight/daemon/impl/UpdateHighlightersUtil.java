@@ -285,7 +285,7 @@ public class UpdateHighlightersUtil {
       }
     });
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      markup.removeHighlighter(highlighter);
+      highlighter.dispose();
       changed[0] = true;
     }
 
@@ -356,7 +356,7 @@ public class UpdateHighlightersUtil {
       }
     });
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      markup.removeHighlighter(highlighter);
+      highlighter.dispose();
       changed[0] = true;
     }
 
@@ -565,7 +565,7 @@ public class UpdateHighlightersUtil {
     }
 
     for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
-      markupModel.removeHighlighter(highlighter);
+      highlighter.dispose();
     }
 
     DaemonCodeAnalyzerImpl.setLineMarkers(document, array, project);
@@ -648,7 +648,7 @@ public class UpdateHighlightersUtil {
 
     for (HighlightInfo info : removed) {
       if (!info.highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        markup.removeHighlighter(info.highlighter);
+        info.highlighter.dispose();
       }
     }
     

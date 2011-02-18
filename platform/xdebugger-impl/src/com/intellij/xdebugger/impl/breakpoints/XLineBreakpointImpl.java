@@ -200,7 +200,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   private void removeHighlighter() {
     if (myHighlighter != null) {
-      myHighlighter.getDocument().getMarkupModel(getProject()).removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
       myHighlighter = null;
     }
   }

@@ -58,6 +58,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   protected boolean unregisterInDocument() {
+    if (myNode == null) return false;
     // we store highlighters in MarkupModel
     getData().unregisterMe();
     myNode = null;

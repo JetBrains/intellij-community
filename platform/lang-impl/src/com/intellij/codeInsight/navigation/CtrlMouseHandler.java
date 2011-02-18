@@ -52,7 +52,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,9 +59,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -370,7 +369,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
               return found.size() != 2;
             }
           });
-          return found.toArray(new PsiElement[found.size()]);
+          return PsiUtilBase.toPsiElementArray(found);
         }
       }.searchImplementations(editor, element, offset);
       if (targetElements.length > 1) {
@@ -418,7 +417,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   private void disposeHighlighter() {
     if (myHighlighter != null) {
-      myHighlighter.deinstall();
+      myHighlighter.uninstall();
       HintManager.getInstance().hideAllHints();
       myHighlighter = null;
     }
@@ -563,9 +562,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myStoredInfo = storedInfo;
     }
 
-    public void deinstall() {
+    public void uninstall() {
       for (RangeHighlighter highlighter : myHighlighters) {
-        myHighlighterView.getMarkupModel().removeHighlighter(highlighter);
+        highlighter.dispose();
       }
 
       Component internalComponent = myHighlighterView.getContentComponent();

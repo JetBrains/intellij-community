@@ -202,7 +202,7 @@ public class XPathEvalAction extends XPathAction {
 
             input = inputXPathExpression(project, contextNode);
             if (contextHighlighter != null) {
-                editor.getMarkupModel().removeHighlighter(contextHighlighter);
+                contextHighlighter.dispose();
             }
             if (input == null) {
                 return;

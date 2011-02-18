@@ -55,7 +55,7 @@ public class CurrentLineMarker implements CaretListener {
   void hide() {
     if (myHighlighter != null) {
       LOG.assertTrue(myEditor != null);
-      myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
       myHighlighter = null;
     }
   }

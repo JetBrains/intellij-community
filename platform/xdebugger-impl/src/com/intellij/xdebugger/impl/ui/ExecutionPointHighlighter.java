@@ -118,7 +118,7 @@ public class ExecutionPointHighlighter {
     }
     if (myRangeHighlighter == null || myEditor == null) return;
 
-    myEditor.getMarkupModel().removeHighlighter(myRangeHighlighter);
+    myRangeHighlighter.dispose();
     myRangeHighlighter = null;
   }
 

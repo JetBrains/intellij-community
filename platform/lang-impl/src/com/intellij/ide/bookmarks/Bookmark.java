@@ -92,7 +92,7 @@ public class Bookmark {
 
   public void release() {
     if (myHighlighter != null) {
-      getDocument().getMarkupModel(myProject).removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
     }
   }
 

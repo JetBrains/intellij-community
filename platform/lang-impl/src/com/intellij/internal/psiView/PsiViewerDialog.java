@@ -870,7 +870,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     public void clearSelection() {
       if (myHighlighter != null && Arrays.asList(myEditor.getMarkupModel().getAllHighlighters()).contains(myHighlighter)) {
-        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+        myHighlighter.dispose();
         myHighlighter = null;
       }
     }

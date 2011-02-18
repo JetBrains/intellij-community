@@ -1078,7 +1078,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         RangeHighlighter[] allHighlighters = myEditor.getMarkupModel().getAllHighlighters();
         for (RangeHighlighter highlighter : allHighlighters) {
           if (highlighter.getStartOffset() >= token.startOffset) {
-            myEditor.getMarkupModel().removeHighlighter(highlighter);
+            highlighter.dispose();
           }
         }
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(0);
@@ -1163,7 +1163,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     //refresh highlighter text attributes
     RangeHighlighter dummy =
       markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE);
-    markupModel.removeHighlighter(dummy);
+    dummy.dispose();
   }
 
   public HyperlinkInfo getHyperlinkInfoByPoint(final Point p) {

@@ -130,7 +130,7 @@ public class PositionHighlighter {
       if(!myIsActive) return;
       myIsActive = false;
       if (myHighlighter != null) {
-        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+        myHighlighter.dispose();
         myHighlighter = null;
       }
     }
