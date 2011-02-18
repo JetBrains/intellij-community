@@ -72,7 +72,8 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                            "  -PsiDirectory: src\n" +
                                                                                            "   -PsiDirectory: com\n" +
                                                                                            "    -PsiDirectory: package1\n" +
-                                                                                           "     [Class11]\n" +
+                                                                                           "     -[Class1.java]\n" +
+                                                                                           "      [Class11]\n" +
                                                                                            "     Class2\n" +
                                                                                            getRootFiles() +
                                                                                            " +External Libraries\n");
