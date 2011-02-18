@@ -44,7 +44,7 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    */
   private static final Logger LOG = Logger.getInstance(PydevXmlRpcClient.class.getName());
 
-  private static final long TIME_LIMIT = 5000;
+  private static final long TIME_LIMIT = 30000;
 
 
   /**
