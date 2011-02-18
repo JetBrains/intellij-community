@@ -636,4 +636,8 @@ set<caret>Foo(2)
     myFixture.addFileToProject "a/B.groovy", "package a; class B {public static def f1; public static def f2}"
     assertEquals 'f2', resolve("A.groovy").name
   }
+
+  public void testF1property() {
+    assertInstanceOf resolve("A.groovy"), GrAccessorMethod
+  }
 }
