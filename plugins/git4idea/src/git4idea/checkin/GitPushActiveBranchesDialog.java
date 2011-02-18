@@ -19,7 +19,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -749,7 +748,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * @param postUiTask
    */
   private void loadRootsInBackground(final boolean fetchData, @Nullable final PushActiveBranchRunnable postUiTask) {
-    Task.Backgroundable fetchTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
+    final Task.Backgroundable fetchTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
       public void run(@NotNull ProgressIndicator indicator) {
         final Collection<VcsException> exceptions = new HashSet<VcsException>(1);
         final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, fetchData);
@@ -768,7 +767,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
       }
     };
-    myVcs.runInBackground(fetchTask);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override public void run() {
+        final ModalityState modalityState = ModalityState.stateForComponent(getContentPane());
+        myVcs.getTaskQueue().run(fetchTask, modalityState, null);
+      }
+    });
   }
 
   /**
