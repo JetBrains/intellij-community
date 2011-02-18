@@ -528,14 +528,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    *                  the difference is that commit checkboxes should be checked only during the initial refresh - others should respect
    *                  user who could uncheck some commits.
    */
-  private void refreshTree(final boolean fetchData, final Map<VirtualFile, Set<String>> unchecked, final boolean updateTree) {
+  private void refreshTree(final boolean fetchData, final Map<VirtualFile, Set<String>> unchecked, final boolean updateUncheckedCommits) {
     myCommitTree.setPaintBusy(true);
     loadRootsInBackground(fetchData, new PushActiveBranchRunnable(){
       @Override
       void run(List<Root> roots) {
-        if (updateTree) {
-          updateTree(roots, unchecked);
-        }
+        updateTree(roots, updateUncheckedCommits ? unchecked : null);
         updateUI();
         myCommitTree.setPaintBusy(false);
       }
