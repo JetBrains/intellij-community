@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -41,13 +42,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "'if' replaceable with 'switch'";
+        return InspectionGadgetsBundle.message("if.can.be.switch.display.name");
     }
 
     @NotNull
     @Override
     protected String buildErrorString(Object... infos) {
-        return "<code>#ref</code> statement replaceable with 'switch' statement";
+        return InspectionGadgetsBundle.message(
+                "if.can.be.switch.problem.descriptor");
     }
 
     @Override
@@ -65,13 +67,13 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Replace with 'switch'";
+            return InspectionGadgetsBundle.message("if.can.be.switch.quickfix");
         }
 
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement element = descriptor.getPsiElement().getParent();
             if (!(element instanceof PsiIfStatement)) {
                 return;
             }
@@ -155,8 +157,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                     new StringBuilder();
             switchStatementText.append("switch(");
             switchStatementText.append(switchExpression.getText());
-            switchStatementText.append(')');
-            switchStatementText.append('{');
+            switchStatementText.append("){");
             for (IfStatementBranch branch : branches) {
                 boolean hasConflicts = false;
                 for (IfStatementBranch testBranch : branches) {
@@ -210,7 +211,6 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                                 switchStatementText.toString(), element);
                 statementToReplace.replace(newStatement);
             }
-
         }
 
         @Nullable
