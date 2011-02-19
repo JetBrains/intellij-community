@@ -1,4 +1,4 @@
-// "Replace with <>" "true"
+// "Replace with <>" "false"
 public class Test {
   void bar() {
     foo(new FF<Str<caret>ing>());
