@@ -98,6 +98,8 @@ public class PsiDiamondType extends PsiType {
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression) {
     final PsiClass psiClass = findClass(newExpression);
     if (psiClass == null) return DiamondInferenceResult.NULL_RESULT;
+    final PsiExpressionList argumentList = newExpression.getArgumentList();
+    if (argumentList == null) return DiamondInferenceResult.NULL_RESULT;
     final PsiMethod constructor = findConstructor(psiClass, newExpression);
     PsiTypeParameter[] params = getAllTypeParams(constructor, psiClass);
     PsiMethod staticFactory = generateStaticFactory(constructor, psiClass, params);
@@ -125,7 +127,6 @@ public class PsiDiamondType extends PsiType {
   @Nullable
   private static PsiMethod findConstructor(PsiClass containingClass, PsiNewExpression newExpression) {
     final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) return null;
     final Project project = newExpression.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -211,7 +212,8 @@ public class PsiDiamondType extends PsiType {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(staticFactoryMethod.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     final PsiParameter[] parameters = staticFactoryMethod.getParameterList().getParameters();
-    final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+    final PsiExpressionList argumentList = expression.getArgumentList();
+    final PsiExpression[] expressions = argumentList.getExpressions();
     return resolveHelper
       .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, expression, false);
   }
