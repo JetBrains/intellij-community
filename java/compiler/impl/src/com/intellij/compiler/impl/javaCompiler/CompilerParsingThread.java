@@ -18,9 +18,9 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SpinAllocator;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +64,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
         if (!myIsUnitTestMode && myProcess == null) {
           break;
         }
-        if (myProcessExited || isCanceled()) {
+        if (isCanceled()) {
           break;
         }
         if (!myOutputParser.processMessageLine(this)) {
