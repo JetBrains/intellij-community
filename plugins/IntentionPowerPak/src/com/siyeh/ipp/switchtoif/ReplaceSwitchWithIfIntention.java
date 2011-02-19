@@ -89,15 +89,6 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         if (body == null) {
             return;
         }
-        final PsiStatement[] statements = body.getStatements();
-        boolean renameBreaks = false;
-        for (int i = 1; i < statements.length - 1; i++) {
-            if (ControlFlowUtils.statementContainsNakedBreak(statements[i])) {
-                renameBreaks = true;
-                break;
-            }
-        }
-
         final List<SwitchStatementBranch> openBranches =
                 new ArrayList<SwitchStatementBranch>();
         final Set<PsiLocalVariable> declaredVariables =
@@ -161,13 +152,6 @@ public class ReplaceSwitchWithIfIntention extends Intention {
             }
         }
         final StringBuilder ifStatementText = new StringBuilder();
-        String breakLabel = null;
-        if (renameBreaks) {
-            breakLabel =
-                    SwitchUtils.findUniqueLabelName(switchStatement, "label");
-            ifStatementText.append(breakLabel);
-            ifStatementText.append(':');
-        }
         boolean firstBranch = true;
         SwitchStatementBranch defaultBranch = null;
         for (SwitchStatementBranch branch : allBranches) {
@@ -178,8 +162,8 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                 final List<PsiElement> bodyElements = branch.getBodyElements();
                 final Set<PsiLocalVariable> pendingVariableDeclarations =
                         branch.getPendingVariableDeclarations();
-                dumpBranch(expressionText, caseValues, bodyElements, breakLabel,
-                        pendingVariableDeclarations, firstBranch, renameBreaks,
+                dumpBranch(expressionText, caseValues, bodyElements,
+                        pendingVariableDeclarations, firstBranch,
                         isSwitchOnString, ifStatementText);
                 firstBranch = false;
             }
@@ -189,9 +173,8 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                     defaultBranch.getBodyElements();
             final Set<PsiLocalVariable> pendingVariableDeclarations =
                     defaultBranch.getPendingVariableDeclarations();
-            dumpDefaultBranch(bodyElements, breakLabel,
-                    pendingVariableDeclarations, firstBranch, renameBreaks,
-                    ifStatementText);
+            dumpDefaultBranch(bodyElements, pendingVariableDeclarations,
+                    firstBranch, ifStatementText);
         }
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -245,28 +228,26 @@ public class ReplaceSwitchWithIfIntention extends Intention {
 
     private static void dumpBranch(
             String expressionText, List<String> caseValues,
-            List<PsiElement> bodyStatements, String breakLabel,
+            List<PsiElement> bodyStatements,
             Set<PsiLocalVariable> variables, boolean firstBranch,
-            boolean renameBreaks, boolean useEquals,
+            boolean useEquals,
             @NonNls StringBuilder ifStatementString) {
         if (!firstBranch) {
             ifStatementString.append("else ");
         }
         dumpCaseValues(expressionText, caseValues, useEquals,
                 ifStatementString);
-        dumpBody(bodyStatements, breakLabel, variables, renameBreaks,
-                ifStatementString);
+        dumpBody(bodyStatements, variables, ifStatementString);
     }
 
     private static void dumpDefaultBranch(
-            List<PsiElement> bodyStatements, String breakLabel,
+            List<PsiElement> bodyStatements,
             Set<PsiLocalVariable> variables, boolean firstBranch,
-            boolean renameBreaks, @NonNls StringBuilder ifStatementString) {
+            @NonNls StringBuilder ifStatementString) {
         if (!firstBranch) {
             ifStatementString.append("else ");
         }
-        dumpBody(bodyStatements, breakLabel, variables, renameBreaks,
-                ifStatementString);
+        dumpBody(bodyStatements, variables, ifStatementString);
     }
 
     private static void dumpCaseValues(
@@ -292,10 +273,9 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         ifStatementString.append(')');
     }
 
-    private static void dumpBody(
-            List<PsiElement> bodyStatements, String breakLabel,
-            Set<PsiLocalVariable> variables, boolean renameBreaks,
-            @NonNls StringBuilder ifStatementString) {
+    private static void dumpBody(List<PsiElement> bodyStatements,
+                                 Set<PsiLocalVariable> variables,
+                                 @NonNls StringBuilder ifStatementString) {
         ifStatementString.append('{');
         for (PsiLocalVariable variable : variables) {
             if (SwitchUtils.isUsedByStatementList(variable, bodyStatements)) {
@@ -307,44 +287,33 @@ public class ReplaceSwitchWithIfIntention extends Intention {
             }
         }
         for (PsiElement bodyStatement : bodyStatements) {
-            @NonNls final String text = bodyStatement.getText();
-            if (!"break;".equals(text)) {
-                appendElement(bodyStatement, breakLabel, renameBreaks,
-                        ifStatementString);
+            if (bodyStatement instanceof PsiBlockStatement) {
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement) bodyStatement;
+                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                for (PsiStatement statement : statements) {
+                    appendElement(statement, ifStatementString);
+                }
+            } else {
+                appendElement(bodyStatement, ifStatementString);
             }
         }
         ifStatementString.append("\n}");
     }
 
     private static void appendElement(
-            PsiElement element, String breakLabelString,
-            boolean renameBreakElements,
-            @NonNls StringBuilder ifStatementString) {
-        if (!renameBreakElements) {
-            final String text = element.getText();
-            ifStatementString.append(text);
-        } else if (element instanceof PsiBreakStatement) {
+            PsiElement element, @NonNls StringBuilder ifStatementString) {
+        if (element instanceof PsiBreakStatement) {
+            final PsiBreakStatement breakStatement =
+                    (PsiBreakStatement) element;
             final PsiIdentifier identifier =
-                    ((PsiBreakStatement)element).getLabelIdentifier();
-            if (identifier == null || "".equals(identifier.getText())) {
-                ifStatementString.append("break ");
-                ifStatementString.append(breakLabelString);
-                ifStatementString.append(';');
-            } else {
-                final String text = element.getText();
-                ifStatementString.append(text);
+                    breakStatement.getLabelIdentifier();
+            if (identifier == null) {
+                return;
             }
-        } else if (element instanceof PsiBlockStatement ||
-                element instanceof PsiCodeBlock ||
-                element instanceof PsiIfStatement) {
-            final PsiElement[] children = element.getChildren();
-            for (PsiElement child : children) {
-                appendElement(child, breakLabelString, renameBreakElements,
-                        ifStatementString);
-            }
-        } else {
-            final String text = element.getText();
-            ifStatementString.append(text);
         }
+        final String text = element.getText();
+        ifStatementString.append(text);
     }
 }
