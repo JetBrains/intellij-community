@@ -44,7 +44,8 @@ public class SwitchUtils{
     }
 
     @Nullable
-    public static PsiExpression getSwitchExpression(PsiIfStatement statement){
+    public static PsiExpression getSwitchExpression(PsiIfStatement statement,
+                                                    int minimumBranches){
         final PsiExpression condition = statement.getCondition();
         final LanguageLevel languageLevel =
                 PsiUtil.getLanguageLevel(statement);
@@ -56,7 +57,9 @@ public class SwitchUtils{
         if (SideEffectChecker.mayHaveSideEffects(possibleSwitchExpression)) {
             return null;
         }
+        int branchCount = 0;
         while(true){
+            branchCount++;
             final PsiExpression caseCondition = statement.getCondition();
             if (!canBeMadeIntoCase(caseCondition, possibleSwitchExpression,
                     languageLevel)) {
@@ -64,6 +67,12 @@ public class SwitchUtils{
             }
             final PsiStatement elseBranch = statement.getElseBranch();
             if(!(elseBranch instanceof PsiIfStatement)){
+                if (elseBranch != null) {
+                    branchCount++;
+                }
+                if (branchCount < minimumBranches) {
+                    return null;
+                }
                 return possibleSwitchExpression;
             }
             statement = (PsiIfStatement) elseBranch;

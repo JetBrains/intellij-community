@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -33,10 +34,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public int minimumBranches = 3;
 
     @Nls
     @NotNull
@@ -55,6 +60,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IfCanBeSwitchFix((PsiExpression) infos[0]);
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "if.can.be.switch.minimum.branch.option"),
+                this, "minimumBranches");
     }
 
     private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
@@ -168,25 +181,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                         hasConflicts = true;
                     }
                 }
-
-                final PsiStatement branchStatement = branch.getStatement();
-                if (branch.isElse()) {
-                    final List<String> comments = branch.getComments();
-                    final List<String> statementComments =
-                            branch.getStatementComments();
-                    dumpDefaultBranch(switchStatementText, comments,
-                            branchStatement, statementComments,
-                            hasConflicts, breaksNeedRelabeled, labelString);
-                } else {
-                    final List<String> conditions = branch.getConditions();
-                    final List<String> comments = branch.getComments();
-                    final List<String> statementComments =
-                            branch.getStatementComments();
-                    dumpBranch(switchStatementText,
-                            comments, conditions, statementComments,
-                            branchStatement, hasConflicts, breaksNeedRelabeled,
-                            labelString);
-                }
+                dumpBranch(branch, hasConflicts, breaksNeedRelabeled,
+                        labelString, switchStatementText);
             }
             switchStatementText.append('}');
             final JavaPsiFacade psiFacade =
@@ -346,57 +342,41 @@ public class IfCanBeSwitchInspection extends BaseInspection {
             return values;
         }
 
-        private static void dumpBranch(StringBuilder switchStatementText,
-                                       List<String> comments,
-                                       List<String> labels,
-                                       List<String> statementComments,
-                                       PsiStatement body,
-                                       boolean wrap, boolean renameBreaks,
-                                       String breakLabelName) {
-            dumpComments(switchStatementText, comments);
-            dumpLabels(switchStatementText, labels);
-            dumpComments(switchStatementText, statementComments);
-            dumpBody(switchStatementText, body, wrap, renameBreaks,
-                    breakLabelName);
-        }
-
-        private static void dumpComments(StringBuilder switchStatementText,
-                                         List<String> comments) {
-            if (!comments.isEmpty()) {
-                switchStatementText.append('\n');
-                for (String comment : comments) {
-                    switchStatementText.append(comment);
-                    switchStatementText.append('\n');
+        private static void dumpBranch(
+                IfStatementBranch branch, boolean wrap,
+                boolean renameBreaks, String breakLabelName,
+                @NonNls StringBuilder switchStatementText) {
+            dumpComments(branch.getComments(), switchStatementText);
+            if (branch.isElse()) {
+                switchStatementText.append("default: ");
+            } else {
+                for (String label : branch.getConditions()) {
+                    switchStatementText.append("case ");
+                    switchStatementText.append(label);
+                    switchStatementText.append(": ");
                 }
             }
+            dumpComments(branch.getStatementComments(), switchStatementText);
+            dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName,
+                    switchStatementText);
         }
 
-        private static void dumpDefaultBranch(
-                @NonNls StringBuilder switchStatementString,
-                List<String> comments, PsiStatement body,
-                List<String> statementComments, boolean wrap,
-                boolean renameBreaks, String breakLabelName) {
-            dumpComments(switchStatementString, comments);
-            switchStatementString.append("default: ");
-            dumpComments(switchStatementString, statementComments);
-            dumpBody(switchStatementString, body, wrap, renameBreaks,
-                    breakLabelName);
-        }
-
-        private static void dumpLabels(
-                @NonNls StringBuilder switchStatementText,
-                List<String> labels) {
-            for (String label : labels) {
-                switchStatementText.append("case ");
-                switchStatementText.append(label);
-                switchStatementText.append(": ");
+        private static void dumpComments(List<String> comments,
+                                         StringBuilder switchStatementText) {
+            if (comments.isEmpty()) {
+                return;
+            }
+            switchStatementText.append('\n');
+            for (String comment : comments) {
+                switchStatementText.append(comment);
+                switchStatementText.append('\n');
             }
         }
 
         private static void dumpBody(
-                @NonNls StringBuilder switchStatementText,
-                PsiStatement bodyStatement, boolean wrap,
-                boolean renameBreaks, String breakLabelName) {
+                PsiStatement bodyStatement, boolean wrap, boolean renameBreaks,
+                String breakLabelName,
+                @NonNls StringBuilder switchStatementText) {
             if (wrap) {
                 switchStatementText.append('{');
             }
@@ -466,18 +446,21 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         return new IfCanBeSwitchVisitor();
     }
 
-    private static class IfCanBeSwitchVisitor extends BaseInspectionVisitor {
+    private class IfCanBeSwitchVisitor extends BaseInspectionVisitor {
 
         @Override
         public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
+            final PsiElement parent = statement.getParent();
+            if (parent instanceof PsiIfStatement) {
+                return;
+            }
             final PsiExpression switchExpression =
-                    SwitchUtils.getSwitchExpression(statement);
+                    SwitchUtils.getSwitchExpression(statement, minimumBranches);
             if (switchExpression == null) {
                 return;
             }
             registerStatementError(statement, switchExpression);
         }
     }
-
 }
