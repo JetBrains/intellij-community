@@ -19,9 +19,7 @@ import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -38,10 +36,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class TipPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.TipPanel");
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
   private final JCheckBox myCheckBox;
@@ -92,10 +88,10 @@ public class TipPanel extends JPanel {
     });
     add(myCheckBox, BorderLayout.SOUTH);
     try {
-      readTips();
+      readTips("/tips/tips.xml");
+      readTips("/tips/IdeSpecificTips.xml");
     }
-    catch (Exception exception) {
-
+    catch (Exception exception) {//
     }
   }
 
@@ -108,10 +104,10 @@ public class TipPanel extends JPanel {
       browser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
-    GeneralSettings settings = GeneralSettings.getInstance();
+    final GeneralSettings settings = GeneralSettings.getInstance();
     int lastTip = settings.getLastTip();
 
-    String path;
+    final String path;
     lastTip--;
     if (lastTip <= 0) {
       path = myTipPaths.get(myTipPaths.size() - 1);
@@ -126,7 +122,6 @@ public class TipPanel extends JPanel {
 
   private void setTip (String path, int lastTip, JEditorPane browser, GeneralSettings settings) {
     TipUIUtil.openTipInBrowser(path, browser, myPathsToProviderMap.get(path));
-
     settings.setLastTip(lastTip);
   }
 
@@ -148,46 +143,21 @@ public class TipPanel extends JPanel {
     }
 
     setTip(path, lastTip, browser, settings);
-    /*
-    try {
-      String appName = ApplicationUtil.getApplicationName();
-      String tipsPath = ResourceUtil.getHomePath() + File.separator + "help" + File.separator + appName + File.separator + "tips" + File.separator;
-      File file = new File(tipsPath + "tip" + lastTip + ".html");
-      if (!file.exists()) {
-        if (lastTip == 1) {
-          browser.setText("Tips not found.  Make sure you installed IntelliJ IDEA correctly.");
-          return;
-        }
-        lastTip = 1;
-        file = new File(tipsPath + "tip" + lastTip + ".html");
-        if (!file.exists()) {
-          browser.setText("Tips not found.  Make sure you installed IntelliJ IDEA correctly.");
-          return;
-        }
-      }
-      browser.setPage(file.toURL());
-      settings.setLastTip(lastTip);
-    }
-    catch (IOException ex) {
-      ex.printStackTrace();
-    }
-    */
   }
 
-  private void readTips() throws Exception {
-    @NonNls String tipsURL = "/tips/" + "tips.xml";
-    Document document = JDOMUtil.loadDocument(getClass().getResource(tipsURL).openStream());
-    if (document == null) return;
-    for (Iterator iterator = document.getRootElement().getChildren(ELEMENT_TIP).iterator(); iterator.hasNext();) {
-      Element element = (Element)iterator.next();
-      myTipPaths.add(element.getAttributeValue(ATTRIBUTE_FILE));
+  private void readTips(String tipsURL) throws Exception {
+    final Document document = JDOMUtil.loadDocument(getClass().getResource(tipsURL).openStream());
+
+    for (Object o : document.getRootElement().getChildren(ELEMENT_TIP)) {
+      Element tip = (Element)o;
+      myTipPaths.add(tip.getAttributeValue(ATTRIBUTE_FILE));
     }
-    final ProductivityFeaturesProvider[] providers = ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class);
-    for (ProductivityFeaturesProvider provider : providers) {
-      final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
-      for (int j = 0; featureDescriptors != null && j < featureDescriptors.length; j++) {
-        FeatureDescriptor featureDescriptor = featureDescriptors[j];
-        myPathsToProviderMap.put(featureDescriptor.getTipFileName(), featureDescriptor.getProvider());
+
+    for (ProductivityFeaturesProvider provider : ProductivityFeaturesProvider.EP_NAME.getExtensions()) {
+      final FeatureDescriptor[] descriptors = provider.getFeatureDescriptors();
+      for (int j = 0; descriptors != null && j < descriptors.length; j++) {
+        FeatureDescriptor descriptor = descriptors[j];
+        myPathsToProviderMap.put(descriptor.getTipFileName(), descriptor.getProvider());
       }
     }
   }
