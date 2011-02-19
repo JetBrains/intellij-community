@@ -1,7 +1,5 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.CompileDriver;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -65,9 +63,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    System.out.println("================BEGIN "+getName()+"====================");
-    CompileDriver.ourDebugMode = true;
-    TranslatingCompilerFilesMonitor.ourDebugMode = true;
+    //System.out.println("================BEGIN "+getName()+"====================");
+    //CompileDriver.ourDebugMode = true;
+    //TranslatingCompilerFilesMonitor.ourDebugMode = true;
     
     mySemaphore = new Semaphore();
     final Exception[] ex = {null};
@@ -513,9 +511,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       }, ModalityState.NON_MODAL);
     }
     finally {
-      System.out.println("================END "+getName()+"====================");
-      CompileDriver.ourDebugMode = false;
-      TranslatingCompilerFilesMonitor.ourDebugMode = false;
+      //System.out.println("================END "+getName()+"====================");
+      //CompileDriver.ourDebugMode = false;
+      //TranslatingCompilerFilesMonitor.ourDebugMode = false;
     }
     if (exceptions[0] != null) {
       throw exceptions[0];
