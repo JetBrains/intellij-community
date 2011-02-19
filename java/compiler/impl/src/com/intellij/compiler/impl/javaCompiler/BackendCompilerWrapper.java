@@ -377,10 +377,6 @@ public class BackendCompilerWrapper {
         exitValue = process.waitFor();
       }
       catch (InterruptedException e) {
-        if (CompileDriver.ourDebugMode) {
-          System.out.println("Compiler interrupted; ");
-          e.printStackTrace();
-        }
         process.destroy();
         exitValue = process.exitValue();
       }

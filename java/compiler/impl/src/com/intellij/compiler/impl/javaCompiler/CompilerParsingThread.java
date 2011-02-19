@@ -48,8 +48,6 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private volatile boolean myProcessExited = false;
   private final CompileContext myContext;
   
-  //private final BlockingQueue<String> myLines = new LinkedBlockingQueue<String>();
-
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines, CompileContext context) {
     myProcess = process;
     myOutputParser = outputParser;
@@ -62,24 +60,6 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
 
   volatile boolean processing;
   public void run() {
-    //if (CompileDriver.ourDebugMode) {
-    //  ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-    //    @Override
-    //    public void run() {
-    //      while (true) {
-    //        final String line = readLine(myCompilerOutStreamReader);
-    //        if (CompileDriver.ourDebugMode) {
-    //          System.out.println("RAW_LIne read: #" + line + "#");
-    //        }
-    //        if (line == null) {
-    //          myLines.offer(TERMINATION_STRING);
-    //          break;
-    //        }
-    //        myLines.offer(line);
-    //      }
-    //    }
-    //  });
-    //}
     processing = true;
     try {
       while (true) {
@@ -131,7 +111,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myLastReadLine = pushBack;
       return pushBack;
     }
-    final String line = getNextUnprocessedLine();
+    final String line = readLine(myCompilerOutStreamReader);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LIne read: #" + line + "#");
     }
@@ -145,28 +125,6 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
     }
     return myLastReadLine;
-  }
-
-  private String getNextUnprocessedLine() {
-    //if (CompileDriver.ourDebugMode) {
-    //  try {
-    //    if (TERMINATION_STRING.equals(myLines.peek())) {
-    //      return TERMINATION_STRING;
-    //    }
-    //    final String line = myLines.take();
-    //    if (TERMINATION_STRING.equals(line)) {
-    //      myLines.offer(TERMINATION_STRING); // pushback
-    //    }
-    //    return line;
-    //  }
-    //  catch (InterruptedException e) {
-    //    e.printStackTrace();
-    //    return TERMINATION_STRING;
-    //  }
-    //}
-    //else {
-      return readLine(myCompilerOutStreamReader);
-    //}
   }
 
   @Override
