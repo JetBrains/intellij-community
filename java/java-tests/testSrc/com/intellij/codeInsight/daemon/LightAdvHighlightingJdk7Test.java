@@ -154,6 +154,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testMultiCatchWarn() throws Exception {
+    doTest(true, false);
+  }
+
   public void testTryWithResources() throws Exception {
     doTest(false, false);
   }
