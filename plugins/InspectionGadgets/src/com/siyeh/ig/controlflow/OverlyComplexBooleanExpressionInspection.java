@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,18 +61,21 @@ public class OverlyComplexBooleanExpressionInspection
     /** @noinspection PublicField*/
     public boolean m_ignorePureConjunctionsDisjunctions = true;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.boolean.expression.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "overly.complex.boolean.expression.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final ButtonModel pureModel =
                 m_ignoreConjunctionsDisjunctionsCheckBox.getModel();
@@ -85,7 +88,7 @@ public class OverlyComplexBooleanExpressionInspection
         });
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
-        m_termLimitTextField.setValue(m_limit);
+        m_termLimitTextField.setValue(Integer.valueOf(m_limit));
         m_termLimitTextField.setColumns(4);
         FormattedTextFieldMacFix.apply(m_termLimitTextField);
         final Document document = m_termLimitTextField.getDocument();
@@ -115,19 +118,22 @@ public class OverlyComplexBooleanExpressionInspection
         return m_contentPanel;
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new ExtractMethodFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementWithTooManyBranchesVisitor();
+        return new OverlyComplexBooleanExpressionVisitor();
     }
 
-    private class SwitchStatementWithTooManyBranchesVisitor
+    private class OverlyComplexBooleanExpressionVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitBinaryExpression(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,18 +48,21 @@ public class OverlyComplexArithmeticExpressionInspection
         arithmeticTokens.add("%");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.arithmetic.expression.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "overly.complex.arithmetic.expression.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -67,19 +70,22 @@ public class OverlyComplexArithmeticExpressionInspection
                 this, "m_limit");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ExtractMethodFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementWithTooManyBranchesVisitor();
+        return new OverlyComplexArithmeticExpressionVisitor();
     }
 
-    private class SwitchStatementWithTooManyBranchesVisitor
+    private class OverlyComplexArithmeticExpressionVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitBinaryExpression(
