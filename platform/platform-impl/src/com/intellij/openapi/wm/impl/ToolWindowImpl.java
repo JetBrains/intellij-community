@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
@@ -115,6 +112,20 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.isToolWindowActive(myId) || (myDecorator != null && myDecorator.isFocused());
+  }
+
+  @Override
+  public ActionCallback getReady(Object requestor) {
+    final ActionCallback result = new ActionCallback(3);
+    myContentManager.getReady(requestor).notify(result);
+    getActivation().notify(result);
+    IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        result.setDone();
+      }
+    });
+    return result;
   }
 
   public final void show(final Runnable runnable) {

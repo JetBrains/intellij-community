@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-public interface ToolWindow {
+public interface ToolWindow extends BusyObject {
 
   Key<Boolean> SHOW_CONTENT_ICON = new Key<Boolean>("ContentIcon");
 
