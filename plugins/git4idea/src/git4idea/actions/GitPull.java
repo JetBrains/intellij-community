@@ -70,7 +70,7 @@ public class GitPull extends GitRepositoryAction {
 
     GitTask pullTask = new GitTask(project, h, GitBundle.message("pulling.title", dialog.getRemote()));
     pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    pullTask.execute(new GitTaskResultHandlerAdapter() {
+    pullTask.executeModal(new GitTaskResultHandlerAdapter() {
       @Override
       protected void onSuccess() {
         GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);

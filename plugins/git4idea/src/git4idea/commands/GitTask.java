@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Cancellation is implemented with a {@link java.util.Timer} which checks whether the ProgressIndicator was cancelled and kills
  * the GitHandler in that case.
  *
- * A GitTask may be executed synchronously ({@link #execute()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
+ * A GitTask may be executed synchronously ({@link #executeModal()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
  * Result of the execution is encapsulated in {@link GitTaskResult}.
  *
  * @see {@link git4idea.commands.GitHandler#kill()}
@@ -50,6 +51,7 @@ public class GitTask {
   private final String myTitle;
   private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
   private GitProgressAnalyzer myProgressAnalyzer;
+  private static final Logger LOG = Logger.getInstance(GitTask.class);
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -61,7 +63,7 @@ public class GitTask {
    * Executes this task synchronously, with a modal progress dialog.
    * @return Result of the task execution.
    */
-  public GitTaskResult execute() {
+  public GitTaskResult executeModal() {
     ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
         addListeners(this, indicator);
@@ -91,8 +93,8 @@ public class GitTask {
    * Executes the task synchronously, with a modal progress dialog.
    * @param resultHandler callback which will be called after task execution.
    */
-  public void execute(GitTaskResultHandler resultHandler) {
-    resultHandler.run(execute());
+  public void executeModal(GitTaskResultHandler resultHandler) {
+    resultHandler.run(executeModal());
   }
 
   /**
@@ -100,6 +102,11 @@ public class GitTask {
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
   public void executeAsync(final GitTaskResultHandler resultHandler) {
+    executeInBackground(false, resultHandler);
+  }
+
+  public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
+    final Object LOCK = new Object();
     BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
         addListeners(this, indicator);
@@ -114,16 +121,31 @@ public class GitTask {
           myResult.set(GitTaskResult.OK);
         }
         resultHandler.run(myResult.get());
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
       }
 
       @Override
       public void onCancel() {
         myResult.set(GitTaskResult.CANCELLED);
         resultHandler.run(GitTaskResult.CANCELLED);
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
       }
     };
 
     GitVcs.runInBackground(task);
+    if (sync) {
+      try {
+        synchronized (LOCK) {
+          LOCK.wait();
+        }
+      } catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   private void addListeners(final TaskExecution task, final ProgressIndicator indicator) {
