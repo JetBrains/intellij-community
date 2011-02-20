@@ -128,8 +128,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 new StringBuilder();
         switchStatementText.append("switch(");
         switchStatementText.append(switchExpression.getText());
-        switchStatementText.append(')');
-        switchStatementText.append('{');
+        switchStatementText.append("){");
         for (IfStatementBranch branch : branches) {
             boolean hasConflicts = false;
             for (IfStatementBranch testBranch : branches) {
@@ -140,25 +139,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                     hasConflicts = true;
                 }
             }
-
-            final PsiStatement branchStatement = branch.getStatement();
-            if (branch.isElse()) {
-                final List<String> comments = branch.getComments();
-                final List<String> statementComments =
-                        branch.getStatementComments();
-                dumpDefaultBranch(switchStatementText, comments,
-                        branchStatement, statementComments,
-                        hasConflicts, breaksNeedRelabeled, labelString);
-            } else {
-                final List<String> conditions = branch.getConditions();
-                final List<String> comments = branch.getComments();
-                final List<String> statementComments =
-                        branch.getStatementComments();
-                dumpBranch(switchStatementText,
-                        comments, conditions, statementComments,
-                        branchStatement, hasConflicts, breaksNeedRelabeled,
-                        labelString);
-            }
+            dumpBranch(branch, hasConflicts, breaksNeedRelabeled, labelString,
+                    switchStatementText);
         }
         switchStatementText.append('}');
         final JavaPsiFacade psiFacade =
@@ -170,8 +152,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 out.append(labelString);
                 out.append(':');
             }
-            termReplace(out, breakTarget, statementToReplace,
-                    switchStatementText);
+            termReplace(breakTarget, statementToReplace, switchStatementText,
+                    out);
             final String newStatementText = out.toString();
             final PsiStatement newStatement =
                     factory.createStatementFromText(newStatementText, element);
@@ -253,8 +235,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
     }
 
     private static void termReplace(
-            StringBuilder out, PsiElement target,
-            PsiElement replace, StringBuilder stringToReplaceWith) {
+            PsiElement target, PsiElement replace,
+            StringBuilder stringToReplaceWith, StringBuilder out) {
         if (target.equals(replace)) {
             out.append(stringToReplaceWith);
         } else if (target.getChildren().length == 0) {
@@ -262,7 +244,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         } else {
             final PsiElement[] children = target.getChildren();
             for (final PsiElement child : children) {
-                termReplace(out, child, replace, stringToReplaceWith);
+                termReplace(child, replace, stringToReplaceWith, out);
             }
         }
     }
@@ -317,22 +299,29 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         return values;
     }
 
-    private static void dumpBranch(StringBuilder switchStatementText,
-                                   List<String> comments,
-                                   List<String> labels,
-                                   List<String> statementComments,
-                                   PsiStatement body,
-                                   boolean wrap, boolean renameBreaks,
-                                   String breakLabelName) {
-        dumpComments(switchStatementText, comments);
-        dumpLabels(switchStatementText, labels);
-        dumpComments(switchStatementText, statementComments);
-        dumpBody(switchStatementText, body, wrap, renameBreaks,
-                breakLabelName);
+    private static void dumpBranch(IfStatementBranch branch,
+                                   boolean wrap,
+                                   boolean renameBreaks,
+                                   String breakLabelName,
+                                   StringBuilder switchStatementText) {
+        dumpComments(branch.getComments(), switchStatementText);
+        if (branch.isElse()) {
+            switchStatementText.append("default: ");
+        } else {
+            for (String label : branch.getConditions()) {
+                switchStatementText.append("case ");
+                switchStatementText.append(label);
+                switchStatementText.append(": ");
+            }
+        }
+        dumpComments(branch.getStatementComments(), switchStatementText);
+        dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName,
+                switchStatementText
+        );
     }
 
-    private static void dumpComments(StringBuilder switchStatementText,
-                                     List<String> comments) {
+    private static void dumpComments(List<String> comments,
+                                     StringBuilder switchStatementText) {
         if (!comments.isEmpty()) {
             switchStatementText.append('\n');
             for (String comment : comments) {
@@ -342,30 +331,11 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         }
     }
 
-    private static void dumpDefaultBranch(
-            @NonNls StringBuilder switchStatementString,
-            List<String> comments, PsiStatement body,
-            List<String> statementComments, boolean wrap,
-            boolean renameBreaks, String breakLabelName) {
-        dumpComments(switchStatementString, comments);
-        switchStatementString.append("default: ");
-        dumpComments(switchStatementString, statementComments);
-        dumpBody(switchStatementString, body, wrap, renameBreaks,
-                breakLabelName);
-    }
-
-    private static void dumpLabels(@NonNls StringBuilder switchStatementText,
-                                   List<String> labels) {
-        for (String label : labels) {
-            switchStatementText.append("case ");
-            switchStatementText.append(label);
-            switchStatementText.append(": ");
-        }
-    }
-
-    private static void dumpBody(@NonNls StringBuilder switchStatementText,
-                                 PsiStatement bodyStatement, boolean wrap,
-                                 boolean renameBreaks, String breakLabelName) {
+    private static void dumpBody(PsiStatement bodyStatement,
+                                 boolean wrap,
+                                 boolean renameBreaks,
+                                 String breakLabelName,
+                                 @NonNls StringBuilder switchStatementText) {
         if (wrap) {
             switchStatementText.append('{');
         }
@@ -376,12 +346,14 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             //skip the first and last members, to unwrap the block
             for (int i = 1; i < children.length - 1; i++) {
                 final PsiElement child = children[i];
-                appendElement(switchStatementText, child, renameBreaks,
-                        breakLabelName);
+                appendElement(child, renameBreaks, breakLabelName,
+                        switchStatementText
+                );
             }
         } else {
-            appendElement(switchStatementText, bodyStatement,
-                    renameBreaks, breakLabelName);
+            appendElement(bodyStatement, renameBreaks, breakLabelName,
+                    switchStatementText
+            );
         }
         if (ControlFlowUtils.statementMayCompleteNormally(
                 bodyStatement)) {
@@ -392,10 +364,10 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         }
     }
 
-    private static void appendElement(
-            @NonNls StringBuilder switchStatementText,
-            PsiElement element, boolean renameBreakElements,
-            String breakLabelString) {
+    private static void appendElement(PsiElement element,
+                                      boolean renameBreakElements,
+                                      String breakLabelString,
+                                      @NonNls StringBuilder switchStatementText) {
         final String text = element.getText();
         if (!renameBreakElements) {
             switchStatementText.append(text);
@@ -416,8 +388,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 element instanceof PsiIfStatement) {
             final PsiElement[] children = element.getChildren();
             for (final PsiElement child : children) {
-                appendElement(switchStatementText, child, renameBreakElements,
-                        breakLabelString);
+                appendElement(child, renameBreakElements, breakLabelString,
+                        switchStatementText);
             }
         } else {
             switchStatementText.append(text);
