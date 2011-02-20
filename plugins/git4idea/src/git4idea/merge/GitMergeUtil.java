@@ -36,6 +36,7 @@ import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -196,7 +197,7 @@ public class GitMergeUtil {
    * @return the path to merge head file
    */
   @Nullable
-  private static File getMergeHead(VirtualFile root) {
+  private static File getMergeHead(@NotNull VirtualFile root) {
     File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
     File f = new File(gitDir, "MERGE_HEAD");
     if (f.exists()) {
@@ -206,12 +207,9 @@ public class GitMergeUtil {
   }
 
   /**
-   * Checks if the merge is in the progress for the specified git root
-   *
-   * @param root the git root
-   * @return true if the merge_head file presents in the root
+   * @return true if merge is going on for the given git root, false if there is no merge operation in progress.
    */
-  public static boolean isMergeInTheProgress(VirtualFile root) {
+  public static boolean isMergeInProgress(@NotNull VirtualFile root) {
     return getMergeHead(root) != null;
   }
 }
