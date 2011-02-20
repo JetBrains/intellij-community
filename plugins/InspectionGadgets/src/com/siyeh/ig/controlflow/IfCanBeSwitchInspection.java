@@ -418,14 +418,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                     switchStatementText.append(breakLabelString);
                     switchStatementText.append(';');
                 } else {
-                    final String identifierText = identifier.getText();
-                    if ("".equals(identifierText)) {
-                        switchStatementText.append("break ");
-                        switchStatementText.append(breakLabelString);
-                        switchStatementText.append(';');
-                    } else {
-                        switchStatementText.append(text);
-                    }
+                    switchStatementText.append(text);
                 }
             } else if (element instanceof PsiBlockStatement ||
                     element instanceof PsiCodeBlock ||
