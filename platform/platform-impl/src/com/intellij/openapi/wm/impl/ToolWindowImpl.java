@@ -20,13 +20,18 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +40,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -59,6 +65,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private ToolWindowFactory myContentFactory;
 
   private ActionCallback myActivation = new ActionCallback.Done();
+  private BusyObject.Impl myShowing = new BusyObject.Impl() {
+    @Override
+    protected boolean isReady() {
+      return myComponent != null && myComponent.isShowing();
+    }
+  };
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -78,6 +90,14 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
 
     myComponent = myContentManager.getComponent();
+
+    UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        myShowing.onReady();
+      }
+    });
+    Disposer.register(myContentManager, notifyConnector);
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
@@ -115,14 +135,24 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public ActionCallback getReady(Object requestor) {
-    final ActionCallback result = new ActionCallback(3);
-    myContentManager.getReady(requestor).notify(result);
-    getActivation().notify(result);
-    IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+  public ActionCallback getReady(final Object requestor) {
+    final ActionCallback result = new ActionCallback();
+    myShowing.getReady(this).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        result.setDone();
+        ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
+        cmd.add(new FinalizableCommand(null) {
+          @Override
+          public void run() {
+            IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+              @Override
+              public void run() {
+                myContentManager.getReady(requestor).notify(result);
+              }
+            });
+          }
+        });
+        myToolWindowManager.execute(cmd);
       }
     });
     return result;
