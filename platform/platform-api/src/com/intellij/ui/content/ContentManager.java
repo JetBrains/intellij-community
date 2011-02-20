@@ -19,13 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-public interface ContentManager extends Disposable {
+public interface ContentManager extends Disposable, BusyObject {
 
 
   boolean canCloseContents();
