@@ -116,7 +116,7 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider {
+public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
@@ -577,6 +577,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     if (toolWindow != null) {
       final ContentManager contentManager = toolWindow.getContentManager();
       final Content content = contentManager.getFactory().createContent(getComponent(), ToolWindowId.PROJECT_VIEW, false);
+      content.setBusyObject(this);
       contentManager.addContent(content);
 
       content.setPreferredFocusedComponent(new Computable<JComponent>() {
@@ -1835,5 +1836,11 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   public Collection<SelectInTarget> getSelectInTargets() {
     ensurePanesLoaded();
     return mySelectInTargets.values();
+  }
+
+  @Override
+  public ActionCallback getReady(Object requestor) {
+    AbstractProjectViewPane pane = myId2Pane.get(myCurrentViewSubId);
+    return pane != null ? pane.getReady(requestor) : new ActionCallback.Done();
   }
 }

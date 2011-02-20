@@ -18,6 +18,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
@@ -102,5 +103,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @Nullable AlertIcon getAlertIcon();
 
   void fireAlert();
-  
+
+  @Nullable
+  BusyObject getBusyObject();
+  void setBusyObject(BusyObject object);
+
 }

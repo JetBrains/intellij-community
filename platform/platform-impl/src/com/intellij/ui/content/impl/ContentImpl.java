@@ -18,10 +18,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
@@ -57,6 +54,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private JComponent mySearchComponent;
 
   private Computable<JComponent> myFocusRequest;
+  private BusyObject myBusyObject;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -262,6 +260,16 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   public void fireAlert() {
     myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
+  }
+
+  @Override
+  public void setBusyObject(BusyObject object) {
+    myBusyObject = object;
+  }
+
+  @Override
+  public BusyObject getBusyObject() {
+    return myBusyObject;
   }
 
   public void setSearchComponent(@Nullable final JComponent comp) {

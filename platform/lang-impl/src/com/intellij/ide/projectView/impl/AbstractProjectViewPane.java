@@ -74,7 +74,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public abstract class AbstractProjectViewPane implements DataProvider, Disposable  {
+public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject  {
   public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
   protected final Project myProject;
@@ -634,5 +634,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       return MoveHandler.canMove(dataContext);
     }
     return false;
+  }
+
+  @Override
+  public ActionCallback getReady(Object requestor) {
+    return myTreeBuilder.getUi().getReady(requestor);
   }
 }
