@@ -558,7 +558,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * This is helper method. It delegated its fuctionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  private void execute(final ArrayList<FinalizableCommand> commandList) {
+  public void execute(final ArrayList<FinalizableCommand> commandList) {
     for (FinalizableCommand each : commandList) {
       if (each.willChangeState()) {
         fireStateChanged();
