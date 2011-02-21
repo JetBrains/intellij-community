@@ -26,6 +26,21 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   private SearchResults mySearchResults;
   private LivePreview myLivePreview;
 
+  public interface ReplaceListener {
+    void replacePerformed(LiveOccurrence occurrence, final String replacement, final Editor editor);
+    void replaceAllPerformed(Editor e);
+  }
+
+  private ReplaceListener myReplaceListener;
+
+  public ReplaceListener getReplaceListener() {
+    return myReplaceListener;
+  }
+
+  public void setReplaceListener(ReplaceListener replaceListener) {
+    myReplaceListener = replaceListener;
+  }
+
   public LivePreviewControllerBase(SearchResults searchResults, LivePreview livePreview) {
     mySearchResults = searchResults;
     myLivePreview = livePreview;
@@ -86,21 +101,27 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
+    TextRange result = null;
     try {
-      return FindUtil.doReplace(editor.getProject(), editor.getDocument(), findModel, new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
+      result = FindUtil.doReplace(editor.getProject(), editor.getDocument(), findModel, new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
                          FindManager.getInstance(editor.getProject()).getStringToReplace(editor.getDocument().getText(range), findModel),
                          true, new ArrayList<Pair<TextRange, String>>());
     }
     catch (FindManager.MalformedReplacementStringException e) {
       /**/
     }
+    if (myReplaceListener != null) {
+      myReplaceListener.replacePerformed(occurrence, replacement, editor);
+    }
     mySearchResults.updateThreadSafe(findModel);
-    return null;
+    return result;
   }
 
   @Override
   public void performReplaceAll(Editor e) {
-    FindUtil.replace(e.getProject(), e, 0, mySearchResults.getFindModel(), this);
+    FindUtil.replace(e.getProject(), e,
+                     mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),
+                     mySearchResults.getFindModel(), this);
   }
 
   @Override
