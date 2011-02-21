@@ -18,7 +18,7 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
 
   @NotNull
   public Lexer createLexer(Project project) {
-    return new RegExpLexer(false, true, false);
+    return new RegExpLexer(false, true, false, true);
   }
 
   @Override

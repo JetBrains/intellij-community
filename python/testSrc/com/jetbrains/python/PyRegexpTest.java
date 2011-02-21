@@ -14,6 +14,10 @@ public class PyRegexpTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testOctal() {  // PY-2906
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(true, false, false, "regexp/" + getTestName(true) + ".py");
   }
