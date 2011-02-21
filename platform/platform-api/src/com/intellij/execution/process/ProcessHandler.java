@@ -15,10 +15,8 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
@@ -26,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -36,6 +33,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
+  /**
+   * todo: replace with an overridable method [nik]
+   * @deprecated
+   */
   public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
 
   private final List<ProcessListener> myListeners = ContainerUtil.createEmptyCOWList();
