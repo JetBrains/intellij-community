@@ -1,4 +1,4 @@
-// "Replace with <>" "true"
+// "Replace with <>" "false"
 public class Test {
   F<F<String>> f = new FF<Str<caret>ing>();
 }

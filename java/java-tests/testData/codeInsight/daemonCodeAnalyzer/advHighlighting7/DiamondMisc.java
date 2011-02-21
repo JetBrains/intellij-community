@@ -35,7 +35,7 @@ class P<PT> {
 
 class Test1 {
   void bar() {
-    foo(new FF<>());
+    foo<error descr="'foo(F<F<java.lang.String>>)' in 'Test1' cannot be applied to '(FF<java.lang.Object>)'">(new FF<>())</error>;
   }
 
   void foo(F<F<String>> p) {}
