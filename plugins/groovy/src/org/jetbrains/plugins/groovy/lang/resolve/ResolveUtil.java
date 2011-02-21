@@ -520,9 +520,8 @@ public class ResolveUtil {
     return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext());
   }
 
-  public static boolean isInUseScope(PsiElement context) {
-    if (!context.isValid()) return false;
-    if (context instanceof GrMethodCall) {
+  public static boolean isInUseScope(@Nullable PsiElement context) {
+    if (context instanceof GrMethodCall && context.isValid()) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
