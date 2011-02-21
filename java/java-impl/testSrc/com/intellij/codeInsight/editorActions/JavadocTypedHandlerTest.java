@@ -37,6 +37,12 @@ public class JavadocTypedHandlerTest {
     doTest("<t\nag><caret>", null);
   }
   
+  @Test
+  public void tagWithAttribute() {
+    doTest("<a href='www'><caret>", "a");
+    //TODO den implement
+  }
+  
   private static void doTest(String text, String expected) {
     StringBuilder normalized = new StringBuilder();
     int offset = text.indexOf(CARET_MARKER);
