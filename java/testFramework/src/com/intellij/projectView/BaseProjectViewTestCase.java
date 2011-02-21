@@ -25,8 +25,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
@@ -299,5 +297,10 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath(getClass());
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

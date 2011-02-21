@@ -86,7 +86,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public boolean hasNodesToUpdate() {
-    return myNodeQueue.size() > 0 || !myUpdateQueue.isEmpty();
+    return !myNodeQueue.isEmpty() || !myUpdateQueue.isEmpty();
   }
 
   public void dispose() {
@@ -114,15 +114,15 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           toAdd.expire();
           break;
         }
-        else if (passInQueue.getNode() == toAdd.getNode()) {
+        if (passInQueue.getNode() == toAdd.getNode()) {
           toAdd.expire();
           break;
         }
-        else if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
+        if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
           toAdd.expire();
           break;
         }
-        else if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
+        if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
           iterator.remove();
           passInQueue.expire();
         }
@@ -133,9 +133,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
     if (!toAdd.isExpired()) {
       final Collection<TreeUpdatePass> yielding = ui.getYeildingPasses();
-      for (Iterator<TreeUpdatePass> iterator = yielding.iterator(); iterator.hasNext();) {
-        TreeUpdatePass eachYielding = iterator.next();
-
+      for (TreeUpdatePass eachYielding : yielding) {
         final DefaultMutableTreeNode eachNode = eachYielding.getCurrentNode();
         if (eachNode != null) {
           if (eachNode.isNodeAncestor(toAdd.getNode())) {
@@ -228,8 +226,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           try {
             myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
           }
-          catch (ProcessCanceledException e) {
-            return;
+          catch (ProcessCanceledException ignored) {
           }
         }
       });
@@ -348,10 +345,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public boolean isEnqueuedToUpdate(DefaultMutableTreeNode node) {
-    Iterator<TreeUpdatePass> nodes = myNodeQueue.iterator();
-    while (nodes.hasNext()) {
-      TreeUpdatePass each = nodes.next();
-      if (each.willUpdate(node)) return true;
+    for (TreeUpdatePass pass : myNodeQueue) {
+      if (pass.willUpdate(node)) return true;
     }
     return false;
   }

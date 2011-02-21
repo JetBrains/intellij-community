@@ -52,7 +52,7 @@ public class TransferToEDTQueue<T> {
         T thing = myQueue.poll();
         if (thing == null) break;
         if (!myProcessor.process(thing)) {
-          myQueue.clear();
+          stop();
           return;
         }
         processed++;

@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -54,11 +55,13 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final RangeHighlighterTree myHighlighterTree;
 
   MarkupModelImpl(DocumentImpl document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(myDocument);
   }
 
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myHighlighterTree.dispose();
   }
 
@@ -98,9 +101,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCachedHighlighters == null) {
-      if (myHighlighterTree.size() == 0) return RangeHighlighter.EMPTY_ARRAY;
-      List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      int size = myHighlighterTree.size();
+      if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
+      List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>(size);
       myHighlighterTree.process(new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
@@ -115,6 +120,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = isPersistent
                                      ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
                                      : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
@@ -134,6 +140,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean changed = highlighter instanceof PersistentRangeHighlighterImpl
                       ? ((PersistentRangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction)
                       : ((RangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
@@ -143,6 +150,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   void addRangeHighlighter(RangeHighlighterEx marker, int start, int end, RangeHighlighterData data) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myHighlighterTree.addInterval(marker, start, end, data);
   }
 
@@ -156,6 +164,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void removeHighlighter(@NotNull RangeHighlighter segmentHighlighter) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myCachedHighlighters = null;
     if (!segmentHighlighter.isValid()) return;
 
@@ -166,6 +175,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void removeAllHighlighters() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myHighlighterTree.process(new Processor<RangeMarkerEx>() {
       public boolean process(RangeMarkerEx rangeMarkerEx) {
         fireBeforeRemoved((RangeHighlighterEx)rangeMarkerEx);
@@ -191,6 +201,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ((RangeHighlighterImpl)highlighter).setTextAttributes(textAttributes);
   }
 
@@ -211,6 +222,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return !myHighlighterTree.processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx h) {
         return h.getId() != ((RangeHighlighterEx)highlighter).getId();
@@ -236,6 +248,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void normalize() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myHighlighterTree.normalize();
   }
 }

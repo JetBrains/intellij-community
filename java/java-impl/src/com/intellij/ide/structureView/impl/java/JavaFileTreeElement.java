@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> implements ItemPresentation {
-
   public JavaFileTreeElement(PsiJavaFile file) {
     super(file);
   }

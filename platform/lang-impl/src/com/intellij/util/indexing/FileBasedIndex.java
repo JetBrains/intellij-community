@@ -102,8 +102,9 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
 
   private final PerIndexDocumentMap<Long> myLastIndexedDocStamps = new PerIndexDocumentMap<Long>() {
+    @NotNull
     @Override
-    protected Long createDefault(Document document) {
+    protected Long createDefault(@NotNull Document document) {
       return 0L;
     }
   };
@@ -1161,7 +1162,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
 // returns false if doc was not indexed because the file does not fit in scope
-  private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, final Project project, GlobalSearchScope filter) throws StorageException {
+  private boolean indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project, GlobalSearchScope filter) throws StorageException {
     final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return true;
@@ -1253,9 +1254,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void cleanupMemoryStorage() {
-    synchronized (myLastIndexedDocStamps) {
-      myLastIndexedDocStamps.clear();
-    }
+    myLastIndexedDocStamps.clear();
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final MapReduceIndex index = (MapReduceIndex)getIndex(indexId);
       assert index != null;

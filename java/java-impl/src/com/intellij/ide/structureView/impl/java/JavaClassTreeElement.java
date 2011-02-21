@@ -35,10 +35,8 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   }
 
   private Collection<StructureViewTreeElement> getClassChildren() {
-    ArrayList<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
-
     final PsiClass aClass = getElement();
-    if (aClass == null) return array;
+    if (aClass == null) return Collections.emptyList();
 
     List<PsiElement> children = Arrays.asList(aClass.getChildren());
     Collection<PsiElement> ownChildren = new THashSet<PsiElement>();
@@ -47,6 +45,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     ContainerUtil.addAll(ownChildren, aClass.getInnerClasses());
     ContainerUtil.addAll(ownChildren, aClass.getInitializers());
     Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
+    List<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>(inherited.size());
 
     aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
 

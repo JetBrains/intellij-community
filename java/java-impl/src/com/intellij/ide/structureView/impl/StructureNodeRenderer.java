@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -51,7 +52,8 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
     ModifiableCellAppearance result;
     if (psiElement instanceof PsiElement && !((PsiElement)psiElement).isValid()) {
       result = CompositeAppearance.single(name);
-    } else {
+    }
+    else {
       PsiClass psiClass = getContainingClass(psiElement);
       if (isInheritedMember(node, psiClass) && psiClass != null) {
         CompositeAppearance.DequeEnd ending = new CompositeAppearance().getEnding();
@@ -84,13 +86,13 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public static String getNameOf(PsiElement psiElement) {
+  private static String getNameOf(PsiElement psiElement) {
     if (psiElement instanceof PsiMethod)
       return PsiFormatUtil.formatMethod((PsiMethod)psiElement,
                                         PsiSubstitutor.EMPTY,
-                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER |
-                                        PsiFormatUtil.SHOW_PARAMETERS,
-                                        PsiFormatUtil.SHOW_TYPE
+                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER |
+                                        PsiFormatUtilBase.SHOW_PARAMETERS,
+                                        PsiFormatUtilBase.SHOW_TYPE
       );
     return psiElement.toString();
   }
@@ -109,23 +111,17 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
     return new SimpleTextAttributes(nameAttributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, nameAttributes.getFgColor());
   }
 
-  public static boolean isDeprecated(Object psiElement) {
-    if (psiElement instanceof PsiDocCommentOwner)
-      return ((PsiDocCommentOwner) psiElement).isDeprecated();
-    return false;
+  private static boolean isDeprecated(Object psiElement) {
+    return psiElement instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiElement).isDeprecated();
   }
 
-  public static PsiClass getContainingClass(Object element) {
+  private static PsiClass getContainingClass(Object element) {
     if (element instanceof PsiMember)
       return ((PsiMember) element).getContainingClass();
-    if (element instanceof PsiClass) {
-      PsiElement parent = ((PsiClass) element).getParent();
-      return (PsiClass) (parent instanceof PsiClass ? parent : null);
-    }
     return null;
   }
 
-  public static PsiClass getTreeParentClass(Object value) {
+  private static PsiClass getTreeParentClass(Object value) {
     if (!(value instanceof TreeNode))
       return null;
     for (TreeNode treeNode = ((TreeNode) value).getParent(); treeNode != null; treeNode = treeNode.getParent()) {
