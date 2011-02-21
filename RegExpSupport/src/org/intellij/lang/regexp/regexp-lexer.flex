@@ -38,6 +38,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowDanglingMetacharacters = capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS);
       this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
+      this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
     }
 
     private void yypushstate(int state) {
