@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -206,10 +207,10 @@ public class ExceptionUtil {
       PsiClassType exception = getUnhandledException(statement, topElement);
       unhandledExceptions = exception == null ? Collections.<PsiClassType>emptyList() : Collections.singletonList(exception);
     }
-    else if (element instanceof PsiCodeBlock
-             && element.getParent() instanceof PsiMethod
-             && ((PsiMethod)element.getParent()).isConstructor()
-             && !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
+    else if (element instanceof PsiCodeBlock &&
+             element.getParent() instanceof PsiMethod &&
+             ((PsiMethod)element.getParent()).isConstructor() &&
+             !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
       // there is implicit parent constructor call
       final PsiMethod constructor = (PsiMethod)element.getParent();
       final PsiClass aClass = constructor.getContainingClass();
@@ -244,6 +245,22 @@ public class ExceptionUtil {
         }
       }
       unhandledExceptions = unhandled;
+    }
+
+    if (PsiUtil.isResourceInTryStatement(element)) {
+      final PsiType resourceType = PsiUtil.getResourceType(element);
+      if (resourceType instanceof PsiClassType) {
+        final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+        if (resourceClass != null) {
+          final List<PsiClassType> unhandled = getUnhandledCloserExceptions(element, resourceClass, topElement);
+          if (unhandledExceptions == null) {
+            unhandledExceptions = unhandled;
+          }
+          else {
+            unhandledExceptions.addAll(unhandled);
+          }
+        }
+      }
     }
 
     if (unhandledExceptions != null) {
@@ -309,15 +326,28 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall, final PsiElement topElement) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
-    PsiMethod method = (PsiMethod)result.getElement();
-    return getUnhandledExceptions(method, methodCall, topElement,
-                                  ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
-                                    public PsiSubstitutor compute() {
-                                      return result.getSubstitutor();
-                                    }
-                                  }));
+    final PsiMethod method = (PsiMethod)result.getElement();
+    final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
+      public PsiSubstitutor compute() {
+        return result.getSubstitutor();
+      }
+    });
+    return getUnhandledExceptions(method, methodCall, topElement, substitutor);
+  }
+
+  @NotNull
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiElement resource,
+                                                                final PsiClass resourceClass,
+                                                                final PsiElement topElement) {
+    final PsiMethod[] closers = resourceClass.findMethodsByName("close", false);
+    for (final PsiMethod method : closers) {
+      if (method.getParameterList().getParametersCount() == 0) {
+        return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -334,7 +364,6 @@ public class ExceptionUtil {
     }
     return null;
   }
-
 
   @NotNull
   private static List<PsiClassType> getUnhandledExceptions(PsiMethod method,

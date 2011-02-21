@@ -94,7 +94,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   @NotNull
   public PsiTypeElement getTypeElement() {
     ASTNode first = getTreeParent().findChildByType(LOCAL_VARIABLE);
-    return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(first.findChildByType(TYPE));
+    return SourceTreeToPsiMap.treeToPsiNotNull(first.findChildByType(TYPE));
   }
 
   public PsiModifierList getModifierList() {
@@ -105,7 +105,8 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
-    return getModifierList().hasModifierProperty(name);
+    final PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   public PsiExpression getInitializer() {
@@ -304,9 +305,14 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       }
     }
 
-    PsiElement parentElement = getParent();
+    final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());
+    }
+    else if (parentElement instanceof PsiResourceList) {
+      final PsiElement tryStatement = parentElement.getParent();
+      final PsiCodeBlock tryBlock = ((PsiTryStatement)tryStatement).getTryBlock();
+      return new LocalSearchScope(tryBlock != null ? tryBlock : tryStatement);
     }
     else {
       return getManager().getFileManager().getUseScope(this);
@@ -317,6 +323,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
   public PsiType getTypeNoResolve() {
     return getType();
   }

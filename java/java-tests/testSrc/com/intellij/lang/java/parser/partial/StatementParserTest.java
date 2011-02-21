@@ -122,6 +122,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryNormal3() { doParserTestJDK7("try{}catch(A|B e){}"); }
   public void testTryNormal4() { doParserTestJDK7("try(R r = 0){}"); }
   public void testTryNormal5() { doParserTestJDK7("try(R1 r1 = 1; R2 r2 = 2){}"); }
+  public void testTryNormal6() { doParserTestJDK7("try(r){}"); }
+  public void testTryNormal7() { doParserTestJDK7("try(r; null){}"); }
   public void testTryIncomplete0() { doParserTest("try"); }
   public void testTryIncomplete1() { doParserTest("try{}"); }
   public void testTryIncomplete2() { doParserTest("try{}catch"); }
@@ -136,7 +138,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete11() { doParserTestJDK7("try(){}"); }
   public void testTryIncomplete12() { doParserTestJDK7("try(;){}"); }
   public void testTryIncomplete13() { doParserTestJDK7("try(final ){}"); }
-  public void testTryIncomplete14() { doParserTestJDK7("try(R){}"); }
+  public void testTryIncomplete14() { doParserTestJDK7("try(int){}"); }
   public void testTryIncomplete15() { doParserTestJDK7("try(R r){}"); }
   public void testTryIncomplete16() { doParserTestJDK7("try(R r =){}"); }
   public void testTryIncomplete17() { doParserTestJDK7("try(R r = 0;){}"); }

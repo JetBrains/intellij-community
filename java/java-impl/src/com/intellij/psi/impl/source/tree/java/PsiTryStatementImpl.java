@@ -93,8 +93,8 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   @Override
-  public PsiParameterList getResourceList() {
-    return PsiTreeUtil.findChildOfType(this, PsiParameterList.class);
+  public PsiResourceList getResourceList() {
+    return PsiTreeUtil.findChildOfType(this, PsiResourceList.class);
   }
 
   public ASTNode findChildByRole(int role) {

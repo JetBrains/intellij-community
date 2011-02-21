@@ -268,7 +268,6 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       }
     }
 
-
     // generate jump to the top finally block
     if (!myFinallyBlocks.isEmpty()) {
       final PsiElement finallyBlock = myFinallyBlocks.peek();
@@ -278,13 +277,10 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
         addElementOffsetLater(finallyBlock, true);
       }
     }
-
   }
 
   private void generateCheckedExceptionJumps(PsiElement element) {
     //generate jumps to all handled exception handlers
-    //if (myCatchBlocks.size() != 0) {
-    //}
     Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
@@ -1039,6 +1035,11 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       // javac works as if all checked exceptions can occur at the top of the block
       generateCheckedExceptionJumps(tryBlock);
       tryBlock.accept(this);
+    }
+    PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null) {
+      generateCheckedExceptionJumps(resourceList);
+      resourceList.accept(this);
     }
 
     //noinspection StatementWithEmptyBody

@@ -71,5 +71,5 @@ public interface PsiTryStatement extends PsiStatement {
    * @return resource list, or null if the statement doesn't have it.
    */
   @Nullable
-  PsiParameterList getResourceList();
+  PsiResourceList getResourceList();
 }

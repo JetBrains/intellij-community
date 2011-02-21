@@ -553,18 +553,19 @@ public class HighlightUtil {
     return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.size());
   }
 
-
   @Nullable
   static HighlightInfo checkVariableAlreadyDefined(PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
     boolean isIncorrect = false;
     PsiIdentifier identifier = variable.getNameIdentifier();
+    assert identifier != null : variable;
     String name = variable.getName();
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement ||
+        PsiUtil.isResourceInTryStatement(variable)) {
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
-      VariablesNotProcessor proc = new VariablesNotProcessor(variable, false){
+      VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         protected boolean check(final PsiVariable var, final ResolveState state) {
           return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, state);
         }
@@ -864,12 +865,10 @@ public class HighlightUtil {
     assert tryBlock != null : statement;
     thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
 
-    final PsiParameterList resources = statement.getResourceList();
+    final PsiResourceList resources = statement.getResourceList();
     if (resources != null) {
       thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(resources, resources));
     }
-
-    // todo: add exceptions from resource's close() method
 
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
@@ -1110,12 +1109,30 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkCatchParameterIsThrowable(PsiParameter parameter) {
+  public static HighlightInfo checkCatchParameterIsThrowable(final PsiParameter parameter) {
     if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
-      PsiType type = parameter.getType();
+      final PsiType type = parameter.getType();
       return checkMustBeThrowable(type, parameter, true);
     }
     return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiElement resource) {
+    final PsiType type = PsiUtil.getResourceType(resource);
+    if (type == null) return null;
+
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
+    final PsiClassType autoCloseable = factory.createTypeByFQClassName("java.lang.AutoCloseable", resource.getResolveScope());
+    if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
+
+    final HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(autoCloseable, type, resource.getTextRange());
+    //if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, autoCloseable)) {
+    //  if (parameter instanceof PsiExpression) {
+    //    QuickFixAction.registerQuickFixAction(highlightInfo, new AddTypeCastFix(autoCloseable, (PsiExpression)parameter));
+    //  }
+    //}
+    return highlightInfo;
   }
 
   public static void checkArrayInitalizer(final PsiExpression initializer, final HighlightInfoHolder holder) {

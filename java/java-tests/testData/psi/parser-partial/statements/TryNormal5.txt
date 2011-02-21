@@ -1,9 +1,9 @@
 PsiJavaFile:TryNormal5.java
   PsiTryStatement
     PsiKeyword:try('try')
-    PsiParameterList:(R1 r1 = 1; R2 r2 = 2)
+    PsiResourceList:(R1 r1 = 1; R2 r2 = 2)
       PsiJavaToken:LPARENTH('(')
-      PsiParameter:r1
+      PsiLocalVariable:r1
         PsiModifierList:
           <empty list>
         PsiTypeElement:R1
@@ -20,7 +20,7 @@ PsiJavaFile:TryNormal5.java
           PsiJavaToken:INTEGER_LITERAL('1')
       PsiJavaToken:SEMICOLON(';')
       PsiWhiteSpace(' ')
-      PsiParameter:r2
+      PsiLocalVariable:r2
         PsiModifierList:
           <empty list>
         PsiTypeElement:R2
