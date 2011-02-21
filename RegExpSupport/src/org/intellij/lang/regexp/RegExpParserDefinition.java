@@ -36,7 +36,7 @@ public class RegExpParserDefinition implements ParserDefinition {
 
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(false, false);
+        return new RegExpLexer(false, false, true);
     }
 
     public PsiParser createParser(Project project) {

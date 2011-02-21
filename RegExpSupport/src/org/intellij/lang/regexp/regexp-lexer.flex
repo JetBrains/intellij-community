@@ -27,11 +27,13 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean xmlSchemaMode;
 
     private boolean allowDanglingMetacharacters;
+    private boolean allowRBracketInCharacterClass;
 
-    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters) {
+    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = xmlSchemaMode;
       this.allowDanglingMetacharacters = allowDanglingMetacharacters;
+      this.allowRBracketInCharacterClass = allowRBracketInCharacterClass;
     }
 
     private void yypushstate(int state) {
@@ -59,6 +61,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate EMBRACED
 %xstate CLASS1
 %state CLASS2
+%state CLASS2PY
 %state PROP
 %xstate OPTIONS
 %xstate COMMENT
@@ -146,7 +149,14 @@ HEX_CHAR=[0-9a-fA-F]
 
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+
+<CLASS2PY> {
+  {ESCAPE} {RBRACKET}   { return RegExpTT.CHARACTER; }
+}
+
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
+
+
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
@@ -175,8 +185,25 @@ HEX_CHAR=[0-9a-fA-F]
 "-"                   { return RegExpTT.MINUS; }
 "^"                   { return RegExpTT.CARET; }
 
-{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET}                { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
+<CLASS2PY> {
+  {LBRACKET}          { return RegExpTT.CHARACTER; }
+}
+
+{LBRACKET} / {RBRACKET}   { if (allowRBracketInCharacterClass) {
+                              yypushstate(CLASS1);
+                            }
+                            else {
+                              yypushstate(CLASS2PY);
+                            }
+                            return RegExpTT.CLASS_BEGIN; }
+
+{LBRACKET}                { if (allowRBracketInCharacterClass) {
+                              yypushstate(CLASS2);
+                            }
+                            else {
+                              yypushstate(CLASS2PY);
+                            }
+                            return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
 <CLASS1> {
@@ -191,6 +218,15 @@ HEX_CHAR=[0-9a-fA-F]
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
+
+/* see rules for matching LBRACKET and escaped RBRACKET in CLASS2PY above */
+<CLASS2PY> {
+  {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
+
+  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
+  {ANY}                 { return RegExpTT.CHARACTER; }
+}
+
 
 <YYINITIAL> {
   {LPAREN}      { return RegExpTT.GROUP_BEGIN; }
