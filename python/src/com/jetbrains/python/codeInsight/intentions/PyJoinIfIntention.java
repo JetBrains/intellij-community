@@ -45,7 +45,8 @@ public class PyJoinIfIntention extends BaseIntentionAction {
     if (outer != null) {
       if (outer.getElsePart() != null || outer.getElifParts().length > 0) return false;
       PyStatement firstStatement = getFirstStatement(outer);
-
+      PyStatementList outerStList = outer.getIfPart().getStatementList();
+      if (outerStList != null && outerStList.getStatements().length != 1) return false;
       if (firstStatement instanceof PyIfStatement) {
         final PyIfStatement inner = (PyIfStatement)firstStatement;
         if (inner.getElsePart() != null || inner.getElifParts().length > 0) return false;
