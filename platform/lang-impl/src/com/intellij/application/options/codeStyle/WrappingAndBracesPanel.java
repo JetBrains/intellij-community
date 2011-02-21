@@ -36,6 +36,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("KEEP_CONTROL_STATEMENT_IN_ONE_LINE", ApplicationBundle.message("checkbox.keep.when.reformatting.control.statement.in.one.line"),
               WRAPPING_KEEP);
     addOption("KEEP_SIMPLE_BLOCKS_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.simple.blocks.in.one.line"), WRAPPING_KEEP);
+    addOption("KEEP_SIMPLE_METHODS_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.simple.methods.in.one.line"), WRAPPING_KEEP);
     addOption("KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE", ApplicationBundle.message("wrapping.keep.multiple.expressions.in.one.line"), WRAPPING_KEEP);
 
     addOption("CLASS_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.class.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
