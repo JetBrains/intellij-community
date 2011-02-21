@@ -166,7 +166,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   }
 
   @NotNull
-  public String getPlaceholderText(@NotNull final ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull final ASTNode node) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
   }
 

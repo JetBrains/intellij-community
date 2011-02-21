@@ -26,7 +26,6 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -60,7 +59,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   }
 
   @Override
-  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement element = node.getPsi();
     if (element instanceof PsiAnnotation) {
       return "/" + StringUtil.join(((PsiAnnotation)element).getParameterList().getAttributes(), new Function<PsiNameValuePair, String>() {

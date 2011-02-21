@@ -52,7 +52,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
             : FoldingDescriptor.EMPTY;
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == RncTokenTypes.LBRACE) {
       return "{ ... }";

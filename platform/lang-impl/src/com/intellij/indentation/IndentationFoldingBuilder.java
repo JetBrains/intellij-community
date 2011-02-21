@@ -5,7 +5,6 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   }
 
   @Nullable
-  public String getPlaceholderText(@NotNull final ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull final ASTNode node) {
     final StringBuilder builder = new StringBuilder();
     ASTNode child = node.getFirstChildNode();
     String text;

@@ -206,7 +206,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
     return false;
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag ||
         psi instanceof XmlComment ||

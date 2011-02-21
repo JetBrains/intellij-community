@@ -223,7 +223,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType elemType = node.getElementType();
     if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
