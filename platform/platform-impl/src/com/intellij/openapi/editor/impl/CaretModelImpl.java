@@ -365,7 +365,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     EditorSettings editorSettings = myEditor.getSettings();
 
-    if (!editorSettings.isVirtualSpace() && line < lineCount) {
+    if (!editorSettings.isVirtualSpace() && line < lineCount && !myEditor.getSelectionModel().hasBlockSelection()) {
       int lineEndOffset = doc.getLineEndOffset(line);
       int lineEndColumnNumber = myEditor.offsetToLogicalPosition(lineEndOffset).column;
       if (column > lineEndColumnNumber) {

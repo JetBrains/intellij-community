@@ -3258,7 +3258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (!mySettings.isVirtualSpace()) {
+    if (!mySettings.isVirtualSpace() && !mySelectionModel.hasBlockSelection()) {
       int lineEndOffset = myDocument.getLineEndOffset(lineNumber);
       int lineEndColumnNumber = calcColumnNumber(lineEndOffset, lineNumber);
       if (columnNumber > lineEndColumnNumber) {
