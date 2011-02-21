@@ -200,6 +200,8 @@
 
     <languageInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
     <lang.parserDefinition language="PythonRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
+    <lang.parserDefinition language="PythonVerboseRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="PythonVerboseRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>

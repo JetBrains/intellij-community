@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.lexer.Lexer;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
+import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
@@ -35,6 +36,11 @@ public class PyRegexpTest extends PyLightFixtureTestCase {
 
   public void testDanglingMetacharacters() {  // PY-2430
     doTestHighlighting();
+  }
+
+  public void testVerbose() {
+    Lexer lexer = new PythonVerboseRegexpParserDefinition().createLexer(myFixture.getProject());
+    PyLexerTestCase.doLexerTest("# abc", lexer, "COMMENT", "COMMENT");
   }
 
   private void doTestHighlighting() {
