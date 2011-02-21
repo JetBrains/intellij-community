@@ -86,7 +86,7 @@ public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
     return elementType == PyElementTypes.IMPORT_STATEMENT || elementType == PyElementTypes.FROM_IMPORT_STATEMENT;
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
     if (isImport(node, false)) {
       return "import ...";
     }
