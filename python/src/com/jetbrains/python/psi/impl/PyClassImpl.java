@@ -85,6 +85,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   }
 
+  public PsiElement getNameIdentifier() {
+    final ASTNode nameNode = getNameNode();
+    return nameNode != null ? nameNode.getPsi() : null;
+  }
+
   public ASTNode getNameNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
