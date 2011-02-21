@@ -28,7 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -46,6 +45,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
 import javax.swing.*;
@@ -90,7 +90,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myContext = context;
 
     GrTypeDefinition clazz = (GrTypeDefinition)context.scope;
-    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.expression, clazz);
+    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.place, clazz);
     if (myIsStatic) {
       myFieldLabel.setText("Static Field of Type:");
     }
@@ -111,7 +111,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myClassConstructorSRadioButton.setEnabled(false);
       myFieldDeclarationRadioButton.setEnabled(false);
     }*/
-    if (GrIntroduceFieldHandler.getContainingMethod(context.expression, clazz) == null) {
+    final GrMethod containingMethod = GrIntroduceFieldHandler.getContainingMethod(context.place, clazz);
+    if (containingMethod == null) {
       myCurrentMethodRadioButton.setEnabled(false);
     }
 
@@ -122,9 +123,13 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myFieldDeclarationRadioButton.setSelected(true);
     }
 
-    final String invokedOnLocalVar = getInvokedOnLocalVar(context.expression);
-    if (invokedOnLocalVar != null) {
-      myReplaceAllOccurencesCheckBox.setText("Replace all occurences and remove variable '" + invokedOnLocalVar + "'");
+    myInvokedOnLocalVar  = context.var == null ? getInvokedOnLocalVar(context.expression) : context.var.getName();
+    if (myInvokedOnLocalVar != null) {
+      myReplaceAllOccurencesCheckBox.setText("Replace all occurences and remove variable '" + myInvokedOnLocalVar + "'");
+      if (context.var != null) {
+        myReplaceAllOccurencesCheckBox.setEnabled(false);
+        myReplaceAllOccurencesCheckBox.setSelected(true);
+      }
     }
     else if (context.occurrences.length == 1) {
       myReplaceAllOccurencesCheckBox.setSelected(false);
@@ -156,12 +161,10 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myReplaceAllOccurencesCheckBox.addItemListener(l);
     myTypeComboBox.addItemListener(l);
 
-    isInvokedInAlwaysInvokedConstructor = allOccurrencesInOneMethod(myContext.occurrences, (GrTypeDefinition)myContext.scope) &&
-                                          isAlwaysInvokedConstructor(GrIntroduceFieldHandler.getContainingMethod(myContext.expression,
-                                                                                                                 (GrTypeDefinition)myContext.scope),
-                                                                     (GrTypeDefinition)myContext.scope);
+    isInvokedInAlwaysInvokedConstructor =
+      allOccurrencesInOneMethod(myContext.occurrences, clazz) && isAlwaysInvokedConstructor(containingMethod, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
-    myInvokedOnLocalVar = getInvokedOnLocalVar(myContext.expression);
+
     init();
     checkErrors();
   }
@@ -191,12 +194,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private static boolean hasLhsUsages(GrIntroduceContext context) {
-    if (!(context.expression instanceof GrReferenceExpression)) return false;
-    for (PsiElement element : context.occurrences) {
-      if (element instanceof GrReferenceExpression) {
-        if (PsiUtil.isLValue((GroovyPsiElement)element)) return true;
-      }
-    }
+    if (context.var == null && !(context.expression instanceof GrReferenceExpression)) return false;
+    if (GrIntroduceHandlerBase.hasLhs(context.occurrences)) return true;
     return false;
   }
 
@@ -249,8 +248,14 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   private void createUIComponents() {
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyFieldValidator(myContext), true);
+    if (myContext.var != null) {
+      String[] arr = new String[possibleNames.length + 1];
+      arr[0] = myContext.var.getName();
+      System.arraycopy(possibleNames, 0, arr, 1, possibleNames.length);
+      possibleNames = arr;
+    }
     myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.project, GroovyFileType.GROOVY_FILE_TYPE);
-    myTypeComboBox = new GrTypeComboBox(myContext.expression);
+    myTypeComboBox = new GrTypeComboBox(myContext.expression == null ? myContext.var.getDeclaredType() : myContext.expression.getType());
   }
 
   @Override
@@ -316,7 +321,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return null;
   }
 
-  private static boolean canBeInitializedOutsideBlock(GrExpression expression, final GrTypeDefinition scope) {
+  private static boolean canBeInitializedOutsideBlock(@Nullable GrExpression expression, final GrTypeDefinition scope) {
+    if (expression == null) return false;
     expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
     if (expression == null) return false;
 

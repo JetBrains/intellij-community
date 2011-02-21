@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -34,6 +36,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
@@ -480,6 +485,17 @@ public class ControlFlowUtils {
     if (returnStatement instanceof GrReturnStatement) return ((GrReturnStatement)returnStatement).getReturnValue();
     if (returnStatement instanceof GrExpression) return (GrExpression)returnStatement;
     return null;
+  }
+
+  public static boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
+    final PsiElement parent = referenceExpression.getParent();
+    if (parent instanceof GrPostfixExpression) return true;
+    if (parent instanceof GrUnaryExpression) {
+      final IElementType opType = ((GrUnaryExpression)parent).getOperationTokenType();
+      return opType == GroovyElementTypes.mDEC || opType == GroovyElementTypes.mINC;
+    }
+
+    return false;
   }
 
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {

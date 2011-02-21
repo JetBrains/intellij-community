@@ -21,9 +21,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiConstantEvaluationHelper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -359,7 +359,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
     if (referenceExpression.getQualifierExpression() == null) {
-      if (isIncOrDecOperand(referenceExpression) && !myAssertionsOnly) {
+      if (ControlFlowUtils.isIncOrDecOperand(referenceExpression) && !myAssertionsOnly) {
         final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false);
         addNode(i);
         addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
@@ -375,17 +375,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         checkPending(i);
       }
     }
-  }
-
-  private static boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
-    final PsiElement parent = referenceExpression.getParent();
-    if (parent instanceof GrPostfixExpression) return true;
-    if (parent instanceof GrUnaryExpression) {
-      final IElementType opType = ((GrUnaryExpression)parent).getOperationTokenType();
-      return opType == GroovyElementTypes.mDEC || opType == GroovyElementTypes.mINC;
-    }
-
-    return false;
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {

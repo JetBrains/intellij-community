@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
@@ -27,19 +26,18 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class GrTypeComboBox extends JComboBox {
-  private final GrExpression myExpr;
+  private final PsiType myType;
 
-  public GrTypeComboBox(GrExpression expr) {
+  public GrTypeComboBox(PsiType type) {
     super();
-    myExpr = expr;
+    myType = type;
     initialize();
   }
 
   private void initialize() {
-    final PsiType expressionType = myExpr.getType();
     addItem(new PsiTypeItem(null));
-    if (expressionType != null) {
-      final Map<String, PsiType> myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(expressionType);
+    if (myType != null) {
+      final Map<String, PsiType> myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
       for (String typeName : myTypes.keySet()) {
         addItem(new PsiTypeItem(myTypes.get(typeName)));
       }
