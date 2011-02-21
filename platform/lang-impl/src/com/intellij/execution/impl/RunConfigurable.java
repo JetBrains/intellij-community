@@ -21,6 +21,7 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -332,12 +333,26 @@ class RunConfigurable extends BaseConfigurable {
                                                 ? configurationType.getConfigurationTypeDescription()
                                                 : ExecutionBundle.message("run.configuration.default.type.description");
     browser.setText(ExecutionBundle.message("empty.run.configuration.panel.text.label", font.getFontName(), addUrl, defaultsURL,
-                                            configurationTypeDescription));
+                                            configurationTypeDescription, configurationType != null ? configurationType.getId() : ""));
     browser.setPreferredSize(new Dimension(200, 50));
     browser.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          if (Comparing.strEqual(e.getDescription(), "add")) {
+          final String description = e.getDescription();
+          final String addPrefix = "add";
+          if (description.startsWith(addPrefix)) {
+            final String typeId = description.substring(addPrefix.length());
+            if (!typeId.isEmpty()) {
+              for (ConfigurationType type : Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP)) {
+                if (Comparing.strEqual(type.getId(), typeId)) {
+                  final ConfigurationFactory[] factories = type.getConfigurationFactories();
+                  if (factories.length > 0) {
+                    createNewConfiguration(factories[0]);
+                  }
+                  return;
+                }
+              }
+            }
             new MyToolbarAddAction().actionPerformed(null);
           }
         }
