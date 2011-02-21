@@ -5,7 +5,6 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -50,7 +49,7 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
   }
 
   @Nullable
-  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == YAMLElementTypes.DOCUMENT){
       return "---";
