@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
 
 
 public class DeclarationParser {
@@ -588,12 +589,22 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseResource(final PsiBuilder builder) {
-    PsiBuilder.Marker resource = parse(builder, Context.RESOURCE_LIST);
-    if (resource == null) {
-      resource = ExpressionParser.parse(builder);
+  public static PsiBuilder.Marker parseResource(final PsiBuilder builder) {
+    PsiBuilder.Marker element = parse(builder, Context.RESOURCE_LIST);
+    if (exprType(element) == JavaElementType.MODIFIER_LIST) {
+      return element;
     }
-    return resource;
+    else if (element == null) {
+      element = ExpressionParser.parse(builder);
+    }
+
+    if (element != null) {
+      final PsiBuilder.Marker resource = element.precede();
+      done(resource, JavaElementType.RESOURCE);
+      return resource;
+    }
+
+    return null;
   }
 
   @Nullable

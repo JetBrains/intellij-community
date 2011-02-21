@@ -17,15 +17,12 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-/**
- * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
- *
- * @see PsiTryStatement#getResourceList()
- * @since 10.5.
- */
-public interface PsiResourceList extends PsiElement {
+public interface PsiScopedLocalVariable extends PsiLocalVariable {
+  /**
+   * Returns the element (method, "for" statement or try block) in which the variable is declared.
+   *
+   * @return the declaration scope for the variable.
+   */
   @NotNull
-  List<PsiResource> getResources();
+  PsiElement getDeclarationScope();
 }

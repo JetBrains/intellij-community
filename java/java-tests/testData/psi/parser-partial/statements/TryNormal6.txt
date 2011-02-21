@@ -3,10 +3,11 @@ PsiJavaFile:TryNormal6.java
     PsiKeyword:try('try')
     PsiResourceList:(r)
       PsiJavaToken:LPARENTH('(')
-      PsiReferenceExpression:r
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:r('r')
+      PsiResource:
+        PsiReferenceExpression:r
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:r('r')
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

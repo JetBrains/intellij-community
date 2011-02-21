@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
@@ -634,20 +633,6 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isInsideJavadocComment(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
-  }
-
-  public static boolean isResourceInTryStatement(final PsiElement element) {
-    return (element instanceof PsiLocalVariable || element instanceof PsiExpression) &&
-           element.getParent() instanceof PsiResourceList;
-  }
-
-  @Nullable
-  public static PsiType getResourceType(final PsiElement element) {
-    if (element == null || !(element.getParent() instanceof PsiResourceList)) return null;
-    if (element instanceof PsiLocalVariable) return ((PsiLocalVariable)element).getType();
-    if (element instanceof PsiExpression) return ((PsiExpression)element).getType();
-    LOG.error("Unexpected resource type: " + LogUtil.objectAndClass(element));
-    return null;
   }
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {

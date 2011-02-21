@@ -16,16 +16,24 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
  *
- * @see PsiTryStatement#getResourceList()
+ * @see PsiResourceList#getResources()
  * @since 10.5.
  */
-public interface PsiResourceList extends PsiElement {
+public interface PsiResource extends PsiElement {
+  /**
+   * Returns main element of the resource.
+   * It may be PsiLocalVariable, PsiAssignmentExpression, or other instance of PsiExpression.
+   *
+   * @return resource element.
+   */
   @NotNull
-  List<PsiResource> getResources();
+  PsiElement getResourceElement();
+
+  @Nullable
+  PsiType getType();
 }
