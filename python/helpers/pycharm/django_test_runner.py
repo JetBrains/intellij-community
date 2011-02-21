@@ -2,6 +2,7 @@ from pycharm.tcunittest import TeamcityTestRunner
 from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
 import unittest
 from django.test.testcases import TestCase
+from tcmessages import TeamcityServiceMessages
 import django
 import sys
 
@@ -151,6 +152,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[]):
     old_name = settings.DATABASE_NAME
     from django.db import connection
     connection.creation.create_test_db(verbosity, autoclobber=True)
+    TeamcityServiceMessages(sys.stdout).testCount(suite.countTestCases())
     result = DjangoTeamcityTestRunner().run(suite)
     connection.creation.destroy_test_db(old_name, verbosity)
 
