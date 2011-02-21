@@ -20,7 +20,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.java.PomJavaAspect;
-import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,20 +27,14 @@ import java.util.List;
 public class PomJavaAspectChangeSet implements PomChangeSet{
   private final PomModel myModel;
   private final List<PomJavaChange> myChanges = new ArrayList<PomJavaChange>();
-  private final PsiFile myChangedFile;
 
 
-  public PomJavaAspectChangeSet(PomModel model, PsiFile fileChanged) {
+  public PomJavaAspectChangeSet(PomModel model) {
     myModel = model;
-    myChangedFile = fileChanged;
   }
 
   public void addChange(PomJavaChange change) {
     myChanges.add(change);
-  }
-
-  public List<PomJavaChange> getChanges() {
-    return myChanges;
   }
 
   public PomModelAspect getAspect() {
@@ -52,9 +45,5 @@ public class PomJavaAspectChangeSet implements PomChangeSet{
     if(!(blocked instanceof PomJavaAspectChangeSet)) return;
     final PomJavaAspectChangeSet blockedJavaChange = (PomJavaAspectChangeSet)blocked;
     myChanges.addAll(blockedJavaChange.myChanges);
-  }
-
-  public PsiFile getChangedFile() {
-    return myChangedFile;
   }
 }

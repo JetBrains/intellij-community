@@ -34,13 +34,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.event.PomChangeSet;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.event.PomModelListener;
-import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -103,8 +96,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
-          myQueue.cancelAllUpdates();
-          myQueue.queue(new MyUpdate(BreadcrumbsXmlWrapper.this, editor));
+          queueUpdate(editor);
         }
 
         myUserCaretChange = true;
@@ -118,19 +110,40 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       }
     });
 
-    PomManager.getModel(project).addModelListener(new PomModelListener() {
-      public void modelChanged(final PomModelEvent event) {
-        final PomChangeSet set = event.getChangeSet(event.getSource().getModelAspect(XmlAspect.class));
-        if (set instanceof XmlChangeSet && myQueue != null) {
-          myQueue.cancelAllUpdates();
-          myQueue.queue(new MyUpdate(BreadcrumbsXmlWrapper.this, editor));
-        }
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void propertyChanged(PsiTreeChangeEvent event) {
+        PsiFile psiFile = event.getFile();
+        VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
+        if (file != myFile) return;
+        queueUpdate(editor);
       }
 
-      public boolean isAspectChangeInteresting(final PomModelAspect aspect) {
-        return aspect instanceof XmlAspect;
+      @Override
+      public void childrenChanged(PsiTreeChangeEvent event) {
+        propertyChanged(event);
       }
-    }, this);
+
+      @Override
+      public void childMoved(PsiTreeChangeEvent event) {
+        propertyChanged(event);
+      }
+
+      @Override
+      public void childReplaced(PsiTreeChangeEvent event) {
+        propertyChanged(event);
+      }
+
+      @Override
+      public void childRemoved(PsiTreeChangeEvent event) {
+        propertyChanged(event);
+      }
+
+      @Override
+      public void childAdded(PsiTreeChangeEvent event) {
+        propertyChanged(event);
+      }
+    },this);
 
     myComponent = new BreadcrumbsComponent<BreadcrumbsPsiItem>();
     myComponent.addBreadcrumbsItemListener(this);
@@ -140,8 +153,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     final ComponentAdapter resizeListener = new ComponentAdapter() {
       public void componentResized(final ComponentEvent e) {
-        myQueue.cancelAllUpdates();
-        myQueue.queue(new MyUpdate(BreadcrumbsXmlWrapper.this, editor));
+        queueUpdate(editor);
       }
     };
 
@@ -164,6 +176,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     myWrapperPanel.setOpaque(false);
 
     myWrapperPanel.add(myComponent, BorderLayout.CENTER);
+  }
+
+  private void queueUpdate(Editor editor) {
+    myQueue.cancelAllUpdates();
+    myQueue.queue(new MyUpdate(this, editor));
   }
 
   private void moveEditorCaretTo(@NotNull final PsiElement element) {

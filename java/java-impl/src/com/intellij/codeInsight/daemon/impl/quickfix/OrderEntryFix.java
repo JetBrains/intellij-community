@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -42,8 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.compiler.ModuleCompilerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,12 +71,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    try {
-      invoke(project, null, descriptor.getPsiElement().getContainingFile());
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
 
   @Nullable
