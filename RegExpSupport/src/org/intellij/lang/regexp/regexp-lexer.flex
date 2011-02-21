@@ -62,6 +62,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate CLASS1
+%xstate CLASS1PY
 %state CLASS2
 %state PROP
 %xstate OPTIONS
@@ -209,12 +210,27 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACKET} / {RBRACKET}   { yypushstate(CLASS1);
                             return RegExpTT.CLASS_BEGIN; }
 
+/* Python understands that, Java doesn't */
+{LBRACKET} / "^" {RBRACKET} { if (!allowNestedCharacterClasses) {
+                                yypushstate(CLASS1PY);
+                              }
+                              else {
+                                yypushstate(CLASS2);
+                              }
+                              return RegExpTT.CLASS_BEGIN;
+                            }
+
 {LBRACKET}                { yypushstate(CLASS2);
                             return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
 <CLASS1> {
   {RBRACKET}              { yybegin(CLASS2); return RegExpTT.CHARACTER; }
+  .                       { assert false : yytext(); }
+}
+
+<CLASS1PY> {
+  "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
   .                       { assert false : yytext(); }
 }
 
