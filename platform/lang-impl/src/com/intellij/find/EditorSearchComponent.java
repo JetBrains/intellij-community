@@ -166,8 +166,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         myEditor.getCaretModel().moveToOffset(range.getEndOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        myEditor.getCaretModel().moveToOffset(range.getStartOffset());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
       myToChangeSelection = false;
     }
@@ -525,6 +523,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       mySearchResults.nextOccurrence();
     } else {
       mySearchResults.prevOccurrence();
+    }
+  }
+
+  public void replaceCurrent() {
+    if (mySearchResults.getCursor() != null) {
+      String replacement = myLivePreviewController.getReplacementPreviewText(myEditor, mySearchResults.getCursor());
+      myLivePreviewController.performReplace(mySearchResults.getCursor(), replacement, myEditor);
     }
   }
 

@@ -238,6 +238,17 @@ public class SearchResults {
   }
 
   @Nullable
+  private LiveOccurrence firstOccurrenceBeforeCaret() {
+    int offset = getEditor().getCaretModel().getOffset();
+    for (int i = getOccurrences().size()-1; i >= 0; --i) {
+      if (getOccurrences().get(i).getPrimaryRange().getEndOffset() < offset) {
+        return getOccurrences().get(i);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private LiveOccurrence firstOccurrenceAfterCaret() {
     LiveOccurrence afterCaret = null;
     int caret = myEditor.getCaretModel().getOffset();
@@ -294,7 +305,7 @@ public class SearchResults {
   }
 
   public void prevOccurrence() {
-    LiveOccurrence prev = prevOccurrence(myCursor);
+    LiveOccurrence prev = firstOccurrenceBeforeCaret();
     if (prev == null && !getOccurrences().isEmpty()) {
       prev = getOccurrences().get(getOccurrences().size() - 1);
     }
@@ -302,7 +313,7 @@ public class SearchResults {
   }
 
   public void nextOccurrence() {
-    LiveOccurrence next = nextOccurrence(myCursor);
+    LiveOccurrence next = firstOccurrenceAfterCaret();
     if (next == null && !getOccurrences().isEmpty()) {
       next = getOccurrences().get(0);
     }
