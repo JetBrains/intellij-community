@@ -131,7 +131,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public interface AssertEqualsDiffViewerProvider {
     void openDiff(final Project project);
-    String getExpecteed();
+    String getExpected();
     String getActual();
   }
 }
