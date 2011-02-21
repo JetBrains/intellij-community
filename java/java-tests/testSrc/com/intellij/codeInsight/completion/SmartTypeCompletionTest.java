@@ -875,6 +875,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoCommaBeforeVarargs() throws Throwable { doTest(); }
+
   public void testEnumField() throws Throwable {
     doItemTest();
   }

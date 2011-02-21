@@ -953,7 +953,7 @@ public class ExpectedTypesProvider {
       if (index >= params.length) {
         return TailType.NONE;
       }
-      if (index == params.length - 1) {
+      if (index == params.length - 1 || index == params.length - 2 && params[index + 1].isVarArgs()) {
         //myTailType = CompletionUtil.NONE_TAIL;
         final PsiElement call = argument.getParent().getParent();
         if (call instanceof JspMethodCall) return TailType.NONE;
