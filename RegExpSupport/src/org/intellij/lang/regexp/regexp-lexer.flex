@@ -4,6 +4,7 @@ package org.intellij.lang.regexp;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import java.util.LinkedList;
+import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
 
 // IDEADEV-11055
@@ -23,19 +24,20 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private final LinkedList<Integer> states = new LinkedList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
-    // as well, but is currently unfinished as it requires to tweak more places than just the lexer. 
+    // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
     private boolean xmlSchemaMode;
+
 
     private boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
 
-    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowNestedCharacterClasses, boolean allowOctalNoLeadingZero) {
+    _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
-      this.xmlSchemaMode = xmlSchemaMode;
-      this.allowDanglingMetacharacters = allowDanglingMetacharacters;
-      this.allowNestedCharacterClasses = allowNestedCharacterClasses;
-      this.allowOctalNoLeadingZero = allowOctalNoLeadingZero;
+      this.xmlSchemaMode = capabilities.contains(RegExpCapability.XML_SCHEMA_MODE);
+      this.allowDanglingMetacharacters = capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS);
+      this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
+      this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
     }
 
     private void yypushstate(int state) {

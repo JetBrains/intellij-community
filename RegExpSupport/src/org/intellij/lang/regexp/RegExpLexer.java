@@ -17,13 +17,14 @@ package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexAdapter;
 
+import java.util.EnumSet;
+
 public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
 
-    public RegExpLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowNestedCharacterClasses,
-                       boolean allowOctalNoLeadingZero) {
-        super(new _RegExLexer(xmlSchemaMode, allowDanglingMetacharacters, allowNestedCharacterClasses, allowOctalNoLeadingZero));
+    public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
+        super(new _RegExLexer(capabilities));
     }
 
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
