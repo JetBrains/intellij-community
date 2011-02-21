@@ -583,6 +583,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testFieldNegation() throws Throwable { doTest('!');}
+  public void testDefaultInSwitch() throws Throwable { doTest()}
 
   public void testSuperInConstructor() throws Throwable {
     doTest();
