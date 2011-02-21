@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.InjectedLanguagePlaces;
@@ -57,7 +57,7 @@ public class PythonRegexpInjector implements LanguageInjector {
           if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
             List<TextRange> ranges = ((PyStringLiteralExpression)host).getStringValueTextRanges();
             if (ranges.size() == 1) {
-              injectionPlacesRegistrar.addPlace(RegExpLanguage.INSTANCE, ranges.get(0), null, null);
+              injectionPlacesRegistrar.addPlace(PythonRegexpLanguage.INSTANCE, ranges.get(0), null, null);
             }
           }
         }

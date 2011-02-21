@@ -198,7 +198,8 @@
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
     <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
 
-    <languageInjector implementation="com.jetbrains.python.codeInsight.PythonRegexpInjector"/>
+    <languageInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
+    <lang.parserDefinition language="PythonRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
