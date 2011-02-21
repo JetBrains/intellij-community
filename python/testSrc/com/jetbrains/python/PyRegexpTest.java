@@ -33,6 +33,10 @@ public class PyRegexpTest extends PyLightFixtureTestCase {
     doTestLexer("[^][]", "CLASS_BEGIN", "CARET", "CHARACTER", "CHARACTER", "CLASS_END");
   }
 
+  public void testDanglingMetacharacters() {  // PY-2430
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, false, "regexp/" + getTestName(true) + ".py");
   }
