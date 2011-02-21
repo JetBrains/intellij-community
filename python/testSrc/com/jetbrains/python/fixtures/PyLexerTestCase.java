@@ -7,7 +7,7 @@ import junit.framework.TestCase;
  * @author yole
  */
 public abstract class PyLexerTestCase extends TestCase {
-  protected static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {
+  public static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {
     lexer.start(text);
     int idx = 0;
     int tokenPos = 0;
