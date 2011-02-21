@@ -10,27 +10,35 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  */
 public class PyRegexpTest extends PyLightFixtureTestCase {
   public void testNestedCharacterClasses() {  // PY-2908
-    doTest();
+    doTestHighlighting();
   }
 
   public void testNestedCharacterClassesLexer() {
-    Lexer lexer = new PythonRegexpParserDefinition().createLexer(myFixture.getProject());
-    PyLexerTestCase.doLexerTest("[][]", lexer, "CLASS_BEGIN", "CHARACTER", "CHARACTER", "CLASS_END");
+    doTestLexer("[][]", "CLASS_BEGIN", "CHARACTER", "CHARACTER", "CLASS_END");
   }
 
   public void testNestedCharacterClasses2() {  // PY-2908
-    doTest();
+    doTestHighlighting();
   }
 
   public void testOctal() {  // PY-2906
-    doTest();
+    doTestHighlighting();
   }
 
   public void testBraceInPythonCharacterClass() {  // PY-1929
-    doTest();
+    doTestHighlighting();
   }
 
-  private void doTest() {
+  public void testNegatedBraceInCharacterClass() {
+    doTestLexer("[^][]", "CLASS_BEGIN", "CARET", "CHARACTER", "CHARACTER", "CLASS_END");
+  }
+
+  private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, false, "regexp/" + getTestName(true) + ".py");
+  }
+
+  private void doTestLexer(final String text, String... expectedTokens) {
+    Lexer lexer = new PythonRegexpParserDefinition().createLexer(myFixture.getProject());
+    PyLexerTestCase.doLexerTest(text, lexer, expectedTokens);
   }
 }
