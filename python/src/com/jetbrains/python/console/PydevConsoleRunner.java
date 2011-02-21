@@ -13,6 +13,10 @@ import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -41,6 +45,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
+  private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -98,12 +103,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     };
 
     final PydevConsoleRunner consoleRunner = new PydevConsoleRunner(project, sdk, consoleTitle, provider, projectRoot, ports);
-    try {
-      consoleRunner.initAndRun(statements2execute);
-    }
-    catch (ExecutionException e) {
-      ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
-    }
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Connecting to console", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        indicator.setText("Connecting to console...");
+        try {
+          consoleRunner.initAndRun(statements2execute);
+        }
+        catch (ExecutionException e) {
+          ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
+        }
+      }
+    });
   }
 
   @Override
@@ -133,26 +143,47 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   public void initAndRun(final String... statements2execute) throws ExecutionException {
     super.initAndRun();
 
-    // Propagate console communication to language console
-    ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
-
-    final LanguageConsoleImpl console = getConsoleView().getConsole();
-
     if (handshake()) {
-      // Make executed statements visible to developers
-      PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-      getConsoleExecuteActionHandler().processLine(PYTHON_ENV_COMMAND);
 
-      for (String statement : statements2execute) {
-        PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-        getConsoleExecuteActionHandler().processLine(statement + "\n");
-      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+          // Propagate console communication to language console
+          ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
+
+          final LanguageConsoleImpl console = getConsoleView().getConsole();
+
+          enableConsoleExecuteAction();
+
+          // Make executed statements visible to developers
+          PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
+
+          getConsoleExecuteActionHandler().processLine(PYTHON_ENV_COMMAND);
+
+          for (String statement : statements2execute) {
+            PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
+            getConsoleExecuteActionHandler().processLine(statement + "\n");
+          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              console.flushAllUiUpdates();
+            }
+          });
+        }
+      });
     }
     else {
+      final LanguageConsoleImpl console = getConsoleView().getConsole();
       PyConsoleHighlightingUtil.processOutput(console, "Couldn't connect to console process.", ProcessOutputTypes.STDERR);
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+  private void enableConsoleExecuteAction() {
+    myConsoleExecuteActionHandler.setEnabled(true);
   }
 
   private boolean handshake() {
@@ -198,7 +229,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     return createConsoleStoppingAction(generalCloseAction);
   }
 
-
   private AnAction createConsoleStoppingAction(final AnAction generalStopAction) {
     final AnAction stopAction = new AnAction() {
       @Override
@@ -231,7 +261,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   @NotNull
   @Override
   protected ConsoleExecuteActionHandler createConsoleExecuteActionHandler() {
-    return new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
+    myConsoleExecuteActionHandler =
+      new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
+    myConsoleExecuteActionHandler.setEnabled(false);
+    return myConsoleExecuteActionHandler;
   }
 
 
