@@ -38,6 +38,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -47,8 +48,8 @@ import java.util.*;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class GenericInlineHandler {
 
-  public static boolean invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
-    final PsiReference invocationReference = TargetElementUtilBase.findReference(editor);
+  public static boolean invoke(final PsiElement element, @Nullable Editor editor, final InlineHandler languageSpecific) {
+    final PsiReference invocationReference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
     final InlineHandler.Settings settings = languageSpecific.prepareInlineElement(element, editor, invocationReference != null);
     if (settings == null || settings == InlineHandler.Settings.CANNOT_INLINE_SETTINGS) {
       return settings != null;
@@ -65,7 +66,7 @@ public class GenericInlineHandler {
         public void run() {
           usagesRef.set(ReferencesSearch.search(element).findAll());
         }
-      }, "Find Usages", false, editor.getProject());
+      }, "Find Usages", false, element.getProject());
       allReferences = usagesRef.get();
     }
 
