@@ -137,7 +137,8 @@ public class CreateLauncherScriptAction extends AnAction {
     String homePath = PathManager.getHomePath();
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
-      launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/Contents/MacOS/" + productName);
+      // Just use "*.app"
+      launcherContents = launcherContents.replace("$RUN_PATH$", homePath);
     }
     else {
       launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/bin/" + productName + ".sh");

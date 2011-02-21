@@ -19,12 +19,12 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -43,23 +43,18 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       return;
     }
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     final GotoClassModel2 model = new GotoClassModel2(project);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e),
-                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
-    final ChooseByNameFilter filterUI = new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
-
-    popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      public void onClose() {
-        if (GotoClassAction.class.equals(myInAction)) {
-          myInAction = null;
-        }
-        filterUI.close();
+    showNavigationPopup(e, model, new GotoActionCallback<Language>() {
+      @Override
+      protected ChooseByNameFilter<Language> createFilter(ChooseByNamePopup popup) {
+        return new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
       }
 
-      public void elementChosen(Object element) {
+      @Override
+      public void elementChosen(ChooseByNamePopup popup, Object element) {
         if (element instanceof PsiElement) {
           NavigationUtil.activateFileWithPsiElement((PsiElement)element);
         }
@@ -67,7 +62,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
           ((NavigationItem)element).navigate(true);
         }
       }
-    }, ModalityState.current(), true);
+    });
   }
 
   protected boolean hasContributors(DataContext dataContext) {

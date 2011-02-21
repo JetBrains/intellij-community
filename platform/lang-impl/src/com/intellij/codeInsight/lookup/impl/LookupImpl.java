@@ -1149,7 +1149,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         editor.getContentComponent()
       );
 
-      final HintHint hintHint = new HintHint(editor, editorPoint).setHighlighterType(true).setContentActive(true);
+      final HintHint hintHint = new HintHint(editor, editorPoint);
 
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       if (myAutopopupHint == null) {

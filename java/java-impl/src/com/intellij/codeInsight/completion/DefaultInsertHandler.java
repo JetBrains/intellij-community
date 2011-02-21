@@ -21,7 +21,6 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,20 +70,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     handleParentheses(false, false, tailType, context, state);
     handleBrackets(item, document, state);
-
-    if (item.getObject() instanceof PsiVariable) {
-      if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(((PsiVariable) item.getObject()).getType())) {
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        final PsiReferenceExpression ref =
-            PsiTreeUtil.findElementOfClassAtOffset(file, state.tailOffset - 1, PsiReferenceExpression.class, false);
-        if (ref != null) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
-          document.insertString(ref.getTextRange().getStartOffset(), "!");
-          state.caretOffset++;
-          state.tailOffset++;
-        }
-      }
-    }
 
     context.setTailOffset(state.tailOffset);
     state.caretOffset = processTail(tailType, state.caretOffset, state.tailOffset, editor);

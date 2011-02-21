@@ -60,6 +60,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -82,7 +84,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable, TabsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -93,6 +95,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
   private final Project myProject;
+  private final List<TabInfo> myTabsHistory = new ArrayList<TabInfo>();
+
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
@@ -102,6 +106,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
   private DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
+  private MessageBusConnection myBusConnection;
 
   public FileEditorManagerImpl(final Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -109,6 +114,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+    myBusConnection = project.getMessageBus().connect(project);
+    myBusConnection.subscribe(TabsListener.TOPIC, this);
   }
 
   private void initDockableContentFactory() {
@@ -473,13 +480,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     getSplitters().setCurrentWindow(window, true);
   }
 
-  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
+  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window, final boolean transferFocus) {
     assertDispatchThread();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         if (window.isFileOpen(file)) {
-          window.closeFile(file);
+          window.closeFile(file, true, transferFocus);
           final List<EditorWindow> windows = window.getOwner().findWindows(file);
           if (windows.isEmpty()) { // no more windows containing this file left
             final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
@@ -490,6 +497,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
+    removeHistory(file, window);
+  }
+
+  private void removeHistory(VirtualFile file, EditorWindow window) {
+    for (Iterator<TabInfo> i = myTabsHistory.iterator(); i.hasNext();) {
+      final TabInfo info = i.next();
+      final JComponent c = info.getComponent();
+      if (info.getObject() == file && c instanceof EditorWindowHolder && ((EditorWindowHolder)c).getEditorWindow() == window) {
+        i.remove();
+        break;
+      }
+    }
+  }
+
+  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
+    closeFile(file, window, true);
   }
 
   //============================= EditorManager methods ================================
@@ -1182,6 +1205,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 // Dispose created editors. We do not use use closeEditor method because
 // it fires event and changes history.
     closeAllFiles();
+    myBusConnection.disconnect();
   }
 
 // BaseCompomemnt methods
@@ -1600,4 +1624,25 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return splitters;
   }
 
+  @Override
+  public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+    final JComponent selected = newSelection.getComponent();
+    final Iterator<TabInfo> i = myTabsHistory.iterator();
+    while (i.hasNext()) {
+      final TabInfo info = i.next();
+      if (info.getComponent() == selected) {
+        i.remove();
+        break;
+      }
+    }
+    myTabsHistory.add(0, newSelection);
+  }
+
+  public List<TabInfo> getTabsHistory() {
+    return myTabsHistory;
+  }
+
+  @Override
+  public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+  }
 }

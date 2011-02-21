@@ -15,6 +15,9 @@ package org.jetbrains.plugins.groovy.refactoring.introduce;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
@@ -23,15 +26,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GrIntroduceContext {
   public final Project project;
   public final Editor editor;
-  public final GrExpression expression;
+  @Nullable public final GrExpression expression;
   public final PsiElement[] occurrences;
   public final PsiElement scope;
+  @Nullable public final GrVariable var;
+  @NotNull public final PsiElement place;
 
-  public GrIntroduceContext(Project project, Editor editor, GrExpression expression, PsiElement[] occurrences, PsiElement scope) {
+  public GrIntroduceContext(Project project,
+                            Editor editor,
+                            GrExpression expression,
+                            PsiElement[] occurrences,
+                            PsiElement scope,
+                            @Nullable GrVariable var) {
     this.project = project;
     this.editor = editor;
     this.expression = expression;
     this.occurrences = occurrences;
     this.scope = scope;
+    this.var = var;
+    this.place = expression == null ? var : expression;
   }
 }

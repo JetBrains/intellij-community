@@ -48,7 +48,7 @@ public class ComparisonFailureState extends FaultyState implements AbstractTestP
     myHyperlink.printOn(printer);
   }
 
-  public String getExpecteed() {
+  public String getExpected() {
     return myHyperlink.getLeft();
   }
 

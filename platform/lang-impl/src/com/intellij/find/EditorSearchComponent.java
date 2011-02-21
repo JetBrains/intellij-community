@@ -166,8 +166,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         myEditor.getCaretModel().moveToOffset(range.getEndOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        myEditor.getCaretModel().moveToOffset(range.getStartOffset());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
       myToChangeSelection = false;
     }
@@ -196,7 +194,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       public void getFocusBack() {
         mySearchField.requestFocus();
       }
+
+      @Override
+      public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
+        myToChangeSelection = true;
+        return super
+          .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
+      }
     };
+
     mySearchResults.addListener(this);
     setMatchesLimit(MATCHES_LIMIT);
 
@@ -528,6 +534,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
   }
 
+  public void replaceCurrent() {
+    if (mySearchResults.getCursor() != null) {
+      String replacement = myLivePreviewController.getReplacementPreviewText(myEditor, mySearchResults.getCursor());
+      myLivePreviewController.performReplace(mySearchResults.getCursor(), replacement, myEditor);
+    }
+  }
+
   private static void setSmallerFontAndOpaque(final JComponent component) {
     setSmallerFont(component);
     component.setOpaque(false);
@@ -635,7 +648,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         model.setGlobal(!mySelectionOnly.isSelected());
         model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
       }
-      myToChangeSelection = allowedToChangedEditorSelection;
+      if (!myToChangeSelection) {
+        myToChangeSelection = allowedToChangedEditorSelection;
+      }
 
       myLivePreviewController.updateInBackground(model);
     }

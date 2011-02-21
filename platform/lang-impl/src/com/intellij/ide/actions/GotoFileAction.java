@@ -17,7 +17,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,18 +55,14 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, gotoFileModel, getPsiContext(e),
-                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
-    final ChooseByNameFilter filterUI = new GotoFileFilter(popup, gotoFileModel, project);
-    popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      public void onClose() {
-        if (GotoFileAction.class.equals(myInAction)) {
-          myInAction = null;
-        }
-        filterUI.close();
+    showNavigationPopup(e, gotoFileModel, new GotoActionCallback<FileType>() {
+      @Override
+      protected ChooseByNameFilter<FileType> createFilter(ChooseByNamePopup popup) {
+        return new GotoFileFilter(popup, gotoFileModel, project);
       }
 
-      public void elementChosen(final Object element) {
+      @Override
+      public void elementChosen(final ChooseByNamePopup popup, final Object element) {
         if (element == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -81,7 +80,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
           }
         }, ModalityState.NON_MODAL);
       }
-    }, ModalityState.current(), true);
+    });
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {

@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -58,8 +59,9 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
 
   @NotNull
   @Override
-  protected PsiElement findScope(GrExpression expression) {
-    return expression.getContainingFile();
+  protected PsiElement findScope(GrExpression expression, GrVariable variable) {
+    final PsiElement place = expression == null ? variable : expression;
+    return place.getContainingFile();
   }
 
   @Override
@@ -67,9 +69,25 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     selectedExpr.accept(new ConstantChecker(selectedExpr, selectedExpr));
   }
 
+  @Override
+  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
+    final GrExpression initializer = variable.getInitializerGroovy();
+    if (initializer == null) {
+      throw new GrIntroduceRefactoringError(RefactoringBundle.message("variable.does.not.have.an.initializer", variable.getName()));
+    }
+    checkExpression(initializer);
+  }
+
+  @Override
+  protected void checkOccurrences(PsiElement[] occurrences) {
+    if (hasLhs(occurrences)) {
+      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.variable.is.used.for.write"));
+    }
+  }
+
   @Nullable
   public static GrTypeDefinition findContainingClass(GrIntroduceContext context) {
-    PsiElement place = context.expression;
+    PsiElement place = context.place;
     while (place != null) {
       final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
       if (typeDefinition == null) return null;
@@ -86,10 +104,10 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Override
-  public void runRefactoring(GrIntroduceContext context, GrIntroduceConstantSettings settings) {
+  public GrField runRefactoring(GrIntroduceContext context, GrIntroduceConstantSettings settings) {
     final PsiClass targetClass = settings.getTargetClass();
 
-    if (targetClass == null) return;
+    if (targetClass == null) return null;
 
     final GrVariableDeclaration declaration = createField(context, settings);
     if (targetClass.isInterface()) {
@@ -105,6 +123,9 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
       added = ((GrVariableDeclaration)targetClass.add(declaration));
     }
     PsiUtil.shortenReferences(added);
+    if (context.var != null) {
+      deleteLocalVar(context);
+    }
     final GrField field = (GrField)added.getVariables()[0];
     if (settings.replaceAllOccurrences()) {
       GroovyRefactoringUtil.sortOccurrences(context.occurrences);
@@ -115,6 +136,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     else {
       replaceOccurence(field, context.expression, isEscalateVisibility(settings.getVisibilityModifier()));
     }
+    return (GrField)added.getVariables()[0];
   }
 
   private static void replaceOccurence(GrField field, PsiElement occurence, boolean escalateVisibility) {

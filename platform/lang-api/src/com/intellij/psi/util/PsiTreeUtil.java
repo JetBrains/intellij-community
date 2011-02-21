@@ -312,6 +312,22 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @NotNull
+  public static List<? extends PsiElement> getChildrenOfAnyType(@Nullable final PsiElement element,
+                                                                @Nullable final Class<? extends PsiElement>... classes) {
+    if (element == null || classes == null || classes.length == 0) return Collections.emptyList();
+
+    final List<PsiElement> result = new SmartList<PsiElement>();
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      for (Class<? extends PsiElement> aClass : classes) {
+        if (aClass.isInstance(child)) {
+          result.add(child);
+        }
+      }
+    }
+    return result;
+  }
+
   @Nullable
   public static <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling == null) return null;

@@ -503,8 +503,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
             new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
             new LeftNeighbour(new OrFilter(
               new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2),
-              new AndFilter(new TextFilter(";", "}", ":"),new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 3)
-              ))))));
+              new AndFilter(new TextFilter(";", ":"),new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 3)),
+              new AndFilter(new TextFilter("}"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 4))
+              )))));
       variant.includeScopeClass(PsiElement.class, false);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);

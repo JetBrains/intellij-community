@@ -79,11 +79,11 @@ public class RecursionWeigher extends CompletionWeigher {
     if (object instanceof PsiMethod && positionMethod != null) {
       final PsiMethod method = (PsiMethod)object;
       if (PsiTreeUtil.isAncestor(reference, position, false) &&
-          Comparing.equal(method.getName(), positionMethod.getName()) &&
-          method.getParameterList().getParametersCount() == positionMethod.getParameterList().getParametersCount()) {
-        if (findDeepestSuper(method).equals(findDeepestSuper(positionMethod))) {
-          return isDelegate ? Result.delegation : Result.recursive;
+          Comparing.equal(method.getName(), positionMethod.getName())) {
+        if (!isDelegate && findDeepestSuper(method).equals(findDeepestSuper(positionMethod))) {
+          return Result.recursive;
         }
+        return RecursionWeigher.Result.delegation;
       }
     }
 

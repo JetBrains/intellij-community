@@ -1,9 +1,9 @@
 PsiJavaFile:TryIncomplete16.java
   PsiTryStatement
     PsiKeyword:try('try')
-    PsiParameterList:(R r =)
+    PsiResourceList:(R r =)
       PsiJavaToken:LPARENTH('(')
-      PsiParameter:r
+      PsiLocalVariable:r
         PsiModifierList:
           <empty list>
         PsiTypeElement:R

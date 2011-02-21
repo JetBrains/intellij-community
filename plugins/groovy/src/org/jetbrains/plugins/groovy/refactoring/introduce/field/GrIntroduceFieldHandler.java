@@ -73,22 +73,37 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @NotNull
   @Override
-  protected GrTypeDefinition findScope(GrExpression expression) {
-    final GrTypeDefinition scope = PsiTreeUtil.getParentOfType(expression, GrTypeDefinition.class);
+  protected GrTypeDefinition findScope(GrExpression expression, GrVariable variable) {
+    PsiElement place = expression == null ? variable : expression;
+    final GrTypeDefinition scope = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
     LOG.assertTrue(scope != null);
     return scope;
   }
 
   @Override
   protected void checkExpression(GrExpression selectedExpr) {
-    final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(selectedExpr, GrTypeDefinition.class);
+    checkContainingClass(selectedExpr);
+  }
+
+  private static void checkContainingClass(PsiElement place) {
+    final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
     if (containingClass == null) throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.script"));
     if (containingClass.isInterface()) {
       throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("cannot.introduce.field.in.interface"));
     }
-    if (PsiUtil.skipParentheses(selectedExpr, false) == null) {
+    if (PsiUtil.skipParentheses(place, false) == null) {
       throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("expression.contains.errors"));
     }
+  }
+
+  @Override
+  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
+    checkContainingClass(variable);
+  }
+
+  @Override
+  protected void checkOccurrences(PsiElement[] occurrences) {
+    //notning to do
   }
 
   @Override
@@ -97,10 +112,10 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Override
-  public void runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings) {
+  public GrField runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings) {
     final PsiClass targetClass = (PsiClass)context.scope;
 
-    if (targetClass == null) return;
+    if (targetClass == null) return null;
 
     final GrVariableDeclaration declaration = createField(context, settings);
 
@@ -126,6 +141,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     if (settings.removeLocalVar()) {
       deleteLocalVar(context);
     }
+
     if (settings.replaceAllOccurrences()) {
       GroovyRefactoringUtil.sortOccurrences(context.occurrences);
       for (PsiElement occurrence : context.occurrences) {
@@ -135,6 +151,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     else {
       replaceOccurence(field, context.expression);
     }
+    return field;
   }
 
   @Override
@@ -152,31 +169,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     return ContainerUtil.toArray(filtered, new PsiElement[filtered.size()]);
   }
 
-  private static void deleteLocalVar(GrIntroduceContext context) {
-    LOG.assertTrue(context.expression instanceof GrReferenceExpression);
-    final GrVariable resolved = resolveLocalVar(context);
-    final PsiElement parent = resolved.getParent();
-    if (parent instanceof GrTupleDeclaration) {
-      if (((GrTupleDeclaration)parent).getVariables().length == 1) {
-        parent.getParent().delete();
-      }
-      else {
-        final GrExpression initializerGroovy = resolved.getInitializerGroovy();
-        if (initializerGroovy != null) initializerGroovy.delete();
-        resolved.delete();
-      }
-    }
-    else {
-      if (((GrVariableDeclaration)parent).getVariables().length == 1) {
-        parent.delete();
-      }
-      else {
-        resolved.delete();
-      }
-    }
-  }
-
   private static void initializeInMethod(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrField field) {
+    if (context.expression == null) return;
     final GrExpression expression = context.expression;
     final GrTypeDefinition scope = (GrTypeDefinition)context.scope;
     final GrMethod method = getContainingMethod(expression, scope);
@@ -238,11 +232,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     GrExpression initializer = ((GrVariable)resolved).getInitializerGroovy();
     LOG.assertTrue(initializer != null);
     return initializer;
-  }
-
-  private static GrVariable resolveLocalVar(GrIntroduceContext context) {
-    LOG.assertTrue(context.expression instanceof GrReferenceExpression);
-    return (GrVariable)((GrReferenceExpression)context.expression).resolve();
   }
 
   @Nullable

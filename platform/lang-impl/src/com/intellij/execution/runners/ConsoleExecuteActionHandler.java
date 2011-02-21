@@ -57,10 +57,10 @@ public class ConsoleExecuteActionHandler {
   }
 
   public void processLine(String line) {
-    sendLine(line + "\n");
+    sendText(line + "\n");
   }
 
-  public void sendLine(String line) {
+  public void sendText(String line) {
     //final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {

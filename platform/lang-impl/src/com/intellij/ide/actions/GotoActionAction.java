@@ -19,7 +19,6 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -38,15 +37,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoActionModel(project, component), getPsiContext(e));
-    popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      public void onClose() {
-        if (GotoActionAction.class.equals(myInAction)) {
-          myInAction = null;
-        }
-      }
-
-      public void elementChosen(Object element) {
+    showNavigationPopup(e, new GotoActionModel(project, component), new GotoActionCallback<Object>() {
+      @Override
+      public void elementChosen(ChooseByNamePopup popup, Object element) {
         final AnAction action = (AnAction)((Map.Entry)element).getKey();
         if (action != null) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -62,7 +55,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }, ModalityState.NON_MODAL);
         }
       }
-    }, ModalityState.current(), true);
+    });
   }
 
 }

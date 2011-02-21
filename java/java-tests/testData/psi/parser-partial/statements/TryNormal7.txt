@@ -1,0 +1,17 @@
+PsiJavaFile:TryNormal7.java
+  PsiTryStatement
+    PsiKeyword:try('try')
+    PsiResourceList:(r; null)
+      PsiJavaToken:LPARENTH('(')
+      PsiReferenceExpression:r
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:r('r')
+      PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:null
+        PsiJavaToken:NULL_KEYWORD('null')
+      PsiJavaToken:RPARENTH(')')
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiJavaToken:RBRACE('}')

@@ -366,6 +366,12 @@ public class IdeEventQueue extends EventQueue {
 
     try {
       _dispatchEvent(e);
+    } catch (ProcessCanceledException pce) {
+      throw pce;
+    } catch (Throwable exc) {
+      if (!myToolkitBugsProcessor.process(exc)) {
+        LOG.error("Error during dispatching of " + e, exc);
+      }
     }
     finally {
       myIsInInputEvent = wasInputEvent;

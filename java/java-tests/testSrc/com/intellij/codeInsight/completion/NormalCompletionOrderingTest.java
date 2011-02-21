@@ -201,4 +201,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertFalse(getLookup().getItems().get(0).getObject() instanceof PsiClass);
   }
 
+  public void testPreferSameNamedMethods() {
+    checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+  }
+
 }

@@ -19,6 +19,7 @@ package com.intellij.ide.palette.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.PaletteItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -60,20 +61,22 @@ public class PaletteManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myPaletteWindow = new PaletteWindow(myProject);
-        myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(IdeBundle.message("toolwindow.palette"),
-                                                                                          myPaletteWindow,
-                                                                                          ToolWindowAnchor.RIGHT,
-                                                                                          myProject,
-                                                                                          true);
-        myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
-        myPaletteToolWindow.setAvailable(false, null);
-        final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
-        myFileEditorManager.addFileEditorManagerListener(myListener, myProject);
-      }
-    });
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          myPaletteWindow = new PaletteWindow(myProject);
+          myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(IdeBundle.message("toolwindow.palette"),
+                                                                                            myPaletteWindow,
+                                                                                            ToolWindowAnchor.RIGHT,
+                                                                                            myProject,
+                                                                                            true);
+          myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
+          myPaletteToolWindow.setAvailable(false, null);
+          final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
+          myFileEditorManager.addFileEditorManagerListener(myListener, myProject);
+        }
+      });
+    }
   }
 
   public void projectClosed() {

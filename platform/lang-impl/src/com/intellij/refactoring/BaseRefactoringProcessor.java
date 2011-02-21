@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
@@ -224,7 +225,12 @@ public abstract class BaseRefactoringProcessor {
                 refUsages.set(findUsages());
               }
             });
-            final Usage[] usages = UsageInfo2UsageAdapter.convert(refUsages.get());
+            final Usage[] usages = ApplicationManager.getApplication().runReadAction(new Computable<Usage[]>() {
+              @Override
+              public Usage[] compute() {
+                return UsageInfo2UsageAdapter.convert(refUsages.get());
+              }
+            });
 
             for (Usage usage : usages) {
               processor.process(usage);

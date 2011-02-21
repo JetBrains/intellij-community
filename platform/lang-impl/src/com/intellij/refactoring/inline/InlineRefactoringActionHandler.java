@@ -38,6 +38,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -57,6 +58,8 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
         return;
       }
     }
+
+    invokeInliner(editor, elements[0]);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -78,7 +81,7 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
     }
   }
 
-  public static boolean invokeInliner(Editor editor, PsiElement element) {
+  public static boolean invokeInliner(@Nullable Editor editor, PsiElement element) {
     final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(element.getLanguage());
     for (InlineHandler handler : handlers) {
       if (GenericInlineHandler.invoke(element, editor, handler)) {
