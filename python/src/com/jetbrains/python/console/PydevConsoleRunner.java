@@ -24,8 +24,6 @@ import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
-import com.jetbrains.python.sdk.JythonSdkFlavor;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,15 +137,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
 
     final LanguageConsoleImpl console = getConsoleView().getConsole();
-
-    //TODO: it is a dirty hack, implement proper handshake for processes
-    if (PythonSdkFlavor.getFlavor(mySdk.getHomePath()) instanceof JythonSdkFlavor) {
-      try {
-        Thread.sleep(3000);
-      }
-      catch (InterruptedException e) {
-      }
-    }
 
     if (handshake()) {
       // Make executed statements visible to developers
