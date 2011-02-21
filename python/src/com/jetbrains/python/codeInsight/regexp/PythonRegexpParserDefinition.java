@@ -6,28 +6,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
-import org.intellij.lang.regexp.RegExpFile;
-import org.intellij.lang.regexp.RegExpLexer;
-import org.intellij.lang.regexp.RegExpParser;
-import org.intellij.lang.regexp.RegExpParserDefinition;
+import org.intellij.lang.regexp.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
 
 /**
  * @author yole
  */
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
+  private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.DANGLING_METACHARACTERS,
+                                                                    RegExpCapability.OCTAL_NO_LEADING_ZERO);
 
   @NotNull
   public Lexer createLexer(Project project) {
-    return new RegExpLexer(false, true, false, true);
+    return new RegExpLexer(CAPABILITIES);
   }
 
   @Override
   public PsiParser createParser(Project project) {
-    RegExpParser regExpParser = new RegExpParser();
-    regExpParser.setAllowDanglingMetacharacters(true);
-    return regExpParser;
+    return new RegExpParser(CAPABILITIES);
   }
 
   @Override
