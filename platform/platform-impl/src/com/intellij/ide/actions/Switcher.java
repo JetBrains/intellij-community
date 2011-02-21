@@ -22,13 +22,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -48,6 +44,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
@@ -158,7 +155,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
-    final Map<VirtualFile, FileEditor> files2editors;
+    //final Map<VirtualFile, FileEditor> files2editors;
     final Map<String, ToolWindow> twShortcuts;
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
@@ -250,38 +247,37 @@ public class Switcher extends AnAction implements DumbAware {
           return new Dimension(5, max.height);
         }
       };
-      separator.setBackground(Color.WHITE);      
+      separator.setBackground(Color.WHITE);
 
-      final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-      final FileEditor[] allEditors = editorManager.getAllEditors();
-      files2editors = new HashMap<VirtualFile, FileEditor>();
-      for (FileEditor editor : allEditors) {
-        files2editors.put(((FileEditorManagerImpl)editorManager).getFile(editor), editor);
+      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      final ArrayList<FileEditorInfo> filesData = new ArrayList<FileEditorInfo>();
+      final ArrayList<FileEditorInfo> editors = new ArrayList<FileEditorInfo>();
+      for (EditorsSplitters splitters : editorManager.getAllSplitters()) {
+        for (EditorWindow window : splitters.getWindows()) {
+          for (VirtualFile file : window.getFiles()) {
+            editors.add(new FileEditorInfo(file, window));
+          }
+        }
       }
-      final ArrayList<VirtualFile> openFiles = new ArrayList<VirtualFile>();
-      final ArrayList<VirtualFile> editorFiles = new ArrayList<VirtualFile>();
-      for (EditorsSplitters splitters : ((FileEditorManagerImpl)editorManager).getAllSplitters()) {
-        editorFiles.addAll(Arrays.asList(splitters.getOpenFiles()));
-      }
-      if (editorFiles.size() < 2) {
+      if (editors.size() < 2) {
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
-        final int len = Math.min(toolWindows.getModel().getSize(), Math.max(editorFiles.size(), recentFiles.length));
+        final int len = Math.min(toolWindows.getModel().getSize(), Math.max(editors.size(), recentFiles.length));
         for (int i = 0; i < len; i++) {
-          openFiles.add(recentFiles[i]);
+          filesData.add(new FileEditorInfo(recentFiles[i], null));
         }
       } else {
         try {
-          ContainerUtil.sort(editorFiles, new RecentFilesComparator(project));
+          ContainerUtil.sort(editors, new RecentFilesComparator(project));
         } catch (Exception e) {// IndexNotReadyException
         }
-        for (int i = 0; i < Math.min(MAX_FILES, editorFiles.size()); i++) {
-          openFiles.add(editorFiles.get(i));
+        for (int i = 0; i < Math.min(MAX_FILES, editors.size()); i++) {
+          filesData.add(editors.get(i));
         }
       }
 
       final DefaultListModel filesModel = new DefaultListModel();
-      for (VirtualFile openFile : openFiles) {
-        filesModel.addElement(openFile);
+      for (FileEditorInfo editor : filesData) {
+        filesModel.addElement(editor);
       }
 
       files = new JBList(filesModel);
@@ -346,7 +342,7 @@ public class Switcher extends AnAction implements DumbAware {
         private void updatePathLabel() {
           final Object[] values = files.getSelectedValues();
           if (values != null && values.length == 1) {
-            final VirtualFile parent = ((VirtualFile)values[0]).getParent();
+            final VirtualFile parent = ((FileEditorInfo)values[0]).file.getParent();
             if (parent != null) {
               pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
             } else {
@@ -460,25 +456,28 @@ public class Switcher extends AnAction implements DumbAware {
 
     private void closeTabOrToolWindow() {
       final Object value = getSelectedList().getSelectedValue();
-      if (value instanceof VirtualFile) {
-        final VirtualFile virtualFile = (VirtualFile)value;
-        final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        if (editorManager instanceof FileEditorManagerImpl) {
-          final JList jList = getSelectedList();
-          ((FileEditorManagerImpl)editorManager).closeFile(virtualFile, false);
-          final int selectedIndex = jList.getSelectedIndex();
-          if (jList.getModel().getSize() == 1) {
-            goLeft();
-            ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
-            this.remove(jList);
-            this.remove(separator);
-          } else {
-            goForward();
-            ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
-            jList.setSize(jList.getPreferredSize());
-          }
-          pack();
+      if (value instanceof FileEditorInfo) {
+        final FileEditorInfo info = (FileEditorInfo)value;
+        final VirtualFile virtualFile = info.file;
+        final FileEditorManagerImpl editorManager = ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
+        final JList jList = getSelectedList();
+        if (info.window == null) {
+          editorManager.closeFile(virtualFile, false);
+        } else {
+          editorManager.closeFile(virtualFile, info.window, false);
         }
+        final int selectedIndex = jList.getSelectedIndex();
+        if (jList.getModel().getSize() == 1) {
+          goLeft();
+          ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+          this.remove(jList);
+          this.remove(separator);
+        } else {
+          goForward();
+          ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
+          jList.setSize(jList.getPreferredSize());
+        }
+        pack();
       } else if (value instanceof ToolWindow) {
         final ToolWindow toolWindow = (ToolWindow)value;
         if (twManager instanceof ToolWindowManagerImpl) {
@@ -587,26 +586,39 @@ public class Switcher extends AnAction implements DumbAware {
       if (value instanceof ToolWindow) {
         ((ToolWindow)value).activate(null, true, true);
       }
-      else if (value instanceof VirtualFile) {
-        final VirtualFile file = (VirtualFile)value;
+      else if (value instanceof FileEditorInfo) {
+        final FileEditorInfo info = (FileEditorInfo)value;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
-            FileEditorManager.getInstance(project).openFile(file, true, true);
+            final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+            if (info.window != null) {
+              manager.openFileImpl2(info.window, info.file, true);
+            } else {
+              manager.openFile(info.file, true);
+            }
           }
         });
       }
     }
 
-    private class RecentFilesComparator implements Comparator<VirtualFile> {
-      private final VirtualFile[] recentFiles;
+    private class RecentFilesComparator implements Comparator<FileEditorInfo> {
+      private Map<FileEditorInfo, Integer> tabs = new HashMap<FileEditorInfo, Integer>();
 
       public RecentFilesComparator(Project project) {
-        recentFiles = EditorHistoryManager.getInstance(project).getFiles();
+        final List<TabInfo> history = ((FileEditorManagerImpl)FileEditorManager.getInstance(project)).getTabsHistory();
+        for (int i = 0; i < history.size(); i++) {
+          final TabInfo info = history.get(i);
+          if (info.getObject() instanceof VirtualFile && info.getComponent() instanceof EditorWindowHolder) {
+            tabs.put(new FileEditorInfo((VirtualFile)info.getObject(), ((EditorWindowHolder)info.getComponent()).getEditorWindow()), i);
+          }
+        }
       }
 
-      public int compare(VirtualFile vf1, VirtualFile vf2) {
-        return ArrayUtil.find(recentFiles, vf2) - ArrayUtil.find(recentFiles, vf1);
+      public int compare(FileEditorInfo vf1, FileEditorInfo vf2) {
+        final Integer index1 = tabs.get(vf1);
+        final Integer index2 = tabs.get(vf2);
+        return index1 == null && index2 == null ? 0 : index1 == null ? 1 : index2 == null ? -1 : index1 - index2;
       }
     }
 
@@ -673,8 +685,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof VirtualFile) {
-        final VirtualFile virtualFile = (VirtualFile)value;
+      if (value instanceof FileEditorInfo) {
+        final VirtualFile virtualFile = ((FileEditorInfo)value).file;
         final String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
@@ -743,6 +755,36 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       return new ImageIcon(img);
+    }
+  }
+
+  private static class FileEditorInfo {
+    final VirtualFile file;
+    final EditorWindow window;
+
+    private FileEditorInfo(VirtualFile file, EditorWindow window) {
+      this.file = file;
+      this.window = window;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FileEditorInfo that = (FileEditorInfo)o;
+
+      if (!file.equals(that.file)) return false;
+      if (!window.equals(that.window)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = file.hashCode();
+      result = 31 * result + window.hashCode();
+      return result;
     }
   }
 }
