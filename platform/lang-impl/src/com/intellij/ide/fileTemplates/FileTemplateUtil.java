@@ -311,7 +311,7 @@ public class FileTemplateUtil{
     final Properties finalProps = props;
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
       public void run(){
-        final Runnable run = new Runnable(){
+        ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run(){
             try{
               CreateFromTemplateHandler handler = findHandler(template);
@@ -321,8 +321,7 @@ public class FileTemplateUtil{
               commandException[0] = ex;
             }
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(run);
+        });
       }
     }, template.isJavaClassTemplate()
        ? IdeBundle.message("command.create.class.from.template")
