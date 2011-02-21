@@ -55,6 +55,14 @@ public class GitUIUtil {
    */
   private GitUIUtil() { }
 
+  public static String stringifyErrors(List<VcsException> errors) {
+    StringBuilder content = new StringBuilder();
+    for (VcsException e : errors) {
+      content.append(e.getLocalizedMessage()).append("<br/>");
+    }
+    return content.toString();
+  }
+
   /**
    * Displays a "success"-notification.
    */
