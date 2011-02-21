@@ -90,9 +90,10 @@ public class PlatformPackageUtil {
                                                              GlobalSearchScope scope,
                                                              String packageName,
                                                              PsiDirectory baseDir,
-                                                             boolean askUserToCreate) throws IncorrectOperationException {
+                                                             boolean askUserToCreate,
+                                                             ThreeState chooseFlag) throws IncorrectOperationException {
     PsiDirectory psiDirectory = null;
-    if (!"".equals(packageName)) {
+    if (chooseFlag == ThreeState.UNSURE && !"".equals(packageName)) {
       String rootPackage = findLongestExistingPackage(project, packageName, scope);
       if (rootPackage != null) {
         int beginIndex = rootPackage.length() + 1;
@@ -108,19 +109,25 @@ public class PlatformPackageUtil {
     }
 
     if (psiDirectory == null) {
-      if (module != null && !checkSourceRootsConfigured(module)) return null;
-      final GlobalSearchScope scope_ = scope;
-      List<PsiDirectory> dirs =
-        ContainerUtil
-          .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(), new Function<VirtualFile, PsiDirectory>() {
-            @Override
-            public PsiDirectory fun(VirtualFile virtualFile) {
-              return scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null;
-            }
-          });
-      psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
-                                                          File.separatorChar + packageName.replace('.', File.separatorChar));
-      if (psiDirectory == null) return null;
+      if (chooseFlag == ThreeState.NO && baseDir != null) {
+        VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(baseDir.getVirtualFile());
+        psiDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
+      }
+      else {
+        if (module != null && !checkSourceRootsConfigured(module)) return null;
+        final GlobalSearchScope scope_ = scope;
+        List<PsiDirectory> dirs =
+          ContainerUtil
+            .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(), new Function<VirtualFile, PsiDirectory>() {
+              @Override
+              public PsiDirectory fun(VirtualFile virtualFile) {
+                return scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null;
+              }
+            });
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
+                                                            File.separatorChar + packageName.replace('.', File.separatorChar));
+        if (psiDirectory == null) return null;
+      }
     }
 
     String restOfName = packageName;

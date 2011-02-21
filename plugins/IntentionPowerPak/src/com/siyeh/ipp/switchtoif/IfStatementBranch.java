@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,23 @@
  */
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 
 import java.util.*;
 
 class IfStatementBranch{
 
-    private Set<String> m_topLevelVariables = new HashSet<String>(3);
-    private Set<String> m_innerVariables = new HashSet<String>(3);
+    private final Set<String> topLevelVariables = new HashSet<String>(3);
     private final LinkedList<String> comments = new LinkedList<String>();
     private final LinkedList<String> statementComments = new LinkedList<String>();
-    private final List<String> m_conditions = new ArrayList<String>(3);
-    private PsiStatement m_statement = null;
-    private boolean m_else = false;
+    private final List<String> conditions = new ArrayList<String>(3);
+    private final PsiStatement statement;
+    private final boolean elseBranch;
 
-    public IfStatementBranch() {
+    public IfStatementBranch(PsiStatement branch, boolean elseBranch) {
+        statement = branch;
+        this.elseBranch = elseBranch;
+        calculateVariablesDeclared(statement);
     }
 
     public void addComment(String comment){
@@ -41,58 +43,31 @@ class IfStatementBranch{
     }
 
     public void addCondition(String conditionString){
-        m_conditions.add(conditionString);
-    }
-
-    public void setStatement(PsiStatement statement){
-        m_statement = statement;
+        conditions.add(conditionString);
     }
 
     public PsiStatement getStatement(){
-        return m_statement;
+        return statement;
     }
 
     public List<String> getConditions(){
-        return Collections.unmodifiableList(m_conditions);
+        return Collections.unmodifiableList(conditions);
     }
 
     public boolean isElse(){
-        return m_else;
+        return elseBranch;
     }
 
-    public void setElse(){
-        m_else = true;
-    }
-
-    public void setTopLevelVariables(Set<String> topLevelVariables){
-        m_topLevelVariables = new HashSet<String>(topLevelVariables);
-    }
-
-    public void setInnerVariables(Set<String> innerVariables){
-        m_innerVariables = new HashSet<String>(innerVariables);
-    }
-
-    private Set<String> getTopLevelVariables(){
-        return Collections.unmodifiableSet(m_topLevelVariables);
-    }
-
-    private Set<String> getInnerVariables(){
-        return Collections.unmodifiableSet(m_innerVariables);
-    }
-
-    public boolean topLevelDeclarationsConfictWith(
+    public boolean topLevelDeclarationsConflictWith(
             IfStatementBranch testBranch){
-        final Set<String> innerVariables = testBranch.getInnerVariables();
-        final Set<String> topLevel = testBranch.getTopLevelVariables();
-        return hasNonEmptyIntersection(m_topLevelVariables, topLevel) ||
-                hasNonEmptyIntersection(m_topLevelVariables,
-                                        innerVariables);
+        final Set<String> topLevel = testBranch.topLevelVariables;
+        return intersects(topLevelVariables, topLevel);
     }
 
-    private static boolean hasNonEmptyIntersection(Set<String> set1,
-                                                   Set<String> set2){
-        for(final String set1Element : set1){
-            if(set2.contains(set1Element)){
+    private static boolean intersects(Set<String> set1,
+                                      Set<String> set2){
+        for(final String s : set1){
+            if(set2.contains(s)){
                 return true;
             }
         }
@@ -105,5 +80,29 @@ class IfStatementBranch{
 
     public List<String> getStatementComments() {
         return statementComments;
+    }
+
+    public void calculateVariablesDeclared(PsiStatement statement){
+        if(statement == null){
+            return;
+        }
+        if(statement instanceof PsiDeclarationStatement){
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement) statement;
+            final PsiElement[] elements =
+                    declarationStatement.getDeclaredElements();
+            for(PsiElement element : elements){
+                final PsiVariable variable = (PsiVariable) element;
+                final String varName = variable.getName();
+                topLevelVariables.add(varName);
+            }
+        } else if(statement instanceof PsiBlockStatement){
+            final PsiBlockStatement block = (PsiBlockStatement) statement;
+            final PsiCodeBlock codeBlock = block.getCodeBlock();
+            final PsiStatement[] statements = codeBlock.getStatements();
+            for(PsiStatement statement1 : statements){
+                calculateVariablesDeclared(statement1);
+            }
+        }
     }
 }

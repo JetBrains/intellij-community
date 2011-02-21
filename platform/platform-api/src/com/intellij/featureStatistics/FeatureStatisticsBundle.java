@@ -39,15 +39,14 @@ public class FeatureStatisticsBundle {
   }
 
   private static ResourceBundle getBundle(final String key) {
-    // bundles provided by plugins
-    for (FeatureStatisticsBundleProvider provider : FeatureStatisticsBundleProvider.EP_NAME.getExtensions()) {
-      final ResourceBundle bundle = provider.getBundleFor(key);
-      if (bundle != null) {
+    final FeatureStatisticsBundleProvider[] providers = FeatureStatisticsBundleProvider.EP_NAME.getExtensions();
+    for (FeatureStatisticsBundleProvider provider : providers) {
+      final ResourceBundle bundle = provider.getBundle();
+      if (bundle.containsKey(key)) {
         return bundle;
       }
     }
 
-    // default bundle
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
     if (bundle == null) {

@@ -375,7 +375,7 @@ public class StatementParser {
     }
 
     final PsiBuilder.Marker afterParenth = builder.mark();
-    final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false, false);
+    final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false, false, false);
     if (param == null || JavaParserUtil.exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
       return parseForLoopFromInitialization(builder, statement);
@@ -612,6 +612,12 @@ public class StatementParser {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
+    boolean hasResourceList = false;
+    if (areTryWithResourcesSupported(builder) && builder.getTokenType() == JavaTokenType.LPARENTH) {
+      hasResourceList = true;
+      DeclarationParser.parseResourceList(builder);
+    }
+
     final PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
     if (tryBlock == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
@@ -619,7 +625,7 @@ public class StatementParser {
       return statement;
     }
 
-    if (!TRY_CLOSERS_SET.contains(builder.getTokenType())) {
+    if (!hasResourceList && !TRY_CLOSERS_SET.contains(builder.getTokenType())) {
       error(builder, JavaErrorMessages.message("expected.catch.or.finally"));
       done(statement, JavaElementType.TRY_STATEMENT);
       return statement;
@@ -651,7 +657,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false, areMultiCatchSupported(builder));
+    final PsiBuilder.Marker param = DeclarationParser.parseParameter(builder, false, areMultiCatchSupported(builder), false);
     if (param == null) {
       error(builder, JavaErrorMessages.message("expected.parameter"));
     }

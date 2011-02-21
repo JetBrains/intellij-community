@@ -47,8 +47,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected final PsiElement[] myElementsToMove;
   private final boolean mySearchForReferences;
-  private final boolean mySearchInComments;
-  private final boolean mySearchInNonJavaFiles;
+  protected final boolean mySearchInComments;
+  protected final boolean mySearchInNonJavaFiles;
   private final PsiDirectory myNewParent;
   private final MoveCallback myMoveCallback;
   private NonCodeUsageInfo[] myNonCodeUsages;

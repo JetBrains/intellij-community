@@ -30,13 +30,11 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -97,31 +95,9 @@ public class MoveClassesOrPackagesUtil {
                                        final PsiElement element,
                                        final String newQName,
                                        ArrayList<UsageInfo> results) {
-    if (searchInStringsAndComments || searchInNonJavaFiles) {
-      final String stringToSearch = getStringToSearch(element);
-      if (stringToSearch == null) return;
-      TextOccurrencesUtil.UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
-
-      if (searchInStringsAndComments) {
-        TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, results, factory);
-      }
-
-      if (searchInNonJavaFiles) {
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-        TextOccurrencesUtil.addTextOccurences(element, stringToSearch, projectScope, results, factory);
-      }
-    }
-  }
-
-  private static TextOccurrencesUtil.UsageInfoFactory createUsageInfoFactory(final PsiElement element,
-                                                                         final String newQName) {
-    return new TextOccurrencesUtil.UsageInfoFactory() {
-      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        int start = usage.getTextRange().getStartOffset();
-        return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
-                                       newQName);
-      }
-    };
+    final String stringToSearch = getStringToSearch(element);
+    if (stringToSearch == null) return;
+    TextOccurrencesUtil.findNonCodeUsages(element, stringToSearch, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
   }
 
   private static String getStringToSearch(PsiElement element) {

@@ -51,6 +51,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
 
+  @NonNls String ACTION_EDITOR_REFORMAT = "ReformatCode";
 
 
   @NonNls String ACTION_COMMENT_LINE = "CommentByLineComment";

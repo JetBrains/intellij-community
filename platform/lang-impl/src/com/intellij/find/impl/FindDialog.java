@@ -19,7 +19,6 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
@@ -108,9 +107,6 @@ class FindDialog extends DialogWrapper {
   private JRadioButton myRbCustomScope;
   private ScopeChooserCombo myScopeCombo;
 
-  private LivePreviewController myLivePreviewController;
-
-
   public FindDialog(Project project, FindModel model, Runnable myOkHandler){
     super(project, true);
     myProject = project;
@@ -139,7 +135,7 @@ class FindDialog extends DialogWrapper {
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     init();
     initByModel();
-    myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());
+    //myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());
   }
 
   @Override
@@ -148,9 +144,9 @@ class FindDialog extends DialogWrapper {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
-    if (myLivePreviewController != null) {
-      myLivePreviewController.cleanUp();
-    }
+    //if (myLivePreviewController != null) {
+    //  myLivePreviewController.cleanUp();
+    //}
     super.dispose();
   }
 

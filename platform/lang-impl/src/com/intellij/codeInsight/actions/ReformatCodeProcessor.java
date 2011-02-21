@@ -28,11 +28,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
+  
+  public static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code");
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeProcessor");
 
   private final TextRange myRange;
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
-  private static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code");
 
   public ReformatCodeProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT);

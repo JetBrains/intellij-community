@@ -899,7 +899,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       PsiParameter[] parameters = statement.getCatchBlockParameters();
       for (PsiParameter parameter : parameters) {
-        myHolder.add(HighlightUtil.checkExceptionThrownInTry(parameter));
+        myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter));
         myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
         myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
       }

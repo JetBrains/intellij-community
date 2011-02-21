@@ -16,16 +16,15 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
 /**
+ * @author Konstantin Bulenkov
  * @author Roman.Chernyatchik
  */
 public interface FeatureStatisticsBundleProvider {
   ExtensionPointName<FeatureStatisticsBundleProvider> EP_NAME = new ExtensionPointName<FeatureStatisticsBundleProvider>("com.intellij.featureStatBundle");
 
-  @Nullable
-  ResourceBundle getBundleFor(String key);  
+  ResourceBundle getBundle();
 }

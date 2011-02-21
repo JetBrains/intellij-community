@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 30, 2002
- */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -60,6 +56,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author cdr
+ * Date: Jul 30, 2002
+ */
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
@@ -853,14 +853,23 @@ public class HighlightUtil {
 
 
   @Nullable
-  static HighlightInfo checkExceptionThrownInTry(final PsiParameter parameter) {
+  static Collection<HighlightInfo> checkExceptionThrownInTry(final PsiParameter parameter) {
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiCatchSection)) return null;
+
+    final Set<PsiClassType> thrownTypes = Sets.newHashSet();
 
     final PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
     final PsiCodeBlock tryBlock = statement.getTryBlock();
     assert tryBlock != null : statement;
-    final Collection<PsiClassType> thrownTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+    thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
+
+    final PsiParameterList resources = statement.getResourceList();
+    if (resources != null) {
+      thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(resources, resources));
+    }
+
+    // todo: add exceptions from resource's close() method
 
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
@@ -874,9 +883,9 @@ public class HighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo checkSimpleCatchParameter(final PsiParameter parameter,
-                                                         final Collection<PsiClassType> thrownTypes,
-                                                         final PsiClassType caughtType) {
+  private static Collection<HighlightInfo> checkSimpleCatchParameter(final PsiParameter parameter,
+                                                                     final Collection<PsiClassType> thrownTypes,
+                                                                     final PsiClassType caughtType) {
     if (ExceptionUtil.isUncheckedExceptionOrSuperclass(caughtType)) return null;
 
     for (PsiClassType exceptionType : thrownTypes) {
@@ -886,12 +895,17 @@ public class HighlightUtil {
     final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
     final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, description);
     QuickFixAction.registerQuickFixAction(errorResult, new DeleteCatchFix(parameter));
-    return errorResult;
+    return Lists.newArrayList(errorResult);
   }
 
   @Nullable
-  private static HighlightInfo checkMultiCatchParameter(final PsiParameter parameter, final Collection<PsiClassType> thrownTypes) {
-    for (PsiTypeElement typeElement : PsiTreeUtil.getChildrenOfTypeAsList(parameter.getTypeElement(), PsiTypeElement.class)) {
+  private static Collection<HighlightInfo> checkMultiCatchParameter(final PsiParameter parameter,
+                                                                    final Collection<PsiClassType> thrownTypes) {
+    final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(parameter.getTypeElement(), PsiTypeElement.class);
+    final Collection<HighlightInfo> highlights = Lists.newArrayListWithCapacity(typeElements.size());
+
+    for (int i = 0, size = typeElements.size(); i < size; i++) {
+      final PsiTypeElement typeElement = typeElements.get(i);
       final PsiType catchType = typeElement.getType();
       if (catchType instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)catchType)) continue;
 
@@ -902,15 +916,28 @@ public class HighlightUtil {
           break;
         }
       }
-      if (used) continue;
+      if (!used) {
+        final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(catchType));
+        final HighlightInfo highlight = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+        QuickFixAction.registerQuickFixAction(highlight, new DeleteMultiCatchFix(typeElement));
+        highlights.add(highlight);
+        continue;
+      }
 
-      final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(catchType));
-      final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
-      QuickFixAction.registerQuickFixAction(errorResult, new DeleteMultiCatchFix(typeElement));
-      return errorResult;
+      for (int j = size - 1; j > i; j--) {
+        final PsiTypeElement nextElement = typeElements.get(j);
+        final PsiType nextType = nextElement.getType();
+        if (nextType.isAssignableFrom(catchType)) {
+          final String description = JavaErrorMessages.message("exception.double.caught.in.multi", formatType(catchType), formatType(nextType));
+          final HighlightInfo highlight = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, typeElement, description);
+          QuickFixAction.registerQuickFixAction(highlight, new DeleteMultiCatchFix(typeElement));
+          highlights.add(highlight);
+          break;
+        }
+      }
     }
 
-    return null;
+    return highlights;
   }
 
 
