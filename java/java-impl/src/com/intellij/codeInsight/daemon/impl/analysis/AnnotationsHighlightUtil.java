@@ -19,13 +19,19 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -221,7 +227,7 @@ public class AnnotationsHighlightUtil {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.invalid.annotation.member.type"));
   }
 
-  public static HighlightInfo checkApplicability(PsiAnnotation annotation) {
+  public static HighlightInfo checkApplicability(final PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter)) return null;
     PsiElement member = ((PsiElement)owner).getParent();
@@ -231,7 +237,9 @@ public class AnnotationsHighlightUtil {
     String description = JavaErrorMessages.message("annotation.not.applicable",
                                                    nameRef.getText(),
                                                    JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
+    return highlightInfo;
   }
 
   public static boolean isAnnotationApplicableTo(PsiAnnotation annotation, boolean strict, String... elementTypeFields) {
@@ -443,6 +451,41 @@ public class AnnotationsHighlightUtil {
       if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) return Boolean.TRUE;
 
       return classType.equalsToText("java.lang.Class") || classType.equalsToText("java.lang.String") ? Boolean.TRUE : Boolean.FALSE;
+    }
+  }
+
+  private static class DeleteNotApplicableAnnotationAction implements IntentionAction {
+    private final PsiAnnotation myAnnotation;
+
+    public DeleteNotApplicableAnnotationAction(PsiAnnotation annotation) {
+      myAnnotation = annotation;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Remove";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myAnnotation.delete();
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
     }
   }
 }
