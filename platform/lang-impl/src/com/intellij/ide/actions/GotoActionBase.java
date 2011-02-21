@@ -16,7 +16,9 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Author: msk
@@ -71,6 +74,7 @@ public abstract class GotoActionBase extends AnAction {
     return true;
   }
 
+  @Nullable
   public static PsiElement getPsiContext(final AnActionEvent e) {
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null) return file;
@@ -78,11 +82,47 @@ public abstract class GotoActionBase extends AnAction {
     return getPsiContext(project);
   }
 
+  @Nullable
   public static PsiElement getPsiContext(final Project project) {
     if (project == null) return null;
     Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (selectedEditor == null) return null;
     Document document = selectedEditor.getDocument();
     return PsiDocumentManager.getInstance(project).getPsiFile(document);
+  }
+
+  protected static abstract class GotoActionCallback<T> {
+    @Nullable
+    protected ChooseByNameFilter<T> createFilter(ChooseByNamePopup popup) {
+      return null;
+    }
+
+    public abstract void elementChosen(ChooseByNamePopup popup, Object element);
+  }
+
+  protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+
+    final Class startedAction = myInAction;
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+    final ChooseByNameFilter<T> filter = callback.createFilter(popup);
+    popup.invoke(new ChooseByNamePopupComponent.Callback() {
+
+      @Override
+      public void onClose() {
+        if (startedAction.equals(myInAction)) {
+          myInAction = null;
+        }
+        if (filter != null) {
+          filter.close();
+        }
+      }
+
+      @Override
+      public void elementChosen(Object element) {
+        callback.elementChosen(popup, element);
+      }
+    }, ModalityState.current(), true);
+
   }
 }

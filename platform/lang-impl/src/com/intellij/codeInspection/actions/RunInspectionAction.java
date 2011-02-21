@@ -27,20 +27,16 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,26 +53,30 @@ public class RunInspectionAction extends GotoActionBase {
   @Override
   protected void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     final VirtualFile virtualFile = LangDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (project == null || virtualFile == null) return;
+    if (virtualFile == null) return;
+
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoInspectionModel(project), getPsiContext(e));
-    popup.setSearchInAnyPlace(true);
-    popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      public void onClose() {
-        if (RunInspectionAction.class.equals(myInAction)) {
-          myInAction = null;
-        }
+    final GotoInspectionModel model = new GotoInspectionModel(project);
+    showNavigationPopup(e, model, new GotoActionCallback<Object>() {
+      @Override
+      protected ChooseByNameFilter<Object> createFilter(ChooseByNamePopup popup) {
+        popup.setSearchInAnyPlace(true);
+        return super.createFilter(popup);
       }
 
-      public void elementChosen(Object element) {
-        final InspectionProfileEntry profileEntry = (InspectionProfileEntry)element;
-        runInspection(project, profileEntry, virtualFile, psiElement, psiFile);
+      @Override
+      public void elementChosen(ChooseByNamePopup popup, Object element) {
+        runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
       }
-    }, ModalityState.current(), true);
+    });
   }
 
   private static void runInspection(@NotNull Project project,
