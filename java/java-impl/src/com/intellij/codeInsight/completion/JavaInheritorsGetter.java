@@ -135,8 +135,11 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         final PsiStatement statement = elementFactory
           .createStatementFromText(psiType.getCanonicalText() + " v = new " + canonicalText + "<>()", parameters.getOriginalFile());
         final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
-        final PsiExpression initializer = declaredVar.getInitializer();
-        psiType = initializer.getType();
+        final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
+        final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondType.hasDefaultConstructor(psiClass) || !PsiDiamondType.haveConstructorsGenericsParameters(psiClass);
+        if (hasDefaultConstructorOrNoGenericsOne && PsiDiamondType.resolveInferredTypes(initializer).getErrorMessage() == null) {
+          psiType = initializer.getType();
+        }
       }
     }
     final LookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());

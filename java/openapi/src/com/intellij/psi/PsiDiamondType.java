@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -299,5 +300,47 @@ public class PsiDiamondType extends PsiType {
         }
       });
     }
+  }
+
+  public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
+    final PsiMethod[] constructors = psiClass.getConstructors();
+    for (PsiMethod method : constructors) {
+      if (method.getParameterList().getParametersCount() == 0) return true;
+    }
+    return constructors.length == 0;
+  }
+
+  public static boolean haveConstructorsGenericsParameters(@NotNull final PsiClass psiClass) {
+    for (PsiMethod method : psiClass.getConstructors()) {
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        final PsiType type = parameter.getType();
+        final Boolean accept = type.accept(new PsiTypeVisitor<Boolean>() {
+          @Override
+          public Boolean visitArrayType(PsiArrayType arrayType) {
+            return arrayType.getComponentType().accept(this);
+          }
+
+          @Override
+          public Boolean visitClassType(PsiClassType classType) {
+            for (PsiType psiType : classType.getParameters()) {
+              if (psiType != null) {
+                final Boolean typaParamFound = psiType.accept(this);
+                if (typaParamFound != null && typaParamFound) return true;
+              }
+            }
+            return PsiUtil.resolveClassInType(classType) instanceof PsiTypeParameter;
+          }
+
+          @Override
+          public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+            final PsiType bound = wildcardType.getBound();
+            if (bound == null) return false;
+            return bound.accept(this);
+          }
+        });
+        if (accept != null && accept.booleanValue()) return true;
+      }
+    }
+    return false;
   }
 }
