@@ -93,7 +93,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       return;
     }
 
-    if (myCurrentIndentSize != -1) {
+    if (myCurrentIndentSize != -1 && !StringUtil.isEmptyOrSpaces(line)) {
       final int indent = myIndentHelper.getIndent(line, false);
       if (indent >= myCurrentIndentSize) {
         indentEditor(currentEditor, indent);
