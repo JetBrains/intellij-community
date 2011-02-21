@@ -33,15 +33,18 @@ public abstract class SpellCheckerDictionaryGenerator {
   protected SpellCheckerManager mySpellCheckerManager;
   protected NamesValidator[] myNamesValidators;
 
-  public SpellCheckerDictionaryGenerator(final MultiMap<String, String> dict2FolderMap, final Project project,
-                                         final String dictOutputFolder, final String defaultDictName) {
-    myDict2FolderMap = dict2FolderMap;
+  public SpellCheckerDictionaryGenerator(final Project project, final String dictOutputFolder, final String defaultDictName) {
+    myDict2FolderMap = new MultiMap<String, String>();
     myProject = project;
     myDefaultDictName = defaultDictName;
     mySpellCheckerManager = SpellCheckerManager.getInstance(myProject);
     myNamesValidators = SpellCheckingInspection.getNamesValidators();
     myDictOutputFolder = dictOutputFolder;
     SpellCheckingInspection.ensureFactoriesAreLoaded();
+  }
+
+  public void addFolder(String dictName, String path) {
+    myDict2FolderMap.putValue(dictName, path);
   }
 
   public void generate() {
