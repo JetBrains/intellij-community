@@ -582,6 +582,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
+  public void testFieldNegation() throws Throwable { doTest('!');}
+
   public void testSuperInConstructor() throws Throwable {
     doTest();
   }
