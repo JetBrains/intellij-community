@@ -98,8 +98,12 @@ public abstract class SpellCheckerDictionaryGenerator {
       final File dictionaryFile = new File(outFile);
       FileUtil.createIfDoesntExist(dictionaryFile);
       final FileWriter writer = new FileWriter(dictionaryFile.getPath());
-      writer.write(builder.toString());
-      writer.close();
+      try {
+        writer.write(builder.toString());
+      }
+      finally {
+        writer.close();
+      }
     }
     catch (IOException e) {
       LOG.error(e);
@@ -114,8 +118,9 @@ public abstract class SpellCheckerDictionaryGenerator {
         continue;
       }
       final PsiFile file = manager.findFile(virtualFile);
-      assert file != null;
-      processFile(file, seenNames);
+      if (file != null) {
+        processFile(file, seenNames);
+      }
     }
   }
 
