@@ -202,6 +202,10 @@ public class AndroidApkBuilder {
       Set<String> duplicates = new HashSet<String>();
       Set<String> entries = new HashSet<String>();
       for (String externalJar : externalJars) {
+        if (new File(externalJar).isDirectory()) {
+          result.get(CompilerMessageCategory.ERROR).add(externalJar + " is directory. Directory libraries are not supported");
+          return result;
+        }
         collectDuplicateEntries(externalJar, entries, duplicates);
       }
 
