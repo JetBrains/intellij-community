@@ -27,14 +27,14 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean xmlSchemaMode;
 
     private boolean allowDanglingMetacharacters;
-    private boolean allowRBracketInCharacterClass;
+    private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
 
-    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass, boolean allowOctalNoLeadingZero) {
+    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowNestedCharacterClasses, boolean allowOctalNoLeadingZero) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = xmlSchemaMode;
       this.allowDanglingMetacharacters = allowDanglingMetacharacters;
-      this.allowRBracketInCharacterClass = allowRBracketInCharacterClass;
+      this.allowNestedCharacterClasses = allowNestedCharacterClasses;
       this.allowOctalNoLeadingZero = allowOctalNoLeadingZero;
     }
 
@@ -63,7 +63,6 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate EMBRACED
 %xstate CLASS1
 %state CLASS2
-%state CLASS2PY
 %state PROP
 %xstate OPTIONS
 %xstate COMMENT
@@ -155,8 +154,9 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
-<CLASS2PY> {
-  {ESCAPE} {RBRACKET}   { return RegExpTT.CHARACTER; }
+<CLASS2> {
+  {ESCAPE} {RBRACKET}         { if (!allowNestedCharacterClasses) return RegExpTT.CHARACTER;
+                                return RegExpTT.REDUNDANT_ESCAPE; }
 }
 
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
@@ -190,24 +190,26 @@ HEX_CHAR=[0-9a-fA-F]
 "-"                   { return RegExpTT.MINUS; }
 "^"                   { return RegExpTT.CARET; }
 
-<CLASS2PY> {
-  {LBRACKET}          { return RegExpTT.CHARACTER; }
+<CLASS2> {
+  {LBRACKET}          { if (allowNestedCharacterClasses) {
+                           yypushstate(CLASS2);
+                           return RegExpTT.CLASS_BEGIN;
+                        }
+                        return RegExpTT.CHARACTER;
+                      }
+
+  {LBRACKET} / {RBRACKET} { if (allowNestedCharacterClasses) {
+                              yypushstate(CLASS1);
+                              return RegExpTT.CLASS_BEGIN;
+                            }
+                            return RegExpTT.CHARACTER;
+                          }
 }
 
-{LBRACKET} / {RBRACKET}   { if (allowRBracketInCharacterClass) {
-                              yypushstate(CLASS1);
-                            }
-                            else {
-                              yypushstate(CLASS2PY);
-                            }
+{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1);
                             return RegExpTT.CLASS_BEGIN; }
 
-{LBRACKET}                { if (allowRBracketInCharacterClass) {
-                              yypushstate(CLASS2);
-                            }
-                            else {
-                              yypushstate(CLASS2PY);
-                            }
+{LBRACKET}                { yypushstate(CLASS2);
                             return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
@@ -219,15 +221,7 @@ HEX_CHAR=[0-9a-fA-F]
 <CLASS2> {
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
 
-  "&&"                  { return RegExpTT.ANDAND;    }
-  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
-  {ANY}                 { return RegExpTT.CHARACTER; }
-}
-
-/* see rules for matching LBRACKET and escaped RBRACKET in CLASS2PY above */
-<CLASS2PY> {
-  {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
-
+  "&&"                  { return allowNestedCharacterClasses ? RegExpTT.ANDAND : RegExpTT.CHARACTER;    }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
