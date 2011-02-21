@@ -21,8 +21,9 @@ public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
 
-    public RegExpLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass) {
-        super(new _RegExLexer(xmlSchemaMode, allowDanglingMetacharacters, allowRBracketInCharacterClass));
+    public RegExpLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass,
+                       boolean allowOctalNoLeadingZero) {
+        super(new _RegExLexer(xmlSchemaMode, allowDanglingMetacharacters, allowRBracketInCharacterClass, allowOctalNoLeadingZero));
     }
 
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {

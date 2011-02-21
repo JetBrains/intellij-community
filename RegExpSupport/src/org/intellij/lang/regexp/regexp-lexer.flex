@@ -28,12 +28,14 @@ import com.intellij.psi.StringEscapesTokenTypes;
 
     private boolean allowDanglingMetacharacters;
     private boolean allowRBracketInCharacterClass;
+    private boolean allowOctalNoLeadingZero;
 
-    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass) {
+    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters, boolean allowRBracketInCharacterClass, boolean allowOctalNoLeadingZero) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = xmlSchemaMode;
       this.allowDanglingMetacharacters = allowDanglingMetacharacters;
       this.allowRBracketInCharacterClass = allowRBracketInCharacterClass;
+      this.allowOctalNoLeadingZero = allowOctalNoLeadingZero;
     }
 
     private void yypushstate(int state) {
@@ -136,7 +138,10 @@ HEX_CHAR=[0-9a-fA-F]
     So, for 100% compatibility, backrefs > 9 should be resolved by the parser, but
     I'm not sure if it's worth the effort - at least not atm.
 */
-      
+{ESCAPE} [0-7]{3}             { if (allowOctalNoLeadingZero) return RegExpTT.OCT_CHAR;
+                                return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER;
+                              }
+
 {ESCAPE} {DIGITS}             { return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER; }
 
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
