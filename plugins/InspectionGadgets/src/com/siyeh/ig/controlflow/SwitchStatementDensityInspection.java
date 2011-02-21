@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,14 @@ public class SwitchStatementDensityInspection extends BaseInspection {
      */
     public int m_limit = DEFAULT_DENSITY_LIMIT;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "switch.statement.density.display.name");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -50,6 +52,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
                 "m_limit");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final Integer intDensity = (Integer)infos[0];
@@ -57,11 +60,12 @@ public class SwitchStatementDensityInspection extends BaseInspection {
                 "switch.statement.density.problem.descriptor", intDensity);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementWithTooFewBranchesVisitor();
+        return new SwitchStatementDensityVisitor();
     }
 
-    private class SwitchStatementWithTooFewBranchesVisitor
+    private class SwitchStatementDensityVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitSwitchStatement(

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.codeInsight.actions.ReformatAndOptimizeImportsProcessor;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
@@ -27,12 +29,21 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class FormatterUtil {
+  
   private static final List<FormatterUtilHelper> ourHelpers = ContainerUtil.createEmptyCOWList();
+  
+  public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.addAll(
+    new HashSet<String>(), ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME
+  ));
 
   private FormatterUtil() {
   }

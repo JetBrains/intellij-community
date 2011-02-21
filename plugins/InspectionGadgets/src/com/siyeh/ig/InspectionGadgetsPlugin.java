@@ -481,6 +481,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(FallthruInSwitchStatementInspection.class);
         m_inspectionClasses.add(ForLoopReplaceableByWhileInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
+        m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IfMayBeConditionalInspection.class);
         m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         m_inspectionClasses.add(IfStatementWithTooManyBranchesInspection.class);

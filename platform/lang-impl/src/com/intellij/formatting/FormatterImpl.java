@@ -18,6 +18,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -25,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
@@ -92,6 +94,9 @@ public class FormatterImpl extends FormatterEx
 
   @Override
   public void setProgressIndicator(@NotNull FormattingProgressIndicatorImpl progressIndicator) {
+    if (!FormatterUtil.FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName())) {
+      return;
+    }
     myProgressIndicator = progressIndicator;
   }
 

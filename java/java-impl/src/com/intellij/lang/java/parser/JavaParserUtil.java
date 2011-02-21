@@ -138,12 +138,14 @@ public class JavaParserUtil {
     builder.putUserDataUnprotected(LANG_LEVEL_KEY, level);
   }
 
+  // todo[r.sh] join all JDK 7 check clauses into single method (IDEA 11)
   public static boolean areDiamondsSupported(final PsiBuilder builder) {
     return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
   }
-
-  // todo[r.sh] join all JDK 7 check clauses into single method (IDEA 11)
   public static boolean areMultiCatchSupported(final PsiBuilder builder) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
+  }
+  public static boolean areTryWithResourcesSupported(final PsiBuilder builder) {
     return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
   }
 

@@ -49,10 +49,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   @Override
   public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
-    if (childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST) {
-      return true;
-    }
-
-    return false;
+    return childType == JavaElementType.PARAMETER_LIST && nodeType != JavaElementType.METHOD && nodeType != JavaElementType.ANNOTATION_METHOD ||
+           childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST;
   }
 }

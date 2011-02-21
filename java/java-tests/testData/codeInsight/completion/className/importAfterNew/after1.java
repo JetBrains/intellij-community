@@ -1,7 +1,7 @@
-import pack.AClass;
+import pack.AAClass;
 
 public class Test1 {
     public void foo() {
-        new AClass()<caret>
+        new AAClass()<caret>
     }
 }

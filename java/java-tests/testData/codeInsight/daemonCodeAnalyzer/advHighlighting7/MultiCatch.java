@@ -4,6 +4,7 @@ abstract class C {
   private static class E1 extends E { }
   private static class E2 extends E { }
   private static class E3 extends E { }
+  private static class E4 extends E { }
   private static class RE extends RuntimeException { }
   private interface I<T> { }
   private static class IE1 extends E implements I<Integer> { }
@@ -23,7 +24,7 @@ abstract class C {
     try { g(); } catch (IE1 | IE2 e) { new F<I<? extends Number>>(e); }
 
     try { f(); } catch (E1 | E2 | <error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> e) { }
-    try { f(); } catch (<error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> | E e) { }
+    try { f(); } catch (<error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> | <error descr="Exception 'C.E4' is never thrown in the corresponding try block">E4</error> | E e) { }
 
     try { f(); } catch (E | <error descr="Exception 'C.E1' has already been caught">E1</error> e) { }
     try { f(); } catch (E | <error descr="Exception 'C.E3' has already been caught">E3</error> e) { }

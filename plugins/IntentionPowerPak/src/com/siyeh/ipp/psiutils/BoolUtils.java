@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,14 +78,15 @@ public class BoolUtils{
         return ParenthesesUtils.stripParentheses(operand);
     }
 
-    public static boolean isBooleanLiteral(PsiExpression exp){
-        if(exp instanceof PsiLiteralExpression){
-            final PsiLiteralExpression expression = (PsiLiteralExpression) exp;
-            @NonNls final String text = expression.getText();
-            return PsiKeyword.TRUE.equals(text) ||
-                    PsiKeyword.FALSE.equals(text);
+    public static boolean isBooleanLiteral(PsiExpression expression){
+        if (!(expression instanceof PsiLiteralExpression)) {
+            return false;
         }
-        return false;
+        final PsiLiteralExpression literalExpression =
+                (PsiLiteralExpression) expression;
+        @NonNls final String text = literalExpression.getText();
+        return PsiKeyword.TRUE.equals(text) ||
+                PsiKeyword.FALSE.equals(text);
     }
 
     public static String getNegatedExpressionText(

@@ -25,14 +25,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 public class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
@@ -41,7 +44,7 @@ public class TextOccurrencesUtil {
   public static void addTextOccurences(@NotNull PsiElement element,
                                        @NotNull String stringToSearch,
                                        @NotNull GlobalSearchScope searchScope,
-                                       @NotNull final List<UsageInfo> results,
+                                       @NotNull final Collection<UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
     processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
       public boolean process(UsageInfo t) {
@@ -104,7 +107,7 @@ public class TextOccurrencesUtil {
 
   public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull String stringToSearch,
-                                                   @NotNull final List<UsageInfo> results,
+                                                   @NotNull final Collection<UsageInfo> results,
                                                    @NotNull final UsageInfoFactory factory) {
     processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
       public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
@@ -153,6 +156,33 @@ public class TextOccurrencesUtil {
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, true);
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, false, handler);
+  }
+
+  public static void findNonCodeUsages(PsiElement element, String stringToSearch, boolean searchInStringsAndComments,
+                                       boolean searchInNonJavaFiles, String newQName, Collection<UsageInfo> results) {
+    if (searchInStringsAndComments || searchInNonJavaFiles) {
+      UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
+
+      if (searchInStringsAndComments) {
+        addUsagesInStringsAndComments(element, stringToSearch, results, factory);
+      }
+
+      if (searchInNonJavaFiles) {
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
+        addTextOccurences(element, stringToSearch, projectScope, results, factory);
+      }
+    }
+  }
+
+  private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
+                                                        final String newQName) {
+    return new UsageInfoFactory() {
+      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+        int start = usage.getTextRange().getStartOffset();
+        return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
+                                       newQName);
+      }
+    };
   }
 
   public interface UsageInfoFactory {

@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.StatementParser;
+import com.intellij.pom.java.LanguageLevel;
 
 
 public class StatementParserTest extends JavaParsingTestCase {
@@ -116,8 +117,11 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testThrowIncomplete1() { doParserTest("throw e"); }
 
   public void testTryNormal0() { doParserTest("try{}catch(E e){}"); }
-  public void testTryNormal1() { doParserTest("try{}catch(E e){}finally{}"); }
+  public void testTryNormal1() { doParserTest("try{}catch(final E e){}finally{}"); }
   public void testTryNormal2() { doParserTest("try{}finally{}"); }
+  public void testTryNormal3() { doParserTestJDK7("try{}catch(A|B e){}"); }
+  public void testTryNormal4() { doParserTestJDK7("try(R r = 0){}"); }
+  public void testTryNormal5() { doParserTestJDK7("try(R1 r1 = 1; R2 r2 = 2){}"); }
   public void testTryIncomplete0() { doParserTest("try"); }
   public void testTryIncomplete1() { doParserTest("try{}"); }
   public void testTryIncomplete2() { doParserTest("try{}catch"); }
@@ -126,6 +130,16 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testTryIncomplete5() { doParserTest("try{}catch(E e"); }
   public void testTryIncomplete6() { doParserTest("try{}catch(E e)"); }
   public void testTryIncomplete7() { doParserTest("try{}finally"); }
+  public void testTryIncomplete8() { doParserTestJDK7("try{}catch(A|)"); }
+  public void testTryIncomplete9() { doParserTestJDK7("try{}catch(A|B)"); }
+  public void testTryIncomplete10() { doParserTestJDK7("try({}"); }
+  public void testTryIncomplete11() { doParserTestJDK7("try(){}"); }
+  public void testTryIncomplete12() { doParserTestJDK7("try(;){}"); }
+  public void testTryIncomplete13() { doParserTestJDK7("try(final ){}"); }
+  public void testTryIncomplete14() { doParserTestJDK7("try(R){}"); }
+  public void testTryIncomplete15() { doParserTestJDK7("try(R r){}"); }
+  public void testTryIncomplete16() { doParserTestJDK7("try(R r =){}"); }
+  public void testTryIncomplete17() { doParserTestJDK7("try(R r = 0;){}"); }
 
   public void testWhileNormal() { doParserTest("while (true) foo();"); }
   public void testWhileIncomplete0() { doParserTest("while"); }
@@ -149,6 +163,15 @@ public class StatementParserTest extends JavaParsingTestCase {
       @Override
       public void parse(final PsiBuilder builder) {
         StatementParser.parseStatements(builder);
+      }
+    });
+  }
+
+  private void doParserTestJDK7(final String text) {
+    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
+      @Override
+      public void run() {
+        doParserTest(text);
       }
     });
   }

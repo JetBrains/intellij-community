@@ -22,8 +22,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -46,14 +48,24 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   public ProductivityFeaturesRegistryImpl() {
     try {
-      final Document document = JDOMUtil.loadResourceDocument(new URL("file:///ProductivityFeaturesRegistry.xml"));
-      final Element root = document.getRootElement();
-      readGroups(root);
-      readFilters(root);
+      readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
     catch (Exception e) {
       LOG.error(e);
     }
+
+    try {
+      readFromXml("file:///IdeSpecificFeatures.xml");
+    }
+    catch (Exception e) {// ignore
+    }
+  }
+
+  private void readFromXml(String path) throws JDOMException, IOException {
+    final Document document = JDOMUtil.loadResourceDocument(new URL(path));
+    final Element root = document.getRootElement();
+    readGroups(root);
+    readFilters(root);
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {

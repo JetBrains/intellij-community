@@ -58,6 +58,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testDiamondPos5() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDiamondNeg1() throws Exception {
     doTest(false, false);
   }
@@ -77,6 +81,32 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg5() throws Exception {
     doTest(false, false);
   }
+
+  public void testDiamondNeg6() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg7() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg8() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg9() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg10() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg11() throws Exception {
+    doTest(false, false);
+  }
+
+
 
   public void testDiamondMisc() throws Exception {
     doTest(false, false);
@@ -153,7 +183,15 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testMultiCatch() throws Exception {
     doTest(false, false);
   }
-  
+
+  public void testMultiCatchWarn() throws Exception {
+    doTest(true, false);
+  }
+
+  public void testTryWithResources() throws Exception {
+    doTest(false, false);
+  }
+
   public void testSafeVarargsApplicability() throws Exception {
     doTest(true, false);
   }

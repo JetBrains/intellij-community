@@ -478,11 +478,12 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull T... elements) {
+  public static <T> Collection<T> addAll(@NotNull Collection<T> collection, @NotNull T... elements) {
     //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
       collection.add(element);
     }
+    return collection;
   }
 
   public static <T, U extends T> U findInstance(@NotNull Iterable<T> iterable, @NotNull Class<U> aClass) {

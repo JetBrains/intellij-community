@@ -41,6 +41,8 @@ interface SmartPointerElementInfo {
   boolean pointsToTheSameElementAs(SmartPointerElementInfo other);
 
   VirtualFile getVirtualFile();
+
+  @Nullable
   Segment getRange();
   @NotNull Project getProject();
 }
