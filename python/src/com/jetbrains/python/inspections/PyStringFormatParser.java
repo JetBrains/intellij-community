@@ -39,6 +39,7 @@ public class PyStringFormatParser {
     private String myPrecision;
     private char myLengthModifier;
     private char myConversionType;
+    private boolean myUnclosedMapping;
 
     public SubstitutionChunk(int startIndex) {
       super(startIndex, startIndex);
@@ -95,6 +96,14 @@ public class PyStringFormatParser {
     public void setLengthModifier(char lengthModifier) {
       myLengthModifier = lengthModifier;
     }
+
+    public boolean isUnclosedMapping() {
+      return myUnclosedMapping;
+    }
+
+    public void setUnclosedMapping(boolean unclosedMapping) {
+      myUnclosedMapping = unclosedMapping;
+    }
   }
 
   private final String myLiteral;
@@ -102,8 +111,9 @@ public class PyStringFormatParser {
   private int myPos;
 
   private static final String CONVERSION_FLAGS = "#0- +";
-  private static final String DIGITS_OR_ASTERISK = "0123456789*";
-  private static final String LENGTH_MODIFIERS = "hlL*";
+  private static final String DIGITS = "0123456789";
+  private static final String LENGTH_MODIFIERS = "hlL";
+  private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
 
   public PyStringFormatParser(String literal) {
     myLiteral = literal;
@@ -134,10 +144,12 @@ public class PyStringFormatParser {
     SubstitutionChunk chunk = new SubstitutionChunk(myPos);
     myResult.add(chunk);
     myPos++;
-    if (myPos < myLiteral.length() && myLiteral.charAt(myPos) == '(') {
+    if (isAt('(')) {
       int mappingEnd = myLiteral.indexOf(')', myPos+1);
       if (mappingEnd < 0) {
         chunk.setEndIndex(myLiteral.length());
+        chunk.setMappingKey(myLiteral.substring(myPos+1));
+        chunk.setUnclosedMapping(true);
         myPos = myLiteral.length();
         return;
       }
@@ -145,23 +157,41 @@ public class PyStringFormatParser {
       myPos = mappingEnd+1;
     }
     chunk.setConversionFlags(parseWhileCharacterInSet(CONVERSION_FLAGS));
-    chunk.setWidth(parseWhileCharacterInSet(DIGITS_OR_ASTERISK));
-    if (myPos < myLiteral.length() && myLiteral.charAt(myPos) == '.') {
+    chunk.setWidth(parseWidth());
+    if (isAt('.')) {
       myPos++;
-      chunk.setPrecision(parseWhileCharacterInSet(DIGITS_OR_ASTERISK));
+      chunk.setPrecision(parseWidth());
     }
-    if (myPos < myLiteral.length() && LENGTH_MODIFIERS.indexOf(myLiteral.charAt(myPos)) >= 0) {
+    if (isAtSet(LENGTH_MODIFIERS)) {
       chunk.setLengthModifier(myLiteral.charAt(myPos));
       myPos++;
     }
-    chunk.setConversionType(myLiteral.charAt(myPos));
-    myPos++;
+    if (isAtSet(VALID_CONVERSION_TYPES)) {
+      chunk.setConversionType(myLiteral.charAt(myPos));
+      myPos++;
+    }
     chunk.setEndIndex(myPos);
+  }
+
+  private boolean isAtSet(final String characterSet) {
+    return myPos < myLiteral.length() && characterSet.indexOf(myLiteral.charAt(myPos)) >= 0;
+  }
+
+  private boolean isAt(final char c) {
+    return myPos < myLiteral.length() && myLiteral.charAt(myPos) == c;
+  }
+
+  private String parseWidth() {
+    if (isAt('*')) {
+      myPos++;
+      return "*";
+    }
+    return parseWhileCharacterInSet(DIGITS);
   }
 
   private String parseWhileCharacterInSet(final String characterSet) {
     int flagStart = myPos;
-    while(myPos < myLiteral.length() && characterSet.indexOf(myLiteral.charAt(myPos)) >= 0) {
+    while(isAtSet(characterSet)) {
       myPos++;
     }
     return myLiteral.substring(flagStart, myPos);

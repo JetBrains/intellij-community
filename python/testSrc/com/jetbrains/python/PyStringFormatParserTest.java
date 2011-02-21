@@ -77,4 +77,19 @@ public class PyStringFormatParserTest extends TestCase {
     PyStringFormatParser.SubstitutionChunk chunk = (PyStringFormatParser.SubstitutionChunk) chunks.get(0);
     assertEquals('l', chunk.getLengthModifier());
   }
+
+  public void testDoubleAsterisk() {
+    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%**d").parse();
+    assertEquals(2, chunks.size());
+    PyStringFormatParser.SubstitutionChunk chunk = (PyStringFormatParser.SubstitutionChunk) chunks.get(0);
+    assertEquals(2, chunk.getEndIndex());
+    assertEquals('\0', chunk.getConversionType());
+  }
+
+  public void testUnclosedMapping() {
+    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%(name1s").parse();
+    PyStringFormatParser.SubstitutionChunk chunk = (PyStringFormatParser.SubstitutionChunk) chunks.get(0);
+    assertEquals("name1s", chunk.getMappingKey());
+    assertTrue(chunk.isUnclosedMapping());
+  }
 }
