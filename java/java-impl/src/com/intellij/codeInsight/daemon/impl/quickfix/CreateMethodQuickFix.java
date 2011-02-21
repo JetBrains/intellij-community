@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -61,23 +60,18 @@ public class CreateMethodQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    try {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
-      PsiMethod method = createMethod(project);
-      List<Pair<PsiExpression, PsiType>> arguments =
-        ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
-          public Pair<PsiExpression, PsiType> fun(PsiParameter psiParameter) {
-            return Pair.create(null, psiParameter.getType());
-          }
-        });
+    PsiMethod method = createMethod(project);
+    List<Pair<PsiExpression, PsiType>> arguments =
+      ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
+        public Pair<PsiExpression, PsiType> fun(PsiParameter psiParameter) {
+          return Pair.create(null, psiParameter.getType());
+        }
+      });
 
-      method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences((PsiMethod)myTargetClass.add(method));
-      CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences((PsiMethod)myTargetClass.add(method));
+    CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
   }
 
   private PsiMethod createMethod(Project project) {

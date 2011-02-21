@@ -765,6 +765,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int oldFontSize = myScheme.getEditorFontSize();
     myScheme.setEditorFontSize(fontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
+    // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
+    // to scroll to the bottom of the document).
+    myScrollPane.getViewport().invalidate();
   }
 
   public ActionCallback type(final String text) {
@@ -3255,7 +3258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (!mySettings.isVirtualSpace()) {
+    if (!mySettings.isVirtualSpace() && !mySelectionModel.hasBlockSelection()) {
       int lineEndOffset = myDocument.getLineEndOffset(lineNumber);
       int lineEndColumnNumber = calcColumnNumber(lineEndOffset, lineNumber);
       if (columnNumber > lineEndColumnNumber) {

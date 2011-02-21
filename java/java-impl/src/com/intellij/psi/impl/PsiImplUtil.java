@@ -233,7 +233,7 @@ public class PsiImplUtil {
       types[i] = typeElements[i].getType();
     }
     if (types.length == 1 && types[0] instanceof PsiDiamondType) {
-      return ((PsiDiamondType)types[0]).getInferredTypes();
+      return ((PsiDiamondType)types[0]).resolveInferredTypes().getTypes();
     }
     return types;
   }

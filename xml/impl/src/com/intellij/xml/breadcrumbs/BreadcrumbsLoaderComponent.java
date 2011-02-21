@@ -48,20 +48,20 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     return webEditorOptions.isBreadcrumbsEnabled() || webEditorOptions.isBreadcrumbsEnabledInXml();
   }
 
-  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
+  private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
     public void fileOpened(final FileEditorManager source, final VirtualFile file) {
       if (isEnabled() && isSuitable(source.getProject(), file)) {
         final FileEditor[] fileEditors = source.getEditors(file);
-        for (final FileEditor each : fileEditors) {
-          if (each instanceof TextEditor) {
-            final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(((TextEditor)each).getEditor());
+        for (final FileEditor fileEditor : fileEditors) {
+          if (fileEditor instanceof TextEditor) {
+            final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(((TextEditor)fileEditor).getEditor());
             final JComponent c = wrapper.getComponent();
-            source.addTopComponent(each, c);
+            source.addTopComponent(fileEditor, c);
 
-            Disposer.register(each, wrapper);
-            Disposer.register(each, new Disposable() {
+            Disposer.register(fileEditor, wrapper);
+            Disposer.register(fileEditor, new Disposable() {
               public void dispose() {
-                source.removeTopComponent(each, c);
+                source.removeTopComponent(fileEditor, c);
               }
             });
           }
@@ -74,11 +74,11 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
         return false;
       }
 
-      final FileViewProvider psiFile = PsiManager.getInstance(project).findViewProvider(file);
+      final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
 
-      return psiFile != null
-             && hasNonEmptyHtml(psiFile)
-             && BreadcrumbsXmlWrapper.findInfoProvider(psiFile) != null;
+      return provider != null
+             && hasNonEmptyHtml(provider)
+             && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
     }
 
     public static boolean hasNonEmptyHtml(FileViewProvider viewProvider) {
@@ -93,12 +93,6 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
         }
       }
       return false;
-    }
-
-    public void fileClosed(final FileEditorManager source, final VirtualFile file) {
-    }
-
-    public void selectionChanged(final FileEditorManagerEvent event) {
     }
   }
 }

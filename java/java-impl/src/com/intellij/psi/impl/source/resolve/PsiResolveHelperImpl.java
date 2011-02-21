@@ -403,8 +403,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                      final boolean forCompletion) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     Pair<PsiType, ConstraintType> substitution = null;
-    if (owner instanceof PsiMethod && parent instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+    if (owner instanceof PsiMethod && parent instanceof PsiCallExpression) {
+      PsiCallExpression methodCall = (PsiCallExpression)parent;
       substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor, forCompletion);
     }
     return substitution;
@@ -604,7 +604,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
-                                                                                  PsiMethodCallExpression methodCall,
+                                                                                  PsiCallExpression methodCall,
                                                                                   final PsiTypeParameter typeParameter,
                                                                                   PsiSubstitutor substitutor,
                                                                                   final boolean forCompletion) {
@@ -701,13 +701,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static final ThreadLocal<List<PsiMethodCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiMethodCallExpression>>() {
-    protected List<PsiMethodCallExpression> initialValue() {
-      return new ArrayList<PsiMethodCallExpression>(2);
+  private static final ThreadLocal<List<PsiCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiCallExpression>>() {
+    protected List<PsiCallExpression> initialValue() {
+      return new ArrayList<PsiCallExpression>(2);
     }
   };
 
-  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiMethodCallExpression innerMethodCall,
+  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiCallExpression innerMethodCall,
                                                                                      final PsiExpressionList expressionList,
                                                                                      final PsiCallExpression contextCall,
                                                                                      final PsiTypeParameter typeParameter) {
