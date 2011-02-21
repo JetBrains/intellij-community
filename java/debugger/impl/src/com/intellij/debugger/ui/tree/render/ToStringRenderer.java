@@ -15,9 +15,8 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -73,7 +73,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
-        valueDescriptor.setValueLabel(message != null ? "\"" + message + "\"" : "");
+        valueDescriptor.setValueLabel(message != null ? "\"" + DebuggerUtilsEx.truncateString(message) + "\"" : "");
         labelListener.labelChanged();
       }
 
