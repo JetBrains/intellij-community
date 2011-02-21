@@ -235,6 +235,10 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "myFoo", "myBar");
   }
 
+  public void testPreferSameNamedMethods() {
+    checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
