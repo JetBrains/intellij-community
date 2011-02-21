@@ -28,6 +28,7 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -112,7 +113,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof PsiLiteralExpression) {
       return getI18nMessage((PsiLiteralExpression)element);

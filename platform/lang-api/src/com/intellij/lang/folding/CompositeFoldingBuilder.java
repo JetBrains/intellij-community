@@ -18,8 +18,9 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,9 +57,9 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return builder == null ? node.getText() : builder.getPlaceholderText(node);
+    return builder == null ? node.getText() : builder.getPlaceholderText(node, range);
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {

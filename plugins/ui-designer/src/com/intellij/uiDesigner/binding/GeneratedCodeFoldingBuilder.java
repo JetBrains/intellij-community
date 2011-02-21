@@ -40,7 +40,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     return visitor.myFoldingData.toArray(new FoldingDescriptor[visitor.myFoldingData.size()]);
   }
 
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node, TextRange range) {
     return UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text");
   }
 
