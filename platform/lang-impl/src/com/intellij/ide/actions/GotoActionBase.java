@@ -16,7 +16,10 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +32,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Author: msk
  */
@@ -36,17 +42,8 @@ public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
   protected static Class myInAction = null;
+  private static Map<Class, String> ourLastStrings = new HashMap<Class, String>();
 
-  public static String getInitialText(Editor editor) {
-    if (editor == null) {
-      return "";
-    }
-    final String selectedText = editor.getSelectionModel().getSelectedText();
-    if (selectedText != null && selectedText.indexOf("\n") < 0) {
-      return selectedText;
-    }
-    return "";
-  }
 
   public final void actionPerformed(AnActionEvent e) {
     LOG.assertTrue (!getClass ().equals (myInAction));
@@ -100,6 +97,24 @@ public abstract class GotoActionBase extends AnAction {
     public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
+  private static String getInitialText(Editor editor) {
+    if (editor != null) {
+      final String selectedText = editor.getSelectionModel().getSelectedText();
+      if (selectedText != null && selectedText.indexOf("\n") < 0) {
+        return selectedText;
+      }
+    }
+
+    if (myInAction != null) {
+      final String lastString = ourLastStrings.get(myInAction);
+      if (lastString != null) {
+        return lastString;
+      }
+    }
+
+    return "";
+  }
+
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
@@ -110,6 +125,7 @@ public abstract class GotoActionBase extends AnAction {
 
       @Override
       public void onClose() {
+        ourLastStrings.put(myInAction, popup.getEnteredText());
         if (startedAction.equals(myInAction)) {
           myInAction = null;
         }
