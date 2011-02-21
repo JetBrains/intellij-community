@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -51,6 +52,8 @@ public class ChooseItemReplaceAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup != null) {
+        lookup.refreshUi(); // to bring the list model up to date
+
         CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
         if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
           return false;
@@ -60,7 +63,6 @@ public class ChooseItemReplaceAction extends EditorAction {
           return true;
         }
 
-        lookup.refreshUi(); // to bring the list model up to date
         return !lookup.getItems().isEmpty();
       }
       return false;
@@ -76,7 +78,7 @@ public class ChooseItemReplaceAction extends EditorAction {
 
     final int end = editor.getCaretModel().getOffset();
     final int start = lookup.getLookupStart();
-    final String prefix = editor.getDocument().getText(TextRange.create(start, end));
+    final String prefix = !lookup.getItems().isEmpty() ? editor.getDocument().getText(TextRange.create(start, end)) : ListTemplatesHandler.getPrefix(editor.getDocument(), end);
     final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, end, prefix);
     return template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template);
   }

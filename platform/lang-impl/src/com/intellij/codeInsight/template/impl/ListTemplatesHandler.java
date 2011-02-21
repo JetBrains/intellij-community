@@ -107,7 +107,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private static String getPrefix(Document document, int offset) {
+  public static String getPrefix(Document document, int offset) {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while (true) {

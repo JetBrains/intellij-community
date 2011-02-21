@@ -447,6 +447,9 @@ public abstract class ChooseByNameBase {
           case KeyEvent.VK_PAGE_DOWN:
             ListScrollingUtil.movePageDown(myList);
             break;
+          case KeyEvent.VK_TAB:
+            close(true);
+            break;
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
@@ -992,7 +995,7 @@ public abstract class ChooseByNameBase {
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
-
+      setFocusTraversalKeysEnabled(false);
     }
 
     private KeyStroke getShortcut(String actionCodeCompletion) {

@@ -343,9 +343,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return null;
     }
     for (ExecutionEvent ev : events) {
-      final String presentableName = ev.getPresentableName();
-      if (Comparing.strEqual(targetName, presentableName)) {
-        return new MetaTarget(buildFile, presentableName, ((ExecuteCompositeTargetEvent)ev).getTargetNames());
+      final String name = ExecuteCompositeTargetEvent.TYPE_ID.equals(ev.getTypeId())? ((ExecuteCompositeTargetEvent)ev).getMetaTargetName() : ev.getPresentableName();
+      if (Comparing.strEqual(targetName, name)) {
+        return new MetaTarget(buildFile, ev.getPresentableName(), ((ExecuteCompositeTargetEvent)ev).getTargetNames());
       }
     }
     return null;

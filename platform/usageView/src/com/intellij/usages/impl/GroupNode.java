@@ -105,7 +105,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     MergeableUsage mergeableUsage = (MergeableUsage)usage;
     for (UsageNode node : myUsageNodes) {
       Usage original = node.getUsage();
-      assert original != mergeableUsage : "Double add: " + usage +"; node: "+ node+"; already added: "+myUsageNodes;
+      if (original == mergeableUsage) {
+        // search returned duplicate usage, ignore
+        return node;
+      }
       if (original instanceof MergeableUsage) {
         if (((MergeableUsage)original).merge(mergeableUsage)) return node;
       }
