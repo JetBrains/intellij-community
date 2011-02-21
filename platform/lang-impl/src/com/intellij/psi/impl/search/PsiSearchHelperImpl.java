@@ -102,25 +102,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
+    final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
     for(IndexPatternOccurrence occurrence: occurrences) {
       TextRange occurrenceRange = occurrence.getTextRange();
       if (textRange.contains(occurrenceRange)) {
-        items.add(new TodoItemImpl(occurrence.getFile(), occurrenceRange.getStartOffset(), occurrenceRange.getEndOffset(),
-                                   mapPattern(occurrence.getPattern())));
+        items.add(todoItemsCreator.createTodo(occurrence));
       }
     }
 
     return items.toArray(new TodoItem[items.size()]);
-  }
-
-  private static TodoPattern mapPattern(final IndexPattern pattern) {
-    for(TodoPattern todoPattern: TodoConfiguration.getInstance().getTodoPatterns()) {
-      if (todoPattern.getIndexPattern() == pattern) {
-        return todoPattern;
-      }
-    }
-    LOG.error("Could not find matching TODO pattern for index pattern " + pattern.getPatternString());
-    return null;
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {

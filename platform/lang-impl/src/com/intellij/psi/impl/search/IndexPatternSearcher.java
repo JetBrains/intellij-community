@@ -65,6 +65,13 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                 : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
     if (count == 0) return true;
 
+    return executeImpl(queryParameters, consumer);
+  }
+
+  protected boolean executeImpl(IndexPatternSearch.SearchParameters queryParameters,
+                              Processor<IndexPatternOccurrence> consumer) {
+    final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
+    final PsiFile file = queryParameters.getFile();
     TIntArrayList commentStarts = new TIntArrayList();
     TIntArrayList commentEnds = new TIntArrayList();
 
