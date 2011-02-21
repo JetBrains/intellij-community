@@ -429,9 +429,9 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   public void testVerticalArrows() {
     testArrows false, false, 0, -1
-    testArrows false, true, -1, 1
-    testArrows true, false, 0, -1
-    testArrows true, true, -1, 1
+    testArrows false, true, 0, -1
+    testArrows true, false, 0, 1
+    testArrows true, true, 0, 1
   }
 
   public void testHideOnOnePrefixVariant() {
