@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,12 +28,12 @@ public abstract class SpellCheckerDictionaryGenerator {
   protected final Project myProject;
   private final String myDefaultDictName;
   protected final String myDictOutputFolder;
-  protected final MultiMap<String, String> myDict2FolderMap;
+  protected final MultiMap<String, VirtualFile> myDict2FolderMap;
   protected SpellCheckerManager mySpellCheckerManager;
   protected NamesValidator[] myNamesValidators;
 
   public SpellCheckerDictionaryGenerator(final Project project, final String dictOutputFolder, final String defaultDictName) {
-    myDict2FolderMap = new MultiMap<String, String>();
+    myDict2FolderMap = new MultiMap<String, VirtualFile>();
     myProject = project;
     myDefaultDictName = defaultDictName;
     mySpellCheckerManager = SpellCheckerManager.getInstance(myProject);
@@ -43,7 +42,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     SpellCheckingInspection.ensureFactoriesAreLoaded();
   }
 
-  public void addFolder(String dictName, String path) {
+  public void addFolder(String dictName, VirtualFile path) {
     myDict2FolderMap.putValue(dictName, path);
   }
 
@@ -71,13 +70,12 @@ public abstract class SpellCheckerDictionaryGenerator {
     System.out.println("Done");
   }
 
-  private void generateDictionary(final Project project, final Collection<String> folderPaths, final String outFile) {
+  private void generateDictionary(final Project project, final Collection<VirtualFile> folderPaths, final String outFile) {
     final HashSet<String> seenNames = new HashSet<String>();
     // Collect stuff
-    for (String folderPath : folderPaths) {
-      System.out.println("  Scanning folder: " + folderPath);
+    for (VirtualFile folder : folderPaths) {
+      System.out.println("  Scanning folder: " + folder.getPath());
       final PsiManager manager = PsiManager.getInstance(project);
-      final VirtualFile folder = LocalFileSystem.getInstance().findFileByPath(folderPath);
       processFolder(seenNames, manager, folder);
     }
 
