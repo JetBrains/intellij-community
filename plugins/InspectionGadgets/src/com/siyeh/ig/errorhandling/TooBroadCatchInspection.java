@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -30,14 +31,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 public class TooBroadCatchInspection extends BaseInspection {
 
@@ -204,29 +201,58 @@ public class TooBroadCatchInspection extends BaseInspection {
                     continue;
                 }
                 final PsiType typeCaught = parameter.getType();
-                if (exceptionsThrown.contains(typeCaught)) {
-                    exceptionsCaught.add(typeCaught);
-                }
-                final List<PsiType> typesMasked = new ArrayList();
-                for (PsiType typeThrown : exceptionsThrown) {
-                    if (!exceptionsCaught.contains(typeThrown) &&
-                        typeCaught.isAssignableFrom(typeThrown)) {
-                        exceptionsCaught.add(typeThrown);
-                        typesMasked.add(typeThrown);
+                if (typeCaught instanceof PsiDisjunctionType) {
+                    final PsiDisjunctionType disjunctionType =
+                            (PsiDisjunctionType) typeCaught;
+                    final List<PsiType> types =
+                            disjunctionType.getDisjunctions();
+                    for (PsiType type : types) {
+                        final List<PsiType> maskedExceptions =
+                                findMaskedExceptions(exceptionsThrown,
+                                        exceptionsCaught, type);
+                        if (!maskedExceptions.isEmpty()) {
+                            final PsiTypeElement typeElement =
+                                    parameter.getTypeElement();
+                            registerError(typeElement, maskedExceptions,
+                                    statement, catchSection);
+                        }
+                    }
+                } else {
+                    final List<PsiType> maskedExceptions =
+                            findMaskedExceptions(exceptionsThrown,
+                                    exceptionsCaught, typeCaught);
+                    if (!maskedExceptions.isEmpty()) {
+                        final PsiTypeElement typeElement =
+                                parameter.getTypeElement();
+                        registerError(typeElement, maskedExceptions, statement,
+                                catchSection);
                     }
                 }
-                if (onlyWarnOnRootExceptions) {
-                    if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
-                        continue;
-                    }
-                }
-                if (!typesMasked.isEmpty()) {
-                    final PsiTypeElement typeElement =
-                            parameter.getTypeElement();
-                    registerError(typeElement, typesMasked, statement,
-                            catchSection);
+                
+            }
+        }
+
+        private List<PsiType> findMaskedExceptions(
+                Set<? extends PsiType> exceptionsThrown,
+                Set<PsiType> exceptionsCaught, PsiType typeCaught) {
+            if (exceptionsThrown.contains(typeCaught)) {
+                exceptionsCaught.add(typeCaught);
+                exceptionsThrown.remove(typeCaught);
+            }
+            final List<PsiType> typesMasked = new ArrayList();
+            for (PsiType typeThrown : exceptionsThrown) {
+                if (!exceptionsCaught.contains(typeThrown) &&
+                    typeCaught.isAssignableFrom(typeThrown)) {
+                    exceptionsCaught.add(typeThrown);
+                    typesMasked.add(typeThrown);
                 }
             }
+            if (onlyWarnOnRootExceptions) {
+                if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
+                    return Collections.EMPTY_LIST;
+                }
+            }
+            return typesMasked;
         }
     }
 }
