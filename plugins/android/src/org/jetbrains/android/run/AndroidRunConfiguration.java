@@ -35,6 +35,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -115,12 +116,8 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
   @Nullable
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (element instanceof PsiClass && Comparing.strEqual(((PsiClass)element).getQualifiedName(), ACTIVITY_CLASS, true)) {
-      return new RefactoringElementListener() {
-        public void elementMoved(@NotNull PsiElement newElement) {
-          ACTIVITY_CLASS = ((PsiClass)newElement).getQualifiedName();
-        }
-
-        public void elementRenamed(@NotNull PsiElement newElement) {
+      return new RefactoringElementAdapter() {
+        public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
           ACTIVITY_CLASS = ((PsiClass)newElement).getQualifiedName();
         }
       };

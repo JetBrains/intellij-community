@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
@@ -80,18 +81,9 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
       if (composite == null) {
         composite = new RefactoringElementListenerComposite();
       }
-      composite.addListener(new RefactoringElementListener() {
+      composite.addListener(new RefactoringElementAdapter() {
         @Override
-        public void elementMoved(@NotNull PsiElement newElement) {
-          setName(newElement);
-        }
-
-        @Override
-        public void elementRenamed(@NotNull PsiElement newElement) {
-          setName(newElement);
-        }
-
-        private void setName(@NotNull PsiElement newElement) {
+        public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
           LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement);
           try {
             final String newPattern = text.replace(descriptor.getOldQName(), ((PsiQualifiedNamedElement)newElement).getQualifiedName());
