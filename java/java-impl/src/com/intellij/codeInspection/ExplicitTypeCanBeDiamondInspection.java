@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.project.Project;
@@ -124,6 +125,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiReferenceParameterList) {
+        if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
         final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
         psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
       }
