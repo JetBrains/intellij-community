@@ -24,16 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeUtil;
+import git4idea.merge.GitMerger;
 import git4idea.ui.GitUIUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
@@ -59,6 +57,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   @Override
   protected GitUpdateResult doUpdate() {
+    final GitMerger merger = new GitMerger(myProject);
     final GitLineHandler pullHandler = makePullHandler(myRoot);
     final AtomicReference<MergeError> mergeError = new AtomicReference<MergeError>(MergeError.OTHER);
     pullHandler.addLineListener(new GitLineHandlerAdapter() {
@@ -72,7 +71,7 @@ public class GitMergeUpdater extends GitUpdater {
       }
     });
 
-    GitTask pullTask = new GitTask(myProject, pullHandler, "git pull");
+    final GitTask pullTask = new GitTask(myProject, pullHandler, "git pull");
     pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     pullTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
@@ -91,7 +90,7 @@ public class GitMergeUpdater extends GitUpdater {
           try {
             Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoot);
             if (unmergedFiles.isEmpty()) {
-              mergeCommit();
+              merger.mergeCommit(myRoot);
               updateResult.set(GitUpdateResult.SUCCESS);
             } else {
               final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
@@ -102,7 +101,7 @@ public class GitMergeUpdater extends GitUpdater {
               });
               unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoot);
               if (unmergedFiles.isEmpty()) {
-                mergeCommit();
+                merger.mergeCommit(myRoot);
                 updateResult.set(GitUpdateResult.SUCCESS);
               } else {
                 updateResult.set(GitUpdateResult.INCOMPLETE);
@@ -126,23 +125,6 @@ public class GitMergeUpdater extends GitUpdater {
       }
     });
     return updateResult.get();
-  }
-
-  private void mergeCommit() throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.COMMIT);
-    handler.setNoSSH(true);
-
-    File gitDir = new File(VfsUtil.virtualToIoFile(myRoot), ".git");
-    File messageFile = new File(gitDir, "MERGE_MSG");
-    if (!messageFile.exists()) {
-      final GitBranch branch = GitBranch.current(myProject, myRoot);
-      final String branchName = branch != null ? branch.getName() : "";
-      handler.addParameters("-m", "Merge branch '" + branchName + "' of " + myRoot.getPresentableUrl() + "\n");
-    } else {
-      handler.addParameters("-F", messageFile.getAbsolutePath());
-    }
-    handler.endOptions();
-    handler.run();
   }
 
   private void cancel() {

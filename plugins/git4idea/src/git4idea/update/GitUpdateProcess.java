@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.merge.GitMergeUtil;
+import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 
 import java.util.ArrayList;
@@ -157,7 +158,42 @@ public class GitUpdateProcess {
   }
 
   private boolean isMergeInProgressAndNotify() {
-    return false;
+    final GitMerger merger = new GitMerger(myProject);
+    final Collection<VirtualFile> mergingRoots = merger.getMergingRoots();
+    if (mergingRoots.isEmpty()) {
+      return false;
+    }
+
+    try {
+      Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, mergingRoots);
+      if (unmergedFiles.isEmpty()) {
+        return false;
+      } else {
+        // TODO add descriptive message to the dialog:
+        // You must resolve all conflicts before you continue rebase
+        final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override public void run() {
+            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), myVcs.getReverseMergeProvider());
+          }
+        });
+
+        unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, mergingRoots);
+        if (unmergedFiles.isEmpty()) {
+          merger.mergeCommit(mergingRoots);
+          return false;
+        } else {
+          // TODO link to "resolve all conflicts"
+          Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
+                                                    "Resolve all conflicts and commit the result", NotificationType.WARNING), myProject);
+        }
+      }
+    } catch (VcsException e) {
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
+                                                "Be sure to resolve all conflicts and commit the result. <br/>" +
+                                                e.getLocalizedMessage(), NotificationType.WARNING), myProject);
+    }
+    return true;
   }
 
   /**
@@ -191,13 +227,13 @@ public class GitUpdateProcess {
           return rebaser.continueRebase(rebasingRoots);
         } else {
           // TODO link to "resolve all conflicts"
-          Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
-                                                    "You must resolve all conflicts first. <br/>" +
+          Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
+                                                    "You have to resolve all conflicts first. <br/>" +
                                                     "Then you may continue or abort rebase.", NotificationType.WARNING), myProject);
         }
       }
     } catch (VcsException e) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
                                                 "Be sure to resolve all conflicts first. <br/>" +
                                                 "Then you may continue or abort rebase.<br/>" +
                                                 e.getLocalizedMessage(), NotificationType.WARNING), myProject);
