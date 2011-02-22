@@ -182,7 +182,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         else { // null source, must be a "from ... import"
           relative_level = from_import.getRelativeLevel();
           if (relative_level > 0) {
-            PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level-1);
+            PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level);
             if (relative_dir != null) {
               addImportedNames(from_import.getImportElements());
               fillFromDir(relative_dir, null);
