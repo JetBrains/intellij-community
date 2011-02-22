@@ -16,38 +16,47 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends CompletionWeigher {
+public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupElementWeigher {
+  private final CompletionType myCompletionType;
 
-  enum MyResult {
-    className,
-    classLiteral,
-    normal,
-    superMethodParameters,
-    localOrParameter,
-    annoMethod,
+  public PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(CompletionType completionType) {
+    super("local");
+    myCompletionType = completionType;
   }
 
-  public MyResult weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+  enum MyResult {
+    annoMethod,
+    localOrParameter,
+    superMethodParameters,
+    normal,
+    classLiteral,
+    className,
+  }
+
+  @NotNull
+  @Override
+  public Comparable weigh(@NotNull LookupElement item) {
     final Object object = item.getObject();
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
       return MyResult.localOrParameter;
     }
 
-    if (location.getCompletionType() == CompletionType.SMART) {
+    if (myCompletionType == CompletionType.SMART) {
       if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
         return MyResult.superMethodParameters;
       }
       return MyResult.normal;
     }
 
-    if (location.getCompletionType() == CompletionType.BASIC) {
+    if (myCompletionType == CompletionType.BASIC) {
       if (object instanceof PsiKeyword && PsiKeyword.CLASS.equals(item.getLookupString())) {
         return MyResult.classLiteral;
       }
