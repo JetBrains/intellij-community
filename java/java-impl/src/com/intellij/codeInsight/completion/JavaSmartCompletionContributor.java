@@ -402,6 +402,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
 
+  @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {

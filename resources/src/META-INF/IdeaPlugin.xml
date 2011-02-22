@@ -803,11 +803,6 @@
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferExpectedTypeWeigher" id="expectedType"
-             order="after negativeStats"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
-             order="after expectedType, before stats"/>
-
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
              order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"

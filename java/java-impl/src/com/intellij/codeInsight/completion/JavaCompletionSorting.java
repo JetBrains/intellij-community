@@ -44,12 +44,13 @@ public class JavaCompletionSorting {
 
     final boolean smart = type == CompletionType.SMART;
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters);
-    if (!smart && JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
+    final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+    if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new LookupElementWeigher("expectedAfterNew") {
         @NotNull
         @Override
         public Comparable weigh(@NotNull LookupElement element) {
-          return -((Enum)PreferExpectedTypeWeigher.weigh(element, expectedTypes)).ordinal();
+          return getExpectedTypeMatching(element, expectedTypes);
         }
       });
     }
@@ -61,6 +62,25 @@ public class JavaCompletionSorting {
       sorter = sorter.weighAfter("negativeStats", new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
     sorter = recursion(sorter, parameters, expectedTypes);
+
+    sorter = sorter.weighAfter("recursion", new LookupElementWeigher("nameEnd") {
+      @NotNull
+      @Override
+      public Comparable weigh(@NotNull LookupElement element) {
+        final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
+        return -JavaCompletionUtil.getNameEndMatchingDegree(name, expectedTypes, element.getPrefixMatcher().getPrefix());
+      }
+    });
+
+    if (!smart) {
+      sorter = sorter.weighAfter("recursion", new LookupElementWeigher("expectedType") {
+        @NotNull
+        @Override
+        public Comparable weigh(@NotNull LookupElement item) {
+          return item.getObject() instanceof PsiClass && !afterNew ? ExpectedTypeMatching.normal : getExpectedTypeMatching(item, expectedTypes);
+        }
+      });
+    }
     return result.withRelevanceSorter(sorter);
   }
 
@@ -109,6 +129,28 @@ public class JavaCompletionSorting {
         return -5;
       }
     });
+  }
+
+  public static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos) {
+    PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
+    if (itemType == null) return ExpectedTypeMatching.normal;
+
+    for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+      final PsiType defaultType = expectedInfo.getDefaultType();
+      final PsiType expectedType = expectedInfo.getType();
+      if (!expectedType.isValid()) {
+        return ExpectedTypeMatching.normal;
+      }
+
+      if (defaultType != expectedType && defaultType.isAssignableFrom(itemType)) {
+        return ExpectedTypeMatching.ofDefaultType;
+      }
+      if (expectedType.isAssignableFrom(itemType)) {
+        return ExpectedTypeMatching.expected;
+      }
+    }
+
+    return ExpectedTypeMatching.normal;
   }
 
   private static class PreferDefaultTypeWeigher extends LookupElementWeigher {
@@ -273,5 +315,11 @@ public class JavaCompletionSorting {
       final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
       return first == null ? method : first;
     }
+  }
+
+  enum ExpectedTypeMatching {
+    ofDefaultType,
+    expected,
+    normal,
   }
 }
