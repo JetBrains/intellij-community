@@ -15,9 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -29,14 +26,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
-import git4idea.merge.GitMergeUtil;
+import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -57,6 +52,7 @@ public class GitUpdateProcess {
   private final ProgressIndicator myProgressIndicator;
   private final GitVcs myVcs;
   private final AbstractVcsHelper myVcsHelper;
+  private final GitMerger myMerger;
 
   public GitUpdateProcess(Project project,
                           ProgressIndicator progressIndicator,
@@ -68,6 +64,7 @@ public class GitUpdateProcess {
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myVcs = GitVcs.getInstance(myProject);
     myVcsHelper = AbstractVcsHelper.getInstance(project);
+    myMerger = new GitMerger(myProject);
   }
 
   /**
@@ -157,49 +154,27 @@ public class GitUpdateProcess {
     return true;
   }
 
+  /**
+   * Check if merge is in progress, propose to resolve conflicts.
+   * @return true if merge is in progress, which means that update can't continue.
+   */
   private boolean isMergeInProgressAndNotify() {
-    final GitMerger merger = new GitMerger(myProject);
-    final Collection<VirtualFile> mergingRoots = merger.getMergingRoots();
+    final Collection<VirtualFile> mergingRoots = myMerger.getMergingRoots();
     if (mergingRoots.isEmpty()) {
       return false;
     }
 
-    try {
-      Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, mergingRoots);
-      if (unmergedFiles.isEmpty()) {
-        return false;
-      } else {
-        // TODO add descriptive message to the dialog:
-        // You must resolve all conflicts before you continue rebase
-        final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override public void run() {
-            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), myVcs.getReverseMergeProvider());
-          }
-        });
-
-        unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, mergingRoots);
-        if (unmergedFiles.isEmpty()) {
-          merger.mergeCommit(mergingRoots);
-          return false;
-        } else {
-          // TODO link to "resolve all conflicts"
-          Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
-                                                    "Resolve all conflicts and commit the result", NotificationType.WARNING), myProject);
-        }
+    return !new GitMergeConflictResolver(myProject, false, "Can't update", "") {
+      @Override protected boolean proceedAfterAllMerged() throws VcsException {
+        myMerger.mergeCommit(mergingRoots);
+        return true;
       }
-    } catch (VcsException e) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
-                                                "Be sure to resolve all conflicts and commit the result. <br/>" +
-                                                e.getLocalizedMessage(), NotificationType.WARNING), myProject);
-    }
-    return true;
+    }.mergeFiles(mergingRoots);
   }
 
   /**
-   * Check if some roots are under the rebase operation and show a message in this case
-   *
-   * @return true if some roots are being rebased
+   * Check if rebase is in progress, propose to resolve conflicts.
+   * @return true if rebase is in progress, which means that update can't continue.
    */
   private boolean isRebaseInProgressAndNotify() {
     final GitRebaser rebaser = new GitRebaser(myProject);
@@ -208,37 +183,15 @@ public class GitUpdateProcess {
       return false;
     }
 
-    try {
-      Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, rebasingRoots);
-      if (unmergedFiles.isEmpty()) {
+    return !new GitMergeConflictResolver(myProject, true, "Can't update", "Then you may continue or abort rebase.") {
+      @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
-      } else {
-        // TODO add descriptive message to the dialog:
-        // You must resolve all conflicts before you continue rebase
-        final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override public void run() {
-            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), myVcs.getReverseMergeProvider());
-          }
-        });
-
-        unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, rebasingRoots);
-        if (unmergedFiles.isEmpty()) {
-          return rebaser.continueRebase(rebasingRoots);
-        } else {
-          // TODO link to "resolve all conflicts"
-          Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
-                                                    "You have to resolve all conflicts first. <br/>" +
-                                                    "Then you may continue or abort rebase.", NotificationType.WARNING), myProject);
-        }
       }
-    } catch (VcsException e) {
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't update",
-                                                "Be sure to resolve all conflicts first. <br/>" +
-                                                "Then you may continue or abort rebase.<br/>" +
-                                                e.getLocalizedMessage(), NotificationType.WARNING), myProject);
-    }
-    return true;
+
+      @Override protected boolean proceedAfterAllMerged() {
+        return rebaser.continueRebase(rebasingRoots);
+      }
+    }.mergeFiles(rebasingRoots);
   }
 
 }

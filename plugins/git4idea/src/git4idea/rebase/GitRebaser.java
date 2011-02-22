@@ -15,24 +15,17 @@
  */
 package git4idea.rebase;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeUtil;
+import git4idea.merge.GitMergeConflictResolver;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -83,32 +76,18 @@ public class GitRebaser {
 
       @Override protected void onFailure() {
         if (rebaseConflictDetector.isMergeConflict()) {
-          try {
-            Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, root);
-            if (unmergedFiles.isEmpty()) {
-              continueRebase(root, "--continue");
-            } else {
-              myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(unmergedFiles), myVcs.getReverseMergeProvider());
-              unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, root);
-              if (unmergedFiles.isEmpty()) {
-                continueRebase(root, "--continue");
-              } else {
-                result.set(false);
-                Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
-                                                          "You must resolve all conflicts first. <br/>" +
-                                                          "Then you may continue or abort rebase.", NotificationType.WARNING), myProject);
-              }
+          result.set(new GitMergeConflictResolver(myProject, true, "Can't continue rebase", "Then you may continue or abort rebase.") {
+            @Override protected boolean proceedIfNothingToMerge() {
+              return continueRebase(root, "--continue");
             }
-          } catch (VcsException e) {
-            result.set(false);
-            Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
-                                                      "Be sure to resolve all conflicts first. <br/>" +
-                                                      "Then you may continue or abort rebase.<br/>" +
-                                                      e.getLocalizedMessage(), NotificationType.WARNING), myProject);
-          }
+
+            @Override protected boolean proceedAfterAllMerged() {
+              return continueRebase(root, "--continue");
+            }
+          }.mergeFiles(Collections.singleton(root)));
         } else if (rebaseConflictDetector.isNoChangeError()) {
           mySkippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
-          continueRebase(root, "--skip");
+          result.set(continueRebase(root, "--skip"));
         } else {
           result.set(false);
           GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(rh.errors()));

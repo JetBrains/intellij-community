@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
@@ -32,7 +31,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
@@ -50,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utilities for merge
@@ -238,50 +235,4 @@ public class GitMergeUtil {
     return GitChangeUtils.unmergedFiles(project, root);
   }
 
-  public static MergeResult mergeFiles(final Project project, final VirtualFile root, final boolean reverse) throws VcsException {
-    final GitVcs vcs = GitVcs.getInstance(project);
-    final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
-    if (vcs == null) {
-      return MergeResult.CANCEL_UPDATE;
-    }
-
-    final AtomicReference<MergeResult> mergeDecision = new AtomicReference<MergeResult>(MergeResult.ALL_MERGED);
-    final AtomicReference<VcsException> ex = new AtomicReference<VcsException>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        try {
-          List<VirtualFile> unmergedFiles = GitChangeUtils.unmergedFiles(project, root);
-          while (unmergedFiles.size() != 0) {
-            vcsHelper.showMergeDialog(unmergedFiles, reverse ? vcs.getReverseMergeProvider() : vcs.getMergeProvider());
-            unmergedFiles = GitChangeUtils.unmergedFiles(project, root);
-            if (unmergedFiles.size() != 0) {
-              int decision = Messages.showDialog(project,
-                                                 "There are unresolved merges. Would you like to continue merging, merge later by hands or cancel the update",
-                                                 "Unresolved merges", new String[]{"Cancel update", "Merge later", "Merge now"}, 2,
-                                                 Messages.getErrorIcon());
-              if (decision == 0) {
-                mergeDecision.set(MergeResult.CANCEL_UPDATE);
-                return;
-              } else if (decision == 1) {
-                mergeDecision.set(MergeResult.MERGE_LATER);
-                return;
-              }
-            }
-          }
-        } catch (VcsException t) {
-          ex.set(t);
-        }
-      }
-    });
-    if (ex.get() != null) {
-      throw ex.get();
-    }
-    return mergeDecision.get();
-  }
-
-  public enum MergeResult {
-    ALL_MERGED,
-    MERGE_LATER,
-    CANCEL_UPDATE
-  }
 }

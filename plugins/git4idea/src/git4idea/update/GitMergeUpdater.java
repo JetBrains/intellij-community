@@ -15,9 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -25,15 +22,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeUtil;
+import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.ui.GitUIUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -87,37 +82,18 @@ public class GitMergeUpdater extends GitUpdater {
       @Override protected void onFailure() {
         final MergeError error = mergeError.get();
         if (error == MergeError.CONFLICT) {
-          try {
-            Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoot);
-            if (unmergedFiles.isEmpty()) {
+          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Can't update", "") {
+            @Override protected boolean proceedIfNothingToMerge() throws VcsException {
               merger.mergeCommit(myRoot);
-              updateResult.set(GitUpdateResult.SUCCESS);
-            } else {
-              final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
-              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                public void run() {
-                  myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), myVcs.getReverseMergeProvider());
-                }
-              });
-              unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoot);
-              if (unmergedFiles.isEmpty()) {
-                merger.mergeCommit(myRoot);
-                updateResult.set(GitUpdateResult.SUCCESS);
-              } else {
-                updateResult.set(GitUpdateResult.INCOMPLETE);
-                Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
-                                                          "You must resolve all conflicts first. <br/>" +
-                                                          "Then you may continue or abort rebase.", NotificationType.WARNING),
-                                         myProject);
-              }
+              return true;
             }
-          } catch (VcsException e) {
-            updateResult.set(GitUpdateResult.INCOMPLETE);
-            Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Can't continue rebase",
-                                                      "Be sure to resolve all conflicts first. <br/>" +
-                                                      "Then you may continue or abort rebase.<br/>" +
-                                                      e.getLocalizedMessage(), NotificationType.WARNING), myProject);
-          }
+
+            @Override protected boolean proceedAfterAllMerged() throws VcsException {
+              merger.mergeCommit(myRoot);
+              return true;
+            }
+          }.mergeFiles(Collections.singleton(myRoot));
+          updateResult.set(allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE);
         } else {
           GitUIUtil.notifyImportantError(myProject, "Error merging", GitUIUtil.stringifyErrors(pullHandler.errors()));
           updateResult.set(GitUpdateResult.ERROR);
