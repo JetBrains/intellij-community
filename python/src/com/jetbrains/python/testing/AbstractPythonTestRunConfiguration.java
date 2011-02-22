@@ -205,62 +205,70 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
-    if (myTestType == TestType.TEST_FOLDER) {
-      if (element instanceof PsiDirectory) {
-        VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
-        if (Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(myFolderName).getAbsolutePath())) {
-          return new RefactoringElementAdapter() {
-            @Override
-            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-              myFolderName = FileUtil.toSystemDependentName(((PsiDirectory) newElement).getVirtualFile().getPath());
+    if (element instanceof PsiDirectory) {
+      VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
+      if ((myTestType == TestType.TEST_FOLDER && pathsEqual(vFile, myFolderName)) || pathsEqual(vFile, getWorkingDirectory())) {
+        return new RefactoringElementAdapter() {
+          @Override
+          protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+            String newPath = FileUtil.toSystemDependentName(((PsiDirectory)newElement).getVirtualFile().getPath());
+            setWorkingDirectory(newPath);
+            if (myTestType == TestType.TEST_FOLDER) {
+              myFolderName = newPath;
             }
-          };
-        }
-      }
-    }
-    else {
-      File scriptFile = new File(myScriptName);
-      if (!scriptFile.isAbsolute()) {
-        scriptFile = new File(getWorkingDirectory(), myScriptName);
-      }
-      PsiFile containingFile = element.getContainingFile();
-      VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
-      if (vFile != null && Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), scriptFile.getAbsolutePath())) {
-        if (element instanceof PsiFile) {
-          return new RefactoringElementAdapter() {
-            @Override
-            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-              VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
-              if (virtualFile != null) {
-                myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
-              }
-            }
-          };
-        }
-        if (element instanceof PyClass && (myTestType == TestType.TEST_CLASS || myTestType == TestType.TEST_METHOD) &&
-            Comparing.equal(((PyClass)element).getName(), myClassName)) {
-          return new RefactoringElementAdapter() {
-            @Override
-            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-              myClassName = ((PyClass) newElement).getName();
-            }
-          };
-        }
-        if (element instanceof PyFunction &&
-            Comparing.equal(((PyFunction) element).getName(), myMethodName)) {
-          ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-          if ((myTestType == TestType.TEST_FUNCTION && scopeOwner instanceof PyFile) ||
-              (myTestType == TestType.TEST_METHOD && scopeOwner instanceof PyClass && Comparing.equal(scopeOwner.getName(), myClassName))) {
-            return new RefactoringElementAdapter() {
-              @Override
-              protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-                myMethodName = ((PyFunction) newElement).getName();
-              }
-            };
           }
+        };
+      }
+      return null;
+    }
+    if (myTestType == TestType.TEST_FOLDER) {
+      return null;
+    }
+    File scriptFile = new File(myScriptName);
+    if (!scriptFile.isAbsolute()) {
+      scriptFile = new File(getWorkingDirectory(), myScriptName);
+    }
+    PsiFile containingFile = element.getContainingFile();
+    VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
+    if (vFile != null && Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), scriptFile.getAbsolutePath())) {
+      if (element instanceof PsiFile) {
+        return new RefactoringElementAdapter() {
+          @Override
+          protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+            VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
+            if (virtualFile != null) {
+              myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
+            }
+          }
+        };
+      }
+      if (element instanceof PyClass && (myTestType == TestType.TEST_CLASS || myTestType == TestType.TEST_METHOD) &&
+          Comparing.equal(((PyClass)element).getName(), myClassName)) {
+        return new RefactoringElementAdapter() {
+          @Override
+          protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+            myClassName = ((PyClass) newElement).getName();
+          }
+        };
+      }
+      if (element instanceof PyFunction &&
+          Comparing.equal(((PyFunction) element).getName(), myMethodName)) {
+        ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+        if ((myTestType == TestType.TEST_FUNCTION && scopeOwner instanceof PyFile) ||
+            (myTestType == TestType.TEST_METHOD && scopeOwner instanceof PyClass && Comparing.equal(scopeOwner.getName(), myClassName))) {
+          return new RefactoringElementAdapter() {
+            @Override
+            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+              myMethodName = ((PyFunction) newElement).getName();
+            }
+          };
         }
       }
     }
     return null;
+  }
+
+  private static boolean pathsEqual(VirtualFile vFile, final String folderName) {
+    return Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(folderName).getAbsolutePath());
   }
 }
