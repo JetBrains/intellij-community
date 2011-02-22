@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,9 +149,23 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (names_already.contains(s)) continue;
         else names_already.add(s);
       }
-      result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s).setIcon(pfsi.getIcon(0)));
+      result.add(LookupElementBuilder.create(pfsi, s)
+                   .setTypeText(getPresentablePath(directory))
+                   .setPresentableText(s)
+                   .setIcon(pfsi.getIcon(0)));
     }
     return result;
+  }
+
+  private static String getPresentablePath(PsiDirectory directory) {
+    if (directory == null) {
+      return "";
+    }
+    final String path = directory.getVirtualFile().getPath();
+    if (path.contains(PythonSdkType.SKELETON_DIR_NAME)) {
+      return "<built-in>";
+    }
+    return FileUtil.toSystemDependentName(path);
   }
 
   public String getName() {
