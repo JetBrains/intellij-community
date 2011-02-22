@@ -1,7 +1,11 @@
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+
+import java.util.List;
 
 /**
  * Looks for well-formedness of string constants.
@@ -26,8 +30,13 @@ public class StringConstantAnnotator extends PyAnnotator {
     first_quote = s.charAt(index);
     if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
 
-    if (checkTripleQuotedString(node, s, index, TRIPLE_QUOTES)) return;
-    if (checkTripleQuotedString(node, s, index, TRIPLE_APOS)) return;
+    List<ASTNode> stringNodes = node.getStringNodes();
+    int thisNodeIndex = index;
+    for (ASTNode stringNode : stringNodes) {
+      if (checkTripleQuotedString(stringNode.getPsi(), stringNode.getText(), thisNodeIndex, TRIPLE_QUOTES)) return;
+      if (checkTripleQuotedString(stringNode.getPsi(), stringNode.getText(), thisNodeIndex, TRIPLE_APOS)) return;
+      thisNodeIndex = 0;
+    }
 
     first_quote = s.charAt(index);
     // s can't begin with a non-quote, else parser would not say it's a string
@@ -70,7 +79,7 @@ public class StringConstantAnnotator extends PyAnnotator {
     }
   }
 
-  private boolean checkTripleQuotedString(PyStringLiteralExpression node, String s, int index, final String quotes) {
+  private boolean checkTripleQuotedString(PsiElement node, String s, int index, final String quotes) {
     if (StringUtil.startsWith(s.substring(index, s.length()), quotes)) {
       if (s.length() < 6 + index || !s.endsWith(quotes)) {
         getHolder().createErrorAnnotation(node, "Missing closing triple quotes");

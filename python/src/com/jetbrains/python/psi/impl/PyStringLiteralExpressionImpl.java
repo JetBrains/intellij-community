@@ -134,6 +134,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     }
   }
 
+
+
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(TokenSet.create(PyTokenTypes.STRING_LITERAL)));
   }

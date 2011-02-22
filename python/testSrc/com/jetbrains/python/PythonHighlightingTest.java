@@ -134,6 +134,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testMixedTripleQuotes() {   // PY-2806
+    doTest();
+  }
+
   public void testUnsupportedFeaturesInPython3() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
