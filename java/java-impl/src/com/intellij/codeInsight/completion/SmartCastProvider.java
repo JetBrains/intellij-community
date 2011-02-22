@@ -30,20 +30,24 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
       PsiTypeCastExpression.class));
 
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-    for (final ExpectedTypeInfo type : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-      if (type.getType() == PsiType.VOID) {
-        continue;
-      }
-
+    for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       final PsiElement originalPosition = parameters.getOriginalPosition();
       final boolean overwrite = INSIDE_TYPECAST_TYPE.accepts(originalPosition);
 
-      final PsiType defaultType = type.getDefaultType();
-      result.addElement(createSmartCastElement(parameters, overwrite, defaultType));
-      if (defaultType instanceof PsiPrimitiveType) {
-        final PsiType type1 = getCastedExpressionType(originalPosition);
-        if (type1 != null && !(type1 instanceof PsiPrimitiveType)) {
-          final PsiClassType boxedType = ((PsiPrimitiveType)defaultType).getBoxedType(originalPosition);
+      PsiType type = info.getDefaultType();
+      if (type instanceof PsiWildcardType) {
+        type = ((PsiWildcardType)type).getBound();
+      }
+
+      if (type == null || type == PsiType.VOID) {
+        continue;
+      }
+
+      result.addElement(createSmartCastElement(parameters, overwrite, type));
+      if (type instanceof PsiPrimitiveType) {
+        final PsiType castedType = getCastedExpressionType(originalPosition);
+        if (castedType != null && !(castedType instanceof PsiPrimitiveType)) {
+          final PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(originalPosition);
           if (boxedType != null) {
             result.addElement(createSmartCastElement(parameters, overwrite, boxedType));
           }

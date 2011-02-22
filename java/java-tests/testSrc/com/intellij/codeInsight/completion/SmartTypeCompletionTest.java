@@ -434,6 +434,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testCastAutoboxing() throws Throwable { doActionItemTest(); }
   public void testCastAutoboxing2() throws Throwable { doActionItemTest(); }
   public void testCastAutoboxing3() throws Throwable { doActionItemTest(); }
+  public void testCastWildcards() throws Throwable { doTest(); }
 
   public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
   public void testNoUninitializedFieldsInConstructor() throws Throwable { doTest(); }
