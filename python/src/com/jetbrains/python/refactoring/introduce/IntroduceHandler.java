@@ -285,7 +285,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     initInConstructor = initInConstructor != null ? initInConstructor : InitPlace.SAME_METHOD;
 
-    String assignmentText = name + " = " + expression.getText();
+    String assignmentText = name + " = " + expression.getText().replace("\n", " ");
     PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
     PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
 
