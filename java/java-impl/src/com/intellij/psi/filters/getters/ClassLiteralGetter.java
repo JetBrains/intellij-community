@@ -16,30 +16,26 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.completion.CompletionProvider;
-import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionParameters> {
+public class ClassLiteralGetter {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
 
-  @Override
-  protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
-                                ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
+  public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
+                                    @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
 
-    final PrefixMatcher matcher = result.getPrefixMatcher();
     final Condition<String> shortNameCondition = new Condition<String>() {
       public boolean value(String s) {
         return matcher.prefixMatches(s);
@@ -61,7 +57,7 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
     PsiFile file = parameters.getPosition().getContainingFile();
     addClassLiteralLookupElement(classParameter, result, file);
     if (addInheritors) {
-      addInheritorClassLiterals(file, shortNameCondition, classParameter, result);
+      addInheritorClassLiterals(file, shortNameCondition, classParameter, result, matcher);
     }
 
   }
@@ -69,9 +65,9 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
   private static void addInheritorClassLiterals(PsiFile context,
                                                 Condition<String> shortNameCondition,
                                                 final PsiType classParameter,
-                                                CompletionResultSet result) {
+                                                Consumer<LookupElement> result, PrefixMatcher matcher) {
     final String canonicalText = classParameter.getCanonicalText();
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(matcher.getPrefix())) {
       return;
     }
 
@@ -80,13 +76,13 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
     }
   }
 
-  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final CompletionResultSet resultSet, final PsiFile context) {
+  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<LookupElement> resultSet, final PsiFile context) {
     if (type instanceof PsiClassType &&
         PsiUtil.resolveClassInType(type) != null &&
         !((PsiClassType)type).hasParameters() &&
         !(((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
       try {
-        resultSet.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
+        resultSet.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

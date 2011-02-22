@@ -197,9 +197,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, info);
           final PsiType type = info.getType();
 
-          final CompletionService service = CompletionService.getCompletionService();
-          new BasicExpressionCompletionContributor().fillCompletionVariants(parameters, service.createResultSet(parameters, new Consumer<LookupElement>() {
-            public void consume(final LookupElement lookupElement) {
+          BasicExpressionCompletionContributor.fillCompletionVariants(parameters, new Consumer<LookupElement>() {
+            @Override
+            public void consume(LookupElement lookupElement) {
               final TypedLookupItem typed = lookupElement.as(TypedLookupItem.CLASS_CONDITION_KEY);
               if (typed != null) {
                 final PsiType psiType = typed.getType();
@@ -208,12 +208,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                 }
               }
             }
-          }, JavaSmartCompletionContributor.this));
-          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, service.createResultSet(parameters, new Consumer<LookupElement>() {
+          }, result.getPrefixMatcher());
+          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
               result.addElement(decorate(lookupElement, _infos));
             }
-          }, JavaSmartCompletionContributor.this));
+          });
 
         }
       }
