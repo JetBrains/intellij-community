@@ -101,14 +101,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
   private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
 
-  private final PerIndexDocumentMap<Long> myLastIndexedDocStamps = new PerIndexDocumentMap<Long>() {
-    @NotNull
-    @Override
-    protected Long createDefault(@NotNull Document document) {
-      return 0L;
-    }
-  };
-
+  private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   private final ChangedFilesCollector myChangedFilesCollector;
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
@@ -354,7 +347,6 @@ public class FileBasedIndex implements ApplicationComponent {
    * @param isCurrentVersionCorrupted
    */
   private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
-    boolean versionChanged = false;
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     if (!extension.dependsOnFileContent()) {
@@ -363,6 +355,7 @@ public class FileBasedIndex implements ApplicationComponent {
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     final boolean versionFileExisted = versionFile.exists();
+    boolean versionChanged = false;
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
       if (!isCurrentVersionCorrupted && versionFileExisted) {
         versionChanged = true;
@@ -1181,7 +1174,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     final long currentDocStamp = content.getModificationStamp();
-    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
+    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp)) {
       final Ref<StorageException> exRef = new Ref<StorageException>(null);
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         public void run() {
@@ -1770,10 +1763,10 @@ public class FileBasedIndex implements ApplicationComponent {
 
         if (file instanceof VirtualFileWithId) {
           try {
-            boolean oldStuff = true;
             if (file instanceof NewVirtualFile) {
               file.putUserData(NewVirtualFile.FILE_TYPE_KEY, file.getFileType());
             }
+            boolean oldStuff = true;
             if (!isTooLarge(file)) {
               for (ID<?, ?> indexId : myIndices.keySet()) {
                 try {
