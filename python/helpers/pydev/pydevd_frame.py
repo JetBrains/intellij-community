@@ -88,7 +88,7 @@ class PyDBFrame:
                 if exception_breakpoint is not None:
                     curr_func_name = frame.f_code.co_name
                     self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                    thread.additionalInfo.message = exception_breakpoint.name
+                    thread.additionalInfo.message = exception_breakpoint.qname
                     #self.doWaitSuspend(thread, frame, event, arg)
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case

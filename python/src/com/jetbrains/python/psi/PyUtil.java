@@ -746,7 +746,7 @@ public class PyUtil {
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {
-    return pyClass.isSubclass("BaseException");
+    return pyClass.isSubclass("exceptions.BaseException");
   }
 
   public static class MethodFlags {
