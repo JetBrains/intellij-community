@@ -25,9 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.*;
-// .impl looks impure
-
 /**
  * @author yole
  */
@@ -113,9 +110,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
 
-    if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
+    if (point == ResolveImportUtil.PointInImport.NONE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when not imported from, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor(location);
-      processor.setPlainNamesOnly(point.role == AS_NAME); // no parens after imported function names
+      processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -130,7 +127,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    if (point.role == AS_MODULE || point.role == AS_NAME) { // when imported from somehow, add submodules
+    if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
       for (PsiFileSystemItem pfsi : getSubmodulesList()) {
         if (pfsi == location.getContainingFile().getOriginalFile()) continue;
         String s = pfsi.getName();
