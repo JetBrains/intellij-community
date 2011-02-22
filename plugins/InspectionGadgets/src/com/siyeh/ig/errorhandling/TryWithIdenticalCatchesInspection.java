@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -123,16 +124,15 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (parameter1 == null || parameter2 == null) {
         return;
       }
-      String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
+      @NonNls String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
       PsiTryStatement newTryCatch = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, stmt);
       parameter1.getTypeElement().replace(newTryCatch.getCatchSections() [0].getParameter().getTypeElement());
       section.delete();
     }
 
     @NotNull
-    @Override
     public String getName() {
-      return"Collapse catch blocks into multi-catch";
+      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
   }
 }
