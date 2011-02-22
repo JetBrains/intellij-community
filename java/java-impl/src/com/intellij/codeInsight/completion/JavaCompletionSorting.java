@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -83,6 +84,8 @@ public class JavaCompletionSorting {
       }
     });
     sorter = sorter.weighAfter("negativeStats", afterNegativeStats.toArray(new LookupElementWeigher[afterNegativeStats.size()]));
+
+    sorter = sorter.weighAfter("prefix", new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(), new PreferEnumConstants(parameters));
 
     return result.withRelevanceSorter(sorter);
   }
@@ -322,9 +325,106 @@ public class JavaCompletionSorting {
     }
   }
 
-  enum ExpectedTypeMatching {
+  private enum ExpectedTypeMatching {
     ofDefaultType,
     expected,
     normal,
+  }
+
+  private static class PreferAccessible extends LookupElementWeigher {
+    private final PsiElement myPosition;
+
+    public PreferAccessible(PsiElement position) {
+      super("accessible");
+      myPosition = position;
+    }
+
+    private enum MyEnum {
+      NORMAL,
+      DEPRECATED,
+      INACCESSIBLE,
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      final Object object = element.getObject();
+      if (object instanceof PsiDocCommentOwner) {
+        final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
+        if (!member.isValid()) {
+          return MyEnum.NORMAL;
+        }
+
+        if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
+        if (member.isDeprecated()) return MyEnum.DEPRECATED;
+      }
+      return MyEnum.NORMAL;
+    }
+  }
+
+  private static class PreferNonGeneric extends LookupElementWeigher {
+    public PreferNonGeneric() {
+      super("nonGeneric");
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      final Object object = element.getObject();
+      if (object instanceof PsiMethod) {
+        PsiType type = ((PsiMethod)object).getReturnType();
+        final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
+        if (callItem != null) {
+          type = callItem.getSubstitutor().substitute(type);
+        }
+
+        if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return 1;
+      }
+
+      return 0;
+    }
+  }
+
+  private static class PreferSimple extends LookupElementWeigher {
+    public PreferSimple() {
+      super("simple");
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      final PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
+      if (lookupItem != null) {
+        return lookupItem.getBracketsCount();
+      }
+      if (element.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
+        return 239;
+      }
+      return 0;
+    }
+  }
+
+  private static class PreferEnumConstants extends LookupElementWeigher {
+    private final CompletionParameters myParameters;
+
+    public PreferEnumConstants(CompletionParameters parameters) {
+      super("constants");
+      myParameters = parameters;
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      if (element.getObject() instanceof PsiEnumConstant) return -2;
+
+      if (!(myParameters.getOriginalFile() instanceof PsiJavaFile)) return -1;
+
+      if (PsiKeyword.TRUE.equals(element.getLookupString()) || PsiKeyword.FALSE.equals(element.getLookupString())) {
+        boolean inReturn = PsiTreeUtil.getParentOfType(myParameters.getPosition(), PsiReturnStatement.class, false, PsiMember.class) != null;
+        return inReturn ? -2 : 0;
+      }
+
+      return -1;
+    }
   }
 }
