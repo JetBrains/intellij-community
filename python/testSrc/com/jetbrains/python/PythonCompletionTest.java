@@ -289,4 +289,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/relativeImport/pkg/name.after.py");
   }
+
+  public void testImport() {
+    doTest();
+  }
 }

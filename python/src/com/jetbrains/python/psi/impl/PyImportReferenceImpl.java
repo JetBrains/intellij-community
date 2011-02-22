@@ -261,6 +261,9 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
           myObjects.addAll(Arrays.asList(completionVariants));
         }
+        else {
+          myObjects.addAll(PyModuleType.getSubmoduleVariants(target_dir, myElement, myNamesAlready));
+        }
       }
     }
   }
