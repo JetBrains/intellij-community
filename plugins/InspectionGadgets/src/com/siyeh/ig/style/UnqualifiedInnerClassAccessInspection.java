@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,9 +31,13 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreReferencesToLocalInnerClasses = false;
 
     @Nls
     @NotNull
@@ -46,6 +52,14 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unqualified.inner.class.access.problem.descriptor");
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "unqualified.inner.class.access.option"),
+                this, "ignoreReferencesToLocalInnerClasses");
     }
 
     @Override
@@ -146,7 +160,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             ImportUtils.addImportIfNeeded(javaFile, containingClass);
             final PsiDocumentManager documentManager =
                     PsiDocumentManager.getInstance(project);
-            final Document document = documentManager.getDocument(containingFile);
+            final Document document =
+                    documentManager.getDocument(containingFile);
             if (document == null) {
                 return;
             }
@@ -194,13 +209,15 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         }
 
         private static boolean isReferenceToTargetClass(
-                String referenceText, PsiClass targetClass, PsiElement context) {
+                String referenceText, PsiClass targetClass,
+                PsiElement context) {
             final PsiManager manager = targetClass.getManager();
             final JavaPsiFacade facade =
                     JavaPsiFacade.getInstance(manager.getProject());
             final PsiResolveHelper resolveHelper = facade.getResolveHelper();
             final PsiClass referencedClass =
-                    resolveHelper.resolveReferencedClass(referenceText, context);
+                    resolveHelper.resolveReferencedClass(referenceText,
+                            context);
             if (referencedClass == null) {
                 return true;
             }
@@ -208,7 +225,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         }
     }
 
-    private static class ReferenceCollector extends JavaRecursiveElementVisitor {
+    private static class ReferenceCollector
+            extends JavaRecursiveElementVisitor {
 
         private final String name;
         private final boolean onDemand;
@@ -265,7 +283,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         return new UnqualifiedInnerClassAccessVisitor();
     }
 
-    private static class UnqualifiedInnerClassAccessVisitor
+    private class UnqualifiedInnerClassAccessVisitor
             extends BaseInspectionVisitor {
 
         @Override
@@ -284,12 +302,24 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             if (containingClass == null) {
                 return;
             }
+            if (ignoreReferencesToLocalInnerClasses) {
+                if (PsiTreeUtil.isAncestor(containingClass, reference, true)) {
+                    return;
+                }
+                final PsiClass referenceClass =
+                        PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+                if (PsiTreeUtil.isAncestor(referenceClass, containingClass,
+                        true)) {
+                    return;
+                }
+            }
             registerError(reference, containingClass.getName());
         }
 
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitReferenceElement(expression);
-      }
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            visitReferenceElement(expression);
+        }
     }
 }
