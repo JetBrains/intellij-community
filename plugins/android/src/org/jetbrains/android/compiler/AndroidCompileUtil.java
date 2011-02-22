@@ -40,6 +40,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
@@ -227,6 +228,10 @@ public class AndroidCompileUtil {
       }
     });
     generate(compiler, contextWrapper[0]);
+  }
+
+  public static boolean isModuleAffected(CompileContext context, Module module) {
+    return ArrayUtil.find(context.getCompileScope().getAffectedModules(), module) >= 0;
   }
 
   public static void generate(GeneratingCompiler compiler, final CompileContext context) {

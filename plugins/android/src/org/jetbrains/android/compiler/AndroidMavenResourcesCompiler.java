@@ -92,6 +92,11 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
     for (GenerationItem item : items) {
       if (item instanceof MyGenerationItem) {
         final MyGenerationItem genItem = (MyGenerationItem)item;
+
+        if (!AndroidCompileUtil.isModuleAffected(context, genItem.myModule)) {
+          continue;
+        }
+
         Map<CompilerMessageCategory, List<String>> messages = AndroidMavenExecutor.generateResources(genItem.myModule);
         AndroidCompileUtil.addMessages(context, messages);
         if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
