@@ -113,12 +113,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings != null) {
-      UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton, null);
+      UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton);
     }
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         if (settings != null) {
-          settings.setPushActiveBranchesRebaseSavePolicy(UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null));
+          settings.setPushActiveBranchesRebaseSavePolicy(UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton));
         }
       }
     };
@@ -515,7 +515,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         reorderedCommits.put(r.root, reordered);
       }
     }
-    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
+    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton);
     assert p == GitVcsSettings.UpdateChangesPolicy.STASH || p == GitVcsSettings.UpdateChangesPolicy.SHELVE;
 
     return new RebaseInfo(reorderedCommits, rootsWithMerges, uncheckedCommits, roots, p);

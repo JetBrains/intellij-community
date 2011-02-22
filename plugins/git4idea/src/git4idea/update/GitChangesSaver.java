@@ -73,7 +73,6 @@ public abstract class GitChangesSaver {
     switch (settings.updateChangesPolicy()) {
       case STASH: return new GitStashChangesSaver(project, progressIndicator, stashMessage);
       case SHELVE: return new GitShelveChangesSaver(project, progressIndicator, stashMessage);
-      case KEEP: return new GitDumbChangesSaver(project, progressIndicator, stashMessage);
     }
     return getDefaultSaver(project, progressIndicator, stashMessage);
   }
