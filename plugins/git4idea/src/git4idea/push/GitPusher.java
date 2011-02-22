@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.checkin;
+package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.StringScanner;
-import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
-import git4idea.update.GitUpdater;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,61 +39,25 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * This is subclass of {@link git4idea.update.GitUpdater} that implement rebase operation for {@link GitPushActiveBranchesDialog}.
- * This operation reorders commits if needed.
+ * @author Kirill Likhodedov
  */
-public class GitPushRebaseProcess extends GitUpdater {
-  /**
-   * The logger
-   */
-  private static final Logger LOG = Logger.getInstance(GitPushRebaseProcess.class.getName());
-  /**
-   * Save changes policy
-   */
-  private final GitVcsSettings.UpdateChangesPolicy mySavePolicy;
-  /**
-   * The map from vcs root to list of the commit identifier for reordered commits, if vcs root is not provided, the reordering is not needed.
-   */
-  private final Map<VirtualFile, List<String>> myReorderedCommits;
-  /**
-   * A set of roots that have non-pushed merges
-   */
-  private final Set<VirtualFile> myRootsWithMerges;
-  /**
-   * The registration number for the rebase editor
-   */
+public class GitPusher {
+  private final Project myProject;
+  // The map from vcs root to list of the commit identifier for reordered commits, if vcs root is not provided, the reordering is not needed.
+  private Map<VirtualFile, List<String>> myReorderedCommits;
+  // A set of roots that have non-pushed merges
+  private Set<VirtualFile> myRootsWithMerges;
+  // The registration number for the rebase editor
   private Integer myRebaseEditorNo;
-  /**
-   * The rebase editor service
-   */
-  private final GitRebaseEditorService myRebaseEditorService;
+  private GitRebaseEditorService myRebaseEditorService;
 
-  /**
-   * The constructor
-   *
-   * @param vcs             the vcs instance
-   * @param project         the project instance
-   * @param exceptions      the list of exceptions for the process
-   * @param savePolicy      the save policy for the rebase process
-   * @param rootsWithMerges a set of roots with merges
-   */
-  public GitPushRebaseProcess(final GitVcs vcs,
-                              final Project project,
-                              List<VcsException> exceptions,
-                              GitVcsSettings.UpdateChangesPolicy savePolicy,
-                              Map<VirtualFile, List<String>> reorderedCommits,
-                              Set<VirtualFile> rootsWithMerges) {
-    super(vcs, project, exceptions);
-    mySavePolicy = savePolicy;
+  public GitPusher(final Project project, Map<VirtualFile, List<String>> reorderedCommits, Set<VirtualFile> rootsWithMerges) {
+    myProject = project;
     myReorderedCommits = reorderedCommits;
     myRootsWithMerges = rootsWithMerges;
     myRebaseEditorService = GitRebaseEditorService.getInstance();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected GitLineHandler makeStartHandler(VirtualFile root) throws VcsException {
     List<String> commits = myReorderedCommits.get(root);
     boolean hasMerges = myRootsWithMerges.contains(root);
@@ -121,10 +80,6 @@ public class GitPushRebaseProcess extends GitUpdater {
     return h;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void cleanupHandler(VirtualFile root, GitLineHandler h) {
     if (myRebaseEditorNo != null) {
       myRebaseEditorService.unregisterHandler(myRebaseEditorNo);
@@ -132,10 +87,6 @@ public class GitPushRebaseProcess extends GitUpdater {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void configureRebaseEditor(VirtualFile root, GitLineHandler h) {
     GitInteractiveRebaseEditorHandler editorHandler = new GitInteractiveRebaseEditorHandler(myRebaseEditorService, myProject, root, h);
     editorHandler.setRebaseEditorShown();
@@ -143,35 +94,31 @@ public class GitPushRebaseProcess extends GitUpdater {
     myRebaseEditorService.configureHandler(h, myRebaseEditorNo);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected String makeStashMessage() {
-    return "Uncommitted changes before rebase operation in push dialog at " +
-           DateFormatUtil.formatDateTime(Clock.getTime());
-  }
+  //private Collection<VcsException> doRebase(ProgressIndicator progressIndicator,
+  //                                          VirtualFile root,
+  //                                          RebaseConflictDetector rebaseConflictDetector,
+  //                                          final String action) {
+  //  GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+  //  // ignore failure for abort
+  //  rh.ignoreErrorCode(1);
+  //  rh.addParameters(action);
+  //  rebaseConflictDetector.reset();
+  //  rh.addLineListener(rebaseConflictDetector);
+  //  if (!"--abort".equals(action)) {
+  //    configureRebaseEditor(root, rh);
+  //  }
+  //  return GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator, GitHandlerUtil.formatOperationName("Rebasing ", root));
+  //}
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected GitVcsSettings.UpdateChangesPolicy getUpdatePolicy() {
-    return mySavePolicy;
-  }
+
 
   /**
    * The rebase editor that just overrides the list of commits
    */
   class PushRebaseEditor extends GitInteractiveRebaseEditorHandler {
-    /**
-     * The reordered commits
-     */
-    private final List<String> myCommits;
-    /**
-     * The true means that the root has merges
-     */
-    private final boolean myHasMerges;
+    private final Logger LOG = Logger.getInstance(PushRebaseEditor.class);
+    private final List<String> myCommits; // The reordered commits
+    private final boolean myHasMerges; // true means that the root has merges
 
     /**
      * The constructor from fields that is expected to be
@@ -187,9 +134,6 @@ public class GitPushRebaseProcess extends GitUpdater {
       myHasMerges = hasMerges;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public int editCommits(String path) {
       if (!myRebaseEditorShown) {
         myRebaseEditorShown = true;

@@ -424,8 +424,10 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   }
 
   private void executeRebase(final List<VcsException> exceptions, final RebaseInfo rebaseInfo) {
-    GitPushRebaseProcess process = new GitPushRebaseProcess(GitVcs.getInstance(myProject), myProject, exceptions, rebaseInfo.policy, rebaseInfo.reorderedCommits, rebaseInfo.rootsWithMerges);
-    process.doUpdate(ProgressManager.getInstance().getProgressIndicator(), rebaseInfo.roots);
+    // TODO
+    //GitRebaseUpdater
+    //  process = new GitRebaseUpdater(GitVcs.getInstance(myProject), myProject, exceptions, rebaseInfo.policy, rebaseInfo.reorderedCommits, rebaseInfo.rootsWithMerges);
+    //process.doUpdate(ProgressManager.getInstance().getProgressIndicator(), rebaseInfo.roots);
   }
 
   private static class RebaseInfo {

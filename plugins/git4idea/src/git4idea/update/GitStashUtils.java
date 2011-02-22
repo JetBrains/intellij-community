@@ -105,16 +105,12 @@ public class GitStashUtils {
   }
 
   /**
-   * Create stash for later use (it ignores exit code 1 [merge conflict])
-   *
-   * @param project the project to use
-   * @param root    the root
+   * git stash pop
    */
   public static void popLastStash(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
     handler.setNoSSH(true);
     handler.addParameters("pop");
-    handler.ignoreErrorCode(1);
     if (QUIET_STASH_SUPPORTED.isOlderOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("--quiet");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,658 +15,97 @@
  */
 package git4idea.update;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.changes.GitChangeUtils;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
-import git4idea.convert.GitFileSeparatorConverter;
-import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseUtils;
-import git4idea.ui.GitUIUtil;
-import org.jetbrains.annotations.NotNull;
+import git4idea.merge.MergeChangeCollector;
 
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
 
 /**
- * Common class which handles update from remote repository via merge or rebase strategies.
+ * Updates a single repository via merge or rebase.
+ * @see GitRebaseUpdater
+ * @see GitMergeUpdater
  */
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
-  protected Project myProject;
-  protected GitVcs myVcs;
-  protected List<VcsException> myExceptions;
 
-  private List<LocalChangeList> myListsCopy; // Copy of local change list
-  private final Map<VirtualFile, List<Change>> mySortedChanges = new HashMap<VirtualFile, List<Change>>(); // The changes sorted by root
-  private final ChangeListManagerEx myChangeManager;
+  protected final Project myProject;
+  protected final VirtualFile myRoot;
+  protected final ProgressIndicator myProgressIndicator;
+  protected final UpdatedFiles myUpdatedFiles;
+  protected final AbstractVcsHelper myVcsHelper;
+  protected final GitVcs myVcs;
 
-  private final HashSet<VirtualFile> myRootsToStash = new HashSet<VirtualFile>();
-  private boolean stashCreated; // True if the stash was created (root local variable)
-  private String myStashMessage;
+  protected GitRevisionNumber myBefore; // The revision that was before update
 
-  private ShelveChangesManager myShelveManager;
-  private ShelvedChangeList myShelvedChangeList;
-  // Contains vcs roots for which commits were skipped
-  private SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> mySkippedCommits = new TreeMap<VirtualFile, List<GitRebaseUtils.CommitInfo>>(GitUtil.VIRTUAL_FILE_COMPARATOR);
-  private ProgressIndicator myProgressIndicator;
-
-  public GitUpdater(final GitVcs vcs, final Project project, List<VcsException> exceptions) {
-    myVcs = vcs;
+  protected GitUpdater(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
     myProject = project;
-    myExceptions = exceptions;
-    myChangeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
-  }
-
-  /**
-   * Update depending on the chosen strategy.
-   *
-   * @param progressIndicator the progress indicator of overall update process
-   * @param roots             roots to be updated
-   */
-  public void doUpdate(ProgressIndicator progressIndicator, Set<VirtualFile> roots) {
-    LOG.info("doUpdate started");
+    myRoot = root;
     myProgressIndicator = progressIndicator;
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    projectManager.blockReloadingProjectOnExternalChanges();
+    myUpdatedFiles = updatedFiles;
+    myVcsHelper = AbstractVcsHelper.getInstance(project);
+    myVcs = GitVcs.getInstance(project);
+  }
 
+  /**
+   * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
+   *
+   * @param root
+   * @param progressIndicator
+   * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
+   */
+  public static GitUpdater getUpdater(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+    final GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    if (settings == null) {
+      return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+    }
+    switch (settings.getUpdateType()) {
+      case REBASE:
+        return new GitRebaseUpdater(project, root, progressIndicator, updatedFiles);
+      case MERGE:
+        return new GitMergeUpdater(project, root, progressIndicator, updatedFiles);
+      case BRANCH_DEFAULT:
+        // use default for the branch
+        return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+    }
+    return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+  }
+
+  // TODO! read git config. If there is anything, return it. Otherwise return merge. Currently always returning merge!
+  private static GitUpdater getDefaultUpdaterForBranch(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+    return new GitMergeUpdater(project, root, progressIndicator, updatedFiles);
+  }
+
+  public GitUpdateResult update() throws VcsException {
+    markStart(myRoot);
     try {
-      if (isRebaseInProgressAndNotify(roots)) {
-        return;
-      }
-      if (!saveProjectChangesBeforeUpdate()) { // TODO: unite with saveRootChangesBeforeUpdate, show notification in case of failure
-        return;
-      }
-      if (!allTrackedBranchesConfigured(roots)) {
-        return;
-      }
-
-      try {
-        for (final VirtualFile root : roots) {
-          List<GitRebaseUtils.CommitInfo> skippedCommits = null;
-          try {
-
-
-            final Ref<Boolean> cancelled = new Ref<Boolean>(false);
-            final Ref<Throwable> ex = new Ref<Throwable>();
-            saveRootChangesBeforeUpdate(root);
-            boolean hadAbortErrors = false;
-            try {
-              markStart(root);
-              try {
-                GitLineHandler h = makeStartHandler(root);
-                RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
-                h.addLineListener(rebaseConflictDetector);
-                try {
-                  GitHandlerUtil
-                    .doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Updating", root));
-                }
-                finally {
-                  if (!rebaseConflictDetector.isRebaseConflict()) {
-                    myExceptions.addAll(h.errors());
-                  }
-                  cleanupHandler(root, h);
-                }
-                while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get() && !hadAbortErrors) {
-                  mergeFiles(root, cancelled, ex, true);
-                  //noinspection ThrowableResultOfMethodCallIgnored
-                  if (ex.get() != null) {
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    throw GitUtil.rethrowVcsException(ex.get());
-                  }
-                  checkLocallyModified(root, cancelled, ex);
-                  //noinspection ThrowableResultOfMethodCallIgnored
-                  if (ex.get() != null) {
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    throw GitUtil.rethrowVcsException(ex.get());
-                  }
-                  if (cancelled.get()) {
-                    break;
-                  }
-                  Collection<VcsException> exceptions = doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-                  while (rebaseConflictDetector.isNoChange() && !hasAbortExceptions(exceptions)) {
-                    if (skippedCommits == null) {
-                      skippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
-                      mySkippedCommits.put(root, skippedCommits);
-                    }
-                    skippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
-                    exceptions = doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
-                  }
-                  hadAbortErrors = hasAbortExceptions(exceptions);
-                }
-                if (cancelled.get() || hadAbortErrors) {
-                  //noinspection ThrowableInstanceNeverThrown
-                  myExceptions.add(new VcsException(
-                    "The update process was " + (hadAbortErrors ? "aborted" : "cancelled") + " for " + root.getPresentableUrl()));
-                  doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
-                  progressIndicator.setText2("Refreshing files for the root " + root.getPath());
-                  root.refresh(false, true);
-                }
-              }
-              finally {
-                markEnd(root, cancelled.get());
-              }
-            }
-            finally {
-              restoreRootChangesAfterUpdate(root, cancelled);
-            }
-          }
-          catch (VcsException ex) {
-            myExceptions.add(ex);
-          }
-        }
-      } finally {
-        restoreProjectChangesAfterUpdate(); // TODO: unite with restoreRootChangesAfterUpdate
-      }
+      return doUpdate();
     } finally {
-      projectManager.unblockReloadingProjectOnExternalChanges();
+      markEnd(myRoot);
     }
   }
 
   /**
-   * For each root check that the repository is on branch, and this branch is tracking a remote branch.
-   * If it is not true for at least one of roots, notify and return false.
-   * If branch configuration is OK for all roots, return true.
+   * Performs update (via rebase or merge - depending on the implementing classes).
    */
-  private boolean allTrackedBranchesConfigured(@NotNull Set<VirtualFile> roots) {
-    for (VirtualFile root : roots) {
-      try {
-        final GitBranch branch = GitBranch.current(myProject, root);
-        if (branch == null) {
-          GitUIUtil.notifyImportantError(myProject, "Can't update: no current branch",
-                                         "You are in 'detached HEAD' state, which means that you're not on any branch.<br/>" +
-                                         "Checkout a branch to make update possible.");
-          return false;
-        }
-        final String value = branch.getTrackedRemoteName(myProject, root);
-        if (value == null || value.length() == 0) {
-          final String branchName = branch.getName();
-          GitUIUtil.notifyImportantError(myProject, "Can't update: no tracked branch",
-                                         "No tracked branch configured for branch " + branchName +
-                                         "<br/>To make your branch track a remote branch call, for example,<br/>" +
-                                         "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
-          return false;
-        }
-      } catch (VcsException e) {
-        GitUIUtil.notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
-        return false;
-      }
-    }
-    return true;
-  }
+  protected abstract GitUpdateResult doUpdate();
 
-  /**
-   * Check if the exceptions should cause an abort for the rebase process
-   *
-   * @param exceptions the exceptions to check (it should be result of single operation)
-   * @return true if rebase process should be aborted
-   */
-  private static boolean hasAbortExceptions(Collection<VcsException> exceptions) {
-    if (exceptions.size() > 1) {
-      return true;
-    }
-    if (exceptions.size() == 1) {
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"}) final VcsException ex = exceptions.iterator().next();
-      return !ex.getMessage().startsWith("Failed to merge in the changes");
-    }
-    return false;
-  }
-
-  /**
-   * Restore project changes after update
-   */
-  private void restoreProjectChangesAfterUpdate() {
-    LOG.info("restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy() + " myShelvedChangeList: " + myShelvedChangeList);
-    if (mySkippedCommits.size() > 0) {
-      GitSkippedCommits.showSkipped(myProject, mySkippedCommits);
-    }
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
-      if (myShelvedChangeList != null) {
-        myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
-        GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, myChangeManager, myExceptions);
-      }
-    }
-    // Move files back to theirs change lists
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
-      VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
-      final boolean isStash = getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH;
-      HashSet<File> filesToRefresh = isStash ? new HashSet<File>() : null;
-      for (LocalChangeList changeList : myListsCopy) {
-        LOG.info("restoreProjectChangesAfterUpdate refreshing files from changelist " + changeList);
-        for (Change c : changeList.getChanges()) {
-          ContentRevision after = c.getAfterRevision();
-          if (after != null) {
-            m.fileDirty(after.getFile());
-            if (isStash) {
-              filesToRefresh.add(after.getFile().getIOFile());
-            }
-          }
-          ContentRevision before = c.getBeforeRevision();
-          if (before != null) {
-            m.fileDirty(before.getFile());
-            if (isStash) {
-              filesToRefresh.add(before.getFile().getIOFile());
-            }
-          }
-        }
-      }
-      if (isStash) {
-        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
-      }
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          myChangeManager.invokeAfterUpdate(new Runnable() {
-            public void run() {
-              for (LocalChangeList changeList : myListsCopy) {
-                final Collection<Change> changes = changeList.getChanges();
-                LOG.debug("restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
-                if (!changes.isEmpty()) {
-                  LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
-                  myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-                }
-              }
-            }
-          }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, GitBundle.getString("update.restoring.change.lists"),
-                                            ModalityState.NON_MODAL);
-        }
-      });
-    }
-  }
-
-  /**
-   * Restore per-root changes after update
-   *
-   * @param root      the just updated root
-   * @param cancelled
-   */
-  private void restoreRootChangesAfterUpdate(VirtualFile root, Ref<Boolean> cancelled) {
-    final Ref<Throwable> ex = new Ref<Throwable>();
-    if (new File(root.getPath(), "MERGE_HEAD").exists()) {
-      // in case of unfinished merge offer direct merging
-      mergeFiles(root, cancelled, ex, false);
-      //noinspection ThrowableResultOfMethodCallIgnored
-      if (ex.get() != null) {
-        //noinspection ThrowableResultOfMethodCallIgnored
-        myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
-      }
-    }
-    if (stashCreated && getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
-      myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
-      unstash(root);
-      // after unstash, offer reverse merge
-      mergeFiles(root, cancelled, ex, true);
-      //noinspection ThrowableResultOfMethodCallIgnored
-      if (ex.get() != null) {
-        //noinspection ThrowableResultOfMethodCallIgnored
-        myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
-      }
-    }
-
-  }
-
-  /**
-   * Save per-root changes before update
-   *
-   * @param root the root to save changes for
-   * @throws VcsException if there is a problem with saving changes
-   */
-  private void saveRootChangesBeforeUpdate(VirtualFile root) throws VcsException {
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
-      stashCreated = false;
-      if (myRootsToStash.contains(root)) {
-        myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Stashing changes from", root));
-        stashCreated = GitStashUtils.saveStash(myProject, root, myStashMessage);
-      }
-    }
-  }
-
-  /**
-   * Do the project level work required to save the changes
-   *
-   * @return false, if update process needs to be aborted
-   */
-  private boolean saveProjectChangesBeforeUpdate() {
-    LOG.info("saveProjectChangesBeforeUpdate update policy: " + getUpdatePolicy());
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
-      myStashMessage = makeStashMessage();
-      myListsCopy = myChangeManager.getChangeListsCopy();
-      for (LocalChangeList l : myListsCopy) {
-        final Collection<Change> changeCollection = l.getChanges();
-        LOG.info("Stashing " + changeCollection.size() + " changes from '" + l.getName() + "'");
-        for (Change c : changeCollection) {
-          ContentRevision after = c.getAfterRevision();
-          if (after != null) {
-            VirtualFile r = GitUtil.getGitRootOrNull(after.getFile());
-            if (r != null) {
-              myRootsToStash.add(r);
-              List<Change> changes = mySortedChanges.get(r);
-              if (changes == null) {
-                changes = new ArrayList<Change>();
-                mySortedChanges.put(r, changes);
-              }
-              changes.add(c);
-            }
-          }
-          else {
-            ContentRevision before = c.getBeforeRevision();
-            if (before != null) {
-              VirtualFile r = GitUtil.getGitRootOrNull(before.getFile());
-              if (r != null) {
-                myRootsToStash.add(r);
-              }
-            }
-          }
-        }
-      }
-    }
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
-      GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
-      if (settings == null) {
-        return false;
-      }
-      boolean result = GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, settings, mySortedChanges, myExceptions);
-      if (!result) {
-        if (myExceptions.isEmpty()) {
-          //noinspection ThrowableInstanceNeverThrown
-          myExceptions.add(new VcsException("Conversion of line separators failed."));
-        }
-        return false;
-      }
-    }
-    if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
-      myShelveManager = ShelveChangesManager.getInstance(myProject);
-      ArrayList<Change> changes = new ArrayList<Change>();
-      for (LocalChangeList l : myListsCopy) {
-        changes.addAll(l.getChanges());
-      }
-      if (changes.size() > 0) {
-        myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
-        LOG.info("saveProjectChangesBeforeUpdate shelving changes");
-        myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, myExceptions);
-        LOG.info("saveProjectChangesBeforeUpdate shelved changes to " + myShelvedChangeList);
-        if (myShelvedChangeList == null) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Clean up the start handler
-   *
-   * @param root the root
-   * @param h    the handler
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  protected void cleanupHandler(VirtualFile root, GitLineHandler h) {
-    // do nothing by default
-  }
-
-  /**
-   * Make handler that starts operation
-   *
-   * @param root the vcs root
-   * @return the handler that starts rebase operation
-   * @throws VcsException in if there is problem with running git
-   */
-  protected abstract GitLineHandler makeStartHandler(VirtualFile root) throws VcsException;
-
-  /**
-   * Unstash changes and restore them in change list
-   *
-   * @param root the vcs root
-   */
-  private void unstash(VirtualFile root) {
-    try {
-      GitStashUtils.popLastStash(myProject, root);
-    }
-    catch (final VcsException ue) {
-      myExceptions.add(ue);
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          GitUIUtil.showOperationError(myProject, ue, "Auto-unstash");
-        }
-      });
-    }
-  }
-
-  /**
-   * Mark the start of the operation
-   *
-   * @param root the vcs root
-   * @throws VcsException the exception
-   */
   protected void markStart(VirtualFile root) throws VcsException {
-
+    // remember the current position
+    myBefore = GitRevisionNumber.resolve(myProject, root, "HEAD");
   }
 
-  /**
-   * Mark the end of the operation
-   *
-   * @param root      the vcs operation
-   * @param cancelled true if the operation was cancelled due to update operation
-   */
-  protected void markEnd(VirtualFile root, boolean cancelled) {
-
-  }
-
-  /**
-   * @return a stash message for the operation
-   */
-  protected abstract String makeStashMessage();
-
-  /**
-   * @return the policy of autosaving change
-   */
-  protected abstract GitVcsSettings.UpdateChangesPolicy getUpdatePolicy();
-
-  /**
-   * Check if some roots are under the rebase operation and show a message in this case
-   *
-   * @param roots the roots to check
-   * @return true if some roots are being rebased
-   */
-  private boolean isRebaseInProgressAndNotify(Set<VirtualFile> roots) {
-    Set<VirtualFile> rebasingRoots = new TreeSet<VirtualFile>(GitUtil.VIRTUAL_FILE_COMPARATOR);
-    for (final VirtualFile root : roots) {
-      if (GitRebaseUtils.isRebaseInTheProgress(root)) {
-        rebasingRoots.add(root);
-      }
-    }
-    if (!rebasingRoots.isEmpty()) {
-      final StringBuilder files = new StringBuilder();
-      for (VirtualFile r : rebasingRoots) {
-        files.append(GitBundle.message("update.root.rebasing.item", r.getPresentableUrl()));
-        myExceptions.add(new VcsException(GitBundle.message("update.root.rebasing", r.getPresentableUrl())));
-      }
-      GitUIUtil.notifyImportantError(myProject, GitBundle.message("update.root.rebasing.title"), GitBundle.message("update.root.rebasing.message", files.toString()));
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Merge files
-   *
-   * @param root      the project root
-   * @param cancelled the cancelled indicator
-   * @param ex        the exception holder
-   * @param reverse   if true, reverse merge provider will be used
-   */
-  private void mergeFiles(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex, final boolean reverse) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        try {
-          List<VirtualFile> affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
-          while (affectedFiles.size() != 0) {
-            AbstractVcsHelper.getInstance(myProject)
-              .showMergeDialog(affectedFiles, reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider());
-            affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
-            if (affectedFiles.size() != 0) {
-              int result = Messages.showYesNoDialog(myProject,
-                                                    GitBundle.message("update.rebase.unmerged",
-                                                                      StringUtil.escapeXml(root.getPresentableUrl())),
-                                                    GitBundle.getString("update.rebase.unmerged.title"),
-                                                    Messages.getErrorIcon());
-              if (result != 0) {
-                cancelled.set(true);
-                return;
-              }
-            }
-          }
-        }
-        catch (Throwable t) {
-          ex.set(t);
-        }
-      }
-    });
-  }
-
-  /**
-   * Check and process locally modified files
-   *
-   * @param root      the project root
-   * @param cancelled the cancelled indicator
-   * @param ex        the exception holder
-   */
-  private void checkLocallyModified(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        try {
-          if (!GitUpdateLocallyModifiedDialog.showIfNeeded(myProject, root)) {
-            cancelled.set(true);
-          }
-        }
-        catch (Throwable t) {
-          ex.set(t);
-        }
-      }
-    });
-  }
-
-  /**
-   * Do rebase operation as part of update operator
-   *
-   * @param progressIndicator      the progress indicator for the update
-   * @param root                   the vcs root
-   * @param rebaseConflictDetector the detector of conflicts in rebase operation
-   * @param action                 the rebase action to execute
-   * @return collected exceptions
-   */
-  private Collection<VcsException> doRebase(ProgressIndicator progressIndicator,
-                                            VirtualFile root,
-                                            RebaseConflictDetector rebaseConflictDetector,
-                                            final String action) {
-    GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
-    // ignore failure for abort
-    rh.ignoreErrorCode(1);
-    rh.addParameters(action);
-    rebaseConflictDetector.reset();
-    rh.addLineListener(rebaseConflictDetector);
-    if (!"--abort".equals(action)) {
-      configureRebaseEditor(root, rh);
-    }
-    try {
-      return GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator, GitHandlerUtil.formatOperationName("Rebasing ", root));
-    }
-    finally {
-      cleanupHandler(root, rh);
-    }
-  }
-
-  /**
-   * Configure rebase editor
-   *
-   * @param root the vcs root
-   * @param h    the handler to configure
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  protected void configureRebaseEditor(VirtualFile root, GitLineHandler h) {
-    // do nothing by default
-  }
-
-  /**
-   * The detector of conflict conditions for rebase operation
-   */
-  static class RebaseConflictDetector extends GitLineHandlerAdapter {
-    /**
-     * The line that indicates that there is a rebase conflict.
-     */
-    private final static String[] REBASE_CONFLICT_INDICATORS = {"When you have resolved this problem run \"git rebase --continue\".",
-      "Automatic cherry-pick failed.  After resolving the conflicts,"};
-    /**
-     * The line that indicates "no change" condition.
-     */
-    private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
-    /**
-     * if true, the rebase conflict happened
-     */
-    AtomicBoolean rebaseConflict = new AtomicBoolean(false);
-    /**
-     * if true, the no changes were detected in the rebase operations
-     */
-    AtomicBoolean noChange = new AtomicBoolean(false);
-
-    /**
-     * Reset detector before new operation
-     */
-    public void reset() {
-      rebaseConflict.set(false);
-      noChange.set(false);
-    }
-
-    /**
-     * @return true if "no change" condition was detected during the operation
-     */
-    public boolean isNoChange() {
-      return noChange.get();
-    }
-
-    /**
-     * @return true if conflict during rebase was detected
-     */
-    public boolean isRebaseConflict() {
-      return rebaseConflict.get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onLineAvailable(String line, Key outputType) {
-      for (String i : REBASE_CONFLICT_INDICATORS) {
-        if (line.startsWith(i)) {
-          rebaseConflict.set(true);
-          break;
-        }
-      }
-      if (line.startsWith(REBASE_NO_CHANGE_INDICATOR)) {
-        noChange.set(true);
-      }
-    }
+  protected void markEnd(VirtualFile root) {
+    // find out what have changed, this is done even if the process was cancelled.
+    MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore);
+    collector.collect(myUpdatedFiles, new ArrayList<VcsException>()); // TODO handle exceptions
   }
 }
