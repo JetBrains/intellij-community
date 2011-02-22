@@ -803,12 +803,8 @@
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StaticMembersWeigher" id="statics"
-             order="after negativeStats"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferDefaultTypeWeigher" id="defaultType"
-             order="before stats, after statics"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferLocalVariablesLiteralsAndAnnoMethodsWeigher" id="local"
-             order="after defaultType, before nameEnd"/>
+             order="after negativeStats, before nameEnd"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.RecursionWeigher" id="recursion"
              order="after local"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferExpectedTypeWeigher" id="expectedType"

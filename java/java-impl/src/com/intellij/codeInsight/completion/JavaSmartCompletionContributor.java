@@ -335,6 +335,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
   }
 
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    super.fillCompletionVariants(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
+  }
+
   public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {
     if (lookupElement instanceof LookupItem) {
       final LookupItem lookupItem = (LookupItem)lookupElement;
