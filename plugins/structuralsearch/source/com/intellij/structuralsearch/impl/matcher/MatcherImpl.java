@@ -157,7 +157,7 @@ public class MatcherImpl {
     CompiledPattern pattern = context.getPattern();
     PsiElement element = pattern.getNodes().current();
     MatchingHandler matchingHandler = pattern.getHandler(element);
-    return matchingHandler.canMatch(element, elt);
+    return matchingHandler != null && matchingHandler.canMatch(element, elt);
   }
 
   public void processMatchesInElement(MatchContext context, Configuration configuration,
