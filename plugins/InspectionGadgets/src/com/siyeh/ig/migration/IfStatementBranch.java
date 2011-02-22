@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.controlflow;
+package com.siyeh.ig.migration;
 
 import com.intellij.psi.*;
 
 import java.util.*;
 
-class IfStatementBranch{
+class IfStatementBranch {
 
     private final Set<String> topLevelVariables = new HashSet<String>(3);
     private final LinkedList<String> comments = new LinkedList<String>();
@@ -34,7 +34,7 @@ class IfStatementBranch{
         calculateVariablesDeclared(statement);
     }
 
-    public void addComment(String comment){
+    public void addComment(String comment) {
         comments.addFirst(comment);
     }
 
@@ -42,32 +42,32 @@ class IfStatementBranch{
         statementComments.addFirst(comment);
     }
 
-    public void addCondition(String conditionString){
+    public void addCondition(String conditionString) {
         conditions.add(conditionString);
     }
 
-    public PsiStatement getStatement(){
+    public PsiStatement getStatement() {
         return statement;
     }
 
-    public List<String> getConditions(){
+    public List<String> getConditions() {
         return Collections.unmodifiableList(conditions);
     }
 
-    public boolean isElse(){
+    public boolean isElse() {
         return elseBranch;
     }
 
     public boolean topLevelDeclarationsConflictWith(
-            IfStatementBranch testBranch){
+            IfStatementBranch testBranch) {
         final Set<String> topLevel = testBranch.topLevelVariables;
         return intersects(topLevelVariables, topLevel);
     }
 
     private static boolean intersects(Set<String> set1,
-                                      Set<String> set2){
-        for(final String s : set1){
-            if(set2.contains(s)){
+                                      Set<String> set2) {
+        for (final String s : set1) {
+            if (set2.contains(s)) {
                 return true;
             }
         }
@@ -82,25 +82,25 @@ class IfStatementBranch{
         return statementComments;
     }
 
-    public void calculateVariablesDeclared(PsiStatement statement){
-        if(statement == null){
+    public void calculateVariablesDeclared(PsiStatement statement) {
+        if (statement == null) {
             return;
         }
-        if(statement instanceof PsiDeclarationStatement){
+        if (statement instanceof PsiDeclarationStatement) {
             final PsiDeclarationStatement declarationStatement =
                     (PsiDeclarationStatement) statement;
             final PsiElement[] elements =
                     declarationStatement.getDeclaredElements();
-            for(PsiElement element : elements){
+            for (PsiElement element : elements) {
                 final PsiVariable variable = (PsiVariable) element;
                 final String varName = variable.getName();
                 topLevelVariables.add(varName);
             }
-        } else if(statement instanceof PsiBlockStatement){
+        } else if (statement instanceof PsiBlockStatement) {
             final PsiBlockStatement block = (PsiBlockStatement) statement;
             final PsiCodeBlock codeBlock = block.getCodeBlock();
             final PsiStatement[] statements = codeBlock.getStatements();
-            for(PsiStatement statement1 : statements){
+            for (PsiStatement statement1 : statements) {
                 calculateVariablesDeclared(statement1);
             }
         }

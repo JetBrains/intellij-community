@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.controlflow;
+package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -35,6 +35,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.Document;
+import java.awt.*;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +49,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public int minimumBranches = 3;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean suggestIntSwitches = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean suggestEnumSwitches = false;
 
     @Nls
     @NotNull
@@ -64,10 +77,67 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     @Override
     public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "if.can.be.switch.minimum.branch.option"),
-                this, "minimumBranches");
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final JLabel label = new JLabel(InspectionGadgetsBundle.message(
+                "if.can.be.switch.minimum.branch.option"));
+        final NumberFormat formatter = NumberFormat.getIntegerInstance();
+        formatter.setParseIntegerOnly(true);
+        final JFormattedTextField valueField =
+                new JFormattedTextField(formatter);
+        valueField.setValue(Integer.valueOf(minimumBranches));
+        valueField.setColumns(2);
+        final Document document = valueField.getDocument();
+        document.addDocumentListener(new DocumentAdapter() {
+            @Override
+            public void textChanged(DocumentEvent e) {
+                try {
+                    valueField.commitEdit();
+                    minimumBranches =
+                            ((Number) valueField.getValue()).intValue();
+                } catch (ParseException e1) {
+                    // No luck this time
+                }
+            }
+        });
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.top = 4;
+        constraints.weightx = 0.0;
+        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+        constraints.fill = GridBagConstraints.NONE;
+        panel.add(label, constraints);
+        constraints.gridx = 1;
+        constraints.gridy = 0;
+        constraints.weightx = 1.0;
+        panel.add(valueField, constraints);
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 2;
+        final JCheckBox checkBox1 = new JCheckBox(
+                InspectionGadgetsBundle.message("if.can.be.switch.int.option"),
+                suggestIntSwitches);
+        final ButtonModel model1 = checkBox1.getModel();
+        model1.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                suggestIntSwitches = model1.isSelected();
+            }
+        });
+        panel.add(checkBox1, constraints);
+        constraints.gridy = 2;
+        constraints.weighty = 1.0;
+        final JCheckBox checkBox2 = new JCheckBox(
+                InspectionGadgetsBundle.message("if.can.be.switch.enum.option"),
+                suggestEnumSwitches);
+        final ButtonModel model2 = checkBox2.getModel();
+        model2.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                suggestEnumSwitches = model2.isSelected();
+            }
+        });
+        panel.add(checkBox2, constraints);
+        return panel;
     }
 
     private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
@@ -452,6 +522,17 @@ public class IfCanBeSwitchInspection extends BaseInspection {
                     SwitchUtils.getSwitchExpression(statement, minimumBranches);
             if (switchExpression == null) {
                 return;
+            }
+            final PsiType type = switchExpression.getType();
+            if (!suggestIntSwitches && PsiType.INT.equals(type)) {
+                return;
+            }
+            if (!suggestEnumSwitches && type instanceof PsiClassType) {
+                final PsiClassType classType = (PsiClassType) type;
+                final PsiClass aClass = classType.resolve();
+                if (aClass == null || aClass.isEnum()) {
+                    return;
+                }
             }
             registerStatementError(statement, switchExpression);
         }
