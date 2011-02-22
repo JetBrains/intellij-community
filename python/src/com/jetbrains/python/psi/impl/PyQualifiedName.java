@@ -68,7 +68,7 @@ public class PyQualifiedName {
     PyQualifiedName result = new PyQualifiedName(size);
     result.myComponents.addAll(myComponents);
     for (int i = 0; i < count && result.myComponents.size() > 0; i++) {
-      result.myComponents.remove(size-1);
+      result.myComponents.remove(result.myComponents.size()-1);
     }
     return result;
   }
