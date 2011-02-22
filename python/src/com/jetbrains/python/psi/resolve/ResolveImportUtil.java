@@ -906,18 +906,6 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement findImportedNameInsideModule(@NotNull PyImportElement where, String name) {
-    /*
-    PointInImport point = getPointInImport(where);
-    if (point.role == AS_NAME) {
-      final PyReferenceExpression source = point.fromImportStatement.getImportSource();
-      if (source != null) {
-        PsiElement resolved = source.getReference().resolve();
-        if (resolved instanceof PyFile) {
-          return ((PyFile)resolved).findExportedName(name);
-        }
-      }
-    }
-    */
     PyStatement stmt = where.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {
       final PyFromImportStatement from_import = (PyFromImportStatement)stmt;
