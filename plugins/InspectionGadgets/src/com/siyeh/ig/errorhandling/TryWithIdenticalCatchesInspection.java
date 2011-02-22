@@ -84,11 +84,14 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       boolean[] duplicates = new boolean[catchSections.length];
       for (int i = 0; i < catchSections.length; i++) {
         if (duplicates[i]) continue;
-        InputVariables inputVariables = new InputVariables(Collections.singletonList(catchSections[i].getParameter()),
+        final PsiCatchSection catchSection = catchSections[i];
+        final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+        if (catchBlock == null) continue;
+        InputVariables inputVariables = new InputVariables(Collections.singletonList(catchSection.getParameter()),
                                                            statement.getProject(),
-                                                           new LocalSearchScope(catchSections[i].getCatchBlock()),
+                                                           new LocalSearchScope(catchBlock),
                                                            false);
-        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[] { catchSections [i].getCatchBlock() },
+        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[] {catchBlock},
                                                        inputVariables, null, Collections.<PsiVariable>emptyList());
         for (int j = 0; j < catchSections.length; j++) {
           if (i == j || duplicates[j]) continue;
