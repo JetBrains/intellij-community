@@ -28,7 +28,12 @@ import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -45,6 +50,7 @@ public class JavaCompletionSorting {
     final boolean smart = type == CompletionType.SMART;
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters);
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new LookupElementWeigher("expectedAfterNew") {
         @NotNull
@@ -54,26 +60,13 @@ public class JavaCompletionSorting {
         }
       });
     }
-    sorter = sorter.weighAfter("negativeStats", new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type));
-    if (!smart) {
-      sorter = preferStatics(sorter, position);
-    }
-    if (smart) {
-      sorter = sorter.weighAfter("negativeStats", new PreferDefaultTypeWeigher(expectedTypes, parameters));
-    }
-    sorter = recursion(sorter, parameters, expectedTypes);
 
-    sorter = sorter.weighAfter("recursion", new LookupElementWeigher("nameEnd") {
-      @NotNull
-      @Override
-      public Comparable weigh(@NotNull LookupElement element) {
-        final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
-        return -JavaCompletionUtil.getNameEndMatchingDegree(name, expectedTypes, element.getPrefixMatcher().getPrefix());
-      }
-    });
-
+    List<LookupElementWeigher> afterNegativeStats = new ArrayList<LookupElementWeigher>();
+    ContainerUtil.addIfNotNull(afterNegativeStats, smart ? new PreferDefaultTypeWeigher(expectedTypes, parameters) : preferStatics(position));
+    afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type));
+    ContainerUtil.addIfNotNull(afterNegativeStats, recursion(parameters, expectedTypes));
     if (!smart) {
-      sorter = sorter.weighAfter("recursion", new LookupElementWeigher("expectedType") {
+      afterNegativeStats.add(new LookupElementWeigher("expectedType") {
         @NotNull
         @Override
         public Comparable weigh(@NotNull LookupElement item) {
@@ -81,37 +74,49 @@ public class JavaCompletionSorting {
         }
       });
     }
+    afterNegativeStats.add(new LookupElementWeigher("nameEnd") {
+      @NotNull
+      @Override
+      public Comparable weigh(@NotNull LookupElement element) {
+        final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
+        return -JavaCompletionUtil.getNameEndMatchingDegree(name, expectedTypes, element.getPrefixMatcher().getPrefix());
+      }
+    });
+    sorter = sorter.weighAfter("negativeStats", afterNegativeStats.toArray(new LookupElementWeigher[afterNegativeStats.size()]));
+
     return result.withRelevanceSorter(sorter);
   }
 
-  static CompletionSorter recursion(CompletionSorter sorter, CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
+  @Nullable
+  static LookupElementWeigher recursion(CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
 
     final PsiElement position = parameters.getPosition();
     final PsiMethod positionMethod = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false);
     final ElementFilter filter = JavaCompletionUtil.recursionFilter(position);
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
-    if (reference == null) return sorter;
+    if (reference == null) return null;
 
-    return sorter.weighAfter("local", new RecursionWeigher(filter, position, reference, expression, positionMethod, expectedInfos));
+    return new RecursionWeigher(filter, position, reference, expression, positionMethod, expectedInfos);
   }
 
-  static CompletionSorter preferStatics(CompletionSorter sorter, PsiElement position) {
+  @Nullable
+  static LookupElementWeigher preferStatics(PsiElement position) {
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) {
-      return sorter;
+      return null;
     }
     if (position.getParent() instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)position.getParent();
       final PsiElement qualifier = refExpr.getQualifier();
       if (qualifier == null) {
-        return sorter;
+        return null;
       }
       if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass)) {
-        return sorter;
+        return null;
       }
     }
 
-    return sorter.weighAfter("negativeStats", new LookupElementWeigher("statics") {
+    return new LookupElementWeigher("statics") {
       @NotNull
       @Override
       public Comparable weigh(@NotNull LookupElement element) {
@@ -128,7 +133,7 @@ public class JavaCompletionSorting {
         //instance method or field
         return -5;
       }
-    });
+    };
   }
 
   public static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos) {
