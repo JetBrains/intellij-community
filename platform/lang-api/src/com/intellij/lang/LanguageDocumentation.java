@@ -21,6 +21,7 @@ package com.intellij.lang;
 
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
