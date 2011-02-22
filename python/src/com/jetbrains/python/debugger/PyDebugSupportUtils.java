@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -83,7 +84,7 @@ public class PyDebugSupportUtils {
     });
   }
 
-  public static boolean isContinuationLine(Document document, int line) {
+  public static boolean isContinuationLine(@NotNull Document document, int line) {
     if (line > 0 && line < document.getLineCount()) {
       String text = document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
       if (text.trim().endsWith("\\")) {

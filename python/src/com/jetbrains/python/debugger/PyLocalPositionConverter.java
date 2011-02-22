@@ -42,8 +42,10 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   protected int convertLocalLineToRemote(VirtualFile file, int line) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    while (PyDebugSupportUtils.isContinuationLine(document, line)) {
-      line++;
+    if (document != null) {
+      while (PyDebugSupportUtils.isContinuationLine(document, line)) {
+        line++;
+      }
     }
     return line + 1;
   }
@@ -67,8 +69,10 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   private static int convertRemoteLineToLocal(VirtualFile vFile, int line) {
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     line--;
-    while (PyDebugSupportUtils.isContinuationLine(document, line-1)) {
-      line--;
+    if (document != null) {
+      while (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
+        line--;
+      }
     }
     return line;
   }
