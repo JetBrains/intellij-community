@@ -78,10 +78,19 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
       if (parserDefinition == null) return false;
 
-      final IFileElementType filetype = parserDefinition.getFileNodeType();
-      return filetype instanceof IStubFileElementType &&
-             (((IStubFileElementType)filetype).shouldBuildStubFor(file) ||
-              IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
+      final IFileElementType elementType = parserDefinition.getFileNodeType();
+      boolean b = elementType instanceof IStubFileElementType &&
+                  (((IStubFileElementType)elementType).shouldBuildStubFor(file) ||
+                   IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
+      if (b) {
+        String extension = file.getExtension();
+        LOG.assertTrue(!"xml".equalsIgnoreCase(extension) && !"tld".equalsIgnoreCase(extension), "File: " + file +
+                                                                                                 " language: " + l +
+        " filetype: " + fileType +
+        " element type: " + elementType
+        );
+      }
+      return b;
     }
     else if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
