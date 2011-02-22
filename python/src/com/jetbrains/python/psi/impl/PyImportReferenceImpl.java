@@ -146,7 +146,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
 
     public Object[] execute() {
-      int relative_level = 0;
+      int relative_level = -1;
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(myNamesAlready);
       InsertHandler<LookupElement> insertHandler = null;
 
@@ -208,7 +208,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
         // look at dir by level
-        if (myCurrentFile != null && (relative_level > 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
+        if (myCurrentFile != null && (relative_level >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(myCurrentFile.getContainingDirectory());
           if (thisQName == null) {
             fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
@@ -219,7 +219,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
       }
-      if (relative_level == 0) {
+      if (relative_level == -1) {
         fillFromQName(PyQualifiedName.fromComponents(), insertHandler);
       }
 
