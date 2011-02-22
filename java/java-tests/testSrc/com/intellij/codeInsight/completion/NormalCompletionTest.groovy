@@ -356,10 +356,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
+  public void testFieldType() throws Throwable { doTest(); }
+
   public void testPackageInAnnoParam() throws Throwable {
     doTest();
   }
-  
+
   public void testClassLiteralInAnnoParam() throws Throwable {
     doTest();
   }
