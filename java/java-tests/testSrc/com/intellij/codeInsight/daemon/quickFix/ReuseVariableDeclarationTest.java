@@ -1,9 +1,7 @@
-
 package com.intellij.codeInsight.daemon.quickFix;
 
 
-
-public class ReuseVariableDeclarationtTest extends LightQuickFixTestCase {
+public class ReuseVariableDeclarationTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
@@ -11,6 +9,4 @@ public class ReuseVariableDeclarationtTest extends LightQuickFixTestCase {
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/reuseVariableDeclaration";
   }
-
 }
-
