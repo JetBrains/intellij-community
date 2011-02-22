@@ -64,13 +64,6 @@ public class JavaCompletionSorting {
     return result.withRelevanceSorter(sorter);
   }
 
-  enum Result {
-    delegation,
-    normal,
-    passingObjectToItself,
-    recursive,
-  }
-
   static CompletionSorter recursion(CompletionSorter sorter, CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
 
     final PsiElement position = parameters.getPosition();
@@ -78,70 +71,9 @@ public class JavaCompletionSorting {
     final ElementFilter filter = JavaCompletionUtil.recursionFilter(position);
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
-    //if (reference == null) return sorter;
+    if (reference == null) return sorter;
 
-    return sorter.weighAfter("local", new LookupElementWeigher("recursion") {
-      @NotNull
-      @Override
-      public Comparable weigh(@NotNull LookupElement element) {
-        final Object object = element.getObject();
-        if (!(object instanceof PsiMethod || object instanceof PsiVariable || object instanceof PsiExpression)) return Result.normal;
-
-        if (filter != null && !filter.isAcceptable(object, position)) {
-          return Result.recursive;
-        }
-
-        if (reference == null) return Result.normal;
-
-        final PsiExpression qualifier = reference.getQualifierExpression();
-        boolean isDelegate = qualifier != null && !(qualifier instanceof PsiThisExpression);
-
-        if (isPassingObjectToItself(object, qualifier, isDelegate)) {
-          return Result.passingObjectToItself;
-        }
-
-        if (expression != null && positionMethod != null) {
-          if (expectedInfos != null) {
-            final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
-            if (itemType != null) {
-              for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-                if (positionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
-                  return isDelegate ? Result.delegation : Result.recursive;
-                }
-              }
-            }
-          }
-          return Result.normal;
-        }
-
-        if (object instanceof PsiMethod && positionMethod != null) {
-          final PsiMethod method = (PsiMethod)object;
-          if (PsiTreeUtil.isAncestor(reference, position, false) &&
-              Comparing.equal(method.getName(), positionMethod.getName())) {
-            if (!isDelegate && findDeepestSuper(method).equals(findDeepestSuper(positionMethod))) {
-              return Result.recursive;
-            }
-            return Result.delegation;
-          }
-        }
-
-        return Result.normal;
-      }
-
-      private boolean isPassingObjectToItself(Object object, PsiExpression qualifier, boolean delegate) {
-        if (object instanceof PsiThisExpression) {
-          return !delegate || qualifier instanceof PsiSuperExpression;
-        }
-        return qualifier instanceof PsiReferenceExpression &&
-               object.equals(((PsiReferenceExpression)qualifier).advancedResolve(true).getElement());
-      }
-
-      @NotNull
-      private PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
-        final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
-        return first == null ? method : first;
-      }
-    });
+    return sorter.weighAfter("local", new RecursionWeigher(filter, position, reference, expression, positionMethod, expectedInfos));
   }
 
   static CompletionSorter preferStatics(CompletionSorter sorter, PsiElement position) {
@@ -251,5 +183,95 @@ public class JavaCompletionSorting {
       normal,
     }
 
+  }
+
+  private static class RecursionWeigher extends LookupElementWeigher {
+    private final ElementFilter myFilter;
+    private final PsiElement myPosition;
+    private final PsiReferenceExpression myReference;
+    private final PsiMethodCallExpression myExpression;
+    private final PsiMethod myPositionMethod;
+    private final ExpectedTypeInfo[] myExpectedInfos;
+    private final PsiExpression myQualifier;
+    private final boolean myDelegate;
+
+    public RecursionWeigher(ElementFilter filter,
+                            PsiElement position,
+                            @NotNull PsiReferenceExpression reference,
+                            PsiMethodCallExpression expression,
+                            PsiMethod positionMethod, ExpectedTypeInfo[] expectedInfos) {
+      super("recursion");
+      myFilter = filter;
+      myPosition = position;
+      myReference = reference;
+      myExpression = expression;
+      myPositionMethod = positionMethod;
+      myExpectedInfos = expectedInfos;
+      myQualifier = myReference.getQualifierExpression();
+      myDelegate = myQualifier != null && !(myQualifier instanceof PsiThisExpression);
+    }
+
+    enum Result {
+      delegation,
+      normal,
+      passingObjectToItself,
+      recursive,
+    }
+
+    @NotNull
+    @Override
+    public Result weigh(@NotNull LookupElement element) {
+      final Object object = element.getObject();
+      if (!(object instanceof PsiMethod || object instanceof PsiVariable || object instanceof PsiExpression)) return Result.normal;
+
+      if (myFilter != null && !myFilter.isAcceptable(object, myPosition)) {
+        return Result.recursive;
+      }
+
+      if (isPassingObjectToItself(object)) {
+        return Result.passingObjectToItself;
+      }
+
+      if (myExpression != null && myPositionMethod != null) {
+        if (myExpectedInfos != null) {
+          final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
+          if (itemType != null) {
+            for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+              if (myPositionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
+                return myDelegate ? Result.delegation : Result.recursive;
+              }
+            }
+          }
+        }
+        return Result.normal;
+      }
+
+      if (object instanceof PsiMethod && myPositionMethod != null) {
+        final PsiMethod method = (PsiMethod)object;
+        if (PsiTreeUtil.isAncestor(myReference, myPosition, false) &&
+            Comparing.equal(method.getName(), myPositionMethod.getName())) {
+          if (!myDelegate && findDeepestSuper(method).equals(findDeepestSuper(myPositionMethod))) {
+            return Result.recursive;
+          }
+          return Result.delegation;
+        }
+      }
+
+      return Result.normal;
+    }
+
+    private boolean isPassingObjectToItself(Object object) {
+      if (object instanceof PsiThisExpression) {
+        return !myDelegate || myQualifier instanceof PsiSuperExpression;
+      }
+      return myQualifier instanceof PsiReferenceExpression &&
+             object.equals(((PsiReferenceExpression)myQualifier).advancedResolve(true).getElement());
+    }
+
+    @NotNull
+    private static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
+      final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
+      return first == null ? method : first;
+    }
   }
 }
