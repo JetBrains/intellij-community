@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -247,8 +246,8 @@ public class ExceptionUtil {
       unhandledExceptions = unhandled;
     }
 
-    if (PsiUtil.isResourceInTryStatement(element)) {
-      final PsiType resourceType = PsiUtil.getResourceType(element);
+    if (element instanceof PsiResource) {
+      final PsiType resourceType = ((PsiResource)element).getType();
       if (resourceType instanceof PsiClassType) {
         final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
         if (resourceClass != null) {

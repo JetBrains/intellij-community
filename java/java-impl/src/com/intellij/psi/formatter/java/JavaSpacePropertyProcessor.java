@@ -213,6 +213,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (aClass.isEnum()) {
         createParenSpace(true, false);
       }
+      else if (myRole2 == ChildRole.RBRACE && mySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE) {
+        int spaces = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+        myResult = Spacing.createSpacing(spaces, spaces, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
       else if (aClass instanceof PsiAnonymousClass) {
         if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
           myResult = Spacing.createSpacing(0, 0, 0,

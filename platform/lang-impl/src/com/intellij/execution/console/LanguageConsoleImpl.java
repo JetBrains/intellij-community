@@ -21,6 +21,7 @@ import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
@@ -373,7 +374,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterTargetArea.EXACT_RANGE);
 
     final String text = consoleEditor.getDocument().getText(textRange);
-     //offset can be changed after text trimming after insert due to buffer constraints
+    //offset can be changed after text trimming after insert due to buffer constraints
     appendToHistoryDocument(history, text);
     int offset = history.getTextLength() - text.length();
     final int localStartOffset = textRange.getStartOffset();
@@ -617,10 +618,17 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       attributes = additionalType.getAttributes().clone();
       attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        console.printToHistory(string, attributes);
-      }
-    }, ModalityState.stateForComponent(console.getComponent()));
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      console.printToHistory(string, attributes);
+    }
+    else {
+      application.invokeLater(new Runnable() {
+        public void run() {
+          console.printToHistory(string, attributes);
+        }
+      }, ModalityState.stateForComponent(console.getComponent()));
+    }
   }
 }

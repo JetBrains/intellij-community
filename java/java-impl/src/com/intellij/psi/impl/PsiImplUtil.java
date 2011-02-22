@@ -200,9 +200,10 @@ public class PsiImplUtil {
                                                           final PsiElement lastParent) {
     final PsiResourceList resourceList = statement.getResourceList();
     if (resourceList != null && lastParent instanceof PsiCodeBlock && lastParent == statement.getTryBlock()) {
-      final List<PsiLocalVariable> resources = resourceList.getNamedResources();
-      for (PsiLocalVariable resource : resources) {
-        if (!processor.execute(resource, state)) return false;
+      final List<PsiResource> resources = resourceList.getResources();
+      for (PsiResource resource : resources) {
+        final PsiElement resourceElement = resource.getResourceElement();
+        if (resourceElement instanceof PsiLocalVariable && !processor.execute(resourceElement, state)) return false;
       }
     }
 

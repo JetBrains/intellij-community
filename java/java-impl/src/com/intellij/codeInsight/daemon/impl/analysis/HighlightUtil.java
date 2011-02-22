@@ -563,7 +563,7 @@ public class HighlightUtil {
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement ||
-        PsiUtil.isResourceInTryStatement(variable)) {
+        variable instanceof PsiResource && ((PsiResource)variable).getResourceElement() instanceof PsiLocalVariable) {
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         protected boolean check(final PsiVariable var, final ResolveState state) {
@@ -1118,8 +1118,8 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiElement resource) {
-    final PsiType type = PsiUtil.getResourceType(resource);
+  public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiResource resource) {
+    final PsiType type = resource.getType();
     if (type == null) return null;
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();

@@ -62,7 +62,9 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   @Nullable
   public MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
     ComponentState state = myStates.get(key);
-    return state != null ? XmlSerializer.deserialize(state.mySettings, stateClass) : null;
+    if (state == null) return null;
+    final Element settings = state.mySettings;
+    return settings != null ? XmlSerializer.deserialize(settings, stateClass) : null;
   }
 
   public void setComponentState(@NotNull @NonNls String key, @NotNull MasterDetailsState state) {

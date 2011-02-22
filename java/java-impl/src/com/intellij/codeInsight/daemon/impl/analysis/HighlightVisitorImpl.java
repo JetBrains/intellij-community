@@ -820,7 +820,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (!myHolder.hasErrorResults()) {
           myHolder.add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
         }
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitalizedInLoop(expression, resolved));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitializedInLoop(expression, resolved));
       }
     }
 
@@ -905,7 +905,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       PsiResourceList resources = statement.getResourceList();
       if (resources != null) {
-        for (PsiElement resource : resources.getResources()) {
+        for (PsiResource resource : resources.getResources()) {
           myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(resource));
         }
       }

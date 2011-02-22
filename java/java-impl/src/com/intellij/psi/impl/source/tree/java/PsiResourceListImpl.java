@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiResource;
+import com.intellij.psi.PsiResourceList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,15 +33,8 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
 
   @NotNull
   @Override
-  public List<? extends PsiElement> getResources() {
-    //noinspection unchecked
-    return PsiTreeUtil.getChildrenOfAnyType(this, PsiExpression.class, PsiLocalVariable.class);
-  }
-
-  @NotNull
-  @Override
-  public List<PsiLocalVariable> getNamedResources() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiLocalVariable.class);
+  public List<PsiResource> getResources() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResource.class);
   }
 
   @Override

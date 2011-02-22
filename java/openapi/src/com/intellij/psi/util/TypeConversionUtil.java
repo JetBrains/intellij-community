@@ -1170,7 +1170,7 @@ public class TypeConversionUtil {
         final List<PsiType> erased = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
           @Override public PsiType fun(PsiType psiType) { return erasure(psiType, beforeSubstitutor); }
         });
-        return new PsiDisjunctionType(erased, disjunctionType.getManager());
+        return disjunctionType.newDisjunctionType(erased);
       }
     });
   }
