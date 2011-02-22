@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,4 +66,6 @@ public abstract class Template {
 
   public abstract boolean isToShortenLongNames();
   public abstract void setToShortenLongNames(boolean toShortenLongNames);
+
+  public abstract void setSubSelection(RangeMarker selection);
 }

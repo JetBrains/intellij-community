@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   private ArrayList<Segment> mySegments = null;
   private String myTemplateText = null;
   private String myId;
+  private RangeMarker mySubSelection;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -448,6 +450,14 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public boolean skipOnStart(int i) {
     return myVariables.get(i).skipOnStart();
+  }
+
+  public RangeMarker getSubSelection() {
+    return mySubSelection;
+  }
+
+  public void setSubSelection(RangeMarker selection) {
+    mySubSelection = selection;
   }
 
   private static class Segment {

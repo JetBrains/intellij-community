@@ -19,24 +19,27 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.project.DumbAware;
 
-public class SelectAllAction extends AnAction implements DumbAware {
+public class SelectAllAction extends TextComponentEditorAction implements DumbAware {
   public SelectAllAction() {
+    super(new Handler());
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Editor editor = TextComponentEditorAction.getEditorFromContext(dataContext);
-    if (editor == null) return;
-    CommandProcessor processor = CommandProcessor.getInstance();
-    processor.executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
-      public void run() {
-        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-      }
-    }, IdeBundle.message("command.select.all"), null);
+  private static class Handler extends EditorActionHandler {
+    @Override
+    public void execute(final Editor editor, DataContext dataContext) {
+      CommandProcessor processor = CommandProcessor.getInstance();
+      processor.executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
+        public void run() {
+          editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+        }
+      }, IdeBundle.message("command.select.all"), null);
+    }
   }
 
   public void update(AnActionEvent event){

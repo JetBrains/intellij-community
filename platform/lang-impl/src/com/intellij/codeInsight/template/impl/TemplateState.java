@@ -459,8 +459,12 @@ public class TemplateState implements Disposable {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
 
-
-    myEditor.getSelectionModel().setSelection(start, end);
+    final RangeMarker selection = myTemplate.getSubSelection();
+    if (selection != null && selection.getStartOffset() >= start && selection.getEndOffset() <= end) {
+      myEditor.getSelectionModel().setSelection(selection.getStartOffset(), selection.getEndOffset());
+    } else {
+      myEditor.getSelectionModel().setSelection(start, end);
+    }
     Expression expressionNode = myTemplate.getExpressionAt(myCurrentVariableNumber);
 
     final ExpressionContext context = createExpressionContext(start);

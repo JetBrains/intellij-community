@@ -505,6 +505,7 @@
   <editorActionHandler action="EditorTab" implementationClass="com.intellij.codeInsight.template.impl.editorActions.TabHandler"/>
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.HomeHandler"/>
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EndHandler"/>
+  <editorActionHandler action="$SelectAll" implementationClass="com.intellij.codeInsight.template.impl.editorActions.SelectAllHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
   <!-- HighlightManagerActions -->

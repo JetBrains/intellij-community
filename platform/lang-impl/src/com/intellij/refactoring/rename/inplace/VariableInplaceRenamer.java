@@ -32,6 +32,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -183,6 +185,13 @@ public class VariableInplaceRenamer {
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
+    final RangeMarker selection;
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      selection = myEditor.getDocument().createRangeMarker(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    } else {
+      selection = null;
+    }
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder, nameSuggestions);
     for (PsiReference ref : refs) {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
@@ -198,6 +207,7 @@ public class VariableInplaceRenamer {
             final int offset = myEditor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
+            template.setSubSelection(selection);
             TextRange range = scope1.getTextRange();
             assert range != null;
             myHighlighters = new ArrayList<RangeHighlighter>();
@@ -230,11 +240,17 @@ public class VariableInplaceRenamer {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
                 moveOffsetAfter(true);
+                if (selection != null) {
+                  selection.dispose();
+                }
               }
 
               public void templateCancelled(Template template) {
                 finish();
                 moveOffsetAfter(false);
+                if (selection != null) {
+                  selection.dispose();
+                }
               }
             });
 
