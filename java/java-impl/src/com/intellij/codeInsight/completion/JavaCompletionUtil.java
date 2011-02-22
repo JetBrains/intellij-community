@@ -105,23 +105,15 @@ public class JavaCompletionUtil {
   public static Set<PsiType> getExpectedTypes(final CompletionParameters parameters) {
     final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
     if (expr != null) {
-      final ExpectedTypeInfo[] expectedInfos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
-      if(expectedInfos != null){
-        final Set<PsiType> set = new THashSet<PsiType>();
-        for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-          set.add(expectedInfo.getType());
-        }
-        return set;
+      final Set<PsiType> set = new THashSet<PsiType>();
+      for (final ExpectedTypeInfo expectedInfo : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        set.add(expectedInfo.getType());
       }
+      return set;
     }
     return null;
   }
 
-  static final NullableLazyKey<PsiMethod, CompletionLocation> POSITION_METHOD = NullableLazyKey.create("positionMethod", new NullableFunction<CompletionLocation, PsiMethod>() {
-    public PsiMethod fun(final CompletionLocation location) {
-      return PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiMethod.class, false);
-    }
-  });
   public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
   public static PsiType getQualifierType(LookupItem item) {
@@ -323,26 +315,12 @@ public class JavaCompletionUtil {
 
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
     if(reference != null) {
-      /*
-      if(reference instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
-      }
-      else{
-      }
-      */
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
                           reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     }
     else if (isWord(element)){
-      /*
-      if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
-      }
-      else{
-      }
-      */
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
