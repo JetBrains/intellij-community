@@ -431,6 +431,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrivateOverloads() throws Throwable { doTest(); }
 
+  public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
+  public void testNoUninitializedFieldsInConstructor() throws Throwable { doTest(); }
+  public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
+  public void testFieldsSetAbove() throws Throwable { doTest(); }
+
   public void testHonorSelection() throws Throwable {
     configureByTestName();
     select();

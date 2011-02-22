@@ -7,8 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -67,6 +65,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
   }
 
+  public void testNonInitializedField() throws Throwable { doTest(); }
   public void testIgnoreToString() throws Throwable { doTest(); }
   public void testDontIgnoreToStringInsideIt() throws Throwable { doTest(); }
   public void testDontIgnoreToStringInStringBuilders() throws Throwable {

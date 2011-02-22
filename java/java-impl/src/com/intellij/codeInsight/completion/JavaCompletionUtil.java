@@ -573,7 +573,7 @@ public class JavaCompletionUtil {
         return matcher.prefixMatches(s);
       }
     };
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, nameCondition);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, parameters.getInvocationCount() <= 1, nameCondition);
     javaReference.processVariants(processor);
     final Collection<CompletionElement> plainResults = processor.getResults();
 
