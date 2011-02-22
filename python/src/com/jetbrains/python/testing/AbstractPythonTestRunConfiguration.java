@@ -1,25 +1,38 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 /**
  * User: catherine
  */
 public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonRunConfiguration
                             implements AbstractPythonRunConfigurationParams,
-                                       AbstractPythonTestRunConfigurationParams {
+                                       AbstractPythonTestRunConfigurationParams,
+                                       RefactoringListenerProvider {
   protected String myClassName = "";
   protected String myScriptName = "";
   protected String myMethodName = "";
@@ -189,4 +202,65 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   }
 
   protected abstract String getTitle();
+
+  @Override
+  public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
+    if (myTestType == TestType.TEST_FOLDER) {
+      if (element instanceof PsiDirectory) {
+        VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
+        if (Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(myFolderName).getAbsolutePath())) {
+          return new RefactoringElementAdapter() {
+            @Override
+            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+              myFolderName = FileUtil.toSystemDependentName(((PsiDirectory) newElement).getVirtualFile().getPath());
+            }
+          };
+        }
+      }
+    }
+    else {
+      File scriptFile = new File(myScriptName);
+      if (!scriptFile.isAbsolute()) {
+        scriptFile = new File(getWorkingDirectory(), myScriptName);
+      }
+      PsiFile containingFile = element.getContainingFile();
+      VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
+      if (vFile != null && Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), scriptFile.getAbsolutePath())) {
+        if (element instanceof PsiFile) {
+          return new RefactoringElementAdapter() {
+            @Override
+            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+              VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
+              if (virtualFile != null) {
+                myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
+              }
+            }
+          };
+        }
+        if (element instanceof PyClass && (myTestType == TestType.TEST_CLASS || myTestType == TestType.TEST_METHOD) &&
+            Comparing.equal(((PyClass)element).getName(), myClassName)) {
+          return new RefactoringElementAdapter() {
+            @Override
+            protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+              myClassName = ((PyClass) newElement).getName();
+            }
+          };
+        }
+        if (element instanceof PyFunction &&
+            Comparing.equal(((PyFunction) element).getName(), myMethodName)) {
+          ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+          if ((myTestType == TestType.TEST_FUNCTION && scopeOwner instanceof PyFile) ||
+              (myTestType == TestType.TEST_METHOD && scopeOwner instanceof PyClass && Comparing.equal(scopeOwner.getName(), myClassName))) {
+            return new RefactoringElementAdapter() {
+              @Override
+              protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+                myMethodName = ((PyFunction) newElement).getName();
+              }
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
