@@ -1,6 +1,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -17,22 +18,29 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -179,6 +187,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     commandLine.setEnvParams(envs);
     commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
+
+    buildPythonPath(commandLine, myConfig.isPassParentEnvs());
   }
 
   protected static void addCommonEnvironmentVariables(Map<String, String> envs) {
@@ -190,7 +200,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (flavor != null) {
       flavor.addPredefinedEnvironmentVariables(envs);
     }
+  }
 
+  private void buildPythonPath(GeneralCommandLine commandLine, boolean passParentEnvs) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList();
@@ -209,7 +221,42 @@ public abstract class PythonCommandLineState extends CommandLineState {
           }
         }
       }
-      PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
+      pathList.addAll(collectPythonPath());
+
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
+      if (flavor != null) {
+        flavor.addToPythonPath(commandLine, pathList);
+      }
+      else {
+        PythonSdkFlavor.initPythonPath(commandLine.getEnvParams(), passParentEnvs, pathList);
+      }
+    }
+  }
+
+  protected Collection<String> collectPythonPath() {
+    Collection<String> pythonPathList = Sets.newLinkedHashSet();
+    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
+    final Module module = myConfig.getModule();
+    if (module != null) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      addRoots(pythonPathList, moduleRootManager.getContentRoots());
+      addRoots(pythonPathList, moduleRootManager.getSourceRoots());
+
+      final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+      for (Facet facet : facets) {
+        if (facet instanceof PythonPathContributingFacet) {
+          List<String> more_paths = ((PythonPathContributingFacet)facet).getAdditionalPythonPath();
+          if (more_paths != null) pythonPathList.addAll(more_paths);
+        }
+      }
+    }
+    return pythonPathList;
+  }
+
+
+  private static void addRoots(Collection<String> pythonPathList, VirtualFile[] roots) {
+    for (VirtualFile root : roots) {
+      pythonPathList.add(FileUtil.toSystemDependentName(root.getPath()));
     }
   }
 

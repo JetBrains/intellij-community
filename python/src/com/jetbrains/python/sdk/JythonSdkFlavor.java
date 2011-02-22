@@ -2,8 +2,10 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -26,7 +28,7 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public void addToPythonPath(GeneralCommandLine cmd, String path) {
-    cmd.getParametersList().add("-Dpython.path=" + path);
+  public void addToPythonPath(GeneralCommandLine cmd, Collection<String> path) {
+    cmd.getParametersList().add("-Dpython.path=" + StringUtil.join(path, File.pathSeparator));
   }
 }

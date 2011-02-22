@@ -35,8 +35,8 @@ public class PythonUnitTestCommandLineState extends
   }
 
   @Override
-  protected Collection<String> buildPythonPath() {
-    List<String> pythonPath = new ArrayList<String>(super.buildPythonPath());
+  protected Collection<String> collectPythonPath() {
+    List<String> pythonPath = new ArrayList<String>(super.collectPythonPath());
     // the first entry is the helpers path; add script directory as second entry
     if (myConfig.getTestType() == TEST_FOLDER) {
       pythonPath.add(1, myConfig.getFolderName());
