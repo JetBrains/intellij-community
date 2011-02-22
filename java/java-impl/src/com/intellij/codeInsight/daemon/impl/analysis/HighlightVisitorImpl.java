@@ -902,13 +902,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
         myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
       }
+    }
+  }
 
-      PsiResourceList resources = statement.getResourceList();
-      if (resources != null) {
-        for (PsiResource resource : resources.getResources()) {
-          myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(resource));
-        }
-      }
+  @Override
+  public void visitResource(final PsiResource resource) {
+    myHolder.add(HighlightUtil.checkTryResourceIsAutoCloseable(resource));
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkUnhandledCloserExceptions(resource));
     }
   }
 

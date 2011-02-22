@@ -16,6 +16,16 @@ class C {
 
     try (new MyResource()) { }
     catch (E1 | E3 ignore) { }
+
+    MyResource r;
+
+    try (<error descr="Unhandled exception from auto-closeable resource: C.E3">r = new MyResource()</error>) { }
+    catch (E1 e) { }
+
+    try (r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    catch (E3 e) { }
+
+    try (r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
   }
 
   void m2() throws Exception {
@@ -27,6 +37,7 @@ class C {
   void m3() throws Exception {
     try (MyResource r = new MyResource()) {
       r.doSomething();
+      /* todo: < error descr="Cannot assign a value to final variable 'r'">r = null</error >;*/
     }
     catch (E e) {
       <error descr="Cannot resolve symbol 'r'">r</error> = null;

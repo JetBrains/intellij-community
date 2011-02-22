@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -45,6 +46,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -543,14 +545,16 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  public static String getUnhandledExceptionsDescriptor(Collection<PsiClassType> unhandledExceptions) {
-    StringBuilder exceptionsText = new StringBuilder();
-    for (PsiClassType unhandledException : unhandledExceptions) {
-      if (exceptionsText.length() != 0) exceptionsText.append(", ");
-      exceptionsText.append(formatType(unhandledException));
-    }
+  public static String getUnhandledExceptionsDescriptor(final Collection<PsiClassType> unhandled) {
+    return getUnhandledExceptionsDescriptor(unhandled, null);
+  }
 
-    return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.size());
+  private static String getUnhandledExceptionsDescriptor(final Collection<PsiClassType> unhandled, final String source) {
+    final String exceptions = StringUtil.join(unhandled, new Function<PsiClassType, String>() {
+      @Override public String fun(PsiClassType type) { return formatType(type); }
+    }, ", ");
+    return source != null ? JavaErrorMessages.message("unhandled.close.exceptions", exceptions, unhandled.size(), source)
+                          : JavaErrorMessages.message("unhandled.exceptions", exceptions, unhandled.size());
   }
 
   @Nullable
@@ -633,24 +637,43 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkUnhandledExceptions(PsiElement element, TextRange fixRange) {
-    List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
-    HighlightInfo errorResult = null;
-    if (!unhandledExceptions.isEmpty()) {
-      if (fixRange == null) {
-        fixRange = element.getTextRange();
-      }
-      HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
-      if (highlightType == null) return null;
-      errorResult = HighlightInfo.createHighlightInfo(highlightType, fixRange, getUnhandledExceptionsDescriptor(unhandledExceptions));
-      QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchFix());
-      QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsFix(element));
-      QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchFix(element));
-      if (unhandledExceptions.size() == 1) {
-        QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandledExceptions.get(0)));
-      }
-    }
+  public static HighlightInfo checkUnhandledExceptions(final PsiElement element, TextRange fixRange) {
+    final List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
+    if (unhandledExceptions.isEmpty()) return null;
+
+    final HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
+    if (highlightType == null) return null;
+
+    if (fixRange == null) fixRange = element.getTextRange();
+    final String description = getUnhandledExceptionsDescriptor(unhandledExceptions);
+    final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(highlightType, fixRange, description);
+    registerUnhandledExceptionFixes(element, errorResult, unhandledExceptions);
     return errorResult;
+  }
+
+  @Nullable
+  public static HighlightInfo checkUnhandledCloserExceptions(final PsiResource resource) {
+    final List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
+    if (unhandled.isEmpty()) return null;
+
+    final HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
+    if (highlightType == null) return null;
+
+    final String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
+    final HighlightInfo highlight = HighlightInfo.createHighlightInfo(highlightType, resource, description);
+    registerUnhandledExceptionFixes(resource, highlight, unhandled);
+    return highlight;
+  }
+
+  private static void registerUnhandledExceptionFixes(final PsiElement element,
+                                                      final HighlightInfo errorResult,
+                                                      final List<PsiClassType> unhandled) {
+    QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchFix());
+    QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsFix(element));
+    QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchFix(element));
+    if (unhandled.size() == 1) {
+      QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandled.get(0)));
+    }
   }
 
   @Nullable
