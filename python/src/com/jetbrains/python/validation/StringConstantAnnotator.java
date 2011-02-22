@@ -2,8 +2,8 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 
 import java.util.List;
 
@@ -17,73 +17,39 @@ public class StringConstantAnnotator extends PyAnnotator {
   private static final String TRIPLE_QUOTES = "\"\"\"";
   private static final String TRIPLE_APOS = "'''";
 
-  //public static final String PREMATURE_Q = "Premature closing quote";
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
-    String s = node.getText();
-    String msg = "";
-    boolean ok = true;
-    boolean esc = false;
-    int index = 0;
-    // skip 'unicode' and 'raw' modifiers
-    char first_quote = s.charAt(index);
-    if (Character.toLowerCase(first_quote) == 'u' || Character.toLowerCase(first_quote) == 'b') index += 1;
-    first_quote = s.charAt(index);
-    if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
-
     List<ASTNode> stringNodes = node.getStringNodes();
-    int thisNodeIndex = index;
     for (ASTNode stringNode : stringNodes) {
-      if (checkTripleQuotedString(stringNode.getPsi(), stringNode.getText(), thisNodeIndex, TRIPLE_QUOTES)) return;
-      if (checkTripleQuotedString(stringNode.getPsi(), stringNode.getText(), thisNodeIndex, TRIPLE_APOS)) return;
-      thisNodeIndex = 0;
-    }
-
-    first_quote = s.charAt(index);
-    // s can't begin with a non-quote, else parser would not say it's a string
-    index += 1;
-    if (index >= s.length()) { // sole opening quote
-      msg = MISSING_Q + " [" + first_quote  + "]";
-      ok = false;
-    }
-    else {
-      while (ok && (index < s.length()-1)) {
-        char c = s.charAt(index);
-        if (esc) esc = false;
-        else {
-          if (c == '\\') esc = true;
-          // a line may consist of multiple fragments with different quote chars (PY-299)
-          else if (c == '\'' || c == '\"') {
-            if (first_quote == '\0')
-              first_quote = c;
-            else if (c == first_quote)
-              first_quote = '\0';
-          }
-          
-          /*
-          else { // impossible with current lexer, but who knows :)
-            msg = PREMATURE_Q + " [" + first_quote  + "]";
-            ok = false;
-          }
-          */
-        }
-        index += 1;
+      boolean foundError;
+      String nodeText = stringNode.getText();
+      int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      String unprefixed = nodeText.substring(index);
+      if (StringUtil.startsWith(unprefixed, TRIPLE_QUOTES)) {
+        foundError = checkTripleQuotedString(stringNode, unprefixed, TRIPLE_QUOTES);
       }
-      if (ok && (esc || (s.charAt(index) != first_quote))) {
-        msg = MISSING_Q + " [" + first_quote  + "]";
-        ok = false;
+      else if (StringUtil.startsWith(unprefixed, TRIPLE_APOS)) {
+        foundError = checkTripleQuotedString(stringNode, unprefixed, TRIPLE_APOS);
       }
-    }
-    //
-    if (! ok) {
-      getHolder().createErrorAnnotation(node, msg);
+      else {
+        foundError = checkQuotedString(stringNode, unprefixed);
+      }
+      if (foundError) break;
     }
   }
 
-  private boolean checkTripleQuotedString(PsiElement node, String s, int index, final String quotes) {
-    if (StringUtil.startsWith(s.substring(index, s.length()), quotes)) {
-      if (s.length() < 6 + index || !s.endsWith(quotes)) {
-        getHolder().createErrorAnnotation(node, "Missing closing triple quotes");
-      }
+  private boolean checkQuotedString(ASTNode stringNode, String nodeText) {
+    char firstQuote = nodeText.charAt(0);
+    int lastChar = nodeText.length()-1;
+    if (lastChar == 0 || nodeText.charAt(lastChar) != firstQuote || nodeText.charAt(lastChar-1) == '\\') {
+      getHolder().createErrorAnnotation(stringNode, MISSING_Q + " [" + firstQuote + "]");
+      return true;
+    }
+    return false;
+  }
+
+  private boolean checkTripleQuotedString(ASTNode stringNode, String text, final String quotes) {
+    if (text.length() < 6  || !text.endsWith(quotes)) {
+      getHolder().createErrorAnnotation(stringNode, "Missing closing triple quotes");
       return true;
     }
     return false;

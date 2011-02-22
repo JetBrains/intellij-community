@@ -166,6 +166,10 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:STRING_LITERAL");
   }
 
+  public void testOddNumberOfQuotes() {  // PY-2802
+    doTest("'''foo''''", "Py:STRING_LITERAL", "Py:STRING_LITERAL");
+  }
+
   public void testDedentBeforeComment() {  // PY-2209 & friends
     doTest("class UserProfile:\n" +
            "    pass\n" +

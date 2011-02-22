@@ -75,9 +75,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   private static TextRange getNodeTextRange(final String text) {
-    int startOffset = 0;
-    startOffset = skipEncodingPrefix(text, startOffset);
-    startOffset = skipRawPrefix(text, startOffset);
+    int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
     if (afterPrefix.startsWith("\"\"\"") || afterPrefix.startsWith("'''")) {
@@ -90,6 +88,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       endOffset -= delimiterLength;
     }
     return new TextRange(startOffset, endOffset);
+  }
+
+  public static int getPrefixLength(String text) {
+    int startOffset = 0;
+    startOffset = skipEncodingPrefix(text, startOffset);
+    startOffset = skipRawPrefix(text, startOffset);
+    return startOffset;
   }
 
   private static int skipRawPrefix(String text, int startOffset) {
