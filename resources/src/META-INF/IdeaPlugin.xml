@@ -1160,8 +1160,6 @@
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
 
-    <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
-
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
 
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>

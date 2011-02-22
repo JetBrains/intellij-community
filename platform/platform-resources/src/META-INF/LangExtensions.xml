@@ -610,4 +610,5 @@
 
   <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
 
+  <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
 </extensions>
