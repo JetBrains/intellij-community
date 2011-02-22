@@ -1,4 +1,4 @@
-package com.siyeh.igtest.jdk15.unnecessary_unboxing;
+package com.siyeh.igtest.migration.unnecessary_unboxing;
 
 
 

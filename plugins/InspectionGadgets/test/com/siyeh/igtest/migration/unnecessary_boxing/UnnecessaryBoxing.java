@@ -1,4 +1,4 @@
-package com.siyeh.igtest.jdk15.unnecessary_boxing;
+package com.siyeh.igtest.migration.unnecessary_boxing;
 
 
 

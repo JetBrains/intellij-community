@@ -1,4 +1,4 @@
-package com.siyeh.igtest.jdk15;
+package com.siyeh.igtest.migration;
 
 import java.util.Vector;
 import java.util.Hashtable;

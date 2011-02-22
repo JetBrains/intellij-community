@@ -1,4 +1,4 @@
-package com.siyeh.igtest.jdk15.foreach;
+package com.siyeh.igtest.migration.foreach;
 
 import com.siyeh.igtest.verbose.OuterClass;
 

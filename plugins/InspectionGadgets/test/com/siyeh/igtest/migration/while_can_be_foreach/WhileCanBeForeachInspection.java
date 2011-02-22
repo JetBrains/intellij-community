@@ -1,4 +1,4 @@
-package com.siyeh.igtest.jdk15.while_can_be_foreach;
+package com.siyeh.igtest.migration.while_can_be_foreach;
 
 import java.util.*;
 

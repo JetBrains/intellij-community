@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.siyeh.ig.jdk15;
+package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
