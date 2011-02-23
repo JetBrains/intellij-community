@@ -1036,7 +1036,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private void clearIndex(final ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    assert index != null;
+    assert index != null: "Index with key " + indexId + " not found or not registered properly";
     index.clear();
     try {
       IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
