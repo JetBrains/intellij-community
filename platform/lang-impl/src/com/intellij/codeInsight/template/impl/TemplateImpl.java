@@ -42,7 +42,6 @@ public class TemplateImpl extends Template implements SchemeElement {
   private ArrayList<Segment> mySegments = null;
   private String myTemplateText = null;
   private String myId;
-  private RangeMarker mySubSelection;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -450,14 +449,6 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public boolean skipOnStart(int i) {
     return myVariables.get(i).skipOnStart();
-  }
-
-  public RangeMarker getSubSelection() {
-    return mySubSelection;
-  }
-
-  public void setSubSelection(RangeMarker selection) {
-    mySubSelection = selection;
   }
 
   private static class Segment {

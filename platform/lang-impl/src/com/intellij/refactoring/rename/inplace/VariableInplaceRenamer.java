@@ -185,13 +185,6 @@ public class VariableInplaceRenamer {
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
-    final RangeMarker selection;
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      selection = myEditor.getDocument().createRangeMarker(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-    } else {
-      selection = null;
-    }
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder, nameSuggestions);
     for (PsiReference ref : refs) {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
@@ -205,9 +198,16 @@ public class VariableInplaceRenamer {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             final int offset = myEditor.getCaretModel().getOffset();
+            final SelectionModel selectionModel = myEditor.getSelectionModel();
+            final TextRange selectedRange;
+            if (selectionModel.hasSelection()) {
+              selectedRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+            }
+            else {
+              selectedRange = null;
+            }
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
-            template.setSubSelection(selection);
             TextRange range = scope1.getTextRange();
             assert range != null;
             myHighlighters = new ArrayList<RangeHighlighter>();
@@ -240,17 +240,11 @@ public class VariableInplaceRenamer {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
                 moveOffsetAfter(true);
-                if (selection != null) {
-                  selection.dispose();
-                }
               }
 
               public void templateCancelled(Template template) {
                 finish();
                 moveOffsetAfter(false);
-                if (selection != null) {
-                  selection.dispose();
-                }
               }
             });
 
@@ -258,6 +252,9 @@ public class VariableInplaceRenamer {
             Runnable runnable = new Runnable() {
               public void run() {
                 myEditor.getCaretModel().moveToOffset(offset);
+                if (selectedRange != null){
+                  myEditor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+                }
               }
             };
 

@@ -66,6 +66,4 @@ public abstract class Template {
 
   public abstract boolean isToShortenLongNames();
   public abstract void setToShortenLongNames(boolean toShortenLongNames);
-
-  public abstract void setSubSelection(RangeMarker selection);
 }
