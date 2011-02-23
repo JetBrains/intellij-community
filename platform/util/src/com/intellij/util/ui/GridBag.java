@@ -46,6 +46,10 @@ import java.awt.*;
  *
  * // The following code adds a component on the next line with overridden settings:
  * panel.add(c1, bag.nextLine().next().insets(...).weightx(...))
+ *
+ * // You also can pre-configure the object and pass it as a constraint:
+ * bag.nextLine().next();
+ * panel.add(c1, bag)
  * }
  * </pre>
  * Note that every call of {@link #nextLine()} or {@link #next()} resets settings to the defaults for the corresponding column.
