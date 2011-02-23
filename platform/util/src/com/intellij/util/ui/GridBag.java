@@ -45,7 +45,7 @@ import java.awt.*;
  * panel.add(c1, bag.nextLine().coverLine())
  *
  * // The following code adds a component on the next line with overridden settings:
- * panel.add(c1, bag.nextLine().next().insets(É).weightx(É))
+ * panel.add(c1, bag.nextLine().next().insets(...).weightx(...))
  * }
  * </pre>
  * Note that every call of {@link #nextLine()} or {@link #next()} resets settings to the defaults for the corresponding column.
