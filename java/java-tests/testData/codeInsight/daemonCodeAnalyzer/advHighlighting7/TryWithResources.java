@@ -37,7 +37,8 @@ class C {
   void m3(int p) throws Exception {
     try (MyResource r = new MyResource()) {
       r.doSomething();
-      /* todo: < error descr="Cannot assign a value to final variable 'r'">r = null</error >;*/
+      <error descr="Cannot assign a value to final variable 'r'">r = null</error>;
+      int <error descr="Variable 'r' is already defined in the scope">r</error> = 0;
     }
     catch (E e) {
       <error descr="Cannot resolve symbol 'r'">r</error> = null;
@@ -48,6 +49,10 @@ class C {
     <error descr="Cannot resolve symbol 'r'">r</error> = null;
 
     try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource(); MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
+
+    try (MyResource r1 = new MyResource(); MyResource r2 = r1) { }
+
+    /* todo: try (MyResource r1 = < error descr="Cannot resolve symbol 'r'">r2</error >; MyResource r2 = r1) { }*/
 
     MyResource r = null;
     try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
