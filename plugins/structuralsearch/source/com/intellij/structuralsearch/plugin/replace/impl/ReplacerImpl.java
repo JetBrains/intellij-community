@@ -89,7 +89,7 @@ public class ReplacerImpl {
 
       this.options.getMatchOptions().setResultIsContextMatch(true);
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
-      matcher.testFindMatches(new FilteringMatchResultSink(sink, true), this.options.getMatchOptions());
+      matcher.testFindMatches(new FilteringMatchResultSink(sink), this.options.getMatchOptions());
 
       final List<ReplacementInfo> resultPtrList = new LinkedList<ReplacementInfo>();
 

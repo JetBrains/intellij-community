@@ -9,11 +9,12 @@ import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -24,21 +25,61 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelper;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class JSStructuralSearchProfile extends TokenBasedProfile {
+public class JSStructuralSearchProfile extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
   private static String AS_SEARCH_VARIANT = "actionscript";
+
+  @NotNull
+  @Override
+  public CompiledPattern createCompiledPattern() {
+    return new CompiledPattern() {
+      @Override
+      public String getTypedVarPrefix() {
+        return JSStructuralSearchProfile.getTypedVarPrefix();
+      }
+
+      @Override
+      public boolean isTypedVar(String str) {
+        String prefix = JSStructuralSearchProfile.getTypedVarPrefix();
+        return str.startsWith(prefix);
+      }
+    };
+  }
+
+  @NotNull
+  @Override
+  public PsiElementVisitor createLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
+    return new PsiElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (isLexicalNode(element)) {
+          filter.setResult(true);
+        }
+      }
+    };
+  }
 
   @Override
   public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
@@ -59,9 +100,8 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     return new MyJsMatchingVisitor(globalVisitor);
   }
 
-  @Override
-  protected boolean isLexicalNode(@NotNull PsiElement element) {
-    if (super.isLexicalNode(element)) {
+  private static boolean isLexicalNode(@NotNull PsiElement element) {
+    if (element instanceof PsiWhiteSpace || element instanceof PsiErrorElement) {
       return true;
     }
     if (!(element instanceof LeafElement)) {
@@ -72,18 +112,15 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   }
 
   @NotNull
-  @Override
-  protected String getTypedVarPrefix() {
+  private static String getTypedVarPrefix() {
     return TYPED_VAR_PREFIX;
   }
 
-  @Override
-  protected boolean isBlockElement(@NotNull PsiElement element) {
+  private static boolean isBlockElement(@NotNull PsiElement element) {
     return element instanceof JSBlockStatement || element instanceof JSFile;
   }
 
-  @Override
-  protected boolean canBeVariable(PsiElement element) {
+  private static boolean canBeVariable(PsiElement element) {
     if (element instanceof JSExpression ||
         element instanceof JSParameter ||
         element instanceof JSVariable ||
@@ -93,8 +130,7 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     return false;
   }
 
-  @Override
-  protected boolean canBePatternVariable(PsiElement element) {
+  private static boolean canBePatternVariable(PsiElement element) {
     PsiElement child = element.getFirstChild();
     if (child == null) {
       return true;
@@ -109,8 +145,7 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   }
 
   @NotNull
-  @Override
-  protected MatchingStrategy getMatchingStrategy(PsiElement root) {
+  private static MatchingStrategy getMatchingStrategy(PsiElement root) {
     if (root != null) {
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(root);
       if (profile != null && profile.getLanguage(root) == JavaScriptSupportLoader.ECMA_SCRIPT_L4) {
@@ -161,15 +196,6 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     return super.isMyFile(file, lang, patternLanguages);
   }
 
-  private boolean containsFunctionOrClass(PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (element instanceof JSFunction || element instanceof JSClass) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     MatchOptions matchOptions = options.getMatchOptions();
@@ -186,30 +212,6 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
       }
     }
   }
-
-  /*@NotNull
-  @Override
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
-                                        @NotNull String extension,
-                                        @NotNull Project project,
-                                        boolean physical) {
-    if (context == PatternTreeContext.Block) {
-      text = "function f() {" + text + "}";
-      PsiElement[] elements = super.createPatternTree(text, context, fileType, extension, project, physical);
-      for (PsiElement element : elements) {
-        if (element instanceof JSFunction) {
-          JSSourceElement[] sourceElements = ((JSFunction)element).getBody();
-          if (sourceElements.length == 1 && sourceElements[0] instanceof JSBlockStatement) {
-            return ((JSBlockStatement)sourceElements[0]).getStatements();
-          }
-        }
-      }
-      assert false;
-    }
-    return super.createPatternTree(text, context, fileType, extension, project, physical);
-  }*/
 
   @NotNull
   @Override
@@ -230,13 +232,16 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     return element.getLanguage();
   }
 
-  private class MyJsMatchingVisitor extends JSElementVisitor {
+  @Override
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+    return new MyReplaceHandler(context.getProject());
+  }
+
+  private static class MyJsMatchingVisitor extends JSElementVisitor {
     private final GlobalMatchingVisitor myGlobalVisitor;
-    private final MyMatchingVisitor myBaseVisitor;
 
     private MyJsMatchingVisitor(GlobalMatchingVisitor globalVisitor) {
       myGlobalVisitor = globalVisitor;
-      myBaseVisitor = new MyMatchingVisitor(globalVisitor);
     }
 
     @Override
@@ -249,7 +254,26 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
           return;
         }
       }
-      myBaseVisitor.visitElement(element);
+
+      super.visitElement(element);
+
+      if (canBePatternVariable(element)) {
+        String text = element.getText();
+        final boolean isTypedVar = myGlobalVisitor.getMatchContext().getPattern().isTypedVar(text);
+
+        if (isTypedVar) {
+          myGlobalVisitor.setResult(myGlobalVisitor.handleTypedElement(element, myGlobalVisitor.getElement()));
+        }
+        else {
+          myGlobalVisitor.setResult(text.equals(myGlobalVisitor.getElement().getText()));
+        }
+      }
+      else {
+        myGlobalVisitor.setResult(myGlobalVisitor.matchSequentially(
+          new FilteringNodeIterator(element.getFirstChild()),
+          new FilteringNodeIterator(myGlobalVisitor.getElement().getFirstChild())
+        ));
+      }
     }
 
     @Override
@@ -373,15 +397,16 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     }
   }
 
-  private class MyJsCompilingVisitor extends MyCompilingVisitor {
+  private class MyJsCompilingVisitor extends PsiRecursiveElementVisitor {
+    private final GlobalCompilingVisitor myGlobalVisitor;
 
-    protected MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
-      super(globalVisitor);
+    private MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
+      myGlobalVisitor = globalVisitor;
     }
 
     @Override
     public void visitElement(final PsiElement element) {
-      super.visitElement(element);
+      doVisitElement(element);
       if (myGlobalVisitor.getContext().getSearchHelper().doOptimizing()) {
         if (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER) {
           OptimizingSearchHelper helper = myGlobalVisitor.getContext().getSearchHelper();
@@ -415,6 +440,74 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
           });
         }
       }
+    }
+
+    private void initTopLevelElement(PsiElement element, CompiledPattern pattern) {
+      MatchingStrategy strategy = null;
+
+      for (PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
+        if (GlobalCompilingVisitor.getFilter().accepts(el)) {
+          if (el instanceof PsiWhiteSpace) {
+            myGlobalVisitor.addLexicalNode(el);
+          }
+        }
+        else {
+          el.accept(this);
+          if (myGlobalVisitor.getCodeBlockLevel() == 1) {
+            MatchingStrategy newstrategy = getMatchingStrategy(el);
+            if (strategy == null) {
+              strategy = newstrategy;
+            }
+            else if (strategy.getClass() != newstrategy.getClass()) {
+              throw new UnsupportedPatternException(SSRBundle.message("different.strategies.for.top.level.nodes.error.message"));
+            }
+            final MatchingHandler matchingHandler = myGlobalVisitor.getContext().getPattern().getHandler(el);
+            myGlobalVisitor.getContext().getPattern().setHandler(el, new TopLevelMatchingHandler(matchingHandler));
+          }
+        }
+      }
+
+      if (myGlobalVisitor.getCodeBlockLevel() == 1) {
+        if (strategy == null) {
+          strategy = new MatchingStrategy() {
+            public boolean continueMatching(PsiElement start) {
+              return true;
+            }
+          };
+        }
+        myGlobalVisitor.getContext().getPattern().setStrategy(strategy);
+      }
+      pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
+    }
+
+    private void doVisitElement(PsiElement element) {
+      final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
+      if (isBlockElement(element)) {
+        myGlobalVisitor.setCodeBlockLevel(myGlobalVisitor.getCodeBlockLevel() + 1);
+
+        if (myGlobalVisitor.getCodeBlockLevel() == 1) {
+          initTopLevelElement(element, pattern);
+        }
+        else {
+          super.visitElement(element);
+        }
+
+        myGlobalVisitor.setCodeBlockLevel(myGlobalVisitor.getCodeBlockLevel() - 1);
+        return;
+      }
+      if (canBePatternVariable(element)) {
+        if (pattern.isRealTypedVar(element)) {
+          myGlobalVisitor.handle(element);
+          final MatchingHandler handler = pattern.getHandler(element);
+          handler.setFilter(new NodeFilter() {
+            public boolean accepts(PsiElement other) {
+              return canBeVariable(other);
+            }
+          });
+          return;
+        }
+      }
+      super.visitElement(element);
     }
 
     private void visitJsLiteralExpression(JSLiteralExpression expression) {
@@ -461,6 +554,43 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
         }
       });
       return true;
+    }
+  }
+
+  private static class MyReplaceHandler extends StructuralReplaceHandler {
+    private final Project myProject;
+    private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
+
+    private MyReplaceHandler(Project project) {
+      myProject = project;
+    }
+
+    public void replace(ReplacementInfo info) {
+      if (info.getMatchesCount() == 0) return;
+      assert info instanceof ReplacementInfoImpl;
+      PsiElement element = info.getMatch(0);
+      if (element == null) return;
+      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
+      assert file != null;
+      RangeMarker rangeMarker = myRangeMarkers.get(info);
+      Document document = rangeMarker.getDocument();
+      document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
+      PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
+    }
+
+    @Override
+    public void prepare(ReplacementInfo info) {
+      assert info instanceof ReplacementInfoImpl;
+      MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
+      PsiElement element = result.getMatch();
+      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      TextRange textRange = result.getMatchRef().getElement().getTextRange();
+      assert textRange != null;
+      RangeMarker rangeMarker = document.createRangeMarker(textRange);
+      rangeMarker.setGreedyToLeft(true);
+      rangeMarker.setGreedyToRight(true);
+      myRangeMarkers.put(info, rangeMarker);
     }
   }
 }

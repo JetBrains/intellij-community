@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.plugin.ui.actions;
 
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.*;
 import com.intellij.openapi.project.Project;
@@ -15,7 +14,7 @@ public class DoSearchAction {
 
     Matcher matcher = new Matcher(project);
 
-    sink = new FilteringMatchResultSink(sink, configuration instanceof ReplaceConfiguration);
+    sink = new FilteringMatchResultSink(sink);
 
     try {
       matcher.findMatches(sink, options);
