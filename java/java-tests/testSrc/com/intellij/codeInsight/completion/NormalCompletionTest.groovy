@@ -393,6 +393,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
   }
 
+  public void testFinalBeforeMethodCall() throws Throwable {
+    configure()
+    assertStringItems 'final', 'finalize'
+  }
+
   public void testMethodParenthesesSpaces() throws Throwable {
     final settings = CodeStyleSettingsManager.getSettings(getProject())
     settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true

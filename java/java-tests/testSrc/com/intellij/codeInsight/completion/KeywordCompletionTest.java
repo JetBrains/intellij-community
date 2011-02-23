@@ -159,8 +159,17 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testExtendsInCastTypeParameters() throws Throwable { doTest(); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Throwable { doTest(); }
 
-  public void testExtraBracketAfterFinally() throws Throwable { doTest(); }
-  public void testExtraBracketAfterFinally1() throws Throwable { doTest(); }
+  public void testExtraBracketAfterFinally() throws Throwable {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    selectItem(myItems[1]);
+    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+  }
+
+  public void testExtraBracketAfterFinally1() throws Throwable {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    selectItem(myItems[1]);
+    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+  }
 
   public void testTrueInVariableDeclaration() throws Throwable { doTest(); }
   public void testNullInIf() throws Throwable { doTest(); }

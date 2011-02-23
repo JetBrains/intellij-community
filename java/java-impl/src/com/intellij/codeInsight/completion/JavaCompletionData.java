@@ -557,6 +557,13 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       return;
     }
 
+    final PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(position, PsiExpressionStatement.class);
+    if (expressionStatement != null && expressionStatement.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
+      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(expressionStatement)) {
+        result.addElement(createKeyword(position, PsiKeyword.FINAL));
+      }
+    }
+
     if (SUPER_OR_THIS_PATTERN.accepts(position)) {
       if (AFTER_DOT.accepts(position) && !isInsideQualifierClass(position)) return;
 
@@ -607,7 +614,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         if (!PsiKeyword.VOID.equals(primitiveType)) {
           result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
         }
-        result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
+        //result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
       }
     }
 
