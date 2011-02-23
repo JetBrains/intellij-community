@@ -1570,6 +1570,9 @@ public class FileBasedIndex implements ApplicationComponent {
                 if (!isTooLarge.booleanValue()) {
                   affectedIndices.add(indexId);
                 }
+                else {
+                  LOG.error("Indexed file was not scheduled for invalidation ('tooLarge' condition); markForReindex=" + markForReindex + "; FILE=" + file.getPresentableUrl());
+                }
               }
             }
           }
