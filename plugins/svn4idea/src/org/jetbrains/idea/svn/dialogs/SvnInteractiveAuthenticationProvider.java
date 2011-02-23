@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -173,7 +174,27 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         command.run();
       } else {
         final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-        application.invokeAndWait(command, pi == null ? ModalityState.defaultModalityState() : pi.getModalityState());
+        if (pi != null) {
+          if (pi.isModal() && pi instanceof ProgressWindow) {
+            final long maxWait = 3000;
+            final long start = System.currentTimeMillis();
+            while ((! ((ProgressWindow) pi).isPopupWasShown()) && (pi.isRunning()) && (System.currentTimeMillis() - maxWait < start)) {
+              final Object lock = new Object();
+              synchronized (lock) {
+                try {
+                  lock.wait(100);
+                }
+                catch (InterruptedException e) {
+                  //
+                }
+              }
+            }
+            ProgressManager.checkCanceled();
+          }
+          application.invokeAndWait(command, pi.getModalityState());
+        } else {
+          application.invokeAndWait(command, ModalityState.defaultModalityState());
+        }
       }
       log("3 authentication result: " + result[0]);
     }
