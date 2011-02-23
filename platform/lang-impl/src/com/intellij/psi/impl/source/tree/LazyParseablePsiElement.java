@@ -38,7 +38,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LazyParseablePsiElement extends LazyParseableElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseablePsiElement");
@@ -50,6 +56,23 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   @NotNull
   public PsiElement[] getChildren() {
     return getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+  }
+
+  @Nullable
+  protected <T> T findChildByClass(Class<T> aClass) {
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (ReflectionCache.isInstance(cur, aClass)) return (T)cur;
+    }
+    return null;
+  }
+
+  @NotNull
+  protected <T> T[] findChildrenByClass(Class<T> aClass) {
+    List<T> result = new ArrayList<T>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (ReflectionCache.isInstance(cur, aClass)) result.add((T)cur);
+    }
+    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
   }
 
   public PsiElement getFirstChild() {

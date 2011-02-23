@@ -154,6 +154,12 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  @Nullable
+  public PsiElement findPsiChildByType(IElementType type) {
+    final ASTNode node = findChildByType(type);
+    return node == null ? null : node.getPsi();
+  }
+
   public ASTNode findChildByType(IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
