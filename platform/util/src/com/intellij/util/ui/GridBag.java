@@ -23,6 +23,33 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * Usage:
+ * <pre>
+ * {@code
+ *
+ * // First, configure default for every or a specific column:
+ * GridBag bag = new GridBag()
+ *     .setDefaultAnchor(0, GridBagConstraints.EAST)
+ *     .setDefaultAnchor(1, GridBagConstraints.WEST)
+ *     .setDefaultWeightX(1, 1)
+ *     .setDefaultFill(GridBagConstraints.HORIZONTAL);
+ *
+ * // Then, add components to a panel:
+ *
+ * // The following code adds a new line with 2 components with default settings:
+ * panel.add(c1, bag.nextLine().next())
+ * panel.add(c1, bag.next())
+ *
+ * // The following code adds a component on the next line that covers all remaining columns:
+ * panel.add(c1, bag.nextLine().coverLine())
+ *
+ * // The following code adds a component on the next line with overridden settings:
+ * panel.add(c1, bag.nextLine().next().insets(É).weightx(É))
+ * }
+ * </pre>
+ * Note that every call of {@link #nextLine()} or {@link #next()} resets settings to the defaults for the corresponding column.
+ */
 @SuppressWarnings({"JavaDoc"})
 public class GridBag extends GridBagConstraints {
   private int myDefaultAnchor = anchor;
@@ -56,7 +83,7 @@ public class GridBag extends GridBagConstraints {
   }
 
   @NotNull
-  public GridBag nextCell() {
+  public GridBag next() {
     gridx++;
     return reset();
   }
@@ -71,12 +98,12 @@ public class GridBag extends GridBagConstraints {
     return this;
   }
 
-  public int getCell() {
+  public int getColumn() {
     return gridx;
   }
 
   @NotNull
-  public GridBag setCell(int cell) {
+  public GridBag setColumn(int cell) {
     gridx = cell;
     return this;
   }
