@@ -371,6 +371,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }
+  public void testAssigningFieldForTheFirstTime() throws Throwable { doTest(); }
 
   public void testClassTypeParameters() throws Throwable {
     configure()

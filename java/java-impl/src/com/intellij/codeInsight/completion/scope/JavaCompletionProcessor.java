@@ -32,10 +32,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -107,43 +104,63 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
 
     if (checkInitialized) {
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
-      if (statement != null && method != null && method.isConstructor()) {
-        final PsiClass containingClass = method.getContainingClass();
-        assert containingClass != null;
-        for (PsiField field : containingClass.getFields()) {
-          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null) {
-            myNonInitializedFields.add(field);
-          }
-        }
+      myNonInitializedFields.addAll(getNonInitializedFields(element));
+    }
+  }
 
-        method.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-            if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
-              final PsiExpression lExpression = expression.getLExpression();
-              if (lExpression instanceof PsiReferenceExpression) {
-                //noinspection SuspiciousMethodCalls
-                myNonInitializedFields.remove(((PsiReferenceExpression)lExpression).resolve());
-              }
-            }
-            super.visitAssignmentExpression(expression);
-          }
+  private static Set<PsiField> getNonInitializedFields(PsiElement element) {
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
+    if (statement == null || method == null || !method.isConstructor()) {
+      return Collections.emptySet();
+    }
 
-          @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
-              final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-              if (methodExpression.textMatches("this")) {
-                myNonInitializedFields.clear();
-              }
-            }
-            super.visitMethodCallExpression(expression);
-          }
-        });
+    PsiElement parent = element.getParent();
+    while (parent != statement) {
+      PsiElement next = parent.getParent();
+      if (next instanceof PsiAssignmentExpression && parent == ((PsiAssignmentExpression)next).getLExpression()) {
+        return Collections.emptySet();
+      }
+      if (parent instanceof PsiReferenceExpression && next instanceof PsiExpressionStatement) {
+        return Collections.emptySet();
+      }
+      parent = next;
+    }
+
+    final Set<PsiField> fields = new HashSet<PsiField>();
+    final PsiClass containingClass = method.getContainingClass();
+    assert containingClass != null;
+    for (PsiField field : containingClass.getFields()) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null) {
+        fields.add(field);
       }
     }
+
+    method.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
+          final PsiExpression lExpression = expression.getLExpression();
+          if (lExpression instanceof PsiReferenceExpression) {
+            //noinspection SuspiciousMethodCalls
+            fields.remove(((PsiReferenceExpression)lExpression).resolve());
+          }
+        }
+        super.visitAssignmentExpression(expression);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
+          final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+          if (methodExpression.textMatches("this")) {
+            fields.clear();
+          }
+        }
+        super.visitMethodCallExpression(expression);
+      }
+    });
+    return fields;
   }
 
   public void handleEvent(Event event, Object associated){
