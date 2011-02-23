@@ -961,6 +961,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testWildcardedInstanceof3() throws Throwable { doTest(); }
 
   public void testCheckStaticImportsType() throws Throwable { doAntiTest(); }
+  public void testThisFieldAssignedToItself() throws Throwable { doAntiTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
