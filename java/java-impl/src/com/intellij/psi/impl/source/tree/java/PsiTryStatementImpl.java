@@ -164,7 +164,12 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
                                      @NotNull final ResolveState state,
                                      final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
-    return PsiImplUtil.processDeclarationsInTryStatement(this, processor, state, lastParent);
+    final PsiResourceList resourceList = getResourceList();
+    if (resourceList != null && lastParent instanceof PsiCodeBlock && lastParent == getTryBlock()) {
+      return PsiImplUtil.processDeclarationsInResourceList(resourceList, processor, state, lastParent);
+    }
+
+    return true;
   }
 
   public String toString() {

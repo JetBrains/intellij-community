@@ -194,17 +194,16 @@ public class PsiImplUtil {
     return true;
   }
 
-  public static boolean processDeclarationsInTryStatement(@NotNull final PsiTryStatement statement,
+  public static boolean processDeclarationsInResourceList(@NotNull final PsiResourceList resourceList,
                                                           @NotNull final PsiScopeProcessor processor,
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
-    final PsiResourceList resourceList = statement.getResourceList();
-    if (resourceList != null && lastParent instanceof PsiCodeBlock && lastParent == statement.getTryBlock()) {
-      final List<PsiResource> resources = resourceList.getResources();
-      for (PsiResource resource : resources) {
-        final PsiElement resourceElement = resource.getResourceElement();
-        if (resourceElement instanceof PsiLocalVariable && !processor.execute(resourceElement, state)) return false;
-      }
+    final List<PsiResource> resources = resourceList.getResources();
+    for (PsiResource resource : resources) {
+      final PsiElement resourceElement = resource.getResourceElement();
+      if (resourceElement instanceof PsiLocalVariable &&
+          !resourceElement.equals(lastParent) &&
+          !processor.execute(resourceElement, state)) return false;
     }
 
     return true;
