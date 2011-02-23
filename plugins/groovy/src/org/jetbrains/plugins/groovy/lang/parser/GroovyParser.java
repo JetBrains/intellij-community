@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
@@ -45,9 +46,21 @@ public class GroovyParser implements PsiParser {
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     //builder.setDebugMode(true);
-    PsiBuilder.Marker rootMarker = builder.mark();
-    CompilationUnit.parse(builder, this);
-    rootMarker.done(root);
+    if (root == GroovyElementTypes.OPEN_BLOCK) {
+      OpenOrClosableBlock.parseOpenBlock(builder, this);
+    }
+    else if (root == GroovyElementTypes.CLOSABLE_BLOCK) {
+      OpenOrClosableBlock.parseClosableBlock(builder, this);
+    }
+    else if (root == GroovyElementTypes.CONSTRUCTOR_BODY) {
+      ConstructorBody.parseConstructorBody(builder, this);
+    }
+    else {
+      assert root == GroovyParserDefinition.GROOVY_FILE : root;
+      PsiBuilder.Marker rootMarker = builder.mark();
+      CompilationUnit.parseFile(builder, this);
+      rootMarker.done(root);
+    }
     return builder.getTreeBuilt();
 
   }
@@ -305,14 +318,28 @@ public class GroovyParser implements PsiParser {
    * @param builder
    */
   protected void cleanAfterError(PsiBuilder builder) {
+    int braceLevel = 1;
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() &&
-        !(GroovyTokenTypes.mNLS.equals(builder.getTokenType()) ||
-            GroovyTokenTypes.mRCURLY.equals(builder.getTokenType()) ||
-            GroovyTokenTypes.mSEMI.equals(builder.getTokenType())) &&
-        !isExtendedSeparator(builder.getTokenType())
-        ) {
+    while (true) {
+      if (builder.eof()) {
+        break;
+      }
+      final IElementType type = builder.getTokenType();
+      if (GroovyTokenTypes.mLCURLY == type) {
+        braceLevel++;
+      }
+      else if (GroovyTokenTypes.mRCURLY == type) {
+        braceLevel--;
+        if (braceLevel == 0) {
+          break;
+        }
+      }
+      else if (GroovyTokenTypes.mNLS.equals(type) || GroovyTokenTypes.mSEMI.equals(type) || isExtendedSeparator(type)) {
+        if (braceLevel == 1) {
+          break;
+        }
+      }
       builder.advanceLexer();
       i++;
     }

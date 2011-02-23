@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
@@ -56,7 +56,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static boolean parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement, GroovyParser parser) {
+  private static boolean parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement, GroovyParser parser) {
     PsiBuilder.Marker blockStatementMarker = builder.mark();
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -88,7 +88,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
+  public static IElementType parseClosableBlock(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();

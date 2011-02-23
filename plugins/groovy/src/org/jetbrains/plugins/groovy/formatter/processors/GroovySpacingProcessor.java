@@ -26,12 +26,26 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
-import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
+import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
@@ -52,19 +66,6 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 /**
  * @author ilyas
@@ -263,7 +264,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
       } else if (myChild2.getElementType() == mRPAREN && myChild2.getElementType() == THROW_CLAUSE) {
         createSpaceInCode(true);
-      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+      } else if (isOpenBlock(myChild2)) {
         PsiElement methodName = method.getNameIdentifier();
         int dependancyStart = methodName == null ? myParent.getTextRange().getStartOffset() : methodName.getTextRange().getStartOffset();
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
@@ -275,6 +276,10 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
 
+    }
+
+    private static boolean isOpenBlock(final ASTNode node) {
+      return node.getElementType() == OPEN_BLOCK || node.getElementType() == CONSTRUCTOR_BODY;
     }
 
     public void visitDocMethodReference(GrDocMethodReference reference) {
@@ -322,14 +327,14 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     }
 
     public void visitCatchClause(GrCatchClause catchClause) {
-      if (myChild2.getElementType() == OPEN_BLOCK) {
+      if (isOpenBlock(myChild2)) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
                 mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
       }
     }
 
     public void visitFinallyClause(GrFinallyClause catchClause) {
-      if (myChild2.getElementType() == OPEN_BLOCK) {
+      if (isOpenBlock(myChild2)) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
                 mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
       }
@@ -338,7 +343,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
       if (myChild2.getElementType() == FINALLY_CLAUSE) {
         processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
-      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+      } else if (isOpenBlock(myChild2)) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
                 mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
       } else if (myChild2.getElementType() == CATCH_CLAUSE) {
@@ -362,7 +367,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         createSpaceInCode(mySettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES);
       } else if (myChild1.getElementType() == mLPAREN || myChild2.getElementType() == mRPAREN) {
         createSpaceInCode(mySettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES);
-      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+      } else if (isOpenBlock(myChild2)) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE,
                 mySettings.BRACE_STYLE, null,
                 mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
@@ -390,7 +395,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myChild2.getElementType() == kELSE) {
-        if (myChild1.getElementType() != OPEN_BLOCK && myChild1.getElementType() != BLOCK_STATEMENT) {
+        if (!isOpenBlock(myChild1) && myChild1.getElementType() != BLOCK_STATEMENT) {
           myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         } else {
           if (mySettings.ELSE_ON_NEW_LINE) {
@@ -407,7 +412,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
             myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
         } else {
-          if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+          if (myChild2.getElementType() == BLOCK_STATEMENT || isOpenBlock(myChild2)) {
             myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE,
                     null,
                     mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
@@ -415,7 +420,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
             createSpacingBeforeElementInsideControlStatement();
           }
         }
-      } else if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+      } else if (myChild2.getElementType() == BLOCK_STATEMENT || isOpenBlock(myChild2)) {
         boolean space = myChild2.getPsi() == ((GrIfStatement) myParent).getElseBranch() ? mySettings.SPACE_BEFORE_ELSE_LBRACE : mySettings.SPACE_BEFORE_IF_LBRACE;
         myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
                 myChild1.getTextRange().getEndOffset()),
@@ -451,7 +456,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
                   new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
         }
 
-      } else if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+      } else if (myChild2.getElementType() == BLOCK_STATEMENT || isOpenBlock(myChild2)) {
         if (myChild2.getElementType() == BLOCK_STATEMENT) {
           myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE,
                   new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);

@@ -142,7 +142,7 @@ public class ArgumentList implements GroovyElementTypes {
              mLBRACK.equals(builder.getTokenType()) ||
              mLPAREN.equals(builder.getTokenType()) ||
              mLCURLY.equals(builder.getTokenType())) {
-      PrimaryExpression.parse(builder, parser);
+      PrimaryExpression.parsePrimaryExpression(builder, parser);
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
         return true;

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 26.03.2007
  */
 public class ConstructorBody implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseConstructorBody(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -58,7 +58,7 @@ public class ConstructorBody implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    cbMarker.done(OPEN_BLOCK);
+    cbMarker.done(CONSTRUCTOR_BODY);
     return true;
 
   }
