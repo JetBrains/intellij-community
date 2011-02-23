@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -252,12 +253,15 @@ public class Switcher extends AnAction implements DumbAware {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileEditorInfo> filesData = new ArrayList<FileEditorInfo>();
       final ArrayList<FileEditorInfo> editors = new ArrayList<FileEditorInfo>();
-      for (EditorsSplitters splitters : editorManager.getAllSplitters()) {
-        for (EditorWindow window : splitters.getWindows()) {
-          for (VirtualFile file : window.getFiles()) {
-            editors.add(new FileEditorInfo(file, window));
-          }
-        }
+      //for (EditorsSplitters splitters : editorManager.getAllSplitters()) {
+      //  for (EditorWindow window : splitters.getWindows()) {
+      //    for (VirtualFile file : window.getFiles()) {
+      //      editors.add(new FileEditorInfo(file, window));
+      //    }
+      //  }
+      //}
+      for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+        editors.add(new FileEditorInfo(pair.first, pair.second));
       }
       if (editors.size() < 2) {
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
@@ -266,10 +270,10 @@ public class Switcher extends AnAction implements DumbAware {
           filesData.add(new FileEditorInfo(recentFiles[i], null));
         }
       } else {
-        try {
-          ContainerUtil.sort(editors, new RecentFilesComparator(project));
-        } catch (Exception e) {// IndexNotReadyException
-        }
+        //try {
+        //  ContainerUtil.sort(editors, new RecentFilesComparator(project));
+        //} catch (Exception e) {// IndexNotReadyException
+        //}
         for (int i = 0; i < Math.min(MAX_FILES, editors.size()); i++) {
           filesData.add(editors.get(i));
         }
@@ -602,25 +606,25 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    private class RecentFilesComparator implements Comparator<FileEditorInfo> {
-      private Map<FileEditorInfo, Integer> tabs = new HashMap<FileEditorInfo, Integer>();
-
-      public RecentFilesComparator(Project project) {
-        final List<TabInfo> history = ((FileEditorManagerImpl)FileEditorManager.getInstance(project)).getTabsHistory();
-        for (int i = 0; i < history.size(); i++) {
-          final TabInfo info = history.get(i);
-          if (info.getObject() instanceof VirtualFile && info.getComponent() instanceof EditorWindowHolder) {
-            tabs.put(new FileEditorInfo((VirtualFile)info.getObject(), ((EditorWindowHolder)info.getComponent()).getEditorWindow()), i);
-          }
-        }
-      }
-
-      public int compare(FileEditorInfo vf1, FileEditorInfo vf2) {
-        final Integer index1 = tabs.get(vf1);
-        final Integer index2 = tabs.get(vf2);
-        return index1 == null && index2 == null ? 0 : index1 == null ? 1 : index2 == null ? -1 : index1 - index2;
-      }
-    }
+    //private class RecentFilesComparator implements Comparator<FileEditorInfo> {
+    //  private Map<FileEditorInfo, Integer> tabs = new HashMap<FileEditorInfo, Integer>();
+    //
+    //  public RecentFilesComparator(Project project) {
+    //    final List<TabInfo> history = ((FileEditorManagerImpl)FileEditorManager.getInstance(project)).getTabsHistory();
+    //    for (int i = 0; i < history.size(); i++) {
+    //      final TabInfo info = history.get(i);
+    //      if (info.getObject() instanceof VirtualFile && info.getComponent() instanceof EditorWindowHolder) {
+    //        tabs.put(new FileEditorInfo((VirtualFile)info.getObject(), ((EditorWindowHolder)info.getComponent()).getEditorWindow()), i);
+    //      }
+    //    }
+    //  }
+    //
+    //  public int compare(FileEditorInfo vf1, FileEditorInfo vf2) {
+    //    final Integer index1 = tabs.get(vf1);
+    //    final Integer index2 = tabs.get(vf2);
+    //    return index1 == null && index2 == null ? 0 : index1 == null ? 1 : index2 == null ? -1 : index1 - index2;
+    //  }
+    //}
 
     public void mouseClicked(MouseEvent e) {
       final Object source = e.getSource();

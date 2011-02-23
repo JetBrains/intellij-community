@@ -138,7 +138,7 @@ public class EditorWindow {
 
           beforePublisher.beforeFileClosed(editorManager, file);
 
-          if (myTabbedPane != null) {
+          if (myTabbedPane != null && editor != null) {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
@@ -167,6 +167,7 @@ public class EditorWindow {
           }
         }
         finally {
+          editorManager.getSelectionHistory().remove(new Pair<VirtualFile, EditorWindow>(file, EditorWindow.this));
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
