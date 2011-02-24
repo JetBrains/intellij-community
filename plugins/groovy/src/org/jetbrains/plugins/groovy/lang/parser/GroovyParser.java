@@ -43,17 +43,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class GroovyParser implements PsiParser {
 
+  public boolean parseDeep() {
+    return false;
+  }
+
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     //builder.setDebugMode(true);
     if (root == GroovyElementTypes.OPEN_BLOCK) {
-      OpenOrClosableBlock.parseOpenBlock(builder, this);
+      OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
     }
     else if (root == GroovyElementTypes.CLOSABLE_BLOCK) {
-      OpenOrClosableBlock.parseClosableBlock(builder, this);
+      OpenOrClosableBlock.parseClosableBlockDeep(builder, this);
     }
     else if (root == GroovyElementTypes.CONSTRUCTOR_BODY) {
-      ConstructorBody.parseConstructorBody(builder, this);
+      ConstructorBody.parseConstructorBodyDeep(builder, this);
     }
     else {
       assert root == GroovyParserDefinition.GROOVY_FILE : root;
@@ -62,7 +66,6 @@ public class GroovyParser implements PsiParser {
       rootMarker.done(root);
     }
     return builder.getTreeBuilt();
-
   }
 
   public boolean parseForStatement(PsiBuilder builder) {
@@ -253,7 +256,7 @@ public class GroovyParser implements PsiParser {
 
       result = parseStatement(builder, false);
       if (!isExtendedSeparator(builder.getTokenType())) {
-        cleanAfterError(builder);
+        cleanAfterError(builder, false);
       }
     }
     Separators.parse(builder);
@@ -314,10 +317,8 @@ public class GroovyParser implements PsiParser {
 
   /**
    * Rolls marker forward after possible errors
-   *
-   * @param builder
    */
-  protected void cleanAfterError(PsiBuilder builder) {
+  private void cleanAfterError(PsiBuilder builder, boolean rCurlyNeeded) {
     int braceLevel = 1;
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
@@ -335,8 +336,11 @@ public class GroovyParser implements PsiParser {
           break;
         }
       }
-      else if (GroovyTokenTypes.mNLS.equals(type) || GroovyTokenTypes.mSEMI.equals(type) || isExtendedSeparator(type)) {
-        if (braceLevel == 1) {
+      else if (braceLevel == 1) {
+        if (!rCurlyNeeded && (GroovyTokenTypes.mNLS.equals(type) || GroovyTokenTypes.mSEMI.equals(type))) {
+          break;
+        }
+        if (isExtendedSeparator(type)) {
           break;
         }
       }
@@ -372,10 +376,10 @@ public class GroovyParser implements PsiParser {
       }
       result = parseStatement(builder, false);
       if (!isExtendedSeparator(builder.getTokenType())) {
-        cleanAfterError(builder);
+        cleanAfterError(builder, false);
       }
     }
-    cleanAfterError(builder);
+    cleanAfterError(builder, true);
     Separators.parse(builder);
     while (parseExtendedStatement(builder)) {
       Separators.parse(builder);
@@ -385,7 +389,10 @@ public class GroovyParser implements PsiParser {
 
   public boolean parseStatement(PsiBuilder builder, boolean isBlockStatementNeeded) {
     if (isBlockStatementNeeded && GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
-      return OpenOrClosableBlock.parseBlockStatement(builder, this);
+      final PsiBuilder.Marker marker = builder.mark();
+      OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
+      marker.done(GroovyElementTypes.BLOCK_STATEMENT);
+      return true;
     }
 
      if (GroovyTokenTypes.kIMPORT.equals(builder.getTokenType())) {

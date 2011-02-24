@@ -99,8 +99,4 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     return this;
   }
 
-  @Override
-  public void delete() throws IncorrectOperationException {
-    getParent().deleteChildRange(this, this);
-  }
 }

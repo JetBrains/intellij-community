@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +55,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private volatile GrParameter mySyntheticItParameter;
   private GrVariable myOwner;
 
-  public GrClosableBlockImpl(@NotNull ASTNode node) {
-    super(node);
+  public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
+    super(type, buffer);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -132,7 +133,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Override
   @Nullable
   public PsiElement getArrow() {
-    return findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
+    return findPsiChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
 
   public GrParameterListImpl getParameterList() {

@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
@@ -66,7 +64,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionBodyBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
@@ -169,8 +166,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //bodies
     if (elem.equals(CLASS_BODY)) return new GrTypeDefinitionBodyBase.GrClassBody(node);
     if (elem.equals(ENUM_BODY)) return new GrTypeDefinitionBodyBase.GrEnumBody(node);
-    if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
-    if (elem.equals(OPEN_BLOCK) || elem.equals(CONSTRUCTOR_BODY)) return new GrOpenBlockImpl(node);
     if (elem.equals(BLOCK_STATEMENT)) return new GrBlockStatementImpl(node);
     if (elem.equals(EXPLICIT_CONSTRUCTOR)) return new GrConstructorInvocationImpl(node);
 

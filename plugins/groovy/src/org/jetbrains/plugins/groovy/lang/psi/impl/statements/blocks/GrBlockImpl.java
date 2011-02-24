@@ -20,8 +20,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -45,8 +48,30 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 /**
  * @author ven
  */
-public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCodeBlock, GrControlFlowOwner {
+public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrCodeBlock, GrControlFlowOwner {
   private volatile CachedValue<Instruction[]> myControlFlow = null;
+
+  protected GrBlockImpl(@NotNull IElementType type, CharSequence buffer) {
+    super(type, buffer);
+  }
+
+  @Override
+  public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
+    GroovyPsiElementImpl.removeElements(this, elements);
+  }
+
+  @Override
+  public void acceptChildren(GroovyElementVisitor visitor) {
+    GroovyPsiElementImpl.acceptGroovyChildren(this, visitor);
+  }
+
+  public <T extends GrStatement> T replaceWithStatement(T statement) {
+    return GroovyPsiElementImpl.replaceWithStatement(this, statement);
+  }
+
+  public void removeStatement() throws IncorrectOperationException {
+    GroovyPsiElementImpl.removeStatement(this);
+  }
 
   public void subtreeChanged() {
     super.subtreeChanged();
@@ -82,10 +107,6 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     }
 
     return controlFlow.getValue();
-  }
-
-  public GrBlockImpl(@NotNull ASTNode node) {
-    super(node);
   }
 
   public void removeVariable(GrVariable variable) {
@@ -153,12 +174,12 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
 
   @Nullable
   public PsiElement getLBrace() {
-    return findChildByType(GroovyTokenTypes.mLCURLY);
+    return findPsiChildByType(GroovyTokenTypes.mLCURLY);
   }
 
   @Nullable
   public PsiElement getRBrace() {
-    return findChildByType(GroovyTokenTypes.mRCURLY);
+    return findPsiChildByType(GroovyTokenTypes.mRCURLY);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {

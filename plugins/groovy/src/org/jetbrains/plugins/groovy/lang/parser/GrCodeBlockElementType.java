@@ -18,26 +18,33 @@ package org.jetbrains.plugins.groovy.lang.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
+import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IErrorCounterReparseableElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 
 /**
  * @author peter
  */
-class GrCodeBlockElementType extends IErrorCounterReparseableElementType {
+public abstract class GrCodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType {
 
-  GrCodeBlockElementType(String debugName) {
+  protected GrCodeBlockElementType(String debugName) {
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 
+  @NotNull
   @Override
-  public ASTNode createNode(final CharSequence text) {
-    return new LazyParseablePsiElement(this, text);
+  public ASTNode createCompositeNode() {
+    return createNode(null);
   }
+
+  @Override
+  @NotNull
+  public abstract GrBlockImpl createNode(final CharSequence text);
 
   @Override
   public int getErrorsCount(final CharSequence seq, final Project project) {

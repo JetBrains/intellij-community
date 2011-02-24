@@ -16,18 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.lang.*;
-import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lang.java.parser.StatementParser;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.*;
-import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -47,6 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -149,9 +144,27 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
-  GrCodeBlockElementType CLOSABLE_BLOCK = new GrCodeBlockElementType("Closable block");
-  GrCodeBlockElementType OPEN_BLOCK = new GrCodeBlockElementType("Open block");
-  GrCodeBlockElementType CONSTRUCTOR_BODY = new GrCodeBlockElementType("Constructor body");
+  GrCodeBlockElementType CLOSABLE_BLOCK = new GrCodeBlockElementType("Closable block") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrClosableBlockImpl(this, text);
+    }
+  };
+  GrCodeBlockElementType OPEN_BLOCK = new GrCodeBlockElementType("Open block") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrOpenBlockImpl(this, text);
+    }
+  };
+  GrCodeBlockElementType CONSTRUCTOR_BODY = new GrCodeBlockElementType("Constructor body") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrOpenBlockImpl(this, text);
+    }
+  };
 
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
 
