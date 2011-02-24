@@ -106,13 +106,8 @@ public abstract class GitChangesSaver {
       Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
                                                 "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING, new NotificationListener() {
-          @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
-              showSavedChanges();
-            }
-          }
-        }));
+                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING,
+                                                new ShowSavedChangesNotificationListener()));
     }
   }
 
@@ -180,4 +175,11 @@ public abstract class GitChangesSaver {
     });
   }
 
+  protected class ShowSavedChangesNotificationListener implements NotificationListener {
+    @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
+        showSavedChanges();
+      }
+    }
+  }
 }

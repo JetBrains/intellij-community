@@ -15,9 +15,13 @@
  */
 package git4idea.update;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -26,13 +30,17 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
-import git4idea.commands.GitHandlerUtil;
+import git4idea.GitVcs;
+import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
+import git4idea.merge.GitMergeConflictResolver;
+import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Kirill Likhodedov
@@ -97,11 +105,43 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
-  private void loadRoot(VirtualFile root) throws VcsException {
+  private void loadRoot(final VirtualFile root) throws VcsException {
     myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
-    GitStashUtils.popLastStash(myProject, root);
-    // TODO: detect conflict when unstashing and offer a reverse merge.
-    //GitUpdater.mergeFiles(myProject, root, true);
+    final GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
+    handler.setNoSSH(true);
+    handler.addParameters("pop");
+
+    final AtomicBoolean conflict = new AtomicBoolean();
+    handler.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (line.contains("Merge conflict")) {
+          conflict.set(true);
+        }
+      }
+    });
+
+    final GitTask task = new GitTask(myProject, handler, "git stash pop");
+    task.setExecuteResultInAwt(false);
+    task.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+      @Override protected void onSuccess() {
+      }
+
+      @Override protected void onCancel() {
+        Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Unstash cancelled",
+                                                  "You may view the stashed changes <a href='saver'>here</a>", NotificationType.WARNING,
+                                                  new ShowSavedChangesNotificationListener()), myProject);
+      }
+
+      @Override protected void onFailure() {
+        if (conflict.get()) {
+          new GitMergeConflictResolver(myProject, true, "Can't update", "").mergeFiles(Collections.singleton(root));
+        } else {
+          GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
+        }
+      }
+    });
+
   }
 
   // Sort changes from myChangesLists by their git roots.

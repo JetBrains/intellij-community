@@ -105,19 +105,6 @@ public class GitStashUtils {
   }
 
   /**
-   * git stash pop
-   */
-  public static void popLastStash(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
-    handler.setNoSSH(true);
-    handler.addParameters("pop");
-    if (QUIET_STASH_SUPPORTED.isOlderOrEqual(GitVcs.getInstance(project).getVersion())) {
-      handler.addParameters("--quiet");
-    }
-    handler.run();
-  }
-
-  /**
    * Perform system level unshelve operation
    *
    * @param project           the project
