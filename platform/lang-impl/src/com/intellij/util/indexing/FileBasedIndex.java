@@ -1571,7 +1571,10 @@ public class FileBasedIndex implements ApplicationComponent {
                   affectedIndices.add(indexId);
                 }
                 else {
-                  LOG.error("Indexed file was not scheduled for invalidation ('tooLarge' condition); markForReindex=" + markForReindex + "; FILE=" + file.getPresentableUrl());
+                  if (myIsUnitTestMode) {
+                    System.out.println("Indexed file was not scheduled for invalidation ('tooLarge' condition); markForReindex=" + markForReindex + "; FILE=" + file.getPresentableUrl());
+                  }
+                  //LOG.error("Indexed file was not scheduled for invalidation ('tooLarge' condition); markForReindex=" + markForReindex + "; FILE=" + file.getPresentableUrl());
                 }
               }
             }
