@@ -16,7 +16,10 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
@@ -46,7 +49,9 @@ public class EditSourceUtil {
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
-    return new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
+    OpenFileDescriptor desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
+    desc.setUseCurrentWindow(FileEditorManager.USE_CURRENT_WINDOW.isIn(navigationElement));
+    return desc;
   }
 
   public static boolean canNavigate (PsiElement element) {
@@ -56,5 +61,15 @@ public class EditSourceUtil {
     final PsiElement navigationElement = element.getNavigationElement();
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
     return virtualFile != null && virtualFile.isValid();
+  }
+
+  public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {
+    if (item instanceof UserDataHolder) {
+      ((UserDataHolder)item).putUserData(FileEditorManager.USE_CURRENT_WINDOW, useCurrentWindow);
+    }
+    item.navigate(requestFocus);
+    if (item instanceof UserDataHolder) {
+      ((UserDataHolder)item).putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+    }
   }
 }

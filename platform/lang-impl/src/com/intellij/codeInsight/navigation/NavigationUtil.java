@@ -89,7 +89,7 @@ public final class NavigationUtil {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
-  public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
+  public static void activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
     boolean openAsNative = false;
     if (elt instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
@@ -97,14 +97,23 @@ public final class NavigationUtil {
         openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
       }
     }
-    if (openAsNative || !activatePsiElementIfOpen(elt)) {
+
+    if (searchForOpen) {
+      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+    } else {
+      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
+    }
+
+    if (openAsNative || !activatePsiElementIfOpen(elt, searchForOpen)) {
       ((NavigationItem)elt).navigate(true);
     }
+
+    elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
   }
 
 
 
-  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt) {
+  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen) {
     if (!elt.isValid()) return false;
     elt = elt.getNavigationElement();
     if (elt == null) return false;
@@ -118,7 +127,7 @@ public final class NavigationUtil {
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
     if (!fem.isFileOpen(vFile)) {
-      fem.openFile(vFile, true);
+      fem.openFile(vFile, true, searchForOpen);
       return true;
     }
 
@@ -132,7 +141,7 @@ public final class NavigationUtil {
         final int offset = text.getCaretModel().getOffset();
 
         if (range.contains(offset)) {
-          fem.openFile(vFile, true);
+          fem.openFile(vFile, true, searchForOpen);
           return true;
         }
       }

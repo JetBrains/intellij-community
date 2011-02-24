@@ -310,6 +310,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     return myTabs;
   }
 
+  public void requestFocus(boolean forced) {
+    if (myTabs != null) {
+      IdeFocusManager.getInstance(myProject).requestFocus(myTabs.getComponent(), forced);
+    }
+  }
+
   private class MyQueryable implements Queryable {
 
     private final TabInfo myTab;
