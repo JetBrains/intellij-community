@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import git4idea.i18n.GitBundle;
 
 import java.util.ArrayList;
@@ -32,11 +33,13 @@ import java.util.List;
  */
 public class GitShelveChangesSaver extends GitChangesSaver {
   private final ShelveChangesManager myShelveManager;
+  private final ShelvedChangesViewManager myShelveViewManager;
   private ShelvedChangeList myShelvedChangeList;
 
   protected GitShelveChangesSaver(Project project, ProgressIndicator indicator, String stashMessage) {
     super(project, indicator, stashMessage);
     myShelveManager = ShelveChangesManager.getInstance(myProject);
+    myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
   }
 
   @Override
@@ -71,5 +74,13 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   protected boolean wereChangesSaved() {
     return myShelvedChangeList != null;
+  }
+
+  @Override protected String getSaverName() {
+    return "shelf";
+  }
+
+  @Override protected void showSavedChanges() {
+    myShelveViewManager.activateView(myShelvedChangeList);
   }
 }

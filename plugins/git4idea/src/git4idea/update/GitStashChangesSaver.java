@@ -29,6 +29,7 @@ import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
+import git4idea.ui.GitUnstashDialog;
 
 import java.io.File;
 import java.util.*;
@@ -64,6 +65,14 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   protected boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
+  }
+
+  @Override protected String getSaverName() {
+    return "stash";
+  }
+
+  @Override protected void showSavedChanges() {
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next(), new HashSet<VirtualFile>());
   }
 
   private void stash(Collection<VirtualFile> roots) throws VcsException {

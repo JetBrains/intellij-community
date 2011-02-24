@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +30,9 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -98,13 +101,18 @@ public abstract class GitChangesSaver {
     restoreChangeLists();
   }
 
-  // TODO show a link to restore local chanegs
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
-      Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Local changes were not restored",
-                                                "Before update your uncommitted changes were saved to stash/shelf<br/>" +
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
+                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "Thus the local changes were not restored.", NotificationType.WARNING));
+                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING, new NotificationListener() {
+          @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
+              showSavedChanges();
+            }
+          }
+        }));
     }
   }
 
@@ -118,7 +126,20 @@ public abstract class GitChangesSaver {
    */
   protected abstract void load() throws VcsException;
 
+  /**
+   * @return true if there were local changes to save.
+   */
   protected abstract boolean wereChangesSaved();
+
+  /**
+   * @return name of the save capability provider - stash or shelf.
+   */
+  protected abstract String getSaverName();
+
+  /**
+   * Show the saved local changes in the proper viewer.
+   */
+  protected abstract void showSavedChanges();
 
   /**
    * Utility method - gets {@link FilePath}s of changed files in a single collection.
