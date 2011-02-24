@@ -225,7 +225,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
       if (flavor != null) {
-        flavor.addToPythonPath(commandLine, pathList);
+        flavor.initPythonPath(commandLine, pathList);
       }
       else {
         PythonSdkFlavor.initPythonPath(commandLine.getEnvParams(), passParentEnvs, pathList);
