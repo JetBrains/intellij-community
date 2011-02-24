@@ -255,7 +255,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     //  removeSelection();
     //}
 
-    return marker != null && marker.isValid();
+    return marker != null && marker.isValid() && marker.getEndOffset() > marker.getStartOffset();
   }
 
   public void setSelection(int startOffset, int endOffset) {
