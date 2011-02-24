@@ -3,10 +3,16 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.validation.CompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.Nls;
@@ -119,6 +125,40 @@ public class PyCompatibilityInspection extends PyInspection {
         myHolder.registerProblem(element, message, quickFix);
       else
         myHolder.registerProblem(element, message);
+    }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      super.visitPyCallExpression(node);
+
+      int len = 0;
+      StringBuilder message = new StringBuilder("Python version ");
+      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+        LanguageLevel languageLevel = myVersionsToProcess.get(i);
+        PyExpression callee = node.getCallee();
+        assert callee != null;
+        PsiReference reference = callee.getReference();
+        if (reference != null) {
+          PsiElement resolved = reference.resolve();
+          ProjectFileIndex ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
+          final String name = callee.getText();
+          if (resolved != null) {
+            PsiFile file = resolved.getContainingFile();
+            if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
+              if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+                len = appendLanguageLevel(message, len, languageLevel);
+              }
+            }
+          }
+          //else {
+          //  if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+          //    len = appendLanguageLevel(message, len, languageLevel);
+          //  }
+          //}
+        }
+      }
+      commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
+                            len, node, null, false);
     }
   }
 }

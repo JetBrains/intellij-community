@@ -1,11 +1,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -421,34 +417,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
     commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2",
                           len, node, null);
-    len = 0;
-    message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      PyExpression callee = node.getCallee();
-      assert callee != null;
-      PsiReference reference = callee.getReference();
-      if (reference != null) {
-        PsiElement resolved = reference.resolve();
-        ProjectFileIndex ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
-        final String name = callee.getText();
-        if (resolved != null) {
-          PsiFile file = resolved.getContainingFile();
-          if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
-            if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
-              len = appendLanguageLevel(message, len, languageLevel);
-            }
-          }
-        }
-        //else {
-        //  if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
-        //    len = appendLanguageLevel(message, len, languageLevel);
-        //  }
-        //}
-      }
-    }
-    commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
-                          len, node, null, false);
   }
 
   protected abstract void registerProblem(PsiElement node, String s, LocalQuickFix localQuickFix, boolean asError);
@@ -480,7 +448,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       registerProblem(node, initMessage.toString(), localQuickFix, asError);
   }
 
-  private static int appendLanguageLevel(StringBuilder message, int len, LanguageLevel languageLevel) {
+  protected static int appendLanguageLevel(StringBuilder message, int len, LanguageLevel languageLevel) {
     if (len != 0)
       message.append(", ");
     message.append(languageLevel.toString());
