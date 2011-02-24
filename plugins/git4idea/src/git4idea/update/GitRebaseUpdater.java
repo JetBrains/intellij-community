@@ -65,7 +65,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
       @Override protected void onFailure() {
         if (rebaseConflictDetector.isMergeConflict()) {
-          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Can't continue rebase", "Then you may continue or abort rebase.") {
+          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
             @Override protected boolean proceedIfNothingToMerge() throws VcsException {
               return myRebaser.continueRebase(myRoot);
             }

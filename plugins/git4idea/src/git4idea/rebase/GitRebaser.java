@@ -77,7 +77,7 @@ public class GitRebaser {
 
       @Override protected void onFailure() {
         if (rebaseConflictDetector.isMergeConflict()) {
-          result.set(new GitMergeConflictResolver(myProject, true, "Can't continue rebase", "Then you may continue or abort rebase.") {
+          result.set(new GitMergeConflictResolver(myProject, true, "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
             @Override protected boolean proceedIfNothingToMerge() {
               return continueRebase(root, "--continue");
             }

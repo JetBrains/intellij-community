@@ -90,14 +90,14 @@ public class GitMergeConflictResolver {
           return proceedAfterAllMerged();
         } else {
           Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myErrorNotificationTitle,
-                                                    "You have to <a href='resolve'>resolve</a> all conflicts first. <br/>" +
+                                                    "You have to <a href='resolve'>resolve</a> all conflicts first." +
                                                     myErrorNotificationAdditionalDescription, NotificationType.WARNING,
                                                     new ResolveNotificationListener(roots)), myProject);
         }
       }
     } catch (VcsException e) {
       Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myErrorNotificationTitle,
-                                                "Be sure to resolve all conflicts first. <br/>" +
+                                                "Be sure to resolve all conflicts first. " +
                                                 myErrorNotificationAdditionalDescription + "<br/>" +
                                                 e.getLocalizedMessage(), NotificationType.ERROR), myProject);
     }
