@@ -35,7 +35,7 @@ public class PyDocTestRunnerTest extends LightPlatformTestCase {
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
     assertEquals(StringUtil.join(result, "\n"), 13, result.length);
     assertEquals("##teamcity[testCount count='3']", result [0]);
-    assertEquals("##teamcity[testSuiteStarted name='test_file.FirstGoodTest']", result [1]);
+    assertTrue(result[1].contains("name='test_file.FirstGoodTest'"));
   }
 
   private static File getTestDataDir() {
