@@ -50,6 +50,7 @@ public class GitRebaseUpdater extends GitUpdater {
     pullHandler.addLineListener(rebaseConflictDetector);
 
     GitTask pullTask = new GitTask(myProject, pullHandler, "git pull");
+    pullTask.setExecuteResultInAwt(false);
     pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     pullTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {

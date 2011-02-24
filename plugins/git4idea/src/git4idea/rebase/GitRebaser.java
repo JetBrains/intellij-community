@@ -62,7 +62,8 @@ public class GitRebaser {
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
 
-    GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
+    final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
+    rebaseTask.setExecuteResultInAwt(false);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicBoolean result = new AtomicBoolean();
     rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
