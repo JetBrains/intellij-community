@@ -15,19 +15,20 @@
  */
 package com.intellij.uiDesigner;
 
+import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import gnu.trove.TIntArrayList;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -81,13 +81,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final SerializedComponentData data = new SerializedComponentData(serializeForCopy(myEditor, selectedComponents));
     final SimpleTransferable transferable = new SimpleTransferable<SerializedComponentData>(data, SerializedComponentData.class, ourDataFlavor);
     try {
-      final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      clipboard.setContents(transferable, EmptyClipboardOwner.INSTANCE);
+      CopyPasteManager.getInstance().setContents(transferable);
       return true;
-    } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+    }
+    catch (Exception e) {
+      LOG.debug(e);
       return false;
     }
   }
@@ -207,13 +205,13 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Nullable
-  private String getSerializedComponents() {
+  private static String getSerializedComponents() {
     try {
-      final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      if (!clipboard.isDataFlavorAvailable(ourDataFlavor)) {
+      final CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
+      if (!copyPasteManager.isDataFlavorAvailable(ourDataFlavor)) {
         return null;
       }
-      final Transferable content = clipboard.getContents(this);
+      final Transferable content = copyPasteManager.getContents();
       final Object transferData;
       try {
         transferData = content.getTransferData(ourDataFlavor);

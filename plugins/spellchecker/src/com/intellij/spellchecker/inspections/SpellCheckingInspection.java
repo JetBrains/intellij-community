@@ -26,6 +26,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -192,7 +193,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         continue;
       }
 
-      boolean keyword = isKeyword(validators, token.getElement(), word);
+      boolean keyword = isKeyword(token.getElement().getProject(), validators, word);
       if (keyword){
         continue;
       }
@@ -265,12 +266,12 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return validators;
   }
 
-  public static boolean isKeyword(NamesValidator[] validators, PsiElement element, String word) {
+  public static boolean isKeyword(Project project, NamesValidator[] validators, String word) {
     if (validators == null) {
       return false;
     }
     for (NamesValidator validator : validators) {
-      if (validator.isKeyword(word, element.getProject())) {
+      if (validator.isKeyword(word, project)) {
         return true;
       }
     }

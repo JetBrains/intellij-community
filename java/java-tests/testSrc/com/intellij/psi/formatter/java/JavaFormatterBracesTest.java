@@ -113,4 +113,23 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void testKeepSimpleClassesAndInterfacesInOneLine() {
+    // Inspired by IDEA-65433
+    getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    
+    String[] tests = {
+      "class Test {}",
+      "interface Test {}",
+      "class Test {\n" +
+      "    void test() {\n" +
+      "        new Object() {};\n" +
+      "    }\n" +
+      "}"
+    };
+
+    for (String test : tests) {
+      doTextTest(test, test);
+    }
+  }
 }

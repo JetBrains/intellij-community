@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
@@ -36,20 +37,14 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 
 public class ShowXPathAction extends XPathAction {
     public void update(AnActionEvent event) {
@@ -124,7 +119,7 @@ public class ShowXPathAction extends XPathAction {
         InplaceButton copy = new InplaceButton(ActionsBundle.message("action.EditorCopy.text"), IconLoader.getIcon("/actions/copy.png"), new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(path), EmptyClipboardOwner.INSTANCE);
+            CopyPasteManager.getInstance().setContents(new StringSelection(path));
           }
         });
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+@Deprecated // use TLongArrayList instead
 public class LongArrayList implements Cloneable {
   private long[] myData;
   private int mySize;

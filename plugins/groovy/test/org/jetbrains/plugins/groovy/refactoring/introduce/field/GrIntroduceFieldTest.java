@@ -61,6 +61,10 @@ public class GrIntroduceFieldTest extends LightCodeInsightFixtureTestCase {
     doTest(false, true, false, CUR_METHOD, true, null);
   }
 
+  public void testIntroduceLocalVarByDeclaration() {
+    doTest(false, true, false, FIELD_DECLARATION, true, null);
+  }
+
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,

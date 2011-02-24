@@ -23,10 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -107,6 +104,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myComponent.add(myContentComponent, BorderLayout.CENTER);
     }
     return myComponent;
+  }
+
+  @Override
+  public ActionCallback getReady(Object requestor) {
+    Content selected = getSelectedContent();
+    BusyObject busyObject = selected.getBusyObject();
+    return busyObject != null ? busyObject.getReady(requestor) : new ActionCallback.Done();
   }
 
   private class MyContentComponent extends NonOpaquePanel implements DataProvider, SwitchProvider {

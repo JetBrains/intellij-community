@@ -93,8 +93,8 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   @Override
-  public PsiParameterList getResourceList() {
-    return PsiTreeUtil.findChildOfType(this, PsiParameterList.class);
+  public PsiResourceList getResourceList() {
+    return PsiTreeUtil.findChildOfType(this, PsiResourceList.class);
   }
 
   public ASTNode findChildByRole(int role) {
@@ -164,7 +164,12 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
                                      @NotNull final ResolveState state,
                                      final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
-    return PsiImplUtil.processDeclarationsInTryStatement(this, processor, state, lastParent);
+    final PsiResourceList resourceList = getResourceList();
+    if (resourceList != null && lastParent instanceof PsiCodeBlock && lastParent == getTryBlock()) {
+      return PsiImplUtil.processDeclarationsInResourceList(resourceList, processor, state, lastParent);
+    }
+
+    return true;
   }
 
   public String toString() {

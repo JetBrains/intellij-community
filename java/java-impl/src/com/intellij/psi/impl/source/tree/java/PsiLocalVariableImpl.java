@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx, Constants {
+public class PsiLocalVariableImpl extends CompositePsiElement implements PsiScopedLocalVariable, PsiVariableEx, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
 
   private volatile String myCachedName = null;
@@ -94,7 +94,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   @NotNull
   public PsiTypeElement getTypeElement() {
     ASTNode first = getTreeParent().findChildByType(LOCAL_VARIABLE);
-    return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(first.findChildByType(TYPE));
+    return SourceTreeToPsiMap.treeToPsiNotNull(first.findChildByType(TYPE));
   }
 
   public PsiModifierList getModifierList() {
@@ -105,7 +105,8 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
-    return getModifierList().hasModifierProperty(name);
+    final PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   public PsiExpression getInitializer() {
@@ -279,6 +280,21 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @NotNull
+  public PsiElement[] getDeclarationScope() {
+    final PsiElement parentElement = getParent();
+    if (parentElement instanceof PsiDeclarationStatement) {
+      return new PsiElement[]{parentElement.getParent()};
+    }
+    else if (parentElement instanceof PsiResource) {
+      final PsiResourceList resourceList = (PsiResourceList)parentElement.getParent();
+      final PsiTryStatement tryStatement = (PsiTryStatement)resourceList.getParent();
+      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      return tryBlock != null ? new PsiElement[]{resourceList, tryBlock} : new PsiElement[]{resourceList};
+    }
+    return new PsiElement[]{parentElement.getParent()};
+  }
+
+  @NotNull
   public SearchScope getUseScope() {
     if (JspPsiUtil.isInJspFile(this)) {
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
@@ -304,9 +320,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       }
     }
 
-    PsiElement parentElement = getParent();
-    if (parentElement instanceof PsiDeclarationStatement) {
-      return new LocalSearchScope(parentElement.getParent());
+    final PsiElement parentElement = getParent();
+    if (parentElement instanceof PsiDeclarationStatement || parentElement instanceof PsiResource) {
+      return new LocalSearchScope(getDeclarationScope());
     }
     else {
       return getManager().getFileManager().getUseScope(this);
@@ -317,6 +333,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
   public PsiType getTypeNoResolve() {
     return getType();
   }

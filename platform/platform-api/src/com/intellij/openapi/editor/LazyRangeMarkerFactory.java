@@ -27,7 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Date: Mar 17, 2009
@@ -39,14 +40,16 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     super(project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       public void beforeDocumentChange(DocumentEvent e) {
-        for (Iterator<LazyMarker> it = myMarkers.iterator(); it.hasNext();) {
-          final LazyMarker marker = it.next();
+        List<LazyMarker> markers = myMarkers.toStrongList();
+        List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
+        for (final LazyMarker marker : markers) {
           final VirtualFile docFile = fileDocumentManager.getFile(e.getDocument());
           if (marker.getFile() == docFile) {
             marker.ensureDelegate();
-            it.remove();
+            markersToRemove.add(marker);
           }
         }
+        myMarkers.removeAll(markersToRemove);
       }
     }, project);
   }

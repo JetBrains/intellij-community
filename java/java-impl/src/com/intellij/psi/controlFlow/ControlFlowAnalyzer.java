@@ -268,7 +268,6 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       }
     }
 
-
     // generate jump to the top finally block
     if (!myFinallyBlocks.isEmpty()) {
       final PsiElement finallyBlock = myFinallyBlocks.peek();
@@ -278,13 +277,10 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
         addElementOffsetLater(finallyBlock, true);
       }
     }
-
   }
 
   private void generateCheckedExceptionJumps(PsiElement element) {
     //generate jumps to all handled exception handlers
-    //if (myCatchBlocks.size() != 0) {
-    //}
     Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
@@ -478,7 +474,8 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+  @Override
+  public void visitDeclarationStatement(PsiDeclarationStatement statement) {
     startElement(statement);
     int pc = myCurrentFlow.getSize();
     PsiElement[] elements = statement.getDeclaredElements();
@@ -488,28 +485,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
         element.accept(this);
       }
       else if (element instanceof PsiVariable) {
-        PsiExpression initializer = ((PsiVariable)element).getInitializer();
-        if (initializer != null) {
-          myStartStatementStack.pushStatement(initializer, false);
-          myEndStatementStack.pushStatement(initializer, false);
-          initializer.accept(this);
-          myStartStatementStack.popStatement();
-          myEndStatementStack.popStatement();
-        }
-        if (element instanceof PsiLocalVariable && initializer != null
-            || element instanceof PsiField) {
-          if (element instanceof PsiLocalVariable && !myPolicy.isLocalVariableAccepted((PsiLocalVariable)element)) continue;
-
-          if (myAssignmentTargetsAreElements) {
-            startElement(element);
-          }
-
-          generateWriteInstruction((PsiVariable)element);
-
-          if (myAssignmentTargetsAreElements) {
-            finishElement(element);
-          }
-        }
+        processVariable((PsiVariable)element);
       }
     }
     if (pc == myCurrentFlow.getSize()) {
@@ -517,6 +493,31 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       emitEmptyInstruction();
     }
     finishElement(statement);
+  }
+
+  private void processVariable(final PsiVariable element) {
+    final PsiExpression initializer = element.getInitializer();
+    if (initializer != null) {
+      myStartStatementStack.pushStatement(initializer, false);
+      myEndStatementStack.pushStatement(initializer, false);
+      initializer.accept(this);
+      myStartStatementStack.popStatement();
+      myEndStatementStack.popStatement();
+    }
+    if (element instanceof PsiLocalVariable && initializer != null ||
+        element instanceof PsiField) {
+      if (element instanceof PsiLocalVariable && !myPolicy.isLocalVariableAccepted((PsiLocalVariable)element)) return;
+
+      if (myAssignmentTargetsAreElements) {
+        startElement(element);
+      }
+
+      generateWriteInstruction(element);
+
+      if (myAssignmentTargetsAreElements) {
+        finishElement(element);
+      }
+    }
   }
 
   @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
@@ -1034,6 +1035,11 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       myFinallyBlocks.push(finallyBlock);
     }
 
+    PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null) {
+      generateCheckedExceptionJumps(resourceList);
+      resourceList.accept(this);
+    }
     PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock != null) {
       // javac works as if all checked exceptions can occur at the top of the block
@@ -1156,8 +1162,36 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitResourceList(final PsiResourceList resourceList) {
+    startElement(resourceList);
 
-  @Override public void visitWhileStatement(PsiWhileStatement statement) {
+    final List<PsiResource> resources = resourceList.getResources();
+    for (PsiResource resource : resources) {
+      ProgressManager.checkCanceled();
+      resource.accept(this);
+    }
+
+    finishElement(resourceList);
+  }
+
+  @Override
+  public void visitResource(final PsiResource resource) {
+    startElement(resource);
+
+    final PsiElement resourceElement = resource.getResourceElement();
+    if (resourceElement instanceof PsiLocalVariable) {
+      processVariable((PsiLocalVariable)resourceElement);
+    }
+    else if (resourceElement instanceof PsiExpression) {
+      resourceElement.accept(this);
+    }
+
+    finishElement(resource);
+  }
+
+  @Override
+  public void visitWhileStatement(PsiWhileStatement statement) {
     startElement(statement);
     if (statement.getBody() == null) {
       myStartStatementStack.pushStatement(statement, false);

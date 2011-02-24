@@ -35,6 +35,7 @@ import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -236,6 +237,11 @@ public abstract class EditorComposite implements Disposable {
           publisher.selectionChanged(event);
         }
       });
+      final JComponent component = newSelectedEditor.getComponent();
+      final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
+      if (holder != null) {
+        ((FileEditorManagerImpl)myFileEditorManager).addSelectionRecord(myFile, holder.getEditorWindow());
+      }
     }
   }
 

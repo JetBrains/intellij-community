@@ -56,7 +56,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
 
   @NotNull
   @Override
-  protected PsiElement findScope(GrExpression selectedExpr) {
+  protected PsiElement findScope(GrExpression selectedExpr, GrVariable variable) {
 
     // Get container element
     final PsiElement scope = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
@@ -88,6 +88,16 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
     }
   }
 
+  @Override
+  protected void checkVariable(GrVariable variable) throws GrIntroduceRefactoringError {
+    throw new GrIntroduceRefactoringError(null);
+  }
+
+  @Override
+  protected void checkOccurrences(PsiElement[] occurrences) {
+    //nothing to do
+  }
+
   private static boolean checkInFieldInitializer(GrExpression expr) {
     PsiElement parent = expr.getParent();
     if (parent instanceof GrClosableBlock) {
@@ -105,7 +115,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
   /**
    * Inserts new variable declaratrions and replaces occurrences
    */
-  public void runRefactoring(final GrIntroduceContext context, final GroovyIntroduceVariableSettings settings) {
+  public GrVariable runRefactoring(final GrIntroduceContext context, final GroovyIntroduceVariableSettings settings) {
     // Generating varibable declaration
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
@@ -190,10 +200,12 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
         context.editor.getCaretModel().moveToOffset(getPositionMarker().getTextRange().getEndOffset());
         context.editor.getSelectionModel().removeSelection();
       }
+      return insertedVar;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    return null;
   }
 
   private static void resolveLocalConflicts(PsiElement tempContainer, String varName) {

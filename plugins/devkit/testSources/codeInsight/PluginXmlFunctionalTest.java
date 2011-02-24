@@ -15,13 +15,19 @@
  */
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.usageView.UsageViewNodeTextLocation;
+import com.intellij.usageView.UsageViewTypeLocation;
 import org.jetbrains.idea.devkit.DevKitInspectionToolProvider;
 
 import java.io.IOException;
@@ -134,6 +140,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPluginWithXInclude() throws Throwable {
     myFixture.testHighlighting("pluginWithXInclude.xml", "extensionPoints.xml");
+  }
+
+  public void testExtensionPointPresentation() {
+    myFixture.configureByFile(getTestName(true) + ".xml");
+    final PsiElement element =
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertEquals("Extension Point", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE));
+    assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));
   }
 
 }

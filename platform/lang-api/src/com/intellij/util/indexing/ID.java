@@ -78,6 +78,8 @@ public class ID<K, V> {
     }
 
     int n = ourNameToIdRegistry.size() + 1;
+    assert n <= Short.MAX_VALUE : "Number of indices exceeded";
+
     ourNameToIdRegistry.put(name, n);
 
     writeEnumFile();

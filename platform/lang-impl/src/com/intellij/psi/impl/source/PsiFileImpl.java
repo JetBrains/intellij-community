@@ -883,7 +883,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (tree == null) {
         IElementType contentElementType = getContentElementType();
         if (!(contentElementType instanceof IStubFileElementType)) {
-          LOG.error("ContentElementType: "+contentElementType+"; file: "+this);
+          final StringBuilder builder = new StringBuilder();
+          builder.append("ContentElementType: ").append(contentElementType).append("; file: ").append(this);
+          builder.append("\n\t").append("Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = ").append(Boolean.TRUE.equals(getUserData(BUILDING_STUB)));
+          builder.append("\n\t").append("getTreeElementNoLock() = ").append(getTreeElementNoLock());
+          final VirtualFile vFile = getVirtualFile();
+          builder.append("\n\t").append("vFile instanceof VirtualFileWithId = ").append(vFile instanceof VirtualFileWithId);
+          builder.append("\n\t").append("StubUpdatingIndex.canHaveStub(vFile) = ").append(StubUpdatingIndex.canHaveStub(vFile));
+          LOG.error(builder.toString());
         }
         final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
         tree = new StubTree((PsiFileStub)currentStubTree);

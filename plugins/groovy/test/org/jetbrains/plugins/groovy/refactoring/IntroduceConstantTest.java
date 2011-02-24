@@ -76,7 +76,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
 
     final GrExpression expression = findExpression(editor);
 
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression);
+    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, null);
 
     PsiClass targetClass;
     if (targetClassName == null) {

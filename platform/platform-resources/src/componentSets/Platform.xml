@@ -124,6 +124,11 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.ide.ClipboardSynchronizer</interface-class>
+      <implementation-class>com.intellij.ide.ClipboardSynchronizer</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.openapi.util.FoundationLoader</implementation-class>
       <headless-implementation-class/>
     </component>

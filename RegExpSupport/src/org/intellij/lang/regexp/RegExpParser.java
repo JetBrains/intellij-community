@@ -23,17 +23,18 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+
 @SuppressWarnings({"RedundantIfStatement"})
 public class RegExpParser implements PsiParser {
-  private boolean myAllowDanglingMetacharacters;
-  private boolean myAllowOmitNumbersInQuantifiers;
+  private final EnumSet<RegExpCapability> myCapabilities;
 
-  public void setAllowDanglingMetacharacters(boolean allowDanglingMetacharacters) {
-    myAllowDanglingMetacharacters = allowDanglingMetacharacters;
+  public RegExpParser() {
+    myCapabilities = EnumSet.noneOf(RegExpCapability.class);
   }
 
-  public void setAllowOmitNumbersInQuantifiers(boolean allowOmitNumbersInQuantifiers) {
-    myAllowOmitNumbersInQuantifiers = allowOmitNumbersInQuantifiers;
+  public RegExpParser(EnumSet<RegExpCapability> capabilities) {
+    myCapabilities = capabilities;
   }
 
   @NotNull
@@ -136,11 +137,11 @@ public class RegExpParser implements PsiParser {
     if (builder.getTokenType() == RegExpTT.LBRACE) {
       builder.advanceLexer();
       boolean minOmitted = false;
-      if (builder.getTokenType() == RegExpTT.COMMA && myAllowOmitNumbersInQuantifiers) {
+      if (builder.getTokenType() == RegExpTT.COMMA && myCapabilities.contains(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS)) {
         minOmitted = true;
         builder.advanceLexer();
       }
-      else if (builder.getTokenType() != RegExpTT.NUMBER && myAllowDanglingMetacharacters) {
+      else if (builder.getTokenType() != RegExpTT.NUMBER && myCapabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) {
         marker.done(RegExpTT.CHARACTER);
         return true;
       }
@@ -432,7 +433,7 @@ public class RegExpParser implements PsiParser {
       marker.drop();
       return parseClass(builder);
     }
-    else if (type == RegExpTT.LBRACE && myAllowDanglingMetacharacters) {
+    else if (type == RegExpTT.LBRACE && myCapabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.CHAR);
     }

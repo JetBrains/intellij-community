@@ -107,6 +107,22 @@ public class GenericsHighlightUtil {
       }
     }
 
+    PsiDiamondType.DiamondInferenceResult inferenceResult = null;
+    PsiTypeElement[] referenceElements = null;
+    if (referenceParameterList != null) {
+      referenceElements = referenceParameterList.getTypeParameterElements();
+      if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
+        if (!typeParameterListOwner.hasTypeParameters()) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], "Diamond operator is not applicable for non-parameterized types");
+        }
+        inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
+        final String errorMessage = inferenceResult.getErrorMessage();
+          if (errorMessage != null) {
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], errorMessage);
+          }
+      }
+    }
+
     final PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
     final int targetParametersNum = typeParameters.length;
     final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeArguments().length;
@@ -140,9 +156,8 @@ public class GenericsHighlightUtil {
 
     // bounds check
     if (targetParametersNum > 0 && refParametersNum != 0) {
-      final PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
-      if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
-        final PsiType[] types = ((PsiDiamondType)referenceElements[0].getType()).getInferredTypes();
+      if (inferenceResult != null) {
+        final PsiType[] types = inferenceResult.getTypes();
         for (int i = 0; i < typeParameters.length; i++) {
           final PsiType type = types[i];
           final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor,  type, referenceElements[0]);

@@ -28,6 +28,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -44,7 +45,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -291,7 +292,7 @@ public class BraceHighlightingHandler {
   }
 
   private void highlightBraces(final int lBraceOffset, int rBraceOffset, boolean matched, boolean scopeHighlighting) {
-    if (!matched && myFileType == StdFileTypes.PLAIN_TEXT) {
+    if (!matched && myFileType == FileTypes.PLAIN_TEXT) {
       return;
     }
 
@@ -304,10 +305,8 @@ public class BraceHighlightingHandler {
       highlightBrace(rBraceOffset, matched);
     }
 
-    if (lBraceOffset >= 0) {
-      if (!scopeHighlighting) {
-        highlightBrace(lBraceOffset, matched);
-      }
+    if (lBraceOffset >= 0 && !scopeHighlighting) {
+      highlightBrace(lBraceOffset, matched);
     }
 
     if (!myEditor.equals(FileEditorManager.getInstance(myProject).getSelectedTextEditor())) {
@@ -368,13 +367,20 @@ public class BraceHighlightingHandler {
   }
 
   private void registerHighlighter(RangeHighlighter highlighter) {
-    List<RangeHighlighter> highlighters = myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
+    List<RangeHighlighter> highlighters = getHighlightersList();
+    highlighters.add(highlighter);
+  }
+
+  @NotNull
+  private List<RangeHighlighter> getHighlightersList() {
+    // braces are highlighted across the whole editor, not in each injected editor separately
+    Editor editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+    List<RangeHighlighter> highlighters = editor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) {
       highlighters = new ArrayList<RangeHighlighter>();
-      myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters);
+      editor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters);
     }
-
-    highlighters.add(highlighter);
+    return highlighters;
   }
 
   private void showScopeHint(final int lbraceStart, final int lbraceEnd) {
@@ -405,12 +411,11 @@ public class BraceHighlightingHandler {
   }
 
   public void clearBraceHighlighters() {
-    List<RangeHighlighter> highlighters = myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
-    if (highlighters == null) return;
-    myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, null);
+    List<RangeHighlighter> highlighters = getHighlightersList();
     for (final RangeHighlighter highlighter : highlighters) {
       highlighter.dispose();
     }
+    highlighters.clear();
   }
 
   private void lineMarkFragment(int startLine, int endLine, Color color) {

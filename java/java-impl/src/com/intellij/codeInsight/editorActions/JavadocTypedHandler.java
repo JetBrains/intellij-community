@@ -117,6 +117,11 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
             return null;
           }
           return text.subSequence(i + 1, endOffset).toString();
+        
+        // There is a possible case that opening tag has attributes, e.g. <a href='bla-bla-bla'>[offset]. We want to extract
+        // only tag name then.
+        case ' ':
+        case '\t': endOffset = i;
       }
     }
     return null;

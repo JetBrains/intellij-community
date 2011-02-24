@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -73,11 +74,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       if (!lookup.isFocused()) {
-        if (lookup.isPositionedAboveCaret()) {
-          myOriginalHandler.execute(lookup.getEditor(), context);
-          return;
-        }
-
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
         lookup.refreshUi();
@@ -94,16 +90,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       if (!lookup.isFocused()) {
-        if (!lookup.isPositionedAboveCaret()) {
+        if (!UISettings.getInstance().CYCLE_SCROLLING) {
           myOriginalHandler.execute(lookup.getEditor(), context);
           return;
         }
 
         lookup.setFocused(true);
-        final int index = ApplicationManager.getApplication().isUnitTestMode() ? lookup.getItems().size() - 1 : lookup.getList().getLastVisibleIndex();
-        lookup.getList().setSelectedIndex(index);
+        lookup.getList().setSelectedIndex(0);
         lookup.refreshUi();
-        return;
       }
       ListScrollingUtil.moveUp(lookup.getList(), 0);
     }

@@ -4,6 +4,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -31,7 +32,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection()};
+    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection(), new DefUseInspection()};
   }
 
   public void testDuplicateAnnotations() throws Exception {
@@ -58,6 +59,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testDiamondPos5() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDiamondNeg1() throws Exception {
     doTest(false, false);
   }
@@ -77,6 +82,32 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg5() throws Exception {
     doTest(false, false);
   }
+
+  public void testDiamondNeg6() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg7() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg8() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg9() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg10() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondNeg11() throws Exception {
+    doTest(false, false);
+  }
+
+
 
   public void testDiamondMisc() throws Exception {
     doTest(false, false);
@@ -160,6 +191,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   public void testTryWithResources() throws Exception {
     doTest(false, false);
+  }
+
+  public void testTryWithResourcesWarn() throws Exception {
+    doTest(true, false);
   }
 
   public void testSafeVarargsApplicability() throws Exception {

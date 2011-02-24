@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-class RegExpHighlighter extends SyntaxHighlighterBase {
+public class RegExpHighlighter extends SyntaxHighlighterBase {
     private static final Map<IElementType, TextAttributesKey> keys1;
     private static final Map<IElementType, TextAttributesKey> keys2;
 

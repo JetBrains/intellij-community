@@ -20,14 +20,17 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -44,23 +47,8 @@ public class MavenExternalParameters {
   @NonNls private static final String JAVA_HOME = "JAVA_HOME";
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
-  public static void configureSimpleJavaParameters(final SimpleJavaParameters params,
+  public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     final MavenRunnerParameters parameters,
-                                                    final MavenGeneralSettings coreSettings,
-                                                    final MavenRunnerSettings runnerSettings) throws ExecutionException {
-    params.setJdk(getJdk(runnerSettings.getJreName()));
-    for (String parameter : createVMParameters(new ArrayList<String>(), "", runnerSettings)) {
-      params.getVMParametersList().add(parameter);
-    }
-
-    for (String parameter : createMavenParameters(new ArrayList<String>(), coreSettings, runnerSettings, parameters)) {
-      if (!StringUtil.isEmpty(parameter)) {
-        params.getProgramParametersList().add(parameter);
-      }
-    }
-  }
-
-  public static JavaParameters createJavaParameters(final MavenRunnerParameters parameters,
                                                     final MavenGeneralSettings coreSettings,
                                                     final MavenRunnerSettings runnerSettings) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
@@ -80,6 +68,10 @@ public class MavenExternalParameters {
     }
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
+    EncodingManager encodingManager = project == null
+                                      ? EncodingProjectManager.getInstance()
+                                      : EncodingProjectManager.getInstance(project);
+    params.setCharset(encodingManager.getDefaultCharset());
 
     for (String parameter : createMavenParameters(new ArrayList<String>(), coreSettings, runnerSettings, parameters)) {
       if (!StringUtil.isEmpty(parameter)) {
@@ -251,7 +243,7 @@ public class MavenExternalParameters {
   private static String encodeProfiles(final Collection<String> profiles) {
     final StringBuilder stringBuilder = new StringBuilder();
     for (String profile : profiles) {
-      if(stringBuilder.length()!=0){
+      if (stringBuilder.length() != 0) {
         stringBuilder.append(",");
       }
       stringBuilder.append(profile);

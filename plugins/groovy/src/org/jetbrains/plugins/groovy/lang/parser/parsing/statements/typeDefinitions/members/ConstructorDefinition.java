@@ -69,10 +69,9 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
       ParserUtils.getToken(builder, mNLS);
-      if (ConstructorBody.parse(builder, parser)) {
-        constructorMarker.done(CONSTRUCTOR_DEFINITION);
-        return true;
-      }
+      ConstructorBody.parseConstructorBody(builder, parser);
+      constructorMarker.done(CONSTRUCTOR_DEFINITION);
+      return true;
     }
 
     constructorMarker.rollbackTo();

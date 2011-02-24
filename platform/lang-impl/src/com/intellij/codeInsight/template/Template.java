@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

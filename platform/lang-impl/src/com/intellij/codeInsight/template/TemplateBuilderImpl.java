@@ -111,6 +111,14 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(key);
   }
 
+  public void replaceElement(PsiElement element, TextRange textRange, String primaryVariableName, String otherVariableName, boolean alwaysStopAt) {
+    final RangeMarker key = myDocument.createRangeMarker(textRange.shiftRight(element.getTextRange().getStartOffset()));
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, primaryVariableName);
+    myVariableExpressions.put(key, otherVariableName);
+    myElements.add(key);
+  }
+
   public void replaceElement(PsiElement element, Expression expression) {
     final RangeMarker key = wrapElement(element);
     replaceElement(key, expression);

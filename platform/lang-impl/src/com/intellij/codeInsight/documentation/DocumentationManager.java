@@ -43,6 +43,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -78,10 +79,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class DocumentationManager {
   private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
@@ -800,6 +799,17 @@ public class DocumentationManager {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
       if (!baseLanguage.is(containingFileLanguage)) {
         result.add(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage));
+      }
+    }
+    else if (element instanceof PsiDirectory) {
+      final Set<Language> langs = new HashSet<Language>();
+
+      for (PsiFile file : ((PsiDirectory)element).getFiles()) {
+        final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+        if (!langs.contains(baseLanguage)) {
+          langs.add(baseLanguage);
+          result.add(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage));
+        }
       }
     }
     return CompositeDocumentationProvider.wrapProviders(result);

@@ -27,21 +27,19 @@ import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: cdr
+ * @author cdr
  * Date: Nov 20, 2002
- * Time: 3:01:25 PM
- * To change this template use Options | File Templates.
  */
 public class ReuseVariableDeclarationFix implements IntentionAction {
-  private final PsiVariable variable;
-  private final PsiIdentifier identifier;
+  private final PsiVariable myVariable;
+  private final PsiIdentifier myIdentifier;
 
-  public ReuseVariableDeclarationFix(PsiVariable variable, PsiIdentifier identifier) {
-    this.variable = variable;
-    this.identifier = identifier;
+  public ReuseVariableDeclarationFix(final PsiVariable variable, final PsiIdentifier identifier) {
+    this.myVariable = variable;
+    this.myIdentifier = identifier;
   }
 
   @NotNull
@@ -51,55 +49,63 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("reuse.variable.declaration.text", variable.getName());
+    return QuickFixBundle.message("reuse.variable.declaration.text", myVariable.getName());
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-
-    PsiVariable previousVariable = findPreviousVariable();
-    return
-        variable != null
-        && variable.isValid()
-        && variable instanceof PsiLocalVariable
-        && previousVariable != null
-        && Comparing.equal(previousVariable.getType(), variable.getType())
-        && identifier != null
-        && identifier.isValid()
-        && variable.getManager().isInProject(variable);
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    final PsiVariable previousVariable = findPreviousVariable();
+    return myVariable != null &&
+           myVariable.isValid() &&
+           myVariable instanceof PsiLocalVariable &&
+           !(myVariable.getParent() instanceof PsiResource && myVariable.getInitializer() == null) &&
+           previousVariable != null &&
+           Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
+           myIdentifier != null &&
+           myIdentifier.isValid() &&
+           myVariable.getManager().isInProject(myVariable);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiVariable refVariable = findPreviousVariable();
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    final PsiVariable refVariable = findPreviousVariable();
     if (refVariable == null) return;
-    if (!CodeInsightUtil.preparePsiElementsForWrite(variable, refVariable)) return;
-    PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
-    if (variable.getInitializer() == null)  {
-      variable.delete();
+
+    if (!CodeInsightUtil.preparePsiElementsForWrite(myVariable, refVariable)) return;
+
+    final PsiExpression initializer = myVariable.getInitializer();
+    if (initializer == null) {
+      myVariable.delete();
       return;
     }
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement) variable.getParent();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
-    PsiStatement statement = factory.createStatementFromText(variable.getName() + " = " + variable.getInitializer().getText()+";", variable);
-    declaration.replace(statement);
+
+    PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
+
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
+    final PsiElement replacement;
+    final PsiElement parent = myVariable.getParent();
+    if (parent instanceof PsiResource) {
+      replacement = factory.createResourceFromText(myVariable.getName() + " = " + initializer.getText(), null);
+    }
+    else {
+      replacement = factory.createStatementFromText(myVariable.getName() + " = " + initializer.getText() + ";", null);
+    }
+    parent.replace(replacement);
   }
 
+  @Nullable
   private PsiVariable findPreviousVariable() {
-    PsiElement scope = variable.getParent();
+    PsiElement scope = myVariable.getParent();
     while (scope != null) {
       if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
     if (scope == null) return null;
-    VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
-    PsiScopesUtil.treeWalkUp(proc, identifier, scope);
 
-    if(proc.size() > 0)
-      return proc.getResult(0);
-    return null;
+    final VariablesNotProcessor proc = new VariablesNotProcessor(myVariable, false);
+    PsiScopesUtil.treeWalkUp(proc, myIdentifier, scope);
+    return proc.size() > 0 ? proc.getResult(0) : null;
   }
 
   public boolean startInWriteAction() {
     return true;
   }
-
 }

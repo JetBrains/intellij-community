@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -142,20 +143,31 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return false;
   }
 
-  public void addMessage(ErrorTreeElementKind kind, String[] text, VirtualFile file, int line, int column, Object data) {
-    if (file != null) {
+  public void addMessage(ErrorTreeElementKind kind,
+                         @NotNull String[] text,
+                         @Nullable VirtualFile underFileGroup,
+                         @Nullable VirtualFile file,
+                         int line,
+                         int column,
+                         @Nullable Object data) {
+    if (underFileGroup != null || file != null) {
+      if (file == null) line = column = -1;
+
       final int guiline = line < 0 ? -1 : line + 1;
-      final int guicolumn = column < 0 ? -1:column + 1;
+      final int guicolumn = column < 0 ? -1 : column + 1;
+
+      VirtualFile group = underFileGroup != null ? underFileGroup : file;
+      VirtualFile nav = file != null ? file : underFileGroup;
 
       addNavigatableMessage(
-        file.getPresentableUrl(),
-        new OpenFileDescriptor(myProject, file, line, column),
+        group.getPresentableUrl(),
+        new OpenFileDescriptor(myProject, nav, line, column),
         kind,
         text,
         data,
         NewErrorTreeViewPanel.createExportPrefix(guiline),
         NewErrorTreeViewPanel.createRendererPrefix(guiline, guicolumn),
-        file
+        group
       );
     }
     else {

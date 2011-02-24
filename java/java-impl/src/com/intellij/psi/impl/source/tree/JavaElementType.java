@@ -127,9 +127,11 @@ public interface JavaElementType {
   IElementType THROW_STATEMENT = new JavaCompositeElementType("THROW_STATEMENT", PsiThrowStatementImpl.class);
   IElementType SYNCHRONIZED_STATEMENT = new JavaCompositeElementType("SYNCHRONIZED_STATEMENT", PsiSynchronizedStatementImpl.class);
   IElementType TRY_STATEMENT = new JavaCompositeElementType("TRY_STATEMENT", PsiTryStatementImpl.class);
+  IElementType RESOURCE_LIST = new JavaCompositeElementType("RESOURCE_LIST", PsiResourceListImpl.class);
+  IElementType RESOURCE = new JavaCompositeElementType("RESOURCE", PsiResourceImpl.class);
+  IElementType CATCH_SECTION = new JavaCompositeElementType("CATCH_SECTION", PsiCatchSectionImpl.class);
   IElementType LABELED_STATEMENT = new JavaCompositeElementType("LABELED_STATEMENT", PsiLabeledStatementImpl.class);
   IElementType ASSERT_STATEMENT = new JavaCompositeElementType("ASSERT_STATEMENT", PsiAssertStatementImpl.class);
-  IElementType CATCH_SECTION = new JavaCompositeElementType("CATCH_SECTION", PsiCatchSectionImpl.class);
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
   IElementType NAME_VALUE_PAIR = new JavaCompositeElementType("NAME_VALUE_PAIR", PsiNameValuePairImpl.class, true);
   IElementType ANNOTATION_PARAMETER_LIST = new JavaCompositeElementType("ANNOTATION_PARAMETER_LIST", PsiAnnotationParameterListImpl.class, true);

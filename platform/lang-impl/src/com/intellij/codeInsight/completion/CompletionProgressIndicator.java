@@ -392,10 +392,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void closeAndFinish(boolean hideLookup) {
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    LOG.assertTrue(this == current, current);
+    LOG.assertTrue(this == current, current + "!=" + this);
 
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
-    LOG.assertTrue(lookup == myLookup, lookup);
+    LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
     myLookup.removeLookupListener(myLookupListener);
     finishCompletionProcess();
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());

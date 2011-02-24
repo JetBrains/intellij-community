@@ -56,6 +56,7 @@ public class TestProxy extends AbstractTestProxy {
   private SmartPsiElementPointer psiElement;
   private boolean inProgress;
   private boolean myTearDownFailure;
+  private DiffHyperlink myHyperlink;
 
   public TestProxy() {}
 
@@ -247,6 +248,9 @@ public class TestProxy extends AbstractTestProxy {
     if (stackTrace != null) {
       final List<Printable> printables = getPrintables(result);
       for (Printable printable : printables) {
+        if (myHyperlink == null && printable instanceof DiffHyperlink) {
+          myHyperlink = (DiffHyperlink)printable;
+        }
         addLast(printable);
       }
     }
@@ -271,6 +275,29 @@ public class TestProxy extends AbstractTestProxy {
   @Override
   public boolean shouldSkipRootNodeForExport() {
     return true;
+  }
+
+  @Override
+  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+    if (myHyperlink == null) {
+      return null;
+    }
+    return new AssertEqualsDiffViewerProvider() {
+      @Override
+      public void openDiff(Project project) {
+        myHyperlink.openDiff(project);
+      }
+
+      @Override
+      public String getExpected() {
+        return myHyperlink.getLeft();
+      }
+
+      @Override
+      public String getActual() {
+        return myHyperlink.getRight();
+      }
+    };
   }
 
   private static String trimStackTrace(String stackTrace) {

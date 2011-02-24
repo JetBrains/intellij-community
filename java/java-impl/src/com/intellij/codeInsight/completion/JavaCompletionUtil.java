@@ -105,23 +105,15 @@ public class JavaCompletionUtil {
   public static Set<PsiType> getExpectedTypes(final CompletionParameters parameters) {
     final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
     if (expr != null) {
-      final ExpectedTypeInfo[] expectedInfos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
-      if(expectedInfos != null){
-        final Set<PsiType> set = new THashSet<PsiType>();
-        for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-          set.add(expectedInfo.getType());
-        }
-        return set;
+      final Set<PsiType> set = new THashSet<PsiType>();
+      for (final ExpectedTypeInfo expectedInfo : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        set.add(expectedInfo.getType());
       }
+      return set;
     }
     return null;
   }
 
-  static final NullableLazyKey<PsiMethod, CompletionLocation> POSITION_METHOD = NullableLazyKey.create("positionMethod", new NullableFunction<CompletionLocation, PsiMethod>() {
-    public PsiMethod fun(final CompletionLocation location) {
-      return PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiMethod.class, false);
-    }
-  });
   public static final Key<List<PsiMethod>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
   public static PsiType getQualifierType(LookupItem item) {
@@ -323,26 +315,12 @@ public class JavaCompletionUtil {
 
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
     if(reference != null) {
-      /*
-      if(reference instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
-      }
-      else{
-      }
-      */
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
                           reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     }
     else if (isWord(element)){
-      /*
-      if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
-      }
-      else{
-      }
-      */
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
@@ -432,75 +410,6 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos, String prefix) {
-    int res = 0;
-    if (name != null && expectedInfos != null) {
-      if (prefix.equals(name)) {
-        res = Integer.MAX_VALUE;
-      } else {
-        final List<String> words = NameUtil.nameToWordsLowerCase(name);
-        final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
-        int max1 = calcMatch(words, 0, expectedInfos);
-        max1 = calcMatch(wordsNoDigits, max1, expectedInfos);
-        res = max1;
-      }
-    }
-
-    return res;
-  }
-
-  static String truncDigits(String name){
-    int count = name.length() - 1;
-    while (count >= 0) {
-      char c = name.charAt(count);
-      if (!Character.isDigit(c)) break;
-      count--;
-    }
-    return name.substring(0, count + 1);
-  }
-
-  private static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
-    for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
-      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
-      if (expectedName == null) continue;
-      max = calcMatch(expectedName, words, max);
-      max = calcMatch(truncDigits(expectedName), words, max);
-    }
-    return max;
-  }
-
-  static int calcMatch(final String expectedName, final List<String> words, int max) {
-    if (expectedName == null) return max;
-
-    String[] expectedWords = NameUtil.nameToWords(expectedName);
-    int limit = Math.min(words.size(), expectedWords.length);
-    for (int i = 0; i < limit; i++) {
-      String word = words.get(words.size() - i - 1);
-      String expectedWord = expectedWords[expectedWords.length - i - 1];
-      if (word.equalsIgnoreCase(expectedWord)) {
-        max = Math.max(max, i + 1);
-      }
-      else {
-        break;
-      }
-    }
-    return max;
-  }
-
-  @Nullable
-  static String getLookupObjectName(Object o) {
-    if (o instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)o;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
-      VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-      return codeStyleManager.variableNameToPropertyName(variable.getName(), variableKind);
-    }
-    if (o instanceof PsiMethod) {
-      return ((PsiMethod)o).getName();
-    }
-    return null;
-  }
-
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
     TypedLookupItem typed = element.as(TypedLookupItem.CLASS_CONDITION_KEY);
@@ -573,7 +482,7 @@ public class JavaCompletionUtil {
         return matcher.prefixMatches(s);
       }
     };
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, nameCondition);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, parameters.getInvocationCount() <= 1, nameCondition);
     javaReference.processVariants(processor);
     final Collection<CompletionElement> plainResults = processor.getResults();
 

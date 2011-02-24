@@ -104,7 +104,7 @@ public class ReferenceExpressionCompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  public static void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
+  public static void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final PsiElement element = parameters.getPosition();
@@ -115,7 +115,7 @@ public class ReferenceExpressionCompletionContributor {
         if (reference != null) {
           final ElementFilter filter = getReferenceFilter(element, false);
           for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
-            result.addElement(item);
+            result.consume(item);
           }
 
           final boolean secondTime = parameters.getInvocationCount() >= 2;
@@ -180,7 +180,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   private static void addSingleArrayElementAccess(PsiElement element, LookupElement item, JavaSmartCompletionParameters parameters,
-                                           CompletionResultSet result) {
+                                           Consumer<LookupElement> result) {
     if (item.getObject() instanceof PsiLocalVariable) {
       final PsiLocalVariable variable = (PsiLocalVariable)item.getObject();
       final PsiType type = variable.getType();
@@ -192,7 +192,7 @@ public class ReferenceExpressionCompletionContributor {
           if (dimensions.length == 1 && "1".equals(dimensions[0].getText()) && newExpression.getArrayInitializer() == null) {
             final String text = variable.getName() + "[0]";
             final PsiExpression conversion = createExpression(text, element);
-            result.addElement(new ExpressionLookupItem(conversion).setIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
+            result.consume(new ExpressionLookupItem(conversion).setIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
           }
         }
       }
@@ -204,7 +204,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,
-                                                  JavaSmartCompletionParameters parameters, CompletionResultSet result) {
+                                                  JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
     final Object object = baseItem.getObject();
 
     try {
@@ -236,7 +236,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   private static void addArrayMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
-                                              final PsiElement qualifier, final CompletionResultSet result, PsiModifierListOwner object,
+                                              final PsiElement qualifier, final Consumer<LookupElement> result, PsiModifierListOwner object,
                                               final PsiType expectedType)
       throws IncorrectOperationException {
     if (itemType instanceof PsiArrayType && expectedType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
@@ -262,7 +262,7 @@ public class ReferenceExpressionCompletionContributor {
           editor.getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
         }
       });
-      result.addElement(item);
+      result.consume(item);
     }
   }
 
@@ -276,7 +276,7 @@ public class ReferenceExpressionCompletionContributor {
     return false;
   }
 
-  private static void addArraysAsListConversions(final PsiElement element, final String prefix, final PsiType itemType, final CompletionResultSet result,
+  private static void addArraysAsListConversions(final PsiElement element, final String prefix, final PsiType itemType, final Consumer<LookupElement> result,
                                                  @Nullable PsiElement qualifier,
                                                  final PsiType expectedType) throws IncorrectOperationException {
     PsiType componentType = PsiUtil.extractIterableTypeParameter(expectedType, true);
@@ -321,11 +321,11 @@ public class ReferenceExpressionCompletionContributor {
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
     });
-    result.addElement(item);
+    result.consume(item);
   }
 
   private static void addToArrayConversions(final PsiElement element, final Object object, final String prefix, final PsiType itemType,
-                                            final CompletionResultSet result, @Nullable final PsiElement qualifier,
+                                            final Consumer<LookupElement> result, @Nullable final PsiElement qualifier,
                                             final PsiType expectedType) {
     final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
@@ -380,7 +380,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   private static void addChainedCallVariants(final PsiElement place, LookupElement qualifierItem,
-                                             final CompletionResultSet result,
+                                             final Consumer<LookupElement> result,
                                              PsiType qualifierType,
                                              final PsiType expectedType, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
@@ -404,7 +404,7 @@ public class ReferenceExpressionCompletionContributor {
     final ElementFilter filter = getReferenceFilter(place, true);
     for (final LookupElement item : completeFinalReference(place, mockRef, filter, parameters)) {
       if (shoudChain(place, varType, expectedType, item)) {
-        result.addElement(JavaChainLookupElement.chainElements(qualifierItem, item));
+        result.consume(JavaChainLookupElement.chainElements(qualifierItem, item));
       }
     }
   }
@@ -454,7 +454,7 @@ public class ReferenceExpressionCompletionContributor {
     return true;
   }
 
-  private static void addToArrayConversion(final PsiElement element, final String prefix, @NonNls final String expressionString, @NonNls String presentableString, final CompletionResultSet result, PsiElement qualifier) {
+  private static void addToArrayConversion(final PsiElement element, final String prefix, @NonNls final String expressionString, @NonNls String presentableString, final Consumer<LookupElement> result, PsiElement qualifier) {
     final boolean callSpace = CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES;
     final PsiExpression conversion;
     try {
@@ -490,7 +490,7 @@ public class ReferenceExpressionCompletionContributor {
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
     });
-    result.addElement(item);
+    result.consume(item);
   }
 
   private static boolean isEmptyArrayInitializer(@Nullable PsiElement element) {

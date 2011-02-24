@@ -237,7 +237,9 @@ public class AnalysisScope {
   protected void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myType == VIRTUAL_FILES) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
+       final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (final VirtualFile file : myFilesSet) {
+        if (!myIncludeTestSource && index.isInTestSourceContent(file)) continue;
         if (!processFile(file, visitor, psiManager, needReadAction)) return;
       }
     } else if (myScope instanceof GlobalSearchScope) {
@@ -247,6 +249,7 @@ public class AnalysisScope {
         public boolean processFile(final VirtualFile fileOrDir) {
           final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
             public Boolean compute() {
+              if (!myIncludeTestSource && projectFileIndex.isInTestSourceContent(fileOrDir)) return false;
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();

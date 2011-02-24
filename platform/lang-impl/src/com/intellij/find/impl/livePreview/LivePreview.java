@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -50,7 +51,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   public interface Delegate {
 
     @Nullable
-    String getReplacementPreviewText(Editor editor, LiveOccurrence liveOccurrence);
+    String getStringToReplace(Editor editor, LiveOccurrence liveOccurrence);
 
     @Nullable
     TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor);
@@ -187,12 +188,15 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
       }
       myVisibleAreaListenersToRemove.clear();
-      for (RangeHighlighter h : myHighlighters) {
-        HighlightManager.getInstance(mySearchResults.getProject()).removeSegmentHighlighter(editor, h);
-      }
-      if (myCursorHighlighter != null) {
-        HighlightManager.getInstance(mySearchResults.getProject()).removeSegmentHighlighter(editor, myCursorHighlighter);
-        myCursorHighlighter = null;
+      Project project = mySearchResults.getProject();
+      if (!project.isDisposed()) {
+        for (RangeHighlighter h : myHighlighters) {
+          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
+        }
+        if (myCursorHighlighter != null) {
+          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
+          myCursorHighlighter = null;
+        }
       }
     }
   }
@@ -216,7 +220,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final LiveOccurrence cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
-      String replacementPreviewText = myDelegate.getReplacementPreviewText(editor, cursor);
+      String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
       if (replacementPreviewText != null) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
@@ -247,11 +251,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   private void highlightRange(TextRange textRange, TextAttributes attributes, Collection<RangeHighlighter> highlighters) {
-    HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
-    if (highlightManager != null) {
-      highlightManager.addRangeHighlight(mySearchResults.getEditor(),
-                                         textRange.getStartOffset(), textRange.getEndOffset(),
-                                         attributes, false, highlighters);
+    Project project = mySearchResults.getProject();
+    if (!project.isDisposed()) {
+      HighlightManager highlightManager = HighlightManager.getInstance(project);
+      if (highlightManager != null) {
+        highlightManager.addRangeHighlight(mySearchResults.getEditor(),
+                                           textRange.getStartOffset(), textRange.getEndOffset(),
+                                           attributes, false, highlighters);
+      }
     }
   }
 
@@ -269,7 +276,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         drawSegment(editor, new TextRange(offset, newOffset), g);
         offset = newOffset+1;
       }
-
     }
 
     private static void drawSegment(Editor editor, Segment highlighter, Graphics g) {

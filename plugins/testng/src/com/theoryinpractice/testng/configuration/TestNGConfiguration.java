@@ -39,6 +39,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
@@ -395,18 +396,10 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
-      final RefactoringElementListener listener = new RefactoringElementListener() {
-        public void elementMoved(@NotNull final PsiElement newElement) {
-          setMethod((PsiMethod)newElement);
-        }
-
-        public void elementRenamed(@NotNull final PsiElement newElement) {
-          setMethod((PsiMethod)newElement);
-        }
-
-        private void setMethod(final PsiMethod psiMethod) {
+      final RefactoringElementListener listener = new RefactoringElementAdapter() {
+        public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = isGeneratedName();
-          data.setTestMethod(PsiLocation.fromPsiElement(psiMethod));
+          data.setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
           if (generatedName) setGeneratedName();
         }
       };

@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,15 +67,39 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
         if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7)) {
-          final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+          final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           if (classReference != null) {
             final PsiReferenceParameterList parameterList = classReference.getParameterList();
             if (parameterList != null) {
               final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
               if (typeElements.length > 0) {
                 if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return;
-                holder.registerProblem(parameterList,  "Redundant type argument #ref #loc",
-                                       ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithDiamondFix());
+                final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression);
+                if (inferenceResult.getErrorMessage() == null) {
+                  final PsiType[] types = inferenceResult.getTypes();
+                  final PsiType[] typeArguments = parameterList.getTypeArguments();
+                  if (types.length == typeArguments.length) {
+                    for (int i = 0, typeArgumentsLength = typeArguments.length; i < typeArgumentsLength; i++) {
+                      PsiType typeArgument = typeArguments[i];
+                      if (types[i] instanceof PsiWildcardType) {
+                        final PsiWildcardType wildcardType = (PsiWildcardType)types[i];
+                        final PsiType bound = wildcardType.getBound();
+                        if (bound != null) {
+                          if (wildcardType.isExtends()) {
+                            if (bound.isAssignableFrom(typeArgument)) continue;
+                          } else {
+                            if (typeArgument.isAssignableFrom(bound)) continue;
+                          }
+                        }
+                      }
+                      if (!typeArgument.equals(types[i])) {
+                        return;
+                      }
+                    }
+                  }
+                  holder.registerProblem(parameterList,  "Redundant type argument #ref #loc",
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithDiamondFix());
+                }
               }
             }
           }
@@ -99,6 +125,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiReferenceParameterList) {
+        if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
         final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
         psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
       }

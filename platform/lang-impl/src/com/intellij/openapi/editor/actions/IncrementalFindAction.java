@@ -42,8 +42,12 @@ public class IncrementalFindAction extends EditorAction {
       if (!editor.isOneLineMode()) {
         final JComponent headerComponent = editor.getHeaderComponent();
         if (headerComponent instanceof EditorSearchComponent) {
-          ((EditorSearchComponent) headerComponent).setInitialText(editor.getSelectionModel().getSelectedText());
-          headerComponent.requestFocus();
+          if (myReplace) {
+            ((EditorSearchComponent)headerComponent).replaceCurrent();
+          } else {
+            ((EditorSearchComponent) headerComponent).setInitialText(editor.getSelectionModel().getSelectedText());
+            headerComponent.requestFocus();
+          }
         }
         else {
           final EditorSearchComponent header = new EditorSearchComponent(editor, project, myReplace);

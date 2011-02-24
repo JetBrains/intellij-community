@@ -32,15 +32,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -59,6 +64,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +75,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author ven
@@ -136,12 +148,6 @@ public class VariableInplaceRenamer {
 
     ourRenamersStack.push(this);
 
-    final Map<TextRange, TextAttributes> rangesToHighlight = new THashMap<TextRange, TextAttributes>();
-    //it is crucial to highlight AFTER the template is started, so we collect ranges first
-    collectElementsToHighlight(rangesToHighlight, refs);
-
-    final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-
     PsiElement scope = null;
     final SearchScope searchScope = myElementToRename.getManager().getSearchHelper().getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
@@ -157,22 +163,44 @@ public class VariableInplaceRenamer {
     if (containingFile == null){
       return false; // Should have valid local search scope for inplace rename
     }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return false;
+
+    final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
+    final String stringToSearch = myElementToRename.getName();
+    if (processTextOccurrences && stringToSearch != null) {
+      TextOccurrencesUtil
+        .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
+          public boolean process(PsiElement psiElement, TextRange textRange) {
+            stringUsages.add(Pair.create(psiElement, textRange));
+            return true;
+          }
+        });
+    }
+    if (stringUsages.isEmpty()) {
+      runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
+    } else {
+      new RenameChooser(myEditor).showChooser(refs, stringUsages, nameSuggestions, scope, containingFile);
+    }
+
+    myEditor.putUserData(INPLACE_RENAMER, this);
+    return true;
+  }
+
+  private void runRenameTemplate(LinkedHashSet<String> nameSuggestions,
+                                 Collection<PsiReference> refs,
+                                 Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                 PsiElement scope,
+                                 final PsiFile containingFile) {
     final PsiElement context = containingFile.getContext();
     if (context != null) {
       scope = context.getContainingFile();
     }
 
-    String stringToSearch = myElementToRename.getName();
-    if (processTextOccurrences &&
-        stringToSearch != null &&
-        !TextOccurrencesUtil.processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
-            public boolean process(PsiElement psiElement, TextRange textRange) {
-              return false;
-            }
-          })) {
-      return false;
-    }
+    final Map<TextRange, TextAttributes> rangesToHighlight = new THashMap<TextRange, TextAttributes>();
+    //it is crucial to highlight AFTER the template is started, so we collect ranges first
+    collectElementsToHighlight(rangesToHighlight, refs, stringUsages);
 
+    final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
     ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(scope.getLanguage());
     final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider != null ?
       resolveSnapshotProvider.createSnapshot(scope):null;
@@ -181,11 +209,13 @@ public class VariableInplaceRenamer {
     PsiElement nameIdentifier = myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder, nameSuggestions);
     for (PsiReference ref : refs) {
       addVariable(ref, selectedElement, builder, offset, nameSuggestions);
+    }
+    for (Pair<PsiElement, TextRange> usage : stringUsages) {
+      addVariable(usage.first, usage.second, builder);
     }
     addAdditionalVariables(builder);
 
@@ -196,6 +226,8 @@ public class VariableInplaceRenamer {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             final int offset = myEditor.getCaretModel().getOffset();
+            final SelectionModel selectionModel = myEditor.getSelectionModel();
+            final TextRange selectedRange = preserveSelectedRange(selectionModel);
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
             TextRange range = scope1.getTextRange();
@@ -227,7 +259,8 @@ public class VariableInplaceRenamer {
               public void templateFinished(Template template, boolean brokenOff) {
                 super.templateFinished(template, brokenOff);
                 if (myNewName != null) {
-                  performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
+                  performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset),
+                                                                                PsiNameIdentifierOwner.class));
                 }
                 moveOffsetAfter(true);
               }
@@ -242,6 +275,9 @@ public class VariableInplaceRenamer {
             Runnable runnable = new Runnable() {
               public void run() {
                 myEditor.getCaretModel().moveToOffset(offset);
+                if (selectedRange != null){
+                  myEditor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+                }
               }
             };
 
@@ -262,8 +298,14 @@ public class VariableInplaceRenamer {
       }
     }, RefactoringBundle.message("rename.title"), null);
 
-    myEditor.putUserData(INPLACE_RENAMER, this);
-    return true;
+  }
+
+  @Nullable
+  protected TextRange preserveSelectedRange(SelectionModel selectionModel) {
+    if (selectionModel.hasSelection()) {
+      return new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    }
+    return null;
   }
 
   protected void moveOffsetAfter(boolean success) {
@@ -356,7 +398,9 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private void collectElementsToHighlight(Map<TextRange, TextAttributes> rangesToHighlight, Collection<PsiReference> refs) {
+  private void collectElementsToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
+                                          Collection<PsiReference> refs,
+                                          Collection<Pair<PsiElement, TextRange>> stringUsages) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     if (myElementToRename instanceof PsiNameIdentifierOwner) {
       PsiElement nameId = ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier();
@@ -377,6 +421,12 @@ public class VariableInplaceRenamer {
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(isForWrite ?
                                                                                 EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES :
                                                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      rangesToHighlight.put(range, attributes);
+    }
+
+    for (Pair<PsiElement, TextRange> usage : stringUsages) {
+      final TextRange range = usage.second.shiftRight(usage.first.getTextOffset());
+      final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       rangesToHighlight.put(range, attributes);
     }
   }
@@ -441,6 +491,12 @@ public class VariableInplaceRenamer {
     }
   }
 
+  private static void addVariable(PsiElement element,
+                                  TextRange textRange,
+                                  TemplateBuilderImpl builder) {
+    builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+  }
+
   protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
     return lookupItems;
   }
@@ -484,6 +540,87 @@ public class VariableInplaceRenamer {
     @Override
     public String getAdvertisingText() {
       return myAdvertisementText;
+    }
+  }
+
+  private class RenameChooser {
+    @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
+    @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";
+    private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<RangeHighlighter>();
+    private final Editor myEditor;
+    private final TextAttributes myAttributes;
+
+    public RenameChooser(Editor editor) {
+      myEditor = editor;
+      myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    }
+
+    public void showChooser(final Collection<PsiReference> refs,
+                            final Collection<Pair<PsiElement, TextRange>> stringUsages,
+                            final LinkedHashSet<String> nameSuggestions,
+                            final PsiElement scope,
+                            final PsiFile containingFile) {
+
+      final DefaultListModel model = new DefaultListModel();
+      model.addElement(CODE_OCCURRENCES);
+      model.addElement(ALL_OCCURRENCES);
+      final JList list = new JBList(model);
+
+      list.addListSelectionListener(new ListSelectionListener() {
+        public void valueChanged(final ListSelectionEvent e) {
+          final String selectedValue = (String)list.getSelectedValue();
+          if (selectedValue == null) return;
+          dropHighlighters();
+          final MarkupModel markupModel = myEditor.getMarkupModel();
+
+          if (selectedValue == ALL_OCCURRENCES) {
+            for (Pair<PsiElement, TextRange> pair : stringUsages) {
+              final TextRange textRange = pair.second.shiftRight(pair.first.getTextOffset());
+              final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
+                textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
+                HighlighterTargetArea.EXACT_RANGE);
+              myRangeHighlighters.add(rangeHighlighter);
+            }
+          }
+
+          for (PsiReference reference : refs) {
+            final PsiElement element = reference.getElement();
+            if (element == null) continue;
+            final TextRange textRange = element.getTextRange();
+            final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
+              textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
+              HighlighterTargetArea.EXACT_RANGE);
+            myRangeHighlighters.add(rangeHighlighter);
+          }
+        }
+      });
+
+      JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setTitle("String occurrences found")
+        .setMovable(false)
+        .setResizable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(new Runnable() {
+          public void run() {
+            runRenameTemplate(nameSuggestions, refs, list.getSelectedValue() == ALL_OCCURRENCES ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>(), scope, containingFile);
+          }
+        })
+        .addListener(new JBPopupAdapter() {
+          @Override
+          public void onClosed(LightweightWindowEvent event) {
+            dropHighlighters();
+          }
+        })
+        .createPopup().showInBestPositionFor(myEditor);
+    }
+
+
+
+    private void dropHighlighters() {
+      for (RangeHighlighter highlight : myRangeHighlighters) {
+        highlight.dispose();
+      }
+      myRangeHighlighters.clear();
     }
   }
 }

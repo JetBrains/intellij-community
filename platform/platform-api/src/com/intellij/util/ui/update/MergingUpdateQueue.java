@@ -123,8 +123,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         try {
           each.setRejected();
         }
-        catch (ProcessCanceledException e) {
-          continue;
+        catch (ProcessCanceledException ignored) {
         }
       }
       myScheduledUpdates.clear();
@@ -237,7 +236,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
     };
 
-    if (myExecuteInDispatchThread && invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
+    if (myExecuteInDispatchThread && invokeLaterIfNotDispatch) {
       UIUtil.invokeLaterIfNeeded(toRun);
     }
     else {
@@ -394,7 +393,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public boolean isEmpty() {
     synchronized (myScheduledUpdates) {
-      return myScheduledUpdates.size() == 0;
+      return myScheduledUpdates.isEmpty();
     }
   }
 

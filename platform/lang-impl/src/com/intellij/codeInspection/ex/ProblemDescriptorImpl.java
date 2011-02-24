@@ -160,6 +160,13 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     return myEnforcedTextAttributes;
   }
 
+  public TextRange getTextRangeForNavigation() {
+    TextRange textRange = getTextRange();
+    if (textRange == null) return null;
+    PsiElement element = getPsiElement();
+    return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
+  }
+
   public TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();

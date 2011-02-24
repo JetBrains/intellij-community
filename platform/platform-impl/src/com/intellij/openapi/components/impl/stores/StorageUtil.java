@@ -84,7 +84,7 @@ public class StorageUtil {
                                                                                             @NotNull HyperlinkEvent event) {
                                                                   ((ProjectEx)project).checkUnknownMacros(true);
                                                                 }
-                                                              }, macros), NotificationDisplayType.STICKY_BALLOON, project);
+                                                              }, macros), project);
       }
     }
   }

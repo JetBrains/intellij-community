@@ -24,9 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -44,7 +42,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -255,7 +252,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     //  removeSelection();
     //}
 
-    return marker != null && marker.isValid();
+    return marker != null && marker.isValid() && marker.getEndOffset() > marker.getStartOffset();
   }
 
   public void setSelection(int startOffset, int endOffset) {
@@ -728,15 +725,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
     s = StringUtil.convertLineSeparators(s);
     StringSelection contents = new StringSelection(s);
-
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myEditor.getContentComponent()));
-    if (project == null) {
-      Clipboard clipboard = myEditor.getComponent().getToolkit().getSystemClipboard();
-      clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
-    }
-    else {
-      CopyPasteManager.getInstance().setContents(contents);
-    }
+    CopyPasteManager.getInstance().setContents(contents);
   }
 
   public TextAttributes getTextAttributes() {

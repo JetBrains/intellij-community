@@ -31,12 +31,14 @@ import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.regexp.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public class RegExpParserDefinition implements ParserDefinition {
   private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
 
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(false, false);
+        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
     }
 
     public PsiParser createParser(Project project) {

@@ -138,7 +138,7 @@ public class EditorWindow {
 
           beforePublisher.beforeFileClosed(editorManager, file);
 
-          if (myTabbedPane != null) {
+          if (myTabbedPane != null && editor != null) {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
@@ -167,6 +167,7 @@ public class EditorWindow {
           }
         }
         finally {
+          editorManager.getSelectionHistory().remove(new Pair<VirtualFile, EditorWindow>(file, EditorWindow.this));
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
@@ -325,13 +326,20 @@ public class EditorWindow {
     return myTabbedPane;
   }
 
-  protected static class TComp extends JPanel implements DataProvider{
+  protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     final EditorWithProviderComposite myEditor;
+    protected final EditorWindow myWindow;
 
-    TComp(final EditorWithProviderComposite editor) {
+    TComp(final EditorWindow window, final EditorWithProviderComposite editor) {
       super(new BorderLayout());
       myEditor = editor;
+      myWindow = window;
       add(editor.getComponent(), BorderLayout.CENTER);
+    }
+
+    @Override
+    public EditorWindow getEditorWindow() {
+      return myWindow;
     }
 
     public Object getData(String dataId) {
@@ -347,11 +355,8 @@ public class EditorWindow {
   }
 
   protected static class TCompForTablessMode extends TComp{
-    private final EditorWindow myWindow;
-
     TCompForTablessMode(final EditorWindow window, final EditorWithProviderComposite editor) {
-      super(editor);
-      myWindow = window;
+      super(window, editor);
     }
 
     public Object getData(String dataId) {
@@ -434,7 +439,7 @@ public class EditorWindow {
         final int indexToInsert = initialIndex == null ? myTabbedPane.getSelectedIndex() + 1 : initialIndex;
         final VirtualFile file = editor.getFile();
         final Icon template = IconLoader.getIcon("/fileTypes/text.png");
-        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(editor), null, indexToInsert);
+        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);

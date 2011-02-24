@@ -15,7 +15,8 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.ide.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
@@ -48,9 +49,10 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -99,14 +101,14 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     Object root = tree.getModel().getRoot();
     printImpl(tree, root, buffer, 0, withSelection, nodePrintCondition);
     return buffer.toString();
   }
 
   
-  private static void printImpl(JTree tree, Object root, StringBuffer buffer, int level, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+  private static void printImpl(JTree tree, Object root, StringBuilder buffer, int level, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
 
@@ -116,7 +118,7 @@ public class PlatformTestUtil {
       nodeText = toString(userObject, null);
     }
     else {
-      nodeText = defaultMutableTreeNode + "";
+      nodeText = String.valueOf(defaultMutableTreeNode);
     }
 
 
@@ -163,8 +165,10 @@ public class PlatformTestUtil {
     Assert.assertEquals(expected, treeStringPresentation);
   }
 
+  @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
-    final boolean[] invoked = new boolean[]{false};
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    final AtomicBoolean invoked = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     alarm.addRequest(new Runnable() {
       @Override
@@ -175,7 +179,7 @@ public class PlatformTestUtil {
             alarm.addRequest(new Runnable() {
               @Override
               public void run() {
-                invoked[0] = true;
+                invoked.set(true);
               }
             }, delay);
           }
@@ -185,10 +189,13 @@ public class PlatformTestUtil {
 
     UIUtil.dispatchAllInvocationEvents();
 
-    while (!invoked[0]) {
+    boolean sleptAlready = false;
+    while (!invoked.get()) {
       UIUtil.dispatchAllInvocationEvents();
-      Thread.sleep(delay);
+      Thread.sleep(sleptAlready ? 10 : delay);
+      sleptAlready = true;
     }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @TestOnly

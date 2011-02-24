@@ -34,11 +34,9 @@ package com.intellij.projectView;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -48,6 +46,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.IncorrectOperationException;
 
@@ -69,55 +68,55 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       final StructureViewComponent structureViewComponent =
         (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
-                                   "-Class1.java\n" +
-                                   " -Class1\n" +
-                                   "  getValue():int\n" +
-                                   "  getClass():Class<? extends Object>\n" +
-                                   "  hashCode():int\n" +
-                                   "  equals(Object):boolean\n" +
-                                   "  clone():Object\n" +
-                                   "  toString():String\n" +
-                                   "  notify():void\n" +
-                                   "  notifyAll():void\n" +
-                                   "  wait(long):void\n" +
-                                   "  wait(long, int):void\n" +
-                                   "  wait():void\n" +
-                                   "  finalize():void\n" +
-                                   "  myField1:boolean\n" +
-                                   "  myField2:boolean\n");
+      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(),
+                                       "-Class1.java\n" +
+                                       " -Class1\n" +
+                                       "  getValue():int\n" +
+                                       "  getClass():Class<? extends Object>\n" +
+                                       "  hashCode():int\n" +
+                                       "  equals(Object):boolean\n" +
+                                       "  clone():Object\n" +
+                                       "  toString():String\n" +
+                                       "  notify():void\n" +
+                                       "  notifyAll():void\n" +
+                                       "  wait(long):void\n" +
+                                       "  wait(long, int):void\n" +
+                                       "  wait():void\n" +
+                                       "  finalize():void\n" +
+                                       "  myField1:boolean\n" +
+                                       "  myField2:boolean\n");
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      new WriteCommandAction.Simple(getProject()) {
         @Override
-        public void run() {
-
+        protected void run() throws Throwable {
           final int offset = document.getLineStartOffset(5);
           document.insertString(offset, "    boolean myNewField = false;\n");
         }
-      }, null, null);
+      }.execute().throwException();
+
 
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-      IdeaTestUtil.waitForAlarm(600);
+      PlatformTestUtil.waitForAlarm(600);
 
       //TreeUtil.expand(structureViewComponent.getTree(), 3);
 
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
-                                                                     " -Class1\n" + "  getValue():int\n" +
-                                                                     "  getClass():Class<? extends Object>\n" +
-                                                                     "  hashCode():int\n" +
-                                                                     "  equals(Object):boolean\n" +
-                                                                     "  clone():Object\n" +
-                                                                     "  toString():String\n" +
-                                                                     "  notify():void\n" +
-                                                                     "  notifyAll():void\n" +
-                                                                     "  wait(long):void\n" +
-                                                                     "  wait(long, int):void\n" +
-                                                                     "  wait():void\n" +
-                                                                     "  finalize():void\n" +
-                                                                     "  myField1:boolean\n" +
-                                                                     "  myField2:boolean\n" +
-                                                                     "  myNewField:boolean = false\n");
+      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
+                                                                         " -Class1\n" + "  getValue():int\n" +
+                                                                         "  getClass():Class<? extends Object>\n" +
+                                                                         "  hashCode():int\n" +
+                                                                         "  equals(Object):boolean\n" +
+                                                                         "  clone():Object\n" +
+                                                                         "  toString():String\n" +
+                                                                         "  notify():void\n" +
+                                                                         "  notifyAll():void\n" +
+                                                                         "  wait(long):void\n" +
+                                                                         "  wait(long, int):void\n" +
+                                                                         "  wait():void\n" +
+                                                                         "  finalize():void\n" +
+                                                                         "  myField1:boolean\n" +
+                                                                         "  myField2:boolean\n" +
+                                                                         "  myNewField:boolean = false\n");
 
       Disposer.dispose(structureViewComponent);
 
@@ -138,31 +137,31 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     try {
       structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
 
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                     " -Class2\n" +
-                                                                     "  +InnerClass1\n" +
-                                                                     "  +InnerClass2\n" +
-                                                                     "  getValue():int\n" +
-                                                                     "  myField1:boolean\n" +
-                                                                     "  myField2:boolean\n" +
-                                                                     "  myField3:boolean\n" +
-                                                                     "  myField4:boolean\n");
+      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
+                                                                         " -Class2\n" +
+                                                                         "  +InnerClass1\n" +
+                                                                         "  +InnerClass2\n" +
+                                                                         "  getValue():int\n" +
+                                                                         "  myField1:boolean\n" +
+                                                                         "  myField2:boolean\n" +
+                                                                         "  myField3:boolean\n" +
+                                                                         "  myField4:boolean\n");
 
       final PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
 
       structureViewComponent.select(innerClassField, true);
 
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                     " -Class2\n" +
-                                                                     "  -InnerClass1\n" +
-                                                                     "   +InnerClass12\n" +
-                                                                     "   myInnerClassField:int\n" +
-                                                                     "  +InnerClass2\n" +
-                                                                     "  getValue():int\n" +
-                                                                     "  myField1:boolean\n" +
-                                                                     "  myField2:boolean\n" +
-                                                                     "  myField3:boolean\n" +
-                                                                     "  myField4:boolean\n");
+      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
+                                                                         " -Class2\n" +
+                                                                         "  -InnerClass1\n" +
+                                                                         "   +InnerClass12\n" +
+                                                                         "   myInnerClassField:int\n" +
+                                                                         "  +InnerClass2\n" +
+                                                                         "  getValue():int\n" +
+                                                                         "  myField1:boolean\n" +
+                                                                         "  myField2:boolean\n" +
+                                                                         "  myField3:boolean\n" +
+                                                                         "  myField4:boolean\n");
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override
@@ -175,25 +174,25 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                 innerClassField.delete();
               }
               catch (IncorrectOperationException e) {
-                assertTrue(e.getLocalizedMessage(), false);
+                fail(e.getLocalizedMessage());
               }
             }
           });
         }
       }, null, null);
 
-      IdeaTestUtil.waitForAlarm(600);
+      PlatformTestUtil.waitForAlarm(600);
 
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
-                                                                     " -Class2\n" +
-                                                                     "  -InnerClass1\n" +
-                                                                     "   +InnerClass12\n" +
-                                                                     "  +InnerClass2\n" +
-                                                                     "  getValue():int\n" +
-                                                                     "  myField1:boolean\n" +
-                                                                     "  myField2:boolean\n" +
-                                                                     "  myField3:boolean\n" + 
-                                                                     "  myField4:boolean\n");
+      PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
+                                                                         " -Class2\n" +
+                                                                         "  -InnerClass1\n" +
+                                                                         "   +InnerClass12\n" +
+                                                                         "  +InnerClass2\n" +
+                                                                         "  getValue():int\n" +
+                                                                         "  myField1:boolean\n" +
+                                                                         "  myField2:boolean\n" +
+                                                                         "  myField3:boolean\n" +
+                                                                         "  myField4:boolean\n");
 
     }
     finally {
@@ -213,26 +212,26 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
         (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
 
       final JTree tree = structureViewComponent.getTree();
-      IdeaTestUtil.assertTreeEqual(tree, "-test.xml\n" +
-                                         " -test\n" +
-                                         "  +level1\n" +
-                                         "  +level1\n" +
-                                         "  +level1\n" +
-                                         "  +level1\n");
+      PlatformTestUtil.assertTreeEqual(tree, "-test.xml\n" +
+                                             " -test\n" +
+                                             "  +level1\n" +
+                                             "  +level1\n" +
+                                             "  +level1\n" +
+                                             "  +level1\n");
 
       tree.expandPath(tree.getPathForRow(3));
 
-      IdeaTestUtil.waitForAlarm(600);
+      PlatformTestUtil.waitForAlarm(600);
 
 
-      IdeaTestUtil.assertTreeEqual(tree,
-                                   "-test.xml\n" +
-                                   " -test\n" +
-                                   "  +level1\n" +
-                                   "  -level1\n" +
-                                   "   +level2\n" +
-                                   "  +level1\n" +
-                                   "  +level1\n");
+      PlatformTestUtil.assertTreeEqual(tree,
+                                       "-test.xml\n" +
+                                       " -test\n" +
+                                       "  +level1\n" +
+                                       "  -level1\n" +
+                                       "   +level2\n" +
+                                       "  +level1\n" +
+                                       "  +level1\n");
 
       Disposer.dispose(structureViewComponent);
     }
@@ -245,5 +244,10 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

@@ -71,7 +71,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean isVisible() {
       return false;
     }
-    
+
+    @Override
+    public ActionCallback getReady(Object requestor) {
+      return new ActionCallback.Done();
+    }
 
     public void show(@Nullable Runnable runnable) {
     }
@@ -175,6 +179,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   };
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
+
+    @Override
+    public ActionCallback getReady(Object requestor) {
+      return new ActionCallback.Done();
+    }
+
     public void addContent(@NotNull final Content content) { }
     public void addContent(@NotNull Content content, int order) { }
     public void addContent(@NotNull final Content content, final Object constraints) { }

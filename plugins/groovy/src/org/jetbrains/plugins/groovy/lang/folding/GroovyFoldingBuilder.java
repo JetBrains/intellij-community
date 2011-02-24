@@ -254,7 +254,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       return settings.isCollapseJavadocs();
     }
 
-    if (node.getElementType() == OPEN_BLOCK && node.getTreeParent().getElementType() == METHOD_DEFINITION) {
+    if ((node.getElementType() == OPEN_BLOCK || node.getElementType() == CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() == METHOD_DEFINITION) {
       return settings.isCollapseMethods();
     }
 

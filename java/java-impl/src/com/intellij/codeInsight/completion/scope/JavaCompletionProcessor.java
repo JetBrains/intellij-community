@@ -26,14 +26,13 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,8 +57,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
   private final boolean myCheckAccess;
+  private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, @Nullable Condition<String> nameCondition) {
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, @Nullable Condition<String> nameCondition) {
     myCheckAccess = checkAccess;
     mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
@@ -102,6 +102,65 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
     }
+
+    if (checkInitialized) {
+      myNonInitializedFields.addAll(getNonInitializedFields(element));
+    }
+  }
+
+  private static Set<PsiField> getNonInitializedFields(PsiElement element) {
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
+    if (statement == null || method == null || !method.isConstructor()) {
+      return Collections.emptySet();
+    }
+
+    PsiElement parent = element.getParent();
+    while (parent != statement) {
+      PsiElement next = parent.getParent();
+      if (next instanceof PsiAssignmentExpression && parent == ((PsiAssignmentExpression)next).getLExpression()) {
+        return Collections.emptySet();
+      }
+      if (parent instanceof PsiReferenceExpression && next instanceof PsiExpressionStatement) {
+        return Collections.emptySet();
+      }
+      parent = next;
+    }
+
+    final Set<PsiField> fields = new HashSet<PsiField>();
+    final PsiClass containingClass = method.getContainingClass();
+    assert containingClass != null;
+    for (PsiField field : containingClass.getFields()) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null) {
+        fields.add(field);
+      }
+    }
+
+    method.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
+          final PsiExpression lExpression = expression.getLExpression();
+          if (lExpression instanceof PsiReferenceExpression) {
+            //noinspection SuspiciousMethodCalls
+            fields.remove(((PsiReferenceExpression)lExpression).resolve());
+          }
+        }
+        super.visitAssignmentExpression(expression);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
+          final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+          if (methodExpression.textMatches("this")) {
+            fields.clear();
+          }
+        }
+        super.visitMethodCallExpression(expression);
+      }
+    });
+    return fields;
   }
 
   public void handleEvent(Event event, Object associated){
@@ -113,19 +172,24 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public boolean execute(PsiElement element, ResolveState state){
-    if(!(element instanceof PsiClass) && element instanceof PsiModifierListOwner){
+  public boolean execute(PsiElement element, ResolveState state) {
+    //noinspection SuspiciousMethodCalls
+    if (myNonInitializedFields.contains(element)) {
+      return true;
+    }
+
+    if (!(element instanceof PsiClass) && element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-      if(myStatic){
-        if(!modifierListOwner.hasModifierProperty(PsiModifier.STATIC)){
+      if (myStatic) {
+        if (!modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non static method in static context.
           return true;
         }
       }
-      else{
-        if(!mySettings.SHOW_STATIC_AFTER_INSTANCE
-           && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
-           && !myMembersFlag){
+      else {
+        if (!mySettings.SHOW_STATIC_AFTER_INSTANCE
+            && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
+            && !myMembersFlag) {
           // according settings we don't need to process such fields/methods
           return true;
         }

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CompilationUnit implements GroovyElementTypes {
 
-  public static void parse(PsiBuilder builder, GroovyParser parser) {
+  public static void parseFile(PsiBuilder builder, GroovyParser parser) {
 
     ParserUtils.getToken(builder, mSH_COMMENT);
     ParserUtils.getToken(builder, mNLS);

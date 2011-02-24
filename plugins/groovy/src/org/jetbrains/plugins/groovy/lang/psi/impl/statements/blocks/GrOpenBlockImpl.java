@@ -16,18 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 /**
  * @author ilyas
  */
 public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock {
-
-  public GrOpenBlockImpl(@NotNull ASTNode node) {
-    super(node);
+  public GrOpenBlockImpl(@NotNull IElementType type, CharSequence buffer) {
+    super(type, buffer);
   }
 
   public void accept(GroovyElementVisitor visitor) {

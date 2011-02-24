@@ -154,7 +154,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       final String path = existing.getScriptPath();
       if (path != null) {
         final PsiFile file = location.getPsiElement().getContainingFile();
-        if (file instanceof GroovyFile) {
+        if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
           final VirtualFile vfile = file.getVirtualFile();
           if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
             if (GroovyScriptTypeDetector.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {

@@ -25,8 +25,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
@@ -140,22 +143,28 @@ public abstract class AutoScrollToSourceHandler {
   protected abstract boolean isAutoScrollMode();
   protected abstract void setAutoScrollMode(boolean state);
 
-  protected void scrollToSource(Component tree) {
+  protected void scrollToSource(final Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (vFile != null) {
-      // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
-      // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
-      if (FileTypeManager.getInstance().getFileTypeByFile(vFile) == FileTypes.UNKNOWN) return;
-    }
-    Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
-    if (navigatables != null) {
-      for (Navigatable navigatable : navigatables) {
-        // we are not going to open modal dialog during autoscrolling
-        if (!navigatable.canNavigateToSource()) return;
+    getReady(dataContext).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        DataContext context = DataManager.getInstance().getDataContext(tree);
+        final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(context);
+        if (vFile != null) {
+          // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
+          // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
+          if (FileTypeManager.getInstance().getFileTypeByFile(vFile) == FileTypes.UNKNOWN) return;
+        }
+        Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context);
+        if (navigatables != null) {
+          for (Navigatable navigatable : navigatables) {
+            // we are not going to open modal dialog during autoscrolling
+            if (!navigatable.canNavigateToSource()) return;
+          }
+        }
+        OpenSourceUtil.openSourcesFrom(context, false);
       }
-    }
-    OpenSourceUtil.openSourcesFrom(dataContext, false);
+    });
   }
 
   public ToggleAction createToggleAction() {
@@ -174,6 +183,11 @@ public abstract class AutoScrollToSourceHandler {
     public void setSelected(AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }
+  }
+
+  private ActionCallback getReady(DataContext context) {
+    ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
+    return toolWindow != null ? toolWindow.getReady(this) : new ActionCallback.Done();
   }
 }
 

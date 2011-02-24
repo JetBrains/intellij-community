@@ -31,6 +31,7 @@ import java.io.OutputStream;
 public class ConsoleExecuteActionHandler {
   private final ProcessHandler myProcessHandler;
   private final boolean myPreserveMarkup;
+  private boolean myAddCurrentToHistory;
 
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     myProcessHandler = processHandler;
@@ -47,7 +48,9 @@ public class ConsoleExecuteActionHandler {
     final TextRange range = new TextRange(0, document.getTextLength());
 
     languageConsole.getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-    languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
+    if (myAddCurrentToHistory) {
+      languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
+    }
     languageConsole.setInputText("");
     if (!StringUtil.isEmptyOrSpaces(text)) {
       consoleHistoryModel.addToHistory(text);
@@ -57,10 +60,10 @@ public class ConsoleExecuteActionHandler {
   }
 
   public void processLine(String line) {
-    sendLine(line + "\n");
+    sendText(line + "\n");
   }
 
-  public void sendLine(String line) {
+  public void sendText(String line) {
     //final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
@@ -72,5 +75,9 @@ public class ConsoleExecuteActionHandler {
     catch (IOException e) {
       // ignore
     }
+  }
+
+  public void setAddCurrentToHistory(boolean addCurrentToHistory) {
+    myAddCurrentToHistory = addCurrentToHistory;
   }
 }

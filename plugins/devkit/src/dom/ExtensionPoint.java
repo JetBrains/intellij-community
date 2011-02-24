@@ -23,6 +23,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 /**
  * @author mike
  */
+@Presentation(typeName = "Extension Point")
 public interface ExtensionPoint extends DomElement {
   enum Area {
     IDEA_PROJECT,

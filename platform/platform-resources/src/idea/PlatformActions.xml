@@ -50,6 +50,8 @@
       <action id="EditorTab" class="com.intellij.openapi.editor.actions.TabAction"/>
       <action id="EditorScrollUp" class="com.intellij.openapi.editor.actions.ScrollUpAction"/>
       <action id="EditorScrollDown" class="com.intellij.openapi.editor.actions.ScrollDownAction"/>
+      <action id="EditorScrollTop" class="com.intellij.openapi.editor.actions.ScrollToTopAction"/>
+      <action id="EditorScrollBottom" class="com.intellij.openapi.editor.actions.ScrollToBottomAction"/>
       <action id="EditorMoveUpAndScroll" class="com.intellij.openapi.editor.actions.MoveUpAndScrollAction"/>
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>

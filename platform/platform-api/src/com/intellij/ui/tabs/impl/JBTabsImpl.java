@@ -243,7 +243,9 @@ public class JBTabsImpl extends JComponent
 
     new LazyUiDisposable<JBTabsImpl>(parent, this, this) {
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
-        myProject = project;
+        if (project != null) {
+          myProject = project;
+        }
 
         Disposer.register(child, myAnimator);
         Disposer.register(child, new Disposable() {
@@ -793,6 +795,9 @@ public class JBTabsImpl extends JComponent
 
   private void fireSelectionChanged(TabInfo oldInfo, TabInfo newInfo) {
     if (oldInfo != newInfo) {
+      if (myProject != null) {
+        myProject.getMessageBus().syncPublisher(TabsListener.TOPIC).selectionChanged(oldInfo, newInfo);
+      }
       for (TabsListener eachListener : myTabListeners) {
         if (eachListener != null) {
           eachListener.selectionChanged(oldInfo, newInfo);

@@ -15,132 +15,36 @@
  */
 package com.intellij.ide;
 
-import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.EventDispatcher;
 
-import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
-
   private final ArrayList<Transferable> myDatas;
-
-//  private static long ourWastedMemory = 0;
-//  private static long ourLastPrintedMemory = 0;
-//  private static long ourLastPrintTime = 0;
-//  private static long ourInvokationCounter = 0;
-
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-  private static final int DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS = 2000;
-  private boolean myIsWarningShown = false;
+  private final ClipboardSynchronizer myClipboardSynchronizer;
 
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
   }
 
-  public CopyPasteManagerEx() {
+  public CopyPasteManagerEx(ClipboardSynchronizer clipboardSynchronizer) {
+    myClipboardSynchronizer = clipboardSynchronizer;
     myDatas = new ArrayList<Transferable>();
   }
 
   public Transferable getSystemClipboardContents() {
-    return getSystemClipboardContents(true);
+    return myClipboardSynchronizer.getContents();
   }
 
-  public Transferable getSystemClipboardContents(boolean showMessage) {
-    final Transferable[] contents = new Transferable[] {null};
-    final boolean[] success = new boolean[] {false};
-    Runnable accessor = new Runnable() {
-      public void run() {
-        try {
-          for (int i = 0; i < 3; i++) {
-            try {
-              contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
-            }
-            catch (IllegalStateException e) {
-              try {
-                Thread.sleep(50);
-              }
-              catch (InterruptedException e1) {
-              }
-              continue;
-            }
-            break;
-          }
-
-          success[0] = true;
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-          // No luck
-        }        
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-      }
-    };
-
-    if (Patches.SUN_BUG_ID_4818143) {
-      final Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
-
-      try {
-        accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
-      }
-      catch (InterruptedException e) {
-        // {no luck}
-      }
-      catch (TimeoutException e) {
-        // {no luck}
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
-
-      if (success[0]) return contents[0];
-      accessorFuture.cancel(true);
-      if (showMessage) {
-        showWorkaroundMessage();
-      } else {
-        LOG.warn("Can't access to SystemClipboard");
-      }
-
-      return null;
-    }
-    else {
-      accessor.run();
-      return contents[0];
-    }
-  }
-
-  private void showWorkaroundMessage() {
-    if (myIsWarningShown) return;
-    final String productName = ApplicationNamesInfo.getInstance().getProductName();
-    Messages.showErrorDialog(IdeBundle.message("error.paste.bug.workaround", productName, productName), IdeBundle.message("title.system.error"));
-    myIsWarningShown = true;
-  }
-
-//  private long getUsedMemory() {
-//    Runtime runtime = Runtime.getRuntime();
-//    long usedMemory = runtime.totalMemory() - runtime.freeMemory();
-//    return usedMemory;
-//  }
-//
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
     fireContentChanged(null);
   }
@@ -170,6 +74,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     fireContentChanged(old);
   }
 
+  public boolean isDataFlavorAvailable(DataFlavor dataFlavor) {
+    return myClipboardSynchronizer.isDataFlavorAvailable(dataFlavor);
+  }
+
   public boolean isCutElement(final Object element) {
     for(CutElementMarker marker: Extensions.getExtensions(CutElementMarker.EP_NAME)) {
       if (marker.isCutElement(element)) return true;
@@ -178,48 +86,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   void setSystemClipboardContent(final Transferable content) {
-    final boolean[] success = new boolean[]{false};
-    final Runnable accessor = new Runnable() {
-      public void run() {
-        try {
-          for (int i = 0; i < 3; i++) {
-            try {
-              Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
-            }
-            catch (IllegalStateException e) {
-              try {
-                Thread.sleep(50);
-              }
-              catch (InterruptedException e1) {
-              }
-              continue;
-            }
-            break;
-          }
-          success[0] = true;
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-      }
-    };
-
-    if (Patches.SUN_BUG_ID_4818143) {
-      Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
-
-      try {
-        accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
-      }
-      catch (Exception e) { /* no luck */ }
-
-      if (!success[0]) {
-        showWorkaroundMessage();
-        accessorFuture.cancel(true);
-      }
-    }
-    else {
-      accessor.run();
-    }
+    myClipboardSynchronizer.setContent(content, this);
   }
 
   private void addNewContentToStack(Transferable content) {

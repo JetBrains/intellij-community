@@ -17,18 +17,21 @@ package com.intellij.pom.tree.events;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.event.PomChangeSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
  */
 public interface TreeChangeEvent extends PomChangeSet {
+  @NotNull
   ASTNode getRootElement();
 
+  @NotNull
   ASTNode[] getChangedElements();
 
-  TreeChange getChangesByElement(ASTNode element);
+  TreeChange getChangesByElement(@NotNull ASTNode element);
 
-  void addElementaryChange(ASTNode child, ChangeInfo change);
+  void addElementaryChange(@NotNull ASTNode child, @NotNull ChangeInfo change);
 
   void clear();
 }

@@ -61,7 +61,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     final IElementType type = element.getNode().getElementType();
-    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(type)) {
+    if (type == GroovyTokenTypes.mNLS || type == GroovyTokenTypes.mWS) {
       return element.getNextSibling();
     }
 

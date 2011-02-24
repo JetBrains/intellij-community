@@ -68,7 +68,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     if(changeSet == null) return;
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
     if(!(containingFile.getLanguage() instanceof JavaLanguage)) return;
-    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(myPomModel, containingFile);
+    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(myPomModel);
     set.addChange(new JavaTreeChanged(containingFile));
     event.registerChangeSet(this, set);
   }

@@ -102,7 +102,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         myTypeCombo.setEnabled(mySpecifyType.isSelected());
       }
     });
-    mySpecifyType.setSelected(context.expression.getType() != null);
+    mySpecifyType.setSelected(context.expression == null ? context.var.getDeclaredType() != null : context.expression.getType() != null);
     myTypeCombo.setEnabled(mySpecifyType.isSelected());
     updateVisibilityPanel();
     updateOkStatus();
@@ -121,7 +121,11 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     initializeName();
     initializeTargetClassEditor();
 
-    if (myContext.occurrences.length < 2) {
+    if (myContext.var != null) {
+      myReplaceAllOccurences.setEnabled(false);
+      myReplaceAllOccurences.setSelected(true);
+    }
+    else if (myContext.occurrences.length < 2) {
       myReplaceAllOccurences.setVisible(false);
     }
     return myPanel;
@@ -196,6 +200,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
+    if (myContext.var != null) {
+      myNameComboBox.addItem(myContext.var.getName());
+    }
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyVariableValidator(myContext), true);
     for (String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
@@ -221,7 +228,13 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
 
   private void initializeTypeCombo() {
-    final PsiType expressionType = myContext.expression.getType();
+    final PsiType expressionType;
+    if (myContext.expression != null) {
+      expressionType = myContext.expression.getType();
+    }
+    else {
+      expressionType = myContext.var.getDeclaredType();
+    }
     if (expressionType != null) {
       myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(expressionType);
       for (String typeName : myTypes.keySet()) {
@@ -358,7 +371,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
     if (myDefaultTargetClass == null ||
         !"".equals(targetClassName) && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
-      final Module module = ModuleUtil.findModuleForPsiElement(myContext.expression);
+      final Module module = ModuleUtil.findModuleForPsiElement(myContext.place);
       newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, module.getModuleScope());
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myContext.project, GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
@@ -366,12 +379,12 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           return;
         }
         myTargetClass =
-          getTargetClass(targetClassName, myContext.expression.getContainingFile().getContainingDirectory(), myContext.project, module);
+          getTargetClass(targetClassName, myContext.place.getContainingFile().getContainingDirectory(), myContext.project, module);
         if (myTargetClass == null) return;
       }
       else {
         myTargetClass =
-          getTargetClass(targetClassName, myContext.expression.getContainingFile().getContainingDirectory(), myContext.project, module);
+          getTargetClass(targetClassName, myContext.place.getContainingFile().getContainingDirectory(), myContext.project, module);
       }
     }
 
