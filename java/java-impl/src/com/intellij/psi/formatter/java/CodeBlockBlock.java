@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -45,7 +46,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                         final Alignment alignment,
                         final Indent indent,
                         final CodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+    super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
       myChildrenIndent = 0;
     }
@@ -54,6 +55,37 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
+  /**
+   * There is a possible case that 'implements' section is incomplete (e.g. ends with comma). We may want to align lbrace
+   * to the comma then.
+   * 
+   * @param alignment     block alignment
+   * @param baseNode      base AST node
+   * @return              alignment strategy to use for the given node
+   */
+  private static AlignmentStrategy getAlignmentStrategy(Alignment alignment, ASTNode baseNode, @NotNull CodeStyleSettings settings) {
+    if (baseNode.getElementType() != JavaElementType.CLASS || !settings.ALIGN_MULTILINE_EXTENDS_LIST) {
+      return AlignmentStrategy.wrap(alignment);
+    }
+    for (ASTNode node = baseNode.getLastChildNode(); node != null; node = FormattingAstUtil.getPrevNonWhiteSpaceNode(node)) {
+      if (node.getElementType() != JavaElementType.IMPLEMENTS_LIST) {
+        continue;
+      }
+      ASTNode lastChildNode = node.getLastChildNode();
+      if (lastChildNode != null && lastChildNode.getElementType() == JavaTokenType.ERROR_ELEMENT) {
+        Alignment alignmentToUse = alignment;
+        if (alignment == null) {
+          alignmentToUse = Alignment.createAlignment();
+        }
+        return AlignmentStrategy.wrap(
+          alignmentToUse, false, JavaTokenType.LBRACE, JavaElementType.JAVA_CODE_REFERENCE, node.getElementType()
+        );
+      }
+      break;
+    }
+    return AlignmentStrategy.wrap(alignment);
+  }
+  
   private boolean isSwitchCodeBlock() {
     return myNode.getTreeParent().getElementType() == ElementType.SWITCH_STATEMENT;
   }

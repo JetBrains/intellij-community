@@ -34,6 +34,7 @@ public abstract class AbstractBlock implements ASTBlock {
   protected final Alignment myAlignment;
 
   private List<Block> mySubBlocks;
+  private Boolean myIncomplete;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -79,6 +80,7 @@ public abstract class AbstractBlock implements ASTBlock {
     return new ChildAttributes(getChildIndent(), getFirstChildAlignment());
   }
 
+  @Nullable
   private Alignment getFirstChildAlignment() {
     List<Block> subBlocks = getSubBlocks();
     for (final Block subBlock : subBlocks) {
@@ -96,7 +98,10 @@ public abstract class AbstractBlock implements ASTBlock {
   }
 
   public boolean isIncomplete() {
-    return FormatterUtil.isIncompleted(getNode());
+    if (myIncomplete == null) {
+      myIncomplete = FormatterUtil.isIncompleted(getNode());
+    }
+    return myIncomplete;
   }
 
   @Override

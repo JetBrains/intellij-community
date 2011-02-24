@@ -17,43 +17,68 @@ package com.intellij.formatting.alignment;
 
 import com.intellij.formatting.Alignment;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static java.util.Arrays.asList;
 
-/**
- * <code>GoF 'Strategy'</code> for {@link Alignment} retrieval.
- */
-public abstract  class AlignmentStrategy {
+/** <code>GoF 'Strategy'</code> for {@link Alignment} retrieval. */
+public abstract class AlignmentStrategy {
 
-  private static final AlignmentStrategy NULL_STRATEGY = new SharedAlignmentStrategy(null);
+  private static final AlignmentStrategy NULL_STRATEGY = wrap(null);
 
-  /**
-   * @return    shared strategy instance that returns <code>null</code> all the time
-   */
+  /** @return shared strategy instance that returns <code>null</code> all the time */
   public static AlignmentStrategy getNullStrategy() {
     return NULL_STRATEGY;
   }
 
   /**
-   * Constructs strategy that returns given alignment for all elements except those which types are delivered as a trailing argument.
+   * Delegates the processing to {@link #wrap(Alignment, boolean, IElementType...)} with <code>'true'</code> as the second argument
    *
-   * @param alignment   target alignment to wrap
-   * @param typesToIgnore   types of the elements for which <code>null</code> should be returned on subsequent calls
-   *                        to {@link #getAlignment(IElementType)}
-   * @return                strategy that returns given alignment all the time for elements which types are not defined
-   *                        as <code>'types to ignore'</code>; <code>null</code> is returned for them
+   * @param alignment
+   * @param filterTypes
+   * @return
    */
-  public static AlignmentStrategy wrap(Alignment alignment, IElementType ... typesToIgnore) {
-    return new SharedAlignmentStrategy(alignment, typesToIgnore);
+  public static AlignmentStrategy wrap(Alignment alignment, IElementType... filterTypes) {
+    return new SharedAlignmentStrategy(alignment, true, filterTypes);
   }
 
   /**
+   * Constructs strategy that returns given alignment for all elements which types pass through the target filter.
+   *
+   * @param alignment         target alignment to wrap
+   * @param ignoreFilterTypes flag that defines if given alignment should be returned for all elements with given types or
+   *                          all elements except those with the given types
+   * @param filterTypes       element types that should be used for filtering on subsequent calls
+   *                          to {@link #getAlignment(IElementType)}
+   * @return strategy that returns given alignment all the time for elements which types pass through the target
+   *         filter; <code>null</code> otherwise
+   */
+  public static AlignmentStrategy wrap(Alignment alignment, boolean ignoreFilterTypes, IElementType... filterTypes) {
+    return new SharedAlignmentStrategy(alignment, ignoreFilterTypes, filterTypes);
+  }
+
+  /**
+   * Delegates to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean)} with no parent type
+   * check (<code>null</code> is delivered as a parent type).
+   * 
+   * @param targetTypes           target child types
+   * @param allowBackwardShift    flag that defines if backward alignment shift is allowed
+   * @return                      alignment strategy for the given arguments
+   */
+  public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(@NotNull Collection<IElementType> targetTypes,
+                                                                        boolean allowBackwardShift)
+  {
+    return new AlignmentPerTypeStrategy(targetTypes, null, allowBackwardShift);
+  }
+  
+  /**
    * Creates strategy that creates and caches one alignment per given type internally and returns it on subsequent calls
-   * to {@link #getAlignment(IElementType)} for elements which type is listed at the given collection. <code>null</code>
-   * is returned from {@link #getAlignment(IElementType)} for elements which types are not listed at the given collection.
+   * to {@link #getAlignment(IElementType, IElementType)} for elements which type is listed at the given collection and parent type
+   * (if defined) is the same as the given one; <code>null</code> is returned from {@link #getAlignment(IElementType, IElementType)} for all
+   * other elements.
    * <p/>
    * This strategy is assumed to be used at following situations - suppose we want to align code blocks that doesn't belong
    * to the same parent but have similar structure, e.g. variable declaration assignments like the one below:
@@ -64,19 +89,41 @@ public abstract  class AlignmentStrategy {
    * We can provide parent blocks of that target blocks with the same instance of this alignment strategy and let them eventually
    * reuse the same alignment objects for target sub-blocks of the same type.
    *
-   * @param targetTypes                   target types for which cached alignment should be returned
-   * @param allowBackwardShift            flag that specifies if former aligned element may be shifted to right in order to align
-   *                                      to subsequent element (e.g. <code>'='</code> block of <code>'int start  = 1'</code> statement
-   *                                      below is shifted one symbol right in order to align to the <code>'='</code> block
-   *                                      of <code>'int finish  = 1'</code> statement)
-   * @return                              alignment retrieval strategy that follows the rules described above
+   * @param targetTypes        target types for which cached alignment should be returned
+   * @param parentType         target parent type
+   * @param allowBackwardShift flag that specifies if former aligned element may be shifted to right in order to align
+   *                           to subsequent element (e.g. <code>'='</code> block of <code>'int start  = 1'</code> statement
+   *                           below is shifted one symbol right in order to align to the <code>'='</code> block
+   *                           of <code>'int finish  = 1'</code> statement)
+   * @return alignment retrieval strategy that follows the rules described above
    */
-  public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(Collection<IElementType> targetTypes, boolean allowBackwardShift) {
-    return new AlignmentPerTypeStrategy(targetTypes, allowBackwardShift);
+  public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
+    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift)
+  {
+    return new AlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift);
   }
 
+  /**
+   * Delegates the processing to {@link #getAlignment(IElementType, IElementType)} without parent element type
+   * filtering (<code>null</code> is used as parent element type).
+   * 
+   * @param childType     target child type
+   * @return              alignment to use
+   */
   @Nullable
-  public abstract Alignment getAlignment(IElementType elementType);
+  public Alignment getAlignment(@Nullable IElementType childType) {
+    return getAlignment(null, childType);
+  }
+
+  /**
+   * Requests current strategy for alignment to use for the child of the given type assuming that parent node has the given type.
+   * 
+   * @param parentType    parent type to use for filtering (if not <code>null</code>)
+   * @param childType     child type to use for filtering (if not <code>null</code>)
+   * @return              alignment to use for the given arguments
+   */
+  @Nullable
+  public abstract Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
 
   /**
    * Stands for {@link AlignmentStrategy} implementation that is configured to return single pre-configured {@link Alignment} object
@@ -84,17 +131,20 @@ public abstract  class AlignmentStrategy {
    */
   private static class SharedAlignmentStrategy extends AlignmentStrategy {
 
-    private final Set<IElementType> myDisableElementTypes = new HashSet<IElementType>();
-    private final Alignment myAlignment;
+    private final Set<IElementType> myFilterElementTypes = new HashSet<IElementType>();
 
-    SharedAlignmentStrategy(Alignment alignment, IElementType ... disabledElementTypes) {
+    private final Alignment myAlignment;
+    private final boolean   myIgnoreFilterTypes;
+
+    private SharedAlignmentStrategy(Alignment alignment, boolean ignoreFilterTypes, IElementType... disabledElementTypes) {
       myAlignment = alignment;
-      myDisableElementTypes.addAll(asList(disabledElementTypes));
+      myIgnoreFilterTypes = ignoreFilterTypes;
+      myFilterElementTypes.addAll(asList(disabledElementTypes));
     }
 
     @Nullable
-    public Alignment getAlignment(IElementType elementType) {
-      return myDisableElementTypes.contains(elementType) ? null : myAlignment;
+    public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+      return (myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes) ? myAlignment : null;
     }
   }
 
@@ -105,9 +155,12 @@ public abstract  class AlignmentStrategy {
   public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
 
     private final Map<IElementType, Alignment> myAlignments = new HashMap<IElementType, Alignment>();
-    private final boolean myAllowBackwardShift;
+    
+    private final IElementType myParentType;
+    private final boolean      myAllowBackwardShift;
 
-    AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes, boolean allowBackwardShift) {
+    AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes, IElementType parentType, boolean allowBackwardShift) {
+      myParentType = parentType;
       myAllowBackwardShift = allowBackwardShift;
       for (IElementType elementType : targetElementTypes) {
         myAlignments.put(elementType, Alignment.createAlignment(myAllowBackwardShift));
@@ -115,8 +168,11 @@ public abstract  class AlignmentStrategy {
     }
 
     @Override
-    public Alignment getAlignment(IElementType elementType) {
-      return myAlignments.get(elementType);
+    public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+      if (myParentType != null && parentType != null && myParentType != parentType) {
+        return null;
+      }
+      return myAlignments.get(childType);
     }
 
     public void renewAlignment(IElementType elementType) {
