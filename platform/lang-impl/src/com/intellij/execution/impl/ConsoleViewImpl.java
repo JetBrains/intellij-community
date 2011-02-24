@@ -731,6 +731,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return true;
   }
 
+  @TestOnly
+  public void flushDeferredText() {
+    flushDeferredText(false);
+  }
+
   private void flushDeferredText(boolean clear) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {

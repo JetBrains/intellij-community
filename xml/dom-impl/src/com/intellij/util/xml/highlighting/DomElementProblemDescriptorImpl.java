@@ -26,10 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -88,6 +85,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     if (textRange != null) {
       final PsiElement psiElement = getPsiElement();
       LOG.assertTrue(psiElement != null, "Problems with explicit text range can't be created for DOM elements without underlying XML element");
+      assert psiElement.isValid();
       myPair = new Pair<TextRange, PsiElement>(textRange, psiElement);
     }
     myHighlightType = highlightType;
@@ -124,10 +122,12 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public void highlightWholeElement() {
     final PsiElement psiElement = getPsiElement();
     if (psiElement instanceof XmlAttributeValue) {
+      assert psiElement.isValid() : psiElement;
       final PsiElement attr = psiElement.getParent();
       myPair = Pair.create(new TextRange(0, attr.getTextLength()), attr);
     }
     else if (psiElement != null) {
+      assert psiElement.isValid() : psiElement;
       final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
       myPair = new Pair<TextRange, PsiElement>(new TextRange(0, tag.getTextLength()), tag);
     }
@@ -137,6 +137,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     if (myPair == null) {
       myPair = computeProblemRange();
     }
+    assert myPair.second.isValid();
     return myPair;
   }
 
@@ -145,6 +146,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     final PsiElement element = getPsiElement();
 
     if (element != null) {
+      assert element.isValid() : element;
       if (element instanceof XmlTag) {
         return createTagNameRange((XmlTag)element);
       }

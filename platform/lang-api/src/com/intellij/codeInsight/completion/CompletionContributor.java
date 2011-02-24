@@ -125,7 +125,7 @@ import java.util.List;
  *
  * @author peter
  */
-public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
+public abstract class CompletionContributor {
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
       new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();

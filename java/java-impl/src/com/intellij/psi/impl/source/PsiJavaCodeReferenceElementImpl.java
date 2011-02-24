@@ -755,7 +755,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     else {
       while (superParent != null) {
-        if (superParent instanceof PsiCodeBlock || superParent instanceof PsiVariable) {
+        if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
           smartCompletion = false;
           break;
         }
@@ -763,8 +763,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
     if (!smartCompletion && !isCodeFragmentType(getTreeParent().getElementType()) && !(getParent() instanceof PsiAnnotation)) {
-      /*filter.addFilter(ElementClassFilter.CLASS);
-      filter.addFilter(ElementClassFilter.PACKAGE);*/
       filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
       filter.addFilter(ElementClassFilter.VARIABLE);
     }

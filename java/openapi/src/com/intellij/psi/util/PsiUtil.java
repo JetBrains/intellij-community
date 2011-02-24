@@ -635,7 +635,6 @@ public final class PsiUtil extends PsiUtilBase {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
   }
 
-
   private static class ParamWriteProcessor implements Processor<PsiReference> {
     private volatile boolean myIsWriteRefFound = false;
     public boolean process(PsiReference reference) {
@@ -651,6 +650,7 @@ public final class PsiUtil extends PsiUtilBase {
       return myIsWriteRefFound;
     }
   }
+
   public static boolean isAssigned(final PsiParameter parameter) {
     ParamWriteProcessor processor = new ParamWriteProcessor();
     ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
@@ -717,7 +717,7 @@ public final class PsiUtil extends PsiUtilBase {
     }
   }
 
-  /**
+  /*
    * Returns iterator of type parameters visible in owner. Type parameters are iterated in
    * inner-to-outer, right-to-left order.
    */

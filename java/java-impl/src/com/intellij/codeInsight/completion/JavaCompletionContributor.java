@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -182,7 +181,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
 
-    final CompletionResultSet result = addJavaSorting(parameters, _result);
+    final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position)) {
       completeAnnotationAttributeName(result, position, parameters);
@@ -205,18 +204,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addAllClasses(parameters, result, position, inheritors);
     result.stopHere();
-  }
-
-  public static CompletionResultSet addJavaSorting(CompletionParameters parameters, CompletionResultSet result) {
-    final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition());
-    final ExpectedTypeInfo[] expectedTypes = afterNew ? JavaSmartCompletionContributor.getExpectedTypes(parameters) : ExpectedTypeInfo.EMPTY_ARRAY;
-    return result.withRelevanceSorter(CompletionSorter.defaultSorter(parameters).weighBefore("liftShorter", new LookupElementWeigher("expectedAfterNew") {
-        @NotNull
-        @Override
-        public Comparable weigh(@NotNull LookupElement element) {
-          return -((Enum)PreferExpectedTypeWeigher.weigh(element, expectedTypes)).ordinal();
-        }
-      }));
   }
 
   public static void addAllClasses(CompletionParameters parameters,

@@ -58,7 +58,7 @@ import com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection;
 import com.siyeh.ig.javadoc.UnnecessaryInheritDocInspection;
 import com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection;
 import com.siyeh.ig.jdk.*;
-import com.siyeh.ig.jdk15.*;
+import com.siyeh.ig.migration.*;
 import com.siyeh.ig.junit.*;
 import com.siyeh.ig.logging.*;
 import com.siyeh.ig.maturity.*;
@@ -296,7 +296,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerJ2MEInspections();
             registerJavaBeansInspections();
             registerJavadocInspections();
-            registerJdk5SpecificInspections();
+            registerLanguageLevelMigrationInspections();
             registerJdkInspections();
             registerJUnitInspections();
             registerLoggingInspections();
@@ -481,7 +481,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(FallthruInSwitchStatementInspection.class);
         m_inspectionClasses.add(ForLoopReplaceableByWhileInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
-        m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IfMayBeConditionalInspection.class);
         m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         m_inspectionClasses.add(IfStatementWithTooManyBranchesInspection.class);
@@ -625,10 +624,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ReplaceAssignmentWithOperatorAssignmentInspection.class);
     }
 
-    private void registerJdk5SpecificInspections() {
+    private void registerLanguageLevelMigrationInspections() {
         m_inspectionClasses.add(CollectionsFieldAccessReplaceableByMethodCallInspection .class);
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(EnumerationCanBeIterationInspection.class);
+        m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
         m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
         m_inspectionClasses.add(UnnecessaryBoxingInspection.class);

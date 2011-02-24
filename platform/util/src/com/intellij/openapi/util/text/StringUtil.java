@@ -1313,6 +1313,10 @@ public class StringUtil {
     return range.replace(string, replacement);
   }
 
+  public static boolean startsWithWhitespace(@NotNull String text) {
+    return !text.isEmpty() && Character.isWhitespace(text.charAt(0));
+  }
+
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
     int l1 = text.length();
     int l2 = prefix.length();

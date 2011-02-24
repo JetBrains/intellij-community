@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Mar 22, 2002
- * Time: 7:25:02 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,16 +25,20 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @author max
+ * Date: Mar 22, 2002
+ */
 public class DefUseUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
 
-  private DefUseUtil() {
-  }
+  private DefUseUtil() { }
 
   public static class Info {
     private final PsiVariable myVariable;
@@ -132,6 +127,7 @@ public class DefUseUtil {
     }
   }
 
+  @Nullable
   public static List<Info> getUnusedDefs(PsiCodeBlock body, Set<PsiVariable> outUsedVariables) {
     if (body == null) {
       return null;
@@ -232,12 +228,13 @@ public class DefUseUtil {
       if (instruction instanceof WriteVariableInstruction) {
         WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
         if (!defsArmed[i]) {
-          PsiElement context = flow.getElement(i);
-          context = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class, PsiAssignmentExpression.class,
-                                                         PsiPostfixExpression.class, PsiPrefixExpression.class);
+          PsiElement context = PsiTreeUtil.getNonStrictParentOfType(flow.getElement(i),
+                                                                    PsiStatement.class, PsiAssignmentExpression.class,
+                                                                    PsiPostfixExpression.class, PsiPrefixExpression.class,
+                                                                    PsiResource.class);
           PsiVariable psiVariable = writeInstruction.variable;
           if (context != null && !(context instanceof PsiTryStatement)) {
-            if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
+            if (isDeclaration(context) && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
                 unusedDefs.add(new Info(psiVariable, context, false));
               }
@@ -251,7 +248,11 @@ public class DefUseUtil {
     }
 
     return unusedDefs;
+  }
 
+  private static boolean isDeclaration(final PsiElement context) {
+    return context instanceof PsiDeclarationStatement ||
+           context instanceof PsiResource && ((PsiResource)context).getResourceElement() instanceof PsiLocalVariable;
   }
 
   @NotNull
@@ -476,5 +477,4 @@ public class DefUseUtil {
       return true;
     }
   };
-
 }

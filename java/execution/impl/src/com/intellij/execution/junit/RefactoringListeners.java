@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +86,7 @@ public class RefactoringListeners {
     }
   }
 
-  private static abstract class RenameElement<T extends PsiElement> implements RefactoringElementListener {
+  private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter {
     private final Accessor<T> myAccessor;
     private final String myPath;
 
@@ -94,22 +95,15 @@ public class RefactoringListeners {
       myPath = path;
     }
 
-    public void elementMoved(@NotNull final PsiElement newElement) {
-      setName((T)newElement);
-    }
-
-    public void elementRenamed(@NotNull final PsiElement newElement) {
-      setName((T)newElement);
-    }
-
-    private void setName(@NotNull T newElement) {
-      String qualifiedName = getQualifiedName(newElement);
+    public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
+      T newElement1 = (T)newElement;
+      String qualifiedName = getQualifiedName(newElement1);
       if (myPath.length() > 0) {
         qualifiedName = qualifiedName + "." + myPath;
-        newElement = findNewElement(newElement, qualifiedName);
+        newElement1 = findNewElement(newElement1, qualifiedName);
       }
-      if (newElement != null) {
-        myAccessor.setPsiElement(newElement);
+      if (newElement1 != null) {
+        myAccessor.setPsiElement(newElement1);
       }
       else {
         myAccessor.setName(qualifiedName);

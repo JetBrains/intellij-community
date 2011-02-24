@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,8 +29,13 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class UnnecessarilyQualifiedInnerClassAccessInspection 
         extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreReferencesToForeignInnerClasses = false;
 
     @Nls
     @NotNull
@@ -45,6 +52,14 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         return InspectionGadgetsBundle.message(
                 "unnecessarily.qualified.inner.class.access.problem.descriptor",
                 aClass.getName());
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "unnecessarily.qualified.inner.class.access.option"),
+                this, "ignoreReferencesToForeignInnerClasses");
     }
 
     @Override
@@ -90,7 +105,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         return new UnnecessarilyQualifiedInnerClassAccessVisitor();
     }
 
-    private static class UnnecessarilyQualifiedInnerClassAccessVisitor
+    private class UnnecessarilyQualifiedInnerClassAccessVisitor
             extends BaseInspectionVisitor {
 
         @Override
@@ -115,6 +130,20 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             final PsiElement qualifierTarget = referenceElement.resolve();
             if (!(qualifierTarget instanceof PsiClass)) {
                 return;
+            }
+            final PsiClass referenceClass =
+                    PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+            if (referenceClass == null) {
+                return;
+            }
+            if (!referenceClass.equals(qualifierTarget)) {
+                if (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
+                        true) ||
+                        (ignoreReferencesToForeignInnerClasses &&
+                                !PsiTreeUtil.isAncestor(qualifierTarget,
+                                        referenceClass, true))) {
+                    return;
+                }
             }
             final PsiElement target = reference.resolve();
             if (!(target instanceof PsiClass)) {
@@ -141,7 +170,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             visitReferenceElement(expression);
         }
 
-        private static boolean isReferenceToTarget(
+        private boolean isReferenceToTarget(
                 String referenceText, PsiClass target, PsiElement context) {
             final PsiManager manager = target.getManager();
             final JavaPsiFacade facade =
@@ -150,13 +179,11 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
             final PsiClass referencedClass =
                     resolveHelper.resolveReferencedClass(referenceText,
                             context);
-            if (referencedClass == null) {
-                return true;
-            }
-            return manager.areElementsEquivalent(target, referencedClass);
+            return referencedClass == null ||
+                    manager.areElementsEquivalent(target, referencedClass);
         }
 
-        private static boolean isInImportOrPackage(PsiElement element) {
+        private boolean isInImportOrPackage(PsiElement element) {
             while (element instanceof PsiJavaCodeReferenceElement) {
                 element = element.getParent();
                 if (element instanceof PsiImportStatementBase ||

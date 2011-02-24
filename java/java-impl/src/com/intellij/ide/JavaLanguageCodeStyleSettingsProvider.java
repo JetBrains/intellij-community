@@ -220,7 +220,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                      "        throws Exception { \n" +
                                                      "        foo.foo().bar(\"arg1\", \n" +
                                                      "                      \"arg2\"); \n" +
+                                                     "        new Object() {};" +
                                                      "    } \n" +
+                                                     "    class TestInnerClass {}\n" +
+                                                     "    interface TestInnerInterface {}\n" +
                                                      "}\n" +
                                                      "\n" +
                                                      "enum Breed {\n" +

@@ -4,10 +4,12 @@ package com.intellij.find.impl.livePreview;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ public class SearchResults {
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
+  private boolean myNotFound = false;
 
   public SearchResults(Editor editor) {
     myEditor = editor;
@@ -131,10 +134,16 @@ public class SearchResults {
 
     final ArrayList<FindResult> results = new ArrayList<FindResult>();
     if (findModel != null) {
-
+      final Ref<TextRange> selectionRef = new Ref<TextRange>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          selectionRef.set(new TextRange(editor.getSelectionModel().getSelectionStart(),
+                                          editor.getSelectionModel().getSelectionEnd()));
+        }
+      });
       TextRange r = findModel.isGlobal() ? new TextRange(0, Integer.MAX_VALUE) :
-                    new TextRange(editor.getSelectionModel().getSelectionStart(),
-                                  editor.getSelectionModel().getSelectionEnd());
+                    selectionRef.get();
       if (r.getLength() == 0) {
         r = new TextRange(0, Integer.MAX_VALUE);
       }
@@ -238,6 +247,17 @@ public class SearchResults {
   }
 
   @Nullable
+  private LiveOccurrence firstOccurrenceBeforeCaret() {
+    int offset = getEditor().getCaretModel().getOffset();
+    for (int i = getOccurrences().size()-1; i >= 0; --i) {
+      if (getOccurrences().get(i).getPrimaryRange().getEndOffset() < offset) {
+        return getOccurrences().get(i);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private LiveOccurrence firstOccurrenceAfterCaret() {
     LiveOccurrence afterCaret = null;
     int caret = myEditor.getCaretModel().getOffset();
@@ -294,18 +314,30 @@ public class SearchResults {
   }
 
   public void prevOccurrence() {
-    LiveOccurrence prev = prevOccurrence(myCursor);
-    if (prev == null && !getOccurrences().isEmpty()) {
-      prev = getOccurrences().get(getOccurrences().size() - 1);
+    LiveOccurrence next = null;
+    if (!myFindModel.isGlobal()) {
+      next = prevOccurrence(myCursor);
+    } else {
+      next = firstOccurrenceBeforeCaret();
     }
-    moveCursorTo(prev);
+    if (next == null && !getOccurrences().isEmpty()) {
+      next = getOccurrences().get(getOccurrences().size()-1);
+    }
+
+    moveCursorTo(next);
   }
 
   public void nextOccurrence() {
-    LiveOccurrence next = nextOccurrence(myCursor);
+    LiveOccurrence next = null;
+    if (!myFindModel.isGlobal()) {
+      next = nextOccurrence(myCursor);
+    } else {
+      next = firstOccurrenceAfterCaret();
+    }
     if (next == null && !getOccurrences().isEmpty()) {
       next = getOccurrences().get(0);
     }
+
     moveCursorTo(next);
   }
 

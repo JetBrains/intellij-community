@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -83,17 +84,23 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       boolean[] duplicates = new boolean[catchSections.length];
       for (int i = 0; i < catchSections.length; i++) {
         if (duplicates[i]) continue;
-        InputVariables inputVariables = new InputVariables(Collections.singletonList(catchSections[i].getParameter()),
+        final PsiCatchSection catchSection = catchSections[i];
+        final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+        if (catchBlock == null) continue;
+        InputVariables inputVariables = new InputVariables(Collections.singletonList(catchSection.getParameter()),
                                                            statement.getProject(),
-                                                           new LocalSearchScope(catchSections[i].getCatchBlock()),
+                                                           new LocalSearchScope(catchBlock),
                                                            false);
-        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[] { catchSections [i].getCatchBlock() },
+        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[] {catchBlock},
                                                        inputVariables, null, Collections.<PsiVariable>emptyList());
         for (int j = 0; j < catchSections.length; j++) {
           if (i == j || duplicates[j]) continue;
-          Match match = finder.isDuplicate(catchSections[j].getCatchBlock(), true);
+          final PsiCatchSection otherSection = catchSections[j];
+          final PsiCodeBlock otherCatchBlock = otherSection.getCatchBlock();
+          if (otherCatchBlock == null) continue;
+          Match match = finder.isDuplicate(otherCatchBlock, true);
           if (match != null) {
-            registerError(catchSections[j], i);
+            registerError(otherSection, i);
             duplicates[i] = true;
             duplicates[j] = true;
           }
@@ -123,16 +130,15 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (parameter1 == null || parameter2 == null) {
         return;
       }
-      String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
+      @NonNls String text = "try { } catch(" + parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e) { }";
       PsiTryStatement newTryCatch = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, stmt);
       parameter1.getTypeElement().replace(newTryCatch.getCatchSections() [0].getParameter().getTypeElement());
       section.delete();
     }
 
     @NotNull
-    @Override
     public String getName() {
-      return"Collapse catch blocks into multi-catch";
+      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
   }
 }

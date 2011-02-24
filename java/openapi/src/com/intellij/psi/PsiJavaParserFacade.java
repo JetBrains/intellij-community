@@ -117,6 +117,17 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
   PsiParameter createParameterFromText(@NotNull @NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
+   * Creates a Java try-resource from the specified text.
+   *
+   * @param text    the text of the resource to create.
+   * @param context the PSI element used as context for resolving references from the resource.
+   * @return the created resource instance.
+   * @throws com.intellij.util.IncorrectOperationException if the text is not a valid resource definition.
+   */
+  @NotNull
+  PsiResource createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException;
+
+  /**
    * Creates a Java type from the specified text.
    *
    * @param text    the text of the type to create (for example, a primitive type keyword, an array

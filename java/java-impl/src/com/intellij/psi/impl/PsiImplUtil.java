@@ -185,33 +185,28 @@ public class PsiImplUtil {
       if (list != null && !list.processDeclarations(processor, state, null, place)) return false;
     }
     if (lastParent instanceof PsiCodeBlock) {
-      final PsiParameterList parameterList = method.getParameterList();
-      if (processDeclarationsInParameterList(parameterList, processor, state)) return false;
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (PsiParameter parameter : parameters) {
+        if (!processor.execute(parameter, state)) return false;
+      }
     }
 
     return true;
   }
 
-  public static boolean processDeclarationsInTryStatement(@NotNull final PsiTryStatement statement,
+  public static boolean processDeclarationsInResourceList(@NotNull final PsiResourceList resourceList,
                                                           @NotNull final PsiScopeProcessor processor,
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
-    if (lastParent instanceof PsiCodeBlock) {
-      final PsiParameterList parameterList = statement.getResourceList();
-      if (parameterList != null && processDeclarationsInParameterList(parameterList, processor, state)) return false;
+    final List<PsiResource> resources = resourceList.getResources();
+    for (PsiResource resource : resources) {
+      final PsiElement resourceElement = resource.getResourceElement();
+      if (resourceElement instanceof PsiLocalVariable &&
+          !resourceElement.equals(lastParent) &&
+          !processor.execute(resourceElement, state)) return false;
     }
 
     return true;
-  }
-
-  private static boolean processDeclarationsInParameterList(@NotNull final PsiParameterList parameterList,
-                                                            @NotNull final PsiScopeProcessor processor,
-                                                            @NotNull final ResolveState state) {
-    final PsiParameter[] parameters = parameterList.getParameters();
-    for (PsiParameter parameter : parameters) {
-      if (!processor.execute(parameter, state)) return true;
-    }
-    return false;
   }
 
   public static boolean hasTypeParameters(@NotNull PsiTypeParameterListOwner owner) {

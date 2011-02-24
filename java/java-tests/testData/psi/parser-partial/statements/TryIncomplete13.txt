@@ -1,17 +1,13 @@
 PsiJavaFile:TryIncomplete13.java
   PsiTryStatement
     PsiKeyword:try('try')
-    PsiParameterList:(final )
+    PsiResourceList:(final )
       PsiJavaToken:LPARENTH('(')
       PsiModifierList:final
         PsiKeyword:final('final')
-      PsiErrorElement:Type expected
+      PsiErrorElement:Identifier or type expected
         <empty list>
       PsiWhiteSpace(' ')
-      PsiTypeElement:
-        <empty list>
-      PsiErrorElement:Identifier expected
-        <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

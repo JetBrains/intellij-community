@@ -60,9 +60,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
@@ -93,6 +95,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
   private final Project myProject;
+  private final List<TabInfo> myTabsHistory = new ArrayList<TabInfo>();
+  private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
@@ -140,8 +145,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new HashSet<EditorsSplitters>();
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = DockManager.getInstance(myProject).getContainers();
-    for (Iterator<DockContainer> iterator = dockContainers.iterator(); iterator.hasNext();) {
-      DockContainer each = iterator.next();
+    for (DockContainer each : dockContainers) {
       if (each instanceof DockableEditorTabbedContainer) {
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
       }
@@ -473,13 +477,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     getSplitters().setCurrentWindow(window, true);
   }
 
-  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
+  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window, final boolean transferFocus) {
     assertDispatchThread();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         if (window.isFileOpen(file)) {
-          window.closeFile(file);
+          window.closeFile(file, true, transferFocus);
           final List<EditorWindow> windows = window.getOwner().findWindows(file);
           if (windows.isEmpty()) { // no more windows containing this file left
             final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
@@ -490,6 +494,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
+    removeSelectionRecord(file, window);
+  }
+
+  public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
+    closeFile(file, window, true);
   }
 
   //============================= EditorManager methods ================================
@@ -1250,6 +1259,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+      if (newSelectedEditor != null) {
+        final JComponent component = newSelectedEditor.getComponent();
+        final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
+        if (holder != null) {
+          addSelectionRecord(newSelectedFile, holder.getEditorWindow());
+        }
+      }
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
@@ -1600,4 +1617,23 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return splitters;
   }
 
+  public void selectionChanged(VirtualFile file, EditorWindow window) {
+    final Pair<VirtualFile, EditorWindow> selection = new Pair<VirtualFile, EditorWindow>(file, window);
+    mySelectionHistory.remove(selection);
+    mySelectionHistory.add(0, selection);
+  }
+
+  public List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
+    return mySelectionHistory;
+  }
+
+  public void addSelectionRecord(VirtualFile file, EditorWindow window) {
+    final Pair<VirtualFile, EditorWindow> record = new Pair<VirtualFile, EditorWindow>(file, window);
+    mySelectionHistory.remove(record);
+    mySelectionHistory.add(0, record);
+  }
+
+  private void removeSelectionRecord(VirtualFile file, EditorWindow window) {
+    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
+  }
 }

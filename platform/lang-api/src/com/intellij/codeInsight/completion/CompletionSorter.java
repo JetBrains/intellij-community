@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class CompletionSorter {
-  public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher weigher);
+  public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
 
-  public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher weigher);
+  public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
 
   public abstract CompletionSorter weigh(LookupElementWeigher weigher);
 

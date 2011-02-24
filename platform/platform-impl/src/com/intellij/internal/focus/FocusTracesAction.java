@@ -25,6 +25,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
 
+import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +36,7 @@ import java.util.List;
  */
 public class FocusTracesAction extends AnAction implements DumbAware {
   private static boolean myActive = false;
+  private AWTEventListener myFocusTracker;
 
   public static boolean isActive() {
     return myActive;
@@ -46,10 +50,23 @@ public class FocusTracesAction extends AnAction implements DumbAware {
     final FocusManagerImpl focusManager = (FocusManagerImpl)manager;
 
     myActive = !myActive;
+    if (myActive) {
+      myFocusTracker = new AWTEventListener() {
+        @Override
+        public void eventDispatched(AWTEvent event) {
+          if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_GAINED) {
+            focusManager.getRequests().add(new FocusRequestInfo(((FocusEvent)event).getComponent(), new Throwable(), false));
+          }
+        }
+      };
+      Toolkit.getDefaultToolkit().addAWTEventListener(myFocusTracker, AWTEvent.FOCUS_EVENT_MASK);
+    }
 
     if (!myActive) {
       final List<FocusRequestInfo> requests = focusManager.getRequests();
       new FocusTracesDialog(project, new ArrayList<FocusRequestInfo>(requests)).show();
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myFocusTracker);
+      myFocusTracker = null;
       requests.clear();
     }
   }

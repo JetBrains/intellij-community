@@ -15,19 +15,21 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.ProcessingContext;
-import com.intellij.psi.*;
-import static com.intellij.psi.CommonClassNames.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.*;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.CommonClassNames.*;
 
 /**
 * @author peter
 */
-class CollectionsUtilityMethodsProvider extends CompletionProvider<JavaSmartCompletionParameters> {
-  public void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+class CollectionsUtilityMethodsProvider {
+  public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
+                                    @NotNull final Consumer<LookupElement> result) {
     final PsiElement element = parameters.getPosition();
 
     final PsiElement parent = element.getParent();
@@ -63,7 +65,7 @@ class CollectionsUtilityMethodsProvider extends CompletionProvider<JavaSmartComp
 
   }
 
-  private static void addCollectionMethod(final CompletionResultSet result, final PsiType expectedType,
+  private static void addCollectionMethod(final Consumer<LookupElement> result, final PsiType expectedType,
                                    final PsiType defaultType, final String baseClassName,
                                    @NonNls final String method, @NotNull final PsiClass collectionsClass) {
     if (isClassType(expectedType, baseClassName) || isClassType(expectedType, JAVA_UTIL_COLLECTION)) {
@@ -73,7 +75,7 @@ class CollectionsUtilityMethodsProvider extends CompletionProvider<JavaSmartComp
     }
   }
 
-  private static void addMethodItem(CompletionResultSet result, PsiType expectedType, String methodName, PsiClass containingClass) {
+  private static void addMethodItem(Consumer<LookupElement> result, PsiType expectedType, String methodName, PsiClass containingClass) {
     final PsiMethod[] methods = containingClass.findMethodsByName(methodName, false);
     if (methods.length == 0) {
       return;
@@ -83,7 +85,7 @@ class CollectionsUtilityMethodsProvider extends CompletionProvider<JavaSmartComp
     final JavaMethodCallElement item = new JavaMethodCallElement(method);
     JavaCompletionUtil.qualify(item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
     item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType));
-    result.addElement(item);
+    result.consume(item);
   }
 
   private static boolean isClassType(final PsiType type, final String className) {

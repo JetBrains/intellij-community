@@ -1,7 +1,7 @@
 PsiJavaFile:TryIncomplete10.java
   PsiTryStatement
     PsiKeyword:try('try')
-    PsiParameterList:(
+    PsiResourceList:(
       PsiJavaToken:LPARENTH('(')
       PsiErrorElement:')' expected
         <empty list>

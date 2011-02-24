@@ -25,17 +25,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
 
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 public class CutLineEndAction extends EditorAction {
@@ -63,7 +59,7 @@ public class CutLineEndAction extends EditorAction {
       }
 
       if (myCopyToClipboard) {
-        copyToClipboard(doc, caretOffset, lineEndOffset, dataContext, editor);
+        copyToClipboard(doc, caretOffset, lineEndOffset);
       }
 
       final int lineStartOffset = doc.getLineStartOffset(lineNumber);
@@ -75,24 +71,12 @@ public class CutLineEndAction extends EditorAction {
       }
     }
 
-    private static void copyToClipboard(final Document doc,
-                                        int caretOffset,
-                                        int lineEndOffset,
-                                        DataContext dataContext,
-                                        Editor editor) {
+    private static void copyToClipboard(final Document doc, int caretOffset, int lineEndOffset) {
       String s = doc.getCharsSequence().subSequence(caretOffset, lineEndOffset).toString();
 
       s = StringUtil.convertLineSeparators(s);
       StringSelection contents = new StringSelection(s);
-
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project == null) {
-        Clipboard clipboard = editor.getComponent().getToolkit().getSystemClipboard();
-        clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
-      }
-      else {
-        CopyPasteManager.getInstance().setContents(contents);
-      }
+      CopyPasteManager.getInstance().setContents(contents);
     }
   }
 }

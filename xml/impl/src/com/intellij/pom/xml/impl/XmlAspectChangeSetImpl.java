@@ -47,11 +47,12 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     return Collections.unmodifiableList(myChanges);
   }
 
+  @NotNull
   public PomModelAspect getAspect() {
     return myModel.getModelAspect(XmlAspect.class);
   }
 
-  public void merge(PomChangeSet blocked) {
+  public void merge(@NotNull PomChangeSet blocked) {
     final List<XmlChange> changes = ((XmlAspectChangeSetImpl)blocked).myChanges;
     for (XmlChange xmlChange : changes) {
       add(xmlChange);

@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -76,7 +77,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
@@ -95,7 +95,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -5164,12 +5163,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (editor.getDocument().getRangeGuard(offset, offset) != null) return;
 
                 EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
 
                 Transferable backup = null;
                 try {
-                  backup = clipboard.getContents(this);
-                  clipboard.setContents(t, EmptyClipboardOwner.INSTANCE);
+                  backup = copyPasteManager.getContents();
+                  copyPasteManager.setContents(t);
                 }
                 catch (Exception e) {
                   LOG.info("Error communicating with system clipboard", e);
@@ -5179,7 +5178,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 pasteHandler.execute(editor, editor.getDataContext());
                 try {
                   if (backup != null) {
-                    clipboard.setContents(backup, EmptyClipboardOwner.INSTANCE);
+                    copyPasteManager.setContents(backup);
                   }
                 }
                 catch (IllegalStateException e) {

@@ -177,7 +177,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       final List<PsiType> substituted = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
         @Override public PsiType fun(PsiType psiType) { return psiType.accept(SubstitutionVisitorBase.this); }
       });
-      return new PsiDisjunctionType(substituted, disjunctionType.getManager());
+      return disjunctionType.newDisjunctionType(substituted);
     }
   }
 

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -695,5 +696,9 @@ public abstract class UsefulTestCase extends TestCase {
       aClass = aClass.getSuperclass();
     }
     return false;
+  }
+
+  protected String getHomePath() {
+    return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 }

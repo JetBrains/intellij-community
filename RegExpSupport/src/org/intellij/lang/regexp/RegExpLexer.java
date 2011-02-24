@@ -17,16 +17,20 @@ package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexAdapter;
 
+import java.util.EnumSet;
+
 public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
+    private final EnumSet<RegExpCapability> myCapabilities;
 
-    public RegExpLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters) {
-        super(new _RegExLexer(xmlSchemaMode, allowDanglingMetacharacters));
-    }
+    public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
+        super(new _RegExLexer(capabilities));
+        myCapabilities = capabilities;
+  }
 
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
-        getFlex().commentMode = (initialState & COMMENT_MODE) != 0;
+        getFlex().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
         super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
     }
 

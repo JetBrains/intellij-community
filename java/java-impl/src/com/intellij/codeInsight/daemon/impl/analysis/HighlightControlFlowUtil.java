@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 8, 2002
- * Time: 5:55:01 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -43,9 +34,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author cdr
+ * Date: Aug 8, 2002
+ */
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
+  private HighlightControlFlowUtil() { }
 
   @Nullable
   public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
@@ -297,7 +293,7 @@ public class HighlightControlFlowUtil {
       
       topBlock = JspPsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
-        // non final field already initalized with default value
+        // non final field already initialized with default value
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) return null;
         // final field may be initialized in ctor or class initializer only
         // if we're inside non-ctr method, skip it
@@ -314,9 +310,9 @@ public class HighlightControlFlowUtil {
         if (parent instanceof PsiMethod) {
           PsiMethod constructor = (PsiMethod)parent;
           if (!parent.getManager().areElementsEquivalent(constructor.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
-          // static variables already initalized in class initalizers
+          // static variables already initialized in class initializers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
-          // as a last chance, field may be initalized in this() call
+          // as a last chance, field may be initialized in this() call
           final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
           for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
             PsiMethod redirectedConstructor = redirectedConstructors.get(j);
@@ -338,7 +334,7 @@ public class HighlightControlFlowUtil {
           aClass = classInitializer.getContainingClass();
         }
         else {
-          // field reference outside codeblock
+          // field reference outside code block
           // check variable initialized before its usage
           final PsiField field = (PsiField)variable;
 
@@ -356,7 +352,7 @@ public class HighlightControlFlowUtil {
                 && variableDefinitelyAssignedIn(variable, constructor.getBody())) {
               return null;
             }
-            // as a last chance, field may be initalized in this() call
+            // as a last chance, field may be initialized in this() call
             final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
             for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
@@ -371,13 +367,13 @@ public class HighlightControlFlowUtil {
         }
 
         if (aClass != null) {
-          // field may be initialized in class initalizer
+          // field may be initialized in class initializer
           final PsiClassInitializer[] initializers = aClass.getInitializers();
           for (PsiClassInitializer initializer : initializers) {
             PsiCodeBlock body = initializer.getBody();
             if (body == block) break;
             // variable referenced in initializer must be initialized in initializer preceding assignment
-            // varaibel refernced in field initializer or in class initializier
+            // variable referenced in field initializer or in class initializer
             boolean shouldCheckInitializerOrder = block == null || block.getParent() instanceof PsiClassInitializer;
             if (shouldCheckInitializerOrder && startOffset < initializer.getTextRange().getStartOffset()) continue;
             if (initializer.hasModifierProperty(PsiModifier.STATIC)
@@ -449,6 +445,7 @@ public class HighlightControlFlowUtil {
   }
 
 
+  @Nullable
   public static HighlightInfo checkFinalVariableMightAlreadyHaveBeenAssignedTo(PsiVariable variable,
                                                                                PsiReferenceExpression expression,
                                                                                Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
@@ -473,7 +470,7 @@ public class HighlightControlFlowUtil {
       final PsiField field = (PsiField)variable;
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
-      // field can get assigned in other field inititializers
+      // field can get assigned in other field initializers
       final PsiField[] fields = aClass.getFields();
       boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
       for (PsiField psiField : fields) {
@@ -565,7 +562,8 @@ public class HighlightControlFlowUtil {
   }
 
 
-  public static HighlightInfo checkFinalVariableInitalizedInLoop(PsiReferenceExpression expression, PsiElement resolved) {
+  @Nullable
+  public static HighlightInfo checkFinalVariableInitializedInLoop(PsiReferenceExpression expression, PsiElement resolved) {
     if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
@@ -580,6 +578,7 @@ public class HighlightControlFlowUtil {
   }
 
 
+  @Nullable
   public static HighlightInfo checkCannotWriteToFinal(PsiExpression expression) {
     PsiReferenceExpression reference = null;
     if (expression instanceof PsiAssignmentExpression) {
@@ -659,6 +658,7 @@ public class HighlightControlFlowUtil {
   }
 
 
+  @Nullable
   static HighlightInfo checkVariableMustBeFinal(PsiVariable variable, PsiJavaCodeReferenceElement context) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
@@ -672,23 +672,30 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
+  @Nullable
   public static PsiClass getInnerClassVariableReferencedFrom(PsiVariable variable, PsiElement context) {
-    PsiElement scope;
-    if (variable instanceof PsiLocalVariable) {
-      scope = variable.getParent().getParent(); // code block or for statement
+    PsiElement[] scope;
+    if (variable instanceof PsiScopedLocalVariable) {
+      scope = ((PsiScopedLocalVariable)variable).getDeclarationScope();
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      scope = new PsiElement[]{variable.getParent().getParent()}; // code block or for statement
     }
     else if (variable instanceof PsiParameter) {
-      scope = ((PsiParameter)variable).getDeclarationScope();
+      scope = new PsiElement[]{((PsiParameter)variable).getDeclarationScope()};
     }
     else {
-      scope = variable.getParent();
+      scope = new PsiElement[]{variable.getParent()};
     }
-    if (scope.getContainingFile() != context.getContainingFile()) return null;
+    if (scope.length < 1 || scope[0].getContainingFile() != context.getContainingFile()) return null;
 
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;
+    outer:
     while (parent != null) {
-      if (parent.equals(scope)) break;
+      for (PsiElement scopeElement : scope) {
+        if (parent.equals(scopeElement)) break outer;
+      }
       if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
         return (PsiClass)parent;
       }
@@ -699,6 +706,7 @@ public class HighlightControlFlowUtil {
   }
 
 
+  @Nullable
   public static HighlightInfo checkInitializerCompleteNormally(PsiClassInitializer initializer) {
     final PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported

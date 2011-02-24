@@ -30,8 +30,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Composite type resulting from Project Coin's multi-catch statements, * i.e. <code>FileNotFoundException | EOFException</code>.
- * In most cases should be threatened via its least upper bound * (<code>IOException</code> in the example above).
+ * Composite type resulting from Project Coin's multi-catch statements, i.e. <code>FileNotFoundException | EOFException</code>.
+ * In most cases should be threatened via its least upper bound (<code>IOException</code> in the example above).
  */
 public class PsiDisjunctionType extends PsiType {
   private final PsiManager myManager;
@@ -64,8 +64,8 @@ public class PsiDisjunctionType extends PsiType {
     return myTypes;
   }
 
-  public PsiManager getManager() {
-    return myManager;
+  public PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
+    return new PsiDisjunctionType(types, myManager);
   }
 
   @Override

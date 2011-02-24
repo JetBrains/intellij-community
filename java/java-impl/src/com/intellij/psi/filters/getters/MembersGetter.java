@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.SmartCompletionDecorator;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
@@ -27,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MembersGetter {
 
-  public static void addMembers(PsiElement position, PsiType expectedType, CompletionResultSet results) {
+  public static void addMembers(PsiElement position, PsiType expectedType, Consumer<LookupElement> results) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(expectedType);
     processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, expectedType);
 
@@ -47,7 +47,7 @@ public class MembersGetter {
     }
   }
 
-  private static void addConstantsFromTargetClass(PsiElement position, PsiType expectedType, CompletionResultSet results) {
+  private static void addConstantsFromTargetClass(PsiElement position, PsiType expectedType, Consumer<LookupElement> results) {
     PsiElement parent = position.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;
@@ -99,7 +99,7 @@ public class MembersGetter {
     return null;
   }
 
-  private static void processMembers(final PsiElement context, final CompletionResultSet results, @Nullable final PsiClass where,
+  private static void processMembers(final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where,
                                      final boolean acceptMethods, PsiType expectedType) {
     if (where == null) return;
 
@@ -132,7 +132,7 @@ public class MembersGetter {
           }
           final PsiType itemType = ((TypedLookupItem)item).getType();
           if (itemType != null && expectedType.isAssignableFrom(itemType)) {
-            results.addElement(item);
+            results.consume(item);
           }
         }
       }

@@ -30,18 +30,14 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
-import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -60,8 +56,8 @@ import java.util.List;
 
 /**
  * @author oleg
- * This class provides basic functionality for running consoles.
- * It launches external process and handles line input with history
+ *         This class provides basic functionality for running consoles.
+ *         It launches external process and handles line input with history
  */
 public abstract class AbstractConsoleRunnerWithHistory {
   private final Project myProject;
@@ -96,6 +92,23 @@ public abstract class AbstractConsoleRunnerWithHistory {
     // Create Server process
     final Process process = createProcess(myProvider);
 
+    Application application = ApplicationManager.getApplication();
+
+    if (application.isDispatchThread()) {
+      initConsoleUI(process);
+    }
+    else {
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          initConsoleUI(process);
+        }
+      });
+    }
+  }
+
+
+  private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
 
@@ -257,7 +270,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
         // Check if we have active lookup or if we can move in editor
         return LookupManager.getActiveLookup(consoleEditor) != null ||
                document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
-                                !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+               !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
       }
     };
   }

@@ -38,6 +38,7 @@ import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -230,6 +231,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   protected boolean shouldShowFirstErrorInEditor() {
     return false;
   }
+
   public void clearMessages() {
     myErrorViewStructure.clear();
     myBuilder.updateTree();
@@ -238,14 +240,36 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void updateTree() {
     myBuilder.updateTree();
   }
-  public void addMessage(int type, String[] text, VirtualFile file, int line, int column, Object data) {
-    myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, file, line, column, data);
+
+  public void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
+    addMessage(type, text, null, file, line, column, data);
+  }
+
+  @Override
+  public void addMessage(int type,
+                         @NotNull String[] text,
+                         @Nullable VirtualFile underFileGroup,
+                         @Nullable VirtualFile file,
+                         int line,
+                         int column,
+                         @Nullable Object data) {
+    myErrorViewStructure
+      .addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
     myBuilder.updateTree();
   }
 
-  public void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data) {
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix,
-                                               data instanceof VirtualFile ? (VirtualFile) data : null);
+  public void addMessage(int type,
+                         @NotNull String[] text,
+                         @NotNull String groupName,
+                         @NotNull Navigatable navigatable,
+                         @Nullable String exportTextPrefix,
+                         @Nullable String rendererTextPrefix,
+                         @Nullable Object data) {
+    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text,
+                                               data,
+                                               exportTextPrefix == null ? "" : exportTextPrefix,
+                                               rendererTextPrefix == null ? "" : rendererTextPrefix,
+                                               data instanceof VirtualFile ? (VirtualFile)data : null);
     myBuilder.updateTree();
   }
 
@@ -254,11 +278,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public static String createExportPrefix(int line) {
-    return line < 0? "" : IdeBundle.message("errortree.prefix.line", line);
+    return line < 0 ? "" : IdeBundle.message("errortree.prefix.line", line);
   }
 
   public static String createRendererPrefix(int line, int column) {
-    return line < 0? "" : "(" + line + ", " + column + ")";
+    if (line < 0) return "";
+    if (column < 0) return "(" + line + ")";
+    return "(" + line + ", " + column + ")";
   }
 
   public JComponent getComponent() {
@@ -267,7 +293,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private NavigatableMessageElement getSelectedMessageElement() {
     final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
-    return selectedElement instanceof NavigatableMessageElement? (NavigatableMessageElement)selectedElement : null;
+    return selectedElement instanceof NavigatableMessageElement ? (NavigatableMessageElement)selectedElement : null;
   }
 
   public ErrorTreeElement getSelectedErrorTreeElement() {
@@ -423,7 +449,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (rerunAction != null) {
       leftUpdateableActionGroup.add(new RerunAction(rerunAction, closeMessageViewAction));
     }
-    
+
     leftUpdateableActionGroup.add(new StopAction());
     if (myCreateExitAction) {
       leftUpdateableActionGroup.add(closeMessageViewAction);
@@ -439,10 +465,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     JPanel toolbarPanel = new JPanel(new GridLayout(1, 2));
     final ActionManager actionManager = ActionManager.getInstance();
     myLeftToolbar =
-    actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
+      actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
     toolbarPanel.add(myLeftToolbar.getComponent());
     myRightToolbar =
-    actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
+      actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
     toolbarPanel.add(myRightToolbar.getComponent());
 
     return toolbarPanel;
@@ -521,7 +547,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  protected boolean canHideWarnings(){
+  protected boolean canHideWarnings() {
     return true;
   }
 
@@ -543,11 +569,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       }
     }
   }
-  
+
   public boolean isHideWarnings() {
     return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
   }
-  
+
   private class MyTreeExpander implements TreeExpander {
     public void expandAll() {
       NewErrorTreeViewPanel.this.expandAll();

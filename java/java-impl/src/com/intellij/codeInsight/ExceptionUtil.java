@@ -206,10 +206,10 @@ public class ExceptionUtil {
       PsiClassType exception = getUnhandledException(statement, topElement);
       unhandledExceptions = exception == null ? Collections.<PsiClassType>emptyList() : Collections.singletonList(exception);
     }
-    else if (element instanceof PsiCodeBlock
-             && element.getParent() instanceof PsiMethod
-             && ((PsiMethod)element.getParent()).isConstructor()
-             && !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
+    else if (element instanceof PsiCodeBlock &&
+             element.getParent() instanceof PsiMethod &&
+             ((PsiMethod)element.getParent()).isConstructor() &&
+             !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
       // there is implicit parent constructor call
       final PsiMethod constructor = (PsiMethod)element.getParent();
       final PsiClass aClass = constructor.getContainingClass();
@@ -244,6 +244,16 @@ public class ExceptionUtil {
         }
       }
       unhandledExceptions = unhandled;
+    }
+
+    if (element instanceof PsiResource) {
+      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResource)element, topElement);
+      if (unhandledExceptions == null) {
+        unhandledExceptions = unhandled;
+      }
+      else {
+        unhandledExceptions.addAll(unhandled);
+      }
     }
 
     if (unhandledExceptions != null) {
@@ -309,19 +319,36 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall, final PsiElement topElement) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
-    PsiMethod method = (PsiMethod)result.getElement();
-    return getUnhandledExceptions(method, methodCall, topElement,
-                                  ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
-                                    public PsiSubstitutor compute() {
-                                      return result.getSubstitutor();
-                                    }
-                                  }));
+    final PsiMethod method = (PsiMethod)result.getElement();
+    final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
+      public PsiSubstitutor compute() {
+        return result.getSubstitutor();
+      }
+    });
+    return getUnhandledExceptions(method, methodCall, topElement, substitutor);
+  }
+
+  @NotNull
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResource resource, final PsiElement topElement) {
+    final PsiType resourceType = resource.getType();
+    if (resourceType instanceof PsiClassType) {
+      final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+      if (resourceClass != null) {
+        final PsiMethod[] closers = resourceClass.findMethodsByName("close", false);
+        for (final PsiMethod method : closers) {
+          if (method.getParameterList().getParametersCount() == 0) {
+            return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
-  public static PsiClassType getUnhandledException(PsiThrowStatement throwStatement, PsiElement topElement){
+  public static PsiClassType getUnhandledException(PsiThrowStatement throwStatement, PsiElement topElement) {
     final PsiExpression exception = throwStatement.getException();
     if (exception != null) {
       final PsiType type = exception.getType();
@@ -334,7 +361,6 @@ public class ExceptionUtil {
     }
     return null;
   }
-
 
   @NotNull
   private static List<PsiClassType> getUnhandledExceptions(PsiMethod method,

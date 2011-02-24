@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -166,16 +165,7 @@ public class EditorModificationUtil {
   }
 
   private static Transferable getClipboardContent(Editor editor) {
-    Transferable content;
-    Project project = editor.getProject();
-
-    if (project != null) {
-      content  = CopyPasteManager.getInstance().getContents();
-    } else {
-      Clipboard clipboard = editor.getComponent().getToolkit().getSystemClipboard();
-      content = clipboard.getContents(editor.getComponent());
-    }
-    return content;
+    return CopyPasteManager.getInstance().getContents();
   }
 
   public static void pasteFromClipboardAsBlock(Editor editor) {

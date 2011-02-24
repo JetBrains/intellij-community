@@ -67,3 +67,9 @@ class MyTest {
          }
      }
 }
+
+class NonParameterized {
+  void foo() {
+    new NonParameterized<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+  }
+}

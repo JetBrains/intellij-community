@@ -82,7 +82,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     super(node);
   }
 
-  public boolean hasModifierProperty(@NotNull String name){
+  public boolean hasModifierProperty(@NotNull String name) {
     final PsiModifierListStub stub = getStub();
     if (stub != null) {
       int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
@@ -93,34 +93,34 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 
     PsiElement parent = getParent();
-    if (parent instanceof PsiClass){
-      PsiElement pparent = parent.getParent();
-      if (pparent instanceof PsiClass && ((PsiClass)pparent).isInterface()){
-        if (type == JavaTokenType.PUBLIC_KEYWORD){
+    if (parent instanceof PsiClass) {
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD) {
           return true;
         }
-        if (type == null){ // package local
+        if (type == null) { // package local
           return false;
         }
-        if (type == JavaTokenType.STATIC_KEYWORD){
+        if (type == JavaTokenType.STATIC_KEYWORD) {
           return true;
         }
       }
-      if (((PsiClass)parent).isInterface()){
-        if (type == JavaTokenType.ABSTRACT_KEYWORD){
+      if (((PsiClass)parent).isInterface()) {
+        if (type == JavaTokenType.ABSTRACT_KEYWORD) {
           return true;
         }
 
         // nested interface is implicitly static
-        if (pparent instanceof PsiClass) {
-          if (type == JavaTokenType.STATIC_KEYWORD){
+        if (grandParent instanceof PsiClass) {
+          if (type == JavaTokenType.STATIC_KEYWORD) {
             return true;
           }
         }
       }
-      if (((PsiClass)parent).isEnum()){
+      if (((PsiClass)parent).isEnum()) {
         if (type == JavaTokenType.STATIC_KEYWORD) {
-          if (!(pparent instanceof PsiFile)) return true;
+          if (!(grandParent instanceof PsiFile)) return true;
         }
         else if (type == JavaTokenType.FINAL_KEYWORD) {
           final PsiField[] fields = ((PsiClass)parent).getFields();
@@ -138,37 +138,37 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         }
       }
     }
-    else if (parent instanceof PsiMethod){
+    else if (parent instanceof PsiMethod) {
       PsiClass aClass = ((PsiMethod)parent).getContainingClass();
-      if (aClass != null && aClass.isInterface()){
-        if (type == JavaTokenType.PUBLIC_KEYWORD){
+      if (aClass != null && aClass.isInterface()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD) {
           return true;
         }
-        if (type == null){ // package local
+        if (type == null) { // package local
           return false;
         }
-        if (type == JavaTokenType.ABSTRACT_KEYWORD){
+        if (type == JavaTokenType.ABSTRACT_KEYWORD) {
           return true;
         }
       }
     }
-    else if (parent instanceof PsiField){
+    else if (parent instanceof PsiField) {
       if (parent instanceof PsiEnumConstant) {
         return type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD;
       }
       else {
         PsiClass aClass = ((PsiField)parent).getContainingClass();
-        if (aClass != null && aClass.isInterface()){
-          if (type == JavaTokenType.PUBLIC_KEYWORD){
+        if (aClass != null && aClass.isInterface()) {
+          if (type == JavaTokenType.PUBLIC_KEYWORD) {
             return true;
           }
-          if (type == null){ // package local
+          if (type == null) { // package local
             return false;
           }
-          if (type == JavaTokenType.STATIC_KEYWORD){
+          if (type == JavaTokenType.STATIC_KEYWORD) {
             return true;
           }
-          if (type == JavaTokenType.FINAL_KEYWORD){
+          if (type == JavaTokenType.FINAL_KEYWORD) {
             return true;
           }
         }
@@ -177,9 +177,15 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     else if (parent instanceof PsiParameter) {
       if (type == JavaTokenType.FINAL_KEYWORD && ((PsiParameter)parent).getType() instanceof PsiDisjunctionType) return true;
     }
+    else if (parent instanceof PsiLocalVariable) {
+      PsiElement grandParent = parent.getParent();
+      if (type == JavaTokenType.FINAL_KEYWORD && grandParent instanceof PsiResource) return true;
+    }
 
-    if (type == null){ // package local
-      return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
+    if (type == null) { // package local
+      return !hasModifierProperty(PsiModifier.PUBLIC) &&
+             !hasModifierProperty(PsiModifier.PRIVATE) &&
+             !hasModifierProperty(PsiModifier.PROTECTED);
     }
 
     return getNode().findChildByType(type) != null;

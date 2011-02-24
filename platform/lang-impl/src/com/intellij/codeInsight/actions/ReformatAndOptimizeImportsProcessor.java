@@ -21,6 +21,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +73,13 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
     return new Runnable() {
       public void run() {
         r1.run();
-        r2.run();
+        CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
+        try {
+          r2.run();
+        }
+        finally {
+          CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
+        }
       }
     };
   }

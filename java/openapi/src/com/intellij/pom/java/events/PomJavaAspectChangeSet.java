@@ -20,6 +20,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.java.PomJavaAspect;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +38,12 @@ public class PomJavaAspectChangeSet implements PomChangeSet{
     myChanges.add(change);
   }
 
+  @NotNull
   public PomModelAspect getAspect() {
     return myModel.getModelAspect(PomJavaAspect.class);
   }
 
-  public void merge(PomChangeSet blocked) {
+  public void merge(@NotNull PomChangeSet blocked) {
     if(!(blocked instanceof PomJavaAspectChangeSet)) return;
     final PomJavaAspectChangeSet blockedJavaChange = (PomJavaAspectChangeSet)blocked;
     myChanges.addAll(blockedJavaChange.myChanges);

@@ -31,7 +31,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +38,15 @@ import java.util.Map;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @author peter
  */
-public class BasicExpressionCompletionContributor extends ExpressionSmartCompletionContributor{
+public class BasicExpressionCompletionContributor {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
-  private static void addKeyword(final CompletionResultSet result, final PsiElement element, final String s) {
-    result.addElement(createKeywordLookupItem(element, s));
+  private static void addKeyword(final Consumer<LookupElement> result, final PsiElement element, final String s) {
+    result.consume(createKeywordLookupItem(element, s));
   }
 
   public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
@@ -61,31 +59,29 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
     }
   }
 
+  public static void fillCompletionVariants(JavaSmartCompletionParameters parameters,
+                                            final Consumer<LookupElement> result,
+                                            PrefixMatcher matcher) {
+    final PsiElement element = parameters.getPosition();
+    if (PsiJavaPatterns.psiElement().afterLeaf(
+      PsiJavaPatterns.psiElement().withText(".").afterLeaf(
+        PsiJavaPatterns.psiElement().withParent(
+          PsiJavaPatterns.psiElement().referencing(psiClass())))).accepts(element)) {
+      addKeyword(result, element, PsiKeyword.CLASS);
+      addKeyword(result, element, PsiKeyword.THIS);
 
-  public BasicExpressionCompletionContributor() {
-    extend(PsiJavaPatterns.psiElement().afterLeaf(
-        PsiJavaPatterns.psiElement().withText(".").afterLeaf(
-            PsiJavaPatterns.psiElement().withParent(
-                PsiJavaPatterns.psiElement().referencing(psiClass())))), new CompletionProvider<JavaSmartCompletionParameters>() {
-      public void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        final PsiElement element = parameters.getPosition();
-        addKeyword(result, element, PsiKeyword.CLASS);
-        addKeyword(result, element, PsiKeyword.THIS);
-      }
+    }
 
-    });
+    if (!AFTER_DOT.accepts(element)) {
+      CollectionsUtilityMethodsProvider.addCompletions(parameters, result);
+      ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
-    extend(not(AFTER_DOT), new CollectionsUtilityMethodsProvider());
-    extend(not(AFTER_DOT), new ClassLiteralGetter());
-
-    extend(not(AFTER_DOT), new CompletionProvider<JavaSmartCompletionParameters>() {
-      protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
+      final PsiElement position = parameters.getPosition();
         final PsiType expectedType = parameters.getExpectedType();
 
         for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
           if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
-            result.addElement(new SmartCompletionTemplateItem(template, position));
+            result.consume(new SmartCompletionTemplateItem(template, position));
           }
         }
 
@@ -100,17 +96,12 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           }
 
           for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
-            result.addElement(new ExpressionLookupItem(expression));
+            result.consume(new ExpressionLookupItem(expression));
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-          public void consume(LookupElement decorator) {
-            result.addElement(decorator);
-          }
-        });
-      }
-    });
+        processDataflowExpressionTypes(position, expectedType, matcher, result);
+    }
 
   }
 

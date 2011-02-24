@@ -4,6 +4,7 @@ package org.intellij.lang.regexp;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import java.util.LinkedList;
+import java.util.EnumSet;
 import com.intellij.psi.StringEscapesTokenTypes;
 
 // IDEADEV-11055
@@ -23,15 +24,21 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private final LinkedList<Integer> states = new LinkedList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
-    // as well, but is currently unfinished as it requires to tweak more places than just the lexer. 
+    // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
     private boolean xmlSchemaMode;
 
-    private boolean allowDanglingMetacharacters;
 
-    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters) {
+    private boolean allowDanglingMetacharacters;
+    private boolean allowNestedCharacterClasses;
+    private boolean allowOctalNoLeadingZero;
+
+    _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
-      this.xmlSchemaMode = xmlSchemaMode;
-      this.allowDanglingMetacharacters = allowDanglingMetacharacters;
+      this.xmlSchemaMode = capabilities.contains(RegExpCapability.XML_SCHEMA_MODE);
+      this.allowDanglingMetacharacters = capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS);
+      this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
+      this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
+      this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
     }
 
     private void yypushstate(int state) {
@@ -58,6 +65,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate CLASS1
+%xstate CLASS1PY
 %state CLASS2
 %state PROP
 %xstate OPTIONS
@@ -133,7 +141,10 @@ HEX_CHAR=[0-9a-fA-F]
     So, for 100% compatibility, backrefs > 9 should be resolved by the parser, but
     I'm not sure if it's worth the effort - at least not atm.
 */
-      
+{ESCAPE} [0-7]{3}             { if (allowOctalNoLeadingZero) return RegExpTT.OCT_CHAR;
+                                return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER;
+                              }
+
 {ESCAPE} {DIGITS}             { return yystate() != CLASS2 ? RegExpTT.BACKREF : RegExpTT.ESC_CHARACTER; }
 
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
@@ -146,7 +157,15 @@ HEX_CHAR=[0-9a-fA-F]
 
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+
+<CLASS2> {
+  {ESCAPE} {RBRACKET}         { if (!allowNestedCharacterClasses) return RegExpTT.CHARACTER;
+                                return RegExpTT.REDUNDANT_ESCAPE; }
+}
+
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
+
+
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
@@ -175,8 +194,37 @@ HEX_CHAR=[0-9a-fA-F]
 "-"                   { return RegExpTT.MINUS; }
 "^"                   { return RegExpTT.CARET; }
 
-{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET}                { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
+<CLASS2> {
+  {LBRACKET}          { if (allowNestedCharacterClasses) {
+                           yypushstate(CLASS2);
+                           return RegExpTT.CLASS_BEGIN;
+                        }
+                        return RegExpTT.CHARACTER;
+                      }
+
+  {LBRACKET} / {RBRACKET} { if (allowNestedCharacterClasses) {
+                              yypushstate(CLASS1);
+                              return RegExpTT.CLASS_BEGIN;
+                            }
+                            return RegExpTT.CHARACTER;
+                          }
+}
+
+{LBRACKET} / {RBRACKET}   { yypushstate(CLASS1);
+                            return RegExpTT.CLASS_BEGIN; }
+
+/* Python understands that, Java doesn't */
+{LBRACKET} / "^" {RBRACKET} { if (!allowNestedCharacterClasses) {
+                                yypushstate(CLASS1PY);
+                              }
+                              else {
+                                yypushstate(CLASS2);
+                              }
+                              return RegExpTT.CLASS_BEGIN;
+                            }
+
+{LBRACKET}                { yypushstate(CLASS2);
+                            return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
 <CLASS1> {
@@ -184,13 +232,19 @@ HEX_CHAR=[0-9a-fA-F]
   .                       { assert false : yytext(); }
 }
 
+<CLASS1PY> {
+  "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
+  .                       { assert false : yytext(); }
+}
+
 <CLASS2> {
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
 
-  "&&"                  { return RegExpTT.ANDAND;    }
+  "&&"                  { return allowNestedCharacterClasses ? RegExpTT.ANDAND : RegExpTT.CHARACTER;    }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
+
 
 <YYINITIAL> {
   {LPAREN}      { return RegExpTT.GROUP_BEGIN; }

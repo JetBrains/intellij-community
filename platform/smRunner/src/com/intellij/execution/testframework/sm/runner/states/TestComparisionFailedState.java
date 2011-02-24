@@ -74,7 +74,7 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
   }
 
   @Override
-  public String getExpecteed() {
+  public String getExpected() {
     return myHyperlink.getLeft();
   }
 

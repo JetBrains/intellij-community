@@ -26,6 +26,7 @@ import java.util.List;
 public interface XmlChangeSet extends PomChangeSet {
   List<XmlChange> getChanges();
 
+  @NotNull
   PomModelAspect getAspect();
 
   void add(XmlChange xmlChange);

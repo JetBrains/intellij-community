@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -22,22 +23,21 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ConvertCatchToThrowsIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ConvertCatchtoThrowsPredicate();
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiCatchSection catchSection =
                 (PsiCatchSection) element.getParent();
-        final PsiType catchType = catchSection.getCatchType();
-        if (!(catchType instanceof PsiClassType)) {
-            return;
-        }
-        final PsiClassType classType = (PsiClassType) catchType;
         final PsiMethod method =
                 PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
         if (method == null) {
@@ -49,11 +49,32 @@ public class ConvertCatchToThrowsIntention extends Intention {
         // YY. Do you want to modify the base method?"
         //                                             [Yes][No][Cancel]
         final PsiReferenceList throwsList = method.getThrowsList();
-        final PsiManager manager = element.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        final PsiJavaCodeReferenceElement referenceElement =
-                factory.createReferenceElementByType(classType);
-        throwsList.add(referenceElement);
+        final Project project = element.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
+        final PsiType catchType = catchSection.getCatchType();
+        if (catchType instanceof PsiClassType) {
+            final PsiClassType classType = (PsiClassType) catchType;
+            final PsiJavaCodeReferenceElement referenceElement =
+                    factory.createReferenceElementByType(classType);
+            throwsList.add(referenceElement);
+        } else if (catchType instanceof PsiDisjunctionType) {
+            final PsiDisjunctionType disjunctionType =
+                    (PsiDisjunctionType) catchType;
+            final List<PsiType> disjunctions =
+                    disjunctionType.getDisjunctions();
+            for (PsiType disjunction : disjunctions) {
+                if (!(disjunction instanceof PsiClassType)) {
+                    continue;
+                }
+                final PsiClassType classType = (PsiClassType) disjunction;
+                final PsiJavaCodeReferenceElement referenceElement =
+                        factory.createReferenceElementByType(classType);
+                throwsList.add(referenceElement);
+            }
+        } else {
+            return;
+        }
         final PsiTryStatement tryStatement = catchSection.getTryStatement();
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         if (catchSections.length > 1) {
