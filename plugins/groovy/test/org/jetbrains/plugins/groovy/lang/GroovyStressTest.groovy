@@ -60,7 +60,7 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    IdeaTestUtil.assertTiming "slow", 10000, (System.currentTimeMillis() - start)
+    IdeaTestUtil.assertTiming "slow", 7000, (System.currentTimeMillis() - start)
   }
 
 }
