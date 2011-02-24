@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,9 +24,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +47,14 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GitTask {
 
+  private static final Logger LOG = Logger.getInstance(GitTask.class);
+
   private final Project myProject;
   private final GitHandler myHandler;
   private final String myTitle;
   private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
   private GitProgressAnalyzer myProgressAnalyzer;
-  private static final Logger LOG = Logger.getInstance(GitTask.class);
+  private boolean myExecuteResultInAwt = true;
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -115,24 +118,32 @@ public class GitTask {
 
       @Override
       public void onSuccess() {
-        if (!myHandler.errors().isEmpty()) { // TODO: handle errors smarter: an error may be not a complete failure.
-          myResult.set(GitTaskResult.GIT_ERROR);
-        } else {
-          myResult.set(GitTaskResult.OK);
-        }
-        resultHandler.run(myResult.get());
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override public void run() {
+            if (!myHandler.errors().isEmpty()) { // TODO: handle errors smarter: an error may be not a complete failure.
+              myResult.set(GitTaskResult.GIT_ERROR);
+            } else {
+              myResult.set(GitTaskResult.OK);
+            }
+            resultHandler.run(myResult.get());
+            synchronized (LOCK) {
+              LOCK.notifyAll();
+            }
+          }
+        });
       }
 
       @Override
       public void onCancel() {
-        myResult.set(GitTaskResult.CANCELLED);
-        resultHandler.run(GitTaskResult.CANCELLED);
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override public void run() {
+            myResult.set(GitTaskResult.CANCELLED);
+            resultHandler.run(GitTaskResult.CANCELLED);
+            synchronized (LOCK) {
+              LOCK.notifyAll();
+            }
+          }
+        });
       }
     };
 
@@ -158,7 +169,7 @@ public class GitTask {
       public void processTerminated(int exitCode) {
         if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
           if (myHandler.errors().isEmpty()) {
-            myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
+            myHandler.addError(new VcsException(myHandler.getLastOutput()));
           }
         }
       }
@@ -172,6 +183,8 @@ public class GitTask {
       public void onLineAvailable(String line, Key outputType) {
         if (GitHandlerUtil.isErrorLine(line.trim())) {
           myHandler.addError(new VcsException(line));
+        } else if (!StringUtil.isEmptyOrSpaces(line)) {
+          myHandler.addLastOutput(line);
         }
         if (indicator != null) {
           indicator.setText2(line);
@@ -207,6 +220,10 @@ public class GitTask {
 
   public void setProgressAnalyzer(GitProgressAnalyzer progressAnalyzer) {
     myProgressAnalyzer = progressAnalyzer;
+  }
+
+  public void setExecuteResultInAwt(boolean executeResultInAwt) {
+    myExecuteResultInAwt = executeResultInAwt;
   }
 
   /**
