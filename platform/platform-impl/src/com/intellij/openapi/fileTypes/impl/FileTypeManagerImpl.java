@@ -98,6 +98,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   static {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
+      @Override
+      public void consume(@NotNull FileType fileType) {
+        register(fileType, parse(fileType.getDefaultExtension()));
+      }
+
       public void consume(@NotNull final FileType fileType, final String extensions) {
         register(fileType, parse(extensions));
       }
