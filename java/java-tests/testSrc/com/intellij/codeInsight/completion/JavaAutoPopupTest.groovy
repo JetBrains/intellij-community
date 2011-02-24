@@ -17,11 +17,11 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.ide.ui.UISettings
 
-/**
+ /**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -483,6 +483,26 @@ public interface Test {
 }"""
     type 'd'
     assert !lookup
+  }
+
+  public void testCancellingDuringCalculation() {
+    myFixture.configureByText "a.java", """
+public interface Test {
+  <caret>
+}"""
+    edt { myFixture.type 'A' }
+    joinAlarm()
+    def first = lookup
+    assert first
+    edt {
+      assert first == lookup
+      lookup.hide()
+      myFixture.type 'a'
+    }
+    joinAlarm()
+    joinAlarm()
+    joinAlarm()
+    assert lookup != first
   }
 
 

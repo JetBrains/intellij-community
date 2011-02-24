@@ -93,7 +93,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       setMergeCommand();
 
-      myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET, myEditor.getCaretModel().getOffset() - item.getLookupString().length());
+      myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET,
+                            myEditor.getCaretModel().getOffset() - item.getLookupString().length());
       CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), CompletionProgressIndicator.this, myLookup.getItems());
     }
 
@@ -159,6 +160,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       for (CompletionContributor contributor : CompletionContributor.forLanguage(initContext.getPositionLanguage())) {
+      ProgressManager.checkCanceled();
         if (DumbService.getInstance(initContext.getProject()).isDumb() && !DumbService.isDumbAware(contributor)) {
           continue;
         }
@@ -602,6 +604,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     cancel();
 
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    LOG.assertTrue(this == current, current + "!=" + this);
+
     final CompletionPhase phase = new CompletionPhase.Restarted(this);
     CompletionServiceImpl.setCompletionPhase(phase);
 

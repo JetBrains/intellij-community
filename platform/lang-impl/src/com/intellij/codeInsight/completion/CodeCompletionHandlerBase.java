@@ -27,7 +27,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -297,14 +296,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                                                         final CompletionProgressIndicator indicator,
                                                                         final CompletionInitializationContext initContext) {
 
-    final ApplicationAdapter listener = new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        indicator.scheduleRestart();
-      }
-    };
-    ApplicationManager.getApplication().addApplicationListener(listener);
-
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
     startSemaphore.down();
@@ -334,23 +325,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              try {
-                startSemaphore.up();
-                ProgressManager.checkCanceled();
+              startSemaphore.up();
+              ProgressManager.checkCanceled();
 
-                final LookupElement[] result = CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
-                    public void consume(final LookupElement lookupElement) {
-                      indicator.addItem(lookupElement);
-                    }
-                  });
+              final LookupElement[] result = CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
+                public void consume(final LookupElement lookupElement) {
+                  indicator.addItem(lookupElement);
+                }
+              });
 
-                indicator.ensureDuringCompletionPassed();
+              indicator.ensureDuringCompletionPassed();
 
-                data.set(result);
-              }
-              finally {
-                ApplicationManager.getApplication().removeApplicationListener(listener);
-              }
+              data.set(result);
             }
           });
         }

@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -78,8 +80,14 @@ public abstract class CompletionPhase implements Disposable {
     boolean modifiersChanged = false;
     volatile boolean focusLookupWhenDone = false;
 
-    public BgCalculation(CompletionProgressIndicator indicator) {
+    public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
+      ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+        @Override
+        public void beforeWriteActionStart(Object action) {
+          indicator.scheduleRestart();
+        }
+      }, this);
     }
 
     @Override
