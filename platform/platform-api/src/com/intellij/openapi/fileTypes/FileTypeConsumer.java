@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 public interface FileTypeConsumer {
   String EXTENSION_DELIMITER = ";";
 
+  void consume(final @NotNull FileType fileType);
+
   void consume(final @NotNull FileType fileType, @NonNls final String extensions);
 
   void consume(final @NotNull FileType fileType, final FileNameMatcher... matchers);

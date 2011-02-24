@@ -24,7 +24,9 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.*;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -45,10 +47,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +59,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -156,7 +155,6 @@ public class Switcher extends AnAction implements DumbAware {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
-    //final Map<VirtualFile, FileEditor> files2editors;
     final Map<String, ToolWindow> twShortcuts;
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
@@ -207,7 +205,7 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows = new JBList(twModel);
       toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolWindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new ToolWindowsRenderer(ids, map) {
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(ids, map) {
         @Override
         public Component getListCellRendererComponent(JList list,
                                                       Object value,
@@ -251,36 +249,25 @@ public class Switcher extends AnAction implements DumbAware {
       separator.setBackground(Color.WHITE);
 
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileEditorInfo> filesData = new ArrayList<FileEditorInfo>();
-      final ArrayList<FileEditorInfo> editors = new ArrayList<FileEditorInfo>();
-      //for (EditorsSplitters splitters : editorManager.getAllSplitters()) {
-      //  for (EditorWindow window : splitters.getWindows()) {
-      //    for (VirtualFile file : window.getFiles()) {
-      //      editors.add(new FileEditorInfo(file, window));
-      //    }
-      //  }
-      //}
+      final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
+      final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
       for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-        editors.add(new FileEditorInfo(pair.first, pair.second));
+        editors.add(new FileInfo(pair.first, pair.second));
       }
       if (editors.size() < 2) {
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
         final int len = Math.min(toolWindows.getModel().getSize(), Math.max(editors.size(), recentFiles.length));
         for (int i = 0; i < len; i++) {
-          filesData.add(new FileEditorInfo(recentFiles[i], null));
+          filesData.add(new FileInfo(recentFiles[i], null));
         }
       } else {
-        //try {
-        //  ContainerUtil.sort(editors, new RecentFilesComparator(project));
-        //} catch (Exception e) {// IndexNotReadyException
-        //}
         for (int i = 0; i < Math.min(MAX_FILES, editors.size()); i++) {
           filesData.add(editors.get(i));
         }
       }
 
       final DefaultListModel filesModel = new DefaultListModel();
-      for (FileEditorInfo editor : filesData) {
+      for (FileInfo editor : filesData) {
         filesModel.addElement(editor);
       }
 
@@ -346,7 +333,7 @@ public class Switcher extends AnAction implements DumbAware {
         private void updatePathLabel() {
           final Object[] values = files.getSelectedValues();
           if (values != null && values.length == 1) {
-            final VirtualFile parent = ((FileEditorInfo)values[0]).file.getParent();
+            final VirtualFile parent = ((FileInfo)values[0]).first.getParent();
             if (parent != null) {
               pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
             } else {
@@ -460,15 +447,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     private void closeTabOrToolWindow() {
       final Object value = getSelectedList().getSelectedValue();
-      if (value instanceof FileEditorInfo) {
-        final FileEditorInfo info = (FileEditorInfo)value;
-        final VirtualFile virtualFile = info.file;
+      if (value instanceof FileInfo) {
+        final FileInfo info = (FileInfo)value;
+        final VirtualFile virtualFile = info.first;
         final FileEditorManagerImpl editorManager = ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
         final JList jList = getSelectedList();
-        if (info.window == null) {
+        if (info.second == null) {
           editorManager.closeFile(virtualFile, false);
         } else {
-          editorManager.closeFile(virtualFile, info.window, false);
+          editorManager.closeFile(virtualFile, info.second, false);
         }
         final int selectedIndex = jList.getSelectedIndex();
         if (jList.getModel().getSize() == 1) {
@@ -590,41 +577,22 @@ public class Switcher extends AnAction implements DumbAware {
       if (value instanceof ToolWindow) {
         ((ToolWindow)value).activate(null, true, true);
       }
-      else if (value instanceof FileEditorInfo) {
-        final FileEditorInfo info = (FileEditorInfo)value;
+      else if (value instanceof FileInfo) {
+        final FileInfo info = (FileInfo)value;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
             final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-            if (info.window != null) {
-              manager.openFileImpl2(info.window, info.file, true);
+            if (info.second != null) {
+              manager.openFileImpl2(info.second, info.first, true);
+              manager.addSelectionRecord(info.first, info.second);
             } else {
-              manager.openFile(info.file, true);
+              manager.openFile(info.first, true);
             }
           }
         });
       }
     }
-
-    //private class RecentFilesComparator implements Comparator<FileEditorInfo> {
-    //  private Map<FileEditorInfo, Integer> tabs = new HashMap<FileEditorInfo, Integer>();
-    //
-    //  public RecentFilesComparator(Project project) {
-    //    final List<TabInfo> history = ((FileEditorManagerImpl)FileEditorManager.getInstance(project)).getTabsHistory();
-    //    for (int i = 0; i < history.size(); i++) {
-    //      final TabInfo info = history.get(i);
-    //      if (info.getObject() instanceof VirtualFile && info.getComponent() instanceof EditorWindowHolder) {
-    //        tabs.put(new FileEditorInfo((VirtualFile)info.getObject(), ((EditorWindowHolder)info.getComponent()).getEditorWindow()), i);
-    //      }
-    //    }
-    //  }
-    //
-    //  public int compare(FileEditorInfo vf1, FileEditorInfo vf2) {
-    //    final Integer index1 = tabs.get(vf1);
-    //    final Integer index2 = tabs.get(vf2);
-    //    return index1 == null && index2 == null ? 0 : index1 == null ? 1 : index2 == null ? -1 : index1 - index2;
-    //  }
-    //}
 
     public void mouseClicked(MouseEvent e) {
       final Object source = e.getSource();
@@ -689,8 +657,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof FileEditorInfo) {
-        final VirtualFile virtualFile = ((FileEditorInfo)value).file;
+      if (value instanceof FileInfo) {
+        final VirtualFile virtualFile = ((FileInfo)value).first;
         final String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
@@ -701,94 +669,9 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  private static class ToolWindowsRenderer extends ColoredListCellRenderer {
-    private static final Map<String, Icon> iconCache = new HashMap<String, Icon>();
-    private static final SimpleTextAttributes ID_STYLE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.black);
-    private final Map<ToolWindow, String> ids;
-    private final Map<ToolWindow, String> shortcuts;
-
-    public ToolWindowsRenderer(Map<ToolWindow, String> ids, Map<ToolWindow, String> shortcuts) {
-      this.ids = ids;
-      this.shortcuts = shortcuts;
-    }
-
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof ToolWindow) {
-        final ToolWindow tw = (ToolWindow)value;
-        setIcon(getIcon(tw));
-        append(shortcuts.get(tw), ID_STYLE);
-        final String name =  ": " + ids.get(tw);
-
-        final TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-        append(name, SimpleTextAttributes.fromTextAttributes(attributes));
-      }
-    }
-
-    private Icon getIcon(ToolWindow toolWindow) {
-      Icon icon = iconCache.get(ids.get(toolWindow));
-      if (icon != null) return icon;
-
-      icon = toolWindow.getIcon();
-      if (icon == null) {
-        return Icons.UI_FORM_ICON;
-      }
-
-      icon = to16x16(icon);
-      iconCache.put(ids.get(toolWindow), icon);
-      return icon;
-    }
-
-    private static Icon to16x16(Icon icon) {
-      if (icon.getIconHeight() == 16 && icon.getIconWidth() == 16) return icon;
-      final int w = Math.min (icon.getIconWidth(), 16);
-      final int h = Math.min(icon.getIconHeight(), 16);
-
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-        .createCompatibleImage(16, 16, Color.TRANSLUCENT);
-      final Graphics2D g = image.createGraphics();
-      icon.paintIcon(null, g, 0, 0);
-      g.dispose();
-
-      final BufferedImage img = new BufferedImage(16, 16, BufferedImage.TRANSLUCENT);
-      final int offX = Math.max((16 - w) / 2, 0);
-      final int offY = Math.max((16 - h) / 2, 0);
-      for (int col = 0; col < w; col++) {
-        for (int row = 0; row < h; row++) {
-          img.setRGB(col + offX, row + offY, image.getRGB(col, row));
-        }
-      }
-
-      return new ImageIcon(img);
-    }
-  }
-
-  private static class FileEditorInfo {
-    final VirtualFile file;
-    final EditorWindow window;
-
-    private FileEditorInfo(VirtualFile file, EditorWindow window) {
-      this.file = file;
-      this.window = window;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      FileEditorInfo that = (FileEditorInfo)o;
-
-      if (!file.equals(that.file)) return false;
-      if (!window.equals(that.window)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = file.hashCode();
-      result = 31 * result + window.hashCode();
-      return result;
+  private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
+    public FileInfo(VirtualFile first, EditorWindow second) {
+      super(first, second);
     }
   }
 }

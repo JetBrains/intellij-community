@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiResource;
-import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +44,14 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
+    return PsiImplUtil.processDeclarationsInResourceList(this, processor, state, lastParent);
   }
 
   @Override

@@ -18,7 +18,10 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.execution.*;
+import org.jetbrains.idea.maven.execution.MavenExecutor;
+import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.io.File;
 import java.util.Arrays;
@@ -49,7 +52,7 @@ public class ArchetypesTest extends MavenTestCase {
     settings.setMavenProperties(props);
     MavenExecutor exec;
     settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-    exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
+    exec = new MavenExternalExecutor(myProject, params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     exec.execute(new EmptyProgressIndicator());
 
     assertTrue(new File(dir, "bar/pom.xml").exists());

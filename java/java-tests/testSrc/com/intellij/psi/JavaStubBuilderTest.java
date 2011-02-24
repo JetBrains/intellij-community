@@ -254,6 +254,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "  void m() {\n" +
            "    int local = 0;\n" +
            "    for (int loop = 0; loop < 10; loop++) ;\n" +
+           "    try (Resource r = new Resource()) { }\n" +
            "  }\n" +
            "}",
 
@@ -280,28 +281,6 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                "    try { }\n" +
                "      catch (Throwable t) { }\n" +
                "      catch (E1|E2 e) { }\n" +
-               "  }\n" +
-               "}",
-
-               "PsiJavaFileStub []\n" +
-               "  IMPORT_LIST:PsiImportListStub\n" +
-               "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-               "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
-               "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-               "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-               "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-               "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-               "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n");
-      }
-    });
-  }
-
-  public void testNonMethodParameterLists() {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
-      @Override public void run() {
-        doTest("class C {\n" +
-               "  {\n" +
-               "    try (Resource r = new Resource()) { }\n" +
                "  }\n" +
                "}",
 

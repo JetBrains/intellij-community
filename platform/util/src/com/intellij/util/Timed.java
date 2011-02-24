@@ -93,7 +93,7 @@ abstract class Timed<T> implements Disposable {
       if (timed == null) continue;
       synchronized (timed) {
         if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
-          Disposer.dispose(timed);
+          timed.dispose();
         }
         else {
           timed.myLastCheckedAccessCount = timed.myAccessCount;

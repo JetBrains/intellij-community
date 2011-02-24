@@ -16,10 +16,12 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class JBLabel extends JLabel {
   private Style myStyle = Style.REGULAR;
@@ -64,7 +66,23 @@ public class JBLabel extends JLabel {
     if (SystemInfo.isMac) {
       putClientProperty("JComponent.sizeVariant", style == Style.REGULAR ? "regular" : "small");
     }
-    // todo support other systems
+    else {
+      Font defFont = UIUtil.getLabelFont();
+      Font font = getFont();
+      if (style == JBLabel.Style.REGULAR) {
+        if (font != null) {
+          setFont(font.deriveFont(defFont.getSize()));
+        }
+      }
+      else {
+        if (font == null) font = defFont;
+        setFont(font.deriveFont(defFont.getSize() * 0.8f));
+      }
+    }
+    Container p = getParent();
+    if (p != null) {
+      SwingUtilities.updateComponentTreeUI(p);
+    }
   }
 
   public Style getStyle() {

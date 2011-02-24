@@ -741,6 +741,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       protected void run() throws Exception {
         configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
         final VirtualFile file = findFileInTempDir(to);
+        assert file != null : "Directory " + to + " not found";
         assert file.isDirectory() : to + " is not a directory";
         final PsiDirectory directory = myPsiManager.findDirectory(file);
         new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{myFile}, directory,

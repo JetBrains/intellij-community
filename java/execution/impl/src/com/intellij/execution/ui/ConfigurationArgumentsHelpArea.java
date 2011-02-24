@@ -18,13 +18,10 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.ui.EmptyClipboardOwner;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 public class ConfigurationArgumentsHelpArea extends JPanel {
@@ -68,17 +65,8 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      try {
-        final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
-        final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-        if (project == null) {
-          final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-          clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
-        } else {
-          CopyPasteManager.getInstance().setContents(contents);
-        }
-      } catch(Exception ex) {
-      }
+      final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
+      CopyPasteManager.getInstance().setContents(contents);
     }
   }
 

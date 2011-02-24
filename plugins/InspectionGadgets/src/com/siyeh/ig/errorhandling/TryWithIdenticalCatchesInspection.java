@@ -95,9 +95,12 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
                                                        inputVariables, null, Collections.<PsiVariable>emptyList());
         for (int j = 0; j < catchSections.length; j++) {
           if (i == j || duplicates[j]) continue;
-          Match match = finder.isDuplicate(catchSections[j].getCatchBlock(), true);
+          final PsiCatchSection otherSection = catchSections[j];
+          final PsiCodeBlock otherCatchBlock = otherSection.getCatchBlock();
+          if (otherCatchBlock == null) continue;
+          Match match = finder.isDuplicate(otherCatchBlock, true);
           if (match != null) {
-            registerError(catchSections[j], i);
+            registerError(otherSection, i);
             duplicates[i] = true;
             duplicates[j] = true;
           }

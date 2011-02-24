@@ -1554,7 +1554,6 @@ public class FileBasedIndex implements ApplicationComponent {
         IndexingStamp.flushCache();
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
-        Boolean isTooLarge = null;
         for (final ID<?, ?> indexId : myIndices.keySet()) {
           try {
             if (!needsFileContentLoading(indexId)) {
@@ -1564,12 +1563,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
             else { // the index requires file content
               if (shouldUpdateIndex(file, indexId)) {
-                if (isTooLarge == null) {
-                  isTooLarge = Boolean.valueOf(isTooLarge(file));
-                }
-                if (!isTooLarge.booleanValue()) {
-                  affectedIndices.add(indexId);
-                }
+                affectedIndices.add(indexId);
               }
             }
           }
@@ -1580,7 +1574,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
 
         if (!affectedIndices.isEmpty()) {
-          if (markForReindex) {
+          if (markForReindex && !isTooLarge(file)) {
             // only mark the file as unindexed, reindex will be done lazily
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {

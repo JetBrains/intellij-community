@@ -47,6 +47,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -67,6 +69,8 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
   private CurrentFileTodosPanel myCurrentFileTodos;
   private TodoPanel myAllTodos;
   private ChangeListTodosPanel myChangeListTodos;
+  private final List<TodoPanel> myPanels;
+  private final List<Content> myNotAddedContent;
 
   private int mySelectedIndex;
   private final TodoPanelSettings myCurrentPanelSettings;
@@ -90,6 +94,8 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     myCurrentPanelSettings=new TodoPanelSettings();
     myAllPanelSettings=new TodoPanelSettings();
     myChangeListTodosPanelSettings = new TodoPanelSettings();
+    myPanels = new ArrayList<TodoPanel>();
+    myNotAddedContent = new ArrayList<Content>();
 
     myVCSManager.addVcsListener(myVcsListener);
 
@@ -204,16 +210,26 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
       myVcsListener.myIsVisible = true;
       myContentManager.addContent(myChangeListTodosContent);
     }
+    for (Content content : myNotAddedContent) {
+      myContentManager.addContent(content);
+    }
 
+    myChangeListTodosContent.setCloseable(false);
+    allTodosContent.setCloseable(false);
+    currentFileTodosContent.setCloseable(false);
     Content content=myContentManager.getContent(mySelectedIndex);
     content = content == null ? allTodosContent : content;
     myContentManager.setSelectedContent(content);
+
+    myPanels.add(myAllTodos);
+    myPanels.add(myChangeListTodos);
+    myPanels.add(myCurrentFileTodos);
   }
 
   private final class MyVcsListener implements VcsListener {
     private boolean myIsVisible;
 
-    public void directoryMappingChanged() {
+    public void directoryMappingChanged() {        // todo ?
       ApplicationManager.getApplication().invokeLater(new Runnable(){
         public void run() {
           if (myContentManager == null) return; //was not initialized yet
@@ -255,9 +271,9 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     }
 
     private void updateFilters(){
-      myCurrentFileTodos.updateTodoFilter();
-      myAllTodos.updateTodoFilter();
-      myChangeListTodos.updateTodoFilter();
+      for (TodoPanel panel : myPanels) {
+        panel.updateTodoFilter();
+      }
     }
   }
 
@@ -279,17 +295,17 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
               ApplicationManager.getApplication().runReadAction(
                 new Runnable(){
                   public void run(){
-                    myAllTodos.rebuildCache();
-                    myCurrentFileTodos.rebuildCache();
-                    myChangeListTodos.rebuildCache();
+                    for (TodoPanel panel : myPanels) {
+                      panel.rebuildCache();
+                    }
                   }
                 }
               );
               ApplicationManager.getApplication().invokeLater(new Runnable(){
                 public void run(){
-                  myAllTodos.updateTree();
-                  myCurrentFileTodos.updateTree();
-                  myChangeListTodos.updateTree();
+                  for (TodoPanel panel : myPanels) {
+                    panel.updateTree();
+                  }
                 }
               }, ModalityState.NON_MODAL);
             }
@@ -297,5 +313,33 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
         }
       });
     }
+  }
+
+  public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(null, title, true);
+    final ChangeListTodosPanel panel = new ChangeListTodosPanel(myProject, settings, content) {
+      @Override
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
+        final TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, treeModel, project);
+        todoTreeBuilder.init();
+        return todoTreeBuilder;
+      }
+    };
+    content.setComponent(panel);
+    Disposer.register(this, panel);
+
+    if (myContentManager != null) {
+      myContentManager.addContent(content);
+    } else {
+      myNotAddedContent.add(content);
+    }
+    myPanels.add(panel);
+    content.setCloseable(true);
+    content.setDisposer(new Disposable() {
+      @Override
+      public void dispose() {
+        myPanels.remove(panel);
+      }
+    });
   }
 }

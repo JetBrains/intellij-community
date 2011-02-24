@@ -46,7 +46,7 @@ public class PathExpression implements GroovyElementTypes {
 
   public static Result parseForExprStatement(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    final GroovyElementType qualifierType = PrimaryExpression.parse(builder, parser);
+    final IElementType qualifierType = PrimaryExpression.parsePrimaryExpression(builder, parser);
     if (qualifierType != WRONGWAY) {
       Result result = OK;
       if (isPathElementStart(builder)) {
@@ -84,7 +84,7 @@ public class PathExpression implements GroovyElementTypes {
   private static Result pathElementParse(PsiBuilder builder,
                                                     PsiBuilder.Marker marker,
                                                     GroovyParser parser,
-                                                    GroovyElementType qualifierType,
+                                                    IElementType qualifierType,
                                                     Result result) {
 
     GroovyElementType res;
@@ -174,7 +174,7 @@ public class PathExpression implements GroovyElementTypes {
            !ParserUtils.lookAhead(builder, mLBRACK, mNLS, mCOLON);
   }
 
-  private static GroovyElementType parseThisSuperExpression(PsiBuilder builder, GroovyElementType qualifierType) {
+  private static GroovyElementType parseThisSuperExpression(PsiBuilder builder, IElementType qualifierType) {
     if (qualifierType != REFERENCE_EXPRESSION) {
       return WRONGWAY;
     }
@@ -266,7 +266,7 @@ public class PathExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType appendedBlockParse(PsiBuilder builder, GroovyParser parser) {
+  private static IElementType appendedBlockParse(PsiBuilder builder, GroovyParser parser) {
     return OpenOrClosableBlock.parseClosableBlock(builder, parser);
   }
 

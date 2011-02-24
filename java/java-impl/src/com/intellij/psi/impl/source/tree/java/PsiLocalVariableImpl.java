@@ -280,18 +280,18 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiScop
   }
 
   @NotNull
-  public PsiElement getDeclarationScope() {
+  public PsiElement[] getDeclarationScope() {
     final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
-      return parentElement.getParent();
+      return new PsiElement[]{parentElement.getParent()};
     }
     else if (parentElement instanceof PsiResource) {
       final PsiResourceList resourceList = (PsiResourceList)parentElement.getParent();
       final PsiTryStatement tryStatement = (PsiTryStatement)resourceList.getParent();
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      return tryBlock != null ? tryBlock : resourceList;
+      return tryBlock != null ? new PsiElement[]{resourceList, tryBlock} : new PsiElement[]{resourceList};
     }
-    return parentElement.getParent();
+    return new PsiElement[]{parentElement.getParent()};
   }
 
   @NotNull

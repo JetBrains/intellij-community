@@ -4,7 +4,6 @@ package com.intellij.find.impl.livePreview;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
-import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,6 +34,7 @@ public class SearchResults {
 
   private int myMatchesLimit = 100;
   private boolean myNotFound = false;
+  private boolean myDisposed = false;
 
   public SearchResults(Editor editor) {
     myEditor = editor;
@@ -181,8 +181,12 @@ public class SearchResults {
     }
   }
 
+  public void dispose() {
+    myDisposed = true;
+  }
+
   private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel) {
-    if (editor == getEditor()) {
+    if (editor == getEditor() && !myDisposed) {
       myOccurrences = occurrences;
       final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
       Collections.sort(myOccurrences, new Comparator<LiveOccurrence>() {
@@ -204,12 +208,16 @@ public class SearchResults {
 
   private void updateCursor(TextRange oldCursorRange) {
     if (!tryToRepairOldCursor(oldCursorRange)) {
-      LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
-      if (afterCaret != null) {
-        myCursor = afterCaret;
+      if (myFindModel != null && oldCursorRange != null && !myFindModel.isGlobal()) {
+        myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
       } else {
-        LiveOccurrence occurrence = firstVisibleOccurrence();
-        myCursor = occurrence;
+        LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
+        if (afterCaret != null) {
+          myCursor = afterCaret;
+        } else {
+          LiveOccurrence occurrence = firstVisibleOccurrence();
+          myCursor = occurrence;
+        }
       }
     }
   }
@@ -249,6 +257,10 @@ public class SearchResults {
   @Nullable
   private LiveOccurrence firstOccurrenceBeforeCaret() {
     int offset = getEditor().getCaretModel().getOffset();
+    return firstOccurrenceBeforeOffset(offset);
+  }
+
+  private LiveOccurrence firstOccurrenceBeforeOffset(int offset) {
     for (int i = getOccurrences().size()-1; i >= 0; --i) {
       if (getOccurrences().get(i).getPrimaryRange().getEndOffset() < offset) {
         return getOccurrences().get(i);
@@ -259,10 +271,14 @@ public class SearchResults {
 
   @Nullable
   private LiveOccurrence firstOccurrenceAfterCaret() {
-    LiveOccurrence afterCaret = null;
     int caret = myEditor.getCaretModel().getOffset();
+    return firstOccurrenceAfterOffset(caret);
+  }
+
+  private LiveOccurrence firstOccurrenceAfterOffset(int offset) {
+    LiveOccurrence afterCaret = null;
     for (LiveOccurrence occurrence : getOccurrences()) {
-      if (occurrence.getPrimaryRange().getStartOffset() >= caret) {
+      if (occurrence.getPrimaryRange().getStartOffset() >= offset) {
         if (afterCaret == null || occurrence.getPrimaryRange().getStartOffset() < afterCaret.getPrimaryRange().getStartOffset() ) {
           afterCaret = occurrence;
         }
@@ -290,7 +306,7 @@ public class SearchResults {
   @Nullable
   private LiveOccurrence prevOccurrence(LiveOccurrence o) {
     for (int i = 0; i < getOccurrences().size(); ++i) {
-      if (o == getOccurrences().get(i))  {
+      if (getOccurrences().get(i).equals(o))  {
         if (i > 0) {
           return getOccurrences().get(i - 1);
         }
@@ -306,7 +322,7 @@ public class SearchResults {
       if (found) {
         return occurrence;
       }
-      if (o == occurrence) {
+      if (occurrence.equals(o)) {
         found = true;
       }
     }

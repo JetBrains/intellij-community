@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import javax.swing.*;
@@ -102,24 +103,34 @@ public class MavenExecutionTest extends MavenImportingTestCase {
                    "target/classes"); // output dirs are collected twice for exclusion and for compiler output
   }
 
-  private void execute(MavenRunnerParameters params) {
+  private void execute(final MavenRunnerParameters params) {
     final Semaphore sema = new Semaphore();
     sema.down();
-    MavenRunConfigurationType.runConfiguration(myProject, params, getMavenGeneralSettings(),
-                                               new MavenRunnerSettings(),
-                                               new ProgramRunner.Callback() {
-        @Override
-        public void processStarted(final RunContentDescriptor descriptor) {
-          descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        MavenRunConfigurationType.runConfiguration(
+          myProject, params, getMavenGeneralSettings(),
+          new MavenRunnerSettings(),
+          new ProgramRunner.Callback() {
             @Override
-            public void processTerminated(ProcessEvent event) {
-              sema.up();
-              descriptor.dispose();
+            public void processStarted(final RunContentDescriptor descriptor) {
+              descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
+                @Override
+                public void processTerminated(ProcessEvent event) {
+                  sema.up();
+                  UIUtil.invokeLaterIfNeeded(new Runnable() {
+                    @Override
+                    public void run() {
+                      descriptor.dispose();
+                    }
+                  });
+                }
+              });
             }
           });
-        }
-      });
+      }
+    });
     sema.waitFor();
   }
-
 }

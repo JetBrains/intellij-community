@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
 
 public interface PsiScopedLocalVariable extends PsiLocalVariable {
   /**
-   * Returns the element (method, "for" statement or try block) in which the variable is declared.
+   * Returns the element or elements (method, "for" statement or try block) in which the variable is declared.
    *
    * @return the declaration scope for the variable.
    */
   @NotNull
-  PsiElement getDeclarationScope();
+  PsiElement[] getDeclarationScope();
 }

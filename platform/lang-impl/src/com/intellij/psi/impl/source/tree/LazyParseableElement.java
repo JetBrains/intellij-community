@@ -61,6 +61,9 @@ public class LazyParseableElement extends CompositeElement {
     super(type);
     synchronized (lock) {
       myText = text == null ? null : text.toString();
+      if (text != null) {
+        setCachedLength(text.length());
+      }
     }
   }
 
@@ -102,16 +105,6 @@ public class LazyParseableElement extends CompositeElement {
       }
     }
     return super.getNotCachedLength();
-  }
-
-  @Override
-  public int getCachedLength() {
-    synchronized (lock) {
-      if (myText != null) {
-        return myText.length();
-      }
-    }
-    return super.getCachedLength();
   }
 
   @Override

@@ -30,14 +30,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -49,6 +48,7 @@ import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -79,6 +79,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private JTextField myReplaceField;
   private final Color myDefaultBackground;
 
+  private JButton myReplaceButton;
+  private JButton myReplaceAllButton;
+  private JButton myExcludeButton;
+
   private JCheckBox myPreserveCase;
   private JCheckBox mySelectionOnly;
 
@@ -95,7 +99,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final JCheckBox myCbInComments;
   private final JCheckBox myCbInLiterals;
 
-  private final LivePreviewControllerBase myLivePreviewController;
+  private final JPanel myOptionsPane;
+  private final LinkLabel myMoreOptionsButton;
+
+  private final MyLivePreviewController myLivePreviewController;
   private final LivePreview myLivePreview;
 
 
@@ -103,6 +110,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private boolean myListeningSelection = false;
   private boolean myToChangeSelection = true;
   private SearchResults mySearchResults;
+  private Balloon myOptionsBalloon;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -149,19 +157,22 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
 
     updateSelection();
+    updateExcludeStatus();
   }
 
   @Override
   public void cursorMoved() {
     updateSelection();
+    updateExcludeStatus();
   }
 
   private void updateSelection() {
+    SelectionModel selection = myEditor.getSelectionModel();
     if (myToChangeSelection && (mySelectionOnly == null || !mySelectionOnly.isSelected())) {
       LiveOccurrence cursor = mySearchResults.getCursor();
       if (cursor != null) {
         TextRange range = cursor.getPrimaryRange();
-        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+        selection.setSelection(range.getStartOffset(), range.getEndOffset());
 
         myEditor.getCaretModel().moveToOffset(range.getEndOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -189,31 +200,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     mySearchResults = new SearchResults(myEditor);
     myLivePreview = new LivePreview(mySearchResults);
 
-    myLivePreviewController = new LivePreviewControllerBase(mySearchResults, myLivePreview) {
-      @Override
-      public void getFocusBack() {
-        mySearchField.requestFocus();
-      }
-
-      @Override
-      public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
-        myToChangeSelection = true;
-        return super
-          .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
-      }
-    };
+    myLivePreviewController = new MyLivePreviewController();
 
     mySearchResults.addListener(this);
     setMatchesLimit(MATCHES_LIMIT);
 
 
-    JPanel leadPanel = createLeadPane();
+    final JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
 
-    if (myIsReplace) {
-      configureReplacementPane();
-      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    }
     mySearchField = createTextField();
 
     leadPanel.add(mySearchField);
@@ -237,16 +232,35 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
     myCbWholeWords = new NonFocusableCheckBox("Match whole words only");
     myCbRegexp = new NonFocusableCheckBox("Regex");
-    myCbInComments = new NonFocusableCheckBox("In comments");
-    myCbInLiterals = new NonFocusableCheckBox("In literals");
+    myCbInComments = new NonFocusableCheckBox("Search in comments only");
+    myCbInLiterals = new NonFocusableCheckBox("Search in literals only");
+
+    myOptionsPane = new JPanel();
+    myOptionsPane.setLayout(new BoxLayout(myOptionsPane, BoxLayout.Y_AXIS));
 
     leadPanel.add(cbMatchCase);
-    leadPanel.add(myCbWholeWords);
+    myOptionsPane.add(myCbWholeWords);
     leadPanel.add(myCbRegexp);
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      leadPanel.add(myCbInComments);
-      leadPanel.add(myCbInLiterals);
+      myOptionsPane.add(myCbInComments);
+      myOptionsPane.add(myCbInLiterals);
     }
+
+    myMoreOptionsButton = new LinkLabel("more options", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        if (myOptionsBalloon == null || myOptionsBalloon.isDisposed()) {
+          BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myOptionsPane);
+          balloonBuilder.setFillColor(myOptionsPane.getBackground());
+          Point point = new Point((int)(myMoreOptionsButton.getX() + myMoreOptionsButton.getBounds().getWidth()/2),
+                                  (int)(myMoreOptionsButton.getY() + myMoreOptionsButton.getBounds().getHeight()/2));
+          myOptionsBalloon = balloonBuilder.createBalloon();
+          myOptionsBalloon.show(new RelativePoint(leadPanel, point), Balloon.Position.below);
+        }
+      }
+    });
+
+    leadPanel.add(myMoreOptionsButton);
 
     cbMatchCase.setSelected(isCaseSensitive());
     myCbWholeWords.setSelected(isWholeWords());
@@ -256,7 +270,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     cbMatchCase.setMnemonic('C');
     myCbWholeWords.setMnemonic('M');
-    myCbRegexp.setMnemonic('R');
+    myCbRegexp.setMnemonic('x');
     myCbInComments.setMnemonic('o');
     myCbInLiterals.setMnemonic('l');
 
@@ -265,6 +279,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setSmallerFontAndOpaque(myCbRegexp);
     setSmallerFontAndOpaque(myCbInComments);
     setSmallerFontAndOpaque(myCbInLiterals);
+
+    if (myIsReplace) {
+      configureReplacementPane();
+      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
+    }
+
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -382,6 +402,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     JPanel replacement = createLeadPane();
     myReplaceField = createTextField();
     configureTextField(myReplaceField);
+    myReplaceField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplace();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     replacement.add(myReplaceField);
     add(replacement, BorderLayout.SOUTH);
     myPreserveCase = new JCheckBox("Preserve case");
@@ -411,11 +437,63 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myPreserveCase.setSelected(findInFileModel.isPreserveCase());
     myPreserveCase.setEnabled(!findInFileModel.isRegularExpressions());
 
-    replacement.add(mySelectionOnly);
-    replacement.add(myPreserveCase);
+    myReplaceButton = new JButton("Replace");
+    myReplaceButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplace();
+      }
+    });
+    myReplaceButton.setMnemonic('p');
+
+    myReplaceAllButton = new JButton("Replace all");
+    myReplaceAllButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplaceAll();
+      }
+    });
+    myReplaceAllButton.setMnemonic('a');
+
+    myExcludeButton = new JButton("");
+    updateExcludeStatus();
+    myExcludeButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.exclude();
+      }
+    });
+    myExcludeButton.setMnemonic('l');
+
+    replacement.add(myReplaceButton);
+    replacement.add(myReplaceAllButton);
+    replacement.add(myExcludeButton);
+
+    myOptionsPane.add(mySelectionOnly);
+    myOptionsPane.add(myPreserveCase);
+
+    setSmallerFontAndOpaque(myReplaceButton);
+    setSmallerFontAndOpaque(myReplaceAllButton);
+    setSmallerFontAndOpaque(myExcludeButton);
+    
     setSmallerFontAndOpaque(mySelectionOnly);
     setSmallerFontAndOpaque(myPreserveCase);
     setSmallerFont(myReplaceField);
+  }
+
+  private void updateExcludeStatus() {
+    if (myExcludeButton != null) {
+      LiveOccurrence cursor = mySearchResults.getCursor();
+      myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "exclude" : "include");
+      myReplaceAllButton.setEnabled(mySearchResults.hasMatches());
+      if (cursor != null) {
+        myExcludeButton.setEnabled(true);
+        myReplaceButton.setEnabled(true);
+      } else {
+        myExcludeButton.setEnabled(false);
+        myReplaceButton.setEnabled(false);
+      }
+    }
   }
 
   private void updateModelWithSelectionMode(FindModel findInFileModel) {
@@ -536,7 +614,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   public void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
-      String replacement = myLivePreviewController.getReplacementPreviewText(myEditor, mySearchResults.getCursor());
+      String replacement = myLivePreviewController.getStringToReplace(myEditor, mySearchResults.getCursor());
       myLivePreviewController.performReplace(mySearchResults.getCursor(), replacement, myEditor);
     }
   }
@@ -563,6 +641,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myEditor.getSelectionModel().removeSelection();
     }
     IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
+    mySearchResults.dispose();
     myLivePreview.cleanUp();
     myEditor.setHeaderComponent(null);
     addCurrentTextToRecents();
@@ -915,5 +994,37 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     g.setColor(BORDER_COLOR);
     g2d.setPaint(null);
     g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+  }
+
+  private class MyLivePreviewController extends LivePreviewControllerBase {
+    public MyLivePreviewController() {
+      super(EditorSearchComponent.this.mySearchResults, EditorSearchComponent.this.myLivePreview);
+    }
+
+    @Override
+    public void getFocusBack() {
+      mySearchField.requestFocus();
+    }
+
+    @Override
+    public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
+      myToChangeSelection = true;
+      return super
+        .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    public void performReplace() {
+      String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
+      performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      getFocusBack();
+    }
+
+    public void exclude() {
+      mySearchResults.exclude(mySearchResults.getCursor());
+    }
+
+    public void performReplaceAll() {
+      performReplaceAll(myEditor);
+    }
   }
 }

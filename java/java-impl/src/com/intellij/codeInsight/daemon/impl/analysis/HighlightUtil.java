@@ -566,15 +566,18 @@ public class HighlightUtil {
     String name = variable.getName();
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement ||
-        variable instanceof PsiResource && ((PsiResource)variable).getResourceElement() instanceof PsiLocalVariable) {
-      PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+      PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         protected boolean check(final PsiVariable var, final ResolveState state) {
           return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, state);
         }
       };
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
+      if (scope instanceof PsiResourceList && proc.size() == 0) {
+        scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
+        PsiScopesUtil.treeWalkUp(proc, identifier, scope);
+      }
       if (proc.size() > 0) {
         isIncorrect = true;
       }

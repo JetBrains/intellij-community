@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -30,22 +31,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 26.03.2007
  */
 public class ConstructorBody implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker cbMarker = builder.mark();
-
-    if (!ParserUtils.getToken(builder, mLCURLY)) {
-      builder.error(GroovyBundle.message("lcurly.expected"));
-      cbMarker.rollbackTo();
-      return false;
+  public static void parseConstructorBody(PsiBuilder builder, GroovyParser parser) {
+    assert builder.getTokenType() == mLCURLY;
+    if (parser.parseDeep()) {
+      parseConstructorBodyDeep(builder, parser);
+    } else {
+      OpenOrClosableBlock.parseBlockShallow(builder, CONSTRUCTOR_BODY);
     }
+  }
 
+  public static void parseConstructorBodyDeep(PsiBuilder builder, GroovyParser parser) {
+    assert builder.getTokenType() == mLCURLY;
+    PsiBuilder.Marker cbMarker = builder.mark();
+    builder.advanceLexer();
     ParserUtils.getToken(builder, mNLS);
 
-    PsiBuilder.Marker constructorInvokationMarker = builder.mark();
+    PsiBuilder.Marker constructorInvocationMarker = builder.mark();
     if (parseExplicitConstructor(builder, parser)) {
-      constructorInvokationMarker.done(EXPLICIT_CONSTRUCTOR);
+      constructorInvocationMarker.done(EXPLICIT_CONSTRUCTOR);
     } else {
-      constructorInvokationMarker.rollbackTo();
+      constructorInvocationMarker.rollbackTo();
     }
 
     //explicit constructor invocation
@@ -58,9 +63,7 @@ public class ConstructorBody implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    cbMarker.done(OPEN_BLOCK);
-    return true;
-
+    cbMarker.done(CONSTRUCTOR_BODY);
   }
 
   private static boolean parseExplicitConstructor(PsiBuilder builder, GroovyParser parser) {

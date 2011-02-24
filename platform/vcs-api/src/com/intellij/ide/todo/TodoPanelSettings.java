@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,12 +25,12 @@ import java.util.Iterator;
 /**
  * @author Vladimir Kondratyev
  */
-class TodoPanelSettings{
-  private boolean myArePackagesShown;
-  private boolean myAreModulesShown;
-  private boolean myAreFlattenPackages;
-  private boolean myIsAutoScrollToSource;
-  private String myTodoFilterName;
+public class TodoPanelSettings implements JDOMExternalizable {
+  public boolean myArePackagesShown;
+  public boolean myAreModulesShown;
+  public boolean myAreFlattenPackages;
+  public boolean myIsAutoScrollToSource;
+  public String myTodoFilterName;
 
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
   @NonNls private static final String ELEMENT_ARE_PACKAGES_SHOWN = "are-packages-shown";
@@ -38,6 +39,17 @@ class TodoPanelSettings{
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "is-autoscroll-to-source";
   @NonNls private static final String ELEMENT_TODO_FILTER = "todo-filter";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
+
+  public TodoPanelSettings() {
+  }
+
+  public TodoPanelSettings(TodoPanelSettings s) {
+    myArePackagesShown = s.myArePackagesShown;
+    myAreModulesShown = s.myAreModulesShown;
+    myAreFlattenPackages = s.myAreFlattenPackages;
+    myIsAutoScrollToSource = s.myIsAutoScrollToSource;
+    myTodoFilterName = s.myTodoFilterName;
+  }
 
   public void readExternal(Element e){
     for(Iterator i=e.getChildren().iterator();i.hasNext();){
@@ -84,7 +96,7 @@ class TodoPanelSettings{
     }
   }
 
-  boolean areModulesShown() {
+  public boolean areModulesShown() {
     return myAreModulesShown;
   }
 
@@ -92,7 +104,7 @@ class TodoPanelSettings{
     myAreModulesShown = state;
   }
 
-  boolean arePackagesShown(){
+  public boolean arePackagesShown(){
     return myArePackagesShown;
   }
 
@@ -100,27 +112,27 @@ class TodoPanelSettings{
     myArePackagesShown=state;
   }
 
-  boolean areFlattenPackages(){
+  public boolean areFlattenPackages(){
     return myAreFlattenPackages;
   }
 
-  void setAreFlattenPackages(boolean state){
+  public void setAreFlattenPackages(boolean state){
     myAreFlattenPackages=state;
   }
 
-  boolean isAutoScrollToSource(){
+  public boolean isAutoScrollToSource(){
     return myIsAutoScrollToSource;
   }
 
-  void setAutoScrollToSource(boolean state){
+  public void setAutoScrollToSource(boolean state){
     myIsAutoScrollToSource=state;
   }
 
-  String getTodoFilterName(){
+  public String getTodoFilterName(){
     return myTodoFilterName;
   }
 
-  void setTodoFilterName(String todoFilterName){
+  public void setTodoFilterName(String todoFilterName){
     myTodoFilterName=todoFilterName;
   }
 }

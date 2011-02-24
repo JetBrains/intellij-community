@@ -47,13 +47,14 @@ public class AstBufferUtil {
 
       @Override
       public void visitComposite(CompositeElement composite) {
-        if (element instanceof LazyParseableElement) {
-          LazyParseableElement lpe = (LazyParseableElement)element;
+        if (composite instanceof LazyParseableElement) {
+          LazyParseableElement lpe = (LazyParseableElement)composite;
           int lpeResult = lpe.copyTo(buffer, result[0]);
           if (lpeResult > 0) {
             result[0] = lpeResult;
             return;
           }
+          assert lpe.isParsed();
         }
 
         super.visitComposite(composite);

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -351,5 +352,21 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testResultOfAssignmentUsed() {
     doTest(new GroovyResultOfAssignmentUsedInspection());
+  }
+
+  public void testCodeBlockReparse() throws IOException {
+    myFixture.configureByText("a.groovy", "foo 'a', {<caret>}");
+    myFixture.checkHighlighting(true, false, false);
+    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false);
+
+    myFixture.type('\n');
+    myFixture.checkHighlighting(true, false, false);
+    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false);
+
+    myFixture.configureByText("a.txt", psiBefore);
+    myFixture.checkResultByFile(getTestName(false) + "1.txt");
+
+    myFixture.configureByText("a.txt", psiAfter);
+    myFixture.checkResultByFile(getTestName(false) + "2.txt");
   }
 }
