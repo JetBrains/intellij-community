@@ -766,7 +766,7 @@ public class FindUtil {
           }
         });
       }
-    }, null, document);
+    }, null, null);
     return startOffset + converted.length();
   }
 
