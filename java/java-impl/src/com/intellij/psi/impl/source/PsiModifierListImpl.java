@@ -177,9 +177,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     else if (parent instanceof PsiParameter) {
       if (type == JavaTokenType.FINAL_KEYWORD && ((PsiParameter)parent).getType() instanceof PsiDisjunctionType) return true;
     }
-    else if (parent instanceof PsiLocalVariable) {
-      PsiElement grandParent = parent.getParent();
-      if (type == JavaTokenType.FINAL_KEYWORD && grandParent instanceof PsiResource) return true;
+    else if (parent instanceof PsiResourceVariable) {
+      if (type == JavaTokenType.FINAL_KEYWORD) return true;
     }
 
     if (type == null) { // package local

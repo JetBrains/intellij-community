@@ -6,8 +6,6 @@ PsiJavaFile:TryIncomplete12.java
       PsiErrorElement:Resource definition expected
         <empty list>
       PsiJavaToken:SEMICOLON(';')
-      PsiErrorElement:Resource definition expected
-        <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

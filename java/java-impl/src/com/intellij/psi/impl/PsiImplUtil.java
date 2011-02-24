@@ -198,12 +198,9 @@ public class PsiImplUtil {
                                                           @NotNull final PsiScopeProcessor processor,
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
-    final List<PsiResource> resources = resourceList.getResources();
-    for (PsiResource resource : resources) {
-      final PsiElement resourceElement = resource.getResourceElement();
-      if (resourceElement instanceof PsiLocalVariable &&
-          !resourceElement.equals(lastParent) &&
-          !processor.execute(resourceElement, state)) return false;
+    final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
+    for (PsiResourceVariable resource : resources) {
+      if (!resource.equals(lastParent) && !processor.execute(resource, state)) return false;
     }
 
     return true;

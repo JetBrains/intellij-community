@@ -259,13 +259,13 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   @Override
-  public PsiResource createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  public PsiResourceVariable createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, RESOURCE, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-    if (!(element instanceof PsiResource)) {
+    if (!(element instanceof PsiResourceVariable)) {
       throw new IncorrectOperationException("Incorrect resource \"" + text + "\".");
     }
-    return (PsiResource)element;
+    return (PsiResourceVariable)element;
   }
 
   @NotNull

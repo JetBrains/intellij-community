@@ -57,7 +57,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     return myVariable != null &&
            myVariable.isValid() &&
            myVariable instanceof PsiLocalVariable &&
-           !(myVariable.getParent() instanceof PsiResource && myVariable.getInitializer() == null) &&
+           !(myVariable.getParent() instanceof PsiResourceVariable && myVariable.getInitializer() == null) &&
            previousVariable != null &&
            Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
            myIdentifier != null &&
@@ -82,7 +82,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
     final PsiElement replacement;
     final PsiElement parent = myVariable.getParent();
-    if (parent instanceof PsiResource) {
+    if (parent instanceof PsiResourceVariable) {
       replacement = factory.createResourceFromText(myVariable.getName() + " = " + initializer.getText(), null);
     }
     else {

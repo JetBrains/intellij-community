@@ -435,7 +435,7 @@ public class HighlightUtil {
   @Nullable
   static HighlightInfo checkVariableInitializerType(PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
-    // array initalizer checked in checkArrayInitializerApplicable
+    // array initializer checked in checkArrayInitializerApplicable
     if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return null;
     PsiType lType = variable.getType();
     PsiType rType = initializer.getType();
@@ -655,7 +655,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkUnhandledCloserExceptions(final PsiResource resource) {
+  public static HighlightInfo checkUnhandledCloserExceptions(final PsiResourceVariable resource) {
     final List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
     if (unhandled.isEmpty()) return null;
 
@@ -1148,7 +1148,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiResource resource) {
+  public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiResourceVariable resource) {
     final PsiType type = resource.getType();
     if (type == null) return null;
 

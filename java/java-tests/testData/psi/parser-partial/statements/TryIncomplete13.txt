@@ -5,9 +5,13 @@ PsiJavaFile:TryIncomplete13.java
       PsiJavaToken:LPARENTH('(')
       PsiModifierList:final
         PsiKeyword:final('final')
-      PsiErrorElement:Identifier or type expected
+      PsiErrorElement:Type expected
         <empty list>
       PsiWhiteSpace(' ')
+      PsiTypeElement:
+        <empty list>
+      PsiErrorElement:Identifier expected
+        <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')
