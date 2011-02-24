@@ -114,7 +114,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
-    //myListenerList.add(new EditorSelectionListener());
   }
 
   private void initDockableContentFactory() {
@@ -146,8 +145,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new HashSet<EditorsSplitters>();
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = DockManager.getInstance(myProject).getContainers();
-    for (Iterator<DockContainer> iterator = dockContainers.iterator(); iterator.hasNext();) {
-      DockContainer each = iterator.next();
+    for (DockContainer each : dockContainers) {
       if (each instanceof DockableEditorTabbedContainer) {
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
       }
@@ -496,20 +494,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
-    removeHistory(file, window);
-  }
-
-  private void removeHistory(VirtualFile file, EditorWindow window) {
-    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
-
-    for (Iterator<TabInfo> i = myTabsHistory.iterator(); i.hasNext(); ) {
-      final TabInfo info = i.next();
-      final JComponent c = info.getComponent();
-      if (info.getObject() == file && c instanceof EditorWindowHolder && ((EditorWindowHolder)c).getEditorWindow() == window) {
-        i.remove();
-        break;
-      }
-    }
+    removeSelectionRecord(file, window);
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
@@ -1648,10 +1633,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     mySelectionHistory.add(0, record);
   }
 
-  private class EditorSelectionListener extends FileEditorManagerAdapter {
-    @Override
-    public void selectionChanged(FileEditorManagerEvent event) {
-      System.out.println(event.getNewFile().getName());
-    }
+  private void removeSelectionRecord(VirtualFile file, EditorWindow window) {
+    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
   }
 }
