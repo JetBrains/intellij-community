@@ -17,6 +17,9 @@ package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.DebugUtil;
@@ -39,6 +42,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void setUp() throws Exception {
     super.setUp();
     doTest("@interface A { int i() default 42; }\n class C { void m(int p) throws E { } }", null);  // warm up
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk17();
   }
 
   public void testEmpty() {
@@ -255,6 +264,9 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    int local = 0;\n" +
            "    for (int loop = 0; loop < 10; loop++) ;\n" +
            "    try (Resource r = new Resource()) { }\n" +
+           "    try (Resource r = new Resource() {\n" +
+           "           public void close() { }\n" +
+           "         }) { }\n" +
            "  }\n" +
            "}",
 
@@ -269,32 +281,34 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Resource]\n" +
+           "        METHOD:PsiMethodStub[close:void]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          PARAMETER_LIST:PsiParameterListStub\n" +
+           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
   public void testNonListParameters() {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
-      @Override public void run() {
-        doTest("class C {\n" +
-               "  {\n" +
-               "    for (int i : arr) ;\n" +
-               "    try { }\n" +
-               "      catch (Throwable t) { }\n" +
-               "      catch (E1|E2 e) { }\n" +
-               "  }\n" +
-               "}",
+    doTest("class C {\n" +
+           "  {\n" +
+           "    for (int i : arr) ;\n" +
+           "    try { }\n" +
+           "      catch (Throwable t) { }\n" +
+           "      catch (E1|E2 e) { }\n" +
+           "  }\n" +
+           "}",
 
-               "PsiJavaFileStub []\n" +
-               "  IMPORT_LIST:PsiImportListStub\n" +
-               "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-               "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
-               "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-               "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-               "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-               "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-               "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n");
-      }
-    });
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n");
   }
 
   public void testSOEProof() {
