@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,11 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.extractMethod.InputVariables;
+import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
+import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,6 +32,8 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class IfStatementWithIdenticalBranchesInspection
         extends BaseInspection{
@@ -151,48 +157,50 @@ public class IfStatementWithIdenticalBranchesInspection
     private static class IfStatementWithIdenticalBranchesVisitor
             extends BaseInspectionVisitor{
 
-      private static final int LIMIT_DEPTH = 20; // Dirty fix for 'squared' algorithm.
+        private static final int LIMIT_DEPTH = 20; // Dirty fix for 'squared' algorithm.
 
-      @Override public void visitIfStatement(
+        @Override public void visitIfStatement(
                 @NotNull PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
-            final PsiStatement thenBranch = ifStatement.getThenBranch();
             PsiStatement elseBranch = ifStatement.getElseBranch();
+            final PsiStatement thenBranch = ifStatement.getThenBranch();
             if (thenBranch == null) {
                 return;
             }
-            if (elseBranch == null) {
-                checkIfStatementWithoutElseBranch(ifStatement);
-                return;
-            }
-            if (EquivalenceChecker.statementsAreEquivalent(
-                    thenBranch, elseBranch)) {
-                registerStatementError(ifStatement);
-                return;
-            }
-            final PsiStatement identicalElseIf =
-                    getIdenticalElseIfStatement(thenBranch, elseBranch);
-            if (identicalElseIf == null) {
-                return;
-            }
-            registerStatementError(ifStatement, identicalElseIf);
-        }
-
-        public static PsiStatement getIdenticalElseIfStatement(
-                PsiStatement thenBranch, PsiStatement elseBranch) {
+            final Project project = ifStatement.getProject();
+            final InputVariables inputVariables =
+                    new InputVariables(Collections.<PsiVariable>emptyList(),
+                            project, new LocalSearchScope(thenBranch), false);
+            final DuplicatesFinder finder =
+                    new DuplicatesFinder(new PsiElement[]{thenBranch},
+                            inputVariables, null,
+                            Collections.<PsiVariable>emptyList());
             int depth = 0;
             while (elseBranch instanceof PsiIfStatement) {
-                if (depth++ > LIMIT_DEPTH) break;
+                if (depth++ > LIMIT_DEPTH) {
+                    break;
+                }
                 final PsiIfStatement statement =
                         (PsiIfStatement) elseBranch;
                 final PsiStatement branch = statement.getThenBranch();
-                if (EquivalenceChecker.statementsAreEquivalent(
-                        thenBranch, branch)) {
-                    return statement;
+                if (branch == null) {
+                    return;
+                }
+                final Match match = finder.isDuplicate(branch, true);
+                if (match != null) {
+                    registerStatementError(ifStatement, statement);
+                    return;
                 }
                 elseBranch = statement.getElseBranch();
             }
-            return null;
+            if (elseBranch == null) {
+                checkIfStatementWithoutElseBranch(ifStatement);
+            } else {
+                final Match match = finder.isDuplicate(elseBranch, true);
+                if (match != null) {
+                    registerStatementError(ifStatement);
+                }
+            }
         }
 
         private void checkIfStatementWithoutElseBranch(
