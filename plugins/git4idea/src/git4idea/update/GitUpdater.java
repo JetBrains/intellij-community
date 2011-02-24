@@ -22,8 +22,10 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.MergeChangeCollector;
 
@@ -79,8 +81,16 @@ public abstract class GitUpdater {
     return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
   }
 
-  // TODO! read git config. If there is anything, return it. Otherwise return merge. Currently always returning merge!
   private static GitUpdater getDefaultUpdaterForBranch(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+    try {
+      final GitBranch branchName = GitBranch.current(project, root);
+      final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
+      if (rebase != null && rebase.equalsIgnoreCase("true")) {
+        return new GitRebaseUpdater(project, root, progressIndicator, updatedFiles);
+      }
+    } catch (VcsException e) {
+      LOG.info("getDefaultUpdaterForBranch branch", e);
+    }
     return new GitMergeUpdater(project, root, progressIndicator, updatedFiles);
   }
 
