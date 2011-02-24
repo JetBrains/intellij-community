@@ -16,8 +16,10 @@
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -28,6 +30,7 @@ import git4idea.GitVcs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -66,7 +69,7 @@ public class GitMergeConflictResolver {
    * @param roots Git repositories to look for unmerged files.
    * @return true if there is nothing to merge anymore, false if unmerged files remain or in the case of error.
    */
-  public final boolean mergeFiles(@NotNull Collection<VirtualFile> roots) {
+  public final boolean mergeFiles(@NotNull final Collection<VirtualFile> roots) {
     try {
       Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, roots);
       if (unmergedFiles.isEmpty()) {
@@ -86,17 +89,54 @@ public class GitMergeConflictResolver {
         if (unmergedFiles.isEmpty()) {
           return proceedAfterAllMerged();
         } else {
-          // TODO link to "resolve all conflicts"
           Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myErrorNotificationTitle,
-                                                    "You have to resolve all conflicts first. <br/>" +
-                                                    myErrorNotificationAdditionalDescription, NotificationType.WARNING), myProject);
+                                                    "You have to <a href='resolve'>resolve</a> all conflicts first. <br/>" +
+                                                    myErrorNotificationAdditionalDescription, NotificationType.WARNING,
+                                                    new ResolveNotificationListener(roots)), myProject);
         }
       }
     } catch (VcsException e) {
       Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myErrorNotificationTitle,
                                                 "Be sure to resolve all conflicts first. <br/>" +
                                                 myErrorNotificationAdditionalDescription + "<br/>" +
-                                                e.getLocalizedMessage(), NotificationType.WARNING), myProject);
+                                                e.getLocalizedMessage(), NotificationType.ERROR), myProject);
+    }
+    return false;
+  }
+
+  /**
+   * Does the same as {@link #mergeFiles(java.util.Collection)}, but just returns the result of merging without proceeding with update
+   * or other operation. Also notifications are a bit different.
+   * @return true if all conflicts were merged, false if unmerged files remain or in the case of error.
+   */
+  private boolean justMerge(@NotNull final Collection<VirtualFile> roots) {
+    try {
+      Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, roots);
+      if (unmergedFiles.isEmpty()) {
+        return true;
+      } else {
+        final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override public void run() {
+            final MergeProvider mergeProvider = myReverseMerge ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
+            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), mergeProvider);
+          }
+        });
+
+        unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, roots);
+        if (unmergedFiles.isEmpty()) {
+          return true;
+        } else {
+          Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Not all conflicts resolved",
+                                                    "You should <a href='resolve'>resolve</a> all conflicts before update. <br/>" +
+                                                    myErrorNotificationAdditionalDescription, NotificationType.WARNING, new ResolveNotificationListener(roots)), myProject);
+        }
+      }
+    } catch (VcsException e) {
+      Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Not all conflicts resolved",
+                                                "Be sure to resolve all conflicts before update. <br/>" +
+                                                myErrorNotificationAdditionalDescription + "<br/>" +
+                                                e.getLocalizedMessage(), NotificationType.ERROR), myProject);
     }
     return false;
   }
@@ -117,4 +157,22 @@ public class GitMergeConflictResolver {
     return true;
   }
 
+  private class ResolveNotificationListener implements NotificationListener {
+    private final Collection<VirtualFile> myRoots;
+
+    public ResolveNotificationListener(Collection<VirtualFile> roots) {
+      myRoots = roots;
+    }
+
+    @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
+        notification.expire();
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override public void run() {
+            justMerge(myRoots);
+          }
+        });
+      }
+    }
+  }
 }
