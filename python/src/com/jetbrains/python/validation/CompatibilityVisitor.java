@@ -116,18 +116,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       for (PyImportElement importElement : importElements) {
         final PyQualifiedName qName = importElement.getImportedQName();
         if (qName != null) {
-          if (!languageLevel.isPy3K()) {
-            if (qName.matches("builtins")) {
-              len = appendLanguageLevel(message, len, languageLevel);
-              moduleName = "builtins";
-            }
-          }
-          else {
-            if (qName.matches("__builtin__")) {
-              len = appendLanguageLevel(message, len, languageLevel);
-              moduleName = "__builtin__";
-            }
-          }
+          moduleName = qName.toString();
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName))
+            len = appendLanguageLevel(message, len, languageLevel);
         }
       }
     }
@@ -449,32 +440,16 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
             }
           }
         }
-        else {
-          if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
-            len = appendLanguageLevel(message, len, languageLevel);
-          }
-        }
+        //else {
+        //  if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+        //    len = appendLanguageLevel(message, len, languageLevel);
+        //  }
+        //}
       }
     }
     commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
                           len, node, null, false);
   }
-
-  @Override
-  public void visitPyImportElement(PyImportElement node) {
-    super.visitPyImportElement(node);
-    int len = 0;
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(node.getText()) &&
-          !node.getText().equals("__builtin__") && !node.getText().equals("builtins")) {
-        len = appendLanguageLevel(message, len, languageLevel);
-      }
-    }
-    commonRegisterProblem(message, " not have module " + node.getText(), len, node, null, false);
-  }
-
 
   protected abstract void registerProblem(PsiElement node, String s, LocalQuickFix localQuickFix, boolean asError);
 

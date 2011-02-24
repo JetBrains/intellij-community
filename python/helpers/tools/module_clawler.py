@@ -1,8 +1,11 @@
 __author__ = 'catherine'
 
 import urllib2
+import datetime
 from BeautifulSoup import BeautifulSoup
 from xml.dom import minidom
+
+exclude = ['StringIO', 'cStringIO']
 
 def get_address(version):
   return "http://docs.python.org/release/" + str(version) + "/modindex.html"
@@ -68,6 +71,8 @@ def get_functions_from_page(link, module):
         tt = None
     if tt is not None:
       func = str(tt.text)
+      if func in exclude or (module[0] + "." + func) in exclude:
+        continue
       if func.startswith(module[0] + "."):
         functions.add(func)
       else:
@@ -114,13 +119,17 @@ all_versions = (2.4, 2.5, 2.6, 2.7, 3.0, 3.1)
 all_functions = set()
 root_elem = doc.createElement("root")
 
+print ("Start searching for all functions")
 for version in all_versions:
+  print ("version " + str(version) + " started at " + str(datetime.datetime.now()))
   supported = get_supported_functions(version)
   all_functions = all_functions.union(supported)
   builtins = get_builtins(version)
   all_functions = all_functions.union(builtins)
 
+print ("Start searching unsupported functions")
 for version in all_versions:
+  print ("version " + str(version) + " started at " + str(datetime.datetime.now()))
   version_elem = doc.createElement("python")
   version_elem.setAttribute('version', str(version))
   supported = get_supported_functions(version)
@@ -143,8 +152,9 @@ for version in all_versions:
     version_elem.appendChild(elem)
 
   root_elem.appendChild(version_elem)
-doc.appendChild(root_elem)
 
+doc.appendChild(root_elem)
+print ("Versions processing finished at " + str(datetime.datetime.now()))
 file_handler = open("versions.xml", 'w')
 doc.writexml(file_handler)
 file_handler.close()
