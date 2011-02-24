@@ -22,7 +22,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -67,7 +66,7 @@ public class AnalyzeStacktraceUtil {
 
   @Nullable
   public static String getTextInClipboard() {
-    final Transferable contents = CopyPasteManagerEx.getInstanceEx().getSystemClipboardContents(false);
+    final Transferable contents = CopyPasteManagerEx.getInstanceEx().getSystemClipboardContents();
     if (contents != null) {
       try {
         return (String)contents.getTransferData(DataFlavor.stringFlavor);

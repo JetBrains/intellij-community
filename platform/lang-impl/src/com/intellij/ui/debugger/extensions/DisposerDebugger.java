@@ -25,6 +25,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -204,8 +205,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
       public void actionPerformed(AnActionEvent e) {
         try {
-          Toolkit.getDefaultToolkit().getSystemClipboard()
-            .setContents(new TextTransferrable(myAllocation.getText(), myAllocation.getText()), null);
+          CopyPasteManager.getInstance().setContents(new TextTransferrable(myAllocation.getText(), myAllocation.getText()));
         }
         catch (HeadlessException e1) {
           LOG.error(e1);

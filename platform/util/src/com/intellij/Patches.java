@@ -124,10 +124,10 @@ public class Patches {
   public static final boolean MAC_HIDE_QUIT_HACK = false;
 
   /**
-   * Causes calling thread to lock up acquiring content of the system clipboard on linux. Being called from the swing thread an
-   * application stops responding.
+   * The corresponding bug (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143) is marked as fixed but it isn't really fixed.
+   * {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may took 10 seconds if clipboard owner is not responding.
    */
-  public static final boolean SUN_BUG_ID_4818143 = SystemInfo.isLinux || SystemInfo.isFreeBSD || SystemInfo.isMac;
+  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isLinux || SystemInfo.isFreeBSD || SystemInfo.isMac;
 
   /**
    * Java does not recognize the optional BOM which can begin a UTF-8 stream.
