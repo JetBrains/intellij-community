@@ -4,10 +4,8 @@
  */
 package com.intellij.coverage.listeners;
 
-import com.intellij.util.ArrayUtil;
-
 public abstract class CoverageListener {
-  private static final Class[] EMPTY_CLASS_ARRAY = ArrayUtil.EMPTY_CLASS_ARRAY;
+  private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
   private Object myProjectData;
 
   protected static String sanitize(String className, String methodName) {
