@@ -352,4 +352,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testResultOfAssignmentUsed() {
     doTest(new GroovyResultOfAssignmentUsedInspection());
   }
+
+  public void testThisTypeInStaticContext() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }
