@@ -30,7 +30,7 @@ public abstract class PyModuleMembersProvider {
 
   @Nullable
   public PsiElement resolveMember(PyFile module, String name) {
-    for (PyDynamicMember o : getMembers(module, ResolveImportUtil.NOT_IN_IMPORT)) {
+    for (PyDynamicMember o : getMembers(module, ResolveImportUtil.PointInImport.NONE)) {
       if (o.getName().equals(name)) {
         return o.resolve(module);
       }

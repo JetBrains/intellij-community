@@ -275,4 +275,22 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testSuperClassAttributesNoCompletionInFunc() {
     doTest();
   }
+
+  public void testRelativeImport() {  // PY-2816
+    myFixture.copyDirectoryToProject("completion/relativeImport", "relativeImport");
+    myFixture.configureByFile("relativeImport/pkg/main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/relativeImport/pkg/main.after.py");
+  }
+
+  public void testRelativeImportNameFromInitPy() {  // PY-2816
+    myFixture.copyDirectoryToProject("completion/relativeImport", "relativeImport");
+    myFixture.configureByFile("relativeImport/pkg/name.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/relativeImport/pkg/name.after.py");
+  }
+
+  public void testImport() {
+    doTest();
+  }
 }

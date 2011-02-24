@@ -24,6 +24,10 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
     doTest();    
   }
 
+  public void testPy2862() {
+    doTest();
+  }
+
   public void testSuggestKeywordArgumentName() {   // PY-1260
     doTestSuggestions(PyExpression.class, "extra_context");
   }

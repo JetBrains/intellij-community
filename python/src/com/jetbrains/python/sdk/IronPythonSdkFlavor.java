@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public void addToPythonPath(GeneralCommandLine cmd, String path) {
-    addToEnv(cmd, "IRONPYTHONPATH", path);
+  public void addToPythonPath(GeneralCommandLine cmd, Collection<String> path) {
+    addToEnv(cmd, "IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator));
   }
 }

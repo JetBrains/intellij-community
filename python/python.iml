@@ -23,7 +23,7 @@
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="xdebugger-api" />
-    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" />
     <orderEntry type="module" module-name="yaml" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />

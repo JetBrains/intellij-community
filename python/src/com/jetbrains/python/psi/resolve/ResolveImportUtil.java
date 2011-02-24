@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_MODULE;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.AS_NAME;
-
 /**
  * @author dcheryasov
  */
@@ -909,18 +906,6 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement findImportedNameInsideModule(@NotNull PyImportElement where, String name) {
-    /*
-    PointInImport point = getPointInImport(where);
-    if (point.role == AS_NAME) {
-      final PyReferenceExpression source = point.fromImportStatement.getImportSource();
-      if (source != null) {
-        PsiElement resolved = source.getReference().resolve();
-        if (resolved instanceof PyFile) {
-          return ((PyFile)resolved).findExportedName(name);
-        }
-      }
-    }
-    */
     PyStatement stmt = where.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {
       final PyFromImportStatement from_import = (PyFromImportStatement)stmt;
@@ -937,40 +922,22 @@ public class ResolveImportUtil {
     return null;
   }
 
-  /**
-   * Points to an import statement and role as found by {@link #getPointInImport(PsiReference)}.
-   * Immutable.
-   */
-  public static class PointInImport {
-    public final PyFromImportStatement fromImportStatement;
-    public final PyImportStatement importStatement;
-    public final ROLE role;
+  public static enum PointInImport {
+    /**
+     * The reference is not inside an import statement.
+     */
+    NONE,
 
-    PointInImport(PyFromImportStatement fromImportStatement, PyImportStatement importStatement, ROLE role) {
-      this.fromImportStatement = fromImportStatement;
-      this.importStatement = importStatement;
-      this.role = role;
-    }
+    /**
+     * The reference is inside import and refers to a module
+     */
+    AS_MODULE,
 
-    public static enum ROLE {
-      /**
-       * The reference is not inside an import statement.
-       */
-      NONE,
-
-      /**
-       * The reference is inside import and refers to a module
-       */
-      AS_MODULE,
-
-      /**
-       * The reference is inside import and refers to a name imported from a module
-       */
-      AS_NAME
-    }
+    /**
+     * The reference is inside import and refers to a name imported from a module
+     */
+    AS_NAME
   }
-
-  public static final PointInImport NOT_IN_IMPORT = new PointInImport(null, null, PointInImport.ROLE.NONE);
 
   /**
    * @param element what we test (identifier, reference, import element, etc)
@@ -982,23 +949,17 @@ public class ResolveImportUtil {
       PyImportElement.class, PyFromImportStatement.class
     );
     if (parent instanceof PyFromImportStatement) {
-      return new PointInImport((PyFromImportStatement)parent, null, AS_MODULE); // from foo ...
+      return PointInImport.AS_MODULE; // from foo ...
     }
     if (parent instanceof PyImportElement) {
       PsiElement statement = parent.getParent();
       if (statement instanceof PyImportStatement) {
-        return new PointInImport(null, (PyImportStatement)statement, AS_MODULE); // import foo,...
+        return PointInImport.AS_MODULE; // import foo,...
       }
       else if (statement instanceof PyFromImportStatement) {
-        PyFromImportStatement importer = (PyFromImportStatement)statement; // from ??? import foo
-        if (importer.getImportSource() == null && importer.getRelativeLevel() > 0) {
-          return new PointInImport(importer, null, AS_MODULE); // from . import foo,...
-        }
-        else {
-          return new PointInImport(importer, null, AS_NAME);
-        } // from bar import foo,...
+        return PointInImport.AS_NAME;
       }
     }
-    return NOT_IN_IMPORT;
+    return PointInImport.NONE;
   }
 }

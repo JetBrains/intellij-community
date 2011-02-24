@@ -8,8 +8,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -20,9 +18,9 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,19 +91,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       if (type != null) {
         Object[] variants = getTypeCompletionVariants(myElement, type);
         if (!alreadyHasImportKeyword()) {
-          for (int i=0; i < variants.length; i+=1) {
-            Object item = variants[i];
-            if (item instanceof LookupElementBuilder) {
-              variants[i] = ((LookupElementBuilder)item).setInsertHandler(ImportKeywordHandler.INSTANCE);
-            }
-            else if (item instanceof PsiNamedElement) {
-              final PsiNamedElement element = (PsiNamedElement)item;
-              variants[i] = LookupElementBuilder
-                .create(element.getName()) // it can't really have null name
-                .setIcon(element.getIcon(0))
-                .setInsertHandler(ImportKeywordHandler.INSTANCE);
-            }
-          }
+          replaceInsertHandler(variants, ImportKeywordHandler.INSTANCE);
         }
         return variants;
       }
@@ -116,6 +102,22 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     else {
       // complete to possible modules
       return new ImportVariantCollector().execute();
+    }
+  }
+
+  private static void replaceInsertHandler(Object[] variants, final InsertHandler<LookupElement> insertHandler) {
+    for (int i=0; i < variants.length; i+=1) {
+      Object item = variants[i];
+      if (item instanceof LookupElementBuilder) {
+        variants[i] = ((LookupElementBuilder)item).setInsertHandler(insertHandler);
+      }
+      else if (item instanceof PsiNamedElement) {
+        final PsiNamedElement element = (PsiNamedElement)item;
+        variants[i] = LookupElementBuilder
+          .create(element.getName()) // it can't really have null name
+          .setIcon(element.getIcon(0))
+          .setInsertHandler(insertHandler);
+      }
     }
   }
 
@@ -146,7 +148,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
 
     public Object[] execute() {
-      int relative_level = 0;
+      int relative_level = -1;
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(myNamesAlready);
       InsertHandler<LookupElement> insertHandler = null;
 
@@ -208,7 +210,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
         // look at dir by level
-        if (myCurrentFile != null && (relative_level > 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
+        if (myCurrentFile != null && (relative_level >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(myCurrentFile.getContainingDirectory());
           if (thisQName == null) {
             fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
@@ -219,7 +221,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
       }
-      if (relative_level == 0) {
+      if (relative_level == -1) {
         fillFromQName(PyQualifiedName.fromComponents(), insertHandler);
       }
 
@@ -246,50 +248,23 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
 
     // adds variants found under given dir
-    private void fillFromDir(PsiDirectory target_dir, @Nullable InsertHandler<LookupElement> handler) {
+    private void fillFromDir(PsiDirectory target_dir, @Nullable InsertHandler<LookupElement> insertHandler) {
       if (target_dir != null) {
-        for (PsiElement dir_item : target_dir.getChildren()) {
-          if (dir_item != myCurrentFile) {
-            if (dir_item instanceof PsiDirectory) {
-              final PsiDirectory dir = (PsiDirectory)dir_item;
-              if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
-                final String name = dir.getName();
-                if (PyNames.isIdentifier(name)) {
-                  myObjects.add(LookupElementBuilder
-                                  .create(name)
-                                  .setTypeText(getPresentablePath(dir.getParent()))
-                                  .setIcon(dir.getIcon(Iconable.ICON_FLAG_CLOSED)));
-                }
-              }
-            }
-            else if (dir_item instanceof PsiFile) { // plain file
-              String filename = ((PsiFile)dir_item).getName();
-              if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
-                final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
-                if (PyNames.isIdentifier(name)) {
-                  final PsiDirectory dir = ((PsiFile)dir_item).getContainingDirectory();
-                  myObjects.add(LookupElementBuilder
-                                  .create(name)
-                                  .setTypeText(getPresentablePath(dir))
-                                  .setInsertHandler(handler)
-                                  .setIcon(dir_item.getIcon(0)));
-                }
-              }
-            }
+        PsiFile initPy = target_dir.findFile(PyNames.INIT_DOT_PY);
+        if (initPy instanceof PyFile) {
+          PyModuleType moduleType = new PyModuleType((PyFile)initPy);
+          ProcessingContext context = new ProcessingContext();
+          context.put(PyType.CTX_NAMES, myNamesAlready);
+          Object[] completionVariants = moduleType.getCompletionVariants("", (PyExpression)getElement(), context);
+          if (insertHandler != null) {
+            replaceInsertHandler(completionVariants, insertHandler);
           }
+          myObjects.addAll(Arrays.asList(completionVariants));
+        }
+        else {
+          myObjects.addAll(PyModuleType.getSubmoduleVariants(target_dir, myElement, myNamesAlready));
         }
       }
-    }
-
-    private String getPresentablePath(PsiDirectory directory) {
-      if (directory == null) {
-        return "";
-      }
-      final String path = directory.getVirtualFile().getPath();
-      if (path.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-        return "<built-in>";
-      }
-      return FileUtil.toSystemDependentName(path);
     }
   }
 

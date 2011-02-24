@@ -219,6 +219,7 @@ public class ExpressionParsing extends Parsing {
     }
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     if (!parseSingleExpression(false)) {
+      myBuilder.error("value expression expected");
       marker.drop();
       return false;
     }

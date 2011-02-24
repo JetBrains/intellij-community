@@ -46,19 +46,19 @@ IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 STRING_LITERAL=[UuBb]?({RAW_STRING}|{QUOTED_STRING})
 RAW_STRING=[Rr]{QUOTED_STRING}
 QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
-QUOTED_LITERAL="'"([^\\\'\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*("'"|\\)?
+QUOTED_LITERAL="'" ([^\\\'\r\n] | {ESCAPE_SEQUENCE} | (\\[\r\n]))* ("'"|\\)?
 DOUBLE_QUOTED_LITERAL=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*?(\"|\\)?
 ESCAPE_SEQUENCE=\\[^\r\n]
 
 ANY_ESCAPE_SEQUENCE = \\[^]
 
 THREE_QUO = (\"\"\")
-ONE_TWO_QUO = (\"[^\"]) | (\"\"[^\"])
+ONE_TWO_QUO = (\"[^\"]) | (\"\\[^]) | (\"\"[^\"]) | (\"\"\\[^])
 QUO_STRING_CHAR = [^\\\"] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_QUO}
 TRIPLE_QUOTED_LITERAL = {THREE_QUO} {QUO_STRING_CHAR}* {THREE_QUO}?
 
 THREE_APOS = (\'\'\')
-ONE_TWO_APOS = ('[^']) | (''[^'])
+ONE_TWO_APOS = ('[^']) | ('\\[^]) | (''[^']) | (''\\[^])
 APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 

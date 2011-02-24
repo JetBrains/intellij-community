@@ -11,20 +11,25 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class PythonRunConfiguration extends AbstractPythonRunConfiguration 
-  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams
+  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider
 {
   private String myScriptName;
   private String myScriptParameters;
@@ -107,4 +112,23 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptParameters(source.getScriptParameters());
   }
 
+  @Override
+  public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
+    if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (virtualFile != null && Comparing.equal(new File(virtualFile.getPath()).getAbsolutePath(),
+                                                 new File(myScriptName).getAbsolutePath())) {
+        return new RefactoringElementAdapter() {
+          @Override
+          public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
+            VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
+            if (virtualFile != null) {
+              myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
+            }
+          }
+        };
+      }
+    }
+    return null;
+  }
 }

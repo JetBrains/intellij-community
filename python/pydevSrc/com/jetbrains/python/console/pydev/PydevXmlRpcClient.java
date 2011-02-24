@@ -3,6 +3,7 @@ package com.jetbrains.python.console.pydev;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.NetUtils;
 import org.apache.xmlrpc.AsyncCallback;
+import org.apache.xmlrpc.CommonsXmlRpcTransportFactory;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
 
@@ -44,7 +45,7 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    */
   private static final Logger LOG = Logger.getInstance(PydevXmlRpcClient.class.getName());
 
-  private static final long TIME_LIMIT = 30000;
+  private static final long TIME_LIMIT = 60000;
 
 
   /**
@@ -52,7 +53,11 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    */
   public PydevXmlRpcClient(Process process, ThreadStreamReader stdErrReader, ThreadStreamReader stdOutReader, int port)
     throws MalformedURLException {
-    this.impl = new XmlRpcClient(NetUtils.getLocalHostString(), port);
+
+    String hostname = NetUtils.getLocalHostString();
+    URL url = new URL("http://" + hostname + ':' + port + "/RPC2");
+
+    this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
     this.process = process;
     this.stdErrReader = stdErrReader;
     this.stdOutReader = stdOutReader;

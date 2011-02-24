@@ -158,6 +158,18 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("'''abc\nd", "Py:STRING_LITERAL");
   }
 
+  public void testEscapedClosingTripleApos() {  // PY-1777
+    doTest("''' foo '\\''' bar '''", "Py:STRING_LITERAL");
+  }
+
+  public void testEscapedClosingTripleQuote() {  // PY-1777
+    doTest(THREE_QUOTES + " foo \"\\" + THREE_QUOTES + " bar " + THREE_QUOTES, "Py:STRING_LITERAL");
+  }
+
+  public void testOddNumberOfQuotes() {  // PY-2802
+    doTest("'''foo''''", "Py:STRING_LITERAL", "Py:STRING_LITERAL");
+  }
+
   public void testDedentBeforeComment() {  // PY-2209 & friends
     doTest("class UserProfile:\n" +
            "    pass\n" +

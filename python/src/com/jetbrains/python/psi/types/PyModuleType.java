@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.ROLE.*;
-// .impl looks impure
 
 /**
  * @author yole
@@ -64,28 +62,27 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
 
   /**
-   * @return a list of submodules of this module, either files or dirs, for easier naming; may contain filenames
+   * @param directory the module directory
+   *
+   * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain filenames
    *         not suitable for import.
    */
   @NotNull
-  public List<PsiFileSystemItem> getSubmodulesList() {
+  private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory) {
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
 
-    if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
-      PsiDirectory mydir = myModule.getContainingDirectory();
-      if (mydir != null) { // just in case
-        // file modules
-        for (PsiFile f : mydir.getFiles()) {
-          final String filename = f.getName();
-          // if we have a binary module, we'll most likely also have a stub for it in site-packages
-          if ((f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
-            result.add(f);
-          }
+    if (directory != null) { // just in case
+      // file modules
+      for (PsiFile f : directory.getFiles()) {
+        final String filename = f.getName();
+        // if we have a binary module, we'll most likely also have a stub for it in site-packages
+        if ((f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
+          result.add(f);
         }
-        // dir modules
-        for (PsiDirectory dir : mydir.getSubdirectories()) {
-          if (dir.findFile(PyNames.INIT_DOT_PY) instanceof PyFile) result.add(dir);
-        }
+      }
+      // dir modules
+      for (PsiDirectory dir : directory.getSubdirectories()) {
+        if (dir.findFile(PyNames.INIT_DOT_PY) instanceof PyFile) result.add(dir);
       }
     }
     return result;
@@ -113,9 +110,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
 
-    if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
+    if (point == ResolveImportUtil.PointInImport.NONE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when not imported from, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor(location);
-      processor.setPlainNamesOnly(point.role == AS_NAME); // no parens after imported function names
+      processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -130,21 +127,45 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    if (point.role == AS_MODULE || point.role == AS_NAME) { // when imported from somehow, add submodules
-      for (PsiFileSystemItem pfsi : getSubmodulesList()) {
-        if (pfsi == location.getContainingFile().getOriginalFile()) continue;
-        String s = pfsi.getName();
-        int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
-        if (pos > 0) s = s.substring(0, pos);
-        if (!PyNames.isIdentifier(s)) continue;
-        if (names_already != null) {
-          if (names_already.contains(s)) continue;
-          else names_already.add(s);
-        }
-        result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s).setIcon(pfsi.getIcon(0)));
+    if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
+      if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
+        result.addAll(getSubmoduleVariants(myModule.getContainingDirectory(), location, names_already));
       }
     }
     return result.toArray();
+  }
+
+  public static List<LookupElement> getSubmoduleVariants(final PsiDirectory directory,
+                                                         PsiElement location,
+                                                         Set<String> names_already) {
+    List<LookupElement> result = new ArrayList<LookupElement>();
+    for (PsiFileSystemItem pfsi : getSubmodulesList(directory)) {
+      if (pfsi == location.getContainingFile().getOriginalFile()) continue;
+      String s = pfsi.getName();
+      int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
+      if (pos > 0) s = s.substring(0, pos);
+      if (!PyNames.isIdentifier(s)) continue;
+      if (names_already != null) {
+        if (names_already.contains(s)) continue;
+        else names_already.add(s);
+      }
+      result.add(LookupElementBuilder.create(pfsi, s)
+                   .setTypeText(getPresentablePath(directory))
+                   .setPresentableText(s)
+                   .setIcon(pfsi.getIcon(0)));
+    }
+    return result;
+  }
+
+  private static String getPresentablePath(PsiDirectory directory) {
+    if (directory == null) {
+      return "";
+    }
+    final String path = directory.getVirtualFile().getPath();
+    if (path.contains(PythonSdkType.SKELETON_DIR_NAME)) {
+      return "<built-in>";
+    }
+    return FileUtil.toSystemDependentName(path);
   }
 
   public String getName() {

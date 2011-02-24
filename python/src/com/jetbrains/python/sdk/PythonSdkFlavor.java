@@ -92,8 +92,8 @@ public abstract class PythonSdkFlavor {
     return Collections.emptyList();
   }
 
-  public void addToPythonPath(GeneralCommandLine cmd, String path) {
-    addToEnv(cmd, PYTHONPATH, path);
+  public void addToPythonPath(GeneralCommandLine cmd, Collection<String> path) {
+    addToEnv(cmd, PYTHONPATH, StringUtil.join(path, File.pathSeparator));
   }
 
   public static void addToEnv(GeneralCommandLine cmd, final String key, String value) {

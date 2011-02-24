@@ -1,7 +1,9 @@
 package com.jetbrains.python.console;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -37,6 +39,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private IndentHelper myIndentHelper;
 
   private final ConsoleCommunication myConsoleCommunication;
+  private boolean myEnabled = false;
 
   public PydevConsoleExecuteActionHandler(LanguageConsoleViewImpl consoleView,
                                           ProcessHandler myProcessHandler,
@@ -90,7 +93,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       return;
     }
 
-    if (myCurrentIndentSize != -1) {
+    if (myCurrentIndentSize != -1 && !StringUtil.isEmptyOrSpaces(line)) {
       final int indent = myIndentHelper.getIndent(line, false);
       if (indent >= myCurrentIndentSize) {
         indentEditor(currentEditor, indent);
@@ -176,5 +179,26 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
       }
     });
+  }
+
+  public void runExecuteAction(LanguageConsoleImpl languageConsole,
+                                  ConsoleHistoryModel consoleHistoryModel) {
+    if (isEnabled()) {
+      super.runExecuteAction(languageConsole, consoleHistoryModel);
+    } else {
+      HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
+    }
+  }
+
+  protected String getConsoleIsNotEnabledMessage() {
+    return "Console is not enabled.";
+  }
+
+  protected void setEnabled(boolean flag) {
+    myEnabled = flag;
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
   }
 }

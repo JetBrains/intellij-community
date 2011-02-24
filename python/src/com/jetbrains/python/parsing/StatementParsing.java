@@ -714,8 +714,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       else {
         myBuilder.advanceLexer();
-        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
-          parseStatement();
+        if (myBuilder.eof()) {
+          myBuilder.error("indented block expected");
+        }
+        else {
+          while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+            parseStatement();
+          }
         }
       }
 
@@ -734,11 +739,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     else {
       final PsiBuilder.Marker marker = myBuilder.mark();
-      parseSimpleStatement(true);
-      while (matchToken(PyTokenTypes.SEMICOLON)) {
-        if (matchToken(PyTokenTypes.STATEMENT_BREAK))
-          break;
+      if (myBuilder.eof()) {
+        myBuilder.error("statement expected");
+      }
+      else {
         parseSimpleStatement(true);
+        while (matchToken(PyTokenTypes.SEMICOLON)) {
+          if (matchToken(PyTokenTypes.STATEMENT_BREAK))
+            break;
+          parseSimpleStatement(true);
+        }
       }
       marker.done(PyElementTypes.STATEMENT_LIST);
       if (endMarker != null) {

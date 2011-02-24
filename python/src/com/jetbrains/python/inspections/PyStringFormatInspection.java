@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -24,6 +25,8 @@ import java.util.Map;
  * @author Alexey.Ivanov
  */
 public class PyStringFormatInspection extends PyInspection {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.inspections.PyStringFormatInspection");
+
   @Nls
   @NotNull
   @Override
@@ -39,8 +42,6 @@ public class PyStringFormatInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
     private static class Inspection {
-      private static final String FORMAT_FLAGS = "#0- +";
-      private static final String FORMAT_LENGTH = "hlL";
       private static final ImmutableMap<Character, String> FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
         .put('d', "int")
         .put('i', "int")
@@ -272,85 +273,52 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
-        final String literal = formatExpression.getStringValue().replace("%%", "");
+        PyStringFormatParser parser = new PyStringFormatParser(formatExpression.getStringValue());
+        final List<PyStringFormatParser.SubstitutionChunk> chunks = parser.parseSubstitutions();
 
         // 1. The '%' character
-        final String[] sections = literal.split("%");
-
         //  Skip the first item in the sections, it's always empty
-        myExpectedArguments = sections.length - 1;
+        myExpectedArguments = chunks.size();
         myUsedMappingKeys.clear();
 
         // if use mapping keys
-        final boolean mapping = (sections.length > 1 && sections[1].charAt(0) == '(');
-        for (int i = 1; i < sections.length; ++i) {
-          final String section = sections[i];
-          int characterNumber = 0;
+        final boolean mapping = chunks.size() > 0 && chunks.get(0).getMappingKey() != null;
+        for (int i = 0; i < chunks.size(); ++i) {
+          PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
 
           // 2. Mapping key
-          String mappingKey = Integer.toString(i);
+          String mappingKey = Integer.toString(i+1);
           if (mapping) {
-            characterNumber = section.indexOf(")");
-            if (section.charAt(0) != '(' || characterNumber == -1) {
+            if (chunk.getMappingKey() == null || chunk.isUnclosedMapping()) {
               registerProblem(formatExpression, PyBundle.message("INSP.too.few.keys"));
               break;
             }
-            mappingKey = section.substring(1, characterNumber);
+            mappingKey = chunk.getMappingKey();
             myUsedMappingKeys.put(mappingKey, false);
-            ++characterNumber; // Skip ')'
-          }
-
-          // 3. Conversions flags
-          final int length = section.length();
-          while (characterNumber < length && FORMAT_FLAGS.indexOf(section.charAt(characterNumber)) != -1) {
-            ++characterNumber;
           }
 
           // 4. Minimum field width
-          if (characterNumber < length) {
-            characterNumber = inspectWidth(formatExpression, section, characterNumber);
-          }
+          inspectWidth(formatExpression, chunk.getWidth());
 
           // 5. Precision
-          if (characterNumber < length && section.charAt(characterNumber) == '.') {
-            ++characterNumber;
-            characterNumber = inspectWidth(formatExpression, section, characterNumber);
-          }
-
-          // 6. Length modifier
-          if (characterNumber < length && FORMAT_LENGTH.indexOf(section.charAt(characterNumber)) != -1) {
-            ++characterNumber;
-          }
+          inspectWidth(formatExpression, chunk.getPrecision());
 
           // 7. Format specifier
-          if (characterNumber < length) {
-            final char c = section.charAt(characterNumber);
-            if (FORMAT_CONVERSIONS.containsKey(c)) {
-              myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(c));
-              continue;
-            }
+          if (FORMAT_CONVERSIONS.containsKey(chunk.getConversionType())) {
+            myFormatSpec.put(mappingKey, FORMAT_CONVERSIONS.get(chunk.getConversionType()));
+            continue;
           }
           registerProblem(formatExpression, PyBundle.message("INSP.no.format.specifier.char"));
         }
       }
 
-      private int inspectWidth(@NotNull final PyStringLiteralExpression formatExpression,
-                               @NotNull final String section,
-                               int characterNumber) {
-        final int length = section.length();
-        if (section.charAt(characterNumber) == '*') {
+      private void inspectWidth(@NotNull final PyStringLiteralExpression formatExpression, String width) {
+        if ("*".equals(width)){
           ++myExpectedArguments;
-          ++characterNumber;
           if (myUsedMappingKeys.size() > 0) {
             registerProblem(formatExpression, "Can't use \'*\' in formats when using a mapping");
           }
         }
-        else {
-          while (characterNumber < length && Character.isDigit(section.charAt(characterNumber))) {
-            ++characterNumber;
-          }
-        }
-        return characterNumber;
       }
 
       public boolean isProblem() {
