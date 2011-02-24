@@ -49,6 +49,8 @@ public class OpenFileDescriptor implements Navigatable {
   private final RangeMarker myRangeMarker;
   private final Project     myProject;
 
+  private boolean myUseCurrentWindow = false;
+
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset, false);
   }
@@ -212,5 +214,14 @@ public class OpenFileDescriptor implements Navigatable {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public OpenFileDescriptor setUseCurrentWindow(boolean search) {
+    myUseCurrentWindow = search;
+    return this;
+  }
+
+  public boolean isUseCurrentWindow() {
+    return myUseCurrentWindow;
   }
 }

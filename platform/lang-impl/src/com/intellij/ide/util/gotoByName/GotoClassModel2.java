@@ -108,4 +108,9 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   public String getHelpId() {
     return "procedures.navigating.goto.class";
   }
+
+  @Override
+  public boolean willOpenEditor() {
+    return true;
+  }
 }

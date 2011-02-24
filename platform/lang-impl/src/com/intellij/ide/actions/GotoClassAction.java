@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
@@ -61,10 +62,10 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       public void elementChosen(Object element) {
         if (element instanceof PsiElement) {
-          NavigationUtil.activateFileWithPsiElement((PsiElement)element);
+          NavigationUtil.activateFileWithPsiElement((PsiElement)element, !popup.isOpenInCurrentWindowRequested());
         }
         else {
-          ((NavigationItem)element).navigate(true);
+          EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
         }
       }
     }, ModalityState.current(), true);
@@ -73,4 +74,5 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }
+
 }

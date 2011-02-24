@@ -44,6 +44,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
@@ -127,6 +128,8 @@ public abstract class ChooseByNameBase {
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 
+  private boolean myClosedByShiftEnter = false;
+
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
 
@@ -173,6 +176,14 @@ public abstract class ChooseByNameBase {
 
   public void setSearchInAnyPlace(boolean searchInAnyPlace) {
     mySearchInAnyPlace = searchInAnyPlace;
+  }
+
+  public boolean isClosedByShiftEnter() {
+    return myClosedByShiftEnter;
+  }
+
+  public boolean isOpenInCurrentWindowRequested() {
+    return isClosedByShiftEnter();
   }
 
   /**
@@ -419,6 +430,10 @@ public abstract class ChooseByNameBase {
 
     myTextField.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+          myClosedByShiftEnter = true;
+          close(true);
+        }
         if (!myListScrollPane.isVisible()) {
           return;
         }
@@ -435,6 +450,9 @@ public abstract class ChooseByNameBase {
             break;
           case KeyEvent.VK_PAGE_DOWN:
             ListScrollingUtil.movePageDown(myList);
+            break;
+          case KeyEvent.VK_TAB:
+            close(true);
             break;
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
@@ -981,7 +999,7 @@ public abstract class ChooseByNameBase {
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
-
+      setFocusTraversalKeysEnabled(false);
     }
 
     private KeyStroke getShortcut(String actionCodeCompletion) {

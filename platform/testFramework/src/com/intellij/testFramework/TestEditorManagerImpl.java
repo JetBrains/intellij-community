@@ -445,6 +445,11 @@ import java.util.Map;
   }
 
   @Override
+  public boolean hasSplitOrUndockedWindows() {
+    return false;
+  }
+
+  @Override
   @NotNull
   public String getComponentName() {
     return "TestEditorManager";

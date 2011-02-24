@@ -123,4 +123,9 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   public String getHelpId() {
     return "procedures.navigating.goto.class";
   }
+
+  @Override
+  public boolean willOpenEditor() {
+    return true;
+  }
 }

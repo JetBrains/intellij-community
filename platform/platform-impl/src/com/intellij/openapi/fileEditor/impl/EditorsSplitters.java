@@ -594,6 +594,10 @@ public class EditorsSplitters extends JPanel {
           fireRunnable.run();
         }
       }
+
+      if (requestFocus) {
+        window.requestFocus(true);
+      }
     } else {
       fireRunnable.run();
     }

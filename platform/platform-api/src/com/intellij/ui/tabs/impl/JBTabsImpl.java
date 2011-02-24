@@ -3053,4 +3053,9 @@ public class JBTabsImpl extends JComponent
   public boolean isEmptyVisible() {
     return myVisibleInfos.isEmpty();
   }
+
+  @Override
+  public String toString() {
+    return "JBTabs visible=" + myVisibleInfos + " selected=" + mySelectedInfo;
+  }
 }

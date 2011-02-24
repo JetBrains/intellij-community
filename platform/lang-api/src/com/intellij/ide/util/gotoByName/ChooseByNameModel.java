@@ -59,4 +59,6 @@ public interface ChooseByNameModel {
 
   @Nullable
   String getHelpId();
+
+  boolean willOpenEditor();
 }
