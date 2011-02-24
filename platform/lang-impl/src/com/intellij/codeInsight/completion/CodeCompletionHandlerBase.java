@@ -41,9 +41,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -215,26 +213,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     doComplete(time, initializationContext[0]);
   }
 
-  private boolean shouldFocusLookup(CompletionParameters parameters) {
-    if (!autopopup) {
-      return true;
-    }
-
-    switch (CodeInsightSettings.getInstance().AUTOPOPUP_FOCUS_POLICY) {
-      case CodeInsightSettings.ALWAYS: return true;
-      case CodeInsightSettings.NEVER: return false;
-    }
-
-    final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
-    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      final ThreeState result = confidence.shouldFocusLookup(parameters);
-      if (result != ThreeState.UNSURE) {
-        return result == ThreeState.YES;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   private LookupImpl obtainLookup(Editor editor) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
@@ -292,69 +270,40 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
+  private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
                                                                         final CompletionProgressIndicator indicator,
                                                                         final CompletionInitializationContext initContext) {
 
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
-    startSemaphore.down();
-
-    spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              startSemaphore.up();
-              if (autopopup) {
-                indicator.setFocusLookupWhenDone(shouldFocusLookup(parameters));
-              }
-              indicator.duringCompletion(initContext);
-            }
-          });
-        }
-        finally {
-          indicator.duringCompletionPassed();
-        }
-      }
-    });
 
     final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
-    spawnProcess(indicator, new Runnable() {
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              startSemaphore.up();
-              ProgressManager.checkCanceled();
-
-              final LookupElement[] result = CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
-                public void consume(final LookupElement lookupElement) {
-                  indicator.addItem(lookupElement);
-                }
-              });
-
-              indicator.ensureDuringCompletionPassed();
-
-              data.set(result);
-            }
-          });
-        }
-        catch (ProcessCanceledException ignored) {
-        }
-      }
-    });
-
-    startSemaphore.waitFor();
-    return data;
-  }
-
-
-
-  private static void spawnProcess(final ProgressIndicator indicator, final Runnable process) {
     final Runnable computeRunnable = new Runnable() {
       public void run() {
-        ProgressManager.getInstance().runProcess(process, indicator);
+        ProgressManager.getInstance().runProcess(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  startSemaphore.up();
+                  ProgressManager.checkCanceled();
+
+                  indicator.duringCompletion(initContext);
+                  ProgressManager.checkCanceled();
+
+                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
+                    public void consume(final LookupElement lookupElement) {
+                      indicator.addItem(lookupElement);
+                    }
+                  }));
+                }
+              });
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+          }
+        }, indicator);
       }
     };
 
@@ -363,7 +312,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
     }
+
+    startSemaphore.waitFor();
+    return data;
   }
+
 
   private CompletionParameters createCompletionParameters(int invocationCount, final CompletionInitializationContext initContext) {
     final Ref<CompletionContext> ref = Ref.create(null);
