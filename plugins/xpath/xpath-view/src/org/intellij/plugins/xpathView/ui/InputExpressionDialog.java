@@ -84,7 +84,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private final MultilineEditor myEditor;
 
     private final EditorTextField myComboboxEditor;
-    private final ComboBox myComboBox = new ComboBox();
+    private final ComboBox myComboBox = new ComboBox(300);
     private JComponent myEditorComponent;
 
     @Nullable private Set<Namespace> myNamespaceCache;
@@ -121,8 +121,9 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 final HistoryElement item = myModel.getSelectedItem();
                 if (item != null) {
                     myContextProvider.getNamespaceContext().setMap(asMap(item.namespaces));
-                    analyzer.restart();
-                    analyzer.updateVisibleHighlighters(getEditor());
+                    if (myXPathFile != null) {
+                      analyzer.restart(myXPathFile);
+                    }
                 }
             }
         });
@@ -219,8 +220,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        analyzer.restart();
-        analyzer.updateVisibleHighlighters(getEditor());
+        analyzer.restart(myXPathFile);
     }
 
     private Set<String> findUnresolvedPrefixes() {
@@ -304,7 +304,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         myForm.getEditorPanel().add(myEditorComponent = editor, gridConstraints);
     }
 
-    protected Document createXPathDocument(Project project, HistoryElement historyElement) {
+    protected static Document createXPathDocument(Project project, HistoryElement historyElement) {
 
         final String expression = historyElement != null ? historyElement.expression : "";
         final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("DummyFile.xpath", XPathFileType.XPATH, expression, LocalTimeCounter.currentTime(), true);
