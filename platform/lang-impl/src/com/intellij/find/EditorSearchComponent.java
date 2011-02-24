@@ -35,9 +35,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -49,6 +47,7 @@ import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -98,6 +97,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final JCheckBox myCbWholeWords;
   private final JCheckBox myCbInComments;
   private final JCheckBox myCbInLiterals;
+
+  private final JPanel myOptionsPane;
+  private final LinkLabel myMoreOptionsButton;
 
   private final MyLivePreviewController myLivePreviewController;
   private final LivePreview myLivePreview;
@@ -201,13 +203,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setMatchesLimit(MATCHES_LIMIT);
 
 
-    JPanel leadPanel = createLeadPane();
+    final JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
 
-    if (myIsReplace) {
-      configureReplacementPane();
-      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    }
     mySearchField = createTextField();
 
     leadPanel.add(mySearchField);
@@ -234,13 +232,31 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myCbInComments = new NonFocusableCheckBox("In comments");
     myCbInLiterals = new NonFocusableCheckBox("In literals");
 
+    myOptionsPane = new JPanel() {
+      @Override
+      protected void paintComponent(Graphics graphics) {}
+    };
+    myOptionsPane.setLayout(new BoxLayout(myOptionsPane, BoxLayout.Y_AXIS));
+
     leadPanel.add(cbMatchCase);
-    leadPanel.add(myCbWholeWords);
+    myOptionsPane.add(myCbWholeWords);
     leadPanel.add(myCbRegexp);
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      leadPanel.add(myCbInComments);
-      leadPanel.add(myCbInLiterals);
+      myOptionsPane.add(myCbInComments);
+      myOptionsPane.add(myCbInLiterals);
     }
+
+    myMoreOptionsButton = new LinkLabel("more options", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myOptionsPane);
+        Point point = new Point((int)(myMoreOptionsButton.getX() + myMoreOptionsButton.getBounds().getWidth()/2),
+                                (int)(myMoreOptionsButton.getY() + myMoreOptionsButton.getBounds().getHeight()/2));
+        balloonBuilder.createBalloon().show(new RelativePoint(leadPanel, point), Balloon.Position.below);
+      }
+    });
+
+    leadPanel.add(myMoreOptionsButton);
 
     cbMatchCase.setSelected(isCaseSensitive());
     myCbWholeWords.setSelected(isWholeWords());
@@ -259,6 +275,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setSmallerFontAndOpaque(myCbRegexp);
     setSmallerFontAndOpaque(myCbInComments);
     setSmallerFontAndOpaque(myCbInLiterals);
+
+    if (myIsReplace) {
+      configureReplacementPane();
+      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
+    }
+
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -434,8 +456,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     replacement.add(myReplaceAllButton);
     replacement.add(myExcludeButton);
 
-    replacement.add(mySelectionOnly);
-    replacement.add(myPreserveCase);
+    myOptionsPane.add(mySelectionOnly);
+    myOptionsPane.add(myPreserveCase);
 
     setSmallerFontAndOpaque(myReplaceButton);
     setSmallerFontAndOpaque(myReplaceAllButton);
