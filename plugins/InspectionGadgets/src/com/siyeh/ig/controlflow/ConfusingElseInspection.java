@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,26 +31,31 @@ import org.jetbrains.annotations.Nullable;
 
 public class ConfusingElseInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ConfusingElseBranch";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("confusing.else.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "confusing.else.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConfusingElseVisitor();
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ConfusingElseFix();
@@ -64,6 +69,7 @@ public class ConfusingElseInspection extends BaseInspection {
                     "confusing.else.unwrap.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement ifKeyword = descriptor.getPsiElement();
@@ -127,15 +133,13 @@ public class ConfusingElseInspection extends BaseInspection {
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
                 return;
             }
-            final PsiStatement nextStatement =
-                    PsiTreeUtil.getNextSiblingOfType(statement,
-                            PsiStatement.class);
+            final PsiStatement nextStatement = getNextStatement(statement);
             if (nextStatement == null) {
                 return;
             }
             if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
                 return;
-                //protecting against an edge case where both branches return
+                // protecting against an edge case where both branches return
                 // and are followed by a case label
             }
             final PsiElement elseToken = statement.getElseElement();
@@ -143,6 +147,24 @@ public class ConfusingElseInspection extends BaseInspection {
                 return;
             }
             registerError(elseToken);
+        }
+
+        private static PsiStatement getNextStatement(PsiIfStatement statement) {
+            while (true) {
+                final PsiElement parent = statement.getParent();
+                if (parent instanceof PsiIfStatement) {
+                    final PsiIfStatement parentIfStatement =
+                            (PsiIfStatement) parent;
+                    final PsiStatement elseBranch =
+                            parentIfStatement.getElseBranch();
+                    if (elseBranch == statement) {
+                        statement = parentIfStatement;
+                        continue;
+                    }
+                }
+                return PsiTreeUtil.getNextSiblingOfType(statement,
+                        PsiStatement.class);
+            }
         }
     }
 }
