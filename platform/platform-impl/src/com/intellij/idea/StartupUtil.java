@@ -98,7 +98,7 @@ public class StartupUtil {
 
     String version = System.getProperty("java.version");
 
-    if (version.startsWith("1.5") || version.startsWith("1.6")) {
+    if (version.startsWith("1.6") || version.startsWith("1.7")) {
       return true;
     }
 
@@ -108,12 +108,12 @@ public class StartupUtil {
 
   private static void showVersionMismatch(final String version) {
     if (isHeadless()) { //team server inspections
-      System.out.println("The JDK version is " + version + " but " + ApplicationNamesInfo.getInstance().getProductName() + " requires JDK 1.5 or 1.6");
+      System.out.println("The JDK version is " + version + " but " + ApplicationNamesInfo.getInstance().getProductName() + " requires JDK 1.6 or 1.7");
       return;
     }
     JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                   "The JDK version is " + version + "\n" + ApplicationNamesInfo.getInstance().getProductName() +
-                                  " requires JDK 1.5 or 1.6",
+                                  " requires JDK 1.6 or 1.7",
                                   "Java Version Mismatch",
                                   JOptionPane.INFORMATION_MESSAGE);
   }
