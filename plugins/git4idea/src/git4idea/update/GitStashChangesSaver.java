@@ -61,6 +61,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
     LocalFileSystem.getInstance().refreshIoFiles(files);
   }
 
+  @Override
+  protected boolean wereChangesSaved() {
+    return !myStashedRoots.isEmpty();
+  }
+
   private void stash(Collection<VirtualFile> roots) throws VcsException {
     for (VirtualFile root : roots) {
       final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);

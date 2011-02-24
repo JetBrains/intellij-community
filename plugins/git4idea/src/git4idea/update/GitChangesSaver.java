@@ -52,15 +52,6 @@ public abstract class GitChangesSaver {
 
   protected List<LocalChangeList> myChangeLists; // Copy of local change lists - saved before update, used after update to sort changes
 
-  // TODO show a link to restore local chanegs
-  // TODO if no changes were stored, don't show this notification
-  public void notifyLocalChangesAreNotRestored() {
-    Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
-                                              "Before update your uncommitted changes were saved to stash/shelf<br/>" +
-                                              "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                              "Thus the local changes were not restored.", NotificationType.WARNING));
-  }
-
   /**
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
    * @return {@link GitStashChangesSaver}, {@link GitShelveChangesSaver} or {@link GitDumbChangesSaver}
@@ -107,6 +98,16 @@ public abstract class GitChangesSaver {
     restoreChangeLists();
   }
 
+  // TODO show a link to restore local chanegs
+  public void notifyLocalChangesAreNotRestored() {
+    if (wereChangesSaved()) {
+      Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Local changes were not restored",
+                                                "Before update your uncommitted changes were saved to stash/shelf<br/>" +
+                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
+                                                "Thus the local changes were not restored.", NotificationType.WARNING));
+    }
+  }
+
   /**
    * Saves local changes - specific for chosen save strategy.
    */
@@ -116,6 +117,8 @@ public abstract class GitChangesSaver {
    * Loads the changes - specific for chosen save strategy.
    */
   protected abstract void load() throws VcsException;
+
+  protected abstract boolean wereChangesSaved();
 
   /**
    * Utility method - gets {@link FilePath}s of changed files in a single collection.

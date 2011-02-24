@@ -45,7 +45,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     for (LocalChangeList l : myChangeLists) {
       changes.addAll(l.getChanges());
     }
-    if (changes.size() > 0) {
+    if (!changes.isEmpty()) {
       myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
       myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
@@ -67,5 +67,9 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       }
     }
   }
-  
+
+  @Override
+  protected boolean wereChangesSaved() {
+    return myShelvedChangeList != null;
+  }
 }
