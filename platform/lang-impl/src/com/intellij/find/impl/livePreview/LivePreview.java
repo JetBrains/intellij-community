@@ -51,7 +51,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   public interface Delegate {
 
     @Nullable
-    String getReplacementPreviewText(Editor editor, LiveOccurrence liveOccurrence);
+    String getStringToReplace(Editor editor, LiveOccurrence liveOccurrence);
 
     @Nullable
     TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor);
@@ -220,7 +220,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final LiveOccurrence cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
-      String replacementPreviewText = myDelegate.getReplacementPreviewText(editor, cursor);
+      String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
       if (replacementPreviewText != null) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
