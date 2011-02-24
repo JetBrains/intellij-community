@@ -79,6 +79,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private JTextField myReplaceField;
   private final Color myDefaultBackground;
 
+  private JButton myReplaceButton;
+  private JButton myReplaceAllButton;
+  private JButton myExcludeButton;
+
   private JCheckBox myPreserveCase;
   private JCheckBox mySelectionOnly;
 
@@ -95,7 +99,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final JCheckBox myCbInComments;
   private final JCheckBox myCbInLiterals;
 
-  private final LivePreviewControllerBase myLivePreviewController;
+  private final MyLivePreviewController myLivePreviewController;
   private final LivePreview myLivePreview;
 
 
@@ -149,11 +153,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
 
     updateSelection();
+    updateExcludeStatus();
   }
 
   @Override
   public void cursorMoved() {
     updateSelection();
+    updateExcludeStatus();
   }
 
   private void updateSelection() {
@@ -189,19 +195,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     mySearchResults = new SearchResults(myEditor);
     myLivePreview = new LivePreview(mySearchResults);
 
-    myLivePreviewController = new LivePreviewControllerBase(mySearchResults, myLivePreview) {
-      @Override
-      public void getFocusBack() {
-        mySearchField.requestFocus();
-      }
-
-      @Override
-      public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
-        myToChangeSelection = true;
-        return super
-          .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
-      }
-    };
+    myLivePreviewController = new MyLivePreviewController();
 
     mySearchResults.addListener(this);
     setMatchesLimit(MATCHES_LIMIT);
@@ -411,11 +405,60 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myPreserveCase.setSelected(findInFileModel.isPreserveCase());
     myPreserveCase.setEnabled(!findInFileModel.isRegularExpressions());
 
+    myReplaceButton = new JButton("replace");
+    myReplaceButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplace();
+      }
+    });
+
+    myReplaceAllButton = new JButton("replace all");
+    myReplaceAllButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplaceAll();
+      }
+    });
+
+    myExcludeButton = new JButton("");
+    updateExcludeStatus();
+    myExcludeButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.exclude();
+      }
+    });
+
+    replacement.add(myReplaceButton);
+    replacement.add(myReplaceAllButton);
+    replacement.add(myExcludeButton);
+
     replacement.add(mySelectionOnly);
     replacement.add(myPreserveCase);
+
+    setSmallerFontAndOpaque(myReplaceButton);
+    setSmallerFontAndOpaque(myReplaceAllButton);
+    setSmallerFontAndOpaque(myExcludeButton);
+    
     setSmallerFontAndOpaque(mySelectionOnly);
     setSmallerFontAndOpaque(myPreserveCase);
     setSmallerFont(myReplaceField);
+  }
+
+  private void updateExcludeStatus() {
+    if (myExcludeButton != null) {
+      LiveOccurrence cursor = mySearchResults.getCursor();
+      myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "exclude" : "include");
+      myReplaceAllButton.setEnabled(mySearchResults.hasMatches());
+      if (cursor != null) {
+        myExcludeButton.setEnabled(true);
+        myReplaceButton.setEnabled(true);
+      } else {
+        myExcludeButton.setEnabled(false);
+        myReplaceButton.setEnabled(false);
+      }
+    }
   }
 
   private void updateModelWithSelectionMode(FindModel findInFileModel) {
@@ -536,7 +579,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   public void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
-      String replacement = myLivePreviewController.getReplacementPreviewText(myEditor, mySearchResults.getCursor());
+      String replacement = myLivePreviewController.getStringToReplace(myEditor, mySearchResults.getCursor());
       myLivePreviewController.performReplace(mySearchResults.getCursor(), replacement, myEditor);
     }
   }
@@ -915,5 +958,37 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     g.setColor(BORDER_COLOR);
     g2d.setPaint(null);
     g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+  }
+
+  private class MyLivePreviewController extends LivePreviewControllerBase {
+    public MyLivePreviewController() {
+      super(EditorSearchComponent.this.mySearchResults, EditorSearchComponent.this.myLivePreview);
+    }
+
+    @Override
+    public void getFocusBack() {
+      mySearchField.requestFocus();
+    }
+
+    @Override
+    public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
+      myToChangeSelection = true;
+      return super
+        .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    public void performReplace() {
+      String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
+      performReplace(mySearchResults.getCursor(), replacement, myEditor);
+      getFocusBack();
+    }
+
+    public void exclude() {
+      mySearchResults.exclude(mySearchResults.getCursor());
+    }
+
+    public void performReplaceAll() {
+      performReplaceAll(myEditor);
+    }
   }
 }
