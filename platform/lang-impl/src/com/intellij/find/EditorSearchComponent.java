@@ -641,6 +641,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myEditor.getSelectionModel().removeSelection();
     }
     IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
+    mySearchResults.dispose();
     myLivePreview.cleanUp();
     myEditor.setHeaderComponent(null);
     addCurrentTextToRecents();
