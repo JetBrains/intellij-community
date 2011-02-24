@@ -1444,23 +1444,10 @@ public class UIUtil {
   }
 
   public static void initDefaultLAF(String productName) {
-    if (SystemInfo.isWindowsVista || SystemInfo.isWindows7 || SystemInfo.isMac) {
-      try {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      }
-      catch (Exception ignored) {
-      }
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
-    else if ("Rubymine".equals(productName) || "Pycharm".equals(productName)) {
-      try {
-        final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
-        if ("gnome".equals(desktop)) {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-      }
-      catch (Exception e) {
-        // Ignore
-      }
+    catch (Exception ignored) {
     }
   }
 
