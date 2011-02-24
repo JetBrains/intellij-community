@@ -23,21 +23,16 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
-import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -52,6 +47,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
@@ -195,7 +191,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     autoScrollToSourceHandler.install(myTree);
     rightGroup.add(autoScrollToSourceHandler.createToggleAction());
 
-    MySetTodoFilterAction setTodoFilterAction = new MySetTodoFilterAction();
+    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, new Consumer<TodoFilter>() {
+      @Override
+      public void consume(TodoFilter todoFilter) {
+        setTodoFilter(todoFilter);
+      }
+    });
     rightGroup.add(setTodoFilterAction);
     toolBarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
@@ -563,85 +564,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setAreFlattenPackages(state);
       myTodoTreeBuilder.setFlattenPackages(state);
-    }
-  }
-
-  private final class MySetTodoFilterAction extends AnAction implements CustomComponentAction {
-    MySetTodoFilterAction() {
-      super(IdeBundle.message("action.filter.todo.items"), null, IconLoader.getIcon("/ant/filter.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      JComponent button = (JComponent)presentation.getClientProperty("button");
-      DefaultActionGroup group = createPopupActionGroup();
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
-                                                                                    group);
-      popupMenu.getComponent().show(button, button.getWidth(), 0);
-    }
-
-    public JComponent createCustomComponent(Presentation presentation) {
-      ActionButton button = new ActionButton(
-        this,
-        presentation,
-        ActionPlaces.TODO_VIEW_TOOLBAR,
-        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-      );
-      presentation.putClientProperty("button", button);
-      return button;
-    }
-
-    private DefaultActionGroup createPopupActionGroup() {
-      TodoFilter[] filters = TodoConfiguration.getInstance().getTodoFilters();
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
-                                      IdeBundle.message("action.description.todo.show.all"), null));
-      for (TodoFilter filter : filters) {
-        group.add(new TodoFilterApplier(filter.getName(), null, filter));
-      }
-      group.addSeparator();
-      group.add(
-        new AnAction(IdeBundle.message("action.todo.edit.filters"),
-                     IdeBundle.message("action.todo.edit.filters"), IconLoader.getIcon("/general/ideOptions.png")) {
-          public void actionPerformed(AnActionEvent e) {
-            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-            util.editConfigurable(myProject, new TodoConfigurable());
-          }
-        }
-      );
-      return group;
-    }
-
-    private final class TodoFilterApplier extends ToggleAction {
-      private final TodoFilter myFilter;
-
-      /**
-       * @param text        action's text.
-       * @param description action's description.
-       * @param filter      filter to be applied. <code>null</code> value means "empty" filter.
-       */
-      TodoFilterApplier(String text, String description, TodoFilter filter) {
-        super(null, description, null);
-        getTemplatePresentation().setText(text, false);
-        myFilter = filter;
-      }
-
-      public void update(AnActionEvent e) {
-        super.update(e);
-        if (myFilter != null) {
-          e.getPresentation().setEnabled(!myFilter.isEmpty());
-        }
-      }
-
-      public boolean isSelected(AnActionEvent e) {
-        return Comparing.equal(myFilter != null ? myFilter.getName() : null, mySettings.getTodoFilterName());
-      }
-
-      public void setSelected(AnActionEvent e, boolean state) {
-        if (state) {
-          setTodoFilter(myFilter);
-        }
-      }
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -58,6 +59,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
   public boolean CHECK_NEW_TODO = true;
+  public TodoPanelSettings myTodoPanelSettings = new TodoPanelSettings();
   public boolean PERFORM_UPDATE_IN_BACKGROUND = true;
   public boolean PERFORM_COMMIT_IN_BACKGROUND = true;
   public boolean PERFORM_EDIT_IN_BACKGROUND = true;

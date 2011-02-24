@@ -744,6 +744,7 @@
 
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.StandardCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory"/>
 
     <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
 

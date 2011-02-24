@@ -67,7 +67,7 @@ public class PaletteManager implements ProjectComponent {
                                                                                           myPaletteWindow,
                                                                                           ToolWindowAnchor.RIGHT,
                                                                                           myProject,
-                                                                                          true);
+                                                                                          true, false);
         myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
         myPaletteToolWindow.setAvailable(false, null);
         final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();

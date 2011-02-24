@@ -16,8 +16,8 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,12 @@ public abstract class ToolWindowManager {
   /**
   * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
-  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                @NotNull JComponent component,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                Disposable parentDisposable,
+                                                boolean canWorkInDumbMode,
+                                                boolean canCloseContents);
 
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor);
 

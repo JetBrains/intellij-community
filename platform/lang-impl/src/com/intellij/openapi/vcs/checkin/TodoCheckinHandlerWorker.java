@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
@@ -58,6 +59,8 @@ public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
 
   private final Collection<Change> changes;
+  private final TodoFilter myTodoFilter;
+  private final boolean myIncludePattern;
   private final PsiManager myPsiManager;
   private final PsiSearchHelper mySearchHelper;
 
@@ -69,8 +72,11 @@ public class TodoCheckinHandlerWorker {
   private MyEditedFileProcessor myEditedFileProcessor;
 
 
-  public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes) {
+  public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter,
+                                  final boolean includePattern) {
     this.changes = changes;
+    myTodoFilter = todoFilter;
+    myIncludePattern = includePattern;
     myPsiManager = PsiManager.getInstance(project);
     mySearchHelper = myPsiManager.getSearchHelper();
     myAddedOrEditedTodos = new ArrayList<TodoItem>();
@@ -91,7 +97,7 @@ public class TodoCheckinHandlerWorker {
       public void inChanged(TodoItem todoItem) {
         myInChangedTodos.add(todoItem);
       }
-    });
+    }, myTodoFilter);
   }
 
   public void execute() {
@@ -110,7 +116,8 @@ public class TodoCheckinHandlerWorker {
         continue;
       }
 
-      myNewTodoItems = Arrays.asList(mySearchHelper.findTodoItems(myPsiFile));
+      myNewTodoItems = new ArrayList<TodoItem>(Arrays.asList(mySearchHelper.findTodoItems(myPsiFile)));
+      applyFilterAndRemoveDuplicates(myNewTodoItems, myTodoFilter);
       if (change.getBeforeRevision() == null) {
         // take just all todos
         if (myNewTodoItems.isEmpty()) continue;
@@ -118,6 +125,22 @@ public class TodoCheckinHandlerWorker {
       }
       else {
         myEditedFileProcessor.process(change, myNewTodoItems);
+      }
+    }
+  }
+
+  private static void applyFilterAndRemoveDuplicates(final List<TodoItem> todoItems, final TodoFilter filter) {
+    TodoItem previous = null;
+    for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
+      final TodoItem next = iterator.next();
+      if (filter != null && ! filter.contains(next.getPattern())) {
+        iterator.remove();
+        continue;
+      }
+      if (previous != null && next.getTextRange().equals(previous.getTextRange())) {
+        iterator.remove();
+      } else {
+        previous = next;
       }
     }
   }
@@ -133,9 +156,11 @@ public class TodoCheckinHandlerWorker {
     private final PsiFileFactory myPsiFileFactory;
     private FilePath myAfterFile;
     private final Acceptor myAcceptor;
+    private final TodoFilter myTodoFilter;
 
-    private MyEditedFileProcessor(final Project project, Acceptor acceptor) {
+    private MyEditedFileProcessor(final Project project, Acceptor acceptor, final TodoFilter todoFilter) {
       myAcceptor = acceptor;
+      myTodoFilter = todoFilter;
       myPsiFileFactory = PsiFileFactory.getInstance(project);
     }
 
@@ -209,6 +234,7 @@ public class TodoCheckinHandlerWorker {
         for (IndexPatternOccurrence occurrence : all) {
           myOldItems.add(todoItemsCreator.createTodo(occurrence));
         }
+        applyFilterAndRemoveDuplicates(myOldItems, myTodoFilter);
       }
       if (myOldTodoTexts == null) {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<LineFragment, TodoItem>(
@@ -272,7 +298,8 @@ public class TodoCheckinHandlerWorker {
 
     @Override
     public TextRange convert(TodoItem o) {
-      return o.getTextRange();
+      final TextRange textRange = o.getTextRange();
+      return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
     }
   }
 
@@ -285,7 +312,15 @@ public class TodoCheckinHandlerWorker {
 
     @Override
     public TextRange convert(LineFragment o) {
-      return o.getRange(FragmentSide.SIDE2);
+      final TextRange textRange = o.getRange(FragmentSide.SIDE2);
+      return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
     }
+  }
+
+  public List<TodoItem> inOneList() {
+    final List<TodoItem> list = new ArrayList<TodoItem>();
+    list.addAll(getAddedOrEditedTodos());
+    list.addAll(getInChangedTodos());
+    return list;
   }
 }
