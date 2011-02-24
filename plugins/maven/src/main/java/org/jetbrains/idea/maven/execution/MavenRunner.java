@@ -169,6 +169,6 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
                                        MavenGeneralSettings coreSettings,
                                        MavenRunnerSettings runnerSettings,
                                        MavenConsole console) {
-    return new MavenExternalExecutor(taskParameters, coreSettings, runnerSettings, console);
+    return new MavenExternalExecutor(myProject, taskParameters, coreSettings, runnerSettings, console);
   }
 }

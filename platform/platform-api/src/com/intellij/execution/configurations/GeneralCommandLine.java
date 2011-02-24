@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class GeneralCommandLine {
   private Map<String, String> myEnvParams;
@@ -60,11 +62,6 @@ public class GeneralCommandLine {
 
   public void setCharset(@NotNull Charset charset) {
     myCharset = charset;
-  }
-
-  public void setCharsetAndAddJavaParameter(@NotNull Charset charset) {
-    myCharset = charset;
-    addParameter("-Dfile.encoding=" + charset.name());
   }
 
   public void addParameters(final String... parameters) {
