@@ -514,7 +514,6 @@ public interface Test {
       Thread.sleep 500
       ProgressManager.checkCanceled()
       cxt.replacementOffset--;
-      println "aaa$cxt.replacementOffset"
     }
   }
 
