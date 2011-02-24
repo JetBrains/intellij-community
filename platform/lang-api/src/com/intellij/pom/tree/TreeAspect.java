@@ -18,13 +18,12 @@ package com.intellij.pom.tree;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-import org.jetbrains.annotations.NotNull;
-
 public class TreeAspect implements PomModelAspect{
-  public TreeAspect(PomModel model) {
+  public TreeAspect(@NotNull PomModel model) {
     model.registerAspect(TreeAspect.class, this, Collections.<PomModelAspect>emptySet());
   }
 

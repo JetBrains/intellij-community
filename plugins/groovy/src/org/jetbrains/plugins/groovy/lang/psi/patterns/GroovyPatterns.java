@@ -19,6 +19,7 @@ import com.intellij.patterns.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +28,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
 
 public class GroovyPatterns extends PsiJavaPatterns {
 
@@ -54,6 +60,23 @@ public class GroovyPatterns extends PsiJavaPatterns {
                && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
       }
     });
+  }
+
+  public static GroovyElementPattern.Capture<GrLiteralImpl> stringLiteral() {
+    return new GroovyElementPattern.Capture<GrLiteralImpl>(new InitialPatternCondition<GrLiteralImpl>(GrLiteralImpl.class) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        if (!(o instanceof GrLiteralImpl)) return false;
+        PsiElement child = ((GrLiteralImpl)o).getFirstChild();
+        if (child == null) return false;
+
+        IElementType elementType = child.getNode().getElementType();
+        return elementType == mGSTRING_LITERAL || elementType == mSTRING_LITERAL;
+      }
+    });
+  }
+
+  public static GroovyElementPattern.Capture<GrLiteralImpl> namedArgumentStringLiteral() {
+    return stringLiteral().withParent(psiElement(GrNamedArgument.class));
   }
 
   public static GroovyMethodCallPattern methodCall(final ElementPattern<? extends String> names, final String className) {

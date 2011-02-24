@@ -61,10 +61,10 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
@@ -84,7 +84,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable, TabsListener {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -96,6 +96,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<TabInfo> myTabsHistory = new ArrayList<TabInfo>();
+  private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
 
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
@@ -106,7 +107,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
   private DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
-  private MessageBusConnection myBusConnection;
 
   public FileEditorManagerImpl(final Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -114,8 +114,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
-    myBusConnection = project.getMessageBus().connect(project);
-    myBusConnection.subscribe(TabsListener.TOPIC, this);
   }
 
   private void initDockableContentFactory() {
@@ -147,8 +145,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     HashSet<EditorsSplitters> all = new HashSet<EditorsSplitters>();
     all.add(getMainSplitters());
     Set<DockContainer> dockContainers = DockManager.getInstance(myProject).getContainers();
-    for (Iterator<DockContainer> iterator = dockContainers.iterator(); iterator.hasNext();) {
-      DockContainer each = iterator.next();
+    for (DockContainer each : dockContainers) {
       if (each instanceof DockableEditorTabbedContainer) {
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
       }
@@ -504,18 +501,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
-    removeHistory(file, window);
-  }
-
-  private void removeHistory(VirtualFile file, EditorWindow window) {
-    for (Iterator<TabInfo> i = myTabsHistory.iterator(); i.hasNext();) {
-      final TabInfo info = i.next();
-      final JComponent c = info.getComponent();
-      if (info.getObject() == file && c instanceof EditorWindowHolder && ((EditorWindowHolder)c).getEditorWindow() == window) {
-        i.remove();
-        break;
-      }
-    }
+    removeSelectionRecord(file, window);
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
@@ -1213,7 +1199,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 // Dispose created editors. We do not use use closeEditor method because
 // it fires event and changes history.
     closeAllFiles();
-    myBusConnection.disconnect();
   }
 
 // BaseCompomemnt methods
@@ -1282,6 +1267,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+      if (newSelectedEditor != null) {
+        final JComponent component = newSelectedEditor.getComponent();
+        final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
+        if (holder != null) {
+          addSelectionRecord(newSelectedFile, holder.getEditorWindow());
+        }
+      }
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
@@ -1632,25 +1625,23 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return splitters;
   }
 
-  @Override
-  public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-    final JComponent selected = newSelection.getComponent();
-    final Iterator<TabInfo> i = myTabsHistory.iterator();
-    while (i.hasNext()) {
-      final TabInfo info = i.next();
-      if (info.getComponent() == selected) {
-        i.remove();
-        break;
-      }
-    }
-    myTabsHistory.add(0, newSelection);
+  public void selectionChanged(VirtualFile file, EditorWindow window) {
+    final Pair<VirtualFile, EditorWindow> selection = new Pair<VirtualFile, EditorWindow>(file, window);
+    mySelectionHistory.remove(selection);
+    mySelectionHistory.add(0, selection);
   }
 
-  public List<TabInfo> getTabsHistory() {
-    return myTabsHistory;
+  public List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
+    return mySelectionHistory;
   }
 
-  @Override
-  public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+  public void addSelectionRecord(VirtualFile file, EditorWindow window) {
+    final Pair<VirtualFile, EditorWindow> record = new Pair<VirtualFile, EditorWindow>(file, window);
+    mySelectionHistory.remove(record);
+    mySelectionHistory.add(0, record);
+  }
+
+  private void removeSelectionRecord(VirtualFile file, EditorWindow window) {
+    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
   }
 }

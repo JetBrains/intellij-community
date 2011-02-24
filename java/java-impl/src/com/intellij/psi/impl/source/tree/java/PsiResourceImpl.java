@@ -61,7 +61,7 @@ public class PsiResourceImpl extends CompositePsiElement implements PsiResource 
   }
 
   public String getName() {
-    final PsiElement element = getResourceElement();
+    final PsiElement element = getFirstChild();
     if (element instanceof PsiLocalVariable) return ((PsiLocalVariable)element).getName();
     if (element instanceof PsiAssignmentExpression) return ((PsiAssignmentExpression)element).getLExpression().toString();
     return "";

@@ -56,7 +56,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
 
-        final CompletionResultSet result = JavaCompletionContributor.addJavaSorting(parameters, _result);
+        final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
 
         final PsiElement insertedElement = parameters.getPosition();
 

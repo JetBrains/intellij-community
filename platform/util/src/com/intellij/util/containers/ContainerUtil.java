@@ -372,6 +372,15 @@ public class ContainerUtil {
     }
   }
 
+  public static Map<String, String> stringMap(@NotNull final String... keyValues) {
+    final Map<String, String> result = new HashMap<String, String>();
+    for (int i = 0; i < keyValues.length - 1; i+=2) {
+      result.put(keyValues[i], keyValues[i+1]);
+    }
+
+    return result;
+  }
+
   @NotNull
   public static <T> Iterator<T> iterate(@NotNull T[] arrays) {
     return Arrays.asList(arrays).iterator();

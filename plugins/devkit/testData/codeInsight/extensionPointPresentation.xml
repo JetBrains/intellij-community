@@ -1,0 +1,14 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <id>foo</id>
+
+    <extensionPoints>
+        <extensionPoint name="bar"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="foo">
+
+        <b<caret>ar/>
+    </extensions>
+
+</idea-plugin>

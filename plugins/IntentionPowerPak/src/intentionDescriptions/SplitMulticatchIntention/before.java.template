@@ -1,0 +1,12 @@
+import java.io.IOException;
+import java.net.*;
+
+public class X {
+  void f() {
+    try {
+      throw new NoRouteToHostException();
+    } <spot>catch</spot> (NoRouteToHostException | SocketException | IOException e) {
+      e.printStackTrace();
+    }
+  }
+}

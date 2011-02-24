@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="11" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="457" height="401"/>
+      <xy x="20" y="20" width="550" height="401"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -104,12 +104,13 @@
           <text value="Phase to be used for folders &amp;update"/>
         </properties>
       </component>
-      <component id="af117" class="javax.swing.JLabel">
+      <component id="31353" class="com.intellij.ui.components.JBLabel">
         <constraints>
           <grid row="8" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font/>
+          <style value="SMALL"/>
           <text value="&lt;html&gt;IDEA needs to execute one of the listed phases in order to discover all source folders&lt;br&gt;that are configured via Maven plugins.&lt;br&gt;&lt;b&gt;Note&lt;/b&gt; that all test-* phases firstly generate and compile production sources.&lt;/html&gt;"/>
         </properties>
       </component>

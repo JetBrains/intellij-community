@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
@@ -78,18 +79,10 @@ class TestMethod extends TestObject {
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
-      return new RefactoringElementListener() {
-        public void elementMoved(@NotNull final PsiElement newElement) {
-          setMethod(configuration, (PsiMethod)newElement);
-        }
-
-        public void elementRenamed(@NotNull final PsiElement newElement) {
-          setMethod(configuration, (PsiMethod)newElement);
-        }
-
-        private void setMethod(final JUnitConfiguration configuration, final PsiMethod psiMethod) {
+      return new RefactoringElementAdapter() {
+        public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = configuration.isGeneratedName();
-          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement(psiMethod));
+          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
           if (generatedName) configuration.setGeneratedName();
         }
       };

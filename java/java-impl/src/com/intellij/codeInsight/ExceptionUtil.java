@@ -247,18 +247,12 @@ public class ExceptionUtil {
     }
 
     if (element instanceof PsiResource) {
-      final PsiType resourceType = ((PsiResource)element).getType();
-      if (resourceType instanceof PsiClassType) {
-        final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
-        if (resourceClass != null) {
-          final List<PsiClassType> unhandled = getUnhandledCloserExceptions(element, resourceClass, topElement);
-          if (unhandledExceptions == null) {
-            unhandledExceptions = unhandled;
-          }
-          else {
-            unhandledExceptions.addAll(unhandled);
-          }
-        }
+      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResource)element, topElement);
+      if (unhandledExceptions == null) {
+        unhandledExceptions = unhandled;
+      }
+      else {
+        unhandledExceptions.addAll(unhandled);
       }
     }
 
@@ -337,20 +331,24 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiElement resource,
-                                                                final PsiClass resourceClass,
-                                                                final PsiElement topElement) {
-    final PsiMethod[] closers = resourceClass.findMethodsByName("close", false);
-    for (final PsiMethod method : closers) {
-      if (method.getParameterList().getParametersCount() == 0) {
-        return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResource resource, final PsiElement topElement) {
+    final PsiType resourceType = resource.getType();
+    if (resourceType instanceof PsiClassType) {
+      final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+      if (resourceClass != null) {
+        final PsiMethod[] closers = resourceClass.findMethodsByName("close", false);
+        for (final PsiMethod method : closers) {
+          if (method.getParameterList().getParametersCount() == 0) {
+            return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
+          }
+        }
       }
     }
     return Collections.emptyList();
   }
 
   @Nullable
-  public static PsiClassType getUnhandledException(PsiThrowStatement throwStatement, PsiElement topElement){
+  public static PsiClassType getUnhandledException(PsiThrowStatement throwStatement, PsiElement topElement) {
     final PsiExpression exception = throwStatement.getException();
     if (exception != null) {
       final PsiType type = exception.getType();

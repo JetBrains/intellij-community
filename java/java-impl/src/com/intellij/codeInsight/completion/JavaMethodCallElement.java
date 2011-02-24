@@ -141,6 +141,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         return false;
       }
     }
+    if (leaf != null) {
+      final PsiElement parent = leaf.getParent();
+      if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getTypeParameters().length > 0) {
+        return false;
+      }
+    }
 
     return SmartCompletionDecorator.hasUnboundTypeParams(getObject());
   }

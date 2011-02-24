@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.palette;
 
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.psi.PsiElement;
@@ -48,18 +49,14 @@ public class PaletteRefactoringListenerProvider implements RefactoringElementLis
     return null;
   }
 
-  private class MyRefactoringElementListener implements RefactoringElementListener {
+  private class MyRefactoringElementListener extends RefactoringElementAdapter{
     private final ComponentItem myItem;
 
     public MyRefactoringElementListener(final ComponentItem item) {
       myItem = item;
     }
 
-    public void elementMoved(@NotNull PsiElement newElement) {
-      elementRenamed(newElement);
-    }
-
-    public void elementRenamed(@NotNull PsiElement newElement) {
+    public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
       PsiClass psiClass = (PsiClass) newElement;
       final String qName = ClassUtil.getJVMClassName(psiClass);
       if (qName != null) {

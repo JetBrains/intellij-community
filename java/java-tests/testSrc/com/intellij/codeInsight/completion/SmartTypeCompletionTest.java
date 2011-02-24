@@ -431,6 +431,18 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrivateOverloads() throws Throwable { doTest(); }
 
+  public void testCastAutoboxing() throws Throwable { doActionItemTest(); }
+  public void testCastAutoboxing2() throws Throwable { doActionItemTest(); }
+  public void testCastAutoboxing3() throws Throwable { doActionItemTest(); }
+  public void testCastWildcards() throws Throwable { doTest(); }
+
+  public void testNoSecondMethodTypeArguments() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
+
+  public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
+  public void testNoUninitializedFieldsInConstructor() throws Throwable { doTest(); }
+  public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
+  public void testFieldsSetAbove() throws Throwable { doTest(); }
+
   public void testHonorSelection() throws Throwable {
     configureByTestName();
     select();
@@ -949,6 +961,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testWildcardedInstanceof3() throws Throwable { doTest(); }
 
   public void testCheckStaticImportsType() throws Throwable { doAntiTest(); }
+  public void testThisFieldAssignedToItself() throws Throwable { doAntiTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();

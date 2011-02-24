@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
@@ -38,6 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -140,8 +144,27 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
-  GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
-  GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
+  GrCodeBlockElementType CLOSABLE_BLOCK = new GrCodeBlockElementType("Closable block") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrClosableBlockImpl(this, text);
+    }
+  };
+  GrCodeBlockElementType OPEN_BLOCK = new GrCodeBlockElementType("Open block") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrOpenBlockImpl(this, text);
+    }
+  };
+  GrCodeBlockElementType CONSTRUCTOR_BODY = new GrCodeBlockElementType("Constructor body") {
+    @NotNull
+    @Override
+    public GrBlockImpl createNode(CharSequence text) {
+      return new GrOpenBlockImpl(this, text);
+    }
+  };
 
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
 
@@ -394,6 +417,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
           BLOCK_STATEMENT,
+          CONSTRUCTOR_BODY,
           OPEN_BLOCK,
           ENUM_BODY,
           CLASS_BODY);

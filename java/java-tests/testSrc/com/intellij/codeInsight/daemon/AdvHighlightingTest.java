@@ -42,6 +42,12 @@ import java.util.Collection;
 public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
 
+  @Override
+  protected Sdk getTestProjectJdk() {
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    return JavaSdkImpl.getMockJdk14();
+  }
+
   public void testPackageLocals() throws Exception { doTest(BASE_PATH+"/packageLocals/x/sub/UsingMain.java", BASE_PATH+"/packageLocals", false, false); }
   public void testPackageLocalClassInTheMiddle() throws Exception { doTest(BASE_PATH+"/packageLocals/x/A.java", BASE_PATH+"/packageLocals", false, false); }
 
@@ -63,14 +69,6 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testProtectedFieldAccessFromOtherPackage() throws Exception { doTest(BASE_PATH+"/protectedAccessFromOtherPackage/a/A.java", BASE_PATH+"/protectedAccessFromOtherPackage", false, false); }
   public void testPackageLocalClassInTheMiddle1() throws Exception { doTest(BASE_PATH+"/foreignPackageInBetween/a/A1.java", BASE_PATH+"/foreignPackageInBetween", false, false); }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    @NonNls boolean is50 = "StaticImportConflict".equals(getTestName(false));
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(is50 ? LanguageLevel.JDK_1_5 : LanguageLevel.JDK_1_4);
-    return is50 ? JavaSdkImpl.getMockJdk17("java 1.5") : JavaSdkImpl.getMockJdk14();
-  }
-
-  public void testStaticImportConflict() throws Exception { doTest(BASE_PATH+"/staticImportConflict/Usage.java", BASE_PATH+"/staticImportConflict", false, false); }
   public void testImportOnDemand() throws Exception { doTest(BASE_PATH+"/importOnDemand/y/Y.java", BASE_PATH+"/importOnDemand", false, false); }
   public void testImportOnDemandVsSingle() throws Exception { doTest(BASE_PATH+"/importOnDemandVsSingle/y/Y.java", BASE_PATH+"/importOnDemandVsSingle", false, false); }
   public void testImportSingleVsSamePackage() throws Exception { doTest(BASE_PATH+"/importSingleVsSamePackage/y/Y.java", BASE_PATH+"/importSingleVsSamePackage", false, false); }

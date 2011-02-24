@@ -356,10 +356,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
+  public void testFieldType() throws Throwable { doTest(); }
+
   public void testPackageInAnnoParam() throws Throwable {
     doTest();
   }
-  
+
   public void testClassLiteralInAnnoParam() throws Throwable {
     doTest();
   }
@@ -369,6 +371,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }
+  public void testAssigningFieldForTheFirstTime() throws Throwable { doTest(); }
 
   public void testClassTypeParameters() throws Throwable {
     configure()
@@ -388,6 +391,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testLocalTopLevelConflict() throws Throwable {
     configure()
     assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+  }
+
+  public void testFinalBeforeMethodCall() throws Throwable {
+    configure()
+    assertStringItems 'final', 'finalize'
   }
 
   public void testMethodParenthesesSpaces() throws Throwable {

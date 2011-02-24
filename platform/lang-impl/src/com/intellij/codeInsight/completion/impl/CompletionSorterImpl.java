@@ -50,12 +50,23 @@ public class CompletionSorterImpl extends CompletionSorter {
     };
   }
 
-  @Override public CompletionSorterImpl weighBefore(@NotNull final String beforeId, final LookupElementWeigher weigher) {
-    return withClassifier(beforeId, true, weighingFactory(weigher));
+  @Override public CompletionSorterImpl weighBefore(@NotNull final String beforeId, LookupElementWeigher... weighers) {
+    assert weighers.length > 0 : "there should be weighers";
+    CompletionSorterImpl result = this;
+    for (LookupElementWeigher weigher : weighers) {
+      result = result.withClassifier(beforeId, true, weighingFactory(weigher));
+    }
+    return result;
   }
 
-  @Override public CompletionSorterImpl weighAfter(@NotNull final String afterId, final LookupElementWeigher weigher) {
-    return withClassifier(afterId, false, weighingFactory(weigher));
+  @Override public CompletionSorterImpl weighAfter(@NotNull final String afterId, LookupElementWeigher... weighers) {
+    assert weighers.length > 0 : "there should be weighers";
+    CompletionSorterImpl result = this;
+    for (int i = weighers.length - 1; i >= 0; i--) {
+      LookupElementWeigher weigher = weighers[i];
+      result = result.withClassifier(afterId, false, weighingFactory(weigher));
+    }
+    return result;
   }
 
   @Override public CompletionSorterImpl weigh(final LookupElementWeigher weigher) {

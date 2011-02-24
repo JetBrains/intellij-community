@@ -76,6 +76,13 @@ public class WeakList<T> extends AbstractList<T> {
     }
   }
 
+  @Override
+  public boolean removeAll(Collection<?> c) {
+    synchronized (myArray) {
+      return super.removeAll(c);
+    }
+  }
+
   public Iterator<T> iterator() {
     return new MyIterator();
   }
@@ -88,7 +95,7 @@ public class WeakList<T> extends AbstractList<T> {
 
   public List<T> toStrongList() {
     synchronized (myArray) {
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<T>(myArray.size());
       myArray.toStrongCollection(result);
       return result;
     }

@@ -674,25 +674,28 @@ public class HighlightControlFlowUtil {
 
   @Nullable
   public static PsiClass getInnerClassVariableReferencedFrom(PsiVariable variable, PsiElement context) {
-    PsiElement scope;
+    PsiElement[] scope;
     if (variable instanceof PsiScopedLocalVariable) {
       scope = ((PsiScopedLocalVariable)variable).getDeclarationScope();
     }
     else if (variable instanceof PsiLocalVariable) {
-      scope = variable.getParent().getParent(); // code block or for statement
+      scope = new PsiElement[]{variable.getParent().getParent()}; // code block or for statement
     }
     else if (variable instanceof PsiParameter) {
-      scope = ((PsiParameter)variable).getDeclarationScope();
+      scope = new PsiElement[]{((PsiParameter)variable).getDeclarationScope()};
     }
     else {
-      scope = variable.getParent();
+      scope = new PsiElement[]{variable.getParent()};
     }
-    if (scope.getContainingFile() != context.getContainingFile()) return null;
+    if (scope.length < 1 || scope[0].getContainingFile() != context.getContainingFile()) return null;
 
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;
+    outer:
     while (parent != null) {
-      if (parent.equals(scope)) break;
+      for (PsiElement scopeElement : scope) {
+        if (parent.equals(scopeElement)) break outer;
+      }
       if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
         return (PsiClass)parent;
       }

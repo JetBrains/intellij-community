@@ -221,6 +221,11 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiVariable) {
       generateVariableJavaDoc(buffer, (PsiVariable)myElement);
     }
+    else if (myElement instanceof PsiDirectory) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
+      if (aPackage == null) return null;
+      generatePackageJavaDoc(buffer, aPackage);
+    }
     else if (myElement instanceof PsiPackage) {
       generatePackageJavaDoc(buffer, (PsiPackage) myElement);
     } else {
