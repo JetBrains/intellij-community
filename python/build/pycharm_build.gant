@@ -262,6 +262,11 @@ target('default': "Build artifacts") {
 
   buildTarGz()
 
+  ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.zip") {
+    fileset(dir: paths.distAll)
+    fileset(dir: paths.distWin)
+  }
+
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
   installer.nsis_installer([paths.distAll, paths.distWin],
                            "$home/python/build/strings.nsi",
