@@ -106,12 +106,12 @@ public class GitMergeUpdater extends GitUpdater {
 
   private void cancel() {
     try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.MERGE);
-      h.addParameters("-v", "--abort");
+      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
+      h.addParameters("-v", "--merge");
       h.run();
     } catch (VcsException e) {
-      LOG.info("cancel git merge --abort", e);
-      GitUIUtil.notifyImportantError(myProject, "Couldn't abort merge", e.getLocalizedMessage());
+      LOG.info("cancel git reset --merge", e);
+      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", e.getLocalizedMessage());
     }
   }
 
