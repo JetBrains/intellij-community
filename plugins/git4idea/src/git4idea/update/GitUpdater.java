@@ -103,9 +103,13 @@ public abstract class GitUpdater {
     myBefore = GitRevisionNumber.resolve(myProject, root, "HEAD");
   }
 
-  protected void markEnd(VirtualFile root) {
+  protected void markEnd(VirtualFile root) throws VcsException {
     // find out what have changed, this is done even if the process was cancelled.
-    MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore);
-    collector.collect(myUpdatedFiles, new ArrayList<VcsException>()); // TODO handle exceptions
+    final MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore);
+    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    collector.collect(myUpdatedFiles, exceptions);
+    if (!exceptions.isEmpty()) {
+      throw exceptions.get(0);
+    }
   }
 }
