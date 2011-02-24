@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -109,6 +110,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private boolean myListeningSelection = false;
   private boolean myToChangeSelection = true;
   private SearchResults mySearchResults;
+  private Balloon myOptionsBalloon;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -165,11 +167,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void updateSelection() {
+    SelectionModel selection = myEditor.getSelectionModel();
     if (myToChangeSelection && (mySelectionOnly == null || !mySelectionOnly.isSelected())) {
       LiveOccurrence cursor = mySearchResults.getCursor();
       if (cursor != null) {
         TextRange range = cursor.getPrimaryRange();
-        myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+        selection.setSelection(range.getStartOffset(), range.getEndOffset());
 
         myEditor.getCaretModel().moveToOffset(range.getEndOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -229,13 +232,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
     myCbWholeWords = new NonFocusableCheckBox("Match whole words only");
     myCbRegexp = new NonFocusableCheckBox("Regex");
-    myCbInComments = new NonFocusableCheckBox("In comments");
-    myCbInLiterals = new NonFocusableCheckBox("In literals");
+    myCbInComments = new NonFocusableCheckBox("Search in comments only");
+    myCbInLiterals = new NonFocusableCheckBox("Search in literals only");
 
-    myOptionsPane = new JPanel() {
-      @Override
-      protected void paintComponent(Graphics graphics) {}
-    };
+    myOptionsPane = new JPanel();
     myOptionsPane.setLayout(new BoxLayout(myOptionsPane, BoxLayout.Y_AXIS));
 
     leadPanel.add(cbMatchCase);
@@ -249,10 +249,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myMoreOptionsButton = new LinkLabel("more options", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myOptionsPane);
-        Point point = new Point((int)(myMoreOptionsButton.getX() + myMoreOptionsButton.getBounds().getWidth()/2),
-                                (int)(myMoreOptionsButton.getY() + myMoreOptionsButton.getBounds().getHeight()/2));
-        balloonBuilder.createBalloon().show(new RelativePoint(leadPanel, point), Balloon.Position.below);
+        if (myOptionsBalloon == null || myOptionsBalloon.isDisposed()) {
+          BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myOptionsPane);
+          balloonBuilder.setFillColor(myOptionsPane.getBackground());
+          Point point = new Point((int)(myMoreOptionsButton.getX() + myMoreOptionsButton.getBounds().getWidth()/2),
+                                  (int)(myMoreOptionsButton.getY() + myMoreOptionsButton.getBounds().getHeight()/2));
+          myOptionsBalloon = balloonBuilder.createBalloon();
+          myOptionsBalloon.show(new RelativePoint(leadPanel, point), Balloon.Position.below);
+        }
       }
     });
 
@@ -266,7 +270,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     cbMatchCase.setMnemonic('C');
     myCbWholeWords.setMnemonic('M');
-    myCbRegexp.setMnemonic('R');
+    myCbRegexp.setMnemonic('x');
     myCbInComments.setMnemonic('o');
     myCbInLiterals.setMnemonic('l');
 
@@ -398,6 +402,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     JPanel replacement = createLeadPane();
     myReplaceField = createTextField();
     configureTextField(myReplaceField);
+    myReplaceField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent actionEvent) {
+        myLivePreviewController.performReplace();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     replacement.add(myReplaceField);
     add(replacement, BorderLayout.SOUTH);
     myPreserveCase = new JCheckBox("Preserve case");
@@ -427,21 +437,23 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myPreserveCase.setSelected(findInFileModel.isPreserveCase());
     myPreserveCase.setEnabled(!findInFileModel.isRegularExpressions());
 
-    myReplaceButton = new JButton("replace");
+    myReplaceButton = new JButton("Replace");
     myReplaceButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         myLivePreviewController.performReplace();
       }
     });
+    myReplaceButton.setMnemonic('p');
 
-    myReplaceAllButton = new JButton("replace all");
+    myReplaceAllButton = new JButton("Replace all");
     myReplaceAllButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         myLivePreviewController.performReplaceAll();
       }
     });
+    myReplaceAllButton.setMnemonic('a');
 
     myExcludeButton = new JButton("");
     updateExcludeStatus();
@@ -451,6 +463,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         myLivePreviewController.exclude();
       }
     });
+    myExcludeButton.setMnemonic('l');
 
     replacement.add(myReplaceButton);
     replacement.add(myReplaceAllButton);
