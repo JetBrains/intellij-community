@@ -1,77 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ArtifactsStructureConfigurable.UI">
-    <splitter-proportions>
-      <SplitterProportionsDataImpl />
-    </splitter-proportions>
-    <settings />
-  </component>
-  <component name="DependencyValidationManager">
-    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
-  </component>
-  <component name="FacetStructureConfigurable.UI">
-    <splitter-proportions>
-      <SplitterProportionsDataImpl />
-    </splitter-proportions>
-  </component>
-  <component name="Git.Settings">
-    <option name="GIT_EXECUTABLE" value="git.exe" />
-    <option name="CHECKOUT_INCLUDE_TAGS" value="false" />
-  </component>
-  <component name="GlobalLibrariesConfigurable.UI">
-    <splitter-proportions>
-      <SplitterProportionsDataImpl />
-    </splitter-proportions>
-  </component>
-  <component name="IdProvider" IDEtalkID="A8EB56D5B100B7935A4D03BDCB67E4B6" />
-  <component name="JavadocGenerationManager">
-    <option name="OUTPUT_DIRECTORY" />
-    <option name="OPTION_SCOPE" value="protected" />
-    <option name="OPTION_HIERARCHY" value="true" />
-    <option name="OPTION_NAVIGATOR" value="true" />
-    <option name="OPTION_INDEX" value="true" />
-    <option name="OPTION_SEPARATE_INDEX" value="true" />
-    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
-    <option name="OPTION_DEPRECATED_LIST" value="true" />
-    <option name="OTHER_OPTIONS" value="" />
-    <option name="HEAP_SIZE" />
-    <option name="LOCALE" />
-    <option name="OPEN_IN_BROWSER" value="true" />
-  </component>
-  <component name="ModuleStructureConfigurable.UI">
-    <splitter-proportions>
-      <SplitterProportionsDataImpl />
-    </splitter-proportions>
-  </component>
-  <component name="ProjectInspectionProfilesVisibleTreeState">
-    <entry key="Project Default">
-      <profile-state />
-    </entry>
-  </component>
-  <component name="ProjectLibrariesConfigurable.UI">
-    <splitter-proportions>
-      <SplitterProportionsDataImpl />
-    </splitter-proportions>
-  </component>
-  <component name="ProjectResources">
-    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
-  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.5" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
-  </component>
-  <component name="StarteamConfiguration">
-    <option name="SERVER" value="" />
-    <option name="PORT" value="49201" />
-    <option name="USER" value="" />
-    <option name="PASSWORD" value="" />
-    <option name="PROJECT" value="" />
-    <option name="VIEW" value="" />
-    <option name="ALTERNATIVE_WORKING_PATH" value="" />
-    <option name="LOCK_ON_CHECKOUT" value="false" />
-    <option name="UNLOCK_ON_CHECKIN" value="false" />
   </component>
 </project>
 

@@ -28,6 +28,12 @@ class CallAntBuildTask implements ArtifactBuildTask {
     };
     attrs['dir'] = new File(filePath).parent;
 
-    project.binding.ant.ant(attrs);
+    def buildProperties = [["artifact.output.path", artifact.outputPath]]
+    buildProperties.addAll(antProperties.buildProperties)
+    project.binding.ant.ant(attrs) {
+      buildProperties.each {List<String> nameValue ->
+        property(name: nameValue[0], value: nameValue[1])
+      }
+    };
   }
 }

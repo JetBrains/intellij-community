@@ -9,4 +9,5 @@ class AntArtifactProperties implements ArtifactProperties {
   boolean enabled
   String filePath
   String target
+  List<List<String>> buildProperties
 }

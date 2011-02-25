@@ -17,8 +17,8 @@ class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
           dir("dir") {
             file("file.txt")
           }
-          file("prestep.txt")
-          file("poststep.txt")
+          file("prestep.txt", "pre1")
+          file("poststep.txt", "$outDir.absolutePath/artifacts/main")
         }
       }
     }

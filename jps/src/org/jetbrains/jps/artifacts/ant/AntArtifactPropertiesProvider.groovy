@@ -22,7 +22,11 @@ class AntArtifactPropertiesProvider extends ArtifactPropertiesProviderService<An
     String file = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(filePathNode.text()))
     String target = targetNode.text()
     boolean enabled = node."@enabled" == "true"
-    return new AntArtifactProperties(enabled: enabled, filePath: file, target: target)
+    List<List<String>> properties = []
+    node."build-properties"[0]?."build-property"?.each {Node property ->
+      properties << [property."@name", property."@value"]
+    }
+    return new AntArtifactProperties(enabled: enabled, filePath: file, target: target, buildProperties: properties)
   }
 
 }

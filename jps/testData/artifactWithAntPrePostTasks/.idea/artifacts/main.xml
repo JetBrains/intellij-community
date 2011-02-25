@@ -5,12 +5,18 @@
       <options enabled="true">
         <file>file://$PROJECT_DIR$/scripts/build.xml</file>
         <target>post-step</target>
+        <build-properties>
+        </build-properties>
       </options>
     </properties>
     <properties id="ant-preprocessing">
       <options enabled="true">
         <file>file://$PROJECT_DIR$/scripts/build.xml</file>
         <target>pre-step</target>
+        <build-properties>
+          <build-property name="taskName" value="pre" />
+          <build-property name="myProperty" value="1" />
+        </build-properties>
       </options>
     </properties>
     <root id="root">

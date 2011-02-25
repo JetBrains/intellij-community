@@ -6,12 +6,12 @@
 
   <target name="pre-step">
     <mkdir dir="${artifact.out}"/>
-    <echo message="pre step called" file="${artifact.out}/prestep.txt"/>
+    <echo message="${taskName}${myProperty}" file="${artifact.out}/prestep.txt"/>
   </target>
 
   <target name="post-step">
     <mkdir dir="${artifact.out}"/>
-    <echo message="post step called" file="${artifact.out}/poststep.txt"/>
+    <echo message="${artifact.output.path}" file="${artifact.out}/poststep.txt"/>
   </target>
 
 </project>
