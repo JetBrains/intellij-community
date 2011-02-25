@@ -35,6 +35,7 @@ import git4idea.rebase.GitRebaser;
 import java.util.Collection;
 import java.util.Set;
 
+import static git4idea.ui.GitUIUtil.notifyError;
 import static git4idea.ui.GitUIUtil.notifyImportantError;
 
 /**
@@ -114,8 +115,9 @@ public class GitUpdateProcess {
       return success;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
-      notifyImportantError(myProject, "Couldn't save local changes", "Saving uncommitted changes before update failed with an error.<br/>" +
-                                                                     "Update cancelled.<br/>" + e.getLocalizedMessage());
+      notifyError(myProject, "Couldn't save local changes",
+                  "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
+                  "Update was cancelled.", true, e);
     } finally {
       myProjectManager.unblockReloadingProjectOnExternalChanges();
     }

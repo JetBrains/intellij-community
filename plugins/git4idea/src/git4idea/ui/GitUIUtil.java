@@ -55,11 +55,31 @@ public class GitUIUtil {
    */
   private GitUIUtil() { }
 
-  public static String stringifyErrors(List<VcsException> errors) {
+  public static void notifyMessage(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+    String desc = description.replace("\n", "<br/>");
+    if (errors != null && !errors.isEmpty()) {
+      desc += "<hr/>" + stringifyErrors(errors);
+    }
+    String id = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
+    Notifications.Bus.notify(new Notification(id, title, desc, type), project);
+  }
+
+  public static void notifyError(Project project, String title, String description, boolean important, @Nullable VcsException error) {
+    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
+  }
+
+  /**
+   * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
+   * Line separator is also replaced by &lt;br/&gt;
+   */
+  public static @NotNull String stringifyErrors(@Nullable Collection<VcsException> errors) {
+    if (errors == null) {
+      return "";
+    }
     StringBuilder content = new StringBuilder();
     for (VcsException e : errors) {
       for (String message : e.getMessages()) {
-        content.append(message).append("<br/>");
+        content.append(message.replace("\n", "<br/>")).append("<br/>");
       }
     }
     return content.toString();
@@ -73,21 +93,11 @@ public class GitUIUtil {
   }
 
   public static void notifyError(Project project, String title, String description) {
-    notifyError(project, title, description, GitVcs.NOTIFICATION_GROUP_ID);
+    notifyMessage(project, title, description, NotificationType.ERROR, false, null);
   }
 
   public static void notifyImportantError(Project project, String title, String description) {
-    notifyError(project, title, description, GitVcs.IMPORTANT_ERROR_NOTIFICATION);
-  }
-
-  /**
-   * Displays an error notification.
-   */
-  public static void notifyError(Project project, String title, String description, String id) {
-    if (StringUtil.isEmptyOrSpaces(description)) {
-      description = title;
-    }
-    Notifications.Bus.notify(new Notification(id, title, description, NotificationType.ERROR), project);
+    notifyMessage(project, title, description, NotificationType.ERROR, true, null);
   }
 
   public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
