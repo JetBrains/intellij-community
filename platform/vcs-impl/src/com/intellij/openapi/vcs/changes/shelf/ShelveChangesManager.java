@@ -212,11 +212,13 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         }
 
         final String description = file.getNameWithoutExtension().replace('_', ' ');
-        final ShelvedChangeList list = new ShelvedChangeList(file.getPath(), description, new SmartList<ShelvedBinaryFile>(),
+        final File patchPath = getPatchPath(description);
+        final ShelvedChangeList list = new ShelvedChangeList(patchPath.getPath(), description, new SmartList<ShelvedBinaryFile>(),
                                                              file.getTimeStamp());
         try {
           final List<TextFilePatch> patchesList = loadPatches(file.getPath());
           if (! patchesList.isEmpty()) {
+            FileUtil.copy(new File(file.getPath()), patchPath);
             // add only if ok to read patch
             myShelvedChangeLists.add(list);
             result.add(list);
