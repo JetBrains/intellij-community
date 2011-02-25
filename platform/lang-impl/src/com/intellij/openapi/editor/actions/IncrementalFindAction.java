@@ -17,6 +17,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 
@@ -41,18 +44,43 @@ public class IncrementalFindAction extends EditorAction {
       final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
         final JComponent headerComponent = editor.getHeaderComponent();
+        String selectedText = editor.getSelectionModel().getSelectedText();
         if (headerComponent instanceof EditorSearchComponent) {
-          if (myReplace) {
-            ((EditorSearchComponent)headerComponent).replaceCurrent();
-          } else {
-            ((EditorSearchComponent) headerComponent).setInitialText(editor.getSelectionModel().getSelectedText());
+          EditorSearchComponent editorSearchComponent = (EditorSearchComponent)headerComponent;
+          if (!myReplace) {
+            editorSearchComponent.setInitialText(selectedText);
             headerComponent.requestFocus();
+          }
+          if (myReplace != editorSearchComponent.getFindModel().isReplaceState()){
+            editorSearchComponent.getFindModel().setReplaceState(myReplace);
           }
         }
         else {
-          final EditorSearchComponent header = new EditorSearchComponent(editor, project, myReplace);
+          FindManager findManager = FindManager.getInstance(project);
+          FindModel model = null;
+          if (myReplace) {
+            model = findManager.createReplaceInFileModel();
+            if (!StringUtil.isEmpty(selectedText)) {
+              if (selectedText.indexOf('\n') >= 0) {
+                model.setGlobal(false);
+              }
+              else {
+                model.setStringToFind(selectedText);
+                model.setGlobal(true);
+              }
+            }
+            else {
+              model.setGlobal(true);
+            }
+          } else {
+            model = new FindModel();
+            model.copyFrom(findManager.getFindInFileModel());
+          }
+          if (selectedText != null && model.isGlobal()) {
+            model.setStringToFind(selectedText);
+          }
+          final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
           editor.setHeaderComponent(header);
-
           header.requestFocus();
         }
       }
