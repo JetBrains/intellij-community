@@ -282,7 +282,7 @@ public class TodoCheckinHandlerWorker {
   private static ArrayList<LineFragment> getLineFragments(String beforeContent, String afterContent) {
     DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
     DiffFragment[] step1lineFragments =
-      new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
+      new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
     return new DiffFragmentsProcessor().process(step1lineFragments);
   }
 
