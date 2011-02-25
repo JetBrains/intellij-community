@@ -386,6 +386,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return result;
     }
 
+    @Override
+    public boolean willOpenEditor() {
+      return true;
+    }
+
     public String getElementName(final Object element) {
       if (!(element instanceof PsiFile)) return null;
       return ((PsiFile)element).getName();

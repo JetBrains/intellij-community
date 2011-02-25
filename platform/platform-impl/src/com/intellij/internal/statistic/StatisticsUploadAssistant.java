@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +111,7 @@ public class StatisticsUploadAssistant {
     public static Map<GroupDescriptor, Set<PatchedUsage>> getPatchedUsages(@NotNull Set<String> disabledGroups,
                                                                            @NotNull Project[] projects,
                                                                            @NotNull SentUsagesPersistence usagesPersistence) {
-        Map<GroupDescriptor, Set<PatchedUsage>> usages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        Map<GroupDescriptor, Set<PatchedUsage>> usages = new LinkedHashMap<GroupDescriptor, Set<PatchedUsage>>();
 
         for (Project project : projects) {
             final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = getAllUsages(project, disabledGroups);
@@ -125,7 +124,7 @@ public class StatisticsUploadAssistant {
 
     @NotNull
     private static Map<GroupDescriptor, Set<UsageDescriptor>> filterDisabled(@NotNull Set<String> disabledGroups, @NotNull Map<GroupDescriptor, Set<UsageDescriptor>> usages) {
-        Map<GroupDescriptor, Set<UsageDescriptor>> filtered = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+        Map<GroupDescriptor, Set<UsageDescriptor>> filtered = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
 
         for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> usage : usages.entrySet()) {
             if (!disabledGroups.contains(usage.getKey().getId())) {
@@ -154,7 +153,7 @@ public class StatisticsUploadAssistant {
                 final PatchedUsage descriptor = findDescriptor(patchedUsages, Pair.create(sentUsageGroupDescriptor, sentUsage.getKey()));
                 if (descriptor == null) {
                     if (!patchedUsages.containsKey(sentUsageGroupDescriptor)) {
-                        patchedUsages.put(sentUsageGroupDescriptor, new HashSet<PatchedUsage>());
+                        patchedUsages.put(sentUsageGroupDescriptor, new LinkedHashSet<PatchedUsage>());
                     }
                     patchedUsages.get(sentUsageGroupDescriptor).add(new PatchedUsage(sentUsage.getKey(), -sentUsage.getValue()));
                 } else {
@@ -173,7 +172,7 @@ public class StatisticsUploadAssistant {
     }
 
     private static Map<GroupDescriptor, Set<PatchedUsage>> mapToPatchedUsagesMap(Map<GroupDescriptor, Set<UsageDescriptor>> allUsages) {
-        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new LinkedHashMap<GroupDescriptor, Set<PatchedUsage>>();
         for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : allUsages.entrySet()) {
             patchedUsages.put(entry.getKey(), ContainerUtil.map2Set(entry.getValue(), new Function<UsageDescriptor, PatchedUsage>() {
                 @Override
@@ -187,7 +186,7 @@ public class StatisticsUploadAssistant {
 
     @NotNull
     private static Map<GroupDescriptor, Set<PatchedUsage>> packCollection(@NotNull Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages, Condition<PatchedUsage> condition) {
-        Map<GroupDescriptor, Set<PatchedUsage>> result = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        Map<GroupDescriptor, Set<PatchedUsage>> result = new LinkedHashMap<GroupDescriptor, Set<PatchedUsage>>();
         for (GroupDescriptor descriptor : patchedUsages.keySet()) {
             final Set<PatchedUsage> usages = packCollection(patchedUsages.get(descriptor), condition);
             if (usages.size() > 0) {
@@ -225,7 +224,7 @@ public class StatisticsUploadAssistant {
 
     @NotNull
     public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@Nullable Project project, @NotNull Set<String> disabledGroups) {
-        Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+        Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
 
         for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
             final GroupDescriptor groupDescriptor = usagesCollector.getGroupId();

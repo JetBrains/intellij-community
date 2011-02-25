@@ -340,14 +340,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void unsplitWindow() {
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplit(true);
     }
   }
 
   public void unsplitAllWindow() {
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplitAll();
     }
@@ -355,7 +355,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @Override
   public int getWindowSplitCount() {
-    return getSplitters().getSplitCount();
+    return getActiveSplitters(true).getResult().getSplitCount();
+  }
+
+  @Override
+  public boolean hasSplitOrUndockedWindows() {
+    Set<EditorsSplitters> splitters = getAllSplitters();
+    if (splitters.size() > 1) return true;
+    return getWindowSplitCount() > 1;
   }
 
   @NotNull
@@ -725,7 +732,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     // Notify editors about selection changes
-    window.getOwner().setCurrentWindow(window, false);
+    window.getOwner().setCurrentWindow(window, focusEditor);
     window.getOwner().afterFileOpen(file);
 
     newSelectedComposite.getSelectedEditor().selectNotify();
@@ -840,6 +847,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
+      realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
       return openEditor(realDescriptor, focusEditor);
     }
 
@@ -847,7 +855,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         VirtualFile file = descriptor.getFile();
-        final FileEditor[] editors = openFile(file, focusEditor);
+        final FileEditor[] editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow());
         ContainerUtil.addAll(result, editors);
 
         boolean navigated = false;

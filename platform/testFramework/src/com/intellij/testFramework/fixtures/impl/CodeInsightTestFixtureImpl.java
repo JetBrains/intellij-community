@@ -625,34 +625,39 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void type(final char c) {
     assertInitialized();
-    new WriteCommandAction(getProject()) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      protected void run(Result result) throws Exception {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        if (c == '\b') {
-          performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-          return;
-        }
-        if (c == '\n') {
-          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
-            return;
-          }
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+          @Override
+          public void run() {
+            EditorActionManager actionManager = EditorActionManager.getInstance();
+            if (c == '\b') {
+              performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+              return;
+            }
+            if (c == '\n') {
+              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
+                return;
+              }
 
-          performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-          return;
-        }
-        if (c == '\t') {
-          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
-            return;
-          }
-          if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
-            return;
-          }
-        }
+              performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+              return;
+            }
+            if (c == '\t') {
+              if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
+                return;
+              }
+              if (_performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
+                return;
+              }
+            }
 
-        actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
+            actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
+          }
+        }, null, null);
       }
-    }.execute();
+    });
   }
 
   private DataContext getEditorDataContext() {

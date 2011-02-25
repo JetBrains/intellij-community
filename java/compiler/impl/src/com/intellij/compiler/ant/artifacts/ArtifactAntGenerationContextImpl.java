@@ -59,6 +59,16 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     }
   }
 
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
+  public GenerationOptions getGenerationOptions() {
+    return myGenerationOptions;
+  }
+
   public String getConfiguredArtifactOutputProperty(@NotNull Artifact artifact) {
     return "artifact.output." + BuildProperties.convertName(artifact.getName());
   }

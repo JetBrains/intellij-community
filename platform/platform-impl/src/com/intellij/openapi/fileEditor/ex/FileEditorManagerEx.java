@@ -27,8 +27,6 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +89,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract int getWindowSplitCount();
 
+  public abstract boolean hasSplitOrUndockedWindows();
+
   @NotNull
   public abstract EditorWindow[] getWindows();
 
@@ -128,8 +128,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   @NotNull
   @Override
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
-    return openFileWithProviders(file, focusEditor, searchForSplitter).getFirst();
+  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+    return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 
   @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,

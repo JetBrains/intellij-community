@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.compiled.ClsModifierListImpl;
@@ -29,6 +29,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -75,7 +76,19 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
 
   @Override
   public boolean shouldCreateStub(final ASTNode node) {
-    return node.getTreeParent().getElementType() != JavaElementType.LOCAL_VARIABLE;
+    final IElementType parentType = node.getTreeParent().getElementType();
+    return shouldCreateStub(parentType);
+  }
+
+  @Override
+  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+    final LighterASTNode parent = tree.getParent(node);
+    final IElementType parentType = parent != null ? parent.getTokenType() : null;
+    return shouldCreateStub(parentType);
+  }
+
+  private static boolean shouldCreateStub(final IElementType parentType) {
+    return parentType != null && parentType != JavaElementType.LOCAL_VARIABLE && parentType != JavaElementType.RESOURCE_VARIABLE;
   }
 
   public PsiModifierListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {

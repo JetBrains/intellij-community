@@ -72,6 +72,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
@@ -285,7 +286,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final AntBuildFileBase buildFile = getCurrentBuildFile();
     final TreePath[] paths = myTree.getSelectionPaths();
     final String[] targets = getTargetNamesFromPaths(paths);
-    ExecutionHandler.runBuild(buildFile, targets, null, dataContext, AntBuildListener.NULL);
+    ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
   }
 
   private boolean canRunSelection() {

@@ -72,7 +72,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
             if (element instanceof PsiFile) {
               VirtualFile vfile = ((PsiFile)element).getVirtualFile();
               if (vfile == null) return;
-              n = new OpenFileDescriptor(project, vfile, popup.getLinePosition(), popup.getColumnPosition());
+              n = new OpenFileDescriptor(project, vfile, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
             }
 
             if (!n.canNavigate()) return;
@@ -140,4 +140,5 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       return o1.getName().compareToIgnoreCase(o2.getName());
     }
   }
+
 }

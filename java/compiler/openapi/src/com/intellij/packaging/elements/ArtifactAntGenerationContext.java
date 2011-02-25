@@ -15,7 +15,9 @@
  */
 package com.intellij.packaging.elements;
 
+import com.intellij.compiler.ant.GenerationOptions;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -38,4 +40,8 @@ public interface ArtifactAntGenerationContext {
   String getSubstitutedPath(@NonNls String path);
 
   String getArtifactOutputProperty(@NotNull Artifact artifact);
+
+  Project getProject();
+
+  GenerationOptions getGenerationOptions();
 }

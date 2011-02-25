@@ -182,6 +182,10 @@ public abstract class ChooseByNameBase {
     return myClosedByShiftEnter;
   }
 
+  public boolean isOpenInCurrentWindowRequested() {
+    return isClosedByShiftEnter();
+  }
+
   /**
    * Set tool area. The method may be called only before invoke.
    *
