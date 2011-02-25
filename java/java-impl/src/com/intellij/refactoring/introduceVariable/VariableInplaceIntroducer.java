@@ -53,7 +53,7 @@ import java.util.List;
  * User: anna
  * Date: 12/8/10
  */
-class VariableInplaceIntroducer extends VariableInplaceRenamer {
+public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final PsiVariable myElementToRename;
   private final Editor myEditor;
   private final TypeExpression myExpression;
@@ -85,7 +85,7 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myDefaultType = elementToRename.getType();
 
     final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
-    myPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement);
+    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement) : null;
     editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
@@ -100,16 +100,14 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
                            createExpression(myExpression, typeElement.getText(), !myCantChangeFinalModifier), true,
                            true);
     if (!myCantChangeFinalModifier) {
-      builder.replaceElement(myElementToRename.getModifierList(), "_FINAL_", new FinalExpression(myProject), false, true);
+      builder.replaceElement(myElementToRename.getModifierList(), "_FINAL_", new FinalExpression(), false, true);
     }
   }
 
   @Override
   protected LookupElement[] createLookupItems(LookupElement[] lookupItems, String name) {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    final PsiDeclarationStatement declarationStatement = myPointer.getElement();
-    final PsiVariable psiVariable =
-      declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
+    final PsiVariable psiVariable = getVariable();
     if (psiVariable != null) {
       final TextResult insertedValue =
         templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
@@ -133,6 +131,12 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
     return super.createLookupItems(lookupItems, name);
   }
 
+  @Nullable
+  protected PsiVariable getVariable() {
+    final PsiDeclarationStatement declarationStatement = myPointer.getElement();
+    return declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
+  }
+
   @Override
   protected TextRange preserveSelectedRange(SelectionModel selectionModel) {
     return null;
@@ -143,33 +147,32 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
     try {
       if (success) {
         final Document document = myEditor.getDocument();
-        final PsiDeclarationStatement declarationStatement = myPointer.getElement();
-        if (declarationStatement == null) return;
-        final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-        final @Nullable PsiVariable psiVariable = declaredElements.length > 0 ? (PsiVariable)declaredElements[0] : null;
-        if (psiVariable != null) {
-          JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-          FinalExpression.adjustLine(psiVariable, document);
+        final @Nullable PsiVariable psiVariable = getVariable();
+        if (psiVariable == null) {
+          return;
         }
+        saveSettings(psiVariable);
+        adjustLine(psiVariable, document);
         int startOffset = myExprMarker.getStartOffset();
-        final PsiFile file = declarationStatement.getContainingFile();
+        final PsiFile file = psiVariable.getContainingFile();
         final PsiReference referenceAt = file.findReferenceAt(startOffset);
         if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
           startOffset = referenceAt.getElement().getTextRange().getEndOffset();
         }
-        else if (declarationStatement != null) {
-          startOffset = declarationStatement.getTextRange().getEndOffset();
+        else {
+          final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(psiVariable, PsiDeclarationStatement.class);
+          if (declarationStatement != null) {
+            startOffset = declarationStatement.getTextRange().getEndOffset();
+          }
         }
         myEditor.getCaretModel().moveToOffset(startOffset);
-        final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
-        if (selectedType != null) {
-          TypeSelectorManagerImpl.typeSelected(selectedType, myDefaultType);
+        if (psiVariable.getInitializer() != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              appendTypeCasts(myOccurrenceMarkers, file, myProject, psiVariable);
+            }
+          });
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            appendTypeCasts(myOccurrenceMarkers, file, myProject, psiVariable);
-          }
-        });
       }
     }
     finally {
@@ -180,6 +183,11 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
       myEditor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
       myExprMarker.dispose();
     }
+  }
+
+  protected void saveSettings(PsiVariable psiVariable) {
+    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType);
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
@@ -282,16 +290,15 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
     };
   }
 
-  private static class FinalExpression extends Expression {
-    private final Project myProject;
+  protected boolean createFinals() {
+    return IntroduceVariableBase.createFinals(myProject);
+  }
 
-    public FinalExpression(Project project) {
-      myProject = project;
-    }
+  private class FinalExpression extends Expression {
 
     @Override
     public Result calculateResult(ExpressionContext context) {
-      return new TextResult(IntroduceVariableBase.createFinals(myProject) ? PsiKeyword.FINAL : "");
+      return new TextResult(createFinals() ? PsiKeyword.FINAL : "");
     }
 
     @Override
@@ -306,16 +313,18 @@ class VariableInplaceIntroducer extends VariableInplaceRenamer {
       lookupElements[1] = LookupElementBuilder.create(PsiModifier.FINAL + " ");
       return lookupElements;
     }
+  }
 
-    public static void adjustLine(final PsiVariable psiVariable, final Document document) {
-      final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
-      final int varLineNumber = document.getLineNumber(modifierListOffset);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() { //adjust line indent if final was inserted and then deleted
+  public static void adjustLine(final PsiVariable psiVariable, final Document document) {
+    final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
+    final int varLineNumber = document.getLineNumber(modifierListOffset);
 
-        public void run() {
-          CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
-        }
-      });
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() { //adjust line indent if final was inserted and then deleted
+
+      public void run() {
+        PsiDocumentManager.getInstance(psiVariable.getProject()).doPostponedOperationsAndUnblockDocument(document);
+        CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
+      }
+    });
   }
 }

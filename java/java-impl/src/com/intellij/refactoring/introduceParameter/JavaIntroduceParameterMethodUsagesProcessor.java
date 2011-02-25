@@ -209,7 +209,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
   @Nullable
-  private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
+  public static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

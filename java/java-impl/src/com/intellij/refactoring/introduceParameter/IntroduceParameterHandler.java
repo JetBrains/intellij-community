@@ -42,7 +42,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
-import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -53,13 +52,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
+  static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private Project myProject;
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
@@ -153,9 +152,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       expressionToRemoveParamFrom = localVar.getInitializer();
     }
     TIntArrayList parametersToRemove = expressionToRemoveParamFrom == null ? new TIntArrayList() : Util.findParametersToRemove(method, expressionToRemoveParamFrom, occurences);
-    if (editor != null) {
-      RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
-    }
 
     boolean mustBeFinal = false;
     if (localVar != null) {
@@ -198,7 +194,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       final String propName = localVar != null ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(localVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
       final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, expr, localVar);
 
-      TypeSelectorManager typeSelectorManager = expr != null
+      TypeSelectorManagerImpl typeSelectorManager = expr != null
                                                 ? new TypeSelectorManagerImpl(project, initializerType, expr, occurences)
                                                 : new TypeSelectorManagerImpl(project, initializerType, occurences);
 
@@ -211,8 +207,23 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         }
 
       };
-      new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
-                                   typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
+      boolean isInplaceAvailableOnDataContext = editor != null && editor.getSettings().isVariableInplaceRenameEnabled()
+                                                && method == methodToSearchFor && method.hasModifierProperty(PsiModifier.PRIVATE) &&
+                                                parametersToRemove.isEmpty() && (localVar == null || expr == null) &&
+                                                !Util.anyFieldsWithGettersPresent(classMemberRefs);
+
+      if (!isInplaceAvailableOnDataContext) {
+        if (editor != null) {
+          RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
+        }
+        new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
+                                     typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
+      } else {
+        new InplaceIntroduceParameterPopup(project, editor,
+                                     typeSelectorManager, nameSuggestionsGenerator,
+                                     expr, localVar, method, methodToSearchFor, occurences, parametersToRemove,
+                                     mustBeFinal).inplaceIntroduceParameter();
+      }
     }
     return true;
   }

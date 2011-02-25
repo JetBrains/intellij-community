@@ -262,7 +262,7 @@ public class VariableInplaceRenamer {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset),
                                                                                 PsiNameIdentifierOwner.class));
                 }
-                moveOffsetAfter(true);
+                moveOffsetAfter(!brokenOff);
               }
 
               public void templateCancelled(Template template) {
