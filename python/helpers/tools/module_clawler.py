@@ -6,6 +6,7 @@ from BeautifulSoup import BeautifulSoup
 from xml.dom import minidom
 
 exclude = ['StringIO', 'cStringIO']
+exclude_builtin = ['coerce', 'bytearray', 'apply', 'bin', 'bytes', 'format', 'buffer']
 
 def get_address(version):
   if version == 3.2:
@@ -28,9 +29,19 @@ def get_builtins(version):
 
   for dt in soup('dt'):
     tt = dt.findChild('tt')
-    if tt is not None:
+    if tt is not None and str(tt.text) not in exclude_builtin:
       functions_set.add(str(tt.text))
   page.close()
+
+  if version < 3.0:
+    functions_set.add('coerce')
+    functions_set.add('apply')
+    functions_set.add('buffer')
+  if version > 2.5:
+    functions_set.add('bytearray')
+    functions_set.add('bin')
+    functions_set.add('bytes')
+    functions_set.add('format')
   return functions_set
 
 
@@ -43,14 +54,20 @@ def get_modules(version):
     for dl in soup('dt'):
       a = dl.findChild('a')
       tt = dl.findChild('tt')
-      if tt is not None and a is not None:
-        modules[str(tt.text)] = a['href']
+      if tt is not None:
+        if a is not None:
+          modules[str(tt.text)] = a['href']
+        else:
+          modules[str(tt.text)] = None
   else:
     for dl in soup('td'):
       a = dl.findChild('a')
       tt = dl.findChild('tt')
-      if tt is not None and a is not None:
-        modules[str(tt.text)] = a['href']
+      if tt is not None:
+        if a is not None:
+          modules[str(tt.text)] = a['href']
+        else:
+          modules[str(tt.text)] = None
   page.close()
   return modules
 
@@ -106,6 +123,8 @@ def get_supported_functions(version):
   supported = set()
 
   for module in modules.items():
+    if module[1] == None:
+      continue
     link = "http://docs.python.org/release/" + str(version) + "/" + module[1]
     functions = get_functions_from_page(link, module)
     supported = supported.union(functions)
