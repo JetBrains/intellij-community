@@ -3,40 +3,38 @@ PsiJavaFile:TryNormal5.java
     PsiKeyword:try('try')
     PsiResourceList:(R1 r1 = 1; R2 r2 = 2)
       PsiJavaToken:LPARENTH('(')
-      PsiResource:r1
-        PsiLocalVariable:r1
-          PsiModifierList:
-            <empty list>
-          PsiTypeElement:R1
-            PsiJavaCodeReferenceElement:R1
-              PsiIdentifier:R1('R1')
-              PsiReferenceParameterList
-                <empty list>
-          PsiWhiteSpace(' ')
-          PsiIdentifier:r1('r1')
-          PsiWhiteSpace(' ')
-          PsiJavaToken:EQ('=')
-          PsiWhiteSpace(' ')
-          PsiLiteralExpression:1
-            PsiJavaToken:INTEGER_LITERAL('1')
+      PsiResourceVariable:r1
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:R1
+          PsiJavaCodeReferenceElement:R1
+            PsiIdentifier:R1('R1')
+            PsiReferenceParameterList
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiIdentifier:r1('r1')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:EQ('=')
+        PsiWhiteSpace(' ')
+        PsiLiteralExpression:1
+          PsiJavaToken:INTEGER_LITERAL('1')
       PsiJavaToken:SEMICOLON(';')
       PsiWhiteSpace(' ')
-      PsiResource:r2
-        PsiLocalVariable:r2
-          PsiModifierList:
-            <empty list>
-          PsiTypeElement:R2
-            PsiJavaCodeReferenceElement:R2
-              PsiIdentifier:R2('R2')
-              PsiReferenceParameterList
-                <empty list>
-          PsiWhiteSpace(' ')
-          PsiIdentifier:r2('r2')
-          PsiWhiteSpace(' ')
-          PsiJavaToken:EQ('=')
-          PsiWhiteSpace(' ')
-          PsiLiteralExpression:2
-            PsiJavaToken:INTEGER_LITERAL('2')
+      PsiResourceVariable:r2
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:R2
+          PsiJavaCodeReferenceElement:R2
+            PsiIdentifier:R2('R2')
+            PsiReferenceParameterList
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiIdentifier:r2('r2')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:EQ('=')
+        PsiWhiteSpace(' ')
+        PsiLiteralExpression:2
+          PsiJavaToken:INTEGER_LITERAL('2')
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

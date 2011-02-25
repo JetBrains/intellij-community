@@ -675,8 +675,8 @@ public class HighlightControlFlowUtil {
   @Nullable
   public static PsiClass getInnerClassVariableReferencedFrom(PsiVariable variable, PsiElement context) {
     PsiElement[] scope;
-    if (variable instanceof PsiScopedLocalVariable) {
-      scope = ((PsiScopedLocalVariable)variable).getDeclarationScope();
+    if (variable instanceof PsiResourceVariable) {
+      scope = ((PsiResourceVariable)variable).getDeclarationScope();
     }
     else if (variable instanceof PsiLocalVariable) {
       scope = new PsiElement[]{variable.getParent().getParent()}; // code block or for statement

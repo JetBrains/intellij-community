@@ -32,8 +32,8 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
 
   @NotNull
   @Override
-  public List<PsiResource> getResources() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResource.class);
+  public List<PsiResourceVariable> getResourceVariables() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResourceVariable.class);
   }
 
   @Override

@@ -17,12 +17,13 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface PsiScopedLocalVariable extends PsiLocalVariable {
-  /**
-   * Returns the element or elements (method, "for" statement or try block) in which the variable is declared.
-   *
-   * @return the declaration scope for the variable.
-   */
+/**
+ * Represents a resource variable of try-with-resources statement (automatic resource management) introduced in JDK 7.
+ *
+ * @see PsiResourceList#getResourceVariables()
+ * @since 10.5.
+ */
+public interface PsiResourceVariable extends PsiLocalVariable {
   @NotNull
   PsiElement[] getDeclarationScope();
 }

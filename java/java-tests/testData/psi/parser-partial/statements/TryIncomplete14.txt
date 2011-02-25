@@ -3,8 +3,12 @@ PsiJavaFile:TryIncomplete14.java
     PsiKeyword:try('try')
     PsiResourceList:(int)
       PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Resource definition expected
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:int
         PsiKeyword:int('int')
+      PsiErrorElement:Identifier expected
+        <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

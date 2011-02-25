@@ -3,21 +3,20 @@ PsiJavaFile:TryIncomplete16.java
     PsiKeyword:try('try')
     PsiResourceList:(R r =)
       PsiJavaToken:LPARENTH('(')
-      PsiResource:r
-        PsiLocalVariable:r
-          PsiModifierList:
-            <empty list>
-          PsiTypeElement:R
-            PsiJavaCodeReferenceElement:R
-              PsiIdentifier:R('R')
-              PsiReferenceParameterList
-                <empty list>
-          PsiWhiteSpace(' ')
-          PsiIdentifier:r('r')
-          PsiWhiteSpace(' ')
-          PsiJavaToken:EQ('=')
-          PsiErrorElement:Expression expected
-            <empty list>
+      PsiResourceVariable:r
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:R
+          PsiJavaCodeReferenceElement:R
+            PsiIdentifier:R('R')
+            PsiReferenceParameterList
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiIdentifier:r('r')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:EQ('=')
+        PsiErrorElement:Expression expected
+          <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

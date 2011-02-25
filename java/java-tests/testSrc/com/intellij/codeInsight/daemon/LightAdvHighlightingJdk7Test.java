@@ -32,7 +32,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection(), new DefUseInspection()};
+    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection()};
   }
 
   public void testDuplicateAnnotations() throws Exception {
@@ -194,6 +194,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testTryWithResourcesWarn() throws Exception {
+    enableInspectionTool(new DefUseInspection());
     doTest(true, false);
   }
 
