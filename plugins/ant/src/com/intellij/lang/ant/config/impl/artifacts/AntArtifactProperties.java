@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,19 +30,26 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author nik
 */
 public class AntArtifactProperties extends ArtifactProperties<AntArtifactProperties> {
+  @NonNls private static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
   private String myFileUrl;
   private String myTargetName;
   private boolean myEnabled;
   private boolean myPostProcessing;
+  private List<BuildFileProperty> myUserProperties = new ArrayList<BuildFileProperty>();
 
   public AntArtifactProperties() {
   }
@@ -51,7 +59,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
   }
 
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new AntArtifactPropertiesEditor(this, context.getProject(), myPostProcessing);
+    return new AntArtifactPropertiesEditor(this, context, myPostProcessing);
   }
 
   public AntArtifactProperties getState() {
@@ -72,14 +80,15 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
     }
   }
 
-  private void runAntTarget(CompileContext compileContext, Artifact artifact) {
+  private void runAntTarget(CompileContext compileContext, final Artifact artifact) {
     if (myEnabled) {
       final Project project = compileContext.getProject();
       final AntBuildTarget target = findTarget(AntConfiguration.getInstance(project));
       if (target != null) {
+        final List<BuildFileProperty> properties = getAllProperties(artifact);
         final DataContext dataContext = SimpleDataContext.getProjectContext(project);
         if (!myPostProcessing) {
-          final boolean success = AntConfigurationImpl.executeTargetSynchronously(dataContext, target);
+          final boolean success = AntConfigurationImpl.executeTargetSynchronously(dataContext, target, properties);
           if (!success) {
             compileContext.addMessage(CompilerMessageCategory.ERROR, "Cannot build artifact '" + artifact.getName() + "': ant target '" + target.getDisplayName() + "' failed with error", null, -1, -1);
           }
@@ -87,7 +96,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
         }
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            target.run(dataContext, AntBuildListener.NULL);
+            target.run(dataContext, properties, AntBuildListener.NULL);
           }
         });
       }
@@ -111,6 +120,16 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
   @Attribute("enabled")
   public boolean isEnabled() {
     return myEnabled;
+  }
+
+  @Tag("build-properties")
+  @AbstractCollection(surroundWithTag = false)
+  public List<BuildFileProperty> getUserProperties() {
+    return myUserProperties;
+  }
+
+  public void setUserProperties(List<BuildFileProperty> userProperties) {
+    myUserProperties = userProperties;
   }
 
   public void setEnabled(boolean enabled) {
@@ -138,5 +157,16 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
       }
     }
     return null;
+  }
+
+  public List<BuildFileProperty> getAllProperties(@NotNull Artifact artifact) {
+    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    properties.add(new BuildFileProperty(ARTIFACT_OUTPUT_PATH_PROPERTY, artifact.getOutputPath()));
+    properties.addAll(myUserProperties);
+    return properties;
+  }
+
+  public static boolean isPredefinedProperty(String propertyName) {
+    return ARTIFACT_OUTPUT_PATH_PROPERTY.equals(propertyName);
   }
 }

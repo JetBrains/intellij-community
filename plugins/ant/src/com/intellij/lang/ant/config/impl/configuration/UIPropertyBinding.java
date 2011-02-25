@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.ui.DocumentAdapter;
@@ -35,7 +36,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
@@ -95,8 +99,8 @@ public abstract class UIPropertyBinding {
       myBindings.add(new ComboBoxBinding(comboBox, property));
     }
 
-    public <T extends JDOMExternalizable> TableListBinding bindList(JTable table, ColumnInfo[] columns, ListProperty<T> property) {
-      final TableListBinding binding = new TableListBinding(table, columns, property);
+    public <T extends JDOMExternalizable> TableListBinding<T> bindList(JTable table, ColumnInfo[] columns, ListProperty<T> property) {
+      final TableListBinding<T> binding = new TableListBinding<T>(table, columns, property);
       myBindings.add(binding);
       return binding;
     }
@@ -463,7 +467,7 @@ public abstract class UIPropertyBinding {
       myModel.setSortable(isSortable);
     }
 
-    public void addRemoveFacility(final JButton button) {
+    public void addRemoveFacility(final JButton button, final Condition<T> removable) {
       myComponents.add(button);
       button.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -472,9 +476,25 @@ public abstract class UIPropertyBinding {
       });
       getComponent().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          button.setEnabled(!getComponent().getSelectionModel().isSelectionEmpty());
+          updateRemoveButton(button, removable);
         }
       });
+    }
+
+    public void updateRemoveButton(JButton button, Condition<T> removable) {
+      final JTable table = getComponent();
+      final ListSelectionModel selectionModel = table.getSelectionModel();
+      boolean enable = false;
+      if (!selectionModel.isSelectionEmpty()) {
+        enable = true;
+        for (int i : table.getSelectedRows()) {
+          if (!removable.value(myModel.getItems().get(i))) {
+            enable = false;
+            break;
+          }
+        }
+      }
+      button.setEnabled(enable);
     }
   }
 
