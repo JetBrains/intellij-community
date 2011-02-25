@@ -29,6 +29,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 
@@ -75,7 +76,7 @@ public class GitUpdateProcess {
   public boolean update() {
     LOG.info("update started");
     // check if update is possible
-    if (isRebaseInProgressAndNotify() || isMergeInProgressAndNotify()) { return false; }
+    if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
     if (!allTrackedBranchesConfigured()) { return false; }
 
     final GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
@@ -160,7 +161,7 @@ public class GitUpdateProcess {
    * Check if merge is in progress, propose to resolve conflicts.
    * @return true if merge is in progress, which means that update can't continue.
    */
-  private boolean isMergeInProgressAndNotify() {
+  private boolean checkMergeInProgress() {
     final Collection<VirtualFile> mergingRoots = myMerger.getMergingRoots();
     if (mergingRoots.isEmpty()) {
       return false;
@@ -175,10 +176,31 @@ public class GitUpdateProcess {
   }
 
   /**
+   * Checks if there are unmerged files (which may still be possible even if rebase or merge have finished)
+   * @return true if there are unmerged files at
+   */
+  private boolean checkUnmergedFiles() {
+    try {
+      Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoots);
+      if (!unmergedFiles.isEmpty()) {
+        return !new GitMergeConflictResolver(myProject, false, "Unmerged files detected. These conflicts must be resolved before update.", "Can't update", "") {
+          @Override protected boolean proceedAfterAllMerged() throws VcsException {
+            myMerger.mergeCommit(myRoots);
+            return true;
+          }
+        }.mergeFiles(myRoots);
+      }
+    } catch (VcsException e) {
+      LOG.info("areUnmergedFiles. Couldn't get unmerged files", e);
+    }
+    return false; // ignoring errors intentionally - if update will still be not possible, the user will be notified after. 
+  }
+
+  /**
    * Check if rebase is in progress, propose to resolve conflicts.
    * @return true if rebase is in progress, which means that update can't continue.
    */
-  private boolean isRebaseInProgressAndNotify() {
+  private boolean checkRebaseInProgress() {
     final GitRebaser rebaser = new GitRebaser(myProject);
     final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
     if (rebasingRoots.isEmpty()) {
