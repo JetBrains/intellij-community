@@ -7,7 +7,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 
 import java.util.HashSet;
 import java.util.List;
@@ -98,27 +97,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
       commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceExceptPartQuickFix());
     }
-  }
-
-  @Override
-  public void visitPyImportStatement(PyImportStatement node) {
-    super.visitPyImportStatement(node);
-    PyImportElement[] importElements = node.getImportElements();
-    int len = 0;
-    String moduleName = "";
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      for (PyImportElement importElement : importElements) {
-        final PyQualifiedName qName = importElement.getImportedQName();
-        if (qName != null) {
-          moduleName = qName.toString();
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName))
-            len = appendLanguageLevel(message, len, languageLevel);
-        }
-      }
-    }
-    commonRegisterProblem(message, " not have module " + moduleName, len, node, new ReplaceBuiltinsQuickFix());
   }
 
   @Override
@@ -333,8 +311,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyFromImportStatement(PyFromImportStatement node) {
     super.visitPyFromImportStatement(node);
-    int len = 0;
-    StringBuilder message = new StringBuilder(myCommonMessage);
     PyReferenceExpression importSource  = node.getImportSource();
     if (importSource != null) {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {      //PY-2793
@@ -342,16 +318,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT)
           registerProblem(node, "Python version 2.4 doesn't support this syntax.");
       }
-
-      String name = importSource.getText();
-      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-        LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name)) {
-          len = appendLanguageLevel(message, len, languageLevel);
-        }
-      }
-      commonRegisterProblem(message, " not have module " + name,
-                            len, node, null, false);
     }
     else {
       if (myVersionsToProcess.contains(LanguageLevel.PYTHON24))

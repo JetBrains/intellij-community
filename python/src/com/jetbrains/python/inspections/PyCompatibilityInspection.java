@@ -10,9 +10,9 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.actions.ReplaceBuiltinsQuickFix;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.validation.CompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.Nls;
@@ -159,6 +159,45 @@ public class PyCompatibilityInspection extends PyInspection {
       }
       commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
                             len, node, null, false);
+    }
+    @Override
+    public void visitPyImportStatement(PyImportStatement node) {
+      super.visitPyImportStatement(node);
+      PyImportElement[] importElements = node.getImportElements();
+      int len = 0;
+      String moduleName = "";
+      StringBuilder message = new StringBuilder("Python version ");
+      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+        LanguageLevel languageLevel = myVersionsToProcess.get(i);
+        for (PyImportElement importElement : importElements) {
+          final PyQualifiedName qName = importElement.getImportedQName();
+          if (qName != null) {
+            moduleName = qName.toString();
+            if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName))
+              len = appendLanguageLevel(message, len, languageLevel);
+          }
+        }
+      }
+      commonRegisterProblem(message, " not have module " + moduleName, len, node, new ReplaceBuiltinsQuickFix());
+    }
+
+    @Override
+    public void visitPyFromImportStatement(PyFromImportStatement node) {
+      super.visitPyFromImportStatement(node);
+      int len = 0;
+      StringBuilder message = new StringBuilder("Python version ");
+      PyReferenceExpression importSource  = node.getImportSource();
+      if (importSource != null) {
+        String name = importSource.getText();
+        for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+          LanguageLevel languageLevel = myVersionsToProcess.get(i);
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name)) {
+            len = appendLanguageLevel(message, len, languageLevel);
+          }
+        }
+        commonRegisterProblem(message, " not have module " + name,
+                              len, node, null, false);
+      }
     }
   }
 }
