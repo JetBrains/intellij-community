@@ -95,7 +95,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
   private final Project myProject;
-  private final List<TabInfo> myTabsHistory = new ArrayList<TabInfo>();
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
 
 
