@@ -8,9 +8,13 @@ from xml.dom import minidom
 exclude = ['StringIO', 'cStringIO']
 
 def get_address(version):
+  if version == 3.2:
+    return "http://docs.python.org/py3k/py-modindex.html"
   return "http://docs.python.org/release/" + str(version) + "/modindex.html"
 
 def get_builtin_address(version):
+  if version == 3.2:
+    return "http://docs.python.org/py3k/library/functions.html"
   if version > 2.5:
     return 'http://docs.python.org/release/' + str(version) + '/library/functions.html'
   else:
@@ -114,7 +118,7 @@ def get_supported_functions(version):
 
 
 doc = minidom.Document()
-all_versions = (2.4, 2.5, 2.6, 2.7, 3.0, 3.1)
+all_versions = (2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2)
 
 all_functions = set()
 root_elem = doc.createElement("root")

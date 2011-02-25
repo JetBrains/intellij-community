@@ -38,6 +38,7 @@ public class UnsupportedFeaturesUtil {
     ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON27.toString());
     ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON30.toString());
     ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON31.toString());
+    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON32.toString());
   }
 
   private static void fillMaps() throws IOException {

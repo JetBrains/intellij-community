@@ -17,7 +17,8 @@ public enum LanguageLevel {
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
   PYTHON30(30, true, false, false, true),
-  PYTHON31(31, true, false, true, true);
+  PYTHON31(31, true, false, true, true),
+  PYTHON32(32, true, false, true, true);
 
   public static LanguageLevel getDefault() {
     return PYTHON26;
@@ -74,8 +75,11 @@ public enum LanguageLevel {
     if (pythonVersion.startsWith("3.0")) {
       return PYTHON30;
     }
-    if (pythonVersion.startsWith("3.1") || pythonVersion.startsWith("3.2")) {
+    if (pythonVersion.startsWith("3.1")) {
       return PYTHON31;
+    }
+    if (pythonVersion.startsWith("3.2")) {
+      return PYTHON32;
     }
     return PYTHON24;
   }
