@@ -17,7 +17,7 @@ if os.getenv("UTRUNNER_ENABLE_DEBUG_LOGGING"):
 
 def debug(what):
   if ENABLE_DEBUG_LOGGING:
-    print >>sys.stdout, what
+    sys.stdout.writelines(str(what) + '\n')
 
 modules = {}
 def getModuleName(prefix, cnt):
