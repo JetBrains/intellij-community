@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>C.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;s1&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;s2&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;r1&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;r2&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;s2&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;s3&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;r2&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;r3&lt;/code&gt; is redundant #loc</description>
+  </problem>
+</problems>
