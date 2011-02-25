@@ -125,7 +125,7 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
    * @throws com.intellij.util.IncorrectOperationException if the text is not a valid resource definition.
    */
   @NotNull
-  PsiResource createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException;
+  PsiResourceVariable createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java type from the specified text.

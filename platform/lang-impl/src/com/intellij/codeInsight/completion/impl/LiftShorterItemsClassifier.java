@@ -93,7 +93,11 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
             for (LookupElement shorterElement : myElements.get(prefix)) {
               if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
                 lifted.add(shorterElement);
-                group.add(shorterElement);
+                if (group.isEmpty()) {
+                  result.add(Collections.singletonList(shorterElement));
+                } else {
+                  group.add(shorterElement);
+                }
               }
             }
           }

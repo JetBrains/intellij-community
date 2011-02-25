@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.psi.PsiManager#getSearchHelper()
  */
-public interface PsiSearchHelper {
+public interface PsiSearchHelper extends PsiTodoSearchHelper {
   /**
    * Searches the specified scope for comments containing the specified identifier.
    *
@@ -48,48 +48,6 @@ public interface PsiSearchHelper {
    * @return false if processor returned false, true otherwise
    */
   boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);
-
-  /**
-   * Returns the list of all files in the project which have to do items.
-   *
-   * @return the list of files with to do items.
-   */
-  @NotNull PsiFile[] findFilesWithTodoItems();
-
-  /**
-   * Searches the specified file for to do items.
-   *
-   * @param file the file to search for to do items.
-   * @return the array of found items.
-   */
-  @NotNull TodoItem[] findTodoItems(@NotNull PsiFile file);
-
-  /**
-   * Searches the specified range of text in the specified file for to do items.
-   *
-   * @param file        the file to search for to do items.
-   * @param startOffset the start offset of the text range to search to do items in.
-   * @param endOffset   the end offset of the text range to search to do items in.
-   * @return the array of found items.
-   */
-  @NotNull TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
-
-  /**
-   * Returns the number of to do items in the specified file.
-   *
-   * @param file the file to return the to do count for.
-   * @return the count of to do items in the file.
-   */
-  int getTodoItemsCount(@NotNull PsiFile file);
-
-  /**
-   * Returns the number of to do items matching the specified pattern in the specified file.
-   *
-   * @param file    the file to return the to do count for.
-   * @param pattern the pattern of to do items to find.
-   * @return the count of to do items in the file.
-   */
-  int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"

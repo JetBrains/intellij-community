@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 
 import java.util.Collections;
@@ -111,10 +112,10 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       if(myTodoFilter!=null){
         for(Iterator i=myTodoFilter.iterator();i.hasNext();){
           TodoPattern pattern=(TodoPattern)i.next();
-          count+=mySearchHelper.getTodoItemsCount(psiFile,pattern);
+          count+=getSearchHelper().getTodoItemsCount(psiFile,pattern);
         }
       }else{
-        count=mySearchHelper.getTodoItemsCount(psiFile);
+        count=getSearchHelper().getTodoItemsCount(psiFile);
       }
     }
     return count;
@@ -141,7 +142,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return myFlattenPackages;
   }
 
-  public PsiSearchHelper getSearchHelper() {
+  public PsiTodoSearchHelper getSearchHelper() {
     return mySearchHelper;
   }
 

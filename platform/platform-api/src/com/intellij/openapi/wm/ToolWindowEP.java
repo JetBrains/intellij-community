@@ -51,6 +51,9 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   @Attribute("secondary")
   public boolean secondary;
 
+  @Attribute("canCloseContents")
+  public boolean canCloseContents;
+
   private ToolWindowFactory myFactory;
 
   public ToolWindowFactory getToolWindowFactory() {

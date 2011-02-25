@@ -205,4 +205,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
   }
 
+  public void testPreferClassOverItsStaticMembers() {
+    checkPreferredItems(0, "Zoo");
+  }
+
 }

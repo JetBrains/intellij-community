@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class NavBarUpdateQueue extends MergingUpdateQueue {
   private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
-  private Alarm myUserActivityAlarm = new Alarm();
+  private Alarm myUserActivityAlarm = new Alarm(this);
   private Runnable myRunWhenListRebuilt;
   private Runnable myUserActivityAlarmRunnable = new Runnable() {
     @Override
@@ -50,17 +50,17 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     }
   };
 
-  private final NavBarPanel myPanel;
+  private NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
-    super("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel.getProject(), null);
+    super("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel);
     myPanel = panel;
     IdeEventQueue.getInstance().addActivityListener(new Runnable() {
         @Override
         public void run() {
           restartRebuild();
         }
-      });
+      }, panel);
   }
 
   private void requestModelUpdate(@Nullable final DataContext context, final @Nullable Object object, boolean requeue) {
@@ -113,7 +113,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   }
 
   private void processUserActivity() {
-    if (!myPanel.isShowing()) {
+    if (myPanel == null || !myPanel.isShowing()) {
       return;
     }
 
@@ -268,12 +268,14 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  private abstract class AfterModelUpdate extends Update {
-    private final ID myId;
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
 
+  private abstract class AfterModelUpdate extends Update {
     private AfterModelUpdate(ID id) {
       super(id.name(), id.getPriority());
-      myId = id;
     }
 
     @Override

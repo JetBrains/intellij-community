@@ -65,11 +65,12 @@ public class PaletteManager implements ProjectComponent {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           myPaletteWindow = new PaletteWindow(myProject);
-          myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(IdeBundle.message("toolwindow.palette"),
-                                                                                            myPaletteWindow,
-                                                                                            ToolWindowAnchor.RIGHT,
-                                                                                            myProject,
-                                                                                            true);
+          myPaletteToolWindow = ToolWindowManager.getInstance(myProject).
+            registerToolWindow(IdeBundle.message("toolwindow.palette"),
+                               myPaletteWindow,
+                               ToolWindowAnchor.RIGHT,
+                               myProject,
+                               true);
           myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
           myPaletteToolWindow.setAvailable(false, null);
           final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
