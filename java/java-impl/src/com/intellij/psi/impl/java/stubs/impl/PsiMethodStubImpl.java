@@ -163,8 +163,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
       builder.append("deprecated ");
     }
 
-    builder.append(getName()).
-        append(":").append(TypeInfo.createTypeText(getReturnTypeText(true)));
+    builder.append(getName()).append(":").append(TypeInfo.createTypeText(getReturnTypeText(false)));
 
     if (getDefaultValueText() != null) {
       builder.append(" default=").append(getDefaultValueText());
