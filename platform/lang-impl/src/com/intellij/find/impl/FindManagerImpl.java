@@ -114,6 +114,15 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     myFindInProjectModel.setMultipleFiles(true);
   }
 
+  @Override
+  public FindModel createReplaceInFileModel() {
+    FindModel model = new FindModel();
+    model.copyFrom(getFindInFileModel());
+    model.setReplaceState(true);
+    model.setPromptOnReplace(false);
+    return model;
+  }
+
   public Element getState() {
     Element element = new Element("FindManager");
     final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
