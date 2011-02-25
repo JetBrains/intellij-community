@@ -44,7 +44,7 @@ import java.util.List;
 * @author nik
 */
 public class AntArtifactProperties extends ArtifactProperties<AntArtifactProperties> {
-  @NonNls private static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
+  @NonNls static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
   private String myFileUrl;
   private String myTargetName;
   private boolean myEnabled;
