@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class PluginId {
+public class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
   private static final Map<String, PluginId> ourRegisteredIds = new HashMap<String, PluginId>();
@@ -32,6 +32,11 @@ public class PluginId {
 
   private PluginId(String idString) {
     myIdString = idString;
+  }
+
+  @Override
+  public int compareTo(PluginId o) {
+    return myIdString.compareTo(o.myIdString);
   }
 
   public static PluginId getId(String idString) {
