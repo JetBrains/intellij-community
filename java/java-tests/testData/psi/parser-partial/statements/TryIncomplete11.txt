@@ -3,7 +3,7 @@ PsiJavaFile:TryIncomplete11.java
     PsiKeyword:try('try')
     PsiResourceList:()
       PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Resource definition expected
+      PsiErrorElement:Identifier or type expected
         <empty list>
       PsiJavaToken:RPARENTH(')')
     PsiCodeBlock

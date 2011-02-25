@@ -658,7 +658,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return markupModel;
     }
 
-    if (project.isDisposed()) {
+    final DocumentMarkupModelManager documentMarkupModelManager = project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
+    if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
       return new EmptyMarkupModel(this);
     }
 
@@ -669,20 +670,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         if (model == null) {
           model = new MarkupModelImpl(this);
           myProjectToMarkupModelMap.put(project, model);
-          Disposer.register(project, new Disposable() {
-            @Override
-            public void dispose() {
-              MarkupModelImpl removed = myProjectToMarkupModelMap.remove(project);
-              if (removed != null) {
-                removed.dispose();
-              }
-            }
-          });
+          documentMarkupModelManager.registerDocument(this);
         }
       }
     }
 
     return model;
+  }
+
+  void removeMarkupModel(@NotNull Project project) {
+    MarkupModelImpl removed = myProjectToMarkupModelMap.remove(project);
+    if (removed != null) {
+      removed.dispose();
+    }
   }
 
   public void setCyclicBufferSize(int bufferSize) {

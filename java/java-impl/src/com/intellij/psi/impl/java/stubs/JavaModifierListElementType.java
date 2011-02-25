@@ -78,12 +78,6 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
     return node.getTreeParent().getElementType() != JavaElementType.LOCAL_VARIABLE;
   }
 
-  @Override
-  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
-    final LighterASTNode parent = tree.getParent(node);
-    return parent != null && parent.getTokenType() != JavaElementType.LOCAL_VARIABLE;
-  }
-
   public PsiModifierListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiModifierListStubImpl(parentStub, dataStream.readVarInt());
   }

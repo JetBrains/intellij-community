@@ -6,35 +6,28 @@ class C {
   }
 
   void m1() throws Exception {
-    MyResource r1;
-    try (r1 = new MyResource()) {
+    try (MyResource r1 = new MyResource()) {
       System.out.println(r1);
     }
 
-    try (MyResource r2 = new MyResource()) {
-      System.out.println(r2);
-    }
-
-    MyResource r3 = new MyResource();
-    try (MyResource r = r3) {
+    MyResource r2 = new MyResource();
+    try (MyResource r = r2) {
       System.out.println(r);
+      System.out.println(r2);
     }
   }
 
   void m2() throws Exception {
-    MyResource r1 = <warning descr="Variable 'r1' initializer 'null'  is redundant">null</warning>;
-    try (r1 = new MyResource()) {
-      System.out.println(r1);
-    }
+    // todo: test in IG
+    //MyResource < warning descr="Local variable 'r1' is redundant">r1</warning> = null;
+    //try (MyResource r = r1) {
+    //  System.out.println(r);
+    //}
 
-    MyResource r2 = null;
-    System.out.println(r2);
-    try (r2 = <warning descr="The value 'new MyResource()' assigned to r2  is never used">new MyResource()</warning>) { }
+    try (MyResource <warning descr="Variable 'r2' is never used">r2</warning> = new MyResource()) { }
 
-    try (MyResource <warning descr="Variable 'r3' is never used">r3</warning> = new MyResource()) { }
-
-    MyResource <warning descr="Variable 'r4' is never assigned">r4</warning>;
-    try (MyResource r = <error descr="Variable 'r4' might not have been initialized">r4</error>) {
+    MyResource <warning descr="Variable 'r3' is never assigned">r3</warning>;
+    try (MyResource r = <error descr="Variable 'r3' might not have been initialized">r3</error>) {
       System.out.println(r);
     }
   }
