@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
@@ -14,7 +15,7 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 
 public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
-  final List<com.intellij.openapi.util.Pair<ContextFilter, Closure>> enhancers = []
+  final List<Pair<ContextFilter, Closure>> enhancers = []
 
   private final String myFileName;
   static final String ideaVersion
@@ -57,7 +58,7 @@ public class GroovyDslExecutor {
 
   def addClassEnhancer(List<ContextFilter> cts, Closure toDo) {
     assert !locked : 'Contributing to GDSL is only allowed at the top-level of the *.gdsl script'
-    enhancers << com.intellij.openapi.util.Pair.create(CompositeContextFilter.compose(cts, false), toDo)
+    enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
   def processVariants(GroovyClassDescriptor descriptor, consumer, ProcessingContext ctx) {
