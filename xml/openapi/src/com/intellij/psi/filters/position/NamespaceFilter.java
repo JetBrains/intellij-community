@@ -39,9 +39,7 @@ public class NamespaceFilter implements ElementFilter {
       if (!psiElement.isValid()) return false;
       final String ns = psiElement.getNamespace();
 
-      for (String aMyValue : myNamespaces) {
-        if (aMyValue.equals(ns)) return true;
-      }
+      if (isNamespaceAcceptable(ns)) return true;
 
       final PsiFile psiFile = psiElement.getContainingFile();
       if (psiFile instanceof XmlFile) {
@@ -55,11 +53,7 @@ public class NamespaceFilter implements ElementFilter {
             final String publicId = doctype.getPublicId();
 
             if (publicId != null) {
-              for (String aMyValue : myNamespaces) {
-                if (aMyValue.equals(publicId)) {
-                  return true;
-                }
-              }
+              if (isNamespaceAcceptable(publicId)) return true;
             }
           }
         }
@@ -67,6 +61,13 @@ public class NamespaceFilter implements ElementFilter {
     }
     else if(element instanceof XmlDocument){
       return isAcceptable(((XmlDocument) element).getRootTag(), context);
+    }
+    return false;
+  }
+
+  protected boolean isNamespaceAcceptable(String ns) {
+    for (String aMyValue : myNamespaces) {
+      if (aMyValue.equals(ns)) return true;
     }
     return false;
   }
