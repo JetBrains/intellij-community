@@ -147,7 +147,7 @@ public class ConfusingElseInspection extends BaseInspection {
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
                 return;
             }
-            if (reportWhenNoStatementFollow) {
+            if (!reportWhenNoStatementFollow) {
                 final PsiStatement nextStatement = getNextStatement(statement);
                 if (nextStatement == null) {
                     return;
