@@ -17,17 +17,23 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.plugins.groovy.util.GroovyUtils
 
-/**
+ /**
  * @author peter
  */
 public class GppCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
-    addGroovyLibrary myModule, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN, "groovy";
-    addGroovyLibrary myFixture.module, "groovypp-all-(.*)jar", "gpp"
+    addGroovyLibrary myModule
+
+    final String root = PluginPathManager.getPluginHomePath("groovy") + "/../../lib/dev/";
+    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, "groovypp-all-(.*)jar");
+    assert groovyJars.length == 1;
+    PsiTestUtil.addLibrary(myFixture.module, "gpp", root, groovyJars[0].getName());
   }
 
   public void testTraitStubs() throws Throwable {

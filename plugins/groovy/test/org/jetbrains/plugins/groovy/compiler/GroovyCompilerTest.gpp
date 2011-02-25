@@ -22,15 +22,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import junit.framework.AssertionFailedError
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 
-/**
+ /**
  * @author peter
  */
 public class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
-    addGroovyLibrary(myModule, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN, "groovy");
+    addGroovyLibrary myModule
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -267,7 +266,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     Module dep = addDependentModule();
 
-    addGroovyLibrary(dep, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN, "groovy");
+    addGroovyLibrary dep
 
     assertEmpty(make());
     assertOutput("Bar", "239", dep);

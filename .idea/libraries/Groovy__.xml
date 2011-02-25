@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="Groovy++">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/community/lib/groovypp-all-0.4.170.jar!/" />
+      <root url="jar://$PROJECT_DIR$/community/lib/dev/groovypp-all-0.4.170.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
