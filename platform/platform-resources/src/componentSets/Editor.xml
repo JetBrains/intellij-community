@@ -20,6 +20,9 @@
       <!--<implementation-class>com.intellij.jsp.impl.browserprofile.BrowserProfileProvider</implementation-class>-->
     <!--</component>-->
     <component>
+      <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.fileEditor.impl.EditorHistoryManager</implementation-class>
       <option name="workspace" value="true"/>
     </component>
