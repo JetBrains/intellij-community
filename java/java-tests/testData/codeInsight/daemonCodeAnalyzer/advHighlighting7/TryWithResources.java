@@ -46,11 +46,11 @@ class C {
     }
     <error descr="Cannot resolve symbol 'r'">r</error> = null;
 
-    try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource(); MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
+    try (MyResource r = new MyResource(); MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
 
     try (MyResource r1 = new MyResource(); MyResource r2 = r1) { }
 
-    /* todo: try (MyResource r1 = < error descr="Cannot resolve symbol 'r'">r2</error >; MyResource r2 = r1) { }*/
+    try (MyResource r1 = <error descr="Cannot resolve symbol 'r2'">r2</error>; MyResource r2 = r1) { }
 
     MyResource r = null;
     try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
@@ -63,5 +63,10 @@ class C {
         catch (E e) { }
       }
     }.run();
+  }
+
+  void m4() throws Exception {
+    MyResource r;
+    try (MyResource r1 = <error descr="Variable 'r' might not have been initialized">r</error>) { }
   }
 }

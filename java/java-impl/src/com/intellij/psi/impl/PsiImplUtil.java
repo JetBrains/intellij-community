@@ -198,9 +198,14 @@ public class PsiImplUtil {
                                                           @NotNull final PsiScopeProcessor processor,
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
+    final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
+    if (hint != null && !hint.shouldProcess(ElementClassHint.DeclaractionKind.VARIABLE)) return true;
+
     final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
-    for (PsiResourceVariable resource : resources) {
-      if (!resource.equals(lastParent) && !processor.execute(resource, state)) return false;
+    @SuppressWarnings({"SuspiciousMethodCalls"})
+    final int lastIdx = lastParent instanceof PsiResourceVariable ? resources.indexOf(lastParent) : resources.size();
+    for (int i = 0; i < lastIdx; i++) {
+      if (!processor.execute(resources.get(i), state)) return false;
     }
 
     return true;
