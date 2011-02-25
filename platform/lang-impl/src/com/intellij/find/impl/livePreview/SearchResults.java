@@ -19,6 +19,8 @@ import java.util.List;
 
 public class SearchResults {
 
+  public enum Direction {UP, DOWN}
+
   private int myActualFound = 0;
 
   private List<SearchResultsListener> myListeners = new ArrayList<SearchResultsListener>();
@@ -293,6 +295,8 @@ public class SearchResults {
     for (LiveOccurrence searchResult : getOccurrences()) {
       if (searchResult.getPrimaryRange().intersects(oldCursorRange)) {
         mayBeOldCursor = searchResult;
+      }
+      if (searchResult.getPrimaryRange().equals(oldCursorRange)) {
         break;
       }
     }
