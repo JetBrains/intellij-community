@@ -41,7 +41,6 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -80,11 +79,11 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     super.tuneFixture(moduleBuilder);
   }
 
-  protected static void addGroovyLibrary(final Module to) {
+  protected static void addGroovyLibrary(final Module to, String groovyJarPattern, final String libName) {
     final String root = PluginPathManager.getPluginHomePath("groovy") + "/../../lib/";
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, groovyJarPattern);
     assert groovyJars.length == 1;
-    PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
+    PsiTestUtil.addLibrary(to, libName, root, groovyJars[0].getName());
   }
 
   @Override
