@@ -631,10 +631,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
+  @Override
   @NotNull
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
+    return showMergeDialog(files, provider, null);
+  }
+
+  @Override
+  @NotNull
+  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @Nullable String description) {
     if (files.isEmpty()) return Collections.emptyList();
-    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider);
+    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, description);
     fileMergeDialog.show();
     return fileMergeDialog.getProcessedFiles();
   }

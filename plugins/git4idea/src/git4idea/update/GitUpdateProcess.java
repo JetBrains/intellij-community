@@ -167,7 +167,7 @@ public class GitUpdateProcess {
       return false;
     }
 
-    return !new GitMergeConflictResolver(myProject, false, "Can't update", "") {
+    return !new GitMergeConflictResolver(myProject, false, "You have unfinished merge. These conflicts must be resolved before update.", "Can't update", "") {
       @Override protected boolean proceedAfterAllMerged() throws VcsException {
         myMerger.mergeCommit(mergingRoots);
         return true;
@@ -207,7 +207,7 @@ public class GitUpdateProcess {
       return false;
     }
 
-    return !new GitMergeConflictResolver(myProject, true, "Can't update",
+    return !new GitMergeConflictResolver(myProject, true, "You have unfinished rebase process. These conflicts must be resolved before update.", "Can't update",
                                          "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);

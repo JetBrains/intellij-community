@@ -83,7 +83,8 @@ public class GitMergeUpdater extends GitUpdater {
       @Override protected void onFailure() {
         final MergeError error = mergeError.get();
         if (error == MergeError.CONFLICT) {
-          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Can't update", "") {
+          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing update.",
+                                                                 "Can't update", "") {
             @Override protected boolean proceedIfNothingToMerge() throws VcsException {
               merger.mergeCommit(myRoot);
               return true;

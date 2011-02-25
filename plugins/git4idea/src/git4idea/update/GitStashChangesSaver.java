@@ -135,7 +135,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
       @Override protected void onFailure() {
         if (conflict.get()) {
-          new GitMergeConflictResolver(myProject, true, "Can't update", "").mergeFiles(Collections.singleton(root));
+          new GitMergeConflictResolver(myProject, true, "Uncommitted changes that were stashed before update have conflicts with updated files.",
+                                       "Can't update", "").mergeFiles(Collections.singleton(root));
         } else {
           GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
         }

@@ -93,15 +93,26 @@ public abstract class AbstractVcsHelper {
                                                int maxCount,
                                                final String title);
 
-  @NotNull
-  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
-
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
    * Assumes all files are under the same VCS.
    *
    * @param files the files to show in the merge dialog.
-   * @return the files for which the merge was actually performed.
+   * @param provider MergeProvider to be used for merging.
+   * @param description Optional description text (may be HTML) to be shown at the top of the merge dialog.
+   * @return changed files for which the merge was actually performed.
+   */
+  public abstract @NotNull List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @Nullable String description);
+
+  /**
+   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
+   */
+  @NotNull
+  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
+
+  /**
+   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description and with default merge provider
+   * for the current VCS.
    */
   @NotNull
   public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files);

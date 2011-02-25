@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
@@ -43,17 +44,19 @@ public class GitMergeConflictResolver {
   private final boolean myReverseMerge;
   private final String myErrorNotificationTitle;
   private final String myErrorNotificationAdditionalDescription;
+  @Nullable private final String myMergeDialogTitle;
   private final AbstractVcsHelper myVcsHelper;
   private final GitVcs myVcs;
 
   /**
    * @param reverseMerge specify if reverse merge provider has to be used for merging - it is the case of rebase or stash.
    */
-  public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @NonNls String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
+  public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @Nullable String mergeDialogTitle, @NonNls String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
     myProject = project;
     myReverseMerge = reverseMerge;
     myErrorNotificationTitle = errorNotificationTitle;
     myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
+    myMergeDialogTitle = mergeDialogTitle;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
     myVcs = GitVcs.getInstance(project);
   }
@@ -75,13 +78,11 @@ public class GitMergeConflictResolver {
       if (unmergedFiles.isEmpty()) {
         return proceedIfNothingToMerge();
       } else {
-        // TODO add descriptive message to the dialog:
-        // You must resolve all conflicts before you continue rebase
         final Collection<VirtualFile> finalUnmergedFiles = unmergedFiles;
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override public void run() {
             final MergeProvider mergeProvider = myReverseMerge ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
-            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), mergeProvider);
+            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), mergeProvider, myMergeDialogTitle);
           }
         });
 

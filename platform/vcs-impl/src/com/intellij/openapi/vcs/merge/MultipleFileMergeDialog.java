@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -63,6 +64,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private JButton myAcceptTheirsButton;
   private JButton myMergeButton;
   private TableView<VirtualFile> myTable;
+  private JBLabel myDescriptionLabel;
   private final MergeProvider myProvider;
   private final MergeSession myMergeSession;
   private final List<VirtualFile> myFiles;
@@ -105,13 +107,17 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     };
 
-  public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider) {
+  public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider, String description) {
     super(project, false);
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myProjectManager.blockReloadingProjectOnExternalChanges();
     myFiles = new ArrayList<VirtualFile>(files);
     myProvider = provider;
+
+    if (!StringUtil.isEmptyOrSpaces(description)) {
+      myDescriptionLabel.setText(description);
+    }
 
     List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
     Collections.addAll(columns, NAME_COLUMN, TYPE_COLUMN);

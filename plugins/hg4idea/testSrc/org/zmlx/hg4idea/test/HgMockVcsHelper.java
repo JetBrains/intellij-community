@@ -111,6 +111,12 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
 
   @NotNull
   @Override
+  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @Nullable String description) {
+    return null;
+  }
+
+  @NotNull
+  @Override
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
     return null;
   }
