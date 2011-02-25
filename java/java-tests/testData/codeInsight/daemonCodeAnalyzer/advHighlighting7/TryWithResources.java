@@ -66,6 +66,8 @@ class C {
   }
 
   void m4() throws Exception {
+    try (MyResource r = <error descr="Variable 'r' might not have been initialized">r</error>) { }
+
     MyResource r;
     try (MyResource r1 = <error descr="Variable 'r' might not have been initialized">r</error>) { }
   }

@@ -232,7 +232,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   /**
-   * @return codeblock topmost codeblock where variable makes sense
+   * @return topmost code block where variable makes sense
    */
   @Nullable
   public static PsiElement getVariableCodeBlock(PsiVariable variable, PsiElement context) {
@@ -248,6 +248,10 @@ public final class PsiUtil extends PsiUtilBase {
       else if (declarationScope instanceof PsiMethod) {
         codeBlock = ((PsiMethod)declarationScope).getBody();
       }
+    }
+    else if (variable instanceof PsiResourceVariable) {
+      final PsiElement resourceList = variable.getParent();
+      return resourceList != null ? resourceList.getParent() : null;  // use try statement as topmost
     }
     else if (variable instanceof PsiLocalVariable && variable.getParent() instanceof PsiForStatement) {
       return variable.getParent();
