@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -197,6 +198,25 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
 
     return changeList;
+  }
+
+  public ShelvedChangeList importFilePatches(final String fileName, final List<FilePatch> patches) throws IOException {
+    try {
+      final File patchPath = getPatchPath(fileName);
+      myFileProcessor.savePathFile(
+        new CompoundShelfFileProcessor.ContentProvider(){
+            public void writeContentTo(final Writer writer) throws IOException {
+              UnifiedDiffWriter.write(patches, writer, "\n");
+            }
+          },
+          patchPath);
+
+      final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), fileName.replace('\n', ' '), new SmartList<ShelvedBinaryFile>());
+      myShelvedChangeLists.add(changeList);
+      return changeList;
+    } finally {
+      notifyStateChanged();
+    }
   }
 
   public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {

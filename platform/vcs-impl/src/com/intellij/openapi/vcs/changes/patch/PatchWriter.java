@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.vcs.changes.patch;
 
-package com.intellij.history.integration.patches;
-
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,17 +26,19 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 
-public class PatchCreator {
-  public static void create(Project p, List<Change> changes, String filePath, boolean isReverse)
-    throws IOException, VcsException {
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
-    writeFilePatches(p, filePath, patches);
+/**
+ * @author irengrig
+ *         Date: 2/25/11
+ *         Time: 6:41 PM
+ */
+public class PatchWriter {
+  private PatchWriter() {
   }
 
-  public static void writeFilePatches(Project p, String filePath, List<FilePatch> patches) throws IOException {
-    Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
+  public static void writePatches(final Project project, String fileName, List<FilePatch> patches) throws IOException {
+    Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
     try {
-      String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
+      final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
       UnifiedDiffWriter.write(patches, writer, lineSeparator);
     }
     finally {
