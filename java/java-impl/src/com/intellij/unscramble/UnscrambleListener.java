@@ -15,9 +15,11 @@
  */
 package com.intellij.unscramble;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.Alarm;
 
 import java.util.regex.Pattern;
 
@@ -29,16 +31,29 @@ public class UnscrambleListener extends ApplicationAdapter {
   private String stacktrace = null;
 
   @Override
-  public void applicationActivated(IdeFrame ideFrame) {
-    final String clipboard = AnalyzeStacktraceUtil.getTextInClipboard();
-    if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
-      stacktrace = clipboard;
-      final Project project = ideFrame.getProject();
-      if (project != null && isStacktrace(stacktrace)) {
-        final UnscrambleDialog dialog = new UnscrambleDialog(project);
-        dialog.createNormalizeTextAction().actionPerformed(null);
-        dialog.doOKAction();
+  public void applicationActivated(final IdeFrame ideFrame) {
+    final Runnable processClipboard = new Runnable() {
+      @Override
+      public void run() {
+        final String clipboard = AnalyzeStacktraceUtil.getTextInClipboard();
+        if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
+          stacktrace = clipboard;
+          final Project project = ideFrame.getProject();
+          if (project != null && isStacktrace(stacktrace)) {
+            final UnscrambleDialog dialog = new UnscrambleDialog(project);
+            dialog.createNormalizeTextAction().actionPerformed(null);
+            dialog.doOKAction();
+          }
+        }
       }
+    };
+
+    if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS) {
+      //IDEA's clipboard is synchronized with the system clipboard on frame activation so we need to postpone clipboard processing
+      new Alarm().addRequest(processClipboard, 300);
+    }
+    else {
+      processClipboard.run();
     }
   }
 
