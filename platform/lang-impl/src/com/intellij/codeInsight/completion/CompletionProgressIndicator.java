@@ -273,7 +273,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
           if (phase instanceof CompletionPhase.BgCalculation) {
             ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
-          } else if (phase instanceof CompletionPhase.ZombiePhase) {
+          } else if (phase instanceof CompletionPhase.InsertedSingleItem) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
