@@ -46,7 +46,9 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -169,17 +171,12 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       }
     }
 
-    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
     final ShelvedChangeList changeList;
     try {
       File patchPath = getPatchPath(commitMessage);
-      if (ind != null && ind.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      ProgressManager.checkCanceled();
       final List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false);
-      if (ind != null && ind.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      ProgressManager.checkCanceled();
 
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider(){
@@ -191,9 +188,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
       myShelvedChangeLists.add(changeList);
-      if (ind != null && ind.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      ProgressManager.checkCanceled();
 
       new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
     }
@@ -202,6 +197,42 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
 
     return changeList;
+  }
+
+  public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {
+    final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>(files.size());
+    try {
+      final LinkedList<VirtualFile> filesQueue = new LinkedList<VirtualFile>(files);
+      while (! filesQueue.isEmpty()) {
+        ProgressManager.checkCanceled();
+        final VirtualFile file = filesQueue.removeFirst();
+        if (file.isDirectory()) {
+          filesQueue.addAll(Arrays.asList(file.getChildren()));
+          continue;
+        }
+
+        final String description = file.getNameWithoutExtension().replace('_', ' ');
+        final ShelvedChangeList list = new ShelvedChangeList(file.getPath(), description, new SmartList<ShelvedBinaryFile>(),
+                                                             file.getModificationStamp());
+        try {
+          final List<TextFilePatch> patchesList = loadPatches(file.getPath());
+          if (! patchesList.isEmpty()) {
+            // add only if ok to read patch
+            myShelvedChangeLists.add(list);
+            result.add(list);
+          }
+        }
+        catch (IOException e) {
+          exceptionConsumer.consume(new VcsException(e));
+        }
+        catch (PatchSyntaxException e) {
+          exceptionConsumer.consume(new VcsException(e));
+        }
+      }
+    } finally {
+      notifyStateChanged();
+    }
+    return result;
   }
 
   private ShelvedBinaryFile shelveBinaryFile(final Change change) throws IOException {

@@ -56,9 +56,13 @@ public class ShelvedChangeList implements JDOMExternalizable {
   }
 
   public ShelvedChangeList(final String path, final String description, final List<ShelvedBinaryFile> binaryFiles) {
+    this(path, description, binaryFiles, System.currentTimeMillis());
+  }
+
+  public ShelvedChangeList(final String path, final String description, final List<ShelvedBinaryFile> binaryFiles, final long time) {
     PATH = path;
     DESCRIPTION = description;
-    DATE = new Date();
+    DATE = new Date(time);
     myBinaryFiles = binaryFiles;
   }
 

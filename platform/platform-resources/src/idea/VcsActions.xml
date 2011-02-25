@@ -128,6 +128,7 @@
           icon="/actions/diff.png"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
               icon="/actions/createPatch.png"/>
+      <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
       <separator/>
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
               use-shortcut-of="RenameElement"/>
