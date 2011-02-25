@@ -60,6 +60,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -1182,63 +1183,45 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
 
     final List<LookupElement> items = getItems();
+    GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
     for (int i = 0; i < Math.min(maxAutopopupItems, items.size()); i++) {
+      if (i == 1) {
+        //pane.add(normalizedLabel("Other possibilities:", editorFont), gb.nextLine());
+      }
+
       LookupElement element = items.get(i);
       final LookupElementPresentation presentation = new LookupElementPresentation();
       element.renderElement(presentation);
 
       {
-        final GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = i;
-        c.ipadx = itemTextPadding;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 1.0;
+        final GridBagLayout gridBagLayout = new GridBagLayout();
+        final JPanel row = new JPanel(gridBagLayout);
+        row.setBackground(pane.getBackground());
 
+        GridBag rgb = new GridBag().setDefaultAnchor(GridBagConstraints.BASELINE);
 
-        {
-          final GridBagLayout gridBagLayout = new GridBagLayout();
-          final JPanel row = new JPanel(gridBagLayout);
-          row.setBackground(pane.getBackground());
+        final SimpleColoredComponent nameLabel = new SimpleColoredComponent();
+        nameLabel.setIpad(new Insets(0, 0, 0, 0));
+        nameLabel.setFont(editorFont);
+        final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
+        myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
+                                      StringUtil.notNullize(presentation.getItemText()), nameLabel);
+        row.add(nameLabel, rgb.next());
 
-          GridBagConstraints c1 = new GridBagConstraints();
-          c1.anchor = GridBagConstraints.BASELINE;
+        final JLabel tailLabel = normalizedLabel(presentation.getTailText(), editorFont);
+        tailLabel.setForeground(LookupCellRenderer.getTailTextColor(false, presentation, tailLabel.getForeground()));
+        row.add(tailLabel, rgb.next().weightx(1).fillCellHorizontally());
 
-          final SimpleColoredComponent nameLabel = new SimpleColoredComponent();
-          nameLabel.setFont(editorFont);
-          final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
-          myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
-                                        StringUtil.notNullize(presentation.getItemText()), nameLabel);
-          row.add(nameLabel, c1);
+        row.add(normalizedLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ", editorFont), rgb.next());
 
-          c1 = new GridBagConstraints();
-          c1.weightx = 1;
-          c1.anchor = GridBagConstraints.BASELINE;
-          c1.fill = GridBagConstraints.HORIZONTAL;
-          final JLabel tailLabel = new JLabel(presentation.getTailText());
-          tailLabel.setFont(tailLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-          tailLabel.setForeground(LookupCellRenderer.getTailTextColor(false, presentation, tailLabel.getForeground()));
-          row.add(tailLabel, c1);
+        row.setBorder(new EmptyBorder(0, itemTextPadding, 0, 0));
 
-          c1 = new GridBagConstraints();
-          c1.fill = GridBagConstraints.NONE;
-          final JLabel typeLabel = new JLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ");
-          typeLabel.setFont(typeLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-          row.add(typeLabel, c1);
-
-          pane.add(row, c);
-        }
+        pane.add(row, gb.nextLine());
       }
+
     }
 
     {
-      final GridBagConstraints c = new GridBagConstraints();
-      c.gridx = 0;
-      c.gridy = maxAutopopupItems;
-      c.gridwidth = 2;
-      c.ipadx = 5;
-      c.ipady = 2;
-      c.fill = GridBagConstraints.HORIZONTAL;
       final JPanel ad = new JPanel(new BorderLayout());
       ad.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(0, 2, 0, 7)));
       ad.setOpaque(false);
@@ -1246,10 +1229,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (items.size() > maxAutopopupItems) {
         final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
         if (StringUtil.isNotEmpty(ctrlSpace)) {
-          final String moreText = ctrlSpace + " for more  ";
-          final JLabel moreLabel = new JLabel(moreText);
-          moreLabel.setFont(moreLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-          ad.add(moreLabel, BorderLayout.WEST);
+          ad.add(normalizedLabel(ctrlSpace + " for more  ", editorFont), BorderLayout.WEST);
         }
       }
 
@@ -1257,14 +1237,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (StringUtil.isNotEmpty(tab)) {
         final String enter = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
         String message = "  " + tab + (isFocused() ? ", " + enter : "") + " for the first item";
-        final JLabel fstLabel = new JLabel(message);
-        fstLabel.setFont(fstLabel.getFont().deriveFont(Font.PLAIN, editorFont.getSize()));
-        ad.add(fstLabel, BorderLayout.EAST);
+        ad.add(normalizedLabel(message, editorFont), BorderLayout.EAST);
       }
-      pane.add(ad, c);
+      pane.add(ad, gb.nextLine().padx(5).pady(2).coverColumn());
     }
 
     return pane;
+  }
+
+  private static JLabel normalizedLabel(String text, Font font) {
+    JLabel label = new JLabel(text);
+    label.setFont(label.getFont().deriveFont(Font.PLAIN, font.getSize()));
+    return label;
   }
 
   private void hideAutopopupHint() {
