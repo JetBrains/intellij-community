@@ -1,9 +1,14 @@
 <html>
 <body>
-This inspection reports confusing <b>else</b> branches. Confusing <b>else</b>
-branches are branches of <b>if</b> statements whose <b>if</b> branch cannot complete normally and
-which are followed by other statements. In these cases, the statements following the
-<b>if</b> statement may be moved into the <b>else</b> branch, for increased clarity.
+This inspection reports confusing <b>else</b> branches. <b>else</b> branches are confusing
+when the <b>if</b> statement is followed by other statements and the <b>if</b> branch
+cannot complete normally, for example because it ends with a <b>return</b> statement. In these
+cases the statements in the <b>else</b> can be moved after the <b>if</b> statement and
+the <b>else</b> branch removed.
+<p>
+Use the checkbox below to also report <b>else</b> branches of <b>if</b> statements whose
+<b>if</b> branch cannot complete normally and which are not followed by more statements,
+similar to the Redundant Else intention.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,7 +30,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class ConfusingElseInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean reportWhenNoStatementFollow = false;
 
     @Override
     @NotNull
@@ -48,6 +54,13 @@ public class ConfusingElseInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "confusing.else.problem.descriptor");
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("confusing.else.option"),
+                this, "reportWhenNoStatementFollow");
     }
 
     @Override
@@ -114,10 +127,11 @@ public class ConfusingElseInspection extends BaseInspection {
         }
     }
 
-    private static class ConfusingElseVisitor
+    private class ConfusingElseVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(
+                @NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {
@@ -133,14 +147,17 @@ public class ConfusingElseInspection extends BaseInspection {
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
                 return;
             }
-            final PsiStatement nextStatement = getNextStatement(statement);
-            if (nextStatement == null) {
-                return;
-            }
-            if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
-                return;
-                // protecting against an edge case where both branches return
-                // and are followed by a case label
+            if (reportWhenNoStatementFollow) {
+                final PsiStatement nextStatement = getNextStatement(statement);
+                if (nextStatement == null) {
+                    return;
+                }
+                if (!ControlFlowUtils.statementMayCompleteNormally(
+                        elseBranch)) {
+                    return;
+                    // protecting against an edge case where both branches return
+                    // and are followed by a case label
+                }
             }
             final PsiElement elseToken = statement.getElseElement();
             if (elseToken == null) {
@@ -149,7 +166,7 @@ public class ConfusingElseInspection extends BaseInspection {
             registerError(elseToken);
         }
 
-        private static PsiStatement getNextStatement(PsiIfStatement statement) {
+        private PsiStatement getNextStatement(PsiIfStatement statement) {
             while (true) {
                 final PsiElement parent = statement.getParent();
                 if (parent instanceof PsiIfStatement) {
