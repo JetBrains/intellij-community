@@ -1,0 +1,12 @@
+package com.siyeh.igtest.style.unqualified_field_access;
+
+public class UnqualifiedFieldAccess {
+
+        private String field;
+
+        public void x () {
+                field = "foofoo";
+                final String s = String.valueOf(field.hashCode());
+                System.out.println(s);
+        }
+}
