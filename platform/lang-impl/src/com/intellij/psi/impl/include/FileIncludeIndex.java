@@ -82,8 +82,9 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         };
 
         for (FileIncludeProvider provider : myProviders) {
-
+          if (!provider.acceptFile(inputData.getFile())) continue;
           FileIncludeInfo[] infos = provider.getIncludeInfos(inputData);
+          if (infos.length  == 0) continue;
           List<FileIncludeInfoImpl> infoList = map.get(new FileKey(inputData.getFile()));
 
           for (FileIncludeInfo info : infos) {
