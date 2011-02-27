@@ -62,14 +62,14 @@ public abstract class IntroduceParameterSettingsPanel  extends RefactoringDialog
     myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myIsInvokedOnDeclaration = onExpression == null;
     final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
+    myParametersToRemove = new PsiParameter[parameters.length];
+    myParametersToRemoveChecked = new boolean[parameters.length];
     parametersToRemove.forEach(new TIntProcedure() {
       public boolean execute(final int paramNum) {
         myParametersToRemove[paramNum] = parameters[paramNum];
         return true;
       }
     });
-    myParametersToRemove = new PsiParameter[parameters.length];
-    myParametersToRemoveChecked = new boolean[parameters.length];
     myIsLocalVariable = onLocalVariable != null;
   }
 
