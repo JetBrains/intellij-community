@@ -75,14 +75,15 @@ public class GitUpdateProcess {
    */
   public boolean update() {
     LOG.info("update started");
-    // check if update is possible
-    if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
-    if (!allTrackedBranchesConfigured()) { return false; }
-
     final GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
+
     myProjectManager.blockReloadingProjectOnExternalChanges();
     try {
+      // check if update is possible
+      if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
+      if (!allTrackedBranchesConfigured()) { return false; }
+
       saver.saveLocalChanges();
       // update each root
       boolean incomplete = false;
