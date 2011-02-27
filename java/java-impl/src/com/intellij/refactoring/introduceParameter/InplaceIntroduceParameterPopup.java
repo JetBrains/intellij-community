@@ -29,8 +29,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.OccurrencesChooser;
@@ -38,12 +39,18 @@ import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -51,8 +58,9 @@ import java.util.List;
  * User: anna
  * Date: 2/25/11
  */
-class InplaceIntroduceParameterPopup extends JPanel {
+class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsPanel {
   private JCheckBox myDelegateCb;
+
   private Balloon myBalloon;
   private final Project myProject;
   private final Editor myEditor;
@@ -63,14 +71,16 @@ class InplaceIntroduceParameterPopup extends JPanel {
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;
   private final PsiExpression[] myOccurrences;
-  private final TIntArrayList myParametersToRemove;
   private final boolean myMustBeFinal;
   private final RangeMarker myExprMarker;
   private final List<RangeMarker> myOccurrenceMarkers;
 
+  private final JPanel myWholePanel;
+
 
   InplaceIntroduceParameterPopup(final Project project,
                                  final Editor editor,
+                                 final List<UsageInfo> classMemberRefs,
                                  final TypeSelectorManagerImpl typeSelectorManager,
                                  final NameSuggestionsGenerator nameSuggestionsGenerator,
                                  final PsiExpression expr,
@@ -80,7 +90,7 @@ class InplaceIntroduceParameterPopup extends JPanel {
                                  final PsiExpression[] occurrences,
                                  final TIntArrayList parametersToRemove,
                                  final boolean mustBeFinal) {
-    super(new GridBagLayout());
+    super(project, localVar, expr, method, parametersToRemove);
     myProject = project;
     myEditor = editor;
     myTypeSelectorManager = typeSelectorManager;
@@ -90,16 +100,23 @@ class InplaceIntroduceParameterPopup extends JPanel {
     myMethod = method;
     myMethodToSearchFor = methodToSearchFor;
     myOccurrences = occurrences;
-    myParametersToRemove = parametersToRemove;
     myMustBeFinal = mustBeFinal;
-    myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null;
     myOccurrenceMarkers = new ArrayList<RangeMarker>();
 
-    setBorder(BorderFactory.createTitledBorder(IntroduceParameterHandler.REFACTORING_NAME));
+    myWholePanel = new JPanel(new GridBagLayout());
+    myWholePanel.setBorder(BorderFactory.createTitledBorder(IntroduceParameterHandler.REFACTORING_NAME));
     myDelegateCb = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 0), 0, 0);
-    add(myDelegateCb, gc);
+    myWholePanel.add(myDelegateCb, gc);
+    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+    createLocalVariablePanel(gc, myWholePanel, settings);
+    createRemoveParamsPanel(gc, myWholePanel);
+    if (Util.anyFieldsWithGettersPresent(classMemberRefs)) {
+      gc.gridy++;
+      myWholePanel.add(createReplaceFieldsWithGettersPanel(), gc);
+    }
   }
 
 
@@ -115,12 +132,26 @@ class InplaceIntroduceParameterPopup extends JPanel {
     new OccurrencesChooser(myEditor).showChooser(new IntroduceParameterPass(), occurrencesMap);
   }
 
+  @Override
+  protected void updateControls(JCheckBox[] removeParamsCb) {
+  }
+
+  @Override
+  protected void doAction() {
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
+    return null;
+  }
+
+
   private class ParameterInplaceIntroducer extends VariableInplaceIntroducer {
     private String myParameterName;
     private SmartTypePointer myParameterTypePointer;
     private SmartTypePointer myDefaultParameterTypePointer;
     private final PsiParameter myParameter;
-    private final int myParameterIndex;
+    private int myParameterIndex;
 
     private final SmartPsiElementPointer<PsiExpression> myExpressionPointer;
     private final OccurrencesChooser.ReplaceChoice myReplaceChoice;
@@ -144,31 +175,69 @@ class InplaceIntroduceParameterPopup extends JPanel {
     }
 
     @Override
+    protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+      final PsiVariable variable = getVariable();
+      if (variable != null) {
+        for (PsiReference reference : ReferencesSearch.search(variable)) {
+          refs.remove(reference);
+        }
+      }
+    }
+
+    @Override
     protected void saveSettings(PsiVariable psiVariable) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+      final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+      InplaceIntroduceParameterPopup.super.saveSettings(settings);
+      settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
     }
 
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        boolean isDeleteLocalVariable = false;
+
+        PsiExpression parameterInitializer = myExpressionPointer.getElement();
+        if (myLocalVar != null) {
+          if (isUseInitializer()) {
+            parameterInitializer = myLocalVar.getInitializer();
+          }
+          isDeleteLocalVariable = isDeleteLocalVariable();
+        }
+        final TIntArrayList parametersToRemove = getParametersToRemove();
+
         final IntroduceParameterProcessor processor =
           new IntroduceParameterProcessor(myProject, myMethod,
-                                          myMethodToSearchFor, myExpressionPointer.getElement(), myExpressionPointer.getElement(),
-                                          myLocalVar, true, myParameterName,
+                                          myMethodToSearchFor, parameterInitializer, myExpressionPointer.getElement(),
+                                          myLocalVar, isDeleteLocalVariable, myParameterName,
                                           myReplaceChoice == OccurrencesChooser.ReplaceChoice.ALL,
-                                          0, myMustBeFinal || myFinal, myDelegateCb.isSelected(),
+                                          getReplaceFieldsWithGetters(), myMustBeFinal || myFinal, myDelegateCb.isSelected(),
                                           myParameterTypePointer.getType(),
-                                          myParametersToRemove) {
+                                          parametersToRemove) {
             @Override
             protected PsiElement[] getOccurrences() {
               return myOccurrences;
             }
           };
         processor.run();
+        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
       }
       super.moveOffsetAfter(success);
     }
+
+    private void normalizeParameterIdxAccordingToRemovedParams(TIntArrayList parametersToRemove) {
+      parametersToRemove.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          if (myParameterIndex > value) {
+            myParameterIndex--;
+          }
+          return true;
+        }
+      });
+    }
+
+
 
     @Override
     public void finish() {
@@ -237,7 +306,7 @@ class InplaceIntroduceParameterPopup extends JPanel {
     }
 
     private void showSettingsPopup() {
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(InplaceIntroduceParameterPopup.this);
+      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myWholePanel);
       balloonBuilder.setFadeoutTime(0);
       balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
       balloonBuilder.setAnimationCycle(0);

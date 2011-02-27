@@ -73,9 +73,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         final PsiLocalVariable localVar = elementToWorkOn.getLocalVariable();
         final boolean isInvokedOnDeclaration = elementToWorkOn.isInvokedOnDeclaration();
 
-        if (invoke(editor, project, expr, localVar, isInvokedOnDeclaration)) {
-          editor.getSelectionModel().removeSelection();
-        }
+        invoke(editor, project, expr, localVar, isInvokedOnDeclaration);
       }
     });
   }
@@ -208,9 +206,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       };
       boolean isInplaceAvailableOnDataContext = editor != null && editor.getSettings().isVariableInplaceRenameEnabled()
-                                                && method == methodToSearchFor && method.hasModifierProperty(PsiModifier.PRIVATE) &&
-                                                parametersToRemove.isEmpty() && (localVar == null || expr == null) &&
-                                                !Util.anyFieldsWithGettersPresent(classMemberRefs);
+                                                && method == methodToSearchFor
+                                                && method.hasModifierProperty(PsiModifier.PRIVATE);
 
       if (!isInplaceAvailableOnDataContext) {
         if (editor != null) {
@@ -218,8 +215,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         }
         new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
                                      typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
+        if (editor != null) {
+          editor.getSelectionModel().removeSelection();
+        }
       } else {
-        new InplaceIntroduceParameterPopup(project, editor,
+        new InplaceIntroduceParameterPopup(project, editor, classMemberRefs,
                                      typeSelectorManager, nameSuggestionsGenerator,
                                      expr, localVar, method, methodToSearchFor, occurences, parametersToRemove,
                                      mustBeFinal).inplaceIntroduceParameter();
