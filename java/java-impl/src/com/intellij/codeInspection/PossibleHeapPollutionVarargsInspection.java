@@ -87,7 +87,7 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
           //if (containingClass == null || containingClass.isInterface()) return; do not add
           holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
                                  //todo check if can be final or static
-                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) ? new AnnotateAsSafeVarargsQuickFix() : null);
+                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor() ? new AnnotateAsSafeVarargsQuickFix() : null);
         }
       }
 

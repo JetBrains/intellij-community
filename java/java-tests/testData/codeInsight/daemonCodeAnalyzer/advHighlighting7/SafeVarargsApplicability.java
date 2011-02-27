@@ -45,3 +45,17 @@ public class SafeVarargsTests {
     public static <T> void foo2(List<? extends T>... <warning descr="Parameter 't' is never used">t</warning>){}
 
 }
+
+abstract class AClass {
+    @SafeVarargs
+    <T> AClass(T... d){
+      System.out.println(d);
+    }
+}
+
+class ABClass extends AClass {
+    @SafeVarargs
+    <T> ABClass(T... d){
+        super(d);
+    }
+}
