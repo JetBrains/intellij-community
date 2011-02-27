@@ -457,7 +457,7 @@ public class ProjectWrapper {
             }
 
             public boolean isOutdated() {
-                return (!emptySource() && !outputOk()) || (getLatestSource() > getEarliestOutput());
+                return (!emptySource() && !outputOk());
             }
         }
 
@@ -672,14 +672,16 @@ public class ProjectWrapper {
                 return true;
 
             final ModuleWrapper past = history.getModule(myName);
-            final boolean isNewModule = past == null;
-            final boolean outputChanged = !isNewModule && !safeEquals(past.getOutputPath(), getOutputPath());
-            final boolean testOutputChanged = !isNewModule && tests && !safeEquals(past.getTestOutputPath(), getTestOutputPath());
-            final boolean sourceChanged = !isNewModule && !past.getSourceFiles().equals(getSourceFiles());
-            final boolean testSourceChanged = !isNewModule && tests && !past.getTestSourceFiles().equals(getTestSourceFiles());
-            final boolean sourceOutdated = mySource.isOutdated();
-            final boolean testSourceOutdated = tests && myTest.isOutdated();
-            final boolean unsafeDependencyChange = !isNewModule && (
+            if (past == null)
+                return true;
+
+            final boolean outputChanged = !safeEquals(past.getOutputPath(), getOutputPath());
+            final boolean testOutputChanged = tests && !safeEquals(past.getTestOutputPath(), getTestOutputPath());
+            final boolean sourceChanged = !past.getSourceFiles().equals(getSourceFiles());
+            final boolean testSourceChanged = tests && !past.getTestSourceFiles().equals(getTestSourceFiles());
+            final boolean sourceOutdated = mySource.isOutdated() || !mySource.getOutdatedFiles(past.mySource).isEmpty();
+            final boolean testSourceOutdated = tests && (myTest.isOutdated() || !myTest.getOutdatedFiles(past.myTest).isEmpty());
+            final boolean unsafeDependencyChange = (
                     new Object() {
                         public boolean run(final List<ClasspathItemWrapper> today, final List<ClasspathItemWrapper> yesterday) {
                             final Iterator<ClasspathItemWrapper> t = today.iterator();
@@ -705,8 +707,7 @@ public class ProjectWrapper {
                     testSourceChanged ||
                     outputChanged ||
                     testOutputChanged ||
-                    unsafeDependencyChange ||
-                    isNewModule;
+                    unsafeDependencyChange;
         }
 
         @Override
@@ -962,7 +963,6 @@ public class ProjectWrapper {
         final Set<StringCache.S> affectedFiles = new HashSet<StringCache.S>();
         final Set<Module> cleared = new HashSet<Module>();
         final Mappings delta = new Mappings(ProjectWrapper.this);
-        final Callbacks.Backend deltaBackend = delta.getCallback();
 
         BuildDwarf(ProjectBuilder builder) {
             this.builder = builder;
@@ -994,9 +994,11 @@ public class ProjectWrapper {
                     }
                 }
 
-                if (! outputFiles.isEmpty()) {
+                if (!outputFiles.isEmpty()) {
                     builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
                 }
+
+                final Callbacks.Backend deltaBackend = delta.getCallback();
 
                 builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
 
@@ -1187,16 +1189,20 @@ public class ProjectWrapper {
     }
 
     public void makeModule(final String modName, final boolean force, final boolean tests) {
-        final Module module = myProject.getModules().get(modName);
-        final List<Module> list = new ArrayList<Module>();
+        if (modName.equals("*")) {
+            makeModules(myProject.getModules().values(), tests, force);
+        } else {
+            final Module module = myProject.getModules().get(modName);
+            final List<Module> list = new ArrayList<Module>();
 
-        if (module == null) {
-            System.err.println("Module \"" + modName + "\" not found in project \"" + myRoot + "\"");
-            return;
+            if (module == null) {
+                System.err.println("Module \"" + modName + "\" not found in project \"" + myRoot + "\"");
+                return;
+            }
+
+            list.add(module);
+
+            makeModules(list, tests, force);
         }
-
-        list.add(module);
-
-        makeModules(list, tests, force);
     }
 }
