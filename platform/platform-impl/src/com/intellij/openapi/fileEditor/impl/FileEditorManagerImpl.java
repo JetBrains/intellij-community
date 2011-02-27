@@ -60,7 +60,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
