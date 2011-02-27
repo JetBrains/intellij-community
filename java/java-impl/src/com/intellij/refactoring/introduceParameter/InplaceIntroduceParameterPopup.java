@@ -219,6 +219,11 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsPanel {
               return myOccurrences;
             }
           };
+        processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+          @Override
+          public void run() {
+          }
+        });
         processor.run();
         normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
       }
