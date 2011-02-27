@@ -26,11 +26,14 @@ public class OptimizedFileManager extends DefaultFileManager {
     private boolean myUseZipFileIndex;
     private final Map<File, Archive> myArchives;
     private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-    private final Callbacks.Backend callback;
+    private Callbacks.Backend callback;
 
-    public OptimizedFileManager(Callbacks.Backend c) {
-        super(new Context(), true, null);
+    public void setCallback (final Callbacks.Backend c) {
         callback = c;
+    }
+
+    public OptimizedFileManager() {
+        super(new Context(), true, null);
         try {
             final Field archivesField = DefaultFileManager.class.getDeclaredField("archives");
             archivesField.setAccessible(true);

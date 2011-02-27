@@ -19,7 +19,78 @@ public class Mappings {
     private Map<StringCache.S, Set<ClassRepr>> sourceFileToClasses = new HashMap<StringCache.S, Set<ClassRepr>>();
     private Map<StringCache.S, Set<UsageRepr.Usage>> sourceFileToUsages = new HashMap<StringCache.S, Set<UsageRepr.Usage>>();
     private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
-    private Map<StringCache.S, Set<Depender>> fileToFileDependency = new HashMap<StringCache.S, Set<Depender>>();
+    private Map<StringCache.S, Set<StringCache.S>> fileToFileDependency = new HashMap<StringCache.S, Set<StringCache.S>>();
+    private Map<StringCache.S, Set<StringCache.S>> waitingForResolve = new HashMap<StringCache.S, Set<StringCache.S>> ();
+
+    public boolean differentiate (final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> affectedFiles) {
+        boolean incremental = true;
+
+        if (removed != null) {
+            for (StringCache.S file : removed) {
+                final Set<StringCache.S> dependants = fileToFileDependency.get(file);
+
+                if (dependants != null) {
+                    for (StringCache.S d : dependants) {
+                        affectedFiles.add(d);
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<StringCache.S, Set<ClassRepr>> e : delta.sourceFileToClasses.entrySet()) {
+            final StringCache.S fileName = e.getKey();
+            final Map<ClassRepr, ClassRepr> classes = new HashMap<ClassRepr, ClassRepr> ();
+
+            for (ClassRepr cr : e.getValue()) {
+                classes.put(cr, cr);
+            }
+
+            final Set<ClassRepr> pastClasses = sourceFileToClasses.get(fileName);
+            final Set<StringCache.S> dependants = fileToFileDependency.get(fileName);
+
+            if (pastClasses != null) {
+                for (ClassRepr past : pastClasses) {
+                    final ClassRepr present = classes.get(past);
+
+                    if (present != null) {
+                        if (present.differentiate (past)) {
+                            for (StringCache.S d : dependants) {
+                                affectedFiles.add(d);
+                            }
+                        }
+                        else {
+                            incremental = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return incremental;
+    }
+
+    public void integrate (final Mappings delta, final Set<StringCache.S> removed) {
+        if (removed != null) {
+        for (StringCache.S file : removed) {
+            final Set<ClassRepr> classes = sourceFileToClasses.get(file);
+
+            if (classes != null) {
+                for (ClassRepr cr : classes) {
+                    classToSourceFile.remove(cr.fileName);
+                }
+            }
+
+            sourceFileToClasses.remove(file);
+            sourceFileToUsages.remove(file);
+            fileToFileDependency.remove(file);
+        }
+        }
+
+        sourceFileToClasses.putAll(delta.sourceFileToClasses);
+        sourceFileToUsages.putAll(delta.sourceFileToUsages);
+        classToSourceFile.putAll(delta.classToSourceFile);
+        fileToFileDependency.putAll(delta.fileToFileDependency);
+    }
 
     public class Depender {
         boolean resolved;
@@ -57,13 +128,6 @@ public class Mappings {
         }
     }
 
-    public void inherit(final Mappings c) {
-        sourceFileToClasses = c.sourceFileToClasses;
-        sourceFileToUsages = c.sourceFileToUsages;
-        classToSourceFile = c.classToSourceFile;
-        fileToFileDependency = c.fileToFileDependency;
-    }
-
     private <T> void updateMap(final Map<StringCache.S, Set<T>> map, final StringCache.S a, final T b) {
         Set<T> d = map.get(a);
 
@@ -92,25 +156,33 @@ public class Mappings {
         updateMap(sourceFileToClasses, source, classRepr);
     }
 
-    private void updateDependency(final StringCache.S a, final Depender b) {
-        updateMap(fileToFileDependency, a, b);
+    private void updateDependency(final StringCache.S a, final StringCache.S owner) {
+        final StringCache.S sourceFile = classToSourceFile.get(owner);
+
+        if (sourceFile == null) {
+            updateMap (waitingForResolve, owner, a);
+        }
+        else {
+            updateMap(fileToFileDependency, sourceFile, a);
+        }
+    }
+
+    private void updateClassToSource (final StringCache.S className, final StringCache.S sourceName) {
+        classToSourceFile.put(className, sourceName);
+
+        final Set<StringCache.S> waiting = waitingForResolve.get(className);
+
+        if (waiting != null) {
+            for (StringCache.S f : waiting) {
+                updateDependency(f, className);
+            }
+
+            waitingForResolve.remove(className);
+        }
     }
 
     public Callbacks.Backend getCallback() {
         return new Callbacks.Backend() {
-            private final Set<StringCache.S> affected = new HashSet<StringCache.S>();
-
-            public Set<StringCache.S> getAffectedFiles() {
-                return affected;
-            }
-
-            public void begin() {
-                affected.clear();
-            }
-
-            public void end() {
-
-            }
 
             public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
                 final StringCache.S classFileNameS = StringCache.get(project.getRelativePath(classFileName));
@@ -121,11 +193,11 @@ public class Mappings {
                 final Set<UsageRepr.Usage> localUsages = result.snd;
 
                 for (UsageRepr.Usage u : localUsages) {
-                    updateDependency(sourceFileNameS, new Depender(u.getOwner()));
+                    updateDependency(sourceFileNameS, u.getOwner());
                 }
 
                 if (repr != null) {
-                    classToSourceFile.put(repr.name, sourceFileNameS);
+                    updateClassToSource(repr.name, sourceFileNameS);
                     updateSourceToClasses(sourceFileNameS, repr);
                 }
 
@@ -141,11 +213,11 @@ public class Mappings {
                 sourceFileToUsages.put(sourceFileNameS, usages);
 
                 for (ClassRepr r : classes) {
-                    classToSourceFile.put(r.name, sourceFileNameS);
+                    updateClassToSource(r.name, sourceFileNameS);
                 }
 
                 for (UsageRepr.Usage u : usages) {
-                    updateDependency(sourceFileNameS, new Depender(u.getOwner ()));
+                    updateDependency(sourceFileNameS, u.getOwner ());
                 }
             }
         };
@@ -173,28 +245,18 @@ public class Mappings {
         return sourceFileToUsages.get(sourceFileName);
     }
 
-    public Set<Depender> getDependentFiles(final StringCache.S sourceFileName) {
-        return fileToFileDependency.get(sourceFileName);
-    }
-
-    public Set<Depender> getDependentFiles(final String sourceFileName) {
-        return fileToFileDependency.get(StringCache.get(sourceFileName));
-    }
-
     public void print() {
         try {
             final BufferedWriter w = new BufferedWriter(new FileWriter("dep.txt"));
-            for (Map.Entry<StringCache.S, Set<Depender>> e : fileToFileDependency.entrySet()) {
+            for (Map.Entry<StringCache.S, Set<StringCache.S>> e : fileToFileDependency.entrySet()) {
                 w.write(e.getKey().value + " -->");
                 w.newLine();
 
-                for (Depender s : e.getValue()) {
-                    final StringCache.S r = s.getSourceFile();
-
-                    if (r == null)
+                for (StringCache.S s : e.getValue()) {
+                    if (s == null)
                         w.write("  <null>");
                     else
-                        w.write("  " + r.value);
+                        w.write("  " + s.value);
 
                     w.newLine();
                 }

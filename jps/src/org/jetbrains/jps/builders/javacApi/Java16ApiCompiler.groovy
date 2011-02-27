@@ -15,21 +15,19 @@ import org.jetbrains.ether.dependencyView.Callbacks
  */
 class Java16ApiCompiler {
   private static instance
-  private StandardJavaFileManager fileManager
+  private OptimizedFileManager fileManager
   private JavaCompiler compiler
-  private Callbacks.Backend callback
 
-  static Java16ApiCompiler getInstance(Callbacks.Backend callback) {
+  static Java16ApiCompiler getInstance() {
     if (instance == null) {
-      instance = new Java16ApiCompiler(callback)
+      instance = new Java16ApiCompiler()
     }
     return instance
   }
 
-  def Java16ApiCompiler(Callbacks.Backend c) {
+  def Java16ApiCompiler() {
     compiler = ToolProvider.getSystemJavaCompiler()
-    fileManager = new OptimizedFileManager(c);
-    callback = c
+    fileManager = new OptimizedFileManager();
   }
 
   def compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
@@ -51,10 +49,18 @@ class Java16ApiCompiler {
     options << "-nowarn"
 
     List<File> filesToCompile = []
-    Set<File> excluded = state.excludes.collect { new File(it.toString()) }
-    state.sourceRoots.each {
-      JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
+
+    if (state.sourceFiles.size() > 0) {
+      filesToCompile = state.sourceFiles
     }
+    else {
+      Set<File> excluded = state.excludes.collect { new File(it.toString()) }
+      state.sourceRoots.each {
+        JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
+      }
+    }
+
+    fileManager.setCallback(state.callback)
 
     if (filesToCompile.size() > 0) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, [new File(state.targetFolder)])
@@ -64,7 +70,7 @@ class Java16ApiCompiler {
       Sdk sdk = chunk.getSdk()
 
       if (sdk != null) {
-        sdk.classpath.each { bootclasspath << new File (String.valueOf(it)) }
+        sdk.classpath.each { bootclasspath << new File(String.valueOf(it)) }
 
         fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, bootclasspath)
       }
@@ -77,8 +83,6 @@ class Java16ApiCompiler {
       StringWriter out = new StringWriter()
       CompilationTask task = compiler.getTask(new PrintWriter(out), fileManager, null, options, null, toCompile)
 
-      callback.begin()
-
       if (!task.call()) {
         project.builder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
         project.error("Compilation failed")
@@ -88,7 +92,6 @@ class Java16ApiCompiler {
       }
       project.builder.listeners*.onJavaFilesCompiled(chunk, filesToCompile.size())
       fileManager.flush()
-      callback.end()
     }
     else {
       chunk.project.info("No java source files found in '${chunk.name}', skipping compilation")

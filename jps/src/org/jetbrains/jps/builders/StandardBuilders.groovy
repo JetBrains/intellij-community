@@ -8,15 +8,6 @@ import org.jetbrains.ether.dependencyView.Callbacks
  * @author max
  */
 class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
-  Callbacks.Backend callback
-
-  JavacBuilder () {
-    callback = null
-  }
-
-  JavacBuilder (Callbacks.Backend c) {
-    callback = c
-  }
 
   def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     doBuildModule(moduleChunk, state)
@@ -35,7 +26,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
       if ( true ) {
-        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs, callback)) {
+        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
           return
         }
       }
@@ -65,6 +56,10 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
       if (customArgs) {
         compilerarg(line: customArgs)
       }
+
+      sourcepath(path : "")
+
+      include(name : "Main.java")
 
       state.sourceRoots.each {
         src(path: it)

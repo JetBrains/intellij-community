@@ -1,6 +1,7 @@
 package org.jetbrains.ether;
 
 import org.codehaus.gant.GantBinding;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.ether.dependencyView.*;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
@@ -222,10 +223,10 @@ public class ProjectWrapper {
             myName = RW.readString(r);
             myModificationTime = RW.readLong(r);
 
-            final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr> ());
-            final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage> ());
+            final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
+            final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
 
-            mySourceToClassCallback.associate(classes, usages, myName);
+            backendCallback.associate(classes, usages, myName);
         }
 
         public String getName() {
@@ -242,8 +243,8 @@ public class ProjectWrapper {
             RW.writeln(w, name);
             RW.writeln(w, Long.toString(getStamp()));
 
-            RW.writeln(w, mySourceToClass.getClasses(name));
-            RW.writeln(w, mySourceToClass.getUsages(name));
+            RW.writeln(w, dependencyMapping.getClasses(name));
+            RW.writeln(w, dependencyMapping.getUsages(name));
         }
 
         @Override
@@ -286,14 +287,38 @@ public class ProjectWrapper {
             long myLatestOutput;
             long myEarliestOutput;
 
-            public Set<FileWrapper> getAffectedFiles (final Properties past) {
-                final Set<FileWrapper> result = new HashSet<FileWrapper>();
+            public Set<StringCache.S> getFiles() {
+                final Set<StringCache.S> result = new HashSet<StringCache.S>();
+
+                for (FileWrapper f : mySources.keySet()) {
+                    result.add(StringCache.get(f.getName()));
+                }
+
+                return result;
+            }
+
+            public Set<StringCache.S> getOutdatedFiles(final Properties past) {
+                final Set<StringCache.S> result = new HashSet<StringCache.S>();
 
                 for (FileWrapper now : mySources.keySet()) {
                     final FileWrapper than = past.mySources.get(now);
 
-                    if (than == null || than.getStamp() < now.getStamp()){
-                        result.add(now);
+                    if (than == null || than.getStamp() < now.getStamp()) {
+                        result.add(StringCache.get(now.getName()));
+                    }
+                }
+
+                return result;
+            }
+
+            public Set<StringCache.S> getRemovedFiles(final Properties past) {
+                final Set<StringCache.S> result = new HashSet<StringCache.S>();
+
+                for (FileWrapper was : past.mySources.keySet()) {
+                    final FileWrapper now = mySources.get(was);
+
+                    if (now == null) {
+                        result.add(StringCache.get(was.getName()));
                     }
                 }
 
@@ -331,7 +356,7 @@ public class ProjectWrapper {
 
                 RW.readTag(r, "Sources:");
 
-                mySources = new HashMap<FileWrapper, FileWrapper> ();
+                mySources = new HashMap<FileWrapper, FileWrapper>();
 
                 for (FileWrapper fw : (Set<FileWrapper>) RW.readMany(r, myFileWrapperReader, new HashSet<FileWrapper>())) {
                     mySources.put(fw, fw);
@@ -362,7 +387,7 @@ public class ProjectWrapper {
                 {
                     final DirectoryScanner.Result result = DirectoryScanner.getFiles(myRoots, excludes, ProjectWrapper.this);
 
-                    mySources = new HashMap<FileWrapper, FileWrapper> ();
+                    mySources = new HashMap<FileWrapper, FileWrapper>();
 
                     for (FileWrapper fw : result.getFiles()) {
                         mySources.put(fw, fw);
@@ -446,6 +471,30 @@ public class ProjectWrapper {
         List<ClasspathItemWrapper> myDependsOn;
 
         final Set<LibraryWrapper> myLibraries;
+
+        public Set<StringCache.S> getOutdatedSources() {
+            return mySource.getOutdatedFiles(myHistory.getModule(myName).mySource);
+        }
+
+        public Set<StringCache.S> getOutdatedTests() {
+            return myTest.getOutdatedFiles(myHistory.getModule(myName).myTest);
+        }
+
+        public Set<StringCache.S> getRemovedSources() {
+            return mySource.getRemovedFiles(myHistory.getModule(myName).mySource);
+        }
+
+        public Set<StringCache.S> getRemovedTests() {
+            return myTest.getRemovedFiles(myHistory.getModule(myName).myTest);
+        }
+
+        public Set<StringCache.S> getSources() {
+            return mySource.getFiles();
+        }
+
+        public Set<StringCache.S> getTests() {
+            return myTest.getFiles();
+        }
 
         public void rescan() {
             mySource.rescan();
@@ -681,11 +730,6 @@ public class ProjectWrapper {
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
 
-    final ProjectWrapper myHistory;
-
-    final Mappings mySourceToClass = new Mappings(this);
-    final Callbacks.Backend mySourceToClassCallback = mySourceToClass.getCallback();
-
     private void rescan() {
         for (ModuleWrapper m : myModules.values()) {
             m.rescan();
@@ -708,8 +752,16 @@ public class ProjectWrapper {
         return myModules.values();
     }
 
+    final Mappings dependencyMapping;
+    final Callbacks.Backend backendCallback;
+
+    final ProjectWrapper myHistory;
+
     private ProjectWrapper(final String prjDir, final String setupScript) {
-        myProject = new Project(new GantBinding(), mySourceToClassCallback);
+        dependencyMapping = new Mappings(this);
+        backendCallback = dependencyMapping.getCallback();
+
+        myProject = new Project(new GantBinding());
         myRoot = new File(prjDir).getAbsolutePath();
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
@@ -723,10 +775,31 @@ public class ProjectWrapper {
             myLibraries.put(l.getName(), new LibraryWrapper(l));
         }
 
-        myHistory = loadSnapshot();
+        myHistory = loadSnapshot(dependencyMapping);
+    }
 
-        if (myHistory != null)
-            mySourceToClass.inherit(myHistory.mySourceToClass);
+    private ProjectWrapper(final BufferedReader r, final Mappings mappings) {
+        dependencyMapping = mappings;
+        backendCallback = dependencyMapping.getCallback();
+        myProject = null;
+        myHistory = null;
+
+        myRoot = RW.readStringAttribute(r, "Root:");
+        myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
+
+        RW.readTag(r, "Libraries:");
+        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperReader, new HashSet<LibraryWrapper>());
+
+        for (LibraryWrapper l : libs) {
+            myLibraries.put(l.getName(), l);
+        }
+
+        RW.readTag(r, "Modules:");
+        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) RW.readMany(r, myModuleWrapperReader, new HashSet<ModuleWrapper>());
+
+        for (ModuleWrapper m : mods) {
+            myModules.put(m.getName(), m);
+        }
     }
 
     public String getAbsolutePath(final String relative) {
@@ -772,28 +845,6 @@ public class ProjectWrapper {
         return myProject == null;
     }
 
-    private ProjectWrapper(final BufferedReader r) {
-        myProject = null;
-        myHistory = null;
-
-        myRoot = RW.readStringAttribute(r, "Root:");
-        myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
-
-        RW.readTag(r, "Libraries:");
-        final Set<LibraryWrapper> libs = (Set<LibraryWrapper>) RW.readMany(r, myLibraryWrapperReader, new HashSet<LibraryWrapper>());
-
-        for (LibraryWrapper l : libs) {
-            myLibraries.put(l.getName(), l);
-        }
-
-        RW.readTag(r, "Modules:");
-        final Set<ModuleWrapper> mods = (Set<ModuleWrapper>) RW.readMany(r, myModuleWrapperReader, new HashSet<ModuleWrapper>());
-
-        for (ModuleWrapper m : mods) {
-            myModules.put(m.getName(), m);
-        }
-    }
-
     public void write(final BufferedWriter w) {
         RW.writeln(w, "Root:" + myRoot);
 
@@ -808,12 +859,12 @@ public class ProjectWrapper {
         return myProjectSnapshot;
     }
 
-    private ProjectWrapper loadSnapshot() {
+    private ProjectWrapper loadSnapshot(final Mappings m) {
         initJPSDirectory();
 
         try {
             final BufferedReader r = new BufferedReader(new FileReader(getProjectSnapshotFileName()));
-            final ProjectWrapper w = new ProjectWrapper(r);
+            final ProjectWrapper w = new ProjectWrapper(r, m);
             r.close();
 
             return w;
@@ -881,9 +932,7 @@ public class ProjectWrapper {
     }
 
     public void rebuild() {
-        myProject.makeAll();
-        rescan();
-        mySourceToClass.print();
+        makeModules(myProject.getModules().values(), true, true);
     }
 
     public void make(final boolean force, final boolean tests) {
@@ -907,10 +956,114 @@ public class ProjectWrapper {
         makeModules(modules, tests, force);
     }
 
+    class BuildDwarf {
+        final ProjectBuilder builder;
+        final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
+        final Set<StringCache.S> affectedFiles = new HashSet<StringCache.S>();
+        final Set<Module> cleared = new HashSet<Module>();
+        final Mappings delta = new Mappings(ProjectWrapper.this);
+        final Callbacks.Backend deltaBackend = delta.getCallback();
+
+        BuildDwarf(ProjectBuilder builder) {
+            this.builder = builder;
+        }
+
+        boolean iterativeCompile(final ModuleChunk chunk, final boolean tests, final Set<StringCache.S> sources, final Set<StringCache.S> outdated, final Set<StringCache.S> removed) {
+            final Collection<StringCache.S> filesToCompile = DefaultGroovyMethods.intersect(affectedFiles, sources);
+
+            if (outdated != null) {
+                filesToCompile.addAll(outdated);
+            }
+
+            filesToCompile.removeAll(compiledFiles);
+
+            if (!filesToCompile.isEmpty()) {
+                final Set<StringCache.S> outputFiles = new HashSet<StringCache.S>();
+
+                for (StringCache.S f : filesToCompile) {
+                    for (ClassRepr cr : dependencyMapping.getClasses(f)) {
+                        outputFiles.add(cr.fileName);
+                    }
+                }
+
+                if (removed != null) {
+                    for (StringCache.S f : removed) {
+                        for (ClassRepr cr : dependencyMapping.getClasses(f)) {
+                            outputFiles.add(cr.fileName);
+                        }
+                    }
+                }
+
+                if (! outputFiles.isEmpty()) {
+                    builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
+                }
+
+                builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
+
+                compiledFiles.addAll(filesToCompile);
+
+                final boolean incremental = dependencyMapping.differentiate(delta, removed, affectedFiles);
+
+                dependencyMapping.integrate(delta, removed);
+
+                if (!incremental) {
+                    affectedFiles.addAll(sources);
+                    iterativeCompile(chunk, tests, sources, null, null);
+                    return false;
+                }
+
+                return iterativeCompile(chunk, tests, sources, null, null);
+            }
+
+            return true;
+        }
+
+        public void build(final Collection<Module> modules, final boolean tests, final boolean force) {
+
+            boolean incremental = !force;
+
+            for (ModuleChunk c : myProject.getChunks(tests)) {
+                final Set<Module> chunkModules = c.getElements();
+
+                if (!DefaultGroovyMethods.intersect(modules, chunkModules).isEmpty()) {
+                    if (incremental) {
+                        final Set<StringCache.S> chunkSources = new HashSet<StringCache.S>();
+                        final Set<StringCache.S> outdatedSources = new HashSet<StringCache.S>();
+                        final Set<StringCache.S> removedSources = new HashSet<StringCache.S>();
+
+                        for (Module m : chunkModules) {
+                            final ModuleWrapper mw = getModule(m.getName());
+                            outdatedSources.addAll(tests ? mw.getOutdatedTests() : mw.getOutdatedSources());
+                            chunkSources.addAll(tests ? mw.getTests() : mw.getSources());
+                            removedSources.addAll(tests ? mw.getRemovedTests() : mw.getRemovedSources());
+                        }
+
+                        incremental = iterativeCompile(c, tests, chunkSources, outdatedSources, removedSources);
+                    } else {
+                        final Set<Module> toClean = new HashSet<Module>();
+
+                        for (Module m : chunkModules) {
+                            if (!cleared.contains(m)) {
+                                toClean.add(m);
+                            }
+                        }
+
+                        if (!toClean.isEmpty()) {
+                            builder.clearChunk(new ModuleChunk(toClean), null, null);
+                            cleared.addAll(toClean);
+                        }
+
+                        builder.buildChunk(c, tests, null, backendCallback, null);
+                    }
+                }
+            }
+        }
+    }
+
     private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
         final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
 
-        final Set<String> modules = new HashSet<String>();
+        final Set<Module> modules = new HashSet<Module>();
         final Set<String> marked = new HashSet<String>();
         final Map<String, Boolean> visited = new HashMap<String, Boolean>();
         final Set<String> frontier = new HashSet<String>();
@@ -999,7 +1152,7 @@ public class ProjectWrapper {
                     if (property == null || !property && force) {
                         if (force || getModule(moduleName).isOutdated(tests, myHistory)) {
                             visited.put(moduleName, true);
-                            modules.add(moduleName);
+                            modules.add(myProject.getModules().get(moduleName));
                             run(reversedDependencies.get(moduleName), true);
                         } else {
                             if (property == null) {
@@ -1017,13 +1170,19 @@ public class ProjectWrapper {
             return;
         }
 
-        final List<Module> toDo = new ArrayList<Module> ();
+        final ProjectBuilder builder = myProject.getBuilder();
+        final BuildDwarf dwarf = new BuildDwarf(builder);
 
-        for (String name : modules) {
-            toDo.add(myProject.getModules().get(name));
+        builder.buildStart();
+
+        dwarf.build(modules, false, force);
+
+        if (tests) {
+            dwarf.build(modules, true, force);
         }
 
-        myProject.makeSelected(toDo, tests);
+        builder.buildStop();
+
         rescan();
     }
 

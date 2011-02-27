@@ -43,9 +43,11 @@ public class Reporter {
 
     private static void write(final String name, final String contents) {
         try {
-            final BufferedWriter out = new BufferedWriter(new FileWriter(name));
-            out.write(contents);
-            out.close();
+            final FileWriter writer = new FileWriter(name);
+
+            writer.write(contents);
+            writer.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

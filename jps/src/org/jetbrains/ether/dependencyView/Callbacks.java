@@ -13,10 +13,7 @@ import java.util.Set;
  */
 public class Callbacks {
     public interface Backend {
-        public void begin ();
-        public void end ();
         public void associate (String classFileName, String sourceFileName, ClassReader cr);
         public void associate (Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
-        public Set<StringCache.S> getAffectedFiles ();
     }
 }

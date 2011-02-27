@@ -9,6 +9,9 @@ import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
 import org.jetbrains.ether.Reporter
 import org.jetbrains.ether.dependencyView.Callbacks
+import org.jetbrains.ether.dependencyView.StringCache
+import org.jetbrains.ether.dependencyView.Callbacks.Backend
+import org.jetbrains.ether.ProjectWrapper
 
 /**
  * @author max
@@ -39,12 +42,12 @@ class ProjectBuilder {
 
   private final TempFileContainer tempFileContainer
 
-  def ProjectBuilder(GantBinding binding, Project project, Callbacks.Backend callback) {
+  def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
     this.binding = binding
     tempFileContainer = new TempFileContainer(project, "__build_temp__")
     sourceGeneratingBuilders << new GroovyStubGenerator(project)
-    translatingBuilders << new JavacBuilder(callback)
+    translatingBuilders << new JavacBuilder()
     translatingBuilders << new GroovycBuilder(project)
     translatingBuilders << new ResourceCopier()
     weavingBuilders << new JetBrainsInstrumentations(project)
@@ -54,7 +57,7 @@ class ProjectBuilder {
     moduleBuilderLoader*.registerBuilders(this)
   }
 
-  private def ProjectChunks getChunks(boolean includeTests) {
+  def ProjectChunks getChunks(boolean includeTests) {
     return includeTests ? testChunks : productionChunks
   }
 
@@ -92,14 +95,22 @@ class ProjectBuilder {
     }
   }
 
-  private def buildModules(Collection<Module> modules, boolean includeTests) {
+  def buildStart () {
     listeners*.onBuildStarted(project)
+  }
+
+  def buildStop () {
+    listeners*.onBuildFinished(project)
+  }
+
+  private def buildModules(Collection<Module> modules, boolean includeTests) {
+    buildStart ()
     clearChunks(modules)
     buildChunks(modules, false)
     if (includeTests) {
       buildChunks(modules, true)
     }
-    listeners*.onBuildFinished(project)
+    buildStop ()
   }
 
   private def buildChunks(Collection<Module> modules, boolean tests) {
@@ -148,16 +159,38 @@ class ProjectBuilder {
     buildModules(dependencies, includeTests)
   }
 
-  private def clearChunk(ModuleChunk chunk) {
+  def clearChunk(ModuleChunk chunk, Collection<StringCache.S> files, ProjectWrapper pw) {
     if (!project.dryRun) {
-      project.stage("Cleaning module ${chunk.name}")
-      chunk.modules.each {project.cleanModule it}
+      if (files == null) {
+        project.stage("Cleaning module ${chunk.name}")
+        chunk.modules.each {project.cleanModule it}
+      }
+      else {
+        project.stage("Cleaning output files for module ${chunk.name}")
+
+        files.each {
+          binding.ant.delete(file: pw.getAbsolutePath(it.value))
+        }
+
+        chunk.modules.each {
+          binding.ant.delete(file: it.outputPath + File.separator + Reporter.myOkFlag)
+          binding.ant.delete(file: it.outputPath + File.separator + Reporter.myFailFlag)
+        }
+      }
     }
   }
 
-  private def buildChunk(ModuleChunk chunk, boolean tests) {
+  private def clearChunk(ModuleChunk c) {
+    clearChunk(c, null, null)
+  }
+
+  private def buildChunk (ModuleChunk chunk, boolean tests) {
+    buildChunk (chunk, tests, null, null, null)
+  }
+
+  def buildChunk(ModuleChunk chunk, boolean tests, Collection<StringCache.S> files, Backend callback, ProjectWrapper pw) {
     Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks
-    if (compiledSet.contains(chunk)) return
+    if (compiledSet.contains(chunk) && files == null) return
     compiledSet.add(chunk)
 
     project.stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
@@ -165,7 +198,7 @@ class ProjectBuilder {
       project.warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
     }
 
-    compile(chunk, tests)
+    compile(chunk, tests, files, callback, pw)
   }
 
   private String getModuleOutputFolder(Module module, boolean tests) {
@@ -195,19 +228,30 @@ class ProjectBuilder {
     }
   }
 
-  private def compile(ModuleChunk chunk, boolean tests) {
-    if (chunk.toString().startsWith("ModuleChunk")) {
-      final String x = "";
-    }
-
+  private def compile(ModuleChunk chunk, boolean tests, Collection<StringCache.S> files, Backend callback, ProjectWrapper pw) {
     List<String> chunkSources = filterNonExistingFiles(tests ? chunk.testRoots : chunk.sourceRoots, true)
     if (chunkSources.isEmpty()) return
 
+    List<String> sourceFiles = []
+
+    if (files != null) {
+      files.each {sourceFiles << new File (pw.getAbsolutePath(it.value))}
+    }
+
     if (!project.dryRun) {
       List<String> chunkClasspath = moduleClasspath(chunk, getCompileClasspathKind(tests))
+
+      if (files != null) {
+        for (Module m : chunk.elements) {
+          chunkClasspath << (tests ? m.testOutputPath : m.outputPath)
+        }
+      }
+
       List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
+              callback: callback,
+              sourceFiles: sourceFiles,
               sourceRoots: chunkSources,
               excludes: chunk.excludes,
               classpath: chunkClasspath,
@@ -218,6 +262,8 @@ class ProjectBuilder {
           List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
+                    callback : callback,
+                    sourceFiles:sourceFiles,
                     sourceRoots: sourceRoots,
                     excludes: it.excludes,
                     classpath: chunkClasspath,

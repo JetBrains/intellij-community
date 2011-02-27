@@ -14,6 +14,9 @@ class ModuleChunk extends DagNode<Module> {
     elements << module
   }
 
+  ModuleChunk(Set<Module> modules) {
+    elements = modules
+  }
 
   def String getName() {
     if (elements.size() == 1) return elements.iterator().next().getName();

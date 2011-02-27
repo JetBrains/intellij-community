@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
+import org.objectweb.asm.Opcodes;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,7 +29,30 @@ public class ClassRepr implements RW.Writable {
     public final MethodRepr[] methods;
     public final String signature;
 
-    public void updateClassUsages (final Set<UsageRepr.Usage> s) {
+    public boolean differentiate(final ClassRepr past) {
+        boolean incremental = true;
+
+        for (FieldRepr pastField : past.fields) {
+            if ((pastField.access & (Opcodes.ACC_FINAL | Opcodes.ACC_STATIC)) > 0) {
+                for (FieldRepr presentField : fields) {
+                    if (presentField.name.equals(pastField.name)) {
+                        if (presentField.access != pastField.access ||
+                                (presentField.value != null && pastField.value != null &&
+                                        !presentField.value.equals(pastField.value)
+                                ) ||
+                                (presentField.value != pastField.value && (presentField.value == null || pastField.value == null))
+                                ) {
+                            incremental = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return incremental;
+    }
+
+    public void updateClassUsages(final Set<UsageRepr.Usage> s) {
         superClass.updateClassUsages(s);
 
         for (TypeRepr.AbstractType t : interfaces) {
@@ -48,15 +72,15 @@ public class ClassRepr implements RW.Writable {
         fileName = fn;
         name = n;
         superClass = TypeRepr.createClassType(sup);
-        interfaces = TypeRepr.createClassType (i);
-        nestedClasses = TypeRepr.createClassType (ns);
+        interfaces = TypeRepr.createClassType(i);
+        nestedClasses = TypeRepr.createClassType(ns);
         fields = f;
         methods = m;
         signature = sig;
     }
 
     public ClassRepr(final BufferedReader r) {
-        fileName = StringCache.get (RW.readString(r));
+        fileName = StringCache.get(RW.readString(r));
         name = StringCache.get(RW.readString(r));
 
         final String s = RW.readString(r);

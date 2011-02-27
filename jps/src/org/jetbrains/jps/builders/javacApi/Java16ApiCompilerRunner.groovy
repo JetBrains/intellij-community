@@ -10,13 +10,13 @@ import org.jetbrains.ether.dependencyView.Callbacks
 class Java16ApiCompilerRunner {
   private static boolean notAvailable
 
-  static boolean compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs, Callbacks.Backend callback) {
+  static boolean compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
     if (notAvailable) {
       return false
     }
 
     try {
-      Java16ApiCompiler compiler = Java16ApiCompiler.getInstance(callback)
+      Java16ApiCompiler compiler = Java16ApiCompiler.getInstance()
       compiler.compile(chunk, state, sourceLevel, targetLevel, customArgs)
       return true
     }

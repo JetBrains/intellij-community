@@ -34,9 +34,9 @@ class Project {
 
   boolean dryRun = false
 
-  def Project(GantBinding binding, Callbacks.Backend callback) {
+  def Project(GantBinding binding) {
     this.binding = binding
-    builder = new ProjectBuilder(binding, this, callback)
+    builder = new ProjectBuilder(binding, this)
     artifactBuilder = new ArtifactBuilder(this)
 
     resolvers << new ModuleResolver(project: this)
@@ -50,6 +50,14 @@ class Project {
     }
 
     props["compiler.resources.id"] = "default.compiler.resources"
+  }
+
+  def List<ModuleChunk> getChunks (boolean tests) {
+    return builder.getChunks(tests).getChunkList()
+  }
+
+  def ProjectBuilder getBuilder () {
+    return builder;
   }
 
   def Module createModule(String name, Closure initializer) {

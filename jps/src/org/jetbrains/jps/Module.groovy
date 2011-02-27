@@ -133,5 +133,20 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
       this.scope = scope
     }
   }
+
+  boolean equals(o) {
+    if (this.is(o)) return true;
+    if (getClass() != o.class) return false;
+
+    Module module = (Module) o;
+
+    if (name != module.name) return false;
+
+    return true;
+  }
+
+  int hashCode() {
+    return (name != null ? name.hashCode() : 0);
+  }
 }
 
