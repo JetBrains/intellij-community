@@ -31,7 +31,7 @@ import java.io.OutputStream;
 public class ConsoleExecuteActionHandler {
   private final ProcessHandler myProcessHandler;
   private final boolean myPreserveMarkup;
-  private boolean myAddCurrentToHistory;
+  private boolean myAddCurrentToHistory = true;
 
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     myProcessHandler = processHandler;
