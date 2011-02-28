@@ -99,7 +99,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -875,14 +874,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
 
               @Override
-              protected void completionFinished(final int offset1, final int offset2, final CompletionProgressIndicator indicator,
-                                                final LookupElement[] items) {
+              protected void completionFinished(int offset1,
+                                                int offset2,
+                                                CompletionProgressIndicator indicator,
+                                                LookupElement[] items,
+                                                boolean hasModifiers) {
                 myEmptyLookup = items.length == 0;
-                super.completionFinished(offset1, offset2, indicator, items);
+                super.completionFinished(offset1, offset2, indicator, items, hasModifiers);
               }
             };
             Editor editor = getCompletionEditor();
-            handler.invokeCompletion(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()), invocationCount);
+            handler.invokeCompletion(getProject(), editor, invocationCount, false);
 
           }
         }, null, null);

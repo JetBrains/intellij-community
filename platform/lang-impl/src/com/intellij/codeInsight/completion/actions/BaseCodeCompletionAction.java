@@ -53,7 +53,7 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
       case CLASS_NAME: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME);
     }
 
-    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor);
+    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor, 1, e.getInputEvent().getModifiers() != 0);
   }
 
   @Override

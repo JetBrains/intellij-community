@@ -83,29 +83,30 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     this.autopopup = autopopup;
   }
 
-  public final void invokeCompletion(final Project project, final Editor editor) {
-    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    assert file != null;
-    invoke(project, editor, file);
+  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
+    invokeCompletion(project, editor);
   }
 
-  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
-    if (editor.isViewer()) {
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      return;
-    }
-
+  public final void invokeCompletion(final Project project, final Editor editor) {
     try {
-      invokeCompletion(project, editor, psiFile, autopopup ? 0 : 1);
+      invokeCompletion(project, editor, 1, false);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
     }
   }
 
-  public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
+  public final void invokeCompletion(final Project project, final Editor editor, int time, boolean hasModifiers) {
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+    assert psiFile != null;
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
+    }
+
+    if (editor.isViewer()) {
+      editor.getDocument().fireReadOnlyModificationAttempt();
+      return;
     }
 
     final Document document = editor.getDocument();
@@ -212,7 +213,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
 
-    doComplete(time, initializationContext[0]);
+    doComplete(time, initializationContext[0], hasModifiers);
   }
 
   @NotNull
@@ -237,7 +238,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return lookup;
   }
 
-  private void doComplete(final int invocationCount, CompletionInitializationContext initContext) {
+  private void doComplete(final int invocationCount, CompletionInitializationContext initContext, boolean hasModifiers) {
     final Editor editor = initContext.getEditor();
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
@@ -263,7 +264,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (freezeSemaphore.waitFor(2000)) {
       final LookupElement[] allItems = data.get();
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
-        completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems);
+        completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
         return;
       }
     }
@@ -409,7 +410,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected void completionFinished(final int offset1,
                                     final int offset2,
                                     final CompletionProgressIndicator indicator,
-                                    final LookupElement[] items) {
+                                    final LookupElement[] items, boolean hasModifiers) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
       indicator.handleEmptyLookup(true);
@@ -436,7 +437,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
           !ApplicationManager.getApplication().isUnitTestMode()) {
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator, restorePrefix));
+        CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
     }
   }

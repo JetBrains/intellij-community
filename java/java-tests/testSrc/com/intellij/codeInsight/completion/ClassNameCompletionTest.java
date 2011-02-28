@@ -240,7 +240,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     }.execute().throwException();
 
     configureByFileNoCompletion(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-source.java");
-    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, myFile, 2);
+    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, 2, false);
     checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");
   }
 }

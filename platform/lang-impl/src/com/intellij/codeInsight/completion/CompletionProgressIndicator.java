@@ -42,7 +42,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
@@ -609,9 +608,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         closeAndFinish(false);
 
         final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
-        final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);
         try {
-          newHandler.invokeCompletion(project, myEditor, psiFileInEditor, myParameters.getInvocationCount());
+          newHandler.invokeCompletion(project, myEditor, myParameters.getInvocationCount(), false);
         }
         catch (IndexNotReadyException ignored) {
         }
