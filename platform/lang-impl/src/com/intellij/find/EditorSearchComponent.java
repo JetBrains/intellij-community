@@ -429,16 +429,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myCbRegexp.setSelected(myFindModel.isRegularExpressions());
     myCbInComments.setSelected(myFindModel.isInCommentsOnly());
     myCbInLiterals.setSelected(myFindModel.isInStringLiteralsOnly());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        String stringToFind = myFindModel.getStringToFind();
-        boolean changed = StringUtil.equals(stringToFind, mySearchField.getText());
-        mySearchField.setText(stringToFind);
-        if (changed) {
-          updateResults(true);
-        }
-      }
-    });
+
+    String stringToFind = myFindModel.getStringToFind();
+    if (!StringUtil.equals(stringToFind, mySearchField.getText())) {
+      mySearchField.setText(stringToFind);
+    }
 
     setTrackingSelection(!myFindModel.isGlobal());
 
@@ -453,9 +448,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myPreserveCase.setSelected(myFindModel.isPreserveCase());
       myPreserveCase.setEnabled(!myFindModel.isRegularExpressions());
       myPreserveCase.setEnabled(!myFindModel.isWholeWordsOnly());
+      String stringToReplace = myFindModel.getStringToReplace();
+      if (!StringUtil.equals(stringToReplace, myReplaceField.getText())) {
+        myReplaceField.setText(stringToReplace);
+      }
       updateExcludeStatus();
     }
-
   }
 
   private static FindModel createFindModel(FindModel findInFileModel, boolean isReplace) {

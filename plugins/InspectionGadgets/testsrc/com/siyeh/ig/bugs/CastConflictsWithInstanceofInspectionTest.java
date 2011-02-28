@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class CastConflictsWithInstanceofInspectionTest extends IGInspectionTestCase {
 

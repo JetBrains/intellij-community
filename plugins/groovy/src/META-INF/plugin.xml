@@ -89,6 +89,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
+    <testGenerator implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>

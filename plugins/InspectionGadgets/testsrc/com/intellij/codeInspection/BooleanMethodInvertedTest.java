@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 
 /**

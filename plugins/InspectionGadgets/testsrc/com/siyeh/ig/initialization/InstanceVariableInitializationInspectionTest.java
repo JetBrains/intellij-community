@@ -1,6 +1,6 @@
 package com.siyeh.ig.initialization;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class InstanceVariableInitializationInspectionTest extends IGInspectionTestCase {
 

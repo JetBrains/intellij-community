@@ -58,8 +58,8 @@ public class VariablesProcessor
     myResultList = lst;
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.VARIABLE || kind == DeclaractionKind.FIELD || kind == DeclaractionKind.ENUM_CONST;
+  public boolean shouldProcess(DeclarationKind kind) {
+    return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
   /** Always return true since we wanna get all vars in scope */

@@ -35,8 +35,8 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       final PsiElement elementAtCaret = file.findElementAt(startOffset);
       if (!(elementAtCaret instanceof PsiJavaToken &&
             (((PsiJavaToken) elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
-            startOffset > elementAtCaret.getTextRange().getStartOffset() &&
-            endOffsets[i] < elementAtCaret.getTextRange().getEndOffset())) {
+            startOffset >= elementAtCaret.getTextRange().getStartOffset() &&
+            endOffsets[i] <= elementAtCaret.getTextRange().getEndOffset())) {
         isLiteral = false;
       }
     }

@@ -1,6 +1,6 @@
 package com.siyeh.ig.threading;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class WaitNotInSynchronizedContextInspectionTest
         extends IGInspectionTestCase {

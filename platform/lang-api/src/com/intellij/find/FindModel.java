@@ -16,7 +16,6 @@
 package com.intellij.find;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
@@ -713,7 +712,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScope(final SearchScope customScope) {
-    boolean changed = Comparing.equal(this.customScope, customScope);
+    boolean changed = this.customScope != null ? this.customScope.equals(customScope) : (customScope != null);
     this.customScope = customScope;
     if (changed) {
       notifyObservers();

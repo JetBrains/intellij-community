@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class MethodOverridesStaticMethodInspectionTest extends IGInspectionTestCase {
 

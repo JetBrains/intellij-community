@@ -73,7 +73,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     }
 
     @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 

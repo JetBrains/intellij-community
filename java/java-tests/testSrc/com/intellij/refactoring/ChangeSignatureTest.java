@@ -187,6 +187,13 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testVarargs2() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(1, "i", PsiType.INT),
+      new ParameterInfoImpl(0, "b", new PsiEllipsisType(PsiType.BOOLEAN))
+    }, false);
+  }
+
   public void testCovariantReturnType() throws Exception {
     doTest("java.lang.Runnable", new ParameterInfoImpl[0], false);
   }

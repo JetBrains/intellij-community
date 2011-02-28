@@ -22,6 +22,9 @@ public class Artifact {
   @Attribute("group")
   public String myGroup;
 
+  @Attribute("urlPrefix")
+  public String myUrlPrefix;
+
   public String getName() {
     return myName;
   }
@@ -36,6 +39,10 @@ public class Artifact {
 
   public String getVersion() {
     return myVersion;
+  }
+
+  public String getUrlPrefix() {
+    return myUrlPrefix;
   }
 
   @Override

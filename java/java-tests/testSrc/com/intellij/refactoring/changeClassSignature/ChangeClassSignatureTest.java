@@ -32,6 +32,15 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
     });
   }
 
+  public void testSubstituteParamInsideClass() throws Exception {
+    doTest(new GenParams() {
+      @Override
+      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
+        return new TypeParameterInfo[0];
+      }
+    });
+  }
+
   public void testRemoveAllParams() throws Exception {
     doTest(new GenParams() {
       @Override

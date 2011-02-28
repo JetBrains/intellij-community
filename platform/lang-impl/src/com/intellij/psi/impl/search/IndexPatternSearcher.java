@@ -39,6 +39,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
-  public boolean execute(@NotNull final IndexPatternSearch.SearchParameters queryParameters, @NotNull final Processor<IndexPatternOccurrence> consumer) {
+  public boolean execute(@NotNull final IndexPatternSearch.SearchParameters queryParameters,
+                         @NotNull final Processor<IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();
     VirtualFile virtualFile = file.getVirtualFile();
     if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || virtualFile == null) {
@@ -161,29 +163,16 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
   private static void mergeCommentLists(TIntArrayList commentStarts,
-                                       TIntArrayList commentEnds,
-                                       TIntArrayList commentStartsList,
-                                       TIntArrayList commentEndsList) {
+                                        TIntArrayList commentEnds,
+                                        TIntArrayList commentStartsList,
+                                        TIntArrayList commentEndsList) {
     if (commentStarts.size() == 0 && commentEnds.size() == 0) {
       commentStarts.add(commentStartsList.toNativeArray());
       commentEnds.add(commentEndsList.toNativeArray());
       return;
     }
 
-    // TODO: this is costly for large N !
-    for (int i = 0; i < commentStartsList.size(); i++) {
-      boolean found = false;
-      for (int j = 0; j < commentStarts.size(); j++) {
-        if (commentStarts.get(j) == commentStartsList.get(i) && commentEnds.get(j) == commentEndsList.get(i)) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        commentStarts.add(commentStartsList.get(i));
-        commentEnds.add(commentEndsList.get(i));
-      }
-    }
+    ContainerUtil.mergeSortedArrays(commentStarts, commentEnds, commentStartsList, commentEndsList);
   }
 
   private static void findComments(final Lexer lexer,

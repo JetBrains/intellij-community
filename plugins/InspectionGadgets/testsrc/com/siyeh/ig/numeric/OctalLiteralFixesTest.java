@@ -16,7 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.fixes.bugs.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesTestCase;
 
 public class OctalLiteralFixesTest extends IGQuickFixesTestCase {
   @Override

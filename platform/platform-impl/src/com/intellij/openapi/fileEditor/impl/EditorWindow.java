@@ -168,7 +168,7 @@ public class EditorWindow {
           }
         }
         finally {
-          editorManager.getSelectionHistory().remove(new Pair<VirtualFile, EditorWindow>(file, EditorWindow.this));
+          editorManager.removeSelectionRecord(file, EditorWindow.this);
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 

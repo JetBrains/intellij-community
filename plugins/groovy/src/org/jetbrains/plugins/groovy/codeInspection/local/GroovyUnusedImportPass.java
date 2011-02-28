@@ -101,19 +101,23 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       }
 
       public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
-        GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-        final Runnable runnable = optimizer.processFile(file);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(project, runnable, "optimize imports", this);
-          }
-        });
+        optimizeImports(project, file);
       }
 
       public boolean startInWriteAction() {
         return true;
       }
     };
+  }
+
+  public static void optimizeImports(final Project project, PsiFile file) {
+    GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
+    final Runnable runnable = optimizer.processFile(file);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(project, runnable, "optimize imports", this);
+      }
+    });
   }
 
   public void doApplyInformationToEditor() {

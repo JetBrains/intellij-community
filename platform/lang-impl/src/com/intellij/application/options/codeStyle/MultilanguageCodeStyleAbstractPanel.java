@@ -120,6 +120,13 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return LanguageCodeStyleSettingsProvider.getRightMargin(myLanguage, getSettingsType());
   }
 
+  @Override
+  protected String getFileExt() {
+    String fileExt = LanguageCodeStyleSettingsProvider.getFileExt(myLanguage);
+    if (fileExt != null) return fileExt;
+    return super.getFileExt();
+  }
+
   @NotNull
   @Override
   protected FileType getFileType() {
@@ -190,7 +197,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
       if (langs.length == 0) return;
       for (Language lang : langs) {
-        tabbedPane.addTab(lang.getDisplayName(), createDummy());
+        tabbedPane.addTab(getTabName(lang), createDummy());
       }
       tabbedPane.setComponentAt(0, getEditor().getComponent());
       myLangSelectionIndex = 0;
@@ -229,7 +236,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   private void selectCurrentLanguageTab() {
     for(int i = 0; i < tabbedPane.getTabCount(); i ++) {
-      if (myLanguage.getDisplayName().equals(tabbedPane.getTitleAt(i))) {
+      if (getTabName(myLanguage).equals(tabbedPane.getTitleAt(i))) {
         tabbedPane.setSelectedIndex(i);
         return;
       }
@@ -251,5 +258,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   private static JComponent createDummy() {
     return new JLabel("");
+  }
+
+  private static String getTabName(Language language) {
+    String tabName = LanguageCodeStyleSettingsProvider.getLanguageName(language);
+    if (tabName == null) tabName = language.getDisplayName();
+    return tabName;
   }
 }

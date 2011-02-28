@@ -1,6 +1,6 @@
 package com.siyeh.ig.encapsulation;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class PackageVisibleInnerClassInspectionTest extends
         IGInspectionTestCase {

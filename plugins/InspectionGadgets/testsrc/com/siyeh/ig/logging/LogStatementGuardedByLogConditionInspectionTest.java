@@ -1,6 +1,6 @@
 package com.siyeh.ig.logging;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class LogStatementGuardedByLogConditionInspectionTest extends IGInspectionTestCase {
 

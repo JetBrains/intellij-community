@@ -180,7 +180,7 @@ public class PsiImplUtil {
                                                     @NotNull final PsiElement place) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
-    if (hint == null || hint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
+    if (hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       final PsiTypeParameterList list = method.getTypeParameterList();
       if (list != null && !list.processDeclarations(processor, state, null, place)) return false;
     }
@@ -199,7 +199,7 @@ public class PsiImplUtil {
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
-    if (hint != null && !hint.shouldProcess(ElementClassHint.DeclaractionKind.VARIABLE)) return true;
+    if (hint != null && !hint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
 
     final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
     @SuppressWarnings({"SuspiciousMethodCalls"})

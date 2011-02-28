@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,13 +89,19 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String idText, PsiElement context) ;
 
+  public abstract GrReferenceExpression createReferenceElementForClass(PsiClass clazz);
+
   public GrCodeReferenceElement createReferenceElementFromText(String refName) {
     return createReferenceElementFromText(refName, null);
   }
 
   public abstract GrCodeReferenceElement createReferenceElementFromText(String refName, PsiElement context);
 
-  public abstract GrExpression createExpressionFromText(String exprText);
+  public GrExpression createExpressionFromText(String exprText) {
+    return createExpressionFromText(exprText, null);
+  }
+
+  public abstract GrExpression createExpressionFromText(String exprText, PsiElement context);
 
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
   public abstract GrVariableDeclaration createFieldDeclarationFromText(String text);

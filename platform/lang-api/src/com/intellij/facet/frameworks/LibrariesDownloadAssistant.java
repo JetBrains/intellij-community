@@ -141,17 +141,20 @@ public class LibrariesDownloadAssistant {
   public static LibraryInfo[] getLibraryInfos(@Nullable Artifact version) {
     if (version == null) return LibraryInfo.EMPTY_ARRAY;
 
-    final List<LibraryInfo> infos = convert(version.getItems());
+    final List<LibraryInfo> infos = convert(version.getUrlPrefix(), version.getItems());
 
     return infos.toArray(new LibraryInfo[infos.size()]);
   }
 
   @NotNull
-  public static List<LibraryInfo> convert(@NotNull ArtifactItem[] jars) {
+  public static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
     return ContainerUtil.mapNotNull(jars, new Function<ArtifactItem, LibraryInfo>() {
       @Override
       public LibraryInfo fun(ArtifactItem artifactItem) {
-        final String downloadUrl = artifactItem.getUrl();
+        String downloadUrl = artifactItem.getUrl();
+        if (!downloadUrl.startsWith("http://") && urlPrefix != null) {
+          downloadUrl = urlPrefix + downloadUrl;
+        }
         return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
       }
     });
