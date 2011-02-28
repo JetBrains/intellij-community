@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -56,10 +58,18 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
     final LookupElementAction.Result result = selectedValue.performLookupAction();
     if (result == LookupElementAction.Result.HIDE_LOOKUP) {
       myLookup.hide();
-    } else {
+    } else if (result == LookupElementAction.Result.REFRESH_ITEM) {
       myLookup.updateItemActions(myLookupElement);
       myLookup.updateLookupWidth(myLookupElement);
       myLookup.refreshUi();
+    } else if (result instanceof LookupElementAction.Result.ChooseItem) {
+      myLookup.setCurrentItem(((LookupElementAction.Result.ChooseItem)result).item);
+      CommandProcessor.getInstance().executeCommand(myLookup.getEditor().getProject(), new Runnable() {
+        @Override
+        public void run() {
+          myLookup.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
+        }
+      }, null, null);
     }
     return FINAL_CHOICE;
   }

@@ -1,7 +1,9 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupActionProvider;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
@@ -29,7 +31,7 @@ public class ImportStaticLookupActionProvider implements LookupActionProvider {
       @Override
       public Result performLookupAction() {
         item.setShouldBeImported(!item.willBeImported());
-        return Result.REFRESH_ITEM;
+        return new Result.ChooseItem(element);
       }
     });
   }
