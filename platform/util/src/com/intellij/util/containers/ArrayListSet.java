@@ -17,11 +17,12 @@ package com.intellij.util.containers;
 
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class ArrayListSet<E> extends AbstractSet<E> {
   private final ArrayList<E> myList = new ArrayList<E>();
 
-  public java.util.Iterator<E> iterator() {
+  public Iterator<E> iterator() {
     return myList.iterator();
   }
 

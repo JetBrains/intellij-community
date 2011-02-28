@@ -164,6 +164,7 @@ public class FileManagerImpl implements FileManager {
     myDisposed = true;
   }
 
+  @TestOnly
   public void cleanupForNextTest() {
     myVFileToViewProviderMap.clear();
     myVFileToPsiDirMap.clear();
