@@ -128,7 +128,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
 
   public void testSimplifyBooleanCheckQuickFix() {
     doInspectionTest("SimplifyBooleanCheck.py", PySimplifyBooleanCheckInspection.class,
-                     PyBundle.message("QFIX.simplify"), true, true);
+                     PyBundle.message("QFIX.simplify.$0", "b"), true, true);
   }
 
   public void testFromFutureImportQuickFix() {
