@@ -35,6 +35,8 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   private final AntBuildModelBase myModel;
@@ -168,7 +170,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return (myFile == null) ? null : new OpenFileDescriptor(myProject, myFile, myTextOffset);
   }
 
-  public void run(DataContext dataContext, AntBuildListener buildListener) {
+  public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
     AntBuildModel model = getModel();
     if (model == null) {
       buildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
@@ -181,6 +183,6 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     }
 
     String[] targets = isDefault() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{getName()};
-    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, buildListener);
+    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, additionalProperties, buildListener);
   }
 }

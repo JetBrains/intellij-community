@@ -16,10 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -34,6 +36,16 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
 
   public GroovyPsiElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    if (getParent() instanceof ASTDelegatePsiElement) {
+      CheckUtil.checkWritable(this);
+      ((ASTDelegatePsiElement) getParent()).deleteChildInternal(getNode());
+    } else {
+      getParent().deleteChildRange(this, this);
+    }
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -56,7 +68,11 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
   }
 
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
-    ASTNode parentNode = getNode();
+    removeElements(this, elements);
+  }
+
+  public static void removeElements(PsiElement from, PsiElement[] elements) {
+    ASTNode parentNode = from.getNode();
     for (PsiElement element : elements) {
       if (element.isValid()) {
         ASTNode node = element.getNode();

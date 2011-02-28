@@ -83,6 +83,17 @@ public class MostlySingularMultiMap<K, V> {
     return true;
   }
 
+  public int size() {
+    return myMap.size();
+  }
+
+  public int valuesForKey(K key) {
+    Object current = myMap.get(key);
+    if (current == null) return 0;
+    if (current instanceof Object[]) return ((Object[])current).length;
+    return 1;
+  }
+
   @NotNull
   public Iterable<V> get(K name) {
     final Object value = myMap.get(name);

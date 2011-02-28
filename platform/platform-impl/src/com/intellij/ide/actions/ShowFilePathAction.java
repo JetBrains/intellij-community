@@ -57,11 +57,12 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return isJava6() || SystemInfo.isMac;
+    return isJava6orLater() || SystemInfo.isMac;
   }
 
-  private static boolean isJava6() {
-    return System.getProperty("java.version").startsWith("1.6");
+  private static boolean isJava6orLater() {
+    final String javaVersion = System.getProperty("java.version");
+    return javaVersion.startsWith("1.6") || javaVersion.startsWith("1.7");
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -189,7 +190,7 @@ public class ShowFilePathAction extends AnAction {
       }
 
     }
-    else if (isJava6()) {
+    else if (isJava6orLater()) {
       try {
         final Object desktopObject = Class.forName("java.awt.Desktop").getMethod("getDesktop").invoke(null);
         desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);

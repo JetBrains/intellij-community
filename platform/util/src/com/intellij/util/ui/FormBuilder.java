@@ -25,25 +25,34 @@ import java.awt.*;
 public class FormBuilder {
 
   private int line = 0;
+  private int indent;
   private final JPanel panel;
   private boolean vertical;
 
   /**
    * @param vertical labels will be placed on their own rows
    */
-  public FormBuilder(final boolean vertical) {
+  public FormBuilder(final boolean vertical, final int indent) {
     this.vertical = vertical;
     panel = new JPanel(new GridBagLayout());
+    this.indent = indent;
+  }
+
+  public FormBuilder(final boolean vertical) {
+    this(vertical, 5);
   }
 
   public FormBuilder() {
-    this(false);
+    this(false, 5);
   }
 
   public FormBuilder addLabeledComponent(String labelText, JComponent component) {
-    JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
-    label.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(labelText));
-    label.setLabelFor(component);
+    JLabel label = null;
+    if (labelText != null) {
+      label = new JLabel(UIUtil.removeMnemonic(labelText));
+      label.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(labelText));
+      label.setLabelFor(component);
+    }
 
     GridBagConstraints c = new GridBagConstraints();
     int verticalInset = line > 0 ? 10 : 0;
@@ -56,16 +65,16 @@ public class FormBuilder {
       c.weightx = 1.0;
       c.fill = GridBagConstraints.NONE;
       c.anchor = GridBagConstraints.WEST;
-      c.insets = new Insets(verticalInset, 0, 0, 5);
+      c.insets = new Insets(verticalInset, 0, 0, this.indent);
 
-      panel.add(label, c);
+      if (label != null) panel.add(label, c);
 
       c.gridx = 0;
       c.gridy = line + 1;
       c.weightx = 1.0;
-      c.fill = GridBagConstraints.HORIZONTAL;
+      c.fill = component instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
       c.anchor = GridBagConstraints.WEST;
-      c.insets = new Insets(0, 0, 0, 5);
+      c.insets = new Insets(0, 0, 0, this.indent);
 
       panel.add(component, c);
 
@@ -76,13 +85,13 @@ public class FormBuilder {
       c.gridy = line;
       c.weightx = 0;
       c.anchor = GridBagConstraints.EAST;
-      c.insets = new Insets(verticalInset, 0, 0, 5);
+      c.insets = new Insets(verticalInset, 0, 0, this.indent);
 
-      panel.add(label, c);
+      if (label != null) panel.add(label, c);
 
       c.gridx = 1;
       c.gridy = line;
-      c.fill = GridBagConstraints.HORIZONTAL;
+      c.fill = component instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
       c.anchor = GridBagConstraints.WEST;
       c.weightx = 1;
       c.insets = new Insets(verticalInset, 0, 0, 0);

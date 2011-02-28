@@ -985,7 +985,7 @@ public class GenericsHighlightUtil {
       if (!method.isVarArgs()) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on methods with fixed arity");
       }
-      if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.FINAL)) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, safeVarargsAnnotation, "@SafeVarargs is not allowed on non-final instance methods");
       }
 

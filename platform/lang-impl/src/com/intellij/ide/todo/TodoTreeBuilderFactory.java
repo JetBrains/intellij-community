@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.ide.todo;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 
 /**
- * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
- *
- * @see PsiResourceList#getResources()
- * @since 10.5.
+ * @author irengrig
+ *         Date: 2/24/11
+ *         Time: 10:51 AM
  */
-public interface PsiResource extends PsiElement {
-  /**
-   * Returns main element of the resource.
-   * It may be PsiLocalVariable, PsiAssignmentExpression, or other instance of PsiExpression.
-   *
-   * @return resource element.
-   */
-  @NotNull
-  PsiElement getResourceElement();
-
-  @Nullable
-  PsiType getType();
+public interface TodoTreeBuilderFactory {
+  TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project);
 }

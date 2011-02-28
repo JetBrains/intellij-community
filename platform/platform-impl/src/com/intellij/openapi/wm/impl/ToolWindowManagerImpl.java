@@ -19,12 +19,7 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,26 +43,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.commands.ApplyWindowInfoCmd;
-import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
-import com.intellij.openapi.wm.impl.commands.InvokeLaterCmd;
-import com.intellij.openapi.wm.impl.commands.RequestFocusInEditorComponentCmd;
-import com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCmd;
-import com.intellij.openapi.wm.impl.commands.UpdateRootPaneCmd;
+import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
@@ -83,36 +64,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JRootPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkListener;
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -487,7 +448,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
       final ToolWindowImpl toolWindow =
-        (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory));
+        (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory), bean.canCloseContents);
       toolWindow.setContentFactory(factory);
       if (bean.icon != null) {
         Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
@@ -1026,15 +987,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
                                        Disposable parentDisposable) {
-    return registerToolWindow(id, component, anchor, parentDisposable, false);
+    return registerToolWindow(id, component, anchor, parentDisposable, false, false);
+  }
+
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       @NotNull JComponent component,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode) {
+    return registerToolWindow(id, component, anchor, parentDisposable, canWorkInDumbMode, false);
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
                                        Disposable parentDisposable,
-                                       boolean canWorkInDumbMode) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, canWorkInDumbMode));
+                                       boolean canWorkInDumbMode, boolean canCloseContents) {
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode));
   }
 
   private ToolWindow registerToolWindow(@NotNull final String id,

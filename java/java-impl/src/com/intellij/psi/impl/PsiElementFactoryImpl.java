@@ -402,7 +402,10 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiReferenceList createReferenceList(@NotNull final PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("void method() throws ");
+      builder.append("void method()");
+      if (references.length > 0){
+        builder.append(" throws ");
+      }
       for (int i = 0; i < references.length; i++) {
         if (i > 0) builder.append(", ");
         builder.append(references[i].getCanonicalText());

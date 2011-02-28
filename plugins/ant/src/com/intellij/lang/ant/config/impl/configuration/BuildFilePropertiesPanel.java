@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
@@ -230,11 +231,11 @@ public class BuildFilePropertiesPanel {
     private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
 
     public PropertiesTab() {
-      UIPropertyBinding.TableListBinding tableListBinding = getBinding().bindList(myPropertiesTable, PROPERTY_COLUMNS,
+      UIPropertyBinding.TableListBinding<BuildFileProperty> tableListBinding = getBinding().bindList(myPropertiesTable, PROPERTY_COLUMNS,
                                                                                   AntBuildFileImpl.ANT_PROPERTIES);
       tableListBinding.setColumnWidths(GlobalAntConfiguration.PROPERTIES_TABLE_LAYOUT);
       tableListBinding.addAddFacility(myAddButton, NewInstanceFactory.fromClass(BuildFileProperty.class));
-      tableListBinding.addRemoveFacility(myRemoveButton);
+      tableListBinding.addRemoveFacility(myRemoveButton, Condition.TRUE);
     }
 
     public JComponent getComponent() {

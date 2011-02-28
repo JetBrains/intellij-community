@@ -230,11 +230,10 @@ public class DefUseUtil {
         if (!defsArmed[i]) {
           PsiElement context = PsiTreeUtil.getNonStrictParentOfType(flow.getElement(i),
                                                                     PsiStatement.class, PsiAssignmentExpression.class,
-                                                                    PsiPostfixExpression.class, PsiPrefixExpression.class,
-                                                                    PsiResource.class);
+                                                                    PsiPostfixExpression.class, PsiPrefixExpression.class);
           PsiVariable psiVariable = writeInstruction.variable;
           if (context != null && !(context instanceof PsiTryStatement)) {
-            if (isDeclaration(context) && psiVariable.getInitializer() == null) {
+            if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
                 unusedDefs.add(new Info(psiVariable, context, false));
               }
@@ -248,11 +247,6 @@ public class DefUseUtil {
     }
 
     return unusedDefs;
-  }
-
-  private static boolean isDeclaration(final PsiElement context) {
-    return context instanceof PsiDeclarationStatement ||
-           context instanceof PsiResource && ((PsiResource)context).getResourceElement() instanceof PsiLocalVariable;
   }
 
   @NotNull

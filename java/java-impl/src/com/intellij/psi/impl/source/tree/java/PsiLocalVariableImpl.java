@@ -49,13 +49,18 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-public class PsiLocalVariableImpl extends CompositePsiElement implements PsiScopedLocalVariable, PsiVariableEx, Constants {
+public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
 
   private volatile String myCachedName = null;
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public PsiLocalVariableImpl() {
-    super(LOCAL_VARIABLE);
+    this(LOCAL_VARIABLE);
+  }
+
+  protected PsiLocalVariableImpl(final IElementType type) {
+    super(type);
   }
 
   public void clearCaches() {
@@ -280,21 +285,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiScop
   }
 
   @NotNull
-  public PsiElement[] getDeclarationScope() {
-    final PsiElement parentElement = getParent();
-    if (parentElement instanceof PsiDeclarationStatement) {
-      return new PsiElement[]{parentElement.getParent()};
-    }
-    else if (parentElement instanceof PsiResource) {
-      final PsiResourceList resourceList = (PsiResourceList)parentElement.getParent();
-      final PsiTryStatement tryStatement = (PsiTryStatement)resourceList.getParent();
-      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      return tryBlock != null ? new PsiElement[]{resourceList, tryBlock} : new PsiElement[]{resourceList};
-    }
-    return new PsiElement[]{parentElement.getParent()};
-  }
-
-  @NotNull
   public SearchScope getUseScope() {
     if (JspPsiUtil.isInJspFile(this)) {
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
@@ -321,8 +311,8 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiScop
     }
 
     final PsiElement parentElement = getParent();
-    if (parentElement instanceof PsiDeclarationStatement || parentElement instanceof PsiResource) {
-      return new LocalSearchScope(getDeclarationScope());
+    if (parentElement instanceof PsiDeclarationStatement) {
+      return new LocalSearchScope(parentElement.getParent());
     }
     else {
       return getManager().getFileManager().getUseScope(this);

@@ -31,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FindManager {
   public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes",
                                                                                                FindModelListener.class);
+
+  public abstract FindModel createReplaceInFileModel();
+
   /**
    * Returns the find manager instance for the specified project.
    *

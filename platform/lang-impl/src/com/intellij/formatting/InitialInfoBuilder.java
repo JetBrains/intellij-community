@@ -154,7 +154,7 @@ class InitialInfoBuilder {
     }
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
-    boolean isReadOnly = isReadOnly(textRange, rootBlockIsRightBlock);
+    boolean isReadOnly = isReadOnly(rootBlock, rootBlockIsRightBlock);
 
     ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
     try {
@@ -320,11 +320,49 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isReadOnly(final TextRange textRange, boolean rootIsRightBlock) {
-    if (myAffectedRanges == null) return false;
-    return myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
+  private boolean isReadOnly(final Block block, boolean rootIsRightBlock) {
+    if (myAffectedRanges == null || !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock)) {
+      return false;
+    }
+
+    if (!block.isIncomplete()) {
+      return true;
+    }
+    
+    // There is a possible case that particular sub-block has an alignment and we don't want to loose information about it by
+    // excluding that sub-block from the processing.
+    List<Block> blocks = block.getSubBlocks();
+    for (Block subBlock : blocks) {
+      if (hasAlignmentInTree(subBlock)) {
+        return false;
+      }
+    }
+    return true;
   }
 
+  /**
+   * Allows to answer if given block or any of its sub-blocks has defined alignment to use.
+   * 
+   * @param block     root block to check
+   * @return          <code>true</code> if given block or any of its sub-blocks has defined alignment to use;
+   *                  <code>false</code> otherwise
+   */
+  private static boolean hasAlignmentInTree(@NotNull Block block) {
+    Stack<Block> blocks = new Stack<Block>();
+    blocks.push(block);
+    
+    while (!blocks.isEmpty()) {
+      Block blockToProcess = blocks.pop();
+      if (blockToProcess.getAlignment() != null) {
+        return true;
+      }
+      for (Block subBlock : blockToProcess.getSubBlocks()) {
+        blocks.push(subBlock);
+      }
+    }
+    return false;
+  }
+  
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {
     return myResult;
   }

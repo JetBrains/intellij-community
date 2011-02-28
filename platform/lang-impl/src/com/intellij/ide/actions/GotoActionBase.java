@@ -20,18 +20,23 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -118,9 +123,11 @@ public abstract class GotoActionBase extends AnAction {
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
+    boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     final Class startedAction = myInAction;
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)), mayRequestOpenInCurrentWindow);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
+
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
 
       @Override
@@ -139,6 +146,6 @@ public abstract class GotoActionBase extends AnAction {
         callback.elementChosen(popup, element);
       }
     }, ModalityState.current(), true);
-
   }
+
 }

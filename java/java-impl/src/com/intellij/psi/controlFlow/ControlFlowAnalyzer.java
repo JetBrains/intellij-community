@@ -1166,28 +1166,13 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   public void visitResourceList(final PsiResourceList resourceList) {
     startElement(resourceList);
 
-    final List<PsiResource> resources = resourceList.getResources();
-    for (PsiResource resource : resources) {
+    final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
+    for (PsiResourceVariable resource : resources) {
       ProgressManager.checkCanceled();
-      resource.accept(this);
+      processVariable(resource);
     }
 
     finishElement(resourceList);
-  }
-
-  @Override
-  public void visitResource(final PsiResource resource) {
-    startElement(resource);
-
-    final PsiElement resourceElement = resource.getResourceElement();
-    if (resourceElement instanceof PsiLocalVariable) {
-      processVariable((PsiLocalVariable)resourceElement);
-    }
-    else if (resourceElement instanceof PsiExpression) {
-      resourceElement.accept(this);
-    }
-
-    finishElement(resource);
   }
 
   @Override

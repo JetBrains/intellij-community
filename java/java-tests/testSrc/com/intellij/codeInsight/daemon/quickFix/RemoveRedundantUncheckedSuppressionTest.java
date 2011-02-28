@@ -17,9 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.RedundantUncheckedSuppressWarningsInspection;
-import com.intellij.codeInspection.SafeVarargsCanBeUsedInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 
 public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCase {

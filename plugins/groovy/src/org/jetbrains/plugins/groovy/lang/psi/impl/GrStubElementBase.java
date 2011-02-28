@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -36,6 +37,11 @@ public abstract class GrStubElementBase<T extends StubElement> extends StubBased
 
   public GrStubElementBase(final ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    getParent().deleteChildRange(this, this);
   }
 
   @Override

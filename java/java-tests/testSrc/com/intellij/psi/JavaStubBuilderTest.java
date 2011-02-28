@@ -17,6 +17,9 @@ package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.DebugUtil;
@@ -39,6 +42,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void setUp() throws Exception {
     super.setUp();
     doTest("@interface A { int i() default 42; }\n class C { void m(int p) throws E { } }", null);  // warm up
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk17();
   }
 
   public void testEmpty() {
@@ -51,7 +60,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     doTest("package p;\n" +
            "import a/*comment to skip*/.b;\n" +
            "import static c.d.*;\n" +
-           "import static java.util.Arrays.sort",
+           "import static java.util.Arrays.sort;",
 
            "PsiJavaFileStub [p]\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
@@ -108,7 +117,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "}\n" +
            "private class C {\n" +
            "  public C() throws Exception { }\n" +
-           "  public abstract void m(final int i, int[] a1, int a2[], int[] a3[])\n" +
+           "  public abstract void m(final int i, int[] a1, int a2[], int[] a3[]);\n" +
            "  private static int v2a(int... v) [] { return v; }\n" +
            "}",
 
@@ -200,7 +209,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void testAnonymousClasses() {
     doTest("class C { {\n" +
            "  new O.P() { };\n" +
-           "  X.new Y() { }\n" +
+           "  X.new Y() { };\n" +
            "} }",
 
            "PsiJavaFileStub []\n" +
@@ -218,7 +227,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   public void testEnums() {
     doTest("enum E {\n" +
-           "  E1() { }" +
+           "  E1() { };\n" +
            "  abstract void m();\n" +
            "}\n" +
            "public enum U { U1, U2 }",
@@ -253,8 +262,14 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     doTest("class C {\n" +
            "  void m() {\n" +
            "    int local = 0;\n" +
+           "    Object r = new Runnable() {\n" +
+           "      public void run() { }\n" +
+           "    };\n" +
            "    for (int loop = 0; loop < 10; loop++) ;\n" +
            "    try (Resource r = new Resource()) { }\n" +
+           "    try (Resource r = new Resource() {\n" +
+           "           @Override public void close() { }\n" +
+           "         }) { }\n" +
            "  }\n" +
            "}",
 
@@ -269,32 +284,51 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Runnable]\n" +
+           "        METHOD:PsiMethodStub[run:void]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          PARAMETER_LIST:PsiParameterListStub\n" +
+           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Resource]\n" +
+           "        METHOD:PsiMethodStub[close:void]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
+           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          PARAMETER_LIST:PsiParameterListStub\n" +
+           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
   public void testNonListParameters() {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
-      @Override public void run() {
-        doTest("class C {\n" +
-               "  {\n" +
-               "    for (int i : arr) ;\n" +
-               "    try { }\n" +
-               "      catch (Throwable t) { }\n" +
-               "      catch (E1|E2 e) { }\n" +
-               "  }\n" +
-               "}",
+    doTest("class C {\n" +
+           "  {\n" +
+           "    for (int i : arr) ;\n" +
+           "    for (String s : new Iterable<String>() {\n" +
+           "      @Override public Iterator<String> iterator() { return null; }\n" +
+           "    }) ;\n" +
+           "    try { }\n" +
+           "      catch (Throwable t) { }\n" +
+           "      catch (E1|E2 e) { }\n" +
+           "  }\n" +
+           "}",
 
-               "PsiJavaFileStub []\n" +
-               "  IMPORT_LIST:PsiImportListStub\n" +
-               "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-               "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
-               "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-               "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-               "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-               "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-               "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n");
-      }
-    });
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Iterable<String>]\n" +
+           "        METHOD:PsiMethodStub[iterator:Iterator<String>]\n" +
+           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
+           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          PARAMETER_LIST:PsiParameterListStub\n" +
+           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
   public void testSOEProof() {
@@ -329,6 +363,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", new String(source));
 
     IdeaTestUtil.assertTiming("Source file size: " + source.length, 2000, new Runnable() {
+      @Override
       public void run() {
         NEW_BUILDER.buildStubTree(file);
       }
@@ -358,6 +393,14 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     long t4 = System.nanoTime();
     OLD_BUILDER.buildStubTree(file);
     t4 = Math.max((System.nanoTime() - t4)/1000, 1);
+
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        assert !(element instanceof PsiErrorElement) : element;
+        super.visitElement(element);
+      }
+    });
 
     final String lightStr = DebugUtil.stubTreeToString(lighterTree);
     final String originalStr = DebugUtil.stubTreeToString(originalTree);

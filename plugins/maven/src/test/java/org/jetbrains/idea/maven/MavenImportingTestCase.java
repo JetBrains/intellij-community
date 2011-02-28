@@ -468,7 +468,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
+    MavenExecutor e = new MavenExternalExecutor(myProject, rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
 
     e.execute(new EmptyProgressIndicator());
   }

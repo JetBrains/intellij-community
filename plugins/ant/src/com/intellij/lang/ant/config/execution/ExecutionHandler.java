@@ -31,6 +31,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -50,6 +51,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class ExecutionHandler {
@@ -61,13 +63,13 @@ public final class ExecutionHandler {
   }
 
   /**
-   * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
+   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
    */
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
                               final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
-                              @NotNull final AntBuildListener antBuildListener) {
+                              List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final AntCommandLineBuilder builder = new AntCommandLineBuilder();
     final AntBuildMessageView messageView;
@@ -77,7 +79,7 @@ public final class ExecutionHandler {
 
       try {
         builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
-        builder.calculateProperties(dataContext);
+        builder.calculateProperties(dataContext, additionalProperties);
         builder.addTargets(targets);
 
         builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());

@@ -143,6 +143,7 @@ public class AbstractPopup implements JBPopup {
   private JTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
+  private JLabel myAdCmp;
 
 
   AbstractPopup() {
@@ -198,7 +199,8 @@ public class AbstractPopup implements JBPopup {
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
-      myContent.add(HintUtil.createAdComponent(adText), BorderLayout.SOUTH);
+      myAdCmp = HintUtil.createAdComponent(adText);
+      myContent.add(myAdCmp, BorderLayout.SOUTH);
     }
 
     myCancelKeyEnabled = cancelKeyEnabled;
@@ -720,6 +722,10 @@ public class AbstractPopup implements JBPopup {
 
         if (myRequestFocus) {
           _requestFocus();
+
+          if (myFocusable) {
+            myFocusTrackback.cleanParentWindow();
+          }
         }
 
         if (myPreferredFocusedComponent != null && myInStack) {
@@ -1114,10 +1120,19 @@ public class AbstractPopup implements JBPopup {
 
 
   public void setSize(@NotNull final Dimension size) {
+    setSize(size, true);
+  }
+
+  private void setSize(Dimension size, boolean adjustByContent) {
     if (myPopup == null) {
       myForcedSize = size;
     }
     else {
+      if (adjustByContent) {
+        if (myAdCmp != null) {
+          size.height += myAdCmp.getPreferredSize().height;
+        }
+      }
       updateMaskAndAlpha(setSize(myContent, size));
     }
   }
@@ -1141,7 +1156,7 @@ public class AbstractPopup implements JBPopup {
 
     ScreenUtil.moveRectangleToFitTheScreen(bounds);
     setLocation(bounds.getLocation());
-    setSize(bounds.getSize());
+    setSize(bounds.getSize(), false);
   }
 
 

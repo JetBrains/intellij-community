@@ -16,8 +16,11 @@
 
 package com.intellij.lang.ant.config;
 
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface AntBuildTarget {
   @Nullable
@@ -31,7 +34,7 @@ public interface AntBuildTarget {
 
   boolean isDefault();
 
-  void run(DataContext dataContext, AntBuildListener buildListener);
+  void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener);
 
   AntBuildModel getModel();
 }

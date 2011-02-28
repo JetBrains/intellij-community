@@ -288,6 +288,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  public void testRemoveExceptions() throws Exception {
+    doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }

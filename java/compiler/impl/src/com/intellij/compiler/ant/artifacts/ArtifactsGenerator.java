@@ -176,7 +176,7 @@ public class ArtifactsGenerator {
 
   private void generateTasksForArtifacts(Artifact artifact, Target artifactTarget, final boolean preprocessing) {
     for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
-      extension.generateTasksForArtifact(artifact, preprocessing, myResolvingContext.getProject(), myGenOptions, artifactTarget);
+      extension.generateTasksForArtifact(artifact, preprocessing, myContext, artifactTarget);
     }
   }
 

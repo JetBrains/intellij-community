@@ -120,6 +120,10 @@ public class CompletionInitializationContext {
     return myOffsetMap.getOffset(IDENTIFIER_END_OFFSET);
   }
 
+  public int getReplacementOffset() {
+    return getIdentifierEndOffset();
+  }
+
   /**
    * Mark the offset up to which the text will be deleted if a completion variant is selected using Replace character (Tab)
    * @param idEnd

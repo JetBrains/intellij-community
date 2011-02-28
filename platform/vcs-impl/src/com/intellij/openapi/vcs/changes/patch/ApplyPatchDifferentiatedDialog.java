@@ -48,6 +48,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -79,16 +81,19 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final ChangeListChooserPanel myChangeListChooser;
   private final ChangesLegendCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
-  private final Consumer<ApplyPatchDifferentiatedDialog> myCallback;
+  private final ApplyPatchExecutor myCallback;
+  private final List<ApplyPatchExecutor> myExecutors;
 
   private boolean myContainBasedChanges;
+  private JLabel myPatchFileLabel;
 
-  public ApplyPatchDifferentiatedDialog(final Project project, final Consumer<ApplyPatchDifferentiatedDialog> callback,
-                                        @NotNull final VirtualFile patchFile) {
+  public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
+                                        @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
     super(project, true);
     myCallback = callback;
+    myExecutors = executors;
     setModal(false);
-    setTitle(VcsBundle.message("patch.apply.dialog.title"));
+    setTitle(applyPatchMode.getTitle());
 
     final FileChooserDescriptor descriptor = createSelectPatchDescriptor();
     descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
@@ -148,6 +153,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (patchFile.isValid()) {
       init(patchFile);
     }
+    myPatchFileLabel.setVisible(applyPatchMode.isCanChangePatchFile());
+    myPatchFile.setVisible(applyPatchMode.isCanChangePatchFile());
   }
 
   public static FileChooserDescriptor createSelectPatchDescriptor() {
@@ -157,6 +164,39 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
       }
     };
+  }
+
+  @Override
+  protected Action[] createActions() {
+    if (myExecutors.isEmpty()) {
+      return super.createActions();
+    }
+    final List<Action> actions = new ArrayList<Action>(4);
+    actions.add(getOKAction());
+    for (int i = 0; i < myExecutors.size(); i++) {
+      final ApplyPatchExecutor executor = myExecutors.get(i);
+      final int finalI = i;
+      actions.add(new AbstractAction(executor.getName()) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          runExecutor(executor);
+          close(NEXT_USER_EXIT_CODE + finalI);
+        }
+      });
+    }
+    actions.add(getCancelAction());
+    actions.add(getHelpAction());
+    return actions.toArray(new Action[actions.size()]);
+  }
+
+  private void runExecutor(ApplyPatchExecutor executor) {
+    final Collection<FilePatchInProgress> included = getIncluded();
+    if (included.isEmpty()) return;
+    final MultiMap<VirtualFile, FilePatchInProgress> patchGroups = new MultiMap<VirtualFile, FilePatchInProgress>();
+    for (FilePatchInProgress patchInProgress : included) {
+      patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
+    }
+    executor.apply(patchGroups, getSelectedChangeList(), myRecentPathFileChange.get().getVf().getName());
   }
 
   @Override
@@ -287,9 +327,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final GridBagConstraints gb =
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
 
-      final JLabel label = new JLabel(VcsBundle.message("create.patch.file.name.field"));
-      label.setLabelFor(myPatchFile);
-      myCenterPanel.add(label, gb);
+      myPatchFileLabel = new JLabel(VcsBundle.message("create.patch.file.name.field"));
+      myPatchFileLabel.setLabelFor(myPatchFile);
+      myCenterPanel.add(myPatchFileLabel, gb);
 
       ++ gb.gridx;
       gb.fill = GridBagConstraints.HORIZONTAL;
@@ -724,7 +764,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    myCallback.consume(this);
+    runExecutor(myCallback);
   }
 
   private class ZeroStrip extends AnAction {

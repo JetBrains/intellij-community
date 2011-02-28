@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 1/28/11
  */
-public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool {
+public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -44,7 +44,7 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Method can be annotated as @SafeVarargs";
+    return "Possible heap pollution from parameterized vararg type";
   }
 
   @Override
@@ -68,6 +68,7 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
         if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
         if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
         if (!method.isVarArgs()) return;
+
         final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
         final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
         if (GenericsHighlightUtil.isReifiableType(componentType)) {
@@ -81,9 +82,12 @@ public class SafeVarargsCanBeUsedInspection extends BaseJavaLocalInspectionTool 
         }
         final PsiIdentifier nameIdentifier = method.getNameIdentifier();
         if (nameIdentifier != null) {
+          //if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+          //final PsiClass containingClass = method.getContainingClass();
+          //if (containingClass == null || containingClass.isInterface()) return; do not add
           holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
                                  //todo check if can be final or static
-                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) ? new AnnotateAsSafeVarargsQuickFix() : null);
+                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor() ? new AnnotateAsSafeVarargsQuickFix() : null);
         }
       }
 

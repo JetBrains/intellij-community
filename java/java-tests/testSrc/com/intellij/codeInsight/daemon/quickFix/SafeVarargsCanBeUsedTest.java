@@ -16,16 +16,14 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SafeVarargsCanBeUsedInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 
 
 public class SafeVarargsCanBeUsedTest extends LightQuickFixTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new SafeVarargsCanBeUsedInspection(),
+      new PossibleHeapPollutionVarargsInspection(),
     };
   }
 

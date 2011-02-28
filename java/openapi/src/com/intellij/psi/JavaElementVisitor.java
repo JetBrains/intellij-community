@@ -300,8 +300,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(resourceList);
   }
 
-  public void visitResource(PsiResource resource) {
-    visitElement(resource);
+  public void visitResourceVariable(PsiResourceVariable resourceVariable) {
+    visitLocalVariable(resourceVariable);
   }
 
   public void visitTypeElement(PsiTypeElement type) {

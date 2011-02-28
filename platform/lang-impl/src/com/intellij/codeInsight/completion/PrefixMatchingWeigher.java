@@ -19,6 +19,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author peter
 */
@@ -31,14 +33,21 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
       return 0;
     }
 
-    final String lookupString = item.getLookupString();
     final String prefixHumps = StringUtil.capitalsOnly(prefix);
-    final String itemHumps = StringUtil.capitalsOnly(lookupString);
+    final Set<String> strings = item.getAllLookupStrings();
 
-    if (itemHumps.startsWith(prefixHumps)) return 100;// - itemHumps.length();
+    for (String lookupString : strings) {
+      if (StringUtil.capitalsOnly(lookupString).startsWith(prefixHumps)) return 100;
+    }
 
-    if (lookupString.startsWith(prefix)) return 5;
-    if (StringUtil.startsWithIgnoreCase(lookupString, prefix)) return 1;
+    for (String lookupString : strings) {
+      if (lookupString.startsWith(prefix)) return 5;
+    }
+    for (String lookupString : strings) {
+      if (StringUtil.startsWithIgnoreCase(lookupString, prefix)) return 1;
+    }
+
+
     return 0;
   }
 }

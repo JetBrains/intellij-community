@@ -14,24 +14,22 @@ class C {
     try (MyResource r = new MyResource()) { r.doSomething(); }
     catch (E1 | E2 | E3 ignore) { }
 
-    try (new MyResource()) { }
+    try (MyResource r = new MyResource()) { }
     catch (E1 | E3 ignore) { }
 
-    MyResource r;
-
-    try (<error descr="Unhandled exception from auto-closeable resource: C.E3">r = new MyResource()</error>) { }
+    try (<error descr="Unhandled exception from auto-closeable resource: C.E3">MyResource r = new MyResource()</error>) { }
     catch (E1 e) { }
 
-    try (r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
     catch (E3 e) { }
 
-    try (r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
   }
 
   void m2() throws Exception {
     try (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.AutoCloseable'">Object r = new MyResource()</error>) { }
 
-    try (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">"resource"</error>) { }
+    try (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">AutoCloseable r = "resource"</error>) { }
   }
 
   void m3(int p) throws Exception {
@@ -48,15 +46,15 @@ class C {
     }
     <error descr="Cannot resolve symbol 'r'">r</error> = null;
 
-    try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource(); MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
+    try (MyResource r = new MyResource(); MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
 
     try (MyResource r1 = new MyResource(); MyResource r2 = r1) { }
 
-    /* todo: try (MyResource r1 = < error descr="Cannot resolve symbol 'r'">r2</error >; MyResource r2 = r1) { }*/
+    try (MyResource r1 = <error descr="Cannot resolve symbol 'r2'">r2</error>; MyResource r2 = r1) { }
 
     MyResource r = null;
     try (MyResource <error descr="Variable 'r' is already defined in the scope">r</error> = new MyResource()) { }
-    try (r = new MyResource()) { }
+    try (MyResource rr = r) { }
 
     try (MyResource <error descr="Variable 'p' is already defined in the scope">p</error> = new MyResource()) { }
     new Runnable() {
@@ -65,5 +63,12 @@ class C {
         catch (E e) { }
       }
     }.run();
+  }
+
+  void m4() throws Exception {
+    try (MyResource r = <error descr="Variable 'r' might not have been initialized">r</error>) { }
+
+    MyResource r;
+    try (MyResource r1 = <error descr="Variable 'r' might not have been initialized">r</error>) { }
   }
 }

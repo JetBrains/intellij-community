@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -146,11 +147,23 @@ public class JdkUtil {
     commandLine.setExePath(exePath);
     ParametersList parametersList = javaParameters.getVMParametersList();
     commandLine.addParameters(parametersList.getList());
-    if (!parametersList.hasProperty("file.encoding")) {
+
+    // Value of -Dfile.encoding and charset of GeneralCommandLine should be in sync in order process's input and output be correctly handled.
+    String encoding = parametersList.getPropertyValue("file.encoding");
+    if (encoding == null) {
       Charset charset = javaParameters.getCharset();
       if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
       if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-      commandLine.setCharsetAndAddJavaParameter(charset);
+      commandLine.addParameter("-Dfile.encoding=" + charset.name());
+      commandLine.setCharset(charset);
+    }
+    else {
+      try {
+        Charset charset = Charset.forName(encoding);
+        commandLine.setCharset(charset);
+      }
+      catch (UnsupportedCharsetException ignore) {
+      }
     }
 
     final Map<String, String> env = javaParameters.getEnv();

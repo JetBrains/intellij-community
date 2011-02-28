@@ -170,15 +170,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (myReplaceAllOccurences) {
-      final OccurenceManager occurenceManager;
-      if (myLocalVariable == null) {
-        occurenceManager = new ExpressionOccurenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
-      }
-      else {
-        occurenceManager = new LocalVariableOccurenceManager(myLocalVariable, null);
-      }
-      PsiElement[] exprs = occurenceManager.getOccurences();
-      for (PsiElement expr : exprs) {
+      for (PsiElement expr : getOccurrences()) {
         result.add(new InternalUsageInfo(expr));
       }
     }
@@ -190,6 +182,17 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
+  }
+
+  protected PsiElement[] getOccurrences() {
+    final OccurenceManager occurenceManager;
+    if (myLocalVariable == null) {
+      occurenceManager = new ExpressionOccurenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
+    }
+    else {
+      occurenceManager = new LocalVariableOccurenceManager(myLocalVariable, null);
+    }
+    return occurenceManager.getOccurences();
   }
 
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {

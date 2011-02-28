@@ -24,15 +24,16 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
 public class ChooseItemCompleteStatementAction extends EditorAction {
   public ChooseItemCompleteStatementAction(){
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+  private static class Handler extends EditorActionHandler {
+    @Override
+    public void execute(Editor editor, DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
 
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);

@@ -52,14 +52,21 @@ public class AntCommandLineBuilder {
   @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
   @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
 
-  public void calculateProperties(final DataContext dataContext) throws Macro.ExecutionCancelledException {
+  public void calculateProperties(final DataContext dataContext, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
-      String value = property.getPropertyValue();
-      final MacroManager macroManager = GlobalAntConfiguration.getMacroManager();
-      value = macroManager.expandMacrosInString(value, true, dataContext);
-      value = macroManager.expandMacrosInString(value, false, dataContext);
-      myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
+      expandProperty(dataContext, property);
     }
+    for (BuildFileProperty property : additionalProperties) {
+      expandProperty(dataContext, property);
+    }
+  }
+
+  private void expandProperty(DataContext dataContext, BuildFileProperty property) throws Macro.ExecutionCancelledException {
+    String value = property.getPropertyValue();
+    final MacroManager macroManager = GlobalAntConfiguration.getMacroManager();
+    value = macroManager.expandMacrosInString(value, true, dataContext);
+    value = macroManager.expandMacrosInString(value, false, dataContext);
+    myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
   }
 
   public void addTarget(String targetName) {

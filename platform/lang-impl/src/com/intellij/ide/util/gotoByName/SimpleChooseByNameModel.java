@@ -103,4 +103,9 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   public String getHelpId() {
     return myHelpId;
   }
+
+  @Override
+  public boolean willOpenEditor() {
+    return false;
+  }
 }
