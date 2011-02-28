@@ -1,6 +1,6 @@
 package com.siyeh.ig.style;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class FieldMayBeFinalInspectionTest extends IGInspectionTestCase {
 

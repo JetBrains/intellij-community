@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.bugs;
 
+import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 
 /*

@@ -1,6 +1,6 @@
 package com.siyeh.ig.visibility;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class AmbiguousMethodCallInspectionTest extends IGInspectionTestCase {
 

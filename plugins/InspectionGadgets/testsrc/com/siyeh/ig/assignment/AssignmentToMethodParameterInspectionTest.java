@@ -1,6 +1,6 @@
 package com.siyeh.ig.assignment;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class AssignmentToMethodParameterInspectionTest extends IGInspectionTestCase {
 

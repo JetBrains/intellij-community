@@ -1,6 +1,6 @@
 package com.siyeh.ig.controlflow;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class ForLoopReplaceableByWhileInspectionTest extends IGInspectionTestCase {
 
