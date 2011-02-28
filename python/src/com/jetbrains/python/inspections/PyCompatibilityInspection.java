@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.ReplaceBuiltinsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.validation.CompatibilityVisitor;
@@ -171,14 +170,14 @@ public class PyCompatibilityInspection extends PyInspection {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
         for (PyImportElement importElement : importElements) {
           final PyQualifiedName qName = importElement.getImportedQName();
-          if (qName != null) {
+          if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
             moduleName = qName.toString();
             if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName))
               len = appendLanguageLevel(message, len, languageLevel);
           }
         }
       }
-      commonRegisterProblem(message, " not have module " + moduleName, len, node, new ReplaceBuiltinsQuickFix());
+      commonRegisterProblem(message, " not have module " + moduleName, len, node, null);
     }
 
     @Override

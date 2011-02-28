@@ -28,6 +28,7 @@ public class PyCompatibilityInspectionTest extends PyLightFixtureTestCase {
   }
 
   public void testImportStatement() {
+    setLanguageLevel(LanguageLevel.PYTHON27);
     doTest();
   }
 

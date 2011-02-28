@@ -7,6 +7,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +98,36 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
       commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceExceptPartQuickFix());
     }
+  }
+
+  @Override
+  public void visitPyImportStatement(PyImportStatement node) {
+    super.visitPyImportStatement(node);
+    PyImportElement[] importElements = node.getImportElements();
+    int len = 0;
+    String moduleName = "";
+    StringBuilder message = new StringBuilder(myCommonMessage);
+    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+      LanguageLevel languageLevel = myVersionsToProcess.get(i);
+      for (PyImportElement importElement : importElements) {
+        final PyQualifiedName qName = importElement.getImportedQName();
+        if (qName != null) {
+          if (!languageLevel.isPy3K()) {
+            if (qName.matches("builtins")) {
+              len = appendLanguageLevel(message, len, languageLevel);
+              moduleName = "builtins";
+            }
+          }
+          else {
+            if (qName.matches("__builtin__")) {
+              len = appendLanguageLevel(message, len, languageLevel);
+              moduleName = "__builtin__";
+            }
+          }
+        }
+      }
+    }
+    commonRegisterProblem(message, " not have module " + moduleName, len, node, new ReplaceBuiltinsQuickFix());
   }
 
   @Override
