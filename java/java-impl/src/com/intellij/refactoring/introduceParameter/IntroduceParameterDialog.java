@@ -224,6 +224,7 @@ public class IntroduceParameterDialog extends IntroduceParameterSettingsPanel {
     }
     createLocalVariablePanel(gbConstraints, panel, settings);
 
+    gbConstraints.insets =  new Insets(4, 0, 4, 8);
     gbConstraints.gridy++;
     myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     panel.add(myCbGenerateDelegate, gbConstraints);
