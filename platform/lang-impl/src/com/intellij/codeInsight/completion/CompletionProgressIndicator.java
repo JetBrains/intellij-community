@@ -105,7 +105,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
-                                     final OffsetMap offsetMap, LookupImpl lookup) {
+                                     final OffsetMap offsetMap, LookupImpl lookup, boolean hasModifiers) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
@@ -123,11 +123,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isShown()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    if (!lookup.isShown()) {
       scheduleAdvertising();
     }
 
-    trackModifiers();
+    if (hasModifiers) {
+      trackModifiers();
+    }
   }
 
   public OffsetMap getOffsetMap() {
@@ -251,9 +257,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void trackModifiers() {
-    if (isAutopopupCompletion()) {
-      return;
-    }
+    assert !isAutopopupCompletion();
 
     final JComponent contentComponent = myEditor.getContentComponent();
     contentComponent.addKeyListener(new KeyAdapter() {

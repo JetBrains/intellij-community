@@ -248,7 +248,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
-                                                                                  initContext.getOffsetMap(), lookup);
+                                                                                  initContext.getOffsetMap(), lookup, hasModifiers);
 
     boolean sync =
       (invokedExplicitly || ApplicationManager.getApplication().isUnitTestMode()) && !CompletionAutoPopupHandler.ourTestingAutopopup;
