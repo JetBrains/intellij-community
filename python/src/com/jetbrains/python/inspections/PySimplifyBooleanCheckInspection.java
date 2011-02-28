@@ -76,7 +76,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     private void registerProblem(PyBinaryExpression binaryExpression) {
-      registerProblem(binaryExpression, PyBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix());
+      registerProblem(binaryExpression, PyBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix(binaryExpression));
     }
   }
 }
