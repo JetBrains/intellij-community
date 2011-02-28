@@ -1139,7 +1139,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
     else if (myHintMode) {
-      final int itemTextPadding = 2;
+      final int itemTextPadding = 5;
 
       final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding);
       Point bestPoint = calculatePosition(hintComponent);
@@ -1181,12 +1181,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     pane.setBackground(HintUtil.INFORMATION_COLOR);
 
     final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
 
     final List<LookupElement> items = getItems();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
     for (int i = 0; i < Math.min(maxAutopopupItems, items.size()); i++) {
       if (i == 1) {
-        //pane.add(normalizedLabel("Other possibilities:", editorFont), gb.nextLine());
+        JLabel more = normalizedLabel("Other suggestions (" + ctrlSpace + " for a complete list):", editorFont);
+        more.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(5, 2, 5, 7)));
+        pane.add(more, gb.nextLine());
       }
 
       final LookupElement element = items.get(i);
@@ -1239,9 +1242,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       ad.setOpaque(false);
 
       if (items.size() > maxAutopopupItems) {
-        final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
         if (StringUtil.isNotEmpty(ctrlSpace)) {
-          ad.add(normalizedLabel(ctrlSpace + " for more  ", editorFont), BorderLayout.WEST);
+          //ad.add(normalizedLabel(ctrlSpace + " for more  ", editorFont), BorderLayout.WEST);
         }
       }
 
