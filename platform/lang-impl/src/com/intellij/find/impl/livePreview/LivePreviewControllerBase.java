@@ -5,9 +5,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
@@ -38,6 +36,20 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       LiveOccurrence cursor = mySearchResults.getCursor();
       if (cursor != null) {
         TextRange range = cursor.getPrimaryRange();
+        FoldingModel foldingModel = editor.getFoldingModel();
+        final FoldRegion startFolding = foldingModel.getCollapsedRegionAtOffset(range.getStartOffset());
+        final FoldRegion endFolding = foldingModel.getCollapsedRegionAtOffset(range.getEndOffset());
+        foldingModel.runBatchFoldingOperation(new Runnable() {
+          @Override
+          public void run() {
+            if (startFolding != null) {
+              startFolding.setExpanded(true);
+            }
+            if (endFolding != null) {
+              endFolding.setExpanded(true);
+            }
+          }
+        });
         selection.setSelection(range.getStartOffset(), range.getEndOffset());
 
         editor.getCaretModel().moveToOffset(range.getEndOffset());
