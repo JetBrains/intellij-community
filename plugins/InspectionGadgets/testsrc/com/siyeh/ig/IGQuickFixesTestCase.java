@@ -17,46 +17,45 @@ package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
-import org.junit.Assert;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-/*
- * User: anna
+/**
+ * @author anna
  * Date: 16-Jun-2009
- * todo: fix to run on module classpath
  */
-public abstract class IGQuickFixesTestCase extends UsefulTestCase {
-  protected CodeInsightTestFixture myFixture;
+@SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
+public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
+  protected String myDefaultHint = null;
+  protected String myRelativePath = null;
 
-  public void setUp() throws Exception {
-    super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    final String dataPath = PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
-    myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
-
-    builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
-    builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    myFixture.setUp();
+  @Override
+  protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
+    builder.setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  public void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
   }
 
-  protected void doTest(String testName, String hint) {
+  protected void doTest() {
+    assertNotNull(myDefaultHint);
+    final String testName = getTestName(false);
+    doTest(testName, myDefaultHint);
+  }
+
+  protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     final IntentionAction action = myFixture.findSingleIntention(hint);
-    Assert.assertNotNull(action);
+    assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
 
-  protected abstract String getRelativePath();
+  protected String getRelativePath() {
+    assertNotNull(myRelativePath);
+    return myRelativePath;
+  }
 }
