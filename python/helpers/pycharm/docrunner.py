@@ -203,7 +203,10 @@ def loadSource(fileName):
   return module
 
 def testfile(filename):
-    text, filename = doctest._load_testfile(filename, None, False)
+    if PYTHON_VERSION_MAJOR == 3:
+      text, filename = doctest._load_testfile(filename, None, False, "utf-8")
+    else:
+      text, filename = doctest._load_testfile(filename, None, False)
 
     name = os.path.basename(filename)
     globs = {'__name__': '__main__'}
