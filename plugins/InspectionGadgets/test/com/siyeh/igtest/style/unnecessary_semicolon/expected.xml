@@ -7,8 +7,6 @@
     <description>Unnecessary semicolon &lt;code&gt;;&lt;/code&gt; #loc</description>
   </problem>
 
-
-
   <problem>
     <file>UnnecessarySemicolonInspection.java</file>
     <line>3</line>
@@ -30,8 +28,6 @@
     <description>Unnecessary semicolon &lt;code&gt;;&lt;/code&gt; #loc</description>
   </problem>
 
-
-
   <problem>
     <file>UnnecessarySemicolonInspection.java</file>
     <line>11</line>
@@ -45,10 +41,17 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary semicolon</problem_class>
     <description>Unnecessary semicolon &lt;code&gt;;&lt;/code&gt; #loc</description>
   </problem>
-  
+
   <problem>
     <file>UnnecessarySemicolonInspection.java</file>
     <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary semicolon</problem_class>
+    <description>Unnecessary semicolon &lt;code&gt;;&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessarySemicolonInspection.java</file>
+    <line>35</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary semicolon</problem_class>
     <description>Unnecessary semicolon &lt;code&gt;;&lt;/code&gt; #loc</description>
   </problem>
