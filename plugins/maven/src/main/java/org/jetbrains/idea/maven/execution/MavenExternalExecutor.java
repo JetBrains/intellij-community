@@ -23,6 +23,7 @@ import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.facade.MavenFacadeConsole;
@@ -35,12 +36,15 @@ public class MavenExternalExecutor extends MavenExecutor {
 
   @NonNls private static final String PHASE_INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
+  private final Project myProject;
 
-  public MavenExternalExecutor(MavenRunnerParameters parameters,
+  public MavenExternalExecutor(Project project,
+                               MavenRunnerParameters parameters,
                                MavenGeneralSettings coreSettings,
                                MavenRunnerSettings runnerSettings,
                                MavenConsole console) {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"), console);
+    myProject = project;
   }
 
   public boolean execute(final ProgressIndicator indicator) {
@@ -48,7 +52,7 @@ public class MavenExternalExecutor extends MavenExecutor {
 
     try {
       myProcessHandler =
-          new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreSettings, myRunnerSettings)) {
+          new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myProject, myParameters, myCoreSettings, myRunnerSettings)) {
             public void notifyTextAvailable(String text, Key outputType) {
               // todo move this logic to ConsoleAdapter class
               if (!myConsole.isSuppressed(text)) {

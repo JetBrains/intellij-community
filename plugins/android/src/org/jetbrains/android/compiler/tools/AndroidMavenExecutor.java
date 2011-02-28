@@ -61,7 +61,8 @@ public class AndroidMavenExecutor {
     result.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
 
     try {
-      JavaParameters javaParams = MavenExternalParameters.createJavaParameters(parameters, projectsManager.getGeneralSettings(),
+      JavaParameters javaParams = MavenExternalParameters.createJavaParameters(module.getProject(), parameters,
+                                                                               projectsManager.getGeneralSettings(),
                                                                                MavenRunner.getInstance(module.getProject()).getSettings());
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
