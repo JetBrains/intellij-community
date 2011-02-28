@@ -20,8 +20,39 @@ public class PythonUnitTestUtil {
   public static final String TESTCASE_SETUP_NAME = "setUp";
   private static final HashSet<String> PYTHON_TEST_QUALIFIED_CLASSES = Sets.newHashSet("unittest.TestCase", "unittest.case.TestCase");
   private static final Pattern TEST_MATCH_PATTERN = Pattern.compile("(?:^|[\b_\\.%s-])[Tt]est");
+  private static final String TESTCASE_METHOD_PREFIX = "test";
 
   private PythonUnitTestUtil() {
+  }
+
+  public static boolean isUnitTestCaseFunction(PyFunction function) {
+    final String name = function.getName();
+    if (name == null || !name.startsWith(TESTCASE_METHOD_PREFIX)) {
+      return false;
+    }
+
+    final PyClass containingClass = function.getContainingClass();
+    if (containingClass == null || !isUnitTestCaseClass(containingClass, PYTHON_TEST_QUALIFIED_CLASSES)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public static boolean isUnitTestCaseClass(PyClass cls) {
+    return isUnitTestCaseClass(cls, PYTHON_TEST_QUALIFIED_CLASSES);
+  }
+
+  private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
+    for (PyClassRef ancestor : cls.iterateAncestors()) {
+      if (ancestor == null) continue;
+
+      String qName = ancestor.getQualifiedName();
+      if (testQualifiedNames.contains(qName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static List<PyStatement> getTestCaseClassesFromFile(PyFile file) {
