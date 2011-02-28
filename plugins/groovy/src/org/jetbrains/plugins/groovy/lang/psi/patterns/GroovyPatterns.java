@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -28,6 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -77,6 +81,69 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern.Capture<GrLiteralImpl> namedArgumentStringLiteral() {
     return stringLiteral().withParent(psiElement(GrNamedArgument.class));
+  }
+
+  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(final ElementPattern<? extends String> namePattern) {
+    return new GroovyElementPattern.Capture<GrArgumentLabel>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        return o instanceof GrArgumentLabel && namePattern.accepts(((GrArgumentLabel)o).getName());
+      }
+    });
+  }
+
+  public static GroovyElementPattern.Capture<GrNamedArgument> methodNamedParameter(final ElementPattern<? extends GrCallExpression> methodCall) {
+    return new GroovyElementPattern.Capture<GrNamedArgument>(new InitialPatternCondition<GrNamedArgument>(GrNamedArgument.class) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        if (!(o instanceof GrNamedArgument)) return false;
+
+        PsiElement parent = ((GrNamedArgument)o).getParent();
+
+        PsiElement eMethodCall;
+
+        if (parent instanceof GrArgumentList) {
+          eMethodCall = parent.getParent();
+        }
+        else {
+          if (!(parent instanceof GrListOrMap)) return false;
+
+          PsiElement argumentList = parent.getParent();
+          if (!(argumentList instanceof GrArgumentList)) return false;
+
+          if (((GrArgumentList)argumentList).getExpressionArgumentIndex((GrListOrMap)parent) != 0) return false;
+
+          eMethodCall = argumentList.getParent();
+        }
+
+        if (!(eMethodCall instanceof GrCallExpression)) return false;
+
+        return methodCall.accepts(eMethodCall);
+      }
+    });
+  }
+
+  public static GroovyMethodCallPattern methodCall(final Condition<PsiMethod> methodCondition) {
+    return new GroovyMethodCallPattern().with(new PatternCondition<GrCallExpression>("methodCall") {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
+        if (!(callExpression instanceof GrMethodCall)) return false;
+
+        GrExpression expression = ((GrMethodCall)callExpression).getInvokedExpression();
+        if (!(expression instanceof GrReferenceExpression)) return false;
+
+        GrReferenceExpression refExpression = (GrReferenceExpression)expression;
+
+        for (GroovyResolveResult result : refExpression.multiResolve(false)) {
+          PsiElement element = result.getElement();
+
+          if (element instanceof PsiMethod) {
+            if (methodCondition.value((PsiMethod)element)) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }
+    });
   }
 
   public static GroovyMethodCallPattern methodCall(final ElementPattern<? extends String> names, final String className) {
