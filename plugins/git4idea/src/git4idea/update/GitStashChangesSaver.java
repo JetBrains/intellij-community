@@ -55,8 +55,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void save() throws VcsException {
-    Map<VirtualFile, Collection<Change>> changes = groupChangesByRoots();
+  protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
+    Map<VirtualFile, Collection<Change>> changes = groupChangesByRoots(rootsToSave);
     convertSeparatorsIfNeeded(changes);
     stash(changes.keySet());
   }
@@ -146,24 +146,28 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   // Sort changes from myChangesLists by their git roots.
-  private Map<VirtualFile, Collection<Change>> groupChangesByRoots() {
+  // And use only supplied roots, ignoring changes from other roots.
+  private Map<VirtualFile, Collection<Change>> groupChangesByRoots(Collection<VirtualFile> rootsToSave) {
     final Map<VirtualFile, Collection<Change>> sortedChanges = new HashMap<VirtualFile, Collection<Change>>();
     for (LocalChangeList l : myChangeLists) {
       final Collection<Change> changeCollection = l.getChanges();
       for (Change c : changeCollection) {
         if (c.getAfterRevision() != null) {
-          storeChangeInMap(sortedChanges, c, c.getAfterRevision());
+          storeChangeInMap(sortedChanges, c, c.getAfterRevision(), rootsToSave);
         } else if (c.getBeforeRevision() != null) {
-            storeChangeInMap(sortedChanges, c, c.getBeforeRevision());
+          storeChangeInMap(sortedChanges, c, c.getBeforeRevision(), rootsToSave);
         }
       }
     }
     return sortedChanges;
   }
 
-  private static void storeChangeInMap(Map<VirtualFile, Collection<Change>> sortedChanges, Change c, ContentRevision before) {
-    final VirtualFile root = GitUtil.getGitRootOrNull(before.getFile());
-    if (root != null) {
+  private static void storeChangeInMap(Map<VirtualFile, Collection<Change>> sortedChanges,
+                                       Change c,
+                                       ContentRevision contentRevision,
+                                       Collection<VirtualFile> rootsToSave) {
+    final VirtualFile root = GitUtil.getGitRootOrNull(contentRevision.getFile());
+    if (root != null && rootsToSave.contains(root)) {
       Collection<Change> changes = sortedChanges.get(root);
       if (changes == null) {
         changes = new ArrayList<Change>();

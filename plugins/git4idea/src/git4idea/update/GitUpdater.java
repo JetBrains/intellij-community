@@ -60,38 +60,48 @@ public abstract class GitUpdater {
   /**
    * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
    *
+   *
+   * @param gitUpdateProcess
    * @param root
    * @param progressIndicator
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
-  public static GitUpdater getUpdater(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+  public static GitUpdater getUpdater(Project project,
+                                      GitUpdateProcess gitUpdateProcess,
+                                      VirtualFile root,
+                                      ProgressIndicator progressIndicator,
+                                      UpdatedFiles updatedFiles) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
-      return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+      return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
     }
     switch (settings.getUpdateType()) {
       case REBASE:
-        return new GitRebaseUpdater(project, root, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
       case MERGE:
-        return new GitMergeUpdater(project, root, progressIndicator, updatedFiles);
+        return new GitMergeUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
       case BRANCH_DEFAULT:
         // use default for the branch
-        return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+        return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
     }
-    return getDefaultUpdaterForBranch(project, root, progressIndicator, updatedFiles);
+    return getDefaultUpdaterForBranch(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
   }
 
-  private static GitUpdater getDefaultUpdaterForBranch(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+  private static GitUpdater getDefaultUpdaterForBranch(Project project,
+                                                       VirtualFile root,
+                                                       GitUpdateProcess gitUpdateProcess,
+                                                       ProgressIndicator progressIndicator,
+                                                       UpdatedFiles updatedFiles) {
     try {
       final GitBranch branchName = GitBranch.current(project, root);
       final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
       if (rebase != null && rebase.equalsIgnoreCase("true")) {
-        return new GitRebaseUpdater(project, root, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
       }
     } catch (VcsException e) {
       LOG.info("getDefaultUpdaterForBranch branch", e);
     }
-    return new GitMergeUpdater(project, root, progressIndicator, updatedFiles);
+    return new GitMergeUpdater(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
   }
 
   public GitUpdateResult update() throws VcsException {
@@ -102,6 +112,13 @@ public abstract class GitUpdater {
       markEnd(myRoot);
     }
   }
+
+  /**
+   * Checks the repository if local changes need to be saved before update.
+   * For rebase local changes need to be saved always, for merge - only in the case if merge affects the same files.
+   * @return true if local changes from this root need to be saved, false if not.
+   */
+  public abstract boolean isSaveNeeded();
 
   /**
    * Performs update (via rebase or merge - depending on the implementing classes).

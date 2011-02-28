@@ -39,9 +39,17 @@ public class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
   private final GitRebaser myRebaser;
 
-  public GitRebaseUpdater(Project project, VirtualFile root, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
+  public GitRebaseUpdater(Project project,
+                          VirtualFile root,
+                          GitUpdateProcess gitUpdateProcess,
+                          ProgressIndicator progressIndicator,
+                          UpdatedFiles updatedFiles) {
     super(project, root, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject);
+  }
+
+  @Override public boolean isSaveNeeded() {
+    return true;
   }
 
   protected GitUpdateResult doUpdate() {

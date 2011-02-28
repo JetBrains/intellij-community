@@ -26,11 +26,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
@@ -86,10 +88,14 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes in stash or in shelf.
+   * @param rootsToSave Save changes only from these roots.
    */
-  public void saveLocalChanges() throws VcsException {
+  public void saveLocalChanges(@Nullable Collection<VirtualFile> rootsToSave) throws VcsException {
+    if (rootsToSave == null || rootsToSave.isEmpty()) {
+      return;
+    }
     myChangeLists = myChangeManager.getChangeListsCopy();
-    save();
+    save(rootsToSave);
   }
 
   /**
@@ -111,10 +117,33 @@ public abstract class GitChangesSaver {
     }
   }
 
+  public List<LocalChangeList> getChangeLists() {
+    return myChangeLists == null ? myChangeManager.getChangeLists() : myChangeLists;
+  }
+
+  /**
+   * Utility method - gets {@link FilePath}s of changed files in a single collection.
+   */
+  public Collection<FilePath> getChangedFiles() {
+    final HashSet<FilePath> files = new HashSet<FilePath>();
+    for (LocalChangeList changeList : getChangeLists()) {
+      for (Change c : changeList.getChanges()) {
+        if (c.getAfterRevision() != null) {
+          files.add(c.getAfterRevision().getFile());
+        }
+        if (c.getBeforeRevision() != null) {
+          files.add(c.getBeforeRevision().getFile());
+        }
+      }
+    }
+    return files;
+  }
+
   /**
    * Saves local changes - specific for chosen save strategy.
+   * @param rootsToSave local changes should be saved on these roots.
    */
-  protected abstract void save() throws VcsException;
+  protected abstract void save(Collection<VirtualFile> rootsToSave) throws VcsException;
 
   /**
    * Loads the changes - specific for chosen save strategy.
@@ -136,30 +165,15 @@ public abstract class GitChangesSaver {
    */
   protected abstract void showSavedChanges();
 
-  /**
-   * Utility method - gets {@link FilePath}s of changed files in a single collection.
-   */
-  protected Collection<FilePath> getChangedFiles() {
-    final HashSet<FilePath> files = new HashSet<FilePath>();
-    for (LocalChangeList changeList : myChangeLists) {
-      for (Change c : changeList.getChanges()) {
-        if (c.getAfterRevision() != null) {
-          files.add(c.getAfterRevision().getFile());
-        }
-        if (c.getBeforeRevision() != null) {
-          files.add(c.getBeforeRevision().getFile());
-        }
-      }
-    }
-    return files;
-  }
-
   // Move files back to theirs change lists
   private void restoreChangeLists() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         myChangeManager.invokeAfterUpdate(new Runnable() {
           public void run() {
+            if (myChangeLists == null) {
+              return;
+            }
             for (LocalChangeList changeList : myChangeLists) {
               final Collection<Change> changes = changeList.getChanges();
               LOG.debug(

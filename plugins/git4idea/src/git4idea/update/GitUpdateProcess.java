@@ -20,21 +20,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
-import git4idea.GitVcs;
+import git4idea.branch.GitBranchPair;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import static git4idea.ui.GitUIUtil.notifyError;
 import static git4idea.ui.GitUIUtil.notifyImportantError;
@@ -52,9 +49,10 @@ public class GitUpdateProcess {
   private final Set<VirtualFile> myRoots;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
-  private final GitVcs myVcs;
-  private final AbstractVcsHelper myVcsHelper;
   private final GitMerger myMerger;
+  private final GitChangesSaver mySaver;
+
+  private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
 
   public GitUpdateProcess(Project project,
                           ProgressIndicator progressIndicator,
@@ -64,9 +62,9 @@ public class GitUpdateProcess {
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
     myProjectManager = ProjectManagerEx.getInstanceEx();
-    myVcs = GitVcs.getInstance(myProject);
-    myVcsHelper = AbstractVcsHelper.getInstance(project);
     myMerger = new GitMerger(myProject);
+    mySaver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
+      "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
   }
 
   /**
@@ -75,22 +73,30 @@ public class GitUpdateProcess {
    */
   public boolean update() {
     LOG.info("update started");
-    final GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
-      "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
 
     myProjectManager.blockReloadingProjectOnExternalChanges();
     try {
       // check if update is possible
       if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
-      if (!allTrackedBranchesConfigured()) { return false; }
+      if (!checkTrackedBranchesConfigured()) { return false; }
 
-      saver.saveLocalChanges();
+      // define updaters for each root
+      Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
+      for (VirtualFile root : myRoots) {
+        final GitUpdater updater = GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
+        if (updater.isSaveNeeded()) {
+          rootsToSave.add(root);
+        }
+      }
+
+      mySaver.saveLocalChanges(rootsToSave);
+
       // update each root
       boolean incomplete = false;
       boolean success = true;
       for (final VirtualFile root : myRoots) {
         try {
-          final GitUpdater updater = GitUpdater.getUpdater(myProject, root, myProgressIndicator, myUpdatedFiles);
+          final GitUpdater updater = GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
           GitUpdateResult res = updater.update();
           if (res == GitUpdateResult.INCOMPLETE) {
             incomplete = true;
@@ -103,9 +109,9 @@ public class GitUpdateProcess {
         } finally {
           try {
             if (!incomplete) {
-              saver.restoreLocalChanges();
+              mySaver.restoreLocalChanges();
             } else {
-              saver.notifyLocalChangesAreNotRestored();
+              mySaver.notifyLocalChangesAreNotRestored();
             }
           } catch (VcsException e) {
             LOG.info("Couldn't restore local changes after update", e);
@@ -118,7 +124,7 @@ public class GitUpdateProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       notifyError(myProject, "Couldn't save local changes",
-                  "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
+                  "Tried to save uncommitted changes in " + mySaver.getSaverName() + " before update, but failed with an error.<br/>" +
                   "Update was cancelled.", true, e);
     } finally {
       myProjectManager.unblockReloadingProjectOnExternalChanges();
@@ -126,12 +132,20 @@ public class GitUpdateProcess {
     return false;
   }
 
+  public Map<VirtualFile, GitBranchPair> getTrackedBranches() {
+    return myTrackedBranches;
+  }
+
+  public GitChangesSaver getSaver() {
+    return mySaver;
+  }
+
   /**
    * For each root check that the repository is on branch, and this branch is tracking a remote branch.
    * If it is not true for at least one of roots, notify and return false.
    * If branch configuration is OK for all roots, return true.
    */
-  private boolean allTrackedBranchesConfigured() {
+  private boolean checkTrackedBranchesConfigured() {
     for (VirtualFile root : myRoots) {
       try {
         final GitBranch branch = GitBranch.current(myProject, root);
@@ -141,8 +155,8 @@ public class GitUpdateProcess {
                                "Checkout a branch to make update possible.");
           return false;
         }
-        final String value = branch.getTrackedRemoteName(myProject, root);
-        if (StringUtil.isEmpty(value)) {
+        final GitBranch tracked = branch.tracked(myProject, root);
+        if (tracked == null) {
           final String branchName = branch.getName();
           notifyImportantError(myProject, "Can't update: no tracked branch",
                                "No tracked branch configured for branch " + branchName +
@@ -150,6 +164,7 @@ public class GitUpdateProcess {
                                "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
           return false;
         }
+        myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
       } catch (VcsException e) {
         notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
         return false;
