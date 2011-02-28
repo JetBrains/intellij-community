@@ -17,14 +17,17 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.*;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -38,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL;
@@ -86,7 +90,17 @@ public class GroovyPatterns extends PsiJavaPatterns {
   public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(final ElementPattern<? extends String> namePattern) {
     return new GroovyElementPattern.Capture<GrArgumentLabel>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof GrArgumentLabel && namePattern.accepts(((GrArgumentLabel)o).getName());
+        if (o instanceof GrArgumentLabel) {
+          PsiElement nameElement = ((GrArgumentLabel)o).getNameElement();
+          if (nameElement instanceof LeafPsiElement) {
+            IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
+            if (elementType == GroovyElementTypes.mIDENT || CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
+              return namePattern.accepts(((GrArgumentLabel)o).getName());
+            }
+          }
+        }
+
+        return false;
       }
     });
   }
