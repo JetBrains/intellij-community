@@ -15,7 +15,8 @@ threadingCurrentThread = threading.currentThread
 from pydevd_comm import GetGlobalDebugger
 
 class ExceptionBreakpoint:
-    def __init__(self, exctype, notify_always, notify_on_terminate):
+    def __init__(self, qname, exctype, notify_always, notify_on_terminate):
+        self.qname = qname
         self.name = exctype.__name__
         self.type = exctype
         self.notify = {NOTIFY_ALWAYS: notify_always, NOTIFY_ON_TERMINATE: notify_on_terminate}

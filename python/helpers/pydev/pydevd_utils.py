@@ -1,3 +1,4 @@
+import traceback
 import pydevd_constants
 
 def to_number(x):
@@ -66,3 +67,7 @@ def is_string(x):
         return isinstance(x, str)
     else:
         return isinstance(x, basestring)
+
+def print_exc():
+    if traceback:
+        traceback.print_exc()

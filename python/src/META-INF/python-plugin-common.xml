@@ -440,7 +440,7 @@
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
-    <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
+    <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoReferenceQuickFixProvider"/>
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
     <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
