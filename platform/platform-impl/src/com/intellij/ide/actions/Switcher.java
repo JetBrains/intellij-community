@@ -463,6 +463,15 @@ public class Switcher extends AnAction implements DumbAware {
           ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
           this.remove(jList);
           this.remove(separator);
+          final Dimension size = toolWindows.getSize();
+          myPopup.setSize(new Dimension(size.width, myPopup.getSize().height));
+          final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
+          focusManager.doWhenFocusSettlesDown(new Runnable() {
+            @Override
+            public void run() {
+              focusManager.requestFocus(SwitcherPanel.this, true);
+            }
+          });
         } else {
           goForward();
           ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
