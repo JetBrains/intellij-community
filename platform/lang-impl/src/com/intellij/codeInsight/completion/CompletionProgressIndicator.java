@@ -341,7 +341,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
    public static boolean showHintAutopopup() {
-    return "true".equals(Registry.stringValue("hint.autopopup"));
+    return "true".equals(Registry.stringValue("hint.autopopup")) && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   final boolean isInsideIdentifier() {
@@ -486,7 +486,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void updateFocus() {
-    if (myLookup.isSelectionTouched()) {
+    if (myLookup.isSelectionTouched() || myLookup.isHintMode()) {
       return;
     }
 
