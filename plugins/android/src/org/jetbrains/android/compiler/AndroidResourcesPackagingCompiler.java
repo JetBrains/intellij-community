@@ -83,6 +83,11 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final List<ProcessingItem> result = new ArrayList<ProcessingItem>();
     for (ProcessingItem processingItem : items) {
       MyItem item = (MyItem)processingItem;
+
+      if (!AndroidCompileUtil.isModuleAffected(context, item.myModule)) {
+        continue;
+      }
+
       try {
         Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
                                                                                           item.myManifestFile.getPath(),
