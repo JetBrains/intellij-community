@@ -1623,23 +1623,26 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return splitters;
   }
 
-  public void selectionChanged(VirtualFile file, EditorWindow window) {
-    final Pair<VirtualFile, EditorWindow> selection = new Pair<VirtualFile, EditorWindow>(file, window);
-    mySelectionHistory.remove(selection);
-    mySelectionHistory.add(0, selection);
-  }
-
   public List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
+    final List<Pair<VirtualFile, EditorWindow>> toRemove = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+    for (Pair<VirtualFile, EditorWindow> pair : mySelectionHistory) {
+      if (pair.second.getFiles().length == 0) {
+        toRemove.add(pair);
+      }
+    }
+    if (!toRemove.isEmpty()) {
+      mySelectionHistory.removeAll(toRemove);
+    }
     return mySelectionHistory;
   }
 
   public void addSelectionRecord(VirtualFile file, EditorWindow window) {
-    final Pair<VirtualFile, EditorWindow> record = new Pair<VirtualFile, EditorWindow>(file, window);
+    final Pair<VirtualFile, EditorWindow> record = Pair.create(file, window);
     mySelectionHistory.remove(record);
     mySelectionHistory.add(0, record);
   }
 
-  private void removeSelectionRecord(VirtualFile file, EditorWindow window) {
-    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
+  public void removeSelectionRecord(VirtualFile file, EditorWindow window) {
+    mySelectionHistory.remove(Pair.create(file, window));
   }
 }
