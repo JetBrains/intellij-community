@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class VcsFileStatusProvider implements FileStatusProvider {
+public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
   private final FileStatusManagerImpl myFileStatusManager;
   private final ProjectLevelVcsManager myVcsManager;
@@ -133,8 +134,9 @@ public class VcsFileStatusProvider implements FileStatusProvider {
     }
   }
 
+  @Override
   @Nullable
-  String getBaseVersionContent(final VirtualFile file) {
+  public String getBaseVersionContent(final VirtualFile file) {
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -164,6 +166,15 @@ public class VcsFileStatusProvider implements FileStatusProvider {
       });
     }
 
+    return null;
+  }
+
+  @Override
+  public VcsRevisionNumber getBaseRevision(VirtualFile file) {
+    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
+    if (change != null && change.getBeforeRevision() != null && (! FileStatus.ADDED.equals(change.getFileStatus()))) {
+      return change.getBeforeRevision().getRevisionNumber();
+    }
     return null;
   }
 }
