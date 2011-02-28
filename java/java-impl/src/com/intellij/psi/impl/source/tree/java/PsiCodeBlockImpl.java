@@ -209,10 +209,10 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     if (hint != null && !conflict) {
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
       final String name = hint.getName(state);
-      if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) && classesSet.contains(name)) {
+      if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) && classesSet.contains(name)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
       }
-      if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclaractionKind.VARIABLE)) && variablesSet.contains(name)) {
+      if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) && variablesSet.contains(name)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
       }
     }

@@ -247,7 +247,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     myResults.clear();
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
+  public boolean shouldProcess(DeclarationKind kind) {
     switch (kind) {
       case CLASS:
         return myFilter.isClassAcceptable(PsiClass.class);

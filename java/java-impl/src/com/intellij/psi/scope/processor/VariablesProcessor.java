@@ -45,8 +45,8 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
 
   protected abstract boolean check(PsiVariable var, ResolveState state);
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.VARIABLE || kind == DeclaractionKind.FIELD || kind == DeclaractionKind.ENUM_CONST;
+  public boolean shouldProcess(DeclarationKind kind) {
+    return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
   /** Always return true since we wanna get all vars in scope */

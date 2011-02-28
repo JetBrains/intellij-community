@@ -77,8 +77,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return myClassName;
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.CLASS;
+  public boolean shouldProcess(DeclarationKind kind) {
+    return kind == DeclarationKind.CLASS;
   }
 
   private boolean myStaticContext = false;

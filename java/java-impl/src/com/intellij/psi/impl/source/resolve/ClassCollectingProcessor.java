@@ -57,8 +57,8 @@ public class ClassCollectingProcessor extends BaseScopeProcessor implements Elem
     return true;
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.CLASS || kind == DeclaractionKind.PACKAGE || kind == DeclaractionKind.METHOD || kind == DeclaractionKind.FIELD;
+  public boolean shouldProcess(DeclarationKind kind) {
+    return kind == DeclarationKind.CLASS || kind == DeclarationKind.PACKAGE || kind == DeclarationKind.METHOD || kind == DeclarationKind.FIELD;
   }
 
   public MostlySingularMultiMap<String, ResultWithContext> getResults() {
