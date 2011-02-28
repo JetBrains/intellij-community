@@ -1189,7 +1189,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         //pane.add(normalizedLabel("Other possibilities:", editorFont), gb.nextLine());
       }
 
-      LookupElement element = items.get(i);
+      final LookupElement element = items.get(i);
       final LookupElementPresentation presentation = new LookupElementPresentation();
       element.renderElement(presentation);
 
@@ -1215,6 +1215,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         row.add(normalizedLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ", editorFont), rgb.next());
 
         row.setBorder(new EmptyBorder(0, itemTextPadding, 0, 0));
+
+        row.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            setCurrentItem(element);
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              public void run() {
+                finishLookup(NORMAL_SELECT_CHAR);
+              }
+            }, "", null);
+          }
+        });
 
         pane.add(row, gb.nextLine());
       }
