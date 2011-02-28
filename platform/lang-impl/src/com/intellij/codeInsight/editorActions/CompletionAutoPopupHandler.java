@@ -122,7 +122,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void invokeAutoPopupCompletion(Project project, final Editor editor) {
-    new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(project, editor);
+    new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invokeCompletion(project, editor);
 
     final AutoPopupState state = new AutoPopupState(project, editor);
     editor.putUserData(STATE_KEY, state);

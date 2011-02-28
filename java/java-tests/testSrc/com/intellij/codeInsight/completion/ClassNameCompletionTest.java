@@ -9,8 +9,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 
@@ -223,7 +221,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
 
   private void performAction() {
     CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
-    handler.invoke(myProject, myEditor, myFile);
+    handler.invokeCompletion(myProject, myEditor);
     final LookupManager instance = LookupManager.getInstance(myProject);
     if(instance instanceof LookupManagerImpl){
       final LookupManagerImpl testLookupManager = ((LookupManagerImpl)instance);

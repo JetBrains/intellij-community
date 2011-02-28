@@ -67,7 +67,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
 
   private void forceCompletion() {
     CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
-    handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    handler.invokeCompletion(myFixture.getProject(), myFixture.getEditor());
     final LookupManager instance = LookupManager.getInstance(myFixture.getProject());
     if(instance.getActiveLookup() != null)
       instance.forceSelection(Lookup.NORMAL_SELECT_CHAR, 1);

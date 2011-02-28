@@ -83,8 +83,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     this.autopopup = autopopup;
   }
 
-  public final void invoke(final Project project, final Editor editor) {
-    invoke(project, editor, PsiUtilBase.getPsiFileInEditor(editor, project));
+  public final void invokeCompletion(final Project project, final Editor editor) {
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    assert file != null;
+    invoke(project, editor, file);
   }
 
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
