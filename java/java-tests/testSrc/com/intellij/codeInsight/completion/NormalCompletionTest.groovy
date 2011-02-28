@@ -119,6 +119,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPreferLongerNamesOption() throws Exception {
     configureByFile("PreferLongerNamesOption.java");
 
+    assertT
+
     assertEquals(3, myItems.length);
     assertEquals("abcdEfghIjk", myItems[0].getLookupString());
     assertEquals("efghIjk", myItems[1].getLookupString());
