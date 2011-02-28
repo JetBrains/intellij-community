@@ -157,7 +157,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
             myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, myOccurrenceMarkers);
       myParameter = parameter;
       myReplaceChoice = replaceChoice;
-      myExprText = myExpr.getText();
+      myExprText = myExpr != null ? myExpr.getText() : null;
       myParameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
@@ -279,7 +279,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
           myExpression = restoreExpression(containingFile, elementFactory, myExprMarker);
           for (RangeMarker marker : myOccurrenceMarkers) {
-            if (marker.getStartOffset() == myExprMarker.getStartOffset()) continue;
+            if (myExprMarker != null && marker.getStartOffset() == myExprMarker.getStartOffset()) continue;
             restoreExpression(containingFile, elementFactory, marker);
           }
           if (psiParameter.isValid()) {
@@ -292,6 +292,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
     @Nullable
     private PsiExpression restoreExpression(PsiFile containingFile, PsiElementFactory elementFactory, RangeMarker marker) {
+      if (myExprText == null) return null;
       final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
       final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
       if (expression != null) {
