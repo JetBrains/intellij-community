@@ -137,20 +137,14 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     }
     if (child.getElementType() == ElementType.ELSE_KEYWORD)
       return Indent.getNoneIndent();
-    if (state == BEFORE_FIRST) {
-      return Indent.getNoneIndent();
-    }
-    else if (child.getElementType() == ElementType.WHILE_KEYWORD) {
+    if (state == BEFORE_FIRST || child.getElementType() == ElementType.WHILE_KEYWORD) {
       return Indent.getNoneIndent();
     }
     else {
       if (isPartOfCodeBlock(child)) {
         return getCodeBlockExternalIndent();
       }
-      else if (isSimpleStatement(child)){
-        return getCodeBlockInternalIndent(1);
-      }
-      else if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
+      else if (isSimpleStatement(child) || StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())){
         return getCodeBlockInternalIndent(1);
       }
       else {

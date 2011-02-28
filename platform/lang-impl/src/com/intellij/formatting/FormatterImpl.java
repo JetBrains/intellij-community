@@ -52,18 +52,18 @@ public class FormatterImpl extends FormatterEx
   private FormattingProgressIndicatorImpl myProgressIndicator;
   
   private int myIsDisabledCount = 0;
-  private final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false, false);
-  private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(IndentImpl.Type.NONE, true, false);
-  private final IndentImpl myLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, false, false);
-  private final IndentImpl myContinuationIndentRelativeToDirectParent = new IndentImpl(IndentImpl.Type.CONTINUATION, false, true);
-  private final IndentImpl myContinuationIndentNotRelativeToDirectParent = new IndentImpl(IndentImpl.Type.CONTINUATION, false, false);
+  private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
+  private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
+  private final IndentImpl myLabelIndent = new IndentImpl(Indent.Type.LABEL, false, false);
+  private final IndentImpl myContinuationIndentRelativeToDirectParent = new IndentImpl(Indent.Type.CONTINUATION, false, true);
+  private final IndentImpl myContinuationIndentNotRelativeToDirectParent = new IndentImpl(Indent.Type.CONTINUATION, false, false);
   private final IndentImpl myContinuationWithoutFirstIndentRelativeToDirectParent
-    = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false, true);
+    = new IndentImpl(Indent.Type.CONTINUATION_WITHOUT_FIRST, false, true);
   private final IndentImpl myContinuationWithoutFirstIndentNotRelativeToDirectParent
-    = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false, false);
-  private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true, false);
-  private final IndentImpl myNormalIndentRelativeToDirectParent = new IndentImpl(IndentImpl.Type.NORMAL, false, true);
-  private final IndentImpl myNormalIndentNotRelativeToDirectParent = new IndentImpl(IndentImpl.Type.NORMAL, false, false);
+    = new IndentImpl(Indent.Type.CONTINUATION_WITHOUT_FIRST, false, false);
+  private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(Indent.Type.LABEL, true, false);
+  private final IndentImpl myNormalIndentRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, true);
+  private final IndentImpl myNormalIndentNotRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, false);
   private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false, 0);
 
   public FormatterImpl() {
@@ -313,17 +313,16 @@ public class FormatterImpl extends FormatterEx
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
 
-        if (whiteSpace.getEndOffset() < textRange.getStartOffset()) {
+        if (whiteSpace.getEndOffset() < textRange.getStartOffset() || whiteSpace.getEndOffset() > textRange.getEndOffset() + 1) {
           whiteSpace.setIsReadOnly(true);
         } else if (whiteSpace.getStartOffset() > textRange.getStartOffset() &&
-                   whiteSpace.getEndOffset() < textRange.getEndOffset()){
+                   whiteSpace.getEndOffset() < textRange.getEndOffset())
+        {
           if (whiteSpace.containsLineFeeds()) {
             whiteSpace.setLineFeedsAreReadOnly(true);
           } else {
             whiteSpace.setIsReadOnly(true);
           }
-        } else if (whiteSpace.getEndOffset() > textRange.getEndOffset() + 1) {
-          whiteSpace.setIsReadOnly(true);
         }
 
         tokenBlock = tokenBlock.getNextBlock();
@@ -653,7 +652,12 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Indent getSpaceIndent(final int spaces, final boolean relative) {
-    return new IndentImpl(IndentImpl.Type.SPACES, false, spaces, relative);
+    return new IndentImpl(Indent.Type.SPACES, false, spaces, relative, false);
+  }
+
+  @Override
+  public Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndent) {
+    return new IndentImpl(type, false, 0, relativeToDirectParent, enforceIndent);
   }
 
   public Indent getAbsoluteLabelIndent() {
