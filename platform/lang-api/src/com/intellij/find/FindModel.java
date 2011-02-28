@@ -712,7 +712,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScope(final SearchScope customScope) {
-    boolean changed = this.customScope.equals(customScope);
+    boolean changed = this.customScope != null ? this.customScope.equals(customScope) : (customScope != null);
     this.customScope = customScope;
     if (changed) {
       notifyObservers();
