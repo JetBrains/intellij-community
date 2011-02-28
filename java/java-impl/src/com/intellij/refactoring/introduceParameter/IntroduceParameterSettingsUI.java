@@ -39,7 +39,7 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 2/27/11
  */
-public abstract class IntroduceParameterSettingsPanel  extends RefactoringDialog {
+public abstract class IntroduceParameterSettingsUI {
   protected final boolean myIsInvokedOnDeclaration;
   protected final boolean myHasInitializer;
 
@@ -53,12 +53,11 @@ public abstract class IntroduceParameterSettingsPanel  extends RefactoringDialog
   protected final boolean[] myParametersToRemoveChecked;
   protected final boolean myIsLocalVariable;
 
-  public IntroduceParameterSettingsPanel(Project project,
-                                         PsiLocalVariable onLocalVariable,
-                                         PsiExpression onExpression,
-                                         PsiMethod methodToReplaceIn,
-                                         TIntArrayList parametersToRemove) {
-    super(project, true);
+  public IntroduceParameterSettingsUI(Project project,
+                                      PsiLocalVariable onLocalVariable,
+                                      PsiExpression onExpression,
+                                      PsiMethod methodToReplaceIn,
+                                      TIntArrayList parametersToRemove) {
     myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myIsInvokedOnDeclaration = onExpression == null;
     final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();

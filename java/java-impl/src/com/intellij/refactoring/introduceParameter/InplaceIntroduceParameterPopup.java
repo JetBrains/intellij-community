@@ -60,7 +60,7 @@ import java.util.List;
  * User: anna
  * Date: 2/25/11
  */
-class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsPanel {
+class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   private JCheckBox myDelegateCb;
 
   private Balloon myBalloon;
@@ -137,16 +137,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsPanel {
   @Override
   protected void updateControls(JCheckBox[] removeParamsCb) {
   }
-
-  @Override
-  protected void doAction() {
-  }
-
-  @Override
-  protected JComponent createCenterPanel() {
-    return null;
-  }
-
 
   private class ParameterInplaceIntroducer extends VariableInplaceIntroducer {
     private String myParameterName;
