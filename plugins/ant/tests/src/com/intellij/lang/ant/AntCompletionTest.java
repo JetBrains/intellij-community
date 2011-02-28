@@ -193,7 +193,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   private static void performNormalCompletion() {
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), myFile);
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
   private static void select(char completionChar, LookupElement item) {

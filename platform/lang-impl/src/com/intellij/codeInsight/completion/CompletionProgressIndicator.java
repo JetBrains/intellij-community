@@ -42,7 +42,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
@@ -106,7 +105,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
-                                     final OffsetMap offsetMap, LookupImpl lookup) {
+                                     final OffsetMap offsetMap, LookupImpl lookup, boolean hasModifiers) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
@@ -124,11 +123,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !lookup.isShown()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    if (!lookup.isShown()) {
       scheduleAdvertising();
     }
 
-    trackModifiers();
+    if (hasModifiers) {
+      trackModifiers();
+    }
   }
 
   public OffsetMap getOffsetMap() {
@@ -252,9 +257,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void trackModifiers() {
-    if (isAutopopupCompletion()) {
-      return;
-    }
+    assert !isAutopopupCompletion();
 
     final JComponent contentComponent = myEditor.getContentComponent();
     contentComponent.addKeyListener(new KeyAdapter() {
@@ -338,7 +341,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
    public static boolean showHintAutopopup() {
-    return "true".equals(Registry.stringValue("hint.autopopup"));
+    return "true".equals(Registry.stringValue("hint.autopopup")) && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   final boolean isInsideIdentifier() {
@@ -483,7 +486,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void updateFocus() {
-    if (myLookup.isSelectionTouched()) {
+    if (myLookup.isSelectionTouched() || myLookup.isHintMode()) {
       return;
     }
 
@@ -609,9 +612,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         closeAndFinish(false);
 
         final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
-        final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);
         try {
-          newHandler.invokeCompletion(project, myEditor, psiFileInEditor, myParameters.getInvocationCount());
+          newHandler.invokeCompletion(project, myEditor, myParameters.getInvocationCount(), false);
         }
         catch (IndexNotReadyException ignored) {
         }

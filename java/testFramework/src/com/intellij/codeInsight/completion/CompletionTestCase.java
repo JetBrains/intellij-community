@@ -48,7 +48,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
   }
 
   protected void complete(final int time) {
-    new CodeCompletionHandlerBase(myType).invokeCompletion(myProject, myEditor, myFile, time);
+    new CodeCompletionHandlerBase(myType).invokeCompletion(myProject, myEditor, time, false);
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);

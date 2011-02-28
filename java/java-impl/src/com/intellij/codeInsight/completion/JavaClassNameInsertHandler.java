@@ -68,7 +68,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (c == '#') {
       context.setLaterRunnable(new Runnable() {
         public void run() {
-          new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
+          new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor);
         }
       });
     } else if (c == '.' && PsiTreeUtil.getParentOfType(position, PsiParameterList.class) == null) {

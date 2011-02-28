@@ -59,7 +59,7 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     createClass("package foo.bar; public class AxBxCxDxEx {}");
 
     configureByFileNoCompletion("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor(), getFile(), 2);
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor(), 2, false);
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     assertEquals(2, myItems.length);

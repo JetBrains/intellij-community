@@ -15,36 +15,61 @@
  */
 package com.intellij.codeInsight.completion.actions;
 
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class BaseCodeCompletionAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware{
-  protected BaseCodeCompletionAction() {
+public abstract class BaseCodeCompletionAction extends AnAction implements HintManagerImpl.ActionToIgnore, DumbAware {
+  private CompletionType myCompletionType;
+
+  protected BaseCodeCompletionAction(CompletionType completionType) {
+    myCompletionType = completionType;
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
+  public void actionPerformed(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+
+    switch (myCompletionType) {
+      case BASIC: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
+      case SMART: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL);
+      case CLASS_NAME: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME);
+    }
+
+    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor, 1, e.getInputEvent().getModifiers() != 0);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    e.getPresentation().setEnabled(false);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return;
+
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-    getHandler().invoke(project, editor, psiFile);
-  }
-
-  @Override
-  protected boolean isValidForLookup() {
-    return true;
+    e.getPresentation().setEnabled(true);
   }
 }

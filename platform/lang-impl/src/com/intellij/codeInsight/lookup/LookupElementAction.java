@@ -43,8 +43,16 @@ public abstract class LookupElementAction {
 
   public abstract Result performLookupAction();
 
-  public static enum Result {
-    HIDE_LOOKUP,
-    REFRESH_ITEM
+  public static class Result {
+    public static final Result HIDE_LOOKUP = new Result();
+    public static final Result REFRESH_ITEM = new Result();
+
+    public static class ChooseItem extends Result {
+      public final LookupElement item;
+
+      public ChooseItem(LookupElement item) {
+        this.item = item;
+      }
+    }
   }
 }
