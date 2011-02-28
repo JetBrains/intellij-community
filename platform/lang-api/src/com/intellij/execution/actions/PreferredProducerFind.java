@@ -33,10 +33,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-class PreferedProducerFind {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
+class PreferredProducerFind {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferredProducerFind");
 
-  private PreferedProducerFind() {}
+  private PreferredProducerFind() {}
 
   @Nullable
   public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, final ConfigurationContext context) {

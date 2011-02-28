@@ -534,7 +534,8 @@ public class ChooseRunConfigurationAction extends AnAction {
       final DataContext dataContext = DataManager.getInstance().getDataContext();
       final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, false);
+      final List<RuntimeConfigurationProducer> producers = PreferredProducerFind
+        .findPreferredProducers(context.getLocation(), context, false);
       if (producers == null) return Collections.emptyList();
 
       Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
