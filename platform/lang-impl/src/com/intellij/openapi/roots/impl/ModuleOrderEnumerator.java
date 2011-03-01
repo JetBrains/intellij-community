@@ -40,7 +40,7 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
 
   @Override
   public void forEach(@NotNull Processor<OrderEntry> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<Module>() : null, true);
+    processEntries(myRootModel, processor, mySettings.recursively ? new THashSet<Module>() : null, true);
   }
 
   @Override

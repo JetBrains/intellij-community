@@ -45,8 +45,8 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
 
   @Override
   public void forEach(@NotNull final Processor<OrderEntry> processor) {
-    myRecursively = false;
-    myWithoutDepModules = true;
+    mySettings.recursively = false;
+    mySettings.withoutDepModules = true;
     final THashSet<Module> processed = new THashSet<Module>();
     processRootModules(new Processor<Module>() {
       @Override
