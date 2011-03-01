@@ -60,7 +60,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * <b>Parent indent enforcing</b>
  * <p/>
- * It's possible to configure indent to enforce indent from parent. Consider the following situation:
+ * It's possible to configure indent to enforce parent block indent to its children that start new line. Consider the following situation:
  * <pre>
  *   foo("test", new Runnable() {
  *           public void run() { 
@@ -74,7 +74,7 @@ import org.jetbrains.annotations.NotNull;
  * </pre>
  * We want the first {@code 'new Runnable() {...}'} block here to be indented to the method expression list element. However, formatter
  * uses indents only if the block starts new line. Here the block doesn't start new line ({@code 'new Runnable() ...'}), hence
- * we need to define <code>'enforce parent indent'</code> flag in order to instruct formatter to indent block's bottom lines.
+ * we need to define <code>'enforce parent indent'</code> flag in order to instruct formatter to apply parent indent to the sub-blocks.
  *
  * @see com.intellij.formatting.Block#getIndent()
  * @see com.intellij.formatting.ChildAttributes#getChildIndent() 
