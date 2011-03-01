@@ -314,6 +314,9 @@ public class ExceptionUtil {
       PsiClassType exception = getUnhandledException(throwStatement, null);
       if (exception != null) return Collections.singletonList(exception);
     }
+    else if (element instanceof PsiResourceVariable) {
+      return getUnhandledCloserExceptions((PsiResourceVariable)element, null);
+    }
 
     return Collections.emptyList();
   }
