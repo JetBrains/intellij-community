@@ -15,15 +15,16 @@
  */
 package com.intellij.platform;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public class PlatformVcsDetector implements ProjectComponent {
   public void projectOpened() {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, new DumbAwareRunnable() {
+        final DumbAwareRunnable runnable = new DumbAwareRunnable() {
           @Override
           public void run() {
             VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
@@ -55,6 +56,12 @@ public class PlatformVcsDetector implements ProjectComponent {
                 myVcsManager.updateActiveVcss();
               }
             }
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(runnable, new Condition() {
+          @Override
+          public boolean value(Object o) {
+            return (! myProject.isOpen()) || myProject.isDisposed();
           }
         });
       }
