@@ -7,9 +7,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.MembershipMap;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
@@ -23,12 +21,12 @@ import java.util.List;
  */
 public class RecursiveFileHolder<T> implements FileHolder {
   protected final HolderType myHolderType;
-  protected final MembershipMap<VirtualFile, T> myMap;
+  protected final MembershipMapI<VirtualFile, T> myMap;
 
   protected final Project myProject;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
-    myMap = MembershipMap.createMembershipMap(new PairProcessor<VirtualFile, VirtualFile>() {
+    myMap = new TreeMapAsMembershipMap<VirtualFile, T>(new PairProcessor<VirtualFile, VirtualFile>() {
       @Override
       public boolean process(final VirtualFile parent, final VirtualFile child) {
         return VfsUtil.isAncestor(parent, child, false);
@@ -47,7 +45,7 @@ public class RecursiveFileHolder<T> implements FileHolder {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
-        synchronized(RecursiveFileHolder.this) {
+        synchronized (RecursiveFileHolder.this) {
           if (myProject.isDisposed()) return;
 
           final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myMap.keySet());

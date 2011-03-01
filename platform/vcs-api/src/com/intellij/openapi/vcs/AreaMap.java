@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author irengrig
  */
-public class AreaMap<Key, Val> {
+public class AreaMap<Key, Val> implements AreaMapI<Key,Val> {
   protected final List<Key> myKeys;
   protected final Map<Key, Val> myMap;
   // [admittedly] parent, [-"-] child
@@ -46,11 +46,13 @@ public class AreaMap<Key, Val> {
     myMap = new HashMap<Key, Val>();
   }
 
-  public void putAll(final AreaMap<Key, Val> other) {
-    myKeys.addAll(other.myKeys);
-    myMap.putAll(other.myMap);
+  @Override
+  public void putAll(final AreaMapI<Key, Val> other) {
+    myKeys.addAll(other.keySet());
+    myMap.putAll(((MembershipMap) other).myMap);
   }
 
+  @Override
   public void put(final Key key, final Val val) {
     putImpl(key, val);
   }
@@ -74,14 +76,17 @@ public class AreaMap<Key, Val> {
     return idx;
   }
 
+  @Override
   public Collection<Val> values() {
     return Collections.unmodifiableCollection(myMap.values());
   }
 
+  @Override
   public Collection<Key> keySet() {
     return Collections.unmodifiableCollection(myKeys);
   }
 
+  @Override
   @Nullable
   public Val getExact(final Key key) {
     return myMap.get(key);
@@ -99,11 +104,13 @@ public class AreaMap<Key, Val> {
     }
   }
 
+  @Override
   public void remove(final Key key) {
     myKeys.remove(key);
     myMap.remove(key);
   }
 
+  @Override
   public boolean contains(final Key key) {
     return myKeys.contains(key);
   }
@@ -130,6 +137,7 @@ public class AreaMap<Key, Val> {
     return myKeys.isEmpty();
   }
 
+  @Override
   public void clear() {
     myKeys.clear();
     myMap.clear();

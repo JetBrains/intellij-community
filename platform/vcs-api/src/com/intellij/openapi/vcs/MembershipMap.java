@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author irengrig
  */
-public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
+public class MembershipMap<Key, Val> extends AreaMap<Key, Val> implements MembershipMapI<Key,Val> {
   public static<Key extends Comparable<Key>, Val> MembershipMap<Key, Val> createMembershipMap(final PairProcessor<Key, Key> keysResemblance) {
     return new MembershipMap<Key,Val>(keysResemblance, new ComparableComparator<Key>());
   }
@@ -37,6 +37,7 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
     super(keysResemblance, comparator);
   }
 
+  @Override
   public void putOptimal(final Key key, final Val val) {
     final int idx = putImpl(key, val);
 
@@ -66,6 +67,7 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
     }
   }
 
+  @Override
   public void optimizeMap(final PairProcessor<Val, Val> valuesAreas) {
     int i = 0;
     for (Iterator<Key> iterator = myKeys.iterator(); iterator.hasNext();) {
@@ -89,6 +91,7 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
     }
   }
 
+  @Override
   public Pair<Key, Val> getMapping(final Key key) {
     final Ref<Pair<Key, Val>> result = new Ref<Pair<Key, Val>>();
     getSimiliar(key, new PairProcessor<Key, Val>() {
