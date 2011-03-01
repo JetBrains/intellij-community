@@ -17,7 +17,6 @@ package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +27,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -36,15 +34,11 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Formatting progressable task.  
@@ -54,6 +48,16 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class FormattingProgressIndicatorImpl extends Task.Modal implements FormattingProgressIndicator {
 
+  /**
+   * Holds flag that indicates whether formatting was cancelled by end-user or not.
+   */
+  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
+  
   private static final Logger LOG = Logger.getInstance("#" + FormattingProgressIndicatorImpl.class.getName());
 
   /**
@@ -132,7 +136,6 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   public void doRun(@NotNull ProgressIndicator indicator) throws InvocationTargetException, InterruptedException {
     final SequentialTask task = myTask;
     if (task == null) {
@@ -151,40 +154,27 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     });
 
     // We need to sync background thread and EDT here in order to avoid situation when event queue is full of processing requests.
-    final Lock lock = new ReentrantLock();
-    final Condition condition = lock.newCondition();
     myIndicator = indicator;
-    
     while (myRunning && !task.isDone()) {
       if (indicator.isCanceled()) {
         task.stop();
         break;
       }
-      lock.lock();
-      try {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            lock.lock();
-            try {
-              long start = System.currentTimeMillis();
-              while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
-                task.iteration();
-              }
-            }
-            finally {
-              condition.signal();
-              lock.unlock();
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          long start = System.currentTimeMillis();
+          try {
+            while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
+              task.iteration();
             }
           }
-        });
-        if (!task.isDone()) {
-          condition.await();
+          catch (RuntimeException e) {
+            task.stop();
+            throw e;
+          }
         }
-      }
-      finally {
-        lock.unlock();
-      }
+      });
     }
   }
 
@@ -286,6 +276,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   private class MyCancelCallback implements Runnable {
     @Override
     public void run() {
+      FORMATTING_CANCELLED_FLAG.set(true);
       myRunning = false;
       VirtualFile file = myFile.get();
       Document document = myDocument.get();

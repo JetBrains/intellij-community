@@ -293,9 +293,10 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     @Nullable
     private PsiExpression restoreExpression(PsiFile containingFile, PsiElementFactory elementFactory, RangeMarker marker) {
       if (myExprText == null) return null;
+      if (myParameter == null || !myParameter.isValid()) return null;
       final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
       final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-      if (expression != null) {
+      if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == myParameter) {
         return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(myExprText, myMethod));
       }
       return null;

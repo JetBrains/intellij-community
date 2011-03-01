@@ -46,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 /**
  *
@@ -123,8 +125,16 @@ public abstract class AbstractLayoutCodeProcessor {
     return PsiUtilBase.toPsiFileArray(list);
   }
 
+  /**
+   * Ensures that given file is ready to reformatting and prepares it if necessary.
+   * 
+   * @param file      file to process
+   * @return          task that triggers formatting of the given file. Returns value of that task indicates whether formatting
+   *                  is finished correctly or not (exception occurred, user cancelled formatting etc)
+   * @throws IncorrectOperationException    if unexpected exception occurred during formatting
+   */
   @NotNull
-  protected abstract Runnable preprocessFile(PsiFile file) throws IncorrectOperationException;
+  protected abstract FutureTask<Boolean> preprocessFile(PsiFile file) throws IncorrectOperationException;
 
   public void run() {
     if (myDirectory != null){
@@ -204,7 +214,7 @@ public abstract class AbstractLayoutCodeProcessor {
       progress.setText(myProgressText);
     }
 
-    final Runnable[] runnables = new Runnable[files.size()];
+    final List<FutureTask<Boolean>> tasks = new ArrayList<FutureTask<Boolean>>(files.size());
     for(int i = 0; i < files.size(); i++) {
       PsiFile file = files.get(i);
       if (progress != null){
@@ -213,7 +223,7 @@ public abstract class AbstractLayoutCodeProcessor {
       }
       if (file.isWritable()){
         try{
-          runnables[i] = preprocessFile(file);
+          tasks.add(preprocessFile(file));
         }
         catch(IncorrectOperationException e){
           LOG.error(e);
@@ -229,9 +239,23 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return new Runnable() {
       public void run() {
-        for (Runnable runnable : runnables) {
-          if (runnable != null) {
-            runnable.run();
+        for (FutureTask<Boolean> task : tasks) {
+          if (task == null) {
+            continue;
+          }
+          task.run();
+          try {
+            if (!task.get() || task.isCancelled()) {
+              break;
+            }
+          }
+          catch (InterruptedException e) {
+            LOG.error("Got unexpected during formatting", e);
+            break;
+          }
+          catch (ExecutionException e) {
+            LOG.error("Got unexpected during formatting", e);
+            break;
           }
         }
       }

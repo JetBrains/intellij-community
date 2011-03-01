@@ -37,9 +37,7 @@ public abstract class OrderEnumerationHandler {
 
   @NotNull
   public AddDependencyType shouldAddDependency(@NotNull OrderEntry orderEntry,
-                                               boolean productionOnly,
-                                               boolean runtimeOnly,
-                                               boolean compileOnly) {
+                                               @NotNull OrderEnumeratorSettings settings) {
     return AddDependencyType.DEFAULT;
   }
 
@@ -49,18 +47,14 @@ public abstract class OrderEnumerationHandler {
 
   public boolean addCustomOutput(@NotNull Module forModule,
                                  @NotNull ModuleRootModel orderEntryRootModel,
-                                 OrderRootType type,
-                                 boolean productionOnly,
-                                 boolean runtimeOnly,
-                                 boolean compileOnly,
+                                 @NotNull OrderRootType type,
+                                 @NotNull OrderEnumeratorSettings settings,
                                  @NotNull Collection<String> urls) {
     return false;
   }
 
   public void addAdditionalRoots(@NotNull Module forModule,
-                                 boolean productionOnly,
-                                 boolean runtimeOnly,
-                                 boolean compileOnly,
+                                 @NotNull OrderEnumeratorSettings settings,
                                  @NotNull Collection<String> urls) {
   }
 }

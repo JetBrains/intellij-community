@@ -70,7 +70,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
         if (documentManager.getCachedPsiFile(document) == null) return;
         if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
           document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          documentManager.addRunOnCommit(document, new Runnable() {
+          PsiDocumentManagerImpl.addRunOnCommit(document, new Runnable() {
             public void run() {
               updateChangesForDocument(document);
               document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);

@@ -38,6 +38,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -129,6 +131,17 @@ public class LookupManagerImpl extends LookupManager {
       previousUpdate = false;
     }
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
+
+    new UiNotifyConnector(editor.getContentComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+      }
+
+      @Override
+      public void hideNotify() {
+        hideActiveLookup();
+      }
+    });
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable() {

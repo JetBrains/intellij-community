@@ -2481,9 +2481,18 @@ public void testSCR260() throws Exception {
   }
 
   public void testIDEADEV1047_2() throws Exception {
-    doTextTest("class Foo{\n" + "String field1\n" + ",\n" + "field2\n" + "; String field3;" + "}",
-               "class Foo {\n" + "    String field1,\n" + "            field2;\n" + "    String field3;\n" + "}");
-
+    doTextTest(
+      "class Foo{\n" +
+      "String field1\n" +
+      ",\n" +
+      "field2\n" +
+      "; String field3;}",
+      "class Foo {\n" +
+      "    String field1,\n" +
+      "            field2;\n" +
+      "    String field3;\n" +
+      "}"
+    );
   }
 
   public void testSCR2241() throws Exception {

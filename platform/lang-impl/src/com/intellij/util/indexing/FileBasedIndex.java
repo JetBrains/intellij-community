@@ -1046,25 +1046,10 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private Set<Document> getUnsavedOrTransactedDocuments(Project project) {
-    Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
+  private Set<Document> getUnsavedOrTransactedDocuments() {
+    final Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
     synchronized (myTransactionMap) {
       docs.addAll(myTransactionMap.keySet());
-    }
-
-    if (project != null) {
-      // filter out foreign documents
-      Iterator<Document> iterator = docs.iterator();
-      ProjectLocator projectLocator = ProjectLocator.getInstance();
-      while (iterator.hasNext()) {
-        Document document = iterator.next();
-        VirtualFile virtualFile = myFileDocumentManager.getFile(document);
-        if (virtualFile == null) continue;
-        Project guessed = projectLocator.guessProjectForFile(virtualFile);
-        if (guessed != null && guessed != project) {
-          iterator.remove();
-        }
-      }
     }
     return docs;
   }
@@ -1075,7 +1060,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return; // no need to index unsaved docs
     }
 
-    final Set<Document> documents = getUnsavedOrTransactedDocuments(project);
+    final Set<Document> documents = getUnsavedOrTransactedDocuments();
     if (!documents.isEmpty()) {
       // now index unsaved data
       final StorageGuard.Holder guard = setDataBufferingEnabled(true);

@@ -1,6 +1,6 @@
 class Test {
   int myI;
-  void foo(int i){
-    myI = i;
+  void foo(int myI){
+    this.myI = myI;
   }
 }
