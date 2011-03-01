@@ -60,14 +60,15 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         editor.getCaretModel().moveToOffset(tailOffset + 2);
       }
       else {
-        Matcher m = Pattern.compile("(\\s*)(:)?(\\s*),?\\s?(\\s*)(.+)", Pattern.DOTALL).matcher(s);
+        Matcher m = Pattern.compile("(\\s*)(:)?(\\s*),?\\s?(\\s*)(.*)", Pattern.DOTALL).matcher(s);
         if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
 
         if (m.group(2) != null) {
           editor.getCaretModel().moveToOffset(tailOffset + m.end(3));
         }
         else {
-          editor.getDocument().replaceString(tailOffset, tailOffset + m.start(4), ": , ");
+          String toInsert = m.group(5).startsWith("]") ? ": " : ": , ";
+          editor.getDocument().replaceString(tailOffset, tailOffset + m.start(4), toInsert);
           editor.getCaretModel().moveToOffset(tailOffset + 2);
         }
       }
