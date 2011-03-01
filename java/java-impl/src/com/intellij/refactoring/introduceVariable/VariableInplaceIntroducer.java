@@ -153,7 +153,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         }
         saveSettings(psiVariable);
         adjustLine(psiVariable, document);
-        int startOffset = myExprMarker.getStartOffset();
+        int startOffset = myExprMarker != null ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
         final PsiFile file = psiVariable.getContainingFile();
         final PsiReference referenceAt = file.findReferenceAt(startOffset);
         if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
@@ -181,7 +181,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         occurrenceMarker.dispose();
       }
       myEditor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
-      myExprMarker.dispose();
+      if (myExprMarker != null) myExprMarker.dispose();
     }
   }
 

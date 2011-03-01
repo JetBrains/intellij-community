@@ -1055,4 +1055,18 @@ public class PsiUtil {
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
   }
+
+  public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {
+    GrNamedArgument[] res = grCall.getNamedArguments();
+    if (res.length > 0) return res;
+
+    GrExpression[] arguments = grCall.getExpressionArguments();
+    if (arguments.length == 0) return GrNamedArgument.EMPTY_ARRAY;
+
+    PsiElement firstArg = arguments[0];
+
+    if (!(firstArg instanceof GrListOrMap)) return GrNamedArgument.EMPTY_ARRAY;
+
+    return ((GrListOrMap)firstArg).getNamedArguments();
+  }
 }

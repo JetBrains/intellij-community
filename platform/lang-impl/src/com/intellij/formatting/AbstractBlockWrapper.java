@@ -32,7 +32,7 @@ import static java.util.Arrays.asList;
 public abstract class AbstractBlockWrapper {
 
   private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
-    IndentImpl.Type.NORMAL, IndentImpl.Type.CONTINUATION, IndentImpl.Type.CONTINUATION_WITHOUT_FIRST
+    Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
   protected WhiteSpace myWhiteSpace;
@@ -145,10 +145,10 @@ public abstract class AbstractBlockWrapper {
                                       AbstractBlockWrapper block,
                                       final int tokenBlockStartOffset) {
     final IndentImpl indent = block.getIndent();
-    if (indent.getType() == IndentImpl.Type.CONTINUATION) {
+    if (indent.getType() == Indent.Type.CONTINUATION) {
       return new IndentData(options.CONTINUATION_INDENT_SIZE);
     }
-    if (indent.getType() == IndentImpl.Type.CONTINUATION_WITHOUT_FIRST) {
+    if (indent.getType() == Indent.Type.CONTINUATION_WITHOUT_FIRST) {
       if (block.getStartOffset() != block.getParent().getStartOffset() && block.getStartOffset() == tokenBlockStartOffset) {
         return new IndentData(options.CONTINUATION_INDENT_SIZE);
       }
@@ -156,9 +156,9 @@ public abstract class AbstractBlockWrapper {
         return new IndentData(0);
       }
     }
-    if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
-    if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
-    if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
+    if (indent.getType() == Indent.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
+    if (indent.getType() == Indent.Type.NONE) return new IndentData(0);
+    if (indent.getType() == Indent.Type.SPACES) return new IndentData(0, indent.getSpaces());
     return new IndentData(options.INDENT_SIZE);
 
   }
@@ -166,7 +166,7 @@ public abstract class AbstractBlockWrapper {
   public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
     final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
     IndentImpl.Type childIndentType = child.getIndent().getType();
-    final IndentData childIndent;
+    IndentData childIndent;
 
     // Calculate child indent.
     if (childStartsNewLine
@@ -178,6 +178,33 @@ public abstract class AbstractBlockWrapper {
       childIndent = new IndentData(0);
     }
 
+    // Enforce indent if child doesn't start new line, e.g. prefer the code below:
+    //    void test() {
+    //        foo("test", new Runnable() {
+    //                public void run() {
+    //                }
+    //            },
+    //            new Runnable() {
+    //                public void run() {
+    //                }
+    //            }
+    //        );
+    //    }
+    // to this one:
+    //    void test() {
+    //        foo("test", new Runnable() {
+    //            public void run() {
+    //            }
+    //        },
+    //            new Runnable() {
+    //                public void run() {
+    //                }
+    //            }
+    //        );
+    //    }
+    if (child.getIndent().isEnforceParentIndent() && !child.getWhiteSpace().containsLineFeeds()) {
+      childIndent = childIndent.add(getIndent(options, child, getStartOffset()));
+    }
 
     // Use child indent if it's absolute and the child is contained on new line.
     if (childStartsNewLine) {
@@ -381,10 +408,10 @@ public abstract class AbstractBlockWrapper {
   }
 
   private static IndentData getIndent(final CodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {
-    if (indent.getType() == IndentImpl.Type.CONTINUATION) {
+    if (indent.getType() == Indent.Type.CONTINUATION) {
       return new IndentData(options.CONTINUATION_INDENT_SIZE);
     }
-    if (indent.getType() == IndentImpl.Type.CONTINUATION_WITHOUT_FIRST) {
+    if (indent.getType() == Indent.Type.CONTINUATION_WITHOUT_FIRST) {
       if (index != 0) {
         return new IndentData(options.CONTINUATION_INDENT_SIZE);
       }
@@ -392,9 +419,9 @@ public abstract class AbstractBlockWrapper {
         return new IndentData(0);
       }
     }
-    if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
-    if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
-    if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(indent.getSpaces(), 0);
+    if (indent.getType() == Indent.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
+    if (indent.getType() == Indent.Type.NONE) return new IndentData(0);
+    if (indent.getType() == Indent.Type.SPACES) return new IndentData(indent.getSpaces(), 0);
     return new IndentData(options.INDENT_SIZE);
 
   }

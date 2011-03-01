@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -1023,6 +1024,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   ) {
     final Indent externalIndent = Indent.getNoneIndent();
     final Indent internalIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
+    final Indent internalIndentEnforcedToParent = Indent.getIndent(Indent.Type.CONTINUATION, myIndentSettings.USE_RELATIVE_INDENTS, true);
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), ElementType.COMMA);
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
@@ -1054,7 +1056,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         else {
           final IElementType elementType = child.getElementType();
-          processChild(result, child, alignmentStrategy.getAlignment(elementType), wrappingStrategy.getWrap(elementType), internalIndent);
+          Indent indentToUse = shouldEnforceParentIndent(child) ? internalIndentEnforcedToParent : internalIndent;
+          processChild(result, child, alignmentStrategy.getAlignment(elementType), wrappingStrategy.getWrap(elementType), indentToUse);
           if (to == null) {//process only one statement
             return child;
           }
@@ -1068,11 +1071,52 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return prev;
   }
 
+  private boolean shouldEnforceParentIndent(@NotNull ASTNode node) {
+    // Don't enforce indent if given node is the last argument, i.e. prefer the code below
+    //    void test() {
+    //        foo("test", new Runnable() {
+    //            public void run() {
+    //            }
+    //        });
+    //    }
+    // to this one:
+    //    void test() {
+    //        foo("test", new Runnable() {
+    //                public void run() {
+    //                }
+    //        });
+    //    } 
+    ASTNode rBrace = myNode.getLastChildNode();
+    if (node == FormattingAstUtil.getPrevNonWhiteSpaceNode(rBrace)) {
+      return false;
+    }
+
+    // Filter only anonymous class instances as method call arguments
+    if (myNode.getElementType() != JavaElementType.EXPRESSION_LIST) {
+      return false;
+    }
+    ASTNode parent = myNode.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) {
+      return false;
+    }
+    if (node.getElementType() != JavaElementType.NEW_EXPRESSION) {
+      return false;
+    }
+    ASTNode lastChild = node.getLastChildNode();
+    if (lastChild == null || lastChild.getElementType() != JavaElementType.ANONYMOUS_CLASS) {
+      return false;
+    }
+    
+    // Enforce indent only if anonymous class instance expression doesn't start new line.
+    ASTNode prev = node.getTreePrev();
+    return prev == null || prev.getElementType() != JavaTokenType.WHITE_SPACE || !StringUtil.containsLineBreak(prev.getChars());
+  }
+  
   @Nullable
   private ASTNode processEnumBlock(List<Block> result,
                                    ASTNode child,
-                                   ASTNode last) {
-
+                                   ASTNode last)
+  {
     final WrappingStrategy wrappingStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(Wrap
       .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
     while (child != null) {
@@ -1120,26 +1164,34 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent) {
+    return getCodeBlockInternalIndent(baseChildrenIndent, false);
+  }
+  
+  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent, boolean enforceParentIndent) {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Indent.getNoneIndent();
     }
 
     final int braceStyle = getBraceStyle();
     return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ?
-           createNormalIndent(baseChildrenIndent - 1)
-           : createNormalIndent(baseChildrenIndent);
+           createNormalIndent(baseChildrenIndent - 1, enforceParentIndent)
+           : createNormalIndent(baseChildrenIndent, enforceParentIndent);
   }
 
   protected static Indent createNormalIndent(final int baseChildrenIndent) {
+    return createNormalIndent(baseChildrenIndent, false);
+  }
+  
+  protected static Indent createNormalIndent(final int baseChildrenIndent, boolean enforceParentIndent) {
     if (baseChildrenIndent == 1) {
-      return Indent.getNormalIndent();
+      return Indent.getIndent(Indent.Type.NORMAL, false, enforceParentIndent);
     }
     else if (baseChildrenIndent <= 0) {
       return Indent.getNoneIndent();
     }
     else {
       LOG.assertTrue(false);
-      return Indent.getNormalIndent();
+      return Indent.getIndent(Indent.Type.NORMAL, false, enforceParentIndent);
     }
   }
 

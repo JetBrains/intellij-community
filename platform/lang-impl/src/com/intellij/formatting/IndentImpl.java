@@ -22,38 +22,20 @@ class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private final boolean myRelativeToDirectParent;
 
-  static class Type{
-    private final String myName;
-
-
-    public Type(@NonNls final String name) {
-      myName = name;
-    }
-
-    public static final Type SPACES = new Type("SPACES");
-    public static final Type NONE = new Type("NONE");
-    public static final Type LABEL = new Type("LABEL");
-    public static final Type NORMAL = new Type("NORMAL");
-    public static final Type CONTINUATION = new Type("CONTINUATION");
-    public static final Type CONTINUATION_WITHOUT_FIRST = new Type("CONTINUATION_WITHOUT_FIRST");
-
-    public String toString() {
-      return myName;
-    }
-  }
-
   private final Type myType;
   private final int mySpaces;
+  private final boolean myEnforceParentIndent;
 
-  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent) {
+  public IndentImpl(final Type type, boolean absolute, boolean relativeToDirectParent) {
+    this(type, absolute, 0, relativeToDirectParent, false);
+  }
+
+  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceParentIndent) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
     myRelativeToDirectParent = relativeToDirectParent;
-  }
-
-  public IndentImpl(final Type type, boolean absolute, boolean relativeToDirectParent) {
-    this(type, absolute, 0, relativeToDirectParent);
+    myEnforceParentIndent = enforceParentIndent;
   }
 
   Type getType() {
@@ -83,12 +65,27 @@ class IndentImpl extends Indent {
     return myRelativeToDirectParent;
   }
 
+  /**
+   * Allows to answer if current indent object is configured to enforce indent for sub-blocks of composite block that doesn't start
+   * new line.
+   * <p/>
+   * Feel free to check {@link Indent} javadoc for the more detailed explanation of this property usage.
+   * 
+   * @return      <code>true</code> if current indent object is configured to enforce indent for sub-blocks of composite block
+   *              that doesn't start new line; <code>false</code> otherwise
+   */
+  public boolean isEnforceParentIndent() {
+    return myEnforceParentIndent;
+  }
+
   @NonNls
   @Override
   public String toString() {
     if (myType == Type.SPACES) {
       return "<Indent: SPACES(" + mySpaces + ")>";
     }
-    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE" : "") + ">";
+    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "") 
+           + (myRelativeToDirectParent ? " relative to direct parent " : "")
+           + (myEnforceParentIndent ? " enforce parent indent" : "") + ">";
   }
 }
