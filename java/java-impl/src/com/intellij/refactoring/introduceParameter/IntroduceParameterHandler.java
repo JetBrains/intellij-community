@@ -196,15 +196,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                 ? new TypeSelectorManagerImpl(project, initializerType, expr, occurences)
                                                 : new TypeSelectorManagerImpl(project, initializerType, occurences);
 
-      NameSuggestionsGenerator nameSuggestionsGenerator = new NameSuggestionsGenerator() {
-        public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-          final SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
-          final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
-          return new SuggestedNameInfo.Delegate(strings, info);
-        }
-
-      };
+      NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(expr, propName);
       boolean isInplaceAvailableOnDataContext = editor != null && editor.getSettings().isVariableInplaceRenameEnabled()
                                                 && method == methodToSearchFor
                                                 && method.hasModifierProperty(PsiModifier.PRIVATE);
@@ -220,12 +212,26 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         }
       } else {
         new InplaceIntroduceParameterPopup(project, editor, classMemberRefs,
-                                     typeSelectorManager, nameSuggestionsGenerator,
+                                     typeSelectorManager,
                                      expr, localVar, method, methodToSearchFor, occurences, parametersToRemove,
                                      mustBeFinal).inplaceIntroduceParameter();
       }
     }
     return true;
+  }
+
+  protected static NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
+                                                                          final String propName) {
+    return new NameSuggestionsGenerator() {
+      public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expr.getProject());
+        final SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
+        final String[] strings = JavaCompletionUtil
+          .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
+        return new SuggestedNameInfo.Delegate(strings, info);
+      }
+
+    };
   }
 
   private static void showErrorMessage(Project project, String message, Editor editor) {
