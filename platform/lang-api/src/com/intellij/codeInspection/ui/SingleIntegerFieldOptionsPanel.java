@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,14 +67,14 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         constraints.insets.left = 4;
         constraints.insets.top = 4;
         constraints.weightx = 0.0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
         add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
         add(valueField, constraints);
     }
