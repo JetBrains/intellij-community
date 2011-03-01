@@ -138,16 +138,22 @@ public abstract class AbstractConsoleRunnerWithHistory {
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
 
-    final RunContentDescriptor myDescriptor =
+    final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, myConsoleTitle);
 
 // tool bar actions
-    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, myDescriptor);
+    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
+    showConsole(defaultExecutor, contentDescriptor);
 
-// Show in run toolwindow
+// Run
+    myProcessHandler.startNotify();
+  }
+
+  protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
+    // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
 // Request focus
@@ -157,8 +163,6 @@ public abstract class AbstractConsoleRunnerWithHistory {
         IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
       }
     });
-// Run
-    myProcessHandler.startNotify();
   }
 
   protected void finishConsole() {
@@ -189,7 +193,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
                                           final Executor defaultExecutor,
-                                          final RunContentDescriptor myDescriptor) {
+                                          final RunContentDescriptor contentDescriptor) {
 
     List<AnAction> actionList = Lists.newArrayList();
 
@@ -198,7 +202,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     actionList.add(stopAction);
 
 //close
-    final AnAction closeAction = createCloseAction(defaultExecutor, myDescriptor);
+    final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
     actionList.add(closeAction);
 
 // run and history actions
