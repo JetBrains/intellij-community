@@ -632,4 +632,26 @@ public abstract class GroovyRefactoringUtil {
     }
     return true;
   }
+
+  public static GrExpression generateArgFromMultiArg(PsiSubstitutor substitutor,
+                                                     List<PsiElement> arguments,
+                                                     PsiType type,
+                                                     final Project project) {
+    StringBuilder argText = new StringBuilder();
+    argText.append("[");
+    for (PsiElement argument : arguments) {
+      argText.append(argument.getText()).append(", ");
+      argument.delete();
+    }
+    argText.replace(argText.length() - 2, argText.length(), "]");
+    if (type instanceof PsiArrayType) {
+      type = substitutor.substitute(type);
+      String typeText = type.getCanonicalText();
+      if (type instanceof PsiEllipsisType) {
+        typeText = typeText.replace("...", "[]");
+      }
+      argText.append(" as ").append(typeText);
+    }
+    return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(argText.toString());
+  }
 }
