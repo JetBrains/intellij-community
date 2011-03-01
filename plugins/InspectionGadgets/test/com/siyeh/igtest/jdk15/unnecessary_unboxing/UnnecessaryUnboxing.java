@@ -27,4 +27,11 @@ public class UnnecessaryUnboxing {
     Integer foo3(String foo, Integer bar) {
         return foo == null ? 0 : bar.intValue();
     }
+
+    UnnecessaryUnboxing(Object object) {}
+    UnnecessaryUnboxing(long l) {}
+
+    void user(Long l) {
+        new UnnecessaryUnboxing(l.longValue());
+    }
 }

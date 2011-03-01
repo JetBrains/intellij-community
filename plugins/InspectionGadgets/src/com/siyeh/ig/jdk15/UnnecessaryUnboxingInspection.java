@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,10 +175,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
                         return;
                     }
                 }
-            }
-            if (containingExpression instanceof PsiMethodCallExpression) {
-                final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression)containingExpression;
+            } else if (containingExpression instanceof PsiCallExpression) {
+                final PsiCallExpression methodCallExpression =
+                        (PsiCallExpression)containingExpression;
                 if (!isSameMethodCalledWithoutUnboxing(methodCallExpression,
                         expression)) {
                     return;
@@ -247,18 +246,19 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         }
 
         private static boolean isSameMethodCalledWithoutUnboxing(
-                @NotNull PsiMethodCallExpression methodCallExpression,
+                @NotNull PsiCallExpression callExpression,
                 @NotNull PsiMethodCallExpression unboxingExpression) {
             final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final PsiElement element = methodExpression.resolve();
-            if (!(element instanceof PsiMethod)) {
+                    callExpression.getArgumentList();
+            if (argumentList == null) {
                 return false;
             }
-            final PsiMethod originalMethod = (PsiMethod)element;
+            final PsiExpression[] expressions = argumentList.getExpressions();
+            final PsiMethod originalMethod =
+                    callExpression.resolveMethod();
+            if (originalMethod == null) {
+                return false;
+            }
             final String name = originalMethod.getName();
             final PsiClass containingClass =
                     originalMethod.getContainingClass();
@@ -297,9 +297,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         private static PsiExpression getContainingExpression(
                 @NotNull PsiElement expression) {
             final PsiElement parent = expression.getParent();
-            if (parent == null) {
-                return null;
-            } else if (!(parent instanceof PsiExpression) &&
+            if (parent == null || !(parent instanceof PsiExpression) &&
                     !(parent instanceof PsiExpressionList)) {
                 return null;
             }
