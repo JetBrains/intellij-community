@@ -21,63 +21,71 @@ import java.awt.*;
 
 /**
  * @author kir
+ * @author Konstantin Bulenkov
  */
 public class ScreenUtil {
-
-  public static final Rectangle getScreenRectangle(int x, int y) {
-    GraphicsConfiguration targetGraphicsConfiguration = null;
-    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    GraphicsDevice[] devices = env.getScreenDevices();
-
-    int minDistance;
-    GraphicsConfiguration minDsitanceConfig;
-    for (int i = 0; i < devices.length; i++) {
-      GraphicsDevice eachDevice = devices[i];
-      GraphicsConfiguration eachConfig = eachDevice.getDefaultConfiguration();
-      Rectangle eachRec = eachConfig.getBounds();
-
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(eachConfig);
-      if (insets != null) {
-        eachRec.x += insets.left;
-        eachRec.width -= (insets.left + insets.right);
-        eachRec.y += insets.top;
-        eachRec.height -= (insets.top + insets.bottom);
-      }
-
-      if (eachRec.x <= x && x < eachRec.x + eachRec.width && eachRec.y <= y && y < eachRec.y + eachRec.height) {
-        targetGraphicsConfiguration = eachConfig;
-        break;
-      }
-
-
-    }
-    if (targetGraphicsConfiguration == null && devices.length > 0) {
-      targetGraphicsConfiguration = env.getDefaultScreenDevice().getDefaultConfiguration();
-    }
-    if (targetGraphicsConfiguration == null) {
-      throw new IllegalStateException(
-          "It's impossible to determine target graphics environment for point (" + x + "," + y + ")"
-      );
-    }
-
-    // Determine real client area of target graphics configuration
-
-    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGraphicsConfiguration);
-    Rectangle targetRectangle = targetGraphicsConfiguration.getBounds();
-    targetRectangle.x += insets.left;
-    targetRectangle.y += insets.top;
-    targetRectangle.width -= insets.left + insets.right;
-    targetRectangle.height -= insets.top + insets.bottom;
-
-    return targetRectangle;
+  private ScreenUtil() {
   }
 
+  public static Rectangle getScreenRectangle(Point p) {
+    GraphicsConfiguration targetGC = null;
+    final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    final GraphicsDevice[] devices = env.getScreenDevices();
+    double distance = -1;
+    GraphicsConfiguration bestConfig = null;
 
-  public static boolean isOutsideOnTheRightOFScreen(Rectangle aRectangle) {
-    int screenX = aRectangle.x;
-    int screenY = aRectangle.y;
+    for (GraphicsDevice device: devices) {
+      final GraphicsConfiguration config = device.getDefaultConfiguration();
+      final Rectangle rect = config.getBounds();
+
+      final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      if (insets != null) {
+        rect.x += insets.left;
+        rect.width -= (insets.left + insets.right);
+        rect.y += insets.top;
+        rect.height -= (insets.top + insets.bottom);
+      }
+
+      if (rect.contains(p)) {
+        targetGC = config;
+        break;
+      } else {
+        final double d = findNearestPointOnBorder(rect, p).distance(p.x, p.y);
+        if (bestConfig == null || distance > d) {
+          distance = d;
+          bestConfig = config;
+        }
+      }
+    }
+
+    if (targetGC == null && devices.length > 0 && bestConfig != null) {
+      targetGC = bestConfig;
+      //targetGC = env.getDefaultScreenDevice().getDefaultConfiguration();
+    }
+    if (targetGC == null) {
+      throw new IllegalStateException("It's impossible to determine target graphics environment for point (" + p.x + "," + p.y + ")");
+    }
+
+    //Determine real client area of target graphics configuration
+    final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(targetGC);
+    Rectangle targetRect = targetGC.getBounds();
+    targetRect.x += insets.left;
+    targetRect.y += insets.top;
+    targetRect.width -= insets.left + insets.right;
+    targetRect.height -= insets.top + insets.bottom;
+
+    return targetRect;
+  }
+
+  public static Rectangle getScreenRectangle(int x, int y) {
+    return getScreenRectangle(new Point(x, y));
+  }
+
+  public static boolean isOutsideOnTheRightOFScreen(Rectangle rect) {
+    final int screenX = rect.x;
+    final int screenY = rect.y;
     Rectangle screen = getScreenRectangle(screenX, screenY);
-    return aRectangle.getMaxX() > screen.getMaxX();
+    return rect.getMaxX() > screen.getMaxX();
   }
 
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
@@ -140,27 +148,44 @@ public class ScreenUtil {
     }
   }
 
-  public static void cropRectangleToFitTheScreen(Rectangle aRectangle) {
-    int screenX = aRectangle.x;
-    int screenY = aRectangle.y;
-    Rectangle screen = getScreenRectangle(screenX, screenY);
-
-    if (aRectangle.getMaxX() > screen.getMaxX()) {
-      aRectangle.width = (int) screen.getMaxX() - aRectangle.x;
+  public static Point findNearestPointOnBorder(Rectangle rect, Point p) {
+    final int x0 = rect.x;
+    final int y0 = rect.y;
+    final int x1 = x0 + rect.width;
+    final int y1 = y0 + rect.height;
+    double distance = -1;
+    Point best = null;
+    final Point[] variants = {new Point(p.x, y0), new Point(p.x, y1), new Point(x0, p.y), new Point(x1, p.y)};
+    for (Point variant : variants) {
+      final double d = variant.distance(p.x, p.y);
+      if (best == null || distance > d) {
+        best = variant;
+        distance = d;
+      }
     }
-
-
-    if (aRectangle.getMinX() < screen.getMinX()) {
-      aRectangle.x = (int) screen.getMinX();
-    }
-
-    if (aRectangle.getMaxY() > screen.getMaxY()) {
-      aRectangle.height = (int) screen.getMaxY() - aRectangle.y;
-    }
-
-    if (aRectangle.getMinY() < screen.getMinY()) {
-      aRectangle.y = (int) screen.getMinY();
-    }
+    assert best != null;
+    return best;
   }
 
+  public static void cropRectangleToFitTheScreen(Rectangle rect) {
+    int screenX = rect.x;
+    int screenY = rect.y;
+    final Rectangle screen = getScreenRectangle(screenX, screenY);
+
+    if (rect.getMaxX() > screen.getMaxX()) {
+      rect.width = (int) screen.getMaxX() - rect.x;
+    }
+
+    if (rect.getMinX() < screen.getMinX()) {
+      rect.x = (int) screen.getMinX();
+    }
+
+    if (rect.getMaxY() > screen.getMaxY()) {
+      rect.height = (int) screen.getMaxY() - rect.y;
+    }
+
+    if (rect.getMinY() < screen.getMinY()) {
+      rect.y = (int) screen.getMinY();
+    }
+  }
 }

@@ -773,6 +773,7 @@ public class FormatterImpl extends FormatterEx
     @Override
     public void stop() {
       myProcessor.stopSequentialProcessing();
+      myDone = true;
     }
 
     @NotNull

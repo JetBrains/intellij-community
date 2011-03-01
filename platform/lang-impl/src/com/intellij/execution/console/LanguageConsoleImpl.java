@@ -365,7 +365,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
-  private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
+  protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     appendToHistoryDocument(history, myPrompt);

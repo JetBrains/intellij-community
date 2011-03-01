@@ -333,6 +333,10 @@ public class EditorWindow {
     }
   }
 
+  public boolean isValid() {
+    return myPanel.isShowing();
+  }
+
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;

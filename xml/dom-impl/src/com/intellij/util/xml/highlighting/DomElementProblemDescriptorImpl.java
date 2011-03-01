@@ -137,7 +137,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     if (myPair == null) {
       myPair = computeProblemRange();
     }
-    assert myPair.second.isValid();
+    PsiElement element = myPair.second;
+    if (element != null) {
+      assert element.isValid();
+    }
     return myPair;
   }
 

@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -57,9 +58,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlTagInsertHandler");
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
+    LOG.assertTrue(context.getTailOffset() >= 0);
+
     Project project = context.getProject();
     Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
@@ -68,6 +72,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiElement current = context.getFile().findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
+    LOG.assertTrue(context.getTailOffset() >= 0);
+
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
     if (tag == null) return;
@@ -80,6 +86,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       if (descriptor != null) {
         insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
+        LOG.assertTrue(context.getTailOffset() >= 0);
       }
     }
     else if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -104,6 +111,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           editor.getDocument().deleteString(sOffset, eOffset);
           assert otherTag != null;
           editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
+
+          LOG.assertTrue(context.getTailOffset() >= 0);
         }
       }
 
@@ -112,12 +121,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       editor.getSelectionModel().removeSelection();
     }
 
+    LOG.assertTrue(context.getTailOffset() >= 0);
+
     if (context.getCompletionChar() == ' ' && TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       return;
     }
 
     final TailType tailType = LookupItem.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
+    LOG.assertTrue(context.getTailOffset() >= 0);
   }
 
   private static void insertIncompleteTag(char completionChar,

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.formatting.FormattingProgressIndicatorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   
@@ -62,17 +66,21 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @NotNull
-  protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
-    return new Runnable() {
-      public void run() {
+  protected FutureTask<Boolean> preprocessFile(final PsiFile file) throws IncorrectOperationException {
+    return new FutureTask<Boolean>(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        FormattingProgressIndicatorImpl.FORMATTING_CANCELLED_FLAG.set(false);
         try {
           TextRange range = myRange == null ? file.getTextRange() : myRange;
           CodeStyleManager.getInstance(myProject).reformatText(file, range.getStartOffset(), range.getEndOffset());
+          return !FormattingProgressIndicatorImpl.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+          return false;
         }
       }
-    };
+    });
   }
 }

@@ -27,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
+/**
+ * @see ContentFactory#createContent(javax.swing.JComponent, String, boolean)
+ */
 public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls
   String PROP_DISPLAY_NAME = "displayName";

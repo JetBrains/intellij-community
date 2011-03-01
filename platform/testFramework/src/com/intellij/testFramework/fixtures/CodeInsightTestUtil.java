@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
@@ -46,6 +45,7 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -152,10 +152,12 @@ public class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
+  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
     doInlineRename(handler, newName, fixture.getEditor(), fixture.getElementAtCaret());
   }
 
+  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
@@ -166,6 +168,7 @@ public class CodeInsightTestUtil {
         editor = ((EditorWindow)editor).getDelegate();
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+      assert state != null;
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
       final Editor finalEditor = editor;
@@ -178,7 +181,9 @@ public class CodeInsightTestUtil {
       assert renamer != null;
       renamer.finish();
 
-      TemplateManagerImpl.getTemplateState(editor).gotoEnd();
+      state = TemplateManagerImpl.getTemplateState(editor);
+      assert state != null;
+      state.gotoEnd();
       renamer.performAutomaticRename(newName, elementAtCaret);
     }
     finally {
@@ -186,6 +191,7 @@ public class CodeInsightTestUtil {
     }
   }
 
+  @TestOnly
   public static void doInlineRenameTest(VariableInplaceRenameHandler handler, String file, String extension,
                                         String newName, CodeInsightTestFixture fixture) {
     fixture.configureByFile(file + "." + extension);

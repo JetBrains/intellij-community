@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
@@ -637,7 +634,7 @@ public class GroovyToJavaGenerator {
       final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
       for (MethodSignatureBackedByPsiMethod superSignature : superSignatures) {
         final PsiType superType = superSignature.getSubstitutor().substitute(superSignature.getMethod().getReturnType());
-        if (superType != null && !superType.isAssignableFrom(retType)) {
+        if (superType != null && !superType.isAssignableFrom(retType) && !(PsiUtil.resolveClassInType(superType) instanceof PsiTypeParameter)) {
           retType = superType;
         }
       }

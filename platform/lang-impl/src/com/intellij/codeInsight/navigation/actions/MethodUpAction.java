@@ -35,6 +35,11 @@ public class MethodUpAction extends BaseCodeInsightAction {
     return new MethodUpHandler();
   }
 
+  @Override
+  protected boolean isValidForLookup() {
+    return true;
+  }
+
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return checkValidForFile(file);
   }

@@ -58,6 +58,13 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testThrowsCheckedException() throws Throwable { doTest(); }
   public void testSubclassProperty() throws Throwable { doTest(); }
 
+  public void testParameterReturnType() throws Throwable {
+    myFixture.addClass("public interface GwtActionService {\n" +
+                       "    <T extends CharSequence> T execute(java.util.List<T> action);\n" +
+                       "}");
+    doTest();
+  }
+
   public void testRawReturnTypeInImplementation() throws Throwable { doTest(); }
 
   public void testDelegationGenerics() throws Throwable {

@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -105,7 +106,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     });
   }
 
-  public static GroovyElementPattern.Capture<GrNamedArgument> methodNamedParameter(final ElementPattern<? extends GrCallExpression> methodCall) {
+  public static GroovyElementPattern.Capture<GrNamedArgument> methodNamedParameter(@Nullable final ElementPattern<? extends GrCall> methodCall) {
     return new GroovyElementPattern.Capture<GrNamedArgument>(new InitialPatternCondition<GrNamedArgument>(GrNamedArgument.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (!(o instanceof GrNamedArgument)) return false;
@@ -120,17 +121,20 @@ public class GroovyPatterns extends PsiJavaPatterns {
         else {
           if (!(parent instanceof GrListOrMap)) return false;
 
-          PsiElement argumentList = parent.getParent();
-          if (!(argumentList instanceof GrArgumentList)) return false;
+          PsiElement eArgumentList = parent.getParent();
+          if (!(eArgumentList instanceof GrArgumentList)) return false;
 
-          if (((GrArgumentList)argumentList).getExpressionArgumentIndex((GrListOrMap)parent) != 0) return false;
+          GrArgumentList argumentList = (GrArgumentList)eArgumentList;
 
-          eMethodCall = argumentList.getParent();
+          if (argumentList.getNamedArguments().length > 0) return false;
+          if (argumentList.getExpressionArgumentIndex((GrListOrMap)parent) != 0) return false;
+
+          eMethodCall = eArgumentList.getParent();
         }
 
-        if (!(eMethodCall instanceof GrCallExpression)) return false;
+        if (!(eMethodCall instanceof GrCall)) return false;
 
-        return methodCall.accepts(eMethodCall);
+        return methodCall == null || methodCall.accepts(eMethodCall);
       }
     });
   }
