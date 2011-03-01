@@ -33,6 +33,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
 
   enum MyResult {
     annoMethod,
+    returnKeyword,
     localOrParameter,
     superMethodParameters,
     normal,
@@ -42,8 +43,12 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
 
   @NotNull
   @Override
-  public Comparable weigh(@NotNull LookupElement item) {
+  public MyResult weigh(@NotNull LookupElement item) {
     final Object object = item.getObject();
+
+    if (object instanceof PsiKeyword && PsiKeyword.RETURN.equals(((PsiKeyword)object).getText())) {
+      return MyResult.returnKeyword;
+    }
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
       return MyResult.localOrParameter;

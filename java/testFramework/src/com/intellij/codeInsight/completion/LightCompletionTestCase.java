@@ -46,7 +46,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void complete(final int time) {
-    new CodeCompletionHandlerBase(myType).invokeCompletion(getProject(), getEditor(), getFile(), time);
+    new CodeCompletionHandlerBase(myType).invokeCompletion(getProject(), getEditor(), time, false);
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);

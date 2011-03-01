@@ -45,7 +45,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -78,10 +77,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.text.MessageFormat;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author ven
@@ -166,6 +162,22 @@ public class VariableInplaceRenamer {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return false;
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
+    collectAdditionalElementsToRename(processTextOccurrences, stringUsages);
+    if (appendAdditionalElement(stringUsages)) {
+      runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
+    } else {
+      new RenameChooser(myEditor).showChooser(refs, stringUsages, nameSuggestions, scope, containingFile);
+    }
+
+    myEditor.putUserData(INPLACE_RENAMER, this);
+    return true;
+  }
+
+  protected boolean appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages) {
+    return stringUsages.isEmpty();
+  }
+
+  protected void collectAdditionalElementsToRename(boolean processTextOccurrences, final List<Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
     if (processTextOccurrences && stringToSearch != null) {
       TextOccurrencesUtil
@@ -176,14 +188,6 @@ public class VariableInplaceRenamer {
           }
         });
     }
-    if (stringUsages.isEmpty()) {
-      runRenameTemplate(nameSuggestions, refs, stringUsages, scope, containingFile);
-    } else {
-      new RenameChooser(myEditor).showChooser(refs, stringUsages, nameSuggestions, scope, containingFile);
-    }
-
-    myEditor.putUserData(INPLACE_RENAMER, this);
-    return true;
   }
 
   private void runRenameTemplate(LinkedHashSet<String> nameSuggestions,
@@ -262,7 +266,7 @@ public class VariableInplaceRenamer {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset),
                                                                                 PsiNameIdentifierOwner.class));
                 }
-                moveOffsetAfter(true);
+                moveOffsetAfter(!brokenOff);
               }
 
               public void templateCancelled(Template template) {
@@ -424,6 +428,12 @@ public class VariableInplaceRenamer {
       rangesToHighlight.put(range, attributes);
     }
 
+    collectAdditionalRangesToHighlight(rangesToHighlight, stringUsages, colorsManager);
+  }
+
+  protected void collectAdditionalRangesToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
+                                                    Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                                    EditorColorsManager colorsManager) {
     for (Pair<PsiElement, TextRange> usage : stringUsages) {
       final TextRange range = usage.second.shiftRight(usage.first.getTextOffset());
       final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -431,7 +441,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private static void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges, @NotNull Editor editor, @NotNull Collection<RangeHighlighter> highlighters, @NotNull HighlightManager highlightManager) {
+  protected void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges, @NotNull Editor editor, @NotNull Collection<RangeHighlighter> highlighters, @NotNull HighlightManager highlightManager) {
     for (Map.Entry<TextRange,TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
@@ -556,7 +566,7 @@ public class VariableInplaceRenamer {
     }
 
     public void showChooser(final Collection<PsiReference> refs,
-                            final Collection<Pair<PsiElement, TextRange>> stringUsages,
+                            final List<Pair<PsiElement, TextRange>> stringUsages,
                             final LinkedHashSet<String> nameSuggestions,
                             final PsiElement scope,
                             final PsiFile containingFile) {

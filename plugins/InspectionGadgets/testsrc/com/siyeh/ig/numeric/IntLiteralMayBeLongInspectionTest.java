@@ -1,6 +1,6 @@
 package com.siyeh.ig.numeric;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class IntLiteralMayBeLongInspectionTest extends IGInspectionTestCase {
 

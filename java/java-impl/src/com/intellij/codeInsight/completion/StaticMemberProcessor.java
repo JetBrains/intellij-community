@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -69,7 +70,7 @@ public abstract class StaticMemberProcessor {
             if (classes.add(containingClass) && JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
               final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
               if (!myHintShown && !shouldImport && CompletionService.getCompletionService().getAdvertisementText() == null) {
-                final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
+                final String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
                 if (shortcut != null) {
                   CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
                 }

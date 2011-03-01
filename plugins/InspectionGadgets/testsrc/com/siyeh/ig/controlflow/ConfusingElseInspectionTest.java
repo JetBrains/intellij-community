@@ -1,6 +1,6 @@
 package com.siyeh.ig.controlflow;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class ConfusingElseInspectionTest
         extends IGInspectionTestCase {

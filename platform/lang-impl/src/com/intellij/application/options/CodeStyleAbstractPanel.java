@@ -258,10 +258,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void prepareForReformat(PsiFile psiFile) {
   }
+  
+  protected String getFileExt() {
+    return getFileTypeExtension(getFileType());
+  }
 
   protected PsiFile createFileFromText(Project project, String text) {
     return PsiFileFactory.getInstance(project).createFileFromText(
-      "a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), true
+      "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), true
     );
   }
 

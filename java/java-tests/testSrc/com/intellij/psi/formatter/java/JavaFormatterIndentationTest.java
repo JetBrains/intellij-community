@@ -307,4 +307,29 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doClassTest(precededBySingleLineComment, precededBySingleLineComment);
     doClassTest(precededByMultiLineComment, precededByMultiLineComment);
   }
+  
+  public void testAnonymousClassInstancesAsMethodCallArguments() throws Exception {
+    // Inspired by IDEA-65987
+    
+    doMethodTest(
+      "foo(\"long string as the first argument\", new Runnable() {\n" +
+      "public void run() {                         \n" +
+      "}                                        \n" +
+      "},                                            \n" +
+      "new Runnable() {                         \n" +
+      "public void run() {                 \n" +
+      "}                                          \n" +
+      "}                                             \n" +
+      ");                                                       ",
+      "foo(\"long string as the first argument\", new Runnable() {\n" +
+      "            public void run() {                          \n" +
+      "            }                                            \n" +
+      "        },                                               \n" +
+      "        new Runnable() {                                 \n" +
+      "            public void run() {                          \n" +
+      "            }                                            \n" +
+      "        }                                                \n" +
+      ");                                                       "
+    );
+  }
 }

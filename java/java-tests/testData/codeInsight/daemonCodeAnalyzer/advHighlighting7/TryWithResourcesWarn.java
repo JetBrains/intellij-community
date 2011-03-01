@@ -18,12 +18,6 @@ class C {
   }
 
   void m2() throws Exception {
-    // todo: test in IG
-    //MyResource < warning descr="Local variable 'r1' is redundant">r1</warning> = null;
-    //try (MyResource r = r1) {
-    //  System.out.println(r);
-    //}
-
     try (MyResource <warning descr="Variable 'r2' is never used">r2</warning> = new MyResource()) { }
 
     MyResource <warning descr="Variable 'r3' is never assigned">r3</warning>;

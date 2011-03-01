@@ -145,7 +145,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myResolveTargetKinds.contains(resolveKind);
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
+  public boolean shouldProcess(DeclarationKind kind) {
     switch (kind) {
       case CLASS:
         return shouldProcess(CLASS);

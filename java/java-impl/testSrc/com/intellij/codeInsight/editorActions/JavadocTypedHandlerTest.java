@@ -40,7 +40,6 @@ public class JavadocTypedHandlerTest {
   @Test
   public void tagWithAttribute() {
     doTest("<a href='www'><caret>", "a");
-    //TODO den implement
   }
   
   private static void doTest(String text, String expected) {

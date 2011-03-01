@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.parenthesis;
 
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -26,26 +23,33 @@ import org.jetbrains.annotations.NotNull;
 class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiBinaryExpression)) {
-            return element instanceof PsiInstanceOfExpression &&
-                    element.getParent()instanceof PsiBinaryExpression;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)element;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiExpression) {
-            final PsiExpression expression = (PsiExpression)parent;
-            if (needsParentheses(expression, tokenType)) {
+        if (element instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) element;
+            final IElementType tokenType =
+                    binaryExpression.getOperationTokenType();
+            if (parent instanceof PsiExpression) {
+                final PsiExpression expression = (PsiExpression) parent;
+                if (needsParentheses(expression, tokenType)) {
+                    return true;
+                }
+            }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            if (needsParentheses(lhs, tokenType)) {
                 return true;
             }
+            final PsiExpression rhs = binaryExpression.getROperand();
+            return needsParentheses(rhs, tokenType);
+        } else if (parent instanceof PsiConditionalExpression) {
+            final PsiConditionalExpression conditionalExpression =
+                    (PsiConditionalExpression) parent;
+            final PsiExpression condition =
+                    conditionalExpression.getCondition();
+            return element == condition;
         }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        if (needsParentheses(lhs, tokenType)) {
-            return true;
-        }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        return needsParentheses(rhs, tokenType);
+        return element instanceof PsiInstanceOfExpression &&
+                parent instanceof PsiBinaryExpression;
     }
 
     private static boolean needsParentheses(PsiExpression expression,

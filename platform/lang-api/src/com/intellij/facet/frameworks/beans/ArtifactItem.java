@@ -43,7 +43,12 @@ public class ArtifactItem {
   public String myMD5;
 
   public String getName() {
-    return myName;
+    return myName == null ? getNameFromUrl() : myName;
+  }
+
+  private String getNameFromUrl() {
+    final int index = myUrl.lastIndexOf('/');
+    return index == -1 ? myUrl : myUrl.substring(index + 1);
   }
 
   public String getUrl() {

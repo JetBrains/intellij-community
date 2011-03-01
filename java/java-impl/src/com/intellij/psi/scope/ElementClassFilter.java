@@ -23,16 +23,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 
 public class ElementClassFilter implements ElementFilter {
-  public static final ElementClassFilter PACKAGE_FILTER = new ElementClassFilter(ElementClassHint.DeclaractionKind.PACKAGE);
-  public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclaractionKind.VARIABLE);
-  public static final ElementClassFilter METHOD = new ElementClassFilter(ElementClassHint.DeclaractionKind.METHOD);
-  public static final ElementClassFilter CLASS = new ElementClassFilter(ElementClassHint.DeclaractionKind.CLASS);
-  public static final ElementClassFilter FIELD = new ElementClassFilter(ElementClassHint.DeclaractionKind.FIELD);
-  public static final ElementClassFilter ENUM_CONST = new ElementClassFilter(ElementClassHint.DeclaractionKind.ENUM_CONST);
+  public static final ElementClassFilter PACKAGE_FILTER = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
+  public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclarationKind.VARIABLE);
+  public static final ElementClassFilter METHOD = new ElementClassFilter(ElementClassHint.DeclarationKind.METHOD);
+  public static final ElementClassFilter CLASS = new ElementClassFilter(ElementClassHint.DeclarationKind.CLASS);
+  public static final ElementClassFilter FIELD = new ElementClassFilter(ElementClassHint.DeclarationKind.FIELD);
+  public static final ElementClassFilter ENUM_CONST = new ElementClassFilter(ElementClassHint.DeclarationKind.ENUM_CONST);
 
-  private final ElementClassHint.DeclaractionKind myKind;
+  private final ElementClassHint.DeclarationKind myKind;
   
-  private ElementClassFilter(ElementClassHint.DeclaractionKind kind) {
+  private ElementClassFilter(ElementClassHint.DeclarationKind kind) {
     myKind = kind;
   }
 

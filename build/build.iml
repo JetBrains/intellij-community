@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="JPS" level="project" />
   </component>

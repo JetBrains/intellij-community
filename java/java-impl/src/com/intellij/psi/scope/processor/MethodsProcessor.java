@@ -115,7 +115,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return super.getHint(hintKey);
   }
 
-  public boolean shouldProcess(DeclaractionKind kind) {
-    return kind == DeclaractionKind.METHOD;
+  public boolean shouldProcess(DeclarationKind kind) {
+    return kind == DeclarationKind.METHOD;
   }
 }

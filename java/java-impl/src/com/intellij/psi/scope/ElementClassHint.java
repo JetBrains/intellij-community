@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Key;
 public interface ElementClassHint {
   Key<ElementClassHint> KEY = Key.create("ElementClassHint");
 
-  enum DeclaractionKind {
+  enum DeclarationKind {
     CLASS,
     PACKAGE,
     METHOD,
@@ -29,5 +29,5 @@ public interface ElementClassHint {
     ENUM_CONST
   }
 
-  boolean shouldProcess(DeclaractionKind kind);
+  boolean shouldProcess(DeclarationKind kind);
 }

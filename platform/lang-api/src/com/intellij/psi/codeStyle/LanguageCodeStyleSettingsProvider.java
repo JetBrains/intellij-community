@@ -47,6 +47,26 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
+   * Override this method if file extension to be used with samples is different from the one returned by associated file type.
+   * 
+   * @return The file extension for samples (null by default).
+   */
+  @Nullable
+  public String getFileExt() {
+    return null;
+  }
+
+  /**
+   * Override this method if language name shown in preview tab must be different from the name returned by Language class itself.
+   * 
+   * @return The language name to show in preview tab (null by default).
+   */
+  @Nullable
+  public String getLanguageName() {
+    return null;
+  }
+
+  /**
    * Creates an instance of <code>CommonCodeStyleSettings</code> and sets initial default values for those
    * settings which differ from the original.
    *
@@ -90,7 +110,9 @@ public abstract class LanguageCodeStyleSettingsProvider {
   @Nullable
   public static Language getLanguage(String langName) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (langName.equals(provider.getLanguage().getDisplayName())) {
+      String name = provider.getLanguageName();
+      if (name == null) name = provider.getLanguage().getDisplayName();
+      if (langName.equals(name)) {
         return provider.getLanguage();
       }
     }
@@ -106,5 +128,25 @@ public abstract class LanguageCodeStyleSettingsProvider {
     }
     return null;
   }
+  
+  @Nullable
+  public static String getFileExt(Language lang) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (provider.getLanguage().equals(lang)) {
+        return provider.getFileExt();
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public static String getLanguageName(Language lang) {
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (provider.getLanguage().equals(lang)) {
+        return provider.getLanguageName();
+      }
+    }
+    return null;
+  }   
 
 }

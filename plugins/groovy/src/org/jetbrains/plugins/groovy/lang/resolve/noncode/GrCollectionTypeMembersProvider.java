@@ -93,8 +93,8 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     }
 
     @Override
-    public boolean shouldProcess(DeclaractionKind kind) {
-      return kind == DeclaractionKind.FIELD;
+    public boolean shouldProcess(DeclarationKind kind) {
+      return kind == DeclarationKind.FIELD;
     }
   }
 }

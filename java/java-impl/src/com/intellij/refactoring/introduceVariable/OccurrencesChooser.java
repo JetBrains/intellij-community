@@ -134,9 +134,9 @@ public class OccurrencesChooser {
   /**
    * @return true if write usages found
    */
-  static boolean fillChoices(final PsiExpression expr,
-                             final PsiExpression[] occurrences,
-                             final LinkedHashMap<ReplaceChoice, PsiExpression[]> occurrencesMap) {
+  public static boolean fillChoices(final PsiExpression expr,
+                                    final PsiExpression[] occurrences,
+                                    final LinkedHashMap<ReplaceChoice, PsiExpression[]> occurrencesMap) {
     occurrencesMap.put(ReplaceChoice.NO, new PsiExpression[]{expr});
 
     final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();

@@ -338,7 +338,11 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.exceptions.SplitMulticatchIntention</className>
-        <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ReplaceArmWithTryFinallyIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>

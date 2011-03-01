@@ -334,11 +334,11 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   private void performSmartCompletion(){
-    new CodeCompletionHandlerBase(CompletionType.SMART).invoke(getProject(), getEditor(), getFile());
+    new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(getProject(), getEditor());
   }
 
   private void performNormalCompletion(){
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), getFile());
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
   private void select(char completionChar, int index){

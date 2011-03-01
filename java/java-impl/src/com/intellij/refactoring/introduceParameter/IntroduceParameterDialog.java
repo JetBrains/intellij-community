@@ -30,22 +30,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
@@ -57,36 +51,24 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private final Project myProject;
   private final List<UsageInfo> myClassMembersList;
   private final int myOccurenceNumber;
-  private final boolean myIsInvokedOnDeclaration;
   private final PsiMethod myMethodToSearchFor;
   private final PsiMethod myMethodToReplaceIn;
   private final boolean myMustBeFinal;
-  private final PsiParameter[] myParametersToRemove;
-  private final boolean[] myParametersToRemoveChecked;
   private final PsiExpression myExpression;
   private final PsiLocalVariable myLocalVar;
-  private final boolean myIsLocalVariable;
-  private final boolean myHasInitializer;
+  protected JCheckBox myCbDeclareFinal = null;
 
-//  private JComponent myParameterNameField = null;
+  //  private JComponent myParameterNameField = null;
   private NameSuggestionsField myParameterNameField;
   private JCheckBox myCbReplaceAllOccurences = null;
-  private JCheckBox myCbDeclareFinal = null;
   private JCheckBox myCbGenerateDelegate = null;
-  private StateRestoringCheckBox myCbDeleteLocalVariable = null;
-  private StateRestoringCheckBox myCbUseInitializer = null;
-
-  private JRadioButton myReplaceFieldsWithGettersNoneRadio = null;
-  private JRadioButton myReplaceFieldsWithGettersInaccessibleRadio = null;
-  private JRadioButton myReplaceFieldsWithGettersAllRadio = null;
-
-  private final ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
 
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
+  private IntroduceParameterSettingsPanel myPanel;
 
   IntroduceParameterDialog(@NotNull Project project,
                            @NotNull List<UsageInfo> classMembersList,
@@ -100,6 +82,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            @NotNull TIntArrayList parametersToRemove,
                            final boolean mustBeFinal) {
     super(project, true);
+    myPanel = new IntroduceParameterSettingsPanel(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurenceNumber;
@@ -107,22 +90,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myLocalVar = onLocalVariable;
     myMethodToReplaceIn = methodToReplaceIn;
     myMustBeFinal = mustBeFinal;
-    myIsInvokedOnDeclaration = onExpression == null;
     myMethodToSearchFor = methodToSearchFor;
-    myIsLocalVariable = onLocalVariable != null;
-    myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
-    final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
-    myParametersToRemove = new PsiParameter[parameters.length];
-    myParametersToRemoveChecked = new boolean[parameters.length];
-    parametersToRemove.forEach(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
-        myParametersToRemove[paramNum] = parameters[paramNum];
-        return true;
-      }
-    });
-
     setTitle(REFACTORING_NAME);
     init();
   }
@@ -137,17 +107,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   private boolean isReplaceAllOccurences() {
-    return myIsInvokedOnDeclaration || myCbReplaceAllOccurences != null && myCbReplaceAllOccurences.isSelected();
-  }
-
-  private boolean isDeleteLocalVariable() {
-    return myIsInvokedOnDeclaration || myCbDeleteLocalVariable != null && myCbDeleteLocalVariable.isSelected();
-  }
-
-  private boolean isUseInitializer() {
-    if(myIsInvokedOnDeclaration)
-      return myHasInitializer;
-    return myCbUseInitializer != null && myCbUseInitializer.isSelected();
+    return myPanel.myIsInvokedOnDeclaration || myCbReplaceAllOccurences != null && myCbReplaceAllOccurences.isSelected();
   }
 
   private boolean isGenerateDelegate() {
@@ -156,21 +116,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private String getParameterName() {
     return  myParameterNameField.getEnteredName().trim();
-  }
-
-  private int getReplaceFieldsWithGetters() {
-    if(myReplaceFieldsWithGettersAllRadio != null && myReplaceFieldsWithGettersAllRadio.isSelected()) {
-      return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL;
-    }
-    else if(myReplaceFieldsWithGettersInaccessibleRadio != null
-            && myReplaceFieldsWithGettersInaccessibleRadio.isSelected()) {
-      return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
-    }
-    else if(myReplaceFieldsWithGettersNoneRadio != null && myReplaceFieldsWithGettersNoneRadio.isSelected()) {
-      return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE;
-    }
-
-    return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -249,7 +194,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     gbConstraints.insets = new Insets(4, 0, 4, 8);
     gbConstraints.gridwidth = 2;
-    if (myOccurenceNumber > 1 && !myIsInvokedOnDeclaration) {
+    if (myOccurenceNumber > 1 && !myPanel.myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
       myCbReplaceAllOccurences = new NonFocusableCheckBox();
       myCbReplaceAllOccurences.setText(RefactoringBundle.message("replace.all.occurences", myOccurenceNumber));
@@ -273,144 +218,34 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myCbDeclareFinal.setEnabled(false);
     }
 
-
-    if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
-      myCbDeleteLocalVariable = new StateRestoringCheckBox();
-      myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.definition"));
-
-      if(myCbReplaceAllOccurences != null) {
-        gbConstraints.insets = new Insets(0, 16, 4, 8);
-      }
-      gbConstraints.gridy++;
-      panel.add(myCbDeleteLocalVariable, gbConstraints);
-      myCbDeleteLocalVariable.setSelected(settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE);
-
-      gbConstraints.insets = new Insets(4, 0, 4, 8);
-      if(myHasInitializer) {
-        myCbUseInitializer = new StateRestoringCheckBox();
-        myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
-        myCbUseInitializer.setSelected(settings.INTRODUCE_PARAMETER_USE_INITIALIZER);
-
-        gbConstraints.gridy++;
-        panel.add(myCbUseInitializer, gbConstraints);
-      }
+    if(myCbReplaceAllOccurences != null) {
+      gbConstraints.insets = new Insets(0, 16, 4, 8);
     }
+    myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
 
+    gbConstraints.insets =  new Insets(4, 0, 4, 8);
     gbConstraints.gridy++;
     myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     panel.add(myCbGenerateDelegate, gbConstraints);
 
-    final JCheckBox[] removeParamsCb = new JCheckBox[myParametersToRemove.length];
-    for (int i = 0; i < myParametersToRemove.length; i++) {
-      PsiParameter parameter = myParametersToRemove[i];
-      if (parameter == null) continue;
-      final NonFocusableCheckBox cb = new NonFocusableCheckBox(RefactoringBundle.message("remove.parameter.0.no.longer.used",
-                                                                                         parameter.getName()));
-      removeParamsCb[i] = cb;
-      cb.setSelected(true);
-      gbConstraints.gridy++;
-      panel.add(cb, gbConstraints);
-      final int i1 = i;
-      cb.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          myParametersToRemoveChecked[i1] = cb.isSelected();
-        }
-      });
-      myParametersToRemoveChecked[i] = true;
-    }
-
-    updateControls(removeParamsCb);
+    final JCheckBox[] removeParamsCb = myPanel.createRemoveParamsPanel(gbConstraints, panel);
     if (myCbReplaceAllOccurences != null) {
       myCbReplaceAllOccurences.addItemListener(
-              new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                  updateControls(removeParamsCb);
-
-                }
-              }
+        new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            myPanel.updateControls(removeParamsCb);
+          }
+        }
       );
     }
     return panel;
   }
 
-  private void updateControls(JCheckBox[] removeParamsCb) {
-    if (myCbReplaceAllOccurences != null) {
-      for (JCheckBox box : removeParamsCb) {
-        if (box != null) {
-          box.setEnabled(myCbReplaceAllOccurences.isSelected());
-        }
-      }
-      myTypeSelectorManager.setAllOccurences(myCbReplaceAllOccurences.isSelected());
-      if(myCbReplaceAllOccurences.isSelected()) {
-        if (myCbDeleteLocalVariable != null) {
-          myCbDeleteLocalVariable.makeSelectable();
-        }
-      }
-      else {
-        if (myCbDeleteLocalVariable != null) {
-          myCbDeleteLocalVariable.makeUnselectable(false);
-        }
-      }
-    } else {
-      myTypeSelectorManager.setAllOccurences(myIsInvokedOnDeclaration);
-    }
 
-  }
-
-  private JPanel createReplaceFieldsWithGettersPanel() {
-    JPanel radioButtonPanel = new JPanel(new GridBagLayout());
-
-    radioButtonPanel.setBorder(IdeBorderFactory.createRoundedBorder());
-
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    radioButtonPanel.add(
-            new JLabel(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters")), gbConstraints);
-
-    myReplaceFieldsWithGettersNoneRadio = new JRadioButton();
-    myReplaceFieldsWithGettersNoneRadio.setText(RefactoringBundle.message("do.not.replace"));
-
-    myReplaceFieldsWithGettersInaccessibleRadio = new JRadioButton();
-    myReplaceFieldsWithGettersInaccessibleRadio.setText(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context"));
-
-    myReplaceFieldsWithGettersAllRadio = new JRadioButton();
-    myReplaceFieldsWithGettersAllRadio.setText(RefactoringBundle.message("replace.all.fields"));
-
-    gbConstraints.gridy++;
-    radioButtonPanel.add(myReplaceFieldsWithGettersNoneRadio, gbConstraints);
-    gbConstraints.gridy++;
-    radioButtonPanel.add(myReplaceFieldsWithGettersInaccessibleRadio, gbConstraints);
-    gbConstraints.gridy++;
-    radioButtonPanel.add(myReplaceFieldsWithGettersAllRadio, gbConstraints);
-
-    final int currentSetting = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
-
-    myReplaceFieldsWithGettersButtonGroup.add(myReplaceFieldsWithGettersNoneRadio);
-    myReplaceFieldsWithGettersButtonGroup.add(myReplaceFieldsWithGettersInaccessibleRadio);
-    myReplaceFieldsWithGettersButtonGroup.add(myReplaceFieldsWithGettersAllRadio);
-
-    if(currentSetting == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL) {
-      myReplaceFieldsWithGettersAllRadio.setSelected(true);
-    }
-    else if(currentSetting == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE) {
-      myReplaceFieldsWithGettersInaccessibleRadio.setSelected(true);
-    }
-    else if(currentSetting == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
-      myReplaceFieldsWithGettersNoneRadio.setSelected(true);
-    }
-
-    return radioButtonPanel;
-  }
 
   protected JComponent createCenterPanel() {
     if(Util.anyFieldsWithGettersPresent(myClassMembersList)) {
-      return createReplaceFieldsWithGettersPanel();
+      return myPanel.createReplaceFieldsWithGettersPanel();
     }
     else
       return null;
@@ -419,19 +254,12 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   protected void doAction() {
     final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
-            getReplaceFieldsWithGetters();
+            myPanel.getReplaceFieldsWithGetters();
     if (myCbDeclareFinal != null && !myMustBeFinal) {
       settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myCbDeclareFinal.isSelected());
     }
 
-    if(myCbDeleteLocalVariable != null) {
-      settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE =
-              myCbDeleteLocalVariable.isSelectedWhenSelectable();
-    }
-
-    if (myCbUseInitializer != null) {
-      settings.INTRODUCE_PARAMETER_USE_INITIALIZER = myCbUseInitializer.isSelectedWhenSelectable();
-    }
+    myPanel.saveSettings(settings);
 
     myNameSuggestionsManager.nameSelected();
 
@@ -439,9 +267,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     PsiExpression parameterInitializer = myExpression;
     if (myLocalVar != null) {
-      if (isUseInitializer()) {
+      if (myPanel.isUseInitializer()) {
       parameterInitializer = myLocalVar.getInitializer();      }
-      isDeleteLocalVariable = isDeleteLocalVariable();
+      isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
 
     final IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
@@ -449,19 +277,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
       getParameterName(), isReplaceAllOccurences(),
-      getReplaceFieldsWithGetters(), isDeclareFinal(), isGenerateDelegate(), getSelectedType(), getParametersToRemove());
+      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), isGenerateDelegate(), getSelectedType(), myPanel.getParametersToRemove());
     invokeRefactoring(processor);
     myParameterNameField.requestFocusInWindow();
-  }
-
-  private TIntArrayList getParametersToRemove() {
-    TIntArrayList parameters = new TIntArrayList();
-    for (int i = 0; i < myParametersToRemoveChecked.length; i++) {
-      if (myParametersToRemoveChecked[i]) {
-        parameters.add(i);
-      }
-    }
-    return parameters;
   }
 
 
@@ -473,5 +291,37 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
+  private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
+    public IntroduceParameterSettingsPanel(Project project,
+                                           PsiLocalVariable onLocalVariable,
+                                           PsiExpression onExpression,
+                                           PsiMethod methodToReplaceIn, TIntArrayList parametersToRemove) {
+      super(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
+    }
 
+    @Override
+    protected void updateControls(JCheckBox[] removeParamsCb) {
+      if (myCbReplaceAllOccurences != null) {
+        for (JCheckBox box : removeParamsCb) {
+          if (box != null) {
+            box.setEnabled(myCbReplaceAllOccurences.isSelected());
+          }
+        }
+        myTypeSelectorManager.setAllOccurences(myCbReplaceAllOccurences.isSelected());
+        if (myCbReplaceAllOccurences.isSelected()) {
+          if (myCbDeleteLocalVariable != null) {
+            myCbDeleteLocalVariable.makeSelectable();
+          }
+        }
+        else {
+          if (myCbDeleteLocalVariable != null) {
+            myCbDeleteLocalVariable.makeUnselectable(false);
+          }
+        }
+      }
+      else {
+        myTypeSelectorManager.setAllOccurences(myIsInvokedOnDeclaration);
+      }
+    }
+  }
 }

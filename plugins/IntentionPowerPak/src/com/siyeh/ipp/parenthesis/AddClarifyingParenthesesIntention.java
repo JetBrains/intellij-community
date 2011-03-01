@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,18 @@ public class AddClarifyingParenthesesIntention extends Intention {
         }
         final StringBuilder newExpression =
                 createReplacementText(expression, new StringBuilder());
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiConditionalExpression) {
+            final PsiConditionalExpression conditionalExpression =
+                    (PsiConditionalExpression) parent;
+            final PsiExpression condition =
+                    conditionalExpression.getCondition();
+            if (expression == condition) {
+                replaceExpression('(' + newExpression.toString() + ')',
+                        expression);
+                return;
+            }
+        }
         replaceExpression(newExpression.toString(), expression);
     }
 

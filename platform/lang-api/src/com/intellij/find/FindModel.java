@@ -17,11 +17,13 @@ package com.intellij.find;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -31,6 +33,26 @@ import java.util.regex.PatternSyntaxException;
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.FindModel");
+
+  public interface FindModelObserver {
+    void findModelChanged(FindModel findModel);
+  }
+
+  private CopyOnWriteArrayList<FindModelObserver> myObservers = new CopyOnWriteArrayList<FindModelObserver>();
+
+  public void addObserver(FindModelObserver observer) {
+    myObservers.add(observer);
+  }
+
+  public void removeObserver(FindModelObserver observer) {
+    myObservers.remove(observer);
+  }
+
+  private void notifyObservers() {
+    for (FindModelObserver observer : myObservers) {
+      observer.findModelChanged(this);
+    }
+  }
 
   private String myStringToFind = "";
   private String myStringToReplace = "";
@@ -134,8 +156,12 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    */
   public void setStringToFind(@NotNull String s) {
     LOG.assertTrue(s.length() > 0);
+    boolean changed = !StringUtil.equals(s, myStringToFind);
     myStringToFind = s;
     myPattern = NO_PATTERN;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -154,7 +180,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param s the string to replace with.
    */
   public void setStringToReplace(@NotNull String s) {
+    boolean changed = !StringUtil.equals(s, myStringToReplace);
     myStringToReplace = s;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -172,7 +202,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val true if the operation is a Replace, false if it is a Find.
    */
   public void setReplaceState(boolean val) {
+    boolean changed = val != isReplaceState;
     isReplaceState = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -190,7 +224,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val true if the origin is From Cursor, false if it is Entire Scope.
    */
   public void setFromCursor(boolean val) {
+    boolean changed = val != isFromCursor;
     isFromCursor = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -208,7 +246,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val true if the find is forward, false if it is backward.
    */
   public void setForward(boolean val) {
+    boolean changed = val != isForward;
     isForward = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -226,7 +268,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val the value of the Regular Expressions flag.
    */
   public void setRegularExpressions(boolean val) {
+    boolean changed = val != isRegularExpressions;
     isRegularExpressions = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -244,7 +290,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val the value of the Case Sensitive flag.
    */
   public void setCaseSensitive(boolean val) {
+    boolean changed = val != isCaseSensitive;
     isCaseSensitive = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -262,7 +312,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val true if the operation affects multiple files, false if it affects a single file.
    */
   public void setMultipleFiles(boolean val) {
+    boolean changed = val != isMultipleFiles;
     isMultipleFiles = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -280,7 +334,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param val the value of the Prompt on Replace flag.
    */
   public void setPromptOnReplace(boolean val) {
+    boolean changed = val != isPromptOnReplace;
     isPromptOnReplace = val;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -298,7 +356,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param isWholeWordsOnly the value of the Whole Words Only flag.
    */
   public void setWholeWordsOnly(boolean isWholeWordsOnly) {
+    boolean changed = isWholeWordsOnly != this.isWholeWordsOnly;
     this.isWholeWordsOnly = isWholeWordsOnly;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -316,7 +378,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param isGlobal true if the operation affects the entire file, false if it affects the selected text.
    */
   public void setGlobal(boolean isGlobal) {
+    boolean changed = this.isGlobal != isGlobal;
     this.isGlobal = isGlobal;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -334,7 +400,9 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param replaceAll the value of the Replace All flag.
    */
   public void setReplaceAll(boolean replaceAll) {
+    boolean changed = isReplaceAll != replaceAll;
     isReplaceAll = replaceAll;
+    notifyObservers();
   }
 
   /**
@@ -352,7 +420,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTab the value of the Open in New Tab flag.
    */
   public void setOpenInNewTab(boolean showInNewTab) {
+    boolean changed = showInNewTab != isOpenNewTab;
     isOpenNewTab = showInNewTab;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -370,7 +442,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTabEnabled true if Open in New Tab is enabled, false otherwise.
    */
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
+    boolean changed = isOpenInNewTabEnabled != showInNewTabEnabled;
     isOpenInNewTabEnabled = showInNewTabEnabled;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -388,7 +464,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param showInNewTabVisible true if Open in New Tab is visible, false otherwise.
    */
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
+    boolean changed = showInNewTabVisible != isOpenNewTabVisible;
     isOpenNewTabVisible = showInNewTabVisible;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -407,7 +487,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param directoryName the directory scope.
    */
   public void setDirectoryName(String directoryName) {
+    boolean changed = !StringUtil.equals(directoryName, directoryName);
     this.directoryName = directoryName;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -425,7 +509,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param withSubdirectories true if directories are searched recursively, false otherwise.
    */
   public void setWithSubdirectories(boolean withSubdirectories) {
+    boolean changed = withSubdirectories != isWithSubdirectories;
     isWithSubdirectories = withSubdirectories;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -445,7 +533,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param projectScope true if the whole project scope is selected, false otherwise.
    */
   public void setProjectScope(boolean projectScope) {
+    boolean changed = projectScope != isProjectScope;
     isProjectScope = projectScope;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public Object clone() {
@@ -499,7 +591,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param search true if the operation moves between highlighted regions, false otherwise.
    */
   public void setSearchHighlighters(boolean search) {
+    boolean changed = search != isSearchHighlighters;
     isSearchHighlighters = search;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -517,7 +613,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param fileFilter the file name filter text.
    */
   public void setFileFilter(String fileFilter) {
+    boolean changed = !StringUtil.equals(fileFilter, this.fileFilter);
     this.fileFilter = fileFilter;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -538,7 +638,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param moduleName the name of the module used as the scope.
    */
   public void setModuleName(String moduleName) {
+    boolean changed = !StringUtil.equals(moduleName, this.moduleName);
     this.moduleName = moduleName;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -560,7 +664,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @since 5.1
    */
   public void setFindAll(final boolean findAll) {
+    boolean changed = isFindAll != findAll;
     isFindAll = findAll;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   /**
@@ -580,7 +688,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @since 5.1
    */
   public void setFindAllEnabled(final boolean findAllEnabled) {
+    boolean changed = isFindAllEnabled != findAllEnabled;
     isFindAllEnabled = findAllEnabled;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public String getCustomScopeName() {
@@ -588,7 +700,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScopeName(String customScopeName) {
+    boolean changed = !StringUtil.equals(customScopeName, this.customScopeName);
     this.customScopeName = customScopeName;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public SearchScope getCustomScope() {
@@ -596,7 +712,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScope(final SearchScope customScope) {
+    boolean changed = this.customScope != null ? this.customScope.equals(customScope) : (customScope != null);
     this.customScope = customScope;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public boolean isCustomScope() {
@@ -604,7 +724,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScope(boolean customScope) {
+    boolean changed = isCustomScope != customScope;
     isCustomScope = customScope;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public boolean isInStringLiteralsOnly() {
@@ -612,7 +736,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setInStringLiteralsOnly(boolean inStringLiteralsOnly) {
+    boolean changed = isInStringLiteralsOnly != inStringLiteralsOnly;
     isInStringLiteralsOnly = inStringLiteralsOnly;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   public boolean isInCommentsOnly() {
@@ -620,7 +748,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setInCommentsOnly(boolean inCommentsOnly) {
+    boolean changed = isInCommentsOnly != inCommentsOnly;
     isInCommentsOnly = inCommentsOnly;
+    if (changed) {
+      notifyObservers();
+    }
   }
 
   private static final Pattern NO_PATTERN = Pattern.compile("");

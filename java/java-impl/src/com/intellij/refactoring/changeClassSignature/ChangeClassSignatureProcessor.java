@@ -22,16 +22,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -97,13 +97,31 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {
     final PsiTypeParameter[] typeParameters = myClass.getTypeParameters();
-    boolean[] toRemoveParms = detectRemovedParameters(typeParameters);
+    final boolean[] toRemoveParms = detectRemovedParameters(typeParameters);
 
     for (final UsageInfo usage : usages) {
       LOG.assertTrue(usage.getElement() instanceof PsiJavaCodeReferenceElement);
       processUsage(usage, typeParameters, toRemoveParms);
     }
-
+    final Map<PsiTypeElement, PsiClass> supersMap = new HashMap<PsiTypeElement, PsiClass>();
+    myClass.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitTypeElement(PsiTypeElement typeElement) {
+        super.visitTypeElement(typeElement);
+        final PsiType type = typeElement.getType();
+        final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+        if (psiClass instanceof PsiTypeParameter) {
+          final int i = ArrayUtil.find(typeParameters, psiClass);
+          if ( i >= 0 && i < toRemoveParms.length && toRemoveParms[i]) {
+           supersMap.put(typeElement, psiClass.getSuperClass());
+          }
+        }
+      }
+    });
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+    for (Map.Entry<PsiTypeElement, PsiClass> classEntry : supersMap.entrySet()) {
+      classEntry.getKey().replace(elementFactory.createTypeElement(elementFactory.createType(classEntry.getValue())));
+    }
     changeClassSignature(typeParameters, toRemoveParms);
   }
 

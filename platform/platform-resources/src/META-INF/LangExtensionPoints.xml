@@ -382,6 +382,9 @@
   <extensionPoint name="testCreator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+  <extensionPoint name="testGenerator"
+                  interface="com.intellij.testIntegration.createTest.TestGenerator"/>
+
   <extensionPoint name="lang.smartEnterProcessor"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 

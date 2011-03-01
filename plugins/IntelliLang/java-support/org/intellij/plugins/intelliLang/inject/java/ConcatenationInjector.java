@@ -167,7 +167,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           final int index = ArrayUtil.indexOf(list.getExpressions(), expression);
           final String methodName;
           if (psiCallExpression instanceof PsiMethodCallExpression) {
-            methodName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
+            final String referenceName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
+            if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
+              final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiCallExpression, PsiClass.class, true);
+              final PsiClass psiTargetClass = "super".equals(referenceName)? psiClass == null ? null : psiClass.getSuperClass() : psiClass;
+              methodName = psiTargetClass == null? null : psiTargetClass.getName();
+            }
+            else {
+              methodName = referenceName;
+            }
           }
           else if (psiCallExpression instanceof PsiNewExpression) {
             final PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();

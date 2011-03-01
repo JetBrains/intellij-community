@@ -460,7 +460,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
 
     final Condition<String> prefixMatcher = processor.getHint(JavaCompletionProcessor.NAME_FILTER);
 
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
@@ -486,7 +486,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
         }
       }
     }
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.PACKAGE)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         PsiPackage aPackage = findSubPackageByName(nameHint.getName(state));

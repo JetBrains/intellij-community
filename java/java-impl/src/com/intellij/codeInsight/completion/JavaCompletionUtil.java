@@ -456,10 +456,10 @@ public class JavaCompletionUtil {
         return member.getName();
       }
 
-      public boolean shouldProcess(DeclaractionKind kind) {
-        return member instanceof PsiEnumConstant ? kind == DeclaractionKind.ENUM_CONST :
-               member instanceof PsiField ? kind == DeclaractionKind.FIELD :
-               kind == DeclaractionKind.METHOD;
+      public boolean shouldProcess(DeclarationKind kind) {
+        return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
+               member instanceof PsiField ? kind == DeclarationKind.FIELD :
+               kind == DeclarationKind.METHOD;
       }
 
       @Override

@@ -466,12 +466,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
           final NameHint nameHint = processor.getHint(NameHint.KEY);
           final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
           if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.METHOD)) {
+            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
               if (!processor.execute(myValuesMethod, ResolveState.initial())) return false;
             }
           }
           if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
-            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.METHOD)) {
+            if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
               if (!processor.execute(myValueOfMethod, ResolveState.initial())) return false;
             }
           }

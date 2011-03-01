@@ -1,6 +1,6 @@
 package com.siyeh.ig.finalization;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class FinalizeCallsSuperFinalizeInspectionTest extends IGInspectionTestCase {
 

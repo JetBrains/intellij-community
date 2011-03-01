@@ -1,6 +1,6 @@
 package com.siyeh.ig.jdk;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class AutoBoxingInspectionTest extends IGInspectionTestCase {
 

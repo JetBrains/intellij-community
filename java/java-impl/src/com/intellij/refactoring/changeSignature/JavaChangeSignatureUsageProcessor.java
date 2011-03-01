@@ -452,7 +452,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         else {
           final int newVarargCount = newArgsLength - newNonVarargCount;
           LOG.assertTrue(newVarargCount == 0 || newVarargCount == varargCount);
-          System.arraycopy(args, nonVarargCount, newArgs, newNonVarargCount, newVarargCount);
+          for (int i = newNonVarargCount; i < newArgsLength; i++){
+            final int oldIndex = newParms[newNonVarargCount].getOldIndex();
+            if (oldIndex >= 0 && oldIndex != nonVarargCount) {
+              newArgs[i] = createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args);
+            } else {
+              System.arraycopy(args, nonVarargCount, newArgs, newNonVarargCount, newVarargCount);
+              break;
+            }
+          }
         }
         ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newArgs), ExpressionList.INSTANCE, changeInfo.toRemoveParm());
       }

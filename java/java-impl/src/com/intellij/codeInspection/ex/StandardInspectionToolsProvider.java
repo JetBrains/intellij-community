@@ -118,7 +118,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UnknownGuardInspection.class,
 
       ExplicitTypeCanBeDiamondInspection.class,
-      SafeVarargsCanBeUsedInspection.class,
+      PossibleHeapPollutionVarargsInspection.class,
       RedundantUncheckedSuppressWarningsInspection.class
     };
   }

@@ -60,7 +60,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -95,7 +94,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
   private final Project myProject;
-  private final List<TabInfo> myTabsHistory = new ArrayList<TabInfo>();
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
 
 
@@ -1625,23 +1623,26 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return splitters;
   }
 
-  public void selectionChanged(VirtualFile file, EditorWindow window) {
-    final Pair<VirtualFile, EditorWindow> selection = new Pair<VirtualFile, EditorWindow>(file, window);
-    mySelectionHistory.remove(selection);
-    mySelectionHistory.add(0, selection);
-  }
-
   public List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
+    final List<Pair<VirtualFile, EditorWindow>> toRemove = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+    for (Pair<VirtualFile, EditorWindow> pair : mySelectionHistory) {
+      if (pair.second.getFiles().length == 0) {
+        toRemove.add(pair);
+      }
+    }
+    if (!toRemove.isEmpty()) {
+      mySelectionHistory.removeAll(toRemove);
+    }
     return mySelectionHistory;
   }
 
   public void addSelectionRecord(VirtualFile file, EditorWindow window) {
-    final Pair<VirtualFile, EditorWindow> record = new Pair<VirtualFile, EditorWindow>(file, window);
+    final Pair<VirtualFile, EditorWindow> record = Pair.create(file, window);
     mySelectionHistory.remove(record);
     mySelectionHistory.add(0, record);
   }
 
-  private void removeSelectionRecord(VirtualFile file, EditorWindow window) {
-    mySelectionHistory.remove(new Pair<VirtualFile, EditorWindow>(file, window));
+  public void removeSelectionRecord(VirtualFile file, EditorWindow window) {
+    mySelectionHistory.remove(Pair.create(file, window));
   }
 }

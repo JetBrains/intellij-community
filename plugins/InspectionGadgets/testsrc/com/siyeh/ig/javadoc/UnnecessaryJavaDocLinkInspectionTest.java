@@ -1,6 +1,6 @@
 package com.siyeh.ig.javadoc;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryJavaDocLinkInspectionTest extends IGInspectionTestCase {
 

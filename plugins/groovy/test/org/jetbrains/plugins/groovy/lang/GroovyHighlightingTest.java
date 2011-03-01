@@ -354,6 +354,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyResultOfAssignmentUsedInspection());
   }
 
+
+  public void testThisTypeInStaticContext() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
   public void testCodeBlockReparse() throws IOException {
     myFixture.configureByText("a.groovy", "foo 'a', {<caret>}");
     myFixture.checkHighlighting(true, false, false);

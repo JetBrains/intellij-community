@@ -1,6 +1,6 @@
 package com.siyeh.ig.imports;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnusedImportInspectionTest extends IGInspectionTestCase {
 
