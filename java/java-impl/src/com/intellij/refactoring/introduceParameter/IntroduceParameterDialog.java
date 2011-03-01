@@ -209,7 +209,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       gbConstraints.insets = new Insets(0, 16, 4, 8);
     }
     myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
-
+    myPanel.createRemoveParamsPanel(gbConstraints, panel);
     gbConstraints.insets =  new Insets(4, 0, 4, 8);
     gbConstraints.gridy++;
     myPanel.createDelegateCb(gbConstraints, panel);
