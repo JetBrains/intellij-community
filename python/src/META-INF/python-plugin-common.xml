@@ -545,9 +545,14 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="ExecuteInPyConsoleAction" class="com.jetbrains.python.actions.ExecuteInConsoleAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+    </action>
+
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
     </action>
+
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
             description="Create a new directory and __init__.py inside it" icon="/nodes/packageClosed.png">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>

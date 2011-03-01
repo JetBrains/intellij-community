@@ -1,6 +1,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -17,5 +18,14 @@ public class PydevLanguageConsole extends LanguageConsoleImpl {
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+  }
+
+  public void addTextRangeToHistory(final String text) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        getCurrentEditor().getDocument().insertString(0, text);
+      }
+    });
+    queueUiUpdate(true);
   }
 }

@@ -150,27 +150,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
         @Override
         public void run() {
           // Propagate console communication to language console
-          ((PydevLanguageConsoleView)getConsoleView()).setConsoleCommunication(myPydevConsoleCommunication);
+          PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
 
-          final LanguageConsoleImpl console = getConsoleView().getConsole();
+          consoleView.setConsoleCommunication(myPydevConsoleCommunication);
+          consoleView.setExecutionHandler(getConsoleExecuteActionHandler());
 
           enableConsoleExecuteAction();
 
-          // Make executed statements visible to developers
-          PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-
-          getConsoleExecuteActionHandler().processLine(PYTHON_ENV_COMMAND);
+          consoleView.executeStatement(PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
 
           for (String statement : statements2execute) {
-            PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-            getConsoleExecuteActionHandler().processLine(statement + "\n");
+            consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              console.flushAllUiUpdates();
-            }
-          });
+
+          consoleView.flushUIUpdates();
         }
       });
     }
