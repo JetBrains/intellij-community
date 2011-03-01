@@ -97,6 +97,10 @@ public class JdkChooserPanel extends JPanel {
     return myCurrentJdk;
   }
 
+  public Object[] getAllJdks() {
+    return myListModel.toArray();
+  }
+
   public void editJdkTable() {
     ProjectJdksEditor editor = new ProjectJdksEditor((Sdk)myList.getSelectedValue(),
                                                      myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject(),
