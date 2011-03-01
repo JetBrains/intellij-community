@@ -44,6 +44,42 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doVariantableTest("abx", "aby");
   }
 
+  public void testNamedParameters1() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParameters2() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInMap1() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInMap2() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInSecondMap1() throws Throwable {
+    doVariantableTest();
+  }
+
+  public void testNamedParametersInSecondMap2() throws Throwable {
+    doVariantableTest();
+  }
+
+  public void testNamedParametersExcludeExisted() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersExcludeExisted2() throws Throwable {
+    doVariantableTest("abx", "aby", "abz");
+  }
+
+  public void testNamedParametersExcludeExistedMap() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
   public void testNamedParametersForNotMap() throws Throwable {
     doBasicTest();
   }

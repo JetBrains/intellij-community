@@ -37,6 +37,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -60,6 +62,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern;
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -88,11 +92,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER = PlatformPatterns
     .or(psiElement(PsiElement.class).withParent(GrVariable.class).afterLeaf(MODIFIERS),
         psiElement(PsiElement.class).withParent(GrParameter.class));
-
-  private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
-    psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
-  private static final ElementPattern<PsiElement> IN_MAP_KEY_ARGUMENT_LIST_OF_CALL =
-    psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(psiElement(GrNamedArgument.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class))));
 
   private static final String[] THIS_SUPER = {"this", "super"};
   private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
@@ -291,8 +290,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, new MapArgumentCompletionProvider());
-    extend(CompletionType.BASIC, IN_MAP_KEY_ARGUMENT_LIST_OF_CALL, new MapArgumentCompletionProvider());
+    MapArgumentCompletionProvider.register(this);
 
     // class name stuff
 
