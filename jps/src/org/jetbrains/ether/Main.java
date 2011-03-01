@@ -44,8 +44,8 @@ public class Main {
         myOptions = new Options(descrs);
     }
 
-    private static boolean doDebug () {
-        return myOptions.get ("debug") instanceof Options.Switch;
+    private static boolean doDebug() {
+        return myOptions.get("debug") instanceof Options.Switch;
     }
 
     private static boolean doSave() {
@@ -80,7 +80,7 @@ public class Main {
         return myOptions.get("clean") instanceof Options.Switch;
     }
 
-    private static String getScript () {
+    private static String getScript() {
         final Options.Argument arg = myOptions.get("script");
 
         if (arg instanceof Options.Value)
@@ -183,18 +183,24 @@ public class Main {
                     if (make instanceof Options.Value) {
                         final String module = ((Options.Value) make).get();
 
-                        System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
+                        if (module.equals("*")) {
+                            System.out.println("Making all modules in project \"" + prj + "\"");
+                        } else {
+                            System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
+                        }
+
                         project = ProjectWrapper.load(prj, getScript());
                         project.makeModule(module, doForce(), doTests());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
-                        System.out.println("Making project \"" + prj + "\"");
+                        System.out.println("Making outdated modules in project \"" + prj + "\"");
                         project = ProjectWrapper.load(prj, getScript());
                         project.make(doForce(), doTests());
                         project.save();
                         saved = true;
-                    };
+                    }
+                    ;
                     break;
             }
 

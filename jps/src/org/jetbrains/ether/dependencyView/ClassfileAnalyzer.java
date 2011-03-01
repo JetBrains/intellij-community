@@ -88,10 +88,6 @@ public class ClassfileAnalyzer {
             }
         };
 
-        FieldRepr[] dummyFields = new FieldRepr[0];
-        MethodRepr[] dummyMethods = new MethodRepr[0];
-        String[] dummyStrings = new String[0];
-
         Boolean takeIntoAccount = false;
 
         final StringCache.S fileName;
@@ -116,7 +112,7 @@ public class ClassfileAnalyzer {
 
         public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
-                    new ClassRepr(fileName, name, signature, superClass, interfaces, nestedClasses.toArray(dummyStrings), fields.toArray(dummyFields), methods.toArray(dummyMethods)) : null;
+                    new ClassRepr(fileName, name, signature, superClass, interfaces, nestedClasses, fields, methods) : null;
 
             if (repr != null) {
                 repr.updateClassUsages(usages);

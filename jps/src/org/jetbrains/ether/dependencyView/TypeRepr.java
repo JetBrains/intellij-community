@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class TypeRepr {
 
     public static abstract class AbstractType implements RW.Writable {
-        public abstract void updateClassUsages (Set<UsageRepr.Usage> s);
+        public abstract void updateClassUsages(Set<UsageRepr.Usage> s);
     }
 
     public static class PrimitiveType extends AbstractType {
@@ -128,22 +129,42 @@ public class TypeRepr {
         }
     }
 
-    public static ClassType createClassType (final String s) {
-        return (ClassType) getType (new ClassType (s));
+    public static ClassType createClassType(final String s) {
+        return (ClassType) getType(new ClassType(s));
     }
 
-    public static ClassType[] createClassType (final String[] s) {
+    public static ClassType[] createClassType(final String[] s) {
         if (s == null) {
             return null;
         }
 
         final ClassType[] types = new ClassType[s.length];
 
-        for (int i=0; i<types.length; i++) {
+        for (int i = 0; i < types.length; i++) {
             types[i] = createClassType(s[i]);
         }
 
         return types;
+    }
+
+    public static Collection<AbstractType> createClassType(final String[] s, final Collection<AbstractType> acc) {
+        if (s == null) {
+            for (String ss : s) {
+                acc.add(createClassType(ss));
+            }
+        }
+
+        return acc;
+    }
+
+    public static Collection<AbstractType> createClassType(final Collection<String> s, final Collection<AbstractType> acc) {
+        if (s != null) {
+            for (String ss : s) {
+                acc.add(createClassType(ss));
+            }
+        }
+
+        return acc;
     }
 
     private static final Map<AbstractType, AbstractType> map = new HashMap<AbstractType, AbstractType>();
@@ -175,28 +196,28 @@ public class TypeRepr {
         }
     }
 
-    public static AbstractType getType (final Type t) {
-        return getType (t.getDescriptor());
+    public static AbstractType getType(final Type t) {
+        return getType(t.getDescriptor());
     }
 
-    public static AbstractType[] getType (final Type[] t) {
+    public static AbstractType[] getType(final Type[] t) {
         final AbstractType[] r = new AbstractType[t.length];
 
-        for (int i = 0; i<r.length; i++)
-            r[i] = getType (t[i]);
+        for (int i = 0; i < r.length; i++)
+            r[i] = getType(t[i]);
 
         return r;
     }
 
-    public static AbstractType[] getType (final String[] t) {
+    public static AbstractType[] getType(final String[] t) {
         if (t == null) {
             return null;
         }
 
         final AbstractType[] types = new AbstractType[t.length];
 
-        for (int i=0; i<types.length; i++) {
-            types[i] = getType (Type.getType (t[i]));
+        for (int i = 0; i < types.length; i++) {
+            types[i] = getType(Type.getType(t[i]));
         }
 
         return types;
@@ -225,15 +246,15 @@ public class TypeRepr {
                 }
             }
 
-            for (int i = 0; i<level; i++) {
-                elementType = getType (new ArrayType (elementType));
+            for (int i = 0; i < level; i++) {
+                elementType = getType(new ArrayType(elementType));
             }
 
             return elementType;
         }
     };
 
-    public static RW.ToWritable<AbstractType> fromAbstractType = new RW.ToWritable<AbstractType> () {
+    public static RW.ToWritable<AbstractType> fromAbstractType = new RW.ToWritable<AbstractType>() {
         public RW.Writable convert(final AbstractType x) {
             return new RW.Writable() {
                 public void write(final BufferedWriter w) {

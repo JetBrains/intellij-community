@@ -74,6 +74,23 @@ public class FieldRepr implements RW.Writable {
         value = readTyped(r, t);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FieldRepr fieldRepr = (FieldRepr) o;
+
+        if (name != null ? !name.equals(fieldRepr.name) : fieldRepr.name != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return name != null ? name.hashCode() : 0;
+    }
+
     public void write(final BufferedWriter w) {
         RW.writeln(w, name.value);
         RW.writeln(w, Integer.toString(access));
@@ -83,6 +100,7 @@ public class FieldRepr implements RW.Writable {
 
         if (value instanceof String) {
             RW.writeln(w, "string");
+
             RW.writeEncodedString(w, (String) value);
         } else if (value instanceof Integer) {
             RW.writeln(w, "integer");
