@@ -48,6 +48,16 @@ import java.util.Map;
  */
 public class FormattingProgressIndicatorImpl extends Task.Modal implements FormattingProgressIndicator {
 
+  /**
+   * Holds flag that indicates whether formatting was cancelled by end-user or not.
+   */
+  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
+  
   private static final Logger LOG = Logger.getInstance("#" + FormattingProgressIndicatorImpl.class.getName());
 
   /**
@@ -266,6 +276,7 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
   private class MyCancelCallback implements Runnable {
     @Override
     public void run() {
+      FORMATTING_CANCELLED_FLAG.set(true);
       myRunning = false;
       VirtualFile file = myFile.get();
       Document document = myDocument.get();

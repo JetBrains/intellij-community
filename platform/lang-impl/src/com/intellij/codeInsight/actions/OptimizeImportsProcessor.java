@@ -27,6 +27,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.FutureTask;
+
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
   private static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
@@ -52,8 +54,9 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @NotNull
-  protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
+  protected FutureTask<Boolean> preprocessFile(final PsiFile file) throws IncorrectOperationException {
     final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forFile(file);
-    return optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
+    Runnable runnable = optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
+    return new FutureTask<Boolean>(runnable, true);
   }
 }
