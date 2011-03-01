@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodUpHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    LookupManager.getInstance(project).hideActiveLookup();
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int caretOffset = editor.getCaretModel().getOffset();
