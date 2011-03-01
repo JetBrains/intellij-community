@@ -36,9 +36,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -76,7 +74,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.android.util.AndroidUtils.EMULATOR;
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
@@ -339,26 +340,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @Override
   public void initFacet() {
-    if (getConfiguration().ADD_ANDROID_LIBRARY && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          AndroidPlatform platform = getConfiguration().getAndroidPlatform();
-          if (platform != null) {
-            final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-            Library library = platform.getLibrary();
-            if (!((LibraryEx)library).isDisposed() && model.findLibraryOrderEntry(library) == null) {
-              LibraryOrderEntry entry = model.addLibraryEntry(library);
-              entry.setScope(DependencyScope.PROVIDED);
-            }
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                model.commit();
-              }
-            });
-          }
-        }
-      });
-    }
     StartupManager.getInstance(getModule().getProject()).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         myListener = new AndroidResourceFilesListener(AndroidFacet.this);

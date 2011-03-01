@@ -16,12 +16,19 @@
 
 package org.jetbrains.android.newProject;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectJdkForModuleStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.ui.Messages;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 
@@ -52,15 +59,47 @@ public class AndroidModuleType extends ModuleType<AndroidModuleBuilder> {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext,
-                                              AndroidModuleBuilder moduleBuilder,
+  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
+                                              final AndroidModuleBuilder moduleBuilder,
                                               ModulesProvider modulesProvider) {
     List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
     steps.add(factory.createSourcePathsStep(wizardContext, moduleBuilder, null, "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(factory.createProjectJdkStep(wizardContext));
-    steps.add(new AndroidModuleWizardStep(moduleBuilder, wizardContext.getProject()));
+
+    if (!hasAppropriateJdk()) {
+      steps.add(new ProjectJdkForModuleStep(wizardContext, JavaSdk.getInstance()) {
+        @Override
+        public void updateDataModel() {
+          // do nothing
+        }
+
+        @Override
+        public boolean validate() {
+          for (Object o : getAllJdks()) {
+            if (o instanceof Sdk) {
+              Sdk sdk = (Sdk)o;
+              if (AndroidSdkUtils.isApplicableJdk(sdk)) {
+                return true;
+              }
+            }
+          }
+          Messages.showErrorDialog(AndroidBundle.message("no.jdk.error"), CommonBundle.getErrorTitle());
+          return false;
+        }
+      });
+    }
+
+    steps.add(new AndroidModuleWizardStep(moduleBuilder, wizardContext));
     return steps.toArray(new ModuleWizardStep[steps.size()]);
+  }
+
+  private static boolean hasAppropriateJdk() {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (AndroidSdkUtils.isApplicableJdk(sdk)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public String getName() {

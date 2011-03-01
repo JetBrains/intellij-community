@@ -22,16 +22,15 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene.Kudelevsky
  */
 public class AndroidFacetConfiguration implements FacetConfiguration {
-  public String PLATFORM_NAME = "";
-
   public String GEN_FOLDER_RELATIVE_PATH_APT = "/" + SdkConstants.FD_GEN_SOURCES;
   public String GEN_FOLDER_RELATIVE_PATH_AIDL = "/" + SdkConstants.FD_GEN_SOURCES;
 
@@ -65,15 +62,12 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public String APK_PATH = "";
 
-  public boolean ADD_ANDROID_LIBRARY = true;
-
   public boolean LIBRARY_PROJECT = false;
 
   public boolean RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
 
   public boolean GENERATE_UNSIGNED_APK = false;
 
-  private AndroidPlatform myAndroidPlatform;
   private AndroidFacet myFacet = null;
 
   public void init(@NotNull Module module, @NotNull VirtualFile contentRoot) {
@@ -105,18 +99,18 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   @Nullable
   public AndroidPlatform getAndroidPlatform() {
-    if (myAndroidPlatform == null) {
-      Library library = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(PLATFORM_NAME);
-      if (library != null) {
-        myAndroidPlatform = AndroidPlatform.parse(library, null, null);
-      }
+    Sdk moduleSdk = ModuleRootManager.getInstance(myFacet.getModule()).getSdk();
+    if (moduleSdk != null && moduleSdk.getSdkType().equals(AndroidSdkType.getInstance())) {
+      AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)moduleSdk.getSdkAdditionalData();
+      return data != null ? data.getAndroidPlatform() : null;
     }
-    return myAndroidPlatform;
+    return null;
   }
 
   @Nullable
   public AndroidSdk getAndroidSdk() {
-    return myAndroidPlatform != null ? myAndroidPlatform.getSdk() : null;
+    AndroidPlatform platform = getAndroidPlatform();
+    return platform != null ? platform.getSdk() : null;
   }
 
   @Nullable
@@ -125,22 +119,9 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     return platform != null ? platform.getTarget() : null;
   }
 
-  @Nullable
-  public AndroidFacet getFacet() {
-    return myFacet;
-  }
-
   public void setFacet(@NotNull AndroidFacet facet) {
     this.myFacet = facet;
     facet.androidPlatformChanged();
-  }
-
-  public void setAndroidPlatform(@Nullable AndroidPlatform platform) {
-    myAndroidPlatform = platform;
-    PLATFORM_NAME = platform != null ? platform.getName() : "";
-    if (myFacet != null) {
-      myFacet.androidPlatformChanged();
-    }
   }
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
@@ -149,7 +130,6 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    myAndroidPlatform = null;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

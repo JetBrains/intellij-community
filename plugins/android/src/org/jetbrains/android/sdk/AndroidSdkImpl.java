@@ -55,12 +55,6 @@ public class AndroidSdkImpl extends AndroidSdk {
   }
 
   @NotNull
-  @Override
-  public String getName() {
-    return "Android SDK 1.5";
-  }
-
-  @NotNull
   public IAndroidTarget[] getTargets() {
     if (myTargets == null) {
       IAndroidTarget[] targets = mySdkManager.getTargets();
@@ -72,6 +66,11 @@ public class AndroidSdkImpl extends AndroidSdk {
       }
     }
     return myTargets;
+  }
+
+  @Override
+  public IAndroidTarget findTargetByHashString(@NotNull String hashString) {
+    return mySdkManager.getTargetFromHashString(hashString);
   }
 
   @NotNull
