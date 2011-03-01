@@ -41,7 +41,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduceVariable.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -129,7 +128,31 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
 
   void inplaceIntroduceParameter() {
-    new IntroduceParameterPass().pass(OccurrencesChooser.ReplaceChoice.NO);
+    startIntroduceTemplate(false);
+  }
+
+  private void startIntroduceTemplate(final boolean replaceAllOccurrences) {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
+        final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+        final String propName = myLocalVar != null ? JavaCodeStyleManager
+          .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
+        final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
+          .getSuggestedNameInfo(defaultType).names;
+        final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType);
+        if (parameter != null) {
+          myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
+          myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
+          showBalloon();
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
+          nameSuggestions.add(parameter.getName());
+          nameSuggestions.addAll(Arrays.asList(names));
+          final VariableInplaceRenamer renamer = new ParameterInplaceIntroducer(parameter);
+          renamer.performInplaceRename(false, nameSuggestions);
+        }
+      }
+    }, IntroduceParameterHandler.REFACTORING_NAME, null);
   }
 
   @Override
@@ -191,7 +214,8 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         for (PsiExpression expression : myOccurrences) {
           stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
         }
-      } else if (myExpr != null){
+      }
+      else if (myExpr != null) {
         stringUsages.add(Pair.<PsiElement, TextRange>create(myExpr, new TextRange(0, myExpr.getTextLength())));
       }
     }
@@ -215,7 +239,8 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           final int startOffset = marker.getStartOffset();
           highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
         }
-      } else if (myExpr != null) {
+      }
+      else if (myExpr != null) {
         final int startOffset = myExprMarker.getStartOffset();
         highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
       }
@@ -274,7 +299,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         }
       });
     }
-
 
 
     @Override
@@ -348,67 +372,40 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState != null) {
       templateState.gotoEnd(true);
-      new IntroduceParameterPass().pass(isReplaceAllOccurences() ? OccurrencesChooser.ReplaceChoice.ALL : OccurrencesChooser.ReplaceChoice.NO);
+      startIntroduceTemplate(isReplaceAllOccurences());
     }
   }
 
-  private class IntroduceParameterPass extends Pass<OccurrencesChooser.ReplaceChoice> {
 
-    @Override
-    public void pass(final OccurrencesChooser.ReplaceChoice replaceChoice) {
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          myTypeSelectorManager.setAllOccurences(replaceChoice != OccurrencesChooser.ReplaceChoice.NO);
-          final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
-          final String propName = myLocalVar != null ? JavaCodeStyleManager
-            .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-          final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
-            .getSuggestedNameInfo(defaultType).names;
-          final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType);
-          if (parameter != null) {
-            myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
-            myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
-            showSettingsPopup();
-            final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
-            nameSuggestions.add(parameter.getName());
-            nameSuggestions.addAll(Arrays.asList(names));
-            final VariableInplaceRenamer renamer = new ParameterInplaceIntroducer(parameter);
-            renamer.performInplaceRename(false, nameSuggestions);
-          }
-        }
-      }, IntroduceParameterHandler.REFACTORING_NAME, null);
-    }
+  private PsiParameter createParameterToStartTemplateOn(final String[] names,
+                                                        final PsiType defaultType) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myMethod.getProject());
+    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiParameter>() {
+      @Override
+      public PsiParameter compute() {
+        final String name = myParameterName != null ? myParameterName : names[0];
+        final PsiParameter anchor = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethod);
+        final PsiParameter psiParameter = (PsiParameter)myMethod.getParameterList()
+          .addAfter(elementFactory.createParameter(name, defaultType), anchor);
+        PsiUtil.setModifierProperty(psiParameter, PsiModifier.FINAL, hasFinalModifier());
+        return psiParameter;
+      }
+    });
+  }
 
-    private PsiParameter createParameterToStartTemplateOn(final String[] names,
-                                                          final PsiType defaultType) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myMethod.getProject());
-      return ApplicationManager.getApplication().runWriteAction(new Computable<PsiParameter>() {
-        @Override
-        public PsiParameter compute() {
-          final String name = myParameterName != null ? myParameterName : names[0];
-          final PsiParameter anchor = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethod);
-          final PsiParameter psiParameter = (PsiParameter)myMethod.getParameterList()
-            .addAfter(elementFactory.createParameter(name, defaultType), anchor);
-          PsiUtil.setModifierProperty(psiParameter, PsiModifier.FINAL, hasFinalModifier());
-          return psiParameter;
-        }
-      });
-    }
-
-    private void showSettingsPopup() {
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myWholePanel);
-      balloonBuilder.setFadeoutTime(0);
-      balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-      balloonBuilder.setAnimationCycle(0);
-      balloonBuilder.setHideOnClickOutside(false);
-      balloonBuilder.setHideOnKeyOutside(false);
-      balloonBuilder.setHideOnAction(false);
-      balloonBuilder.setCloseButtonEnabled(true);
-      final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-      final Point screenPoint = target.getScreenPoint();
-      myBalloon = balloonBuilder.createBalloon();
-      myBalloon
-        .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
-    }
+  private void showBalloon() {
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myWholePanel);
+    balloonBuilder.setFadeoutTime(0);
+    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
+    balloonBuilder.setAnimationCycle(0);
+    balloonBuilder.setHideOnClickOutside(false);
+    balloonBuilder.setHideOnKeyOutside(false);
+    balloonBuilder.setHideOnAction(false);
+    balloonBuilder.setCloseButtonEnabled(true);
+    final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+    final Point screenPoint = target.getScreenPoint();
+    myBalloon = balloonBuilder.createBalloon();
+    myBalloon
+      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
   }
 }
