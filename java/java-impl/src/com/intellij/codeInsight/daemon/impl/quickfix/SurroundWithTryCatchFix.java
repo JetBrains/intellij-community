@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 19, 2002
- * Time: 8:28:43 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -40,8 +31,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author mike
+ * Date: Aug 19, 2002
+ */
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
+
   private PsiStatement myStatement;
 
   public SurroundWithTryCatchFix(PsiElement element) {
@@ -59,11 +55,10 @@ public class SurroundWithTryCatchFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myStatement == null || !myStatement.isValid()) {
-      return false;
-    }
-    return !(myStatement instanceof PsiExpressionStatement) ||
-           !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression());
+    return myStatement != null &&
+           myStatement.isValid() &&
+           (!(myStatement instanceof PsiExpressionStatement) ||
+            !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression()));
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
@@ -101,5 +96,4 @@ public class SurroundWithTryCatchFix implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
-
 }
