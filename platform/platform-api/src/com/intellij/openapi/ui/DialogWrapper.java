@@ -897,6 +897,9 @@ public abstract class DialogWrapper {
       centerSection.add(wrap, BorderLayout.CENTER);
       myErrorPane = wrap;
     }
+    if (myErrorPane == null) {
+      myErrorPane = root;
+    }
 
     final JPanel southSection = new JPanel(new BorderLayout());
     root.add(southSection, BorderLayout.SOUTH);
