@@ -26,6 +26,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MetaTarget implements AntBuildTargetBase {
   private final AntBuildFileBase myBuildFile;
@@ -102,8 +103,8 @@ public class MetaTarget implements AntBuildTargetBase {
     return null;
   }
 
-  public void run(DataContext dataContext, AntBuildListener buildListener) {
-    ExecutionHandler.runBuild(myBuildFile, myTargets, null, dataContext, buildListener);
+  public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
+    ExecutionHandler.runBuild(myBuildFile, myTargets, null, dataContext, additionalProperties, buildListener);
   }
 
   @Nullable

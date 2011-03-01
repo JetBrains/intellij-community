@@ -14,6 +14,9 @@
     </group>
 
     <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
+
+    <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
+    <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>

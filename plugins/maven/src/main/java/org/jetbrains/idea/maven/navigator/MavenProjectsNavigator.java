@@ -215,7 +215,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true, false);
+    myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
 
     final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {

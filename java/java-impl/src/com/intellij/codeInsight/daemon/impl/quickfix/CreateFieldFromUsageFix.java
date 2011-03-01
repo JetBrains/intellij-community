@@ -20,14 +20,19 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,7 +58,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       return;
     }
 
-    Project project = myReferenceExpression.getProject();
+    final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiMember enclosingContext = null;
@@ -65,7 +70,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    PsiFile targetFile = targetClass.getContainingFile();
+    final PsiFile targetFile = targetClass.getContainingFile();
 
     ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
@@ -117,11 +122,26 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
     Template template = builder.buildTemplate();
 
-    Editor newEditor = positionCursor(project, targetFile, field);
+    final Editor newEditor = positionCursor(project, targetFile, field);
     TextRange range = field.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     template.setToShortenLongNames(false);
-    startTemplate(newEditor, template, project);
+
+    startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
+        final int offset = newEditor.getCaretModel().getOffset();
+        final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);
+        if (psiField != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              CodeStyleManager.getInstance(project).reformat(psiField);
+            }
+          });
+        }
+      }
+    });
   }
 
   @NotNull

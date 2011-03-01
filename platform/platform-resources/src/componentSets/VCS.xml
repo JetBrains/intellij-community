@@ -101,5 +101,8 @@
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
       <skipForDefaultProject/>
     </component>
+    <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
+    </component>
   </project-components>
 </components>

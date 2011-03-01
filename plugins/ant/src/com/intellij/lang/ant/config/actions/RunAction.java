@@ -19,12 +19,14 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
+import java.util.Collections;
 
 public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -40,7 +42,7 @@ public final class RunAction extends AnAction {
       myAntBuildMessageView.getBuildFile(),
       myAntBuildMessageView.getTargets(),
       myAntBuildMessageView,
-      e.getDataContext(), AntBuildListener.NULL);
+      e.getDataContext(), Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
   }
 
   public void update(AnActionEvent event){

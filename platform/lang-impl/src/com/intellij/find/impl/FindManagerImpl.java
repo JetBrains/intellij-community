@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -111,6 +112,15 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);
+  }
+
+  @Override
+  public FindModel createReplaceInFileModel() {
+    FindModel model = new FindModel();
+    model.copyFrom(getFindInFileModel());
+    model.setReplaceState(true);
+    model.setPromptOnReplace(false);
+    return model;
   }
 
   public Element getState() {
@@ -655,7 +665,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  private boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, boolean forwardOrBackward) {
+  private boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
     if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
       EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
       if (searchComponent.hasMatches()) {
@@ -670,7 +680,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
-      if (tryToFindNextUsageViaEditorSearchComponent(editor, true)) {
+      if (tryToFindNextUsageViaEditorSearchComponent(editor, SearchResults.Direction.DOWN)) {
         return true;
       }
       FindModel model = getFindNextModel(editor);
@@ -689,7 +699,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
-      if (tryToFindNextUsageViaEditorSearchComponent(editor, false)) {
+      if (tryToFindNextUsageViaEditorSearchComponent(editor, SearchResults.Direction.UP)) {
         return true;
       }
       FindModel model = getFindNextModel(editor);

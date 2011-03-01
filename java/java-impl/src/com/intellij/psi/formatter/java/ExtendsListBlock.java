@@ -19,6 +19,7 @@ import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -30,6 +31,10 @@ import java.util.List;
 public class ExtendsListBlock extends AbstractJavaBlock{
   public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings) {
     super(node, wrap, alignment, Indent.getNoneIndent(), settings);
+  }
+  
+  public ExtendsListBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignmentStrategy, CodeStyleSettings settings) {
+    super(node, wrap, alignmentStrategy, Indent.getNoneIndent(), settings);
   }
 
   protected List<Block> buildChildren() {
@@ -52,8 +57,13 @@ public class ExtendsListBlock extends AbstractJavaBlock{
           }
           result.add(createJavaBlock(child, mySettings, myChildIndent, arrangeChildWrap(child, childWrap), alignment));
         } else {
+          if (myAlignmentStrategy != null) {
+            Alignment candidate = myAlignmentStrategy.getAlignment(child.getElementType());
+            if (candidate != null) {
+              alignment = myChildAlignment = candidate;
+            }
+          }
           processChild(elementsExceptKeyword, child, myChildAlignment, childWrap, myChildIndent);
-
         }
       }
       child = child.getTreeNext();
@@ -67,9 +77,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
   }
 
   private boolean alignList() {
-    if (myNode.getElementType() == ElementType.EXTENDS_LIST) {
-      return mySettings.ALIGN_MULTILINE_EXTENDS_LIST;
-    } else if (myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
       return mySettings.ALIGN_MULTILINE_EXTENDS_LIST;
     } else if (myNode.getElementType() == ElementType.THROWS_LIST) {
       return mySettings.ALIGN_MULTILINE_THROWS_LIST;

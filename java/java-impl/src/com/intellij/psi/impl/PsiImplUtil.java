@@ -180,7 +180,7 @@ public class PsiImplUtil {
                                                     @NotNull final PsiElement place) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
-    if (hint == null || hint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
+    if (hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       final PsiTypeParameterList list = method.getTypeParameterList();
       if (list != null && !list.processDeclarations(processor, state, null, place)) return false;
     }
@@ -198,12 +198,14 @@ public class PsiImplUtil {
                                                           @NotNull final PsiScopeProcessor processor,
                                                           @NotNull final ResolveState state,
                                                           final PsiElement lastParent) {
-    final List<PsiResource> resources = resourceList.getResources();
-    for (PsiResource resource : resources) {
-      final PsiElement resourceElement = resource.getResourceElement();
-      if (resourceElement instanceof PsiLocalVariable &&
-          !resourceElement.equals(lastParent) &&
-          !processor.execute(resourceElement, state)) return false;
+    final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
+    if (hint != null && !hint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+
+    final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
+    @SuppressWarnings({"SuspiciousMethodCalls"})
+    final int lastIdx = lastParent instanceof PsiResourceVariable ? resources.indexOf(lastParent) : resources.size();
+    for (int i = 0; i < lastIdx; i++) {
+      if (!processor.execute(resources.get(i), state)) return false;
     }
 
     return true;

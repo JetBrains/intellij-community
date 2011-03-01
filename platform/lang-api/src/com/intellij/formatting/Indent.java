@@ -15,9 +15,14 @@
  */
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * The indent setting for a formatting model block. Indicates how the block is indented
  * relative to its parent block.
+ * <p/>
+ * <b>Relative indents</b>
  * <p/>
  * Number of factory methods of this class use <code>'indent relative to direct parent'</code> flag. It specified anchor parent block
  * to use to apply indent.
@@ -52,6 +57,24 @@ package com.intellij.formatting;
  * <p/>
  * In contrast, it's possible to specify that direct parent block that starts on a line before target child block is used as an anchor.
  * Initial formatting example illustrates such approach.
+ * <p/>
+ * <b>Parent indent enforcing</b>
+ * <p/>
+ * It's possible to configure indent to enforce parent block indent to its children that start new line. Consider the following situation:
+ * <pre>
+ *   foo("test", new Runnable() {
+ *           public void run() { 
+ *           }                   
+ *       },                      
+ *       new Runnable() {        
+ *           public void run() { 
+ *           }                   
+ *       }                       
+ *   );                          
+ * </pre>
+ * We want the first {@code 'new Runnable() {...}'} block here to be indented to the method expression list element. However, formatter
+ * uses indents only if the block starts new line. Here the block doesn't start new line ({@code 'new Runnable() ...'}), hence
+ * we need to define <code>'enforce parent indent'</code> flag in order to instruct formatter to apply parent indent to the sub-blocks.
  *
  * @see com.intellij.formatting.Block#getIndent()
  * @see com.intellij.formatting.ChildAttributes#getChildIndent() 
@@ -213,5 +236,39 @@ public abstract class Indent {
    */
   public static Indent getSpaceIndent(final int spaces, final boolean relativeToDirectParent) {
     return myFactory.getSpaceIndent(spaces, relativeToDirectParent);
+  }
+
+  /**
+   * Base factory method for {@link Indent} objects construction, i.e. all other methods may be expressed in terms of this method.
+   * 
+   * @param type                      indent type
+   * @param relativeToDirectParent    flag the indicates if current indent object anchors direct block parent (feel free
+   *                                  to get more information about that at class-level javadoc)
+   * @param enforceParentIndent       flag the indicates if current indent object should be enforced for multiline block children
+   *                                  (feel free to get more information about that at class-level javadoc)
+   * @return                          newly created indent configured in accordance with the given arguments
+   */
+  public static Indent getIndent(@NotNull Type type, boolean relativeToDirectParent, boolean enforceParentIndent) {
+    return myFactory.getIndent(type, relativeToDirectParent, enforceParentIndent);
+  }
+
+  public static class Type {
+    private final String myName;
+
+
+    private Type(@NonNls final String name) {
+      myName = name;
+    }
+
+    public static final Type SPACES = new Type("SPACES");
+    public static final Type NONE = new Type("NONE");
+    public static final Type LABEL = new Type("LABEL");
+    public static final Type NORMAL = new Type("NORMAL");
+    public static final Type CONTINUATION = new Type("CONTINUATION");
+    public static final Type CONTINUATION_WITHOUT_FIRST = new Type("CONTINUATION_WITHOUT_FIRST");
+
+    public String toString() {
+      return myName;
+    }
   }
 }

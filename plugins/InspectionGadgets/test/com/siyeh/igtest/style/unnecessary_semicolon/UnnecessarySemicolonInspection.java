@@ -29,3 +29,9 @@ enum BuildType
         return super.toString();
     }
 }
+class C {
+    void m() throws Exception {
+        try (AutoCloseable r1 = null; AutoCloseable r2 = null /*ok*/ ) { }
+        try (AutoCloseable r1 = null; AutoCloseable r2 = null; /*warn*/ ) { }
+    }
+}

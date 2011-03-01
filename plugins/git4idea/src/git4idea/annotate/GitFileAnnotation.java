@@ -197,7 +197,7 @@ public class GitFileAnnotation implements FileAnnotation {
     VcsFileRevision fileRevision = myRevisionMap.get(info.getRevision());
     if (fileRevision != null) {
       return GitBundle
-        .message("annotation.tool.tip", info.getRevision().asString(), fileRevision.getAuthor(), fileRevision.getRevisionDate(),
+        .message("annotation.tool.tip", info.getRevision().asString(), info.getAuthor(), info.getDate(),
                  fileRevision.getCommitMessage());
     }
     else {
@@ -297,9 +297,8 @@ public class GitFileAnnotation implements FileAnnotation {
     protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         final LineInfo info = myLines.get(lineNum);
-        VcsFileRevision revision = myRevisionMap.get(info.getRevision());
-        if (revision != null) {
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision, myFile);
+        if (info != null) {
+          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, info.getRevision().asString(), myFile);
         }
       }
     }

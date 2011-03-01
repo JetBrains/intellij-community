@@ -138,16 +138,22 @@ public abstract class AbstractConsoleRunnerWithHistory {
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
 
-    final RunContentDescriptor myDescriptor =
+    final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, myConsoleTitle);
 
 // tool bar actions
-    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, myDescriptor);
+    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
+    showConsole(defaultExecutor, contentDescriptor);
 
-// Show in run toolwindow
+// Run
+    myProcessHandler.startNotify();
+  }
+
+  protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
+    // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
 // Request focus
@@ -157,8 +163,6 @@ public abstract class AbstractConsoleRunnerWithHistory {
         IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
       }
     });
-// Run
-    myProcessHandler.startNotify();
   }
 
   protected void finishConsole() {
@@ -189,7 +193,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
                                           final Executor defaultExecutor,
-                                          final RunContentDescriptor myDescriptor) {
+                                          final RunContentDescriptor contentDescriptor) {
 
     List<AnAction> actionList = Lists.newArrayList();
 
@@ -198,14 +202,12 @@ public abstract class AbstractConsoleRunnerWithHistory {
     actionList.add(stopAction);
 
 //close
-    final AnAction closeAction = createCloseAction(defaultExecutor, myDescriptor);
+    final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
     actionList.add(closeAction);
 
 // run and history actions
 
-    ConsoleExecutionActions executionActions =
-      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
-    myRunAction = executionActions.getRunAction();
+    ConsoleExecutionActions executionActions = createExecuteAction();
     actionList.addAll(executionActions.getActionsAsList());
 
 // Help
@@ -216,6 +218,13 @@ public abstract class AbstractConsoleRunnerWithHistory {
     toolbarActions.addAll(actions);
 
     return actions;
+  }
+
+  protected ConsoleExecutionActions createExecuteAction() {
+    ConsoleExecutionActions executionActions =
+      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
+    myRunAction = executionActions.getRunAction();
+    return executionActions;
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
@@ -233,10 +242,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
   public static ConsoleExecutionActions createConsoleExecActions(final LanguageConsoleImpl languageConsole,
                                                                  final ProcessHandler processHandler,
                                                                  final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
-
     final AnAction runAction = new ConsoleExecuteAction(languageConsole,
-                                                        myHistory, processHandler, consoleExecuteActionHandler);
+                                                        processHandler, consoleExecuteActionHandler);
 
     final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {
       public boolean process(final AnActionEvent e, final String s) {
@@ -251,10 +258,10 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
     final EditorEx consoleEditor = languageConsole.getConsoleEditor();
     final AnAction upAction = ConsoleHistoryModel.createConsoleHistoryUpAction(createCanMoveUpComputable(consoleEditor),
-                                                                               myHistory,
+                                                                               consoleExecuteActionHandler.getConsoleHistoryModel(),
                                                                                historyProcessor);
     final AnAction downAction = ConsoleHistoryModel.createConsoleHistoryDownAction(createCanMoveDownComputable(consoleEditor),
-                                                                                   myHistory,
+                                                                                   consoleExecuteActionHandler.getConsoleHistoryModel(),
                                                                                    historyProcessor);
 
     return new ConsoleExecutionActions(runAction, downAction, upAction);
@@ -322,26 +329,23 @@ public abstract class AbstractConsoleRunnerWithHistory {
     public static final String CONSOLE_EXECUTE = "Console.Execute";
 
     private final LanguageConsoleImpl myLanguageConsole;
-    private final ConsoleHistoryModel myHistory;
     private final ProcessHandler myProcessHandler;
 
     private final ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
 
     public ConsoleExecuteAction(LanguageConsoleImpl languageConsole,
-                                ConsoleHistoryModel history,
                                 ProcessHandler processHandler,
                                 ConsoleExecuteActionHandler consoleExecuteActionHandler) {
       super(null, null, IconLoader.getIcon(ACTIONS_EXECUTE_ICON));
       myLanguageConsole = languageConsole;
-      myHistory = history;
       myProcessHandler = processHandler;
       myConsoleExecuteActionHandler = consoleExecuteActionHandler;
       EmptyAction.setupAction(this, CONSOLE_EXECUTE, null);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole, myHistory);
+      myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole);
     }
 
     public void update(final AnActionEvent e) {

@@ -28,10 +28,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl;
-import com.intellij.psi.tree.ICompositeElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.IReparseableElementType;
+import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.ReflectionUtil;
@@ -123,4 +120,8 @@ public interface JavaDocElementType {
       return true;
     }
   };
+  
+  TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(
+   DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT
+  );
 }

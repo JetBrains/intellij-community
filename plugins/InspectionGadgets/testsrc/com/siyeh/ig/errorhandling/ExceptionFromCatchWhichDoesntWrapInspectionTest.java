@@ -1,6 +1,6 @@
 package com.siyeh.ig.errorhandling;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class ExceptionFromCatchWhichDoesntWrapInspectionTest extends
         IGInspectionTestCase {

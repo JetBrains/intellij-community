@@ -208,7 +208,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   }
 
   private void collectModuleRoots(OrderRootType type, ModuleRootModel rootModel, Collection<VirtualFile> result) {
-    final boolean productionOnly = myOrderEnumerator.isProductionOnly();
+    final boolean productionOnly = myOrderEnumerator.getSettings().productionOnly;
     if (type.equals(OrderRootType.SOURCES)) {
       Collections.addAll(result, rootModel.getSourceRoots(!productionOnly));
     }
@@ -228,7 +228,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   }
 
   private void collectModuleRootsUrls(OrderRootType type, ModuleRootModel rootModel, Collection<String> result) {
-    final boolean productionOnly = myOrderEnumerator.isProductionOnly();
+    final boolean productionOnly = myOrderEnumerator.getSettings().productionOnly;
     if (type.equals(OrderRootType.SOURCES)) {
       Collections.addAll(result, rootModel.getSourceRootUrls(!productionOnly));
     }

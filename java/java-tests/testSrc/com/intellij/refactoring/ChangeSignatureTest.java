@@ -187,6 +187,13 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     }, false);
   }
 
+  public void testVarargs2() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(1, "i", PsiType.INT),
+      new ParameterInfoImpl(0, "b", new PsiEllipsisType(PsiType.BOOLEAN))
+    }, false);
+  }
+
   public void testCovariantReturnType() throws Exception {
     doTest("java.lang.Runnable", new ParameterInfoImpl[0], false);
   }
@@ -286,6 +293,10 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testRemoveExceptions() throws Exception {
+    doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {

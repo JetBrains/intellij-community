@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.update.ComparableObject;
 
 import javax.swing.*;
@@ -45,6 +46,8 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private int myPositionChangeX;
   private int myPositionChangeY;
+
+  private Ui myUi;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -208,6 +211,18 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public int getPositionChangeY() {
     return myPositionChangeY;
+  }
+
+  public void setUi(Ui ui) {
+    myUi = ui;
+  }
+
+  public boolean isInside(RelativePoint target) {
+    return myUi != null && myUi.isInside(target);
+  }
+
+  public interface Ui {
+    boolean isInside(RelativePoint target);
   }
 }
 

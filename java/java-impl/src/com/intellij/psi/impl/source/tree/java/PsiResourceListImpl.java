@@ -30,10 +30,19 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
     super(JavaElementType.RESOURCE_LIST);
   }
 
+  @Override
+  public int getResourceVariablesCount() {
+    int count = 0;
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiResourceVariable) ++count;
+    }
+    return count;
+  }
+
   @NotNull
   @Override
-  public List<PsiResource> getResources() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResource.class);
+  public List<PsiResourceVariable> getResourceVariables() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, PsiResourceVariable.class);
   }
 
   @Override

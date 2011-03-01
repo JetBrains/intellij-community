@@ -37,20 +37,6 @@
 
   <problem>
     <file>IfStatementWithIdenticalBranches.java</file>
-    <line>71</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' statement with identical branches</problem_class>
-    <description>&lt;code&gt;if&lt;/code&gt; statement with identical branches #loc</description>
-  </problem>
-
-  <problem>
-    <file>IfStatementWithIdenticalBranches.java</file>
-    <line>82</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' statement with identical branches</problem_class>
-    <description>&lt;code&gt;if&lt;/code&gt; statement with identical branches #loc</description>
-  </problem>
-
-  <problem>
-    <file>IfStatementWithIdenticalBranches.java</file>
     <line>92</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' statement with identical branches</problem_class>
     <description>&lt;code&gt;if&lt;/code&gt; statement with identical branches #loc</description>

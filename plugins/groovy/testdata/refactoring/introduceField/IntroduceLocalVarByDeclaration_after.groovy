@@ -5,7 +5,7 @@ class Foo {
     def foo() {
         print "a"
 
-        <selection></selection>print f
+        print f
         f++
         f -=4
         print f

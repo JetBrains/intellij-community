@@ -1,6 +1,6 @@
 package com.siyeh.ig.performance;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class ManualArrayToCollectionCopyInspectionTest extends IGInspectionTestCase {
 

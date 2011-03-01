@@ -15,6 +15,8 @@
  */
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Internal interface for creating indent instances.
  * <p/>
@@ -30,4 +32,5 @@ interface IndentFactory {
   Indent getContinuationIndent(boolean relativeToDirectParent);
   Indent getContinuationWithoutFirstIndent(boolean relativeToDirectParent);
   Indent getSpaceIndent(final int spaces, boolean relativeToDirectParent);
+  Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceParentIndent);
 }

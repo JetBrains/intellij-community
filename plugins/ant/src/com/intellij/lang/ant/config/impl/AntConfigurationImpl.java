@@ -642,6 +642,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target) {
+    return executeTargetSynchronously(dataContext, target, Collections.<BuildFileProperty>emptyList());
+  }
+
+  public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target, final List<BuildFileProperty> additionalProperties) {
     final Semaphore targetDone = new Semaphore();
     final boolean[] result = new boolean[1];
     try {
@@ -654,7 +658,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
             return;
           }
           targetDone.down();
-          target.run(dataContext, new AntBuildListener() {
+          target.run(dataContext, additionalProperties, new AntBuildListener() {
             public void buildFinished(int state, int errorCount) {
               result[0] = (state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0);
               targetDone.up();

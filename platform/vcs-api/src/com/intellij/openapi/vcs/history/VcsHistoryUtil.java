@@ -64,14 +64,8 @@ public class VcsHistoryUtil {
    * @throws java.io.IOException
    */
   public static void showDiff(Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2, String title1, String title2) throws VcsException, IOException {
-    revision1.loadContent();
-    final byte[] content1 = revision1.getContent();
-    if (content1 == null) throw new VcsException("Failed to load content for revision " + revision1.getRevisionNumber().asString());
-
-    revision2.loadContent();
-    final byte[] content2 = revision2.getContent();
-    if (content2 == null) throw new VcsException("Failed to load content for revision " + revision2.getRevisionNumber().asString());
-
+    final byte[] content1 = loadRevisionContent(revision1);
+    final byte[] content2 = loadRevisionContent(revision2);
 
     final SimpleDiffRequest diffData = new SimpleDiffRequest(project, filePath.getPresentableUrl());
     diffData.addHint(DiffTool.HINT_SHOW_FRAME);
@@ -82,6 +76,16 @@ public class VcsHistoryUtil {
     diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
                          createContent(project, content2, revision2, doc, charset, fileType));
     DiffManager.getInstance().getDiffTool().show(diffData);
+  }
+
+  public static byte[] loadRevisionContent(VcsFileRevision revision) throws VcsException, IOException {
+    byte[] content = revision.getContent();
+    if (content == null) {
+      revision.loadContent();
+    }
+    content = revision.getContent();
+    if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
+    return content;
   }
 
   private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType) {

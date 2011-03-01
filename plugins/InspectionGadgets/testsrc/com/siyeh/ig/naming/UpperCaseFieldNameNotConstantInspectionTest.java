@@ -1,6 +1,6 @@
 package com.siyeh.ig.naming;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class UpperCaseFieldNameNotConstantInspectionTest
         extends IGInspectionTestCase {

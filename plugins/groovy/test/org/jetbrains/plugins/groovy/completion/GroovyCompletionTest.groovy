@@ -44,6 +44,42 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doVariantableTest("abx", "aby");
   }
 
+  public void testNamedParameters1() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParameters2() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInMap1() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInMap2() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersInSecondMap1() throws Throwable {
+    doVariantableTest();
+  }
+
+  public void testNamedParametersInSecondMap2() throws Throwable {
+    doVariantableTest();
+  }
+
+  public void testNamedParametersExcludeExisted() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
+  public void testNamedParametersExcludeExisted2() throws Throwable {
+    doVariantableTest("abx", "aby", "abz");
+  }
+
+  public void testNamedParametersExcludeExistedMap() throws Throwable {
+    doVariantableTest("abx", "aby");
+  }
+
   public void testNamedParametersForNotMap() throws Throwable {
     doBasicTest();
   }
@@ -307,6 +343,74 @@ class A {
  } ) }
 }
 """)
+  }
+
+  public void testCompletionNamedArgument6() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m([arg1<caret>])}
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m([arg111: <caret>])}
+}
+"""
+  }
+
+  public void testCompletionNamedArgument7() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg1<caret>)}
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: <caret>)}
+}
+"""
+  }
+
+  public void testCompletionNamedArgument8() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg1<caret>,)}
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: <caret>, )}
+}
+"""
+  }
+
+  public void testCompletionNamedArgument9() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg1<caret>,   )}
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m(arg111: <caret>,   )}
+}
+"""
   }
 
   public void testSpreadOperator() {

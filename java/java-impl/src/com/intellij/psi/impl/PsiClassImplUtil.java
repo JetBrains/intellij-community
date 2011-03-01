@@ -420,7 +420,7 @@ public class PsiClassImplUtil {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (nameHint != null) {
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.FIELD)) {
+      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
         final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
         if (fieldByName != null) {
           processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
@@ -442,7 +442,7 @@ public class PsiClassImplUtil {
           }
         }
       }
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
+      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
         if (last != null && last.getParent() == aClass) {
           if (last instanceof PsiClass) {
             if (!processor.execute(last, state)) return false;
@@ -476,7 +476,7 @@ public class PsiClassImplUtil {
           }
         }
       }
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.METHOD)) {
+      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
         if (processor instanceof MethodResolverProcessor) {
           final MethodResolverProcessor methodResolverProcessor = (MethodResolverProcessor)processor;
           if (methodResolverProcessor.isConstructor()) {
@@ -540,7 +540,7 @@ public class PsiClassImplUtil {
     final NameHint nameHint = processor.getHint(NameHint.KEY);
 
 
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.FIELD)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
       if (nameHint != null) {
         final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
         if (fieldByName != null) {
@@ -555,7 +555,7 @@ public class PsiClassImplUtil {
       }
     }
 
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.METHOD)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
       final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(state), false) : aClass.getMethods();
       for (final PsiMethod method : methods) {
         if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
@@ -567,7 +567,7 @@ public class PsiClassImplUtil {
       }
     }
 
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (last != null && last.getParent() == aClass) {
         // Parameters
         final PsiTypeParameterList list = aClass.getTypeParameterList();

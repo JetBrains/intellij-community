@@ -26,6 +26,8 @@ import java.util.List;
  * @since 10.5.
  */
 public interface PsiResourceList extends PsiElement {
+  int getResourceVariablesCount();
+
   @NotNull
-  List<PsiResource> getResources();
+  List<PsiResourceVariable> getResourceVariables();
 }

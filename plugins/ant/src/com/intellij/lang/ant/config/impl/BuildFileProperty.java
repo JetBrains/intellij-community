@@ -15,12 +15,16 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+@Tag("build-property")
 public final class BuildFileProperty implements JDOMExternalizable {
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
@@ -51,6 +55,7 @@ public final class BuildFileProperty implements JDOMExternalizable {
     myPropertyValue = propertyValue;
   }
 
+  @Attribute(NAME)
   public String getPropertyName() {
     return myPropertyName;
   }
@@ -59,6 +64,7 @@ public final class BuildFileProperty implements JDOMExternalizable {
     myPropertyName = propertyName.trim();
   }
 
+  @Attribute(VALUE)
   public String getPropertyValue() {
     return myPropertyValue;
   }
@@ -75,5 +81,20 @@ public final class BuildFileProperty implements JDOMExternalizable {
   public void writeExternal(Element element) {
     element.setAttribute(NAME, getPropertyName());
     element.setAttribute(VALUE, getPropertyValue());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BuildFileProperty that = (BuildFileProperty)o;
+    return Comparing.equal(myPropertyName, that.myPropertyName) && Comparing.equal(myPropertyValue, that.myPropertyValue);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * (myPropertyName != null ? myPropertyName.hashCode() : 0)
+              + (myPropertyValue != null ? myPropertyValue.hashCode() : 0);
   }
 }

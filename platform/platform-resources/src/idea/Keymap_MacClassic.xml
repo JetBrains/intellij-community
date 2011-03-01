@@ -77,6 +77,9 @@
     <action id="RunGc"/>
     <action id="RunClass"/>
 
+    <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="alt UP"/> </action>
+    <action id="EditorLookupDown"> <keyboard-shortcut first-keystroke="alt DOWN"/> </action>
+
     <action id="GotoBookmark0">
       <keyboard-shortcut first-keystroke="control 0"/>
     </action>

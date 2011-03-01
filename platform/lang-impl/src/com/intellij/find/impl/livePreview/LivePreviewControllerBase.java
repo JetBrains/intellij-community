@@ -5,7 +5,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
+public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
 
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
@@ -25,6 +25,62 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   private SearchResults mySearchResults;
   private LivePreview myLivePreview;
+
+  private boolean myToChangeSelection = true;
+
+  private void updateSelection() {
+    Editor editor = mySearchResults.getEditor();
+    SelectionModel selection = editor.getSelectionModel();
+    FindModel findModel = mySearchResults.getFindModel();
+    if (myToChangeSelection && findModel.isGlobal()) {
+      LiveOccurrence cursor = mySearchResults.getCursor();
+      if (cursor != null) {
+        TextRange range = cursor.getPrimaryRange();
+        FoldingModel foldingModel = editor.getFoldingModel();
+        final FoldRegion startFolding = foldingModel.getCollapsedRegionAtOffset(range.getStartOffset());
+        final FoldRegion endFolding = foldingModel.getCollapsedRegionAtOffset(range.getEndOffset());
+        foldingModel.runBatchFoldingOperation(new Runnable() {
+          @Override
+          public void run() {
+            if (startFolding != null) {
+              startFolding.setExpanded(true);
+            }
+            if (endFolding != null) {
+              endFolding.setExpanded(true);
+            }
+          }
+        });
+        selection.setSelection(range.getStartOffset(), range.getEndOffset());
+
+        editor.getCaretModel().moveToOffset(range.getEndOffset());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+      }
+      myToChangeSelection = false;
+    }
+  }
+
+  @Override
+  public void searchResultsUpdated(SearchResults sr) {
+    updateSelection();
+  }
+
+  @Override
+  public void editorChanged(SearchResults sr, Editor oldEditor) {}
+
+  @Override
+  public void cursorMoved() {
+    updateSelection();
+  }
+
+  public void moveCursor(SearchResults.Direction direction, boolean toChangeSelection) {
+    myToChangeSelection = toChangeSelection;
+    if (direction == SearchResults.Direction.UP) {
+      mySearchResults.prevOccurrence();
+    } else {
+      mySearchResults.nextOccurrence();
+    }
+  }
 
   public interface ReplaceListener {
     void replacePerformed(LiveOccurrence occurrence, final String replacement, final Editor editor);
@@ -43,6 +99,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   public LivePreviewControllerBase(SearchResults searchResults, LivePreview livePreview) {
     mySearchResults = searchResults;
+    mySearchResults.addListener(this);
     myLivePreview = livePreview;
     myLivePreview.setDelegate(this);
   }
@@ -55,7 +112,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     myUserActivityDelay = userActivityDelay;
   }
 
-  public void updateInBackground(final FindModel findModel) {
+  public void updateInBackground(final FindModel findModel, boolean allowedToChangedEditorSelection) {
     myLivePreviewAlarm.cancelAllRequests();
     if (findModel == null) return;
     Runnable request = new Runnable() {
@@ -68,6 +125,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       request.run();
     } else {
       myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
+    }
+    if (allowedToChangedEditorSelection) {
+      myToChangeSelection = true;
     }
   }
 
@@ -99,6 +159,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Nullable
   @Override
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
+    myToChangeSelection = true;
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;

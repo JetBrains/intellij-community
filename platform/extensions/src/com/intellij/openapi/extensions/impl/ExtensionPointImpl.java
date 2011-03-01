@@ -114,12 +114,12 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
       }
       internalRegisterExtension(extension, new ObjectComponentAdapter(extension, order), index, true);
-      clearCache();
     }
     else {
       myExtensionAdapters.add(new ObjectComponentAdapter(extension, order));
       processAdapters();
     }
+    clearCache();
   }
 
   private void internalRegisterExtension(T extension, ExtensionComponentAdapter adapter, int index, boolean runNotifications) {

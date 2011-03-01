@@ -174,6 +174,10 @@ public class TodoCheckinHandlerWorker {
       try {
         myBeforeContent = change.getBeforeRevision().getContent();
         myAfterContent = change.getAfterRevision().getContent();
+        if (myAfterContent == null) {
+          myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadCurrentRevision));
+          return;
+        }
         if (myBeforeContent == null) {
           myAcceptor.skipped(new Pair<FilePath, String>(myAfterFile, ourCannotLoadPreviousRevision));
           return;
@@ -282,12 +286,13 @@ public class TodoCheckinHandlerWorker {
   private static ArrayList<LineFragment> getLineFragments(String beforeContent, String afterContent) {
     DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
     DiffFragment[] step1lineFragments =
-      new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
+      new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
     return new DiffFragmentsProcessor().process(step1lineFragments);
   }
 
   private final static String ourInvalidFile = "Invalid file (s)";
   private final static String ourCannotLoadPreviousRevision = "Can not load previous revision";
+  private final static String ourCannotLoadCurrentRevision = "Can not load current revision";
 
   private static class TodoItemConvertor implements Convertor<TodoItem, TextRange> {
     private static final TodoItemConvertor ourInstance = new TodoItemConvertor();

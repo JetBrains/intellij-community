@@ -38,7 +38,7 @@ public class InlineVariableFix extends InspectionGadgetsFix {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiLocalVariable variable =
                 (PsiLocalVariable) nameElement.getParent();
@@ -63,7 +63,7 @@ public class InlineVariableFix extends InspectionGadgetsFix {
                 PsiTreeUtil.getParentOfType(variable, PsiMember.class);
         final Query<PsiReference> search =
                 ReferencesSearch.search(variable, new LocalSearchScope(member));
-        final Collection<PsiElement> replacedElements = new ArrayList();
+        final Collection<PsiElement> replacedElements = new ArrayList<PsiElement>();
         final Collection<PsiReference> references = search.findAll();
         for (PsiReference reference : references) {
             final PsiElement replacedElement =
@@ -71,6 +71,13 @@ public class InlineVariableFix extends InspectionGadgetsFix {
             replacedElements.add(replacedElement);
         }
         HighlightUtils.highlightElements(replacedElements);
-        variable.delete();
+        PsiElement elementToRemove = variable;
+        if (variable instanceof PsiResourceVariable) {
+            final PsiElement parent = variable.getParent();
+            if (parent instanceof PsiResourceList && ((PsiResourceList)parent).getResourceVariablesCount() == 1) {
+                elementToRemove = parent;
+            }
+        }
+        elementToRemove.delete();
     }
 }

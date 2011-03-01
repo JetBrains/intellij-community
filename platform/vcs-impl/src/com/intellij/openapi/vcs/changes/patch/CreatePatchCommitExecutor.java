@@ -41,10 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -158,15 +155,8 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         PATCH_PATH = file.getParent();
         REVERSE_PATCH = myPanel.isReversePatch();
         
-        Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
-        try {
-          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
-          final String lineSeparator = CodeStyleFacade.getInstance(myProject).getLineSeparator();
-          UnifiedDiffWriter.write(patches, writer, lineSeparator);
-        }
-        finally {
-          writer.close();
-        }
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
+        PatchWriter.writePatches(myProject, fileName, patches);
         if (binaryCount == 0) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {

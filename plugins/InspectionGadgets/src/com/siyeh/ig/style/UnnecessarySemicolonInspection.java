@@ -197,5 +197,17 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                 registerError(semicolon);
             }
         }
+
+        @Override
+        public void visitResourceList(final PsiResourceList resourceList) {
+            super.visitResourceList(resourceList);
+            final PsiElement last = resourceList.getLastChild();
+            if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH) {
+                final PsiElement prev = skipBackwardWhiteSpacesAndComments(last);
+                if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.SEMICOLON) {
+                    registerError(prev);
+                }
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.siyeh.ig.abstraction;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class TypeMayBeWeakenedInspectionTest extends IGInspectionTestCase {
 

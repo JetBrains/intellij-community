@@ -39,7 +39,7 @@ import java.util.List;
 public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   private enum Type {PRODUCTION, TESTS}
 
-  private enum Scope {COMPILE, RUNTIME}
+  private enum Scope {COMPILE, RUNTIME, MODULE}
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -103,6 +103,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m2", "m3", "m4");
 
     setupJdkForModules("m1", "m2", "m3", "m4");
+
+    assertModuleScopes("m1", "m2", "m3", "m4");
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -168,6 +170,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     setupJdkForModules("m1", "m2");
 
+    assertModuleScopes("m1", "m2");
+
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
                                    getProjectPath() + "/m2/src/main/java");
@@ -212,6 +216,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModules("m1", "m2", "m3");
 
     setupJdkForModules("m1", "m2", "m3");
+
+    assertModuleScopes("m1", "m2", "m3");
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -268,6 +274,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     setupJdkForModules("m1", "m2", "m3");
 
+    assertModuleScopes("m1", "m2", "m3");
+
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java");
     assertAllTestsSearchScope("m1",
@@ -311,7 +319,9 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     assertModules("m1", "m2");
 
-    setupJdkForModules("m1", "m2", "m2");
+    setupJdkForModules("m1", "m2");
+
+    assertModuleScopes("m1", "m2");
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -364,6 +374,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
 
     setupJdkForModules("m1", "m2");
+
+    assertModuleScopes("m1", "m2");
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -419,6 +431,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     importProjects(m1, m2);
     assertModules("m1", "m2");
+
+    assertModuleScopes("m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: jmock:jmock:1.0");
@@ -514,6 +528,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     setupJdkForModules("m1", "m2", "m3");
 
+    assertModuleScopes("m1", "m2", "m3");
+
     assertCompileProductionSearchScope("m1",
                                        getProjectPath() + "/m1/src/main/java",
                                        getProjectPath() + "/m2/src/main/java",
@@ -572,6 +588,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
 
     setupJdkForModules("m1", "m2");
+
+    assertModuleScopes("m1", "m2");
 
     assertCompileProductionSearchScope("m1",
                                        getProjectPath() + "/m1/src/main/java");
@@ -641,6 +659,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0");
 
     setupJdkForModules("m1", "m2");
+
+    assertModuleScopes("m1", "m2");
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -732,6 +752,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
     setupJdkForModules("m1", "m2", "m3");
 
+    assertModuleScopes("m1", "m2", "m3");
+
     assertAllTestsSearchScope("m1",
                               getProjectPath() + "/m1/src/main/java",
                               getProjectPath() + "/m1/src/test/java",
@@ -790,6 +812,12 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
 
     setupJdkForModules("m1");
+
+    assertModuleSearchScope("m1",
+                            getProjectPath() + "/m1/src/main/java",
+                            getProjectPath() + "/m1/src/test/java",
+                            f1.getPath(),
+                            f2.getPath());
 
     assertAllProductionSearchScope("m1",
                                    getProjectPath() + "/m1/src/main/java",
@@ -867,6 +895,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     setupJdkForModules("m1", "m2", "user");
 
     // todo check search scopes
+    assertModuleScopes("m1", "m2");
 
     assertCompileProductionClasspath("user",
                                      getProjectPath() + "/user/output",
@@ -953,6 +982,18 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertPaths(expectedPaths, actualPathsList.getPathList());
   }
 
+  private void assertModuleScopes(String... modules) throws Exception {
+    for (String each : modules) {
+      assertModuleSearchScope(each,
+                              getProjectPath() + "/" + each + "/src/main/java",
+                              getProjectPath() + "/" + each + "/src/test/java");
+    }
+  }
+
+  private void assertModuleSearchScope(String moduleName, String... paths) throws Exception {
+    assertSearchScope(moduleName, Scope.MODULE, null, paths);
+  }
+
   private void assertAllProductionSearchScope(String moduleName, String... paths) throws Exception {
     assertCompileProductionSearchScope(moduleName, paths);
     assertRuntimeProductionSearchScope(moduleName, paths);
@@ -979,13 +1020,22 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertSearchScope(moduleName, Scope.RUNTIME, Type.TESTS, paths);
   }
 
-
   private void assertSearchScope(String moduleName, Scope scope, Type type, String... expectedPaths) throws Exception {
     createOutputDirectories();
     Module module = getModule(moduleName);
 
-    GlobalSearchScope searchScope = scope == Scope.COMPILE ? module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS)
-                                                           : module.getModuleRuntimeScope(type == Type.TESTS);
+    GlobalSearchScope searchScope = null;
+    switch (scope) {
+      case MODULE:
+        searchScope = module.getModuleScope();
+        break;
+      case COMPILE:
+        searchScope = module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS);
+        break;
+      case RUNTIME:
+        searchScope = module.getModuleRuntimeScope(type == Type.TESTS);
+        break;
+    }
 
     final List<VirtualFile> entries = new ArrayList<VirtualFile>(((ModuleWithDependenciesScope)searchScope).getRoots());
 

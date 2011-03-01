@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.openapi.vcs.impl;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
- *
- * @see PsiResourceList#getResources()
- * @since 10.5.
+ * @author irengrig
+ *         Date: 2/28/11
+ *         Time: 1:12 PM
  */
-public interface PsiResource extends PsiElement {
-  /**
-   * Returns main element of the resource.
-   * It may be PsiLocalVariable, PsiAssignmentExpression, or other instance of PsiExpression.
-   *
-   * @return resource element.
-   */
-  @NotNull
-  PsiElement getResourceElement();
-
+public interface VcsBaseContentProvider {
   @Nullable
-  PsiType getType();
+  String getBaseVersionContent(VirtualFile file);
+  @Nullable
+  VcsRevisionNumber getBaseRevision(VirtualFile file);
 }

@@ -33,9 +33,13 @@ import java.util.List;
 public class PatchCreator {
   public static void create(Project p, List<Change> changes, String filePath, boolean isReverse)
     throws IOException, VcsException {
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
+    writeFilePatches(p, filePath, patches);
+  }
+
+  public static void writeFilePatches(Project p, String filePath, List<FilePatch> patches) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
       String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
       UnifiedDiffWriter.write(patches, writer, lineSeparator);
     }

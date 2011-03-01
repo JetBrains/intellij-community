@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,6 +150,8 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     }
 
     ASTNode node = element.getNode();
-    return node != null && JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType());
+    return node != null 
+           && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
+               || JavaDocElementType.ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
   }
 }

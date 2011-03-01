@@ -175,4 +175,9 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   public void putInfo(Map<String, String> info) {
     myEditor.putInfo(info);
   }
+
+  @Override
+  public String toString() {
+    return "EditorComponent file=" + myEditor.getVirtualFile();
+  }
 }

@@ -1,6 +1,6 @@
 package com.siyeh.ig.j2me;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class SimplifiableIfStatementInspectionTest extends IGInspectionTestCase {
 

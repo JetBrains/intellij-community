@@ -131,9 +131,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrReferenceExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
+  @Override
+  public GrReferenceExpression createReferenceElementForClass(PsiClass aClass) {
+    final String text;
+    if (aClass instanceof PsiAnonymousClass) {
+      text = ((PsiAnonymousClass)aClass).getBaseClassType().getPresentableText();
+    }
+    else {
+      text = aClass.getName();
+    }
+    return createReferenceExpressionFromText(text);
+  }
 
-  public GrExpression createExpressionFromText(String text) {
-    GroovyFileImpl file = (GroovyFileImpl) createGroovyFile(text);
+  public GrExpression createExpressionFromText(String text, PsiElement context) {
+    GroovyFileImpl file = (GroovyFileImpl)createGroovyFile(text, false, context);
     assert file.getTopStatements()[0] instanceof GrExpression;
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }

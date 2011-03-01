@@ -606,9 +606,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       @NonNls String defaultValue;
       if (paramType instanceof PsiEllipsisType) {
         final PsiEllipsisType ellipsisType = (PsiEllipsisType)paramType;
-        paramType = ellipsisType.toArrayType();
+        paramType = callSubstitutor.substitute(ellipsisType.toArrayType());
         if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-          defaultValue = "new " + ellipsisType.getComponentType().getCanonicalText() + "[]{}";
+          defaultValue = "new " + ((PsiArrayType)paramType).getComponentType().getCanonicalText() + "[]{}";
         }
         else {
           defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);

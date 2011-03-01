@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -34,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,7 +66,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
-public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner {
+public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner, Disposable{
 
   private final NavBarModel myModel;
 
@@ -82,11 +84,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private JComponent myHintContainer;
   private Component myContextComponent;
 
-
-
   private final NavBarUpdateQueue myUpdateQueue;
 
   private NavBarItem myContextObject;
+  private boolean myDisposed = false;
 
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
@@ -110,6 +111,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
+    Disposer.register(project, this);
   }
 
   public ListPopupImpl getNodePopup() {
@@ -180,6 +182,16 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public NavBarModel getModel() {
     return myModel;
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
+    NavBarListener.unsubscribeFrom(this);
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   private static Object optimizeTarget(Object target) {
@@ -633,7 +645,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public void removeNotify() {
     super.removeNotify();
-    NavBarListener.unsubscribeFrom(this);
+    Disposer.dispose(this);
   }
 
   public void updateState(final boolean show) {
@@ -666,6 +678,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           public void hide() {
             super.hide();
             cancelPopup();
+            Disposer.dispose(NavBarPanel.this);
           }
         };
         myHint.setForceShowAsPopup(true);

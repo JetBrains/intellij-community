@@ -25,7 +25,6 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -166,7 +165,8 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
-  private PsiElement findPsi(VirtualFile vFile) {
+  private PsiElement findPsi(@NotNull VirtualFile vFile) {
+    if (!vFile.isValid()) return null;
     PsiElement element;
     PsiManager psiManager = PsiManager.getInstance(myProject);
     if (vFile.isDirectory()) {

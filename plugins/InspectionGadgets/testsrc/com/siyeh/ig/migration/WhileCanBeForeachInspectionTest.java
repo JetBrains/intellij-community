@@ -1,6 +1,6 @@
 package com.siyeh.ig.migration;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
 public class WhileCanBeForeachInspectionTest extends IGInspectionTestCase {
 

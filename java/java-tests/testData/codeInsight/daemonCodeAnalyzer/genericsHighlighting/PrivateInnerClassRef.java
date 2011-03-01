@@ -12,3 +12,12 @@ public abstract class A implements <error descr="'A.B' has private access in 'A'
 //abstract class C implements error descr="'C.D' has private access in 'C'">C.D error {
 //  private static class D {}
 //}
+
+class JSReferenceSet {
+    static class MyResolver implements JSResolveUtil.Resolver<M> {}
+    class M extends JSResolveUtil.F {}
+}
+class JSResolveUtil {
+    static interface Resolver<T extends F> {}
+    static class F {}
+}

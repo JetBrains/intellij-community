@@ -29,10 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +41,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EventObject;
 
 /**
  * @author nik
@@ -77,6 +75,7 @@ public abstract class AbstractValueHint {
   private JBPopup myPopup;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
+  private Runnable myHideRunnable;
 
   public AbstractValueHint(Project project, Editor editor, Point point, ValueHintType type, final TextRange textRange) {
     myPoint = point;
@@ -173,7 +172,9 @@ public abstract class AbstractValueHint {
     }
   }
 
-  public void invokeHint() {
+  public void invokeHint(Runnable hideRunnable) {
+    myHideRunnable = hideRunnable;
+
     if(!canShowHint()) {
       hideHint();
       return;
@@ -249,6 +250,14 @@ public abstract class AbstractValueHint {
 
   protected boolean showHint(final JComponent component) {
     myCurrentHint = new LightweightHint(component);
+    myCurrentHint.addHintListener(new HintListener() {
+      @Override
+      public void hintHidden(EventObject event) {
+        if (myHideRunnable != null) {
+          myHideRunnable.run();
+        }
+      }
+    });
 
     //Editor may be disposed before later invokator process this action
     final Editor editor = getEditor();
@@ -327,5 +336,9 @@ public abstract class AbstractValueHint {
 
   public static ValueHintType getType(final EditorMouseEvent e) {
     return isAltMask(e.getMouseEvent().getModifiers()) ? ValueHintType.MOUSE_ALT_OVER_HINT : ValueHintType.MOUSE_OVER_HINT;
+  }
+
+  public boolean isInsideHint(Editor editor, Point point) {
+    return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
   }
 }

@@ -97,7 +97,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
         PsiElement context = info.getContext();
         PsiVariable psiVariable = info.getVariable();
 
-        if (context instanceof PsiDeclarationStatement || context instanceof PsiResource) {
+        if (context instanceof PsiDeclarationStatement || context instanceof PsiResourceVariable) {
           if (!info.isRead()) {
             if (!isOnTheFly) {
               holder.registerProblem(psiVariable.getNameIdentifier(),

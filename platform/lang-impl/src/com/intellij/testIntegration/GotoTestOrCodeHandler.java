@@ -104,7 +104,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   @Override
   protected void navigateToElement(Navigatable element) {
     if (element instanceof PsiElement) {
-      NavigationUtil.activateFileWithPsiElement((PsiElement)element);
+      NavigationUtil.activateFileWithPsiElement((PsiElement)element, true);
     }
     else {
       element.navigate(true);

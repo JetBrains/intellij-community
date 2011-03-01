@@ -246,8 +246,8 @@ public class ExceptionUtil {
       unhandledExceptions = unhandled;
     }
 
-    if (element instanceof PsiResource) {
-      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResource)element, topElement);
+    if (element instanceof PsiResourceVariable) {
+      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceVariable)element, topElement);
       if (unhandledExceptions == null) {
         unhandledExceptions = unhandled;
       }
@@ -331,7 +331,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResource resource, final PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, final PsiElement topElement) {
     final PsiType resourceType = resource.getType();
     if (resourceType instanceof PsiClassType) {
       final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();

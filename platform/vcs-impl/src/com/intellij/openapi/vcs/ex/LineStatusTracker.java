@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,9 @@ public class LineStatusTracker {
 
   private boolean myBulkUpdate;
   private final Application myApplication;
+  @Nullable
+  private RevisionPack myBaseRevisionNumber;
+  private String myPreviousBaseRevision;
 
   private LineStatusTracker(final Document document, final Document upToDateDocument, final Project project) {
     myApplication = ApplicationManager.getApplication();
@@ -71,12 +75,16 @@ public class LineStatusTracker {
     myRanges = new ArrayList<Range>();
   }
 
-  public void initialize(@NotNull final String upToDateContent) {
+  public void initialize(@NotNull final String upToDateContent, @NotNull RevisionPack baseRevisionNumber) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     synchronized (myLock) {
-      LOG.assertTrue(BaseLoadState.LOADING == myBaseLoaded);
       try {
+        if (myBaseRevisionNumber != null && myBaseRevisionNumber.after(baseRevisionNumber)) return;
+
+        myBaseRevisionNumber = baseRevisionNumber;
+        myPreviousBaseRevision = null;
+
         myUpToDateDocument.setReadOnly(false);
         myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), upToDateContent);
         myUpToDateDocument.setReadOnly(true);
@@ -90,6 +98,20 @@ public class LineStatusTracker {
       finally {
         myBaseLoaded = BaseLoadState.LOADED;
       }
+    }
+  }
+
+  public void useCachedBaseRevision(final RevisionPack number) {
+    synchronized (myLock) {
+      assert myBaseRevisionNumber != null;
+      if (myPreviousBaseRevision == null || myBaseRevisionNumber.after(number)) return;
+      initialize(myPreviousBaseRevision, number);
+    }
+  }
+
+  public boolean canUseBaseRevision(final RevisionPack number) {
+    synchronized (myLock) {
+      return myBaseRevisionNumber != null && myBaseRevisionNumber.equals(number) && myPreviousBaseRevision != null;
     }
   }
 
@@ -194,18 +216,22 @@ public class LineStatusTracker {
    * @return true if was cleared and base revision contents load should be started
    * false -> load was already started; after contents is loaded,
    */
-  public boolean resetForBaseRevisionLoad() {
+  public void resetForBaseRevisionLoad() {
     myApplication.assertReadAccessAllowed();
 
     synchronized (myLock) {
-      if (BaseLoadState.LOADING == myBaseLoaded) return false;
+      // there can be multiple resets before init -> take from document only firts time -> when right after install(),
+      // where myPreviousBaseRevision become null
+      if (BaseLoadState.LOADED.equals(myBaseLoaded) && myPreviousBaseRevision == null) {
+        myPreviousBaseRevision = myUpToDateDocument.getText();
+      }
       myUpToDateDocument.setReadOnly(false);
       myUpToDateDocument.setText("");
       myUpToDateDocument.setReadOnly(true);
       removeHighlightersFromMarkupModel();
       myRanges.clear();
       myBaseLoaded = BaseLoadState.LOADING;
-      return true;
+      return;
     }
   }
 
@@ -546,10 +572,6 @@ public class LineStatusTracker {
     return new LineStatusTracker(doc, document, project);
   }
 
-  public BaseLoadState getBaseLoaded() {
-    return myBaseLoaded;
-  }
-
   public void baseRevisionLoadFailed() {
     synchronized (myLock) {
       myBaseLoaded = BaseLoadState.FAILED;
@@ -560,5 +582,43 @@ public class LineStatusTracker {
     LOADING,
     FAILED,
     LOADED
+  }
+
+  public static class RevisionPack {
+    private final long myNumber;
+    private final VcsRevisionNumber myRevision;
+
+    public RevisionPack(long number, VcsRevisionNumber revision) {
+      myNumber = number;
+      myRevision = revision;
+    }
+
+    public long getNumber() {
+      return myNumber;
+    }
+
+    public VcsRevisionNumber getRevision() {
+      return myRevision;
+    }
+
+    public boolean after(final RevisionPack previous) {
+      if (myRevision.equals(previous.getRevision())) return false;
+      return myNumber > previous.getNumber();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RevisionPack that = (RevisionPack)o;
+
+      return myRevision.equals(that.getRevision());
+    }
+
+    @Override
+    public int hashCode() {
+      return myRevision.hashCode();
+    }
   }
 }

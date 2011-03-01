@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -167,7 +168,7 @@ public class EditorWindow {
           }
         }
         finally {
-          editorManager.getSelectionHistory().remove(new Pair<VirtualFile, EditorWindow>(file, EditorWindow.this));
+          editorManager.removeSelectionRecord(file, EditorWindow.this);
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
@@ -324,6 +325,16 @@ public class EditorWindow {
 
   public EditorTabbedContainer getTabbedPane() {
     return myTabbedPane;
+  }
+
+  public void requestFocus(boolean forced) {
+    if (myTabbedPane != null) {
+      myTabbedPane.requestFocus(forced);
+    }
+  }
+
+  public boolean isValid() {
+    return myPanel.isShowing();
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
@@ -904,5 +915,10 @@ public class EditorWindow {
 
   protected VirtualFile getFileAt(int i) {
     return getEditorAt(i).getFile();
+  }
+
+  @Override
+  public String toString() {
+    return "EditorWindow: files=" + Arrays.asList(getFiles());
   }
 }

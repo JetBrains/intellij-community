@@ -31,6 +31,11 @@ public class MethodDownAction extends BaseCodeInsightAction {
     return new MethodDownHandler();
   }
 
+  @Override
+  protected boolean isValidForLookup() {
+    return true;
+  }
+
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return MethodUpAction.checkValidForFile(file);
   }

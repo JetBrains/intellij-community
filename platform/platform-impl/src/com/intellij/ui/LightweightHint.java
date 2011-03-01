@@ -428,6 +428,19 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myComponent.getSize();
   }
 
+  public boolean isInsideHint(RelativePoint target) {
+    if (myComponent == null || !myComponent.isShowing()) return false;
+
+    if (myIsRealPopup) {
+      Window wnd = SwingUtilities.getWindowAncestor(myComponent);
+      return wnd.getBounds().contains(target.getScreenPoint());
+    } else if (myCurrentIdeTooltip != null) {
+      return myCurrentIdeTooltip.isInside(target);
+    } else {
+      return new Rectangle(myComponent.getLocationOnScreen(), myComponent.getSize()).contains(target.getScreenPoint());
+    }
+  }
+
   private final class MyEscListener implements ActionListener {
     public final void actionPerformed(final ActionEvent e) {
       hide();

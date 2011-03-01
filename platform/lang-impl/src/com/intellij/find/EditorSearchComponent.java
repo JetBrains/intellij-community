@@ -29,8 +29,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
+import com.intellij.openapi.editor.actions.ReplaceAction;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -39,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -69,7 +68,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener {
+public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
+                                                             FindModel.FindModelObserver {
   private static final int MATCHES_LIMIT = 10000;
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
@@ -106,11 +106,23 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final LivePreview myLivePreview;
 
 
-  private boolean myIsReplace;
   private boolean myListeningSelection = false;
-  private boolean myToChangeSelection = true;
   private SearchResults mySearchResults;
   private Balloon myOptionsBalloon;
+
+  private final FindModel myFindModel;
+  private JCheckBox myCbMatchCase;
+  private JPanel myReplacementPane;
+
+  private static FindModel createDefaultFindModel(Project p) {
+    FindModel findModel = new FindModel();
+    findModel.copyFrom(FindManager.getInstance(p).getFindInFileModel());
+    return findModel;
+  }
+
+  public EditorSearchComponent(Editor editor, Project project) {
+    this(editor, project, createDefaultFindModel(project));
+  }
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -120,76 +132,51 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     return null;
   }
 
-  public EditorSearchComponent(final Editor e, Project p) {
-    this(e, p, false);
-  }
-
   @Override
   public void searchResultsUpdated(SearchResults sr) {
     int count = sr.getActualFound();
     if (mySearchField.getText().isEmpty()) {
       nothingToSearchFor();
-      return;
-    }
+    } else {
+      if (count <= mySearchResults.getMatchesLimit()) {
+        myClickToHighlightLabel.setVisible(false);
 
-    if (count <= mySearchResults.getMatchesLimit()) {
-      myClickToHighlightLabel.setVisible(false);
-
-      if (count > 0) {
-        setRegularBackground();
-        if (count > 1) {
-          myMatchInfoLabel.setText(count + " matches");
+        if (count > 0) {
+          setRegularBackground();
+          if (count > 1) {
+            myMatchInfoLabel.setText(count + " matches");
+          }
+          else {
+            myMatchInfoLabel.setText("1 match");
+          }
         }
         else {
-          myMatchInfoLabel.setText("1 match");
+          setNotFoundBackground();
+          myMatchInfoLabel.setText("No matches");
         }
       }
       else {
-        setNotFoundBackground();
-        myMatchInfoLabel.setText("No matches");
+        setRegularBackground();
+        myMatchInfoLabel.setText("More than " + mySearchResults.getMatchesLimit() + " matches");
+        myClickToHighlightLabel.setVisible(true);
+        boldMatchInfo();
       }
     }
-    else {
-      setRegularBackground();
-      myMatchInfoLabel.setText("More than " + mySearchResults.getMatchesLimit() + " matches");
-      myClickToHighlightLabel.setVisible(true);
-      boldMatchInfo();
-    }
 
-    updateSelection();
     updateExcludeStatus();
   }
 
   @Override
   public void cursorMoved() {
-    updateSelection();
     updateExcludeStatus();
-  }
-
-  private void updateSelection() {
-    SelectionModel selection = myEditor.getSelectionModel();
-    if (myToChangeSelection && (mySelectionOnly == null || !mySelectionOnly.isSelected())) {
-      LiveOccurrence cursor = mySearchResults.getCursor();
-      if (cursor != null) {
-        TextRange range = cursor.getPrimaryRange();
-        selection.setSelection(range.getStartOffset(), range.getEndOffset());
-
-        myEditor.getCaretModel().moveToOffset(range.getEndOffset());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-
-      }
-      myToChangeSelection = false;
-    }
   }
 
   @Override
   public void editorChanged(SearchResults sr, Editor oldEditor) {  }
 
-  public EditorSearchComponent(final Editor editor, final Project project, boolean isReplace) {
+  public EditorSearchComponent(final Editor editor, final Project project, FindModel findModel) {
     super(new BorderLayout(0, 0));
-
-    myIsReplace = isReplace;
-
+    myFindModel = findModel;
 
     GRADIENT_C1 = getBackground();
     GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18), Math.max(0, GRADIENT_C1.getBlue() - 0x18));
@@ -221,6 +208,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     group.add(new PrevOccurrenceAction());
     group.add(new NextOccurrenceAction());
     group.add(new FindAllAction());
+    group.add(new IncrementalFindAction());
+    group.add(new ReplaceAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", group, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -229,7 +218,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myToolbarComponent.setOpaque(false);
     leadPanel.add(myToolbarComponent);
 
-    final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
+    myCbMatchCase = new NonFocusableCheckBox("Case sensitive");
     myCbWholeWords = new NonFocusableCheckBox("Match whole words only");
     myCbRegexp = new NonFocusableCheckBox("Regex");
     myCbInComments = new NonFocusableCheckBox("Search in comments only");
@@ -238,7 +227,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myOptionsPane = new JPanel();
     myOptionsPane.setLayout(new BoxLayout(myOptionsPane, BoxLayout.Y_AXIS));
 
-    leadPanel.add(cbMatchCase);
+    leadPanel.add(myCbMatchCase);
     myOptionsPane.add(myCbWholeWords);
     leadPanel.add(myCbRegexp);
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
@@ -260,38 +249,40 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
     });
 
+
     leadPanel.add(myMoreOptionsButton);
 
-    cbMatchCase.setSelected(isCaseSensitive());
-    myCbWholeWords.setSelected(isWholeWords());
-    myCbRegexp.setSelected(isRegexp());
-    myCbInComments.setSelected(isInComments());
-    myCbInLiterals.setSelected(isInLiterals());
+    myFindModel.addObserver(new FindModel.FindModelObserver() {
+      @Override
+      public void findModelChanged(FindModel findModel) {
+        syncFindModels(FindManager.getInstance(myProject).getFindInFileModel(), myFindModel);
+        updateUIWithFindModel();
+        updateResults(true);
+      }
+    });
 
-    cbMatchCase.setMnemonic('C');
+    FindManager.getInstance(myProject).getFindInFileModel().addObserver(this);
+
+    updateUIWithFindModel();
+
+    myCbMatchCase.setMnemonic('C');
     myCbWholeWords.setMnemonic('M');
     myCbRegexp.setMnemonic('x');
     myCbInComments.setMnemonic('o');
     myCbInLiterals.setMnemonic('l');
 
     setSmallerFontAndOpaque(myCbWholeWords);
-    setSmallerFontAndOpaque(cbMatchCase);
+    setSmallerFontAndOpaque(myCbMatchCase);
     setSmallerFontAndOpaque(myCbRegexp);
     setSmallerFontAndOpaque(myCbInComments);
     setSmallerFontAndOpaque(myCbInLiterals);
 
-    if (myIsReplace) {
-      configureReplacementPane();
-      myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    }
 
-
-    cbMatchCase.addActionListener(new ActionListener() {
+    myCbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final boolean b = cbMatchCase.isSelected();
+        final boolean b = myCbMatchCase.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setCaseSensitive(b);
         FindSettings.getInstance().setLocalCaseSensitive(b);
-        updateResults(true);
       }
     });
 
@@ -300,7 +291,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         final boolean b = myCbWholeWords.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(b);
         FindSettings.getInstance().setLocalWholeWordsOnly(b);
-        updateResults(true);
       }
     });
 
@@ -308,11 +298,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       public void actionPerformed(final ActionEvent e) {
         final boolean b = myCbRegexp.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
-        myCbWholeWords.setEnabled(!b);
-        if (myPreserveCase != null) {
-          myPreserveCase.setEnabled(!b);
-        }
-        updateResults(true);
       }
     });
 
@@ -320,7 +305,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       public void actionPerformed(final ActionEvent e) {
         final boolean b = myCbInComments.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setInCommentsOnly(b);
-        updateResults(true);
       }
     });
 
@@ -328,7 +312,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       public void actionPerformed(final ActionEvent e) {
         final boolean b = myCbInLiterals.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setInStringLiteralsOnly(b);
-        updateResults(true);
       }
     });
 
@@ -367,6 +350,17 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
     configureTextField(mySearchField);
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        setMatchesLimit(MATCHES_LIMIT);
+        String text = mySearchField.getText();
+        if (!StringUtil.isEmpty(text)) {
+          myFindModel.setStringToFind(text);
+          updateResults(true);
+        }
+      }
+    });
+
     setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -381,7 +375,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
                                          JComponent.WHEN_FOCUSED);
 
-    final String initialText = myEditor.getSelectionModel().getSelectedText();
+    final String initialText = myFindModel.getStringToFind();
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -390,8 +384,85 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     });
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
+  }
 
+  @Override
+  public void findModelChanged(FindModel findModel) {
+    syncFindModels(myFindModel, findModel);
+  }
 
+  public boolean isRegexp() {
+    return myFindModel.isRegularExpressions();
+  }
+
+  public void setRegexp(boolean val) {
+    myFindModel.setRegularExpressions(val);
+  }
+
+  public FindModel getFindModel() {
+    return myFindModel;
+  }
+
+  private static void syncFindModels(FindModel to, FindModel from) {
+    to.setCaseSensitive(from.isCaseSensitive());
+    to.setWholeWordsOnly(from.isWholeWordsOnly());
+    to.setRegularExpressions(from.isRegularExpressions());
+    to.setInCommentsOnly(from.isInCommentsOnly());
+    to.setInStringLiteralsOnly(from.isInStringLiteralsOnly());
+  }
+
+  private void updateFindModelWithUI() {
+    myFindModel.setCaseSensitive(myCbMatchCase.isSelected());
+    myFindModel.setWholeWordsOnly(myCbWholeWords.isSelected());
+    myFindModel.setRegularExpressions(myCbRegexp.isSelected());
+    myFindModel.setInCommentsOnly(myCbInComments.isSelected());
+    myFindModel.setInStringLiteralsOnly(myCbInLiterals.isSelected());
+    myFindModel.setFromCursor(false);
+    myFindModel.setSearchHighlighters(true);
+
+  }
+
+  private void updateUIWithFindModel() {
+    myCbMatchCase.setSelected(myFindModel.isCaseSensitive());
+    myCbWholeWords.setSelected(myFindModel.isWholeWordsOnly());
+    myCbWholeWords.setEnabled(!myFindModel.isRegularExpressions());
+    myCbRegexp.setSelected(myFindModel.isRegularExpressions());
+    myCbInComments.setSelected(myFindModel.isInCommentsOnly());
+    myCbInLiterals.setSelected(myFindModel.isInStringLiteralsOnly());
+
+    String stringToFind = myFindModel.getStringToFind();
+    if (!StringUtil.equals(stringToFind, mySearchField.getText())) {
+      mySearchField.setText(stringToFind);
+    }
+
+    setTrackingSelection(!myFindModel.isGlobal());
+
+    if (myFindModel.isReplaceState() && myReplacementPane == null) {
+      configureReplacementPane();
+    } else if (!myFindModel.isReplaceState() && myReplacementPane != null) {
+      remove(myReplacementPane);
+      myReplacementPane = null;
+    }
+    if (myFindModel.isReplaceState()) {
+      mySelectionOnly.setSelected(!myFindModel.isGlobal());
+      myPreserveCase.setSelected(myFindModel.isPreserveCase());
+      myPreserveCase.setEnabled(!myFindModel.isRegularExpressions());
+      myPreserveCase.setEnabled(!myFindModel.isWholeWordsOnly());
+      String stringToReplace = myFindModel.getStringToReplace();
+      if (!StringUtil.equals(stringToReplace, myReplaceField.getText())) {
+        myReplaceField.setText(stringToReplace);
+      }
+      updateExcludeStatus();
+    }
+  }
+
+  private static FindModel createFindModel(FindModel findInFileModel, boolean isReplace) {
+    FindModel result = new FindModel();
+    result.copyFrom(findInFileModel);
+    if (isReplace) {
+      result.setReplaceState(isReplace);
+    }
+    return result;
   }
 
   private void setMatchesLimit(int value) {
@@ -399,43 +470,44 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void configureReplacementPane() {
-    JPanel replacement = createLeadPane();
+    myReplacementPane = createLeadPane();
     myReplaceField = createTextField();
     configureTextField(myReplaceField);
+    myReplaceField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        setMatchesLimit(MATCHES_LIMIT);
+        myFindModel.setStringToReplace(myReplaceField.getText());
+      }
+    });
     myReplaceField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         myLivePreviewController.performReplace();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-    replacement.add(myReplaceField);
-    add(replacement, BorderLayout.SOUTH);
+    myReplaceField.setText(myFindModel.getStringToReplace());
+    myReplacementPane.add(myReplaceField);
+    add(myReplacementPane, BorderLayout.SOUTH);
     myPreserveCase = new JCheckBox("Preserve case");
     mySelectionOnly = new JCheckBox("Selection only");
-    final FindModel findInFileModel = FindManager.getInstance(myProject).getFindInFileModel();
 
     myPreserveCase.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         final boolean b = myPreserveCase.isSelected();
-        findInFileModel.setPreserveCase(b);
-        updateResults(true);
+        myFindModel.setPreserveCase(b);
       }
     });
     myPreserveCase.setMnemonic('P');
     mySelectionOnly.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
-        updateModelWithSelectionMode(findInFileModel);
-        updateResults(true);
+        final boolean b = mySelectionOnly.isSelected();
+        myFindModel.setGlobal(!b);
       }
     });
     mySelectionOnly.setMnemonic('S');
-    updateModelWithSelectionMode(findInFileModel);
 
-    mySelectionOnly.setSelected(!findInFileModel.isGlobal());
-    myPreserveCase.setSelected(findInFileModel.isPreserveCase());
-    myPreserveCase.setEnabled(!findInFileModel.isRegularExpressions());
 
     myReplaceButton = new JButton("Replace");
     myReplaceButton.addActionListener(new ActionListener() {
@@ -456,7 +528,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myReplaceAllButton.setMnemonic('a');
 
     myExcludeButton = new JButton("");
-    updateExcludeStatus();
+
     myExcludeButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -465,9 +537,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     });
     myExcludeButton.setMnemonic('l');
 
-    replacement.add(myReplaceButton);
-    replacement.add(myReplaceAllButton);
-    replacement.add(myExcludeButton);
+    myReplacementPane.add(myReplaceButton);
+    myReplacementPane.add(myReplaceAllButton);
+    myReplacementPane.add(myExcludeButton);
 
     myOptionsPane.add(mySelectionOnly);
     myOptionsPane.add(myPreserveCase);
@@ -479,6 +551,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setSmallerFontAndOpaque(mySelectionOnly);
     setSmallerFontAndOpaque(myPreserveCase);
     setSmallerFont(myReplaceField);
+    myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
   }
 
   private void updateExcludeStatus() {
@@ -496,11 +569,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
   }
 
-  private void updateModelWithSelectionMode(FindModel findInFileModel) {
+  private void updateModelWithSelectionMode() {
     final boolean b = mySelectionOnly.isSelected();
-    findInFileModel.setGlobal(!b);
+    myFindModel.setGlobal(!b);
+  }
+
+  private void setTrackingSelection(boolean b) {
     if (b) {
-      myEditor.getSelectionModel().addSelectionListener(this);
+      if (!myListeningSelection) {
+        myEditor.getSelectionModel().addSelectionListener(this);
+      }
     } else {
       if (myListeningSelection) {
         myEditor.getSelectionModel().removeSelectionListener(this);
@@ -540,12 +618,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
     });
 
-    searchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        setMatchesLimit(MATCHES_LIMIT);
-        updateResults(true);
-      }
-    });
+
 
     searchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -566,7 +639,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   public void setInitialText(final String initialText) {
     final String text = initialText != null ? initialText : "";
     if (text.contains("\n")) {
-      setRegexp(true);
+      myFindModel.setRegularExpressions(true);
       setTextInField(StringUtil.escapeToRegexp(text));
     }
     else {
@@ -580,14 +653,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void searchBackward() {
-    moveCursor(false);
+    moveCursor(SearchResults.Direction.UP);
 
     addCurrentTextToRecents();
   }
 
   private void searchForward() {
-    moveCursor(true);
-
+    moveCursor(SearchResults.Direction.DOWN);
     addCurrentTextToRecents();
   }
 
@@ -603,13 +675,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     updateResults(true);
   }
 
-  public void moveCursor(boolean forwardOrBackward) {
-    myToChangeSelection = true;
-    if (forwardOrBackward) {
-      mySearchResults.nextOccurrence();
-    } else {
-      mySearchResults.prevOccurrence();
-    }
+  public void moveCursor(SearchResults.Direction direction) {
+    myLivePreviewController.moveCursor(direction, true);
   }
 
   public void replaceCurrent() {
@@ -641,6 +708,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myEditor.getSelectionModel().removeSelection();
     }
     IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
+    FindManager.getInstance(myProject).getFindInFileModel().removeObserver(this);
     mySearchResults.dispose();
     myLivePreview.cleanUp();
     myEditor.setHeaderComponent(null);
@@ -660,7 +728,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myEditor.getDocument().addDocumentListener(myDocumentListener);
 
     if (myLivePreview != null) {
-      myLivePreviewController.updateInBackground(mySearchResults.getFindModel());
+      myLivePreviewController.updateInBackground(mySearchResults.getFindModel(), false);
     }
   }
 
@@ -684,14 +752,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       nothingToSearchFor();
     }
     else {
-      final FindModel model = new FindModel();
-      model.setCaseSensitive(isCaseSensitive());
-      model.setInCommentsOnly(isInComments());
-      model.setInStringLiteralsOnly(isInLiterals());
+
       setRegularBackground();
-      if (isRegexp()) {
-        model.setWholeWordsOnly(false);
-        model.setRegularExpressions(true);
+      if (myFindModel.isRegularExpressions()) {
         try {
           Pattern.compile(text);
         }
@@ -703,35 +766,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
           return;
         }
       }
-      else {
-        model.setWholeWordsOnly(isWholeWords());
-        model.setRegularExpressions(false);
-      }
 
-      model.setFromCursor(false);
-      model.setStringToFind(text);
-      model.setSearchHighlighters(true);
 
       final FindManager findManager = FindManager.getInstance(myProject);
       if (allowedToChangedEditorSelection) {
         findManager.setFindWasPerformed();
         FindModel copy = new FindModel();
-        copy.copyFrom(model);
+        copy.copyFrom(myFindModel);
+        copy.setReplaceState(false);
         findManager.setFindNextModel(copy);
       }
       
-      if (myIsReplace) {
-        model.setReplaceState(true);
-        model.setStringToReplace(myReplaceField.getText());
-        model.setPromptOnReplace(false);
-        model.setGlobal(!mySelectionOnly.isSelected());
-        model.setPreserveCase(myPreserveCase.isEnabled() && myPreserveCase.isSelected());
-      }
-      if (!myToChangeSelection) {
-        myToChangeSelection = allowedToChangedEditorSelection;
-      }
-
-      myLivePreviewController.updateInBackground(model);
+      myLivePreviewController.updateInBackground(myFindModel, allowedToChangedEditorSelection);
     }
   }
 
@@ -760,35 +806,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     return mySearchField.getText();
   }
 
-  private boolean isWholeWords() {
-    return FindManager.getInstance(myProject).getFindInFileModel().isWholeWordsOnly();
-  }
-
-  private boolean isInComments() {
-    return FindManager.getInstance(myProject).getFindInFileModel().isInCommentsOnly();
-  }
-
-  private boolean isInLiterals() {
-    return FindManager.getInstance(myProject).getFindInFileModel().isInStringLiteralsOnly();
-  }
-
-  private boolean isCaseSensitive() {
-    return FindManager.getInstance(myProject).getFindInFileModel().isCaseSensitive();
-  }
-
-  public boolean isRegexp() {
-    return myCbRegexp.isSelected() || FindManager.getInstance(myProject).getFindInFileModel().isRegularExpressions();
-  }
-
-  public void setRegexp(boolean r) {
-    myCbRegexp.setSelected(r);
-    myCbWholeWords.setEnabled(!r);
-    updateResults(false);
-  }
-
   public void setTextInField(final String text) {
     mySearchField.setText(text);
-    updateResults(true);
+    if (!StringUtil.isEmpty(text)) {
+      myFindModel.setStringToFind(text);
+    }
   }
 
   private class PrevOccurrenceAction extends AnAction implements DumbAware {
@@ -802,7 +824,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
 
       registerShortcutsForComponent(shortcuts, mySearchField, this);
-      if (myIsReplace) {
+      if (myFindModel.isReplaceState()) {
         registerShortcutsForComponent(shortcuts, myReplaceField, this);
       }
     }
@@ -836,7 +858,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
 
       registerShortcutsForComponent(shortcuts, mySearchField, this);
-      if (myIsReplace) {
+      if (myFindModel.isReplaceState()) {
         registerShortcutsForComponent(shortcuts, myReplaceField, this);
       }
     }
@@ -1004,13 +1026,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     @Override
     public void getFocusBack() {
       mySearchField.requestFocus();
-    }
-
-    @Override
-    public TextRange performReplace(LiveOccurrence occurrence, String replacement, Editor editor) {
-      myToChangeSelection = true;
-      return super
-        .performReplace(occurrence, replacement, editor);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     public void performReplace() {

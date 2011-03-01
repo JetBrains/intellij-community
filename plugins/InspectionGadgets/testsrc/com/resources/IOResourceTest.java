@@ -1,6 +1,6 @@
 package com.resources;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 import com.siyeh.ig.resources.IOResourceInspection;
 
 /**

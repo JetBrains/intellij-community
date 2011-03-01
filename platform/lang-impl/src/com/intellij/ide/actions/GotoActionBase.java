@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -118,9 +119,12 @@ public abstract class GotoActionBase extends AnAction {
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
+    boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
+    assert myInAction != null;
     final Class startedAction = myInAction;
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)), mayRequestOpenInCurrentWindow);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
+
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
 
       @Override
@@ -139,6 +143,6 @@ public abstract class GotoActionBase extends AnAction {
         callback.elementChosen(popup, element);
       }
     }, ModalityState.current(), true);
-
   }
+
 }

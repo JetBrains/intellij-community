@@ -21,17 +21,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 /**
  * @author max
  */
 public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
-  public static final String COMMAND_NAME = CodeInsightBundle.message("progress.reformat.code.prepare");
-  private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
+  public static final String COMMAND_NAME = CodeInsightBundle.message("progress.reformat.and.optimize.common.command.text");
+  private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.and.optimize.progress.common.text");
 
   private final OptimizeImportsProcessor myOptimizeImportsProcessor;
   private final ReformatCodeProcessor myReformatCodeProcessor;
@@ -67,20 +69,26 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
   }
 
   @NotNull
-  protected Runnable preprocessFile(PsiFile file) throws IncorrectOperationException {
-    final Runnable r1 = myReformatCodeProcessor.preprocessFile(file);
-    final Runnable r2 = myOptimizeImportsProcessor.preprocessFile(file);
-    return new Runnable() {
-      public void run() {
-        r1.run();
+  protected FutureTask<Boolean> preprocessFile(PsiFile file) throws IncorrectOperationException {
+    final FutureTask<Boolean> reformatTask = myReformatCodeProcessor.preprocessFile(file);
+    final FutureTask<Boolean> optimizeImportsTask = myOptimizeImportsProcessor.preprocessFile(file);
+    return new FutureTask<Boolean>(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        reformatTask.run();
+        if (!reformatTask.get() || reformatTask.isCancelled()) {
+          return false;
+        }
+        
         CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
         try {
-          r2.run();
+          optimizeImportsTask.run();
+          return optimizeImportsTask.get() && !optimizeImportsTask.isCancelled();
         }
         finally {
           CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
         }
       }
-    };
+    });
   }
 }

@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
@@ -55,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -68,32 +70,6 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   public static void showApplyPatch(final Project project, final VirtualFile file) {
-    final Consumer<ApplyPatchDifferentiatedDialog> callback = new Consumer<ApplyPatchDifferentiatedDialog>() {
-      public void consume(ApplyPatchDifferentiatedDialog newDia) {
-        if (newDia.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
-          return;
-        }
-
-        final Collection<FilePatchInProgress> included = newDia.getIncluded();
-        final MultiMap<VirtualFile, FilePatchInProgress> patchGroups = new MultiMap<VirtualFile, FilePatchInProgress>();
-        for (FilePatchInProgress patchInProgress : included) {
-          patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
-        }
-
-        final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
-        for (VirtualFile base : patchGroups.keySet()) {
-          final PatchApplier patchApplier =
-            new PatchApplier<BinaryFilePatch>(project, base, ObjectsConvertor.convert(patchGroups.get(base),
-                                                                                      new Convertor<FilePatchInProgress, FilePatch>() {
-                                                                                        public FilePatch convert(FilePatchInProgress o) {
-                                                                                          return o.getPatch();
-                                                                                        }
-                                                                                      }), newDia.getSelectedChangeList(), null);
-          appliers.add(patchApplier);
-        }
-        PatchApplier.executePatchGroup(appliers);
-      }
-    };
     FileDocumentManager.getInstance().saveAllDocuments();
     final VirtualFile toUse;
     if (file != null) {
@@ -107,7 +83,8 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       toUse = files[0];
     }
-    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback, toUse);
+    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
+      Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, toUse);
     dialog.show();
   }
 

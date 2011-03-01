@@ -990,6 +990,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, parentDisposable, false, false);
   }
 
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       @NotNull JComponent component,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode) {
+    return registerToolWindow(id, component, anchor, parentDisposable, canWorkInDumbMode, false);
+  }
+
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,

@@ -112,11 +112,9 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
         @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement parent =
-                    expression.getParent();
-            if (parent instanceof PsiReferenceExpression ||
-                    parent instanceof PsiCallExpression) {
-                // optimization
+            final PsiExpression qualifierExpression =
+                    expression.getQualifierExpression();
+            if (qualifierExpression != null) {
                 return;
             }
             final PsiReferenceParameterList parameterList =
@@ -127,11 +125,6 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
             if (parameterList.getTypeArguments().length > 0) {
                 // optimization: reference with type arguments are
                 // definitely not references to fields.
-                return;
-            }
-            final PsiExpression qualifierExpression =
-                    expression.getQualifierExpression();
-            if (qualifierExpression != null) {
                 return;
             }
             final PsiElement element = expression.resolve();

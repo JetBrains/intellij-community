@@ -20,9 +20,9 @@
  */
 package com.siyeh.ig.junit;
 
-import com.IGInspectionTestCase;
+import com.siyeh.ig.IGInspectionTestCase;
 
-public class ParameterizedParametersStaticCollectionInspectionTest extends IGInspectionTestCase{
+public class ParameterizedParametersStaticCollectionInspectionTest extends IGInspectionTestCase {
   public void testCreatemethod() throws Exception {
     doTest();
   }

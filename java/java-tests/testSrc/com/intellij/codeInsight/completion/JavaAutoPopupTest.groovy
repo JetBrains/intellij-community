@@ -17,9 +17,12 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.progress.ProgressManager
 
 /**
  * @author peter
@@ -483,6 +486,57 @@ public interface Test {
 }"""
     type 'd'
     assert !lookup
+  }
+
+  public void testCancellingDuringCalculation() {
+    myFixture.configureByText "a.java", """
+public interface Test {
+  <caret>
+}"""
+    edt { myFixture.type 'A' }
+    joinAlarm()
+    def first = lookup
+    assert first
+    edt {
+      assert first == lookup
+      lookup.hide()
+      myFixture.type 'a'
+    }
+    joinAlarm()
+    joinAlarm()
+    joinAlarm()
+    assert lookup != first
+  }
+
+  static class LongReplacementOffsetContributor extends CompletionContributor {
+    @Override
+    void duringCompletion(CompletionInitializationContext cxt) {
+      Thread.sleep 500
+      ProgressManager.checkCanceled()
+      cxt.replacementOffset--;
+    }
+  }
+
+  public void testDuringCompletionMustFinish() {
+    def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
+    def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: LongReplacementOffsetContributor.name)
+    ep.registerExtension(bean, LoadingOrder.LAST)
+
+    try {
+      edt { myFixture.addFileToProject 'directory/foo.txt', '' }
+      myFixture.configureByText "a.java", 'public interface Test { RuntiExce<caret>xxx }'
+      myFixture.completeBasic()
+      while (!lookup.items) {
+        Thread.sleep(10)
+        edt { lookup.refreshUi() }
+      }
+      edt { myFixture.type '\t' }
+      myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
+    }
+    finally {
+      ep.unregisterExtension(bean)
+    }
+
   }
 
 

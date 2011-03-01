@@ -58,6 +58,14 @@ public abstract class ToolWindowManager {
                                                 @NotNull JComponent component,
                                                 @NotNull ToolWindowAnchor anchor,
                                                 Disposable parentDisposable,
+                                                boolean canWorkInDumbMode);
+  /**
+  * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  */
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                @NotNull JComponent component,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                Disposable parentDisposable,
                                                 boolean canWorkInDumbMode,
                                                 boolean canCloseContents);
 

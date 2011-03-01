@@ -421,7 +421,7 @@ public class PsiUtil {
           }
           else if (qualifier instanceof GrThisReferenceExpression && ((GrThisReferenceExpression)qualifier).getQualifier() == null) {
             //static members may be invoked from this.<...>
-            final boolean isInStatic = isThisReferenceInStaticContext((GrThisReferenceExpression)qualifier);
+            final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
             if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
               return !(owner.hasModifierProperty(GrModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
             }
@@ -455,12 +455,6 @@ public class PsiUtil {
     }
     return true;
   }
-
-  public static boolean isThisReferenceInStaticContext(GrThisReferenceExpression thisReferenceExpression) {
-    final GrMethod owner = PsiTreeUtil.getParentOfType(thisReferenceExpression, GrMethod.class);
-    return owner != null && owner.hasModifierProperty(GrModifier.STATIC);
-  }
-
 
   public static boolean isAccessible(PsiElement place, PsiMember member) {
 
@@ -497,11 +491,16 @@ public class PsiUtil {
     }
   }
 
-  public static boolean isInStaticContext(GrReferenceExpression refExpression, PsiClass targetClass) {
-    if (refExpression.isQualified()) {
-      GrExpression qualifer = refExpression.getQualifierExpression();
-      if (qualifer instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifer).resolve() instanceof PsiClass;
-    } else {
+  public static boolean isInStaticContext(GrQualifiedReference refExpression) {
+    return isInStaticContext(refExpression, null);
+  }
+
+  public static boolean isInStaticContext(GrQualifiedReference refExpression, PsiClass targetClass) {
+    if (refExpression.getQualifier() != null) {
+      PsiElement qualifier = refExpression.getQualifier();
+      if (qualifier instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
+    }
+    else {
       PsiElement run = refExpression;
       while (run != null && run != targetClass) {
         if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
@@ -1055,5 +1054,19 @@ public class PsiUtil {
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
+  }
+
+  public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {
+    GrNamedArgument[] res = grCall.getNamedArguments();
+    if (res.length > 0) return res;
+
+    GrExpression[] arguments = grCall.getExpressionArguments();
+    if (arguments.length == 0) return GrNamedArgument.EMPTY_ARRAY;
+
+    PsiElement firstArg = arguments[0];
+
+    if (!(firstArg instanceof GrListOrMap)) return GrNamedArgument.EMPTY_ARRAY;
+
+    return ((GrListOrMap)firstArg).getNamedArguments();
   }
 }

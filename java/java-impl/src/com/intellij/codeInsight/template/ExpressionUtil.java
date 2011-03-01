@@ -15,17 +15,16 @@
  */
 package com.intellij.codeInsight.template;
 
- import com.intellij.openapi.components.ServiceManager;
- import com.intellij.openapi.diagnostic.Logger;
- import com.intellij.openapi.project.Project;
  import com.intellij.openapi.application.ApplicationManager;
- import com.intellij.psi.*;
- import com.intellij.psi.codeStyle.JavaCodeStyleManager;
- import com.intellij.psi.codeStyle.SuggestedNameInfo;
- import com.intellij.psi.codeStyle.VariableKind;
- import com.intellij.psi.text.BlockSupport;
- import com.intellij.util.IncorrectOperationException;
- import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
  /**
   * @author mike
@@ -53,7 +52,7 @@ package com.intellij.codeInsight.template;
        final PsiFile fileCopy = (PsiFile)file.copy();
        ApplicationManager.getApplication().runWriteAction(new Runnable() {
          public void run() {
-           BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
+           BlockSupport blockSupport = BlockSupport.getInstance(project);
            try{
              blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
            }
