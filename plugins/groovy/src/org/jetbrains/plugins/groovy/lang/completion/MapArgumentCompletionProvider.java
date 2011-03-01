@@ -27,6 +27,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -74,8 +75,8 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       ContainerUtil.addAll(results, constructorCall.multiResolveClass());
     }
     else if (call instanceof GrCallExpression) {
-      GrCallExpression constructorCall = (GrCallExpression)call;
-      ContainerUtil.addAll(results, constructorCall.getCallVariants(null));
+      GrCallExpression callExpression = (GrCallExpression)call;
+      ContainerUtil.addAll(results, callExpression.getCallVariants(null));
       final PsiType type = ((GrCallExpression)call).getType();
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -88,10 +89,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     for (GrNamedArgument argument : argumentList.getNamedArguments()) {
       final GrArgumentLabel label = argument.getLabel();
       if (label != null) {
-        final String name = label.getName();
-        if (name != null) {
-          usedNames.add(name);
-        }
+        ContainerUtil.addIfNotNull(label.getName(), usedNames);
       }
     }
 
@@ -103,13 +101,18 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         if (containingClass != null) {
           addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
         }
-        if (method instanceof GrMethod) {
-          for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
-            if (!usedNames.contains(parameter)) {
-              final LookupElementBuilder lookup =
-                LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
-              result.addElement(lookup);
-            }
+
+        Map<String, String[]> namedArguments = new java.util.HashMap<String, String[]>();
+
+        for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+          namedArgumentProvider.getNamedArguments(method, namedArguments);
+        }
+
+        for (String namedArgumentName : namedArguments.keySet()) {
+          if (!usedNames.contains(namedArgumentName)) {
+            final LookupElementBuilder lookup =
+              LookupElementBuilder.create(namedArgumentName).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+            result.addElement(lookup);
           }
         }
       }
