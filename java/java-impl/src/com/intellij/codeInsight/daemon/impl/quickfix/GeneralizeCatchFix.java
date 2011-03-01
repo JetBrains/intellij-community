@@ -22,12 +22,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class GeneralizeCatchFix implements IntentionAction {
-//  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
-
   private final PsiElement myElement;
   private final PsiClassType myUnhandledException;
   private PsiTryStatement myTryStatement;
@@ -56,13 +55,11 @@ public class GeneralizeCatchFix implements IntentionAction {
           && myUnhandledException != null
           && myUnhandledException.isValid()
           && myElement.getManager().isInProject(myElement))) return false;
-    // final enclosing try
+    // find enclosing try
     PsiElement element = myElement;
     while (element != null) {
-      if (element instanceof PsiCodeBlock
-          && element.getParent() instanceof PsiTryStatement
-          && ((PsiTryStatement) element.getParent()).getTryBlock() == element) {
-        myTryStatement = (PsiTryStatement) element.getParent();
+      if (PsiUtil.isTryBlock(element) || element instanceof PsiResourceList) {
+        myTryStatement = (PsiTryStatement)element.getParent();
         break;
       }
       if (element instanceof PsiMethod || (element instanceof PsiClass && !(element instanceof PsiAnonymousClass))) break;
@@ -91,5 +88,4 @@ public class GeneralizeCatchFix implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
-
 }

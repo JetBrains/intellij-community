@@ -884,6 +884,14 @@ public final class PsiUtil extends PsiUtilBase {
   };
 
   public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @Modifier String property, boolean value) {
-    owner.getModifierList().setModifierProperty(property, value);
+    final PsiModifierList modifierList = owner.getModifierList();
+    assert modifierList != null : owner;
+    modifierList.setModifierProperty(property, value);
+  }
+
+  public static boolean isTryBlock(final PsiElement element) {
+    return element instanceof PsiCodeBlock &&
+           element.getParent() instanceof PsiTryStatement &&
+           ((PsiTryStatement)element.getParent()).getTryBlock() == element;
   }
 }
