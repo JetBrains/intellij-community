@@ -54,7 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenServicesConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class MavenRepositoriesConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
@@ -73,7 +73,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   private ArrayList<String> myServiceUrls = new ArrayList<String>();
   private final Project myProject;
 
-  public MavenServicesConfigurable(Project project) {
+  public MavenRepositoriesConfigurable(Project project) {
     myProject = project;
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
@@ -211,7 +211,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   }
 
   public String getDisplayName() {
-    return IndicesBundle.message("maven.services.title");
+    return IndicesBundle.message("maven.repositories.title");
   }
 
   public Icon getIcon() {

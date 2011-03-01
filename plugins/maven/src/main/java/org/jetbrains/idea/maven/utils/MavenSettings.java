@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.indices.MavenServicesConfigurable;
+import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
@@ -57,7 +57,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     });
 
     if (!myProject.isDefault()) {
-      myChildren.add(new MavenServicesConfigurable(myProject));
+      myChildren.add(new MavenRepositoriesConfigurable(myProject));
     }
   }
 
