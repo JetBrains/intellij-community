@@ -69,6 +69,11 @@ class TeamcityTestResult(TestResult):
         TestResult.addFailure(self, test, err)
 
         error_value = str(err[1])
+        if not len(error_value):
+          # means it's test function and we have to extract value from traceback
+          error_value = traceback.extract_tb(err[2])
+          error_value = error_value[-1][-1]
+          error_value = error_value.split('assert')[-1].strip()
 
         if error_value.startswith("'") or error_value.startswith('"'):
             # let's unescape strings to show sexy multiline diff in PyCharm.
@@ -124,7 +129,8 @@ class TeamcityTestResult(TestResult):
 
     def _unescape(self, text):
       if PYTHON_VERSION_MAJOR == 3:
-        return text
+        byte_text = bytes(text, 'utf-8')
+        return byte_text.decode('unicode_escape')
       else:
         return text.decode('string_escape')
 
