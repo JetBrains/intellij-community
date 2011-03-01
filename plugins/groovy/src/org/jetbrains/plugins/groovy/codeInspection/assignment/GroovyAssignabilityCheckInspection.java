@@ -22,6 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -315,12 +316,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (namedArguments.length == 0) return;
 
-      MultiMap<String, String> map = new MultiMap<String, String>() {
-        @Override
-        protected Collection<String> createCollection() {
-          return new HashSet<String>();
-        }
-      };
+      MultiMap<String, String> map = new MultiMapBasedOnSet<String, String>();
 
       GroovyResolveResult[] callVariants = call.getCallVariants(null);
       for (GroovyResolveResult callVariant : callVariants) {
