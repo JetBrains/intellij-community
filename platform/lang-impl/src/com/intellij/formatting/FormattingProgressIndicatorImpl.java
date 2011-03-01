@@ -17,7 +17,6 @@ package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +27,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -36,16 +34,11 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Formatting progressable task.  
@@ -133,7 +126,6 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   public void doRun(@NotNull ProgressIndicator indicator) throws InvocationTargetException, InterruptedException {
     final SequentialTask task = myTask;
     if (task == null) {
