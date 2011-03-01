@@ -459,10 +459,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {
     try {
-      version1.loadContent();
-      version2.loadContent();
+      final byte[] byteContent1 = VcsHistoryUtil.loadRevisionContent(version1);
+      final byte[] byteContent2 = VcsHistoryUtil.loadRevisionContent(version2);
 
-      if (Comparing.equal(version1.getContent(), version2.getContent())) {
+      if (Comparing.equal(byteContent1, byteContent2)) {
         Messages.showInfoMessage(VcsBundle.message("message.text.versions.are.identical"), VcsBundle.message("message.title.diff"));
       }
 

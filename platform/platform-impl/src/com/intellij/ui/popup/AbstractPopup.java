@@ -723,7 +723,7 @@ public class AbstractPopup implements JBPopup {
         if (myRequestFocus) {
           _requestFocus();
 
-          if (myFocusable) {
+          if (myFocusable && myFocusTrackback != null) {
             myFocusTrackback.cleanParentWindow();
           }
         }

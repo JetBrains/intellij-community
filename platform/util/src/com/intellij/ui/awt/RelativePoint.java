@@ -24,8 +24,14 @@ public class RelativePoint {
   private Component myComponent;
   private Point myPointOnComponent;
 
+  private Component myOriginalComponent;
+  private Point myOriginalPoint;
+
   public RelativePoint(MouseEvent event) {
     init(event.getComponent(), event.getPoint());
+
+    myOriginalComponent = event.getComponent();
+    myOriginalPoint = event.getPoint();
   }
 
   public RelativePoint(Component aComponent, Point aPointOnComponent) {
@@ -48,6 +54,9 @@ public class RelativePoint {
       myComponent = aComponent;
       myPointOnComponent = aPointOnComponent;
     }
+
+    myOriginalComponent = myComponent;
+    myOriginalPoint = myPointOnComponent;
   }
 
   public Component getComponent() {
@@ -119,5 +128,13 @@ public class RelativePoint {
     Frame root = JOptionPane.getRootFrame();
     SwingUtilities.convertPointFromScreen(screenPoint, root);
     return new RelativePoint(root, screenPoint);
+  }
+
+  public Component getOriginalComponent() {
+    return myOriginalComponent;
+  }
+
+  public Point getOriginalPoint() {
+    return myOriginalPoint;
   }
 }

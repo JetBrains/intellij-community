@@ -39,10 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
@@ -148,11 +146,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
           addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
         }
 
-        Map<String, String[]> namedArguments = new java.util.HashMap<String, String[]>();
-
-        for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
-          namedArgumentProvider.getNamedArguments(method, namedArguments);
-        }
+        Map<String, String[]> namedArguments = GroovyNamedArgumentProvider.getNamedArguments(call, method);
 
         for (String namedArgumentName : namedArguments.keySet()) {
           if (!usedNames.contains(namedArgumentName)) {

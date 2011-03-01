@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -53,6 +54,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public boolean isInSynchronization(final Document document) {
     return mySyncDocument == document;
+  }
+
+  @TestOnly
+  void cleanupForNextTest() {
+    myTransactionsMap.clear();
+    mySyncDocument = null;
   }
 
   private interface DocSyncAction {
@@ -163,6 +170,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public void startTransaction(Document doc, PsiElement scope) {
+    LOG.assertTrue(!myPsiDocumentManager.getProject().isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if (pair == null) {
       final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;

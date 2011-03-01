@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -35,6 +36,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   private final Project myProject;
   private AbstractVcs myCurrentVcs;
   private final ProjectLevelVcsManager myVcsManager;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.IgnoredFilesCompositeHolder");
 
   public IgnoredFilesCompositeHolder(final Project project) {
     super();
@@ -70,6 +72,8 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
 
   @Override
   public void addFile(VirtualFile file) {
+    LOG.assertTrue(myHolderMap.containsKey(myCurrentVcs), "current vcs: " + myCurrentVcs + " file: " + file.getPath() +
+                                                          " file's vcs: " + myVcsManager.getVcsFor(file));
     myHolderMap.get(myCurrentVcs).addFile(file);
   }
 

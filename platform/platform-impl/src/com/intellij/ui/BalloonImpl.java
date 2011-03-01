@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -74,7 +75,7 @@ import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class BalloonImpl implements Disposable, Balloon, LightweightWindow, PositionTracker.Client<Balloon> {
+public class BalloonImpl implements Disposable, Balloon, LightweightWindow, PositionTracker.Client<Balloon>, IdeTooltip.Ui {
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
@@ -157,18 +158,19 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private int myPositionChangeYShift;
 
   public boolean isInsideBalloon(MouseEvent me) {
-    if (!me.getComponent().isShowing()) return true;
-    if (me.getComponent() == myCloseRec) return true;
-    if (SwingUtilities.isDescendingFrom(me.getComponent(), myComp) || me.getComponent() == myComp) return true;
+    return isInside(new RelativePoint(me));
+  }
 
+  @Override
+  public boolean isInside(RelativePoint target) {
+    Component cmp = target.getOriginalComponent();
 
-    final Point mouseEventPoint = me.getPoint();
-    SwingUtilities.convertPointToScreen(mouseEventPoint, me.getComponent());
-
+    if (!cmp.isShowing()) return true;
+    if (cmp == myCloseRec) return true;
+    if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
     if (!myComp.isShowing()) return false;
+    if (new Rectangle(myComp.getLocationOnScreen(), myComp.getSize()).contains(target.getScreenPoint())) return true;
 
-    final Rectangle compRect = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
-    if (compRect.contains(mouseEventPoint)) return true;
     return false;
   }
 

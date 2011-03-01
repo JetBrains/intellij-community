@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Map;
@@ -27,10 +30,10 @@ import java.util.Map;
  */
 public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
-  public void getNamedArguments(@NotNull PsiMethod method, Map<String, String[]> result) {
+  public void getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method, Map<String, String[]> result) {
     if (method instanceof GrMethod) {
       for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
-        result.put(parameter, null);
+        result.put(parameter, ArrayUtil.EMPTY_STRING_ARRAY);
       }
     }
   }

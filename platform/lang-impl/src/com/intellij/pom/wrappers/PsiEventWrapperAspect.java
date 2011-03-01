@@ -57,74 +57,77 @@ public class PsiEventWrapperAspect implements PomModelAspect{
   public void update(PomModelEvent event) {
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
+    sendAfterEvents(changeSet);
+  }
+
+  private static void sendAfterEvents(TreeChangeEvent changeSet) {
     ASTNode rootElement = changeSet.getRootElement();
     final PsiFile file = (PsiFile)SourceTreeToPsiMap.treeElementToPsi(rootElement);
     final PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
     if(manager == null) return;
 
-    if(file.isPhysical()){
-      final ASTNode[] changedElements = changeSet.getChangedElements();
-      for (ASTNode changedElement : changedElements) {
-        TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
-        PsiElement psiParent = null;
+    if (!file.isPhysical()) {
+      manager.nonPhysicalChange();
+      return;
+    }
+    final ASTNode[] changedElements = changeSet.getChangedElements();
+    for (ASTNode changedElement : changedElements) {
+      TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
+      PsiElement psiParent = null;
 
-        while (changedElement != null &&
-               ((psiParent = changedElement.getPsi()) == null || !checkPsiForChildren(changesByElement.getAffectedChildren()))) {
-          final ASTNode parent = changedElement.getTreeParent();
-          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
-          changeInfo.compactChange(changesByElement);
-          changesByElement = new TreeChangeImpl(parent);
-          changesByElement.addChange(changedElement, changeInfo);
-          changedElement = parent;
-        }
-        if (changedElement == null) continue;
+      while (changedElement != null &&
+             ((psiParent = changedElement.getPsi()) == null || !checkPsiForChildren(changesByElement.getAffectedChildren()))) {
+        final ASTNode parent = changedElement.getTreeParent();
+        final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
+        changeInfo.compactChange(changesByElement);
+        changesByElement = new TreeChangeImpl(parent);
+        changesByElement.addChange(changedElement, changeInfo);
+        changedElement = parent;
+      }
+      if (changedElement == null) continue;
 
-        final ASTNode[] affectedChildren = changesByElement.getAffectedChildren();
+      final ASTNode[] affectedChildren = changesByElement.getAffectedChildren();
 
-        for (final ASTNode treeElement : affectedChildren) {
-          PsiTreeChangeEventImpl psiEvent = new PsiTreeChangeEventImpl(manager);
-          psiEvent.setParent(psiParent);
-          psiEvent.setFile(file);
+      for (final ASTNode treeElement : affectedChildren) {
+        PsiTreeChangeEventImpl psiEvent = new PsiTreeChangeEventImpl(manager);
+        psiEvent.setParent(psiParent);
+        psiEvent.setFile(file);
 
-          final PsiElement psiChild = treeElement.getPsi();
-          psiEvent.setChild(psiChild);
+        final PsiElement psiChild = treeElement.getPsi();
+        psiEvent.setChild(psiChild);
 
-          final ChangeInfo changeByChild = changesByElement.getChangeByChild(treeElement);
-          switch (changeByChild.getChangeType()) {
-            case ChangeInfo.ADD:
-              psiEvent.setOffset(treeElement.getStartOffset());
-              psiEvent.setOldLength(0);
-              manager.childAdded(psiEvent);
-              break;
-            case ChangeInfo.REPLACE:
-              final ReplaceChangeInfo change = (ReplaceChangeInfo)changeByChild;
-              psiEvent.setOffset(treeElement.getStartOffset());
-              final ASTNode replaced = change.getReplaced();
-              psiEvent.setOldChild(replaced.getPsi());
-              psiEvent.setNewChild(psiChild);
-              psiEvent.setOldLength(replaced.getTextLength());
-              manager.childReplaced(psiEvent);
-              break;
-            case ChangeInfo.CONTENTS_CHANGED:
-              psiEvent.setOffset(treeElement.getStartOffset());
-              psiEvent.setOldChild(psiChild);
-              psiEvent.setNewChild(psiChild);
-              psiEvent.setOldLength(changeByChild.getOldLength());
-              manager.childReplaced(psiEvent);
-              break;
-            case ChangeInfo.REMOVED:
-              psiEvent.setOffset(changesByElement.getChildOffsetInNewTree(treeElement));
-              psiEvent.setOldParent(psiParent);
-              psiEvent.setOldChild(psiChild);
-              psiEvent.setOldLength(changeByChild.getOldLength());
-              manager.childRemoved(psiEvent);
-              break;
-          }
+        final ChangeInfo changeByChild = changesByElement.getChangeByChild(treeElement);
+        switch (changeByChild.getChangeType()) {
+          case ChangeInfo.ADD:
+            psiEvent.setOffset(treeElement.getStartOffset());
+            psiEvent.setOldLength(0);
+            manager.childAdded(psiEvent);
+            break;
+          case ChangeInfo.REPLACE:
+            final ReplaceChangeInfo change = (ReplaceChangeInfo)changeByChild;
+            psiEvent.setOffset(treeElement.getStartOffset());
+            final ASTNode replaced = change.getReplaced();
+            psiEvent.setOldChild(replaced.getPsi());
+            psiEvent.setNewChild(psiChild);
+            psiEvent.setOldLength(replaced.getTextLength());
+            manager.childReplaced(psiEvent);
+            break;
+          case ChangeInfo.CONTENTS_CHANGED:
+            psiEvent.setOffset(treeElement.getStartOffset());
+            psiEvent.setOldChild(psiChild);
+            psiEvent.setNewChild(psiChild);
+            psiEvent.setOldLength(changeByChild.getOldLength());
+            manager.childReplaced(psiEvent);
+            break;
+          case ChangeInfo.REMOVED:
+            psiEvent.setOffset(changesByElement.getChildOffsetInNewTree(treeElement));
+            psiEvent.setOldParent(psiParent);
+            psiEvent.setOldChild(psiChild);
+            psiEvent.setOldLength(changeByChild.getOldLength());
+            manager.childRemoved(psiEvent);
+            break;
         }
       }
-    }
-    else{
-      manager.nonPhysicalChange();
     }
   }
 

@@ -274,6 +274,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     myCurrentTipUi = (BalloonImpl)builder.createBalloon();
+    tooltip.setUi(myCurrentTipUi);
     myCurrentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
     myY = effectivePoint.y;

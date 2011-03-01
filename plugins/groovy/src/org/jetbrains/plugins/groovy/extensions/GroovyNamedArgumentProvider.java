@@ -17,18 +17,30 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author user
+ * @author Sergey Evdokimov
  */
 public abstract class GroovyNamedArgumentProvider {
 
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
-  public abstract void getNamedArguments(@NotNull PsiMethod method, Map<String, String[]> result);
+  public abstract void getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method, Map<String, String[]> result);
+
+  public static Map<String, String[]> getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method) {
+    Map<String, String[]> namedArguments = new HashMap<String, String[]>();
+
+    for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+      namedArgumentProvider.getNamedArguments(call, method, namedArguments);
+    }
+
+    return namedArguments;
+  }
 
 }

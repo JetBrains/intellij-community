@@ -141,6 +141,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return psiFile;
   }
 
+  Project getProject() {
+    return myProject;
+  }
+
 
   public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
@@ -696,6 +700,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @TestOnly
   public void clearUncommitedDocuments() {
     myUncommittedDocuments.clear();
+    mySynchronizer.cleanupForNextTest();
   }
 
   public PsiToDocumentSynchronizer getSynchronizer() {

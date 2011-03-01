@@ -489,7 +489,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         throw IdeaLogger.ourErrorsOccurred;
       }
     }
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
+    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+    documentManager.clearUncommitedDocuments();
     ((HintManagerImpl)HintManager.getInstance()).cleanup();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -513,6 +514,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     if (isLight(project)) {
       ((ProjectImpl)project).setTemporarilyDisposed(true); // mark temporarily as disposed so that rogue component trying to access it will fail
+      documentManager.clearUncommitedDocuments();
     }
   }
 

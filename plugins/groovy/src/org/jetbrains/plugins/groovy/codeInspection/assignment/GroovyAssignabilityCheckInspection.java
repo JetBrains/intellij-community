@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,7 @@ import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -53,6 +56,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -297,9 +305,65 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     private void checkMethodCall(GrMethodCall call) {
       final GrExpression expression = call.getInvokedExpression();
-      if (expression instanceof GrReferenceExpression) return; //it checks in visitRefExpr(...)
-      final PsiType type = expression.getType();
-      checkCallApplicability(type, expression);
+      if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
+        final PsiType type = expression.getType();
+        checkCallApplicability(type, expression);
+      }
+
+      // Check named arguments.
+      GrNamedArgument[] namedArguments = PsiUtil.getFirstMapNamedArguments(call);
+
+      if (namedArguments.length == 0) return;
+
+      MultiMap<String, String> map = new MultiMap<String, String>() {
+        @Override
+        protected Collection<String> createCollection() {
+          return new HashSet<String>();
+        }
+      };
+
+      GroovyResolveResult[] callVariants = call.getCallVariants(null);
+      for (GroovyResolveResult callVariant : callVariants) {
+        PsiElement element = callVariant.getElement();
+        if (element instanceof PsiMethod) {
+          Map<String, String[]> arguments = GroovyNamedArgumentProvider.getNamedArguments(call, (PsiMethod)element);
+
+          for (Map.Entry<String, String[]> entry : arguments.entrySet()) {
+            map.putValues(entry.getKey(), Arrays.asList(entry.getValue()));
+          }
+        }
+      }
+
+      for (GrNamedArgument namedArgument : namedArguments) {
+        String labelName = namedArgument.getLabelName();
+
+        Collection<String> allowTypes = map.get(labelName);
+
+        if (allowTypes.isEmpty()) continue;
+
+        GrExpression namedArgumentExpression = namedArgument.getExpression();
+        if (namedArgumentExpression == null) continue;
+
+        if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue; //GRVY-2197
+
+        PsiType expressionType = namedArgumentExpression.getType();
+        if (expressionType == null) continue;
+
+        expressionType = TypesUtil.boxPrimitiveType(expressionType, namedArgument.getManager(), namedArgument.getResolveScope());
+
+        boolean correct = false;
+
+        for (String typeName : allowTypes) {
+          if (InheritanceUtil.isInheritor(expressionType, typeName)) {
+            correct = true;
+            break;
+          }
+        }
+
+        if (!correct) {
+          registerError(namedArgumentExpression, "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
+        }
+      }
     }
 
     private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,
