@@ -21,9 +21,10 @@ except ImportError:
 class DjangoTeamcityTestRunner(BaseRunner):
   def __init__(self, stream=sys.stdout):
     BaseRunner.__init__(self, stream)
+    self.interactive = False
 
   def run_suite(self, suite):
-        return TeamcityTestRunner().run(suite)
+    return TeamcityTestRunner().run(suite)
 
 def partition_suite(suite, classes, bins):
     """
