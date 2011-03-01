@@ -236,12 +236,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       if (file == null || !file.isValid() || file instanceof LightVirtualFile) {
         myUnsavedDocuments.remove(document);
+        fireUnsavedDocumensDropped();
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
 
       if (!isFileModified(file)) {
         myUnsavedDocuments.remove(document);
+        fireUnsavedDocumensDropped();
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
