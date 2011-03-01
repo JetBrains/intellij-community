@@ -269,15 +269,15 @@ public class MavenProjectsTree {
   private void doSetIgnoredState(List<MavenProject> projects, final boolean ignored, boolean fromImport) {
     final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
     doChangeIgnoreStatus(new Runnable() {
-      public void run() {
-        if (ignored) {
-          myIgnoredFilesPaths.addAll(paths);
+        public void run() {
+          if (ignored) {
+            myIgnoredFilesPaths.addAll(paths);
+          }
+          else {
+            myIgnoredFilesPaths.removeAll(paths);
+          }
         }
-        else {
-          myIgnoredFilesPaths.removeAll(paths);
-        }
-      }
-    }, fromImport);
+      }, fromImport);
   }
 
   public List<String> getIgnoredFilesPatterns() {

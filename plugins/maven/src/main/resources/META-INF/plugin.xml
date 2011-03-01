@@ -22,7 +22,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.facade.MavenFacadeManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenServicesManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenRepositoryServicesManager"/>
 
     <projectConfigurable instance="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 

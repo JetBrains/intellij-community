@@ -17,12 +17,18 @@ public abstract class GroovyImporter extends MavenImporter {
   }
 
   @Override
-  public void preProcess(Module module, MavenProject mavenProject, MavenProjectChanges changes, MavenModifiableModelsProvider modifiableModelsProvider) {
+  public void preProcess(Module module,
+                         MavenProject mavenProject,
+                         MavenProjectChanges changes,
+                         MavenModifiableModelsProvider modifiableModelsProvider) {
   }
 
   @Override
   public void process(MavenModifiableModelsProvider modifiableModelsProvider, Module module, MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel, MavenProject mavenProject, MavenProjectChanges changes, Map<MavenProject, String> mavenProjectToModuleName,
+                      MavenProjectsTree mavenModel,
+                      MavenProject mavenProject,
+                      MavenProjectChanges changes,
+                      Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
   }
 

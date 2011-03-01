@@ -256,7 +256,7 @@ public class MavenProjectReader {
       addProfileIfDoesNotExist(each, modelProfiles);
     }
     model.setProfiles(modelProfiles);
-    
+
     problems.addAll(mySettingsProfilesCache.problems);
     alwaysOnProfiles.addAll(mySettingsProfilesCache.alwaysOnProfiles);
   }

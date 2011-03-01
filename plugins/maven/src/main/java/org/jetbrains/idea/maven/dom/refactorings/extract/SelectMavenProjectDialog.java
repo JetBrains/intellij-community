@@ -36,7 +36,7 @@ import java.awt.event.ItemListener;
 import java.util.Set;
 
 public class SelectMavenProjectDialog extends DialogWrapper {
- private final Set<MavenDomProjectModel> myMavenDomProjectModels;
+  private final Set<MavenDomProjectModel> myMavenDomProjectModels;
   private final boolean myHasExclusions;
 
   private JComboBox myMavenProjectsComboBox;
@@ -49,9 +49,9 @@ public class SelectMavenProjectDialog extends DialogWrapper {
   private final Function<MavenDomProjectModel, Set<MavenDomDependency>> myOccurrencesCountFunction;
 
   public SelectMavenProjectDialog(@NotNull Project project,
-                                 @NotNull Set<MavenDomProjectModel> mavenDomProjectModels,
-                                 @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
-                                 @NotNull boolean hasExclusions) {
+                                  @NotNull Set<MavenDomProjectModel> mavenDomProjectModels,
+                                  @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
+                                  @NotNull boolean hasExclusions) {
     super(project, true);
     myMavenDomProjectModels = mavenDomProjectModels;
     myHasExclusions = hasExclusions;
@@ -65,11 +65,11 @@ public class SelectMavenProjectDialog extends DialogWrapper {
         break;
       }
     }
-    
+
     init();
   }
 
-   protected Action[] createActions() {
+  protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
@@ -101,19 +101,20 @@ public class SelectMavenProjectDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), myMavenDomProjectModels, new Function<MavenDomProjectModel, Pair<String, ?>>() {
-        public Pair<String, ?> fun(MavenDomProjectModel model) {
-          String projectName = model.getName().getStringValue();
-          MavenProject mavenProject = MavenDomUtil.findProject(model);
-          if (mavenProject != null) {
-            projectName = mavenProject.getDisplayName();
-          }
-          if (StringUtil.isEmptyOrSpaces(projectName)) {
-            projectName = "pom.xml";
-          }
-          return Pair.create(projectName, model);
-        }
-      });
+    ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), myMavenDomProjectModels,
+                          new Function<MavenDomProjectModel, Pair<String, ?>>() {
+                            public Pair<String, ?> fun(MavenDomProjectModel model) {
+                              String projectName = model.getName().getStringValue();
+                              MavenProject mavenProject = MavenDomUtil.findProject(model);
+                              if (mavenProject != null) {
+                                projectName = mavenProject.getDisplayName();
+                              }
+                              if (StringUtil.isEmptyOrSpaces(projectName)) {
+                                projectName = "pom.xml";
+                              }
+                              return Pair.create(projectName, model);
+                            }
+                          });
 
     myReplaceAllListener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {

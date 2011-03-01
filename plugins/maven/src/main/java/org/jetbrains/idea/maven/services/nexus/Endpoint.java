@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade.nexus;
+package org.jetbrains.idea.maven.services.nexus;
 
 import org.jvnet.ws.wadl.util.DSDispatcher;
 import org.jvnet.ws.wadl.util.JAXBDispatcher;
@@ -48,7 +48,7 @@ public class Endpoint {
         public DataIndex(final String nexusRoot)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.facade.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -140,7 +140,7 @@ public class Endpoint {
         public DataIndexRepository(String repository)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.facade.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -249,7 +249,7 @@ public class Endpoint {
         public Repositories(String url)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.facade.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -269,7 +269,7 @@ public class Endpoint {
             return _retVal;
         }
 
-        public org.jetbrains.idea.maven.facade.nexus.Repositories getRepolistAsRepositories()
+        public org.jetbrains.idea.maven.services.nexus.Repositories getRepolistAsRepositories()
             throws IOException, MalformedURLException, JAXBException
         {
             HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
@@ -283,7 +283,7 @@ public class Endpoint {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
-            return ((org.jetbrains.idea.maven.facade.nexus.Repositories) _retVal);
+            return ((org.jetbrains.idea.maven.services.nexus.Repositories) _retVal);
         }
 
     }

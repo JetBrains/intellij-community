@@ -142,7 +142,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return new ReadAction<ProcessingItem[]>() {
       protected void run(Result<ProcessingItem[]> resultObject) throws Throwable {
         // make sure null reference will not be returned. By default return empty array 
-        resultObject.setResult(ProcessingItem.EMPTY_ARRAY); 
+        resultObject.setResult(ProcessingItem.EMPTY_ARRAY);
         List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
         List<String> filesToDelete = new ArrayList<String>();
 

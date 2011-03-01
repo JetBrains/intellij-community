@@ -21,8 +21,17 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.services.artifactory.ArtifactoryRepositoryService;
+import org.jetbrains.idea.maven.services.nexus.NexusRepositoryService;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,12 +43,17 @@ import java.util.List;
   storages = {@Storage(
     id = "other",
     file = "$APP_CONFIG$/mavenServices.xml")})
-public class MavenServicesManager implements PersistentStateComponent<Element> {
-
+public class MavenRepositoryServicesManager implements PersistentStateComponent<Element> {
   private final List<String> myUrls = new ArrayList<String>();
 
-  public static MavenServicesManager getInstance() {
-    return ServiceManager.getService(MavenServicesManager.class);
+  @NotNull
+  public static MavenRepositoryServicesManager getInstance() {
+    return ServiceManager.getService(MavenRepositoryServicesManager.class);
+  }
+
+  @NotNull
+  public static MavenRepositoryService[] getServices() {
+    return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService()};
   }
 
   public static String[] getServiceUrls() {
@@ -79,5 +93,33 @@ public class MavenServicesManager implements PersistentStateComponent<Element> {
     for (Element element : (List<Element>)state.getChildren("service-url")) {
       myUrls.add(StringUtil.unescapeXml(element.getTextTrim()));
     }
+  }
+
+  @NotNull
+  public static List<MavenRepositoryInfo> getRepositories(String url) {
+    List<MavenRepositoryInfo> result = new SmartList<MavenRepositoryInfo>();
+    for (MavenRepositoryService service : getServices()) {
+      try {
+        result.addAll(service.getRepositories(url));
+      }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) throws RemoteException {
+    List<MavenArtifactInfo> result = new SmartList<MavenArtifactInfo>();
+    for (MavenRepositoryService service : getServices()) {
+      try {
+        result.addAll(service.findArtifacts(url, template));
+      }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+    }
+    return result;
   }
 }

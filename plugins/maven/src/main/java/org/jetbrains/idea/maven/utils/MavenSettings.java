@@ -16,18 +16,17 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.indices.MavenServicesConfigurable;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.indices.MavenServicesConfigurable;
+import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
 import java.util.ArrayList;

@@ -13,36 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade;
+package org.jetbrains.idea.maven.services;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.artifactory.ArtifactoryService;
-import org.jetbrains.idea.maven.facade.nexus.NexusService;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.List;
 
 /**
  * @author Gregory.Shrago
  */
-public abstract class MavenManagementService {
+public abstract class MavenRepositoryService {
+  @NotNull
   public abstract String getDisplayName();
-  @Nullable
-  public abstract List<MavenRepositoryInfo> getRepositories(String url) throws Exception;
-  public abstract List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) throws Exception;
+
+  @NotNull
+  public abstract List<MavenRepositoryInfo> getRepositories(@NotNull String url) throws IOException;
+
+  @NotNull
+  public abstract List<MavenArtifactInfo> findArtifacts(@NotNull String url, @NotNull MavenArtifactInfo template) throws IOException;
 
 
   public final String toString() {
     return getDisplayName();
-  }
-
-  @NotNull
-  public static MavenManagementService[] getServices() {
-    return new MavenManagementService[] { new NexusService(), new ArtifactoryService() };
   }
 }

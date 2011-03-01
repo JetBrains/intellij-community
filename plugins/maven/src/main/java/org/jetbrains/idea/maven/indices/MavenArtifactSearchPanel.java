@@ -143,15 +143,15 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
-      public void run() {
-        try {
-          doSearch(text);
+        public void run() {
+          try {
+            doSearch(text);
+          }
+          catch (Throwable e) {
+            MavenLog.LOG.warn(e);
+          }
         }
-        catch (Throwable e) {
-          MavenLog.LOG.warn(e);
-        }
-      }
-    }, 500);
+      }, 500);
   }
 
   private void doSearch(String searchText) {

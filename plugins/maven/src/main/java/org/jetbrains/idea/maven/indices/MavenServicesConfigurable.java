@@ -34,7 +34,7 @@ import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.services.MavenServicesManager;
+import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
 import org.jetbrains.idea.maven.utils.RepositoryAttachHandler;
 
 import javax.swing.*;
@@ -54,7 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenServicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
+public class MavenServicesConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
@@ -81,7 +81,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
 
   @Override
   public boolean isModified() {
-    return !myServiceUrls.equals(MavenServicesManager.getInstance().getUrls());
+    return !myServiceUrls.equals(MavenRepositoryServicesManager.getInstance().getUrls());
   }
 
   private void configControls() {
@@ -146,7 +146,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
 
     myIndicesTable.setDefaultRenderer(Object.class, new MyCellRenderer());
     myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
-                               new MyIconCellRenderer());
+                                      new MyIconCellRenderer());
 
     myServiceList.getEmptyText().setText("No services");
     myIndicesTable.getEmptyText().setText("No remote repositories");
@@ -165,7 +165,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
         }
         else {
           final StringBuilder sb = new StringBuilder();
-          sb.append(infos.size()).append(infos.size() == 1? "repository" :" repositories").append(" found");
+          sb.append(infos.size()).append(infos.size() == 1 ? "repository" : " repositories").append(" found");
           for (MavenRepositoryInfo info : infos) {
             sb.append("\n  ");
             sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
@@ -236,12 +236,12 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   }
 
   public void apply() throws ConfigurationException {
-    MavenServicesManager.getInstance().setUrls(myServiceUrls);
+    MavenRepositoryServicesManager.getInstance().setUrls(myServiceUrls);
   }
 
   public void reset() {
     myServiceUrls.clear();
-    myServiceUrls.addAll(MavenServicesManager.getInstance().getUrls());
+    myServiceUrls.addAll(MavenRepositoryServicesManager.getInstance().getUrls());
     myServiceList.setModel(new CollectionListModel(myServiceUrls));
 
     myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));

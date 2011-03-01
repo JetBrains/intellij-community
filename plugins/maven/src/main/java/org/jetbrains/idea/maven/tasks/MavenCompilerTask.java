@@ -46,7 +46,7 @@ public class MavenCompilerTask implements Comparable {
   }
 
   @Override
-  public String toString(){
+  public String toString() {
     return myProjectPath + ":" + myGoal;
   }
 

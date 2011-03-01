@@ -837,10 +837,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
         if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
           myInitializationAlarm.addRequest(new Runnable() { // should not remove previously schedules tasks
 
-            public void run() {
-              wrapper.get().run();
-            }
-          }, 1000);
+              public void run() {
+                wrapper.get().run();
+              }
+            }, 1000);
           return;
         }
         runnable.run();

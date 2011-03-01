@@ -144,7 +144,8 @@ public class MavenDomProjectProcessorUtils {
 
     if (projectDom != null) {
       processProperties(projectDom, searchProcessor, project);
-    } else {
+    }
+    else {
       processPropertiesInProfile(profileDom, searchProcessor);
     }
 

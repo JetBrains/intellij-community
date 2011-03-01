@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;

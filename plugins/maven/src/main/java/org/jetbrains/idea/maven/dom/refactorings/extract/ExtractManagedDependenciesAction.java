@@ -229,7 +229,6 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     }
-
   }
 
   private static class ProcessData {

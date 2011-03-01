@@ -58,9 +58,9 @@ public class MavenGenerateDomActionGroup extends DefaultActionGroup {
   }
 
   private static MavenGenerateTemplateAction createAction(String actionDescription,
-                                                             final Class<? extends DomElement> aClass,
-                                                             @NonNls @Nullable String mappingId,
-                                                             @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
+                                                          final Class<? extends DomElement> aClass,
+                                                          @NonNls @Nullable String mappingId,
+                                                          @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
     return new MavenGenerateTemplateAction(actionDescription, aClass, mappingId, parentFunction);
   }
 }

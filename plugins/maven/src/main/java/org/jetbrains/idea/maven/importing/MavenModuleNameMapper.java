@@ -96,7 +96,7 @@ public class MavenModuleNameMapper {
     public final String groupId;
 
     public int number = -1; // has no duplicates
-    public boolean hasDuplicatedGroup;
+      public boolean hasDuplicatedGroup;
 
     public NameItem(MavenProject project, Module module) {
       this.project = project;

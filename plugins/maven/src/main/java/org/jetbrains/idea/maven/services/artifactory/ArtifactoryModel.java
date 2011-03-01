@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade.artifactory;
+package org.jetbrains.idea.maven.services.artifactory;
 
 /**
-* @author Gregory.Shrago
-*/
+ * @author Gregory.Shrago
+ */
 public class ArtifactoryModel {
   public static class RepositoryType {
     public String key;
@@ -28,7 +28,7 @@ public class ArtifactoryModel {
   }
 
   public static class GavcResults {
-      public GavcResult[] results;
+    public GavcResult[] results;
   }
 
   public static class GavcResult {

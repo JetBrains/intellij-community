@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade.nexus;
+package org.jetbrains.idea.maven.services.nexus;
 
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 

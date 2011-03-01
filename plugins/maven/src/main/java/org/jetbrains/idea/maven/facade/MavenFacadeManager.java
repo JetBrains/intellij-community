@@ -52,9 +52,7 @@ import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -166,11 +164,11 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
   protected void onWrappeeAccessed() {
     myShutdownAlarm.cancelAllRequests();
     myShutdownAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        shutdown(true);
-      }
-    }, 5 * 60 * 1000);
+        @Override
+        public void run() {
+          shutdown(true);
+        }
+      }, 5 * 60 * 1000);
   }
 
   private RunProfileState createRunProfileState() {
@@ -281,24 +279,6 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
         return MavenFacadeManager.this.getOrCreateWrappee().createIndexer();
       }
     };
-  }
-
-  public List<MavenRepositoryInfo> getRepositories(final String nexusUrl) {
-    return perform(new Retriable<List<MavenRepositoryInfo>>() {
-      @Override
-      public List<MavenRepositoryInfo> execute() throws RemoteException {
-        return getOrCreateWrappee().getRepositories(nexusUrl);
-      }
-    });
-  }
-
-  public List<MavenArtifactInfo> findArtifacts(final MavenArtifactInfo template, final String nexusUrl) {
-    return perform(new Retriable<List<MavenArtifactInfo>>() {
-      @Override
-      public List<MavenArtifactInfo> execute() throws RemoteException {
-        return getOrCreateWrappee().findArtifacts(template, nexusUrl);
-      }
-    });
   }
 
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {

@@ -66,13 +66,13 @@ public class MavenImportNotifier extends SimpleProjectComponent {
 
   private void init() {
     myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        for (FileEditor each : source.getEditors(file)) {
-          updateNotification(file, each, false);
+        @Override
+        public void fileOpened(FileEditorManager source, VirtualFile file) {
+          for (FileEditor each : source.getEditors(file)) {
+            updateNotification(file, each, false);
+          }
         }
-      }
-    }, myProject);
+      }, myProject);
     myUpdatesQueue.activate();
   }
 

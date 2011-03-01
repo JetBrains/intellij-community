@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade.artifactory;
+package org.jetbrains.idea.maven.services.artifactory;
 
+import org.jvnet.ws.wadl.util.DSDispatcher;
+import org.jvnet.ws.wadl.util.JAXBDispatcher;
+import org.jvnet.ws.wadl.util.UriBuilder;
+
+import javax.activation.DataSource;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import javax.activation.DataSource;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import org.jvnet.ws.wadl.util.DSDispatcher;
-import org.jvnet.ws.wadl.util.JAXBDispatcher;
-import org.jvnet.ws.wadl.util.UriBuilder;
 
 
 /**

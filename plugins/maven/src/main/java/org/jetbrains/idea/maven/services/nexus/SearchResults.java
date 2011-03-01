@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade.nexus;
+package org.jetbrains.idea.maven.services.nexus;
 
 import javax.xml.bind.annotation.*;
 import java.math.BigInteger;
@@ -36,7 +36,7 @@ import java.util.List;
  *         &lt;element name="from" type="{http://www.w3.org/2001/XMLSchema}integer"/>
  *         &lt;element name="count" type="{http://www.w3.org/2001/XMLSchema}integer"/>
  *         &lt;element name="tooManyResults" type="{http://www.w3.org/2001/XMLSchema}boolean"/>
- *         &lt;element name="data">
+ *         &lt;element name="data" minOccurs="0">
  *           &lt;complexType>
  *             &lt;complexContent>
  *               &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
@@ -63,8 +63,8 @@ import java.util.List;
     "tooManyResults",
     "data"
 })
-@XmlRootElement(name = "search-result")
-public class SearchResult {
+@XmlRootElement(name = "search-results")
+public class SearchResults {
 
     @XmlElement(required = true)
     protected BigInteger totalCount;
@@ -73,8 +73,7 @@ public class SearchResult {
     @XmlElement(required = true)
     protected BigInteger count;
     protected boolean tooManyResults;
-    @XmlElement(required = true)
-    protected SearchResult.Data data;
+    protected SearchResults.Data data;
 
     /**
      * Gets the value of the totalCount property.
@@ -169,10 +168,10 @@ public class SearchResult {
      * 
      * @return
      *     possible object is
-     *     {@link SearchResult.Data }
+     *     {@link SearchResults.Data }
      *     
      */
-    public SearchResult.Data getData() {
+    public SearchResults.Data getData() {
         return data;
     }
 
@@ -181,10 +180,10 @@ public class SearchResult {
      * 
      * @param value
      *     allowed object is
-     *     {@link SearchResult.Data }
+     *     {@link SearchResults.Data }
      *     
      */
-    public void setData(SearchResult.Data value) {
+    public void setData(SearchResults.Data value) {
         this.data = value;
     }
 
@@ -214,7 +213,7 @@ public class SearchResult {
     })
     public static class Data {
 
-        protected List<ArtifactType> artifact;
+        protected ArrayList<ArtifactType> artifact;
 
         /**
          * Gets the value of the artifact property.

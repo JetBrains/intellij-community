@@ -30,7 +30,7 @@ public class Strings {
 
   public static List<String> tokenize(final String string, final String delim) {
     final List<String> tokens = new ArrayList<String>();
-    for ( StringTokenizer tokenizer = new StringTokenizer(string, delim); tokenizer.hasMoreTokens();) {
+    for (StringTokenizer tokenizer = new StringTokenizer(string, delim); tokenizer.hasMoreTokens(); ) {
       tokens.add(tokenizer.nextToken());
     }
     return tokens;
@@ -38,8 +38,8 @@ public class Strings {
 
   public static String detokenize(final Collection<String> list, final char delim) {
     final StringBuilder buffer = new StringBuilder();
-    for ( String goal : list) {
-      if(buffer.length()!=0){
+    for (String goal : list) {
+      if (buffer.length() != 0) {
         buffer.append(delim);
       }
       buffer.append(goal);

@@ -451,32 +451,32 @@ public class MavenIndex {
 
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(new IndexTask<Object>() {
-      public Object doTask() throws Exception {
-        MavenId id = myData.addArtifact(artifactFile);
+        public Object doTask() throws Exception {
+          MavenId id = myData.addArtifact(artifactFile);
 
-        String groupId = id.getGroupId();
-        String artifactId = id.getArtifactId();
-        String version = id.getVersion();
+          String groupId = id.getGroupId();
+          String artifactId = id.getArtifactId();
+          String version = id.getVersion();
 
-        myData.groups.enumerate(groupId);
-        myData.hasGroupCache.put(groupId, true);
+          myData.groups.enumerate(groupId);
+          myData.hasGroupCache.put(groupId, true);
 
-        String groupWithArtifact = groupId + ":" + artifactId;
+          String groupWithArtifact = groupId + ":" + artifactId;
 
-        myData.groupsWithArtifacts.enumerate(groupWithArtifact);
-        myData.hasArtifactCache.put(groupWithArtifact, true);
-        addToCache(myData.groupToArtifactMap, groupId, artifactId);
+          myData.groupsWithArtifacts.enumerate(groupWithArtifact);
+          myData.hasArtifactCache.put(groupWithArtifact, true);
+          addToCache(myData.groupToArtifactMap, groupId, artifactId);
 
-        String groupWithArtifactWithVersion = groupWithArtifact + ":" + version;
+          String groupWithArtifactWithVersion = groupWithArtifact + ":" + version;
 
-        myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
-        myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
-        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
-        myData.flush();
+          myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
+          myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
+          addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
+          myData.flush();
 
-        return null;
-      }
-    }, null);
+          return null;
+        }
+      }, null);
   }
 
   private void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
@@ -488,35 +488,35 @@ public class MavenIndex {
 
   public synchronized Set<String> getGroupIds() {
     return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        final Set<String> result = new THashSet<String>();
-        myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public boolean process(int record) throws IOException {
-            result.add(myData.groups.valueOf(record));
-            return true;
-          }
-        });
-        return result;
-      }
-    }, Collections.<String>emptySet());
+        public Set<String> doTask() throws Exception {
+          final Set<String> result = new THashSet<String>();
+          myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+            public boolean process(int record) throws IOException {
+              result.add(myData.groups.valueOf(record));
+              return true;
+            }
+          });
+          return result;
+        }
+      }, Collections.<String>emptySet());
   }
 
   public synchronized Set<String> getArtifactIds(final String groupId) {
     return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        Set<String> result = myData.groupToArtifactMap.get(groupId);
-        return result == null ? Collections.<String>emptySet() : result;
-      }
-    }, Collections.<String>emptySet());
+        public Set<String> doTask() throws Exception {
+          Set<String> result = myData.groupToArtifactMap.get(groupId);
+          return result == null ? Collections.<String>emptySet() : result;
+        }
+      }, Collections.<String>emptySet());
   }
 
   public synchronized Set<String> getVersions(final String groupId, final String artifactId) {
     return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-        return result == null ? Collections.<String>emptySet() : result;
-      }
-    }, Collections.<String>emptySet());
+        public Set<String> doTask() throws Exception {
+          Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
+          return result == null ? Collections.<String>emptySet() : result;
+        }
+      }, Collections.<String>emptySet());
   }
 
   public synchronized boolean hasGroupId(String groupId) {
@@ -540,15 +540,15 @@ public class MavenIndex {
     if (cached != null) return cached;
 
     boolean result = doIndexTask(new IndexTask<Boolean>() {
-      public Boolean doTask() throws Exception {
-        return !set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public boolean process(int record) throws IOException {
-            if (value.equals(set.valueOf(record))) return false;
-            return true;
-          }
-        });
-      }
-    }, false).booleanValue();
+        public Boolean doTask() throws Exception {
+          return !set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+            public boolean process(int record) throws IOException {
+              if (value.equals(set.valueOf(record))) return false;
+              return true;
+            }
+          });
+        }
+      }, false).booleanValue();
 
     cache.put(value, result);
     return result;
@@ -556,10 +556,10 @@ public class MavenIndex {
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
     return doIndexTask(new IndexTask<Set<MavenArtifactInfo>>() {
-      public Set<MavenArtifactInfo> doTask() throws Exception {
-        return myData.search(query, maxResult);
-      }
-    }, Collections.<MavenArtifactInfo>emptySet());
+        public Set<MavenArtifactInfo> doTask() throws Exception {
+          return myData.search(query, maxResult);
+        }
+      }, Collections.<MavenArtifactInfo>emptySet());
   }
 
   private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
