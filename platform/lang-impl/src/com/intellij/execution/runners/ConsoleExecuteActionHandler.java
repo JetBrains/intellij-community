@@ -26,20 +26,31 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class ConsoleExecuteActionHandler {
   private final ProcessHandler myProcessHandler;
   private final boolean myPreserveMarkup;
 
+  private boolean myAddCurrentToHistory = true;
+  private ConsoleHistoryModel myConsoleHistoryModel;
+
+
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     myProcessHandler = processHandler;
+    myConsoleHistoryModel = new ConsoleHistoryModel();
     myPreserveMarkup = preserveMarkup;
   }
 
+  public void setConsoleHistoryModel(ConsoleHistoryModel consoleHistoryModel) {
+    myConsoleHistoryModel = consoleHistoryModel;
+  }
 
-  public void runExecuteAction(LanguageConsoleImpl languageConsole,
-                                  ConsoleHistoryModel consoleHistoryModel) {
+  public ConsoleHistoryModel getConsoleHistoryModel() {
+    return myConsoleHistoryModel;
+  }
+
+  public void runExecuteAction(LanguageConsoleImpl languageConsole) {
 
     // Process input and add to history
     final Document document = languageConsole.getCurrentEditor().getDocument();
@@ -50,9 +61,10 @@ public class ConsoleExecuteActionHandler {
     languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
     languageConsole.setInputText("");
     if (!StringUtil.isEmptyOrSpaces(text)) {
-      consoleHistoryModel.addToHistory(text);
+      myConsoleHistoryModel.addToHistory(text);
     }
     // Send to interpreter / server
+
     processLine(text);
   }
 

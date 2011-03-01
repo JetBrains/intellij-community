@@ -233,10 +233,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
   public static ConsoleExecutionActions createConsoleExecActions(final LanguageConsoleImpl languageConsole,
                                                                  final ProcessHandler processHandler,
                                                                  final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
-
     final AnAction runAction = new ConsoleExecuteAction(languageConsole,
-                                                        myHistory, processHandler, consoleExecuteActionHandler);
+                                                        processHandler, consoleExecuteActionHandler);
 
     final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {
       public boolean process(final AnActionEvent e, final String s) {
@@ -251,10 +249,10 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
     final EditorEx consoleEditor = languageConsole.getConsoleEditor();
     final AnAction upAction = ConsoleHistoryModel.createConsoleHistoryUpAction(createCanMoveUpComputable(consoleEditor),
-                                                                               myHistory,
+                                                                               consoleExecuteActionHandler.getConsoleHistoryModel(),
                                                                                historyProcessor);
     final AnAction downAction = ConsoleHistoryModel.createConsoleHistoryDownAction(createCanMoveDownComputable(consoleEditor),
-                                                                                   myHistory,
+                                                                                   consoleExecuteActionHandler.getConsoleHistoryModel(),
                                                                                    historyProcessor);
 
     return new ConsoleExecutionActions(runAction, downAction, upAction);
@@ -322,26 +320,23 @@ public abstract class AbstractConsoleRunnerWithHistory {
     public static final String CONSOLE_EXECUTE = "Console.Execute";
 
     private final LanguageConsoleImpl myLanguageConsole;
-    private final ConsoleHistoryModel myHistory;
     private final ProcessHandler myProcessHandler;
 
     private final ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
 
     public ConsoleExecuteAction(LanguageConsoleImpl languageConsole,
-                                ConsoleHistoryModel history,
                                 ProcessHandler processHandler,
                                 ConsoleExecuteActionHandler consoleExecuteActionHandler) {
       super(null, null, IconLoader.getIcon(ACTIONS_EXECUTE_ICON));
       myLanguageConsole = languageConsole;
-      myHistory = history;
       myProcessHandler = processHandler;
       myConsoleExecuteActionHandler = consoleExecuteActionHandler;
       EmptyAction.setupAction(this, CONSOLE_EXECUTE, null);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole, myHistory);
+      myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole);
     }
 
     public void update(final AnActionEvent e) {
