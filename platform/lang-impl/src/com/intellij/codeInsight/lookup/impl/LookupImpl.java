@@ -576,7 +576,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
    * @return point in layered pane coordinate system.
    * @param component
    */
-  public Point calculatePosition(final JComponent component){
+  public Point calculatePosition(final JComponent component) {
     Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0) {
@@ -595,6 +595,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
+    Point originalPoint = new Point(layeredPanePoint);
+    SwingUtilities.convertPointToScreen(originalPoint, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
     layeredPanePoint.x -= component.getInsets().left;
 
@@ -610,6 +612,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         //otherwise the lookup won't intersect with the editor and every editor's resize (e.g. after typing in console) will close the lookup
       }
     }
+
+    final Point painPoint = new Point(layeredPanePoint);
+    SwingUtilities.convertPointToScreen(painPoint, layeredPane);
+    final Rectangle originScreenRect = ScreenUtil.getScreenRectangle(originalPoint);
+    if (! originScreenRect.contains(painPoint)) {
+      final Point p = ScreenUtil.findNearestPointOnBorder(originScreenRect, painPoint);
+      SwingUtilities.convertPointFromScreen(p, layeredPane);
+      return p;
+    }
+
     return layeredPanePoint;
   }
 
