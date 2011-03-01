@@ -35,7 +35,6 @@ public class ConsoleExecuteActionHandler {
   private boolean myAddCurrentToHistory = true;
   private ConsoleHistoryModel myConsoleHistoryModel;
 
-
   public ConsoleExecuteActionHandler(ProcessHandler processHandler, boolean preserveMarkup) {
     myProcessHandler = processHandler;
     myConsoleHistoryModel = new ConsoleHistoryModel();
