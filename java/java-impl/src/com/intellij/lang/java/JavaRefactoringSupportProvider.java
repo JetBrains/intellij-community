@@ -111,8 +111,9 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
     SearchScope useScope = elementToRename.getManager().getSearchHelper().getUseScope(elementToRename);
     if (!(useScope instanceof LocalSearchScope)) return false;
     PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
-    if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in'em
-        !isElementWithComment(scopeElements)) return false;  // except a case of element and it's doc comment
+    if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in them
+        !isElementWithComment(scopeElements) &&              // ... except a case of element and it's doc comment
+        !isResourceVariable(scopeElements)) return false;    // ... and badly scoped resource variables
     PsiFile containingFile = elementToRename.getContainingFile();
     return PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false);
   }
@@ -128,5 +129,11 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
     }
 
     return comment != null && comment.getOwner() == owner;
+  }
+
+  private static boolean isResourceVariable(final PsiElement[] scopeElements) {
+    return scopeElements.length == 2 &&
+           scopeElements[0] instanceof PsiResourceList &&
+           scopeElements[1] instanceof PsiCodeBlock;
   }
 }

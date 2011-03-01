@@ -2,18 +2,12 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.inplace.ResolveSnapshotProvider;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
 /**
  * @author ven
@@ -71,34 +65,24 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     doTestInplaceRename("pp");
   }
 
-  //reference itself won't be renamed
-  private void doTestInplaceRename(String newName) throws Exception {
+  public void testRenameResource() throws Exception {
+    doTest("r1");
+  }
+
+  public void testRenameResourceInPlace() throws Exception {
+    doTestInplaceRename("r1");
+  }
+
+  private void doTestInplaceRename(final String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertNotNull(element);
-    final PsiMethod methodScope = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    assertNotNull(methodScope);
+    assertTrue("In-place rename not allowed for " + element,
+               JavaRefactoringSupportProvider.mayRenameInplace(element, null));
 
-    ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(getFile().getLanguage());
-    assertNotNull(resolveSnapshotProvider);
-    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope.getBody());
-    assertNotNull(snapshot);
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
 
-    final int offset = element.getTextOffset();
-    VariableInplaceRenamer renamer = new VariableInplaceRenamer((PsiNameIdentifierOwner)element, getEditor());
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      renamer.performInplaceRename();
-    }
-    finally {
-      renamer.finish();
-      snapshot.apply(newName);
-
-      TemplateManagerImpl.getTemplateState(myEditor).gotoEnd();
-      renamer.performAutomaticRename(newName, PsiTreeUtil.getParentOfType(myFile.findElementAt(offset), PsiNameIdentifierOwner.class));
-      ((LookupManagerImpl)LookupManager.getInstance(getProject())).clearLookup();
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }

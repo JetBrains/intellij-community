@@ -39,6 +39,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -81,6 +82,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
+  @TestOnly
   public void setTemplateTesting(final boolean templateTesting) {
     myTemplateTesting = templateTesting;
   }
