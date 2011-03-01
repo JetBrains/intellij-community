@@ -883,29 +883,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return RESOLVER.resolve(this, true);
   }
 
-  public void setQualifier(GrExpression newQualifier) {
-    final GrExpression oldQualifier = getQualifierExpression();
-    final ASTNode node = getNode();
-    final PsiElement refNameElement = getReferenceNameElement();
-    if (newQualifier == null) {
-      if (oldQualifier != null) {
-        if (refNameElement != null) {
-          node.removeRange(node.getFirstChildNode(), refNameElement.getNode());
-        }
-      }
-    } else {
-      if (oldQualifier != null) {
-        node.replaceChild(oldQualifier.getNode(), newQualifier.getNode());
-      } else {
-        if (refNameElement != null) {
-          node.addChild(newQualifier.getNode(), refNameElement.getNode());
-          node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
-        }
-      }
-    }
-
-  }
-
   public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) {
     if (getQualifier() != null) {
       throw new IncorrectOperationException("Reference has qualifier");

@@ -33,7 +33,9 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -399,4 +401,26 @@ public class PsiImplUtil {
       }
     }
   }
+
+  public static <T extends PsiElement> void setQualifier(GrQualifiedReference<T> ref, T newQualifier) {
+    final T oldQualifier = ref.getQualifier();
+    final ASTNode node = ref.getNode();
+    final PsiElement refNameElement = ref.getReferenceNameElement();
+    if (newQualifier == null) {
+      if (oldQualifier != null && refNameElement != null) {
+        ref.deleteChildRange(ref.getFirstChild(), refNameElement.getPrevSibling());
+      }
+    } else {
+      if (oldQualifier == null) {
+        if (refNameElement != null) {
+          ref.addBefore(newQualifier, refNameElement);
+          node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
+        }
+      }
+      else {
+        oldQualifier.replace(newQualifier);
+      }
+    }
+  }
+
 }
