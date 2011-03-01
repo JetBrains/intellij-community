@@ -139,7 +139,7 @@ public class EditorWindow {
 
           beforePublisher.beforeFileClosed(editorManager, file);
 
-          if (myTabbedPane != null) {
+          if (myTabbedPane != null && editor != null) {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
@@ -331,6 +331,9 @@ public class EditorWindow {
       myTabbedPane.requestFocus(forced);
     }
   }
+  public boolean isValid() {
+     return myPanel.isShowing();
+   }
 
   protected static class TComp extends JPanel implements DataProvider {
     final EditorWithProviderComposite myEditor;
@@ -341,6 +344,10 @@ public class EditorWindow {
       myEditor = editor;
       myWindow = window;
       add(editor.getComponent(), BorderLayout.CENTER);
+    }
+
+    public EditorWindow getEditorWindow() {
+      return myWindow;
     }
 
     public Object getData(String dataId) {
@@ -907,7 +914,6 @@ public class EditorWindow {
     return getEditorAt(i).getFile();
   }
 
- 
   @Override
   public String toString() {
     return "EditorWindow: files=" + Arrays.asList(getFiles());

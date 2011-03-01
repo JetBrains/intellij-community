@@ -457,12 +457,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public VirtualFile getCurrentFile() {
-    return getSplitters().getCurrentFile();
+    return getActiveSplitters(true).getResult().getCurrentFile();
   }
 
   public AsyncResult<EditorWindow> getActiveWindow() {
+    return _getActiveWindow(false);
+  }
+
+  private AsyncResult<EditorWindow> _getActiveWindow(boolean now) {
     final AsyncResult<EditorWindow> result = new AsyncResult<EditorWindow>();
-    getActiveSplitters(false).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
+    getActiveSplitters(now).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
       @Override
       public void run(EditorsSplitters editorsSplitters) {
         result.setDone(editorsSplitters.getCurrentWindow());
@@ -473,11 +477,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public EditorWindow getCurrentWindow() {
-    return getActiveWindow().getResult();
+    return _getActiveWindow(true).getResult();
   }
 
   public void setCurrentWindow(final EditorWindow window) {
-    getSplitters().setCurrentWindow(window, true);
+    getActiveSplitters(true).getResult().setCurrentWindow(window, true);
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
@@ -582,6 +586,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       wndToOpenIn = getSplitters().getOrCreateCurrentWindow(file);
     }
     return openFileImpl2(wndToOpenIn, file, focusEditor);
+  }
+
+  @NotNull
+  @Override
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                        boolean focusEditor,
+                                                                        @NotNull EditorWindow window) {
+    if (!file.isValid()) {
+      throw new IllegalArgumentException("file is not valid: " + file);
+    }
+    assertDispatchThread();
+
+    return openFileImpl2(window, file, focusEditor);
   }
 
   @NotNull

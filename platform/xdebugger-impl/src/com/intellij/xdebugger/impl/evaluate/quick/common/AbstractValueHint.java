@@ -266,7 +266,7 @@ public abstract class AbstractValueHint {
 
     short constraint = HintManagerImpl.UNDER;
     Point p = HintManagerImpl.getHintPosition(myCurrentHint, editor, editor.xyToLogicalPosition(myPoint), constraint);
-    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, constraint, true);
+    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, constraint);
 
     HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,

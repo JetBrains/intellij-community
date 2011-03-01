@@ -136,6 +136,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
                                                                                          boolean focusEditor,
                                                                                          boolean searchForSplitter);
 
+  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                         boolean focusEditor,
+                                                                                         @NotNull EditorWindow window);
+
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 
   public abstract EditorWindow getNextWindow(@NotNull final EditorWindow window);
