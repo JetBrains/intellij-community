@@ -107,6 +107,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         final ThreadReference threadRef = myThreadProxy.getThreadReference();
         myStackFrame = threadRef.frame(getFrameIndex());
       }
+      catch (IndexOutOfBoundsException e) {
+        throw new EvaluateException(e.getMessage(), e);
+      }
       catch (ObjectCollectedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
       }
