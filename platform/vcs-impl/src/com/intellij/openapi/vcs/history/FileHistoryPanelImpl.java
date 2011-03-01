@@ -884,16 +884,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         }
       }
 
-      try {
-        revision.loadContent();
-      }
-      catch (VcsException e) {
-        Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version", e.getLocalizedMessage()),
-                                 VcsBundle.message("message.title.get.version"));
-      }
-      catch (ProcessCanceledException ex) {
-        return;
-      }
       getVersion(revision);
       refreshFile(revision);
     }
@@ -940,8 +930,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       final byte[] revisionContent;
       try {
-        revision.loadContent();
-        revisionContent = revision.getContent();
+        revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -1197,13 +1186,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     public String getContent() throws VcsException {
-      myRevision.loadContent();
+      final byte[] bytes;
       try {
-        return LoadTextUtil.getTextByBinaryPresentation(myRevision.getContent(), myFile.getVirtualFile(), false).toString();
+        bytes = VcsHistoryUtil.loadRevisionContent(myRevision);
       }
       catch (IOException e) {
         throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
       }
+      return LoadTextUtil.getTextByBinaryPresentation(bytes, myFile.getVirtualFile(), false).toString();
     }
 
     @NotNull
