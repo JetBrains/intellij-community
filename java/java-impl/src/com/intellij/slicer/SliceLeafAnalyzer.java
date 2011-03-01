@@ -235,11 +235,15 @@ public class SliceLeafAnalyzer {
           node(element, map).addAll(node(duplicate, map));
         }
         else {
-          SliceUsage sliceUsage = element.getValue();
+          final SliceUsage sliceUsage = element.getValue();
 
           Collection<? extends AbstractTreeNode> children = element.getChildren();
           if (children.isEmpty()) {
-            PsiElement value = sliceUsage.getElement();
+            PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+              public PsiElement compute() {
+                return sliceUsage.getElement();
+              }
+            });
             node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
           }
           super.visit(element);
