@@ -22,8 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,11 +33,6 @@ import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 public class AndroidValueResourcesTest extends AndroidDomTest {
   public AndroidValueResourcesTest() {
     super(false, "dom/resources");
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   @Override

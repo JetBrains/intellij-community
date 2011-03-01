@@ -19,8 +19,6 @@ package org.jetbrains.android.actions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.android.AndroidTestCase;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 public class AndroidCreateComponentTest extends AndroidTestCase {
   private static final String TEST_FOLDER = "createComponent";
@@ -56,10 +54,5 @@ public class AndroidCreateComponentTest extends AndroidTestCase {
         ApplicationManager.getApplication().runWriteAction(r);
       }
     }, "", null);
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 }

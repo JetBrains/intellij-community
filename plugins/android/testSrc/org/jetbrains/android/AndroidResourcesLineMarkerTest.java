@@ -15,8 +15,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.android.actions.GotoResourceAction;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,11 +27,6 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
 
   public AndroidResourcesLineMarkerTest() {
     super(false);
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   @Override

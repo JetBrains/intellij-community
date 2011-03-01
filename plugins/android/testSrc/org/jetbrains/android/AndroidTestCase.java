@@ -16,30 +16,29 @@
 
 package org.jetbrains.android;
 
-import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
-import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.EmptySdkLog;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,15 +68,14 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
   }
 
   private String getTestSdkPath() {
-    return getTestDataPath() + '/' + getTestProfile().getSdkDirName();
+    return getTestDataPath() + "/sdk1.5";
   }
-
-  public abstract AndroidSdkTestProfile getTestProfile();
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFacet = addAndroidFacet(myModule, getTestProfile(), getTestSdkPath());
+
+    myFacet = addAndroidFacet(myModule, getTestSdkPath());
     myFixture.copyDirectoryToProject(getResDir(), "res");
     if (myCreateManifest) {
       createManifest();
@@ -90,18 +88,12 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    tuneModule(moduleBuilder, getTestSdkPath() + getTestProfile().getAndroidJarDirPath(), getTestDataPath(),
+    tuneModule(moduleBuilder,
                myFixture.getTempDirPath());
   }
 
-  public static void tuneModule(JavaModuleFixtureBuilder moduleBuilder,
-                                String androidJarPath,
-                                String testDataPath,
-                                String moduleDirPath) {
+  public static void tuneModule(JavaModuleFixtureBuilder moduleBuilder, String moduleDirPath) {
     moduleBuilder.addContentRoot(moduleDirPath);
-    moduleBuilder
-      .addLibraryJars(ANDROID_LIBRARY_NAME, testDataPath, "android.jar", androidJarPath,
-                      "android.jar");
 
     new File(moduleDirPath + "/src/").mkdir();
     moduleBuilder.addSourceRoot("src");
@@ -120,41 +112,50 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     super.tearDown();
   }
 
-  @Nullable
-  private static Library findAndroidLibrary(@NotNull Module module) {
-    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library != null && library.getName().equals(ANDROID_LIBRARY_NAME)) {
-          return library;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static AndroidFacet addAndroidFacet(Module module, AndroidSdkTestProfile testProfile, String sdkPath) {
+  public static AndroidFacet addAndroidFacet(Module module, String sdkPath) {
     FacetManager facetManager = FacetManager.getInstance(module);
     AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
-    AndroidSdk sdk = AndroidSdk.parse(sdkPath, new EmptySdkLog());
-    IAndroidTarget target = sdk.findTargetByName(testProfile.getAndroidTargetName());
-    Library androidLibrary = findAndroidLibrary(module);
-    configuration.setAndroidPlatform(new AndroidPlatform(sdk, target, androidLibrary));
-    final ModifiableFacetModel model = facetManager.createModifiableModel();
-    model.addFacet(facet);
+
+    addAndroidSdk(module, sdkPath);
+
+    final ModifiableFacetModel facetModel = facetManager.createModifiableModel();
+    facetModel.addFacet(facet);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        model.commit();
-      }
-    });
-    Disposer.register(module,new Disposable() {
-      @Override
-      public void dispose() {
-        configuration.setAndroidPlatform(null);
+        facetModel.commit();
       }
     });
     return facet;
+  }
+
+  private static void addAndroidSdk(Module module, String sdkPath) {
+    Sdk androidSdk = createAndroidSdk(sdkPath);
+    final ModifiableRootModel moduleModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    moduleModel.setSdk(androidSdk);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        moduleModel.commit();
+      }
+    });
+  }
+
+  private static Sdk createAndroidSdk(String sdkPath) {
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk("android_test_sdk", AndroidSdkType.getInstance());
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath(sdkPath);
+
+    String androidJarPath = sdkPath + "/../android.jar!/";
+    VirtualFile androidJar = JarFileSystem.getInstance().findFileByPath(androidJarPath);
+    sdkModificator.addRoot(androidJar, OrderRootType.CLASSES);
+
+    AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
+    AndroidSdk sdkObject = AndroidSdk.parse(sdkPath, new EmptySdkLog());
+    data.setBuildTarget(sdkObject.findTargetByName("Android 1.5"));
+    sdkModificator.setSdkAdditionalData(data);
+    sdkModificator.commitChanges();
+    return sdk;
   }
 }

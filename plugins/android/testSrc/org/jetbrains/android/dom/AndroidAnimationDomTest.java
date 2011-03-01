@@ -16,8 +16,6 @@
 
 package org.jetbrains.android.dom;
 
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
-import org.jetbrains.android.sdk.Android15TestProfile;
 import com.android.sdklib.SdkConstants;
 
 /**
@@ -35,11 +33,6 @@ public class AndroidAnimationDomTest extends AndroidDomTest {
   @Override
   protected String getPathToCopy(String testFileName) {
     return "res/anim/" + testFileName;
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   @Override
