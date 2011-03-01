@@ -42,6 +42,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -151,40 +152,27 @@ public class FormattingProgressIndicatorImpl extends Task.Modal implements Forma
     });
 
     // We need to sync background thread and EDT here in order to avoid situation when event queue is full of processing requests.
-    final Lock lock = new ReentrantLock();
-    final Condition condition = lock.newCondition();
     myIndicator = indicator;
-    
     while (myRunning && !task.isDone()) {
       if (indicator.isCanceled()) {
         task.stop();
         break;
       }
-      lock.lock();
-      try {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            lock.lock();
-            try {
-              long start = System.currentTimeMillis();
-              while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
-                task.iteration();
-              }
-            }
-            finally {
-              condition.signal();
-              lock.unlock();
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          long start = System.currentTimeMillis();
+          try {
+            while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
+              task.iteration();
             }
           }
-        });
-        if (!task.isDone()) {
-          condition.await();
+          catch (RuntimeException e) {
+            task.stop();
+            throw e;
+          }
         }
-      }
-      finally {
-        lock.unlock();
-      }
+      });
     }
   }
 
