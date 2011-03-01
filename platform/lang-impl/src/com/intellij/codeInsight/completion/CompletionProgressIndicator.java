@@ -152,9 +152,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone = true;
         }
       } else {
+        /*
         myLookup.setAdvertisementText("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
                                       " to choose the first suggestion");
+        */
       }
     }
 

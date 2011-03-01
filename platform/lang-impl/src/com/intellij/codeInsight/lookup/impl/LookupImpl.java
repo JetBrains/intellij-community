@@ -126,7 +126,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private JLabel mySortingLabel;
   private final JScrollPane myScrollPane;
   private boolean myHintMode;
-  private LightweightHint myAutopopupHint;
+  private MyLightweightHint myAutopopupHint;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -484,6 +484,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void setHintMode(final boolean hintMode) {
     if (!hintMode) {
       hideAutopopupHint();
+      markSelectionTouched();
+      setFocused(true);
+      if (!myShown) {
+        show();
+      }
     }
     myHintMode = hintMode;
   }
@@ -1151,7 +1156,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }
     else if (myHintMode) {
-      final int itemTextPadding = 5;
+      final int itemTextPadding = 2;
 
       final JPanel hintComponent = createAutopopupHintComponent(itemTextPadding);
       Point bestPoint = calculatePosition(hintComponent);
@@ -1168,13 +1173,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (myAutopopupHint == null) {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(hintComponent);
-        myAutopopupHint = new LightweightHint(panel) {
-          @Override
-          public void hide() {
-            hideLookup(true);
-            super.hide();
-          }
-        };
+        myAutopopupHint = new MyLightweightHint(panel);
         myAutopopupHint.setForceShowAsPopup(true);
         hintManager.showEditorHint(myAutopopupHint, editor, new Point(bestPoint),
                                    HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
@@ -1193,16 +1192,22 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     pane.setBackground(HintUtil.INFORMATION_COLOR);
 
     final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    final String ctrlSpace = KeymapUtil.getFirstKeyboardShortcutText(
+      ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    final String ctrlDown = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorLookupDown"));
+    final String tab = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
+    final String enter = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
 
     final List<LookupElement> items = getItems();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
     for (int i = 0; i < Math.min(maxAutopopupItems, items.size()); i++) {
+      /*
       if (i == 1) {
-        JLabel more = normalizedLabel("Other suggestions (" + ctrlSpace + " for a complete list):", editorFont);
+        JLabel more = normalizedLabel("Other suggestions (" + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorLookupDown")) + " to choose):", editorFont);
         more.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(5, 2, 5, 7)));
         pane.add(more, gb.nextLine());
       }
+      */
 
       final LookupElement element = items.get(i);
       final LookupElementPresentation presentation = new LookupElementPresentation();
@@ -1225,7 +1230,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
         final JLabel tailLabel = normalizedLabel(presentation.getTailText(), editorFont);
         tailLabel.setForeground(LookupCellRenderer.getTailTextColor(false, presentation, tailLabel.getForeground()));
-        row.add(tailLabel, rgb.next().weightx(1).fillCellHorizontally());
+        row.add(tailLabel, rgb.next());
+
+        String keys = i == 0 ? "  [" + tab + (isFocused() ? ", " + enter : "") + "]" : i == 1 ? "  [" + ctrlDown + "]" : "";
+        JLabel adLabel = new JLabel(keys);
+        adLabel.setFont(adLabel.getFont().deriveFont(Font.BOLD, editorFont.getSize()));
+        row.add(adLabel, rgb.next().weightx(1).fillCellHorizontally());
 
         row.add(normalizedLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ", editorFont), rgb.next());
 
@@ -1256,14 +1266,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (items.size() > maxAutopopupItems) {
         if (StringUtil.isNotEmpty(ctrlSpace)) {
           //ad.add(normalizedLabel(ctrlSpace + " for more  ", editorFont), BorderLayout.WEST);
+          //ad.add(normalizedLabel("Other suggestions (" + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorLookupDown")) + " to choose):", editorFont), BorderLayout.WEST);
         }
       }
 
-      final String tab = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
-      if (StringUtil.isNotEmpty(tab)) {
-        final String enter = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
-        String message = "  " + tab + (isFocused() ? ", " + enter : "") + " for the first item";
-        ad.add(normalizedLabel(message, editorFont), BorderLayout.EAST);
+      if (StringUtil.isNotEmpty(ctrlSpace)) {
+        ad.add(normalizedLabel("Press " + ctrlSpace + " for the complete list", editorFont), BorderLayout.EAST);
       }
       pane.add(ad, gb.nextLine().padx(5).pady(2).coverColumn());
     }
@@ -1279,7 +1287,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private void hideAutopopupHint() {
     if (myAutopopupHint != null) {
-      myAutopopupHint.hide();
+      myAutopopupHint.justHide();
       myPositionedAbove = null;
     }
   }
@@ -1382,4 +1390,24 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myModel.getRelevanceStrings();
   }
 
+  private class MyLightweightHint extends LightweightHint {
+    private boolean myHidden;
+
+    public MyLightweightHint(JPanel panel) {
+      super(panel);
+    }
+
+    @Override
+    public void hide() {
+      if (myHidden) return;
+
+      hideLookup(true);
+      justHide();
+    }
+
+    private void justHide() {
+      myHidden = true;
+      super.hide();
+    }
+  }
 }
