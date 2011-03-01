@@ -26,7 +26,6 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +36,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
@@ -254,10 +252,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   }
 
   protected static NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
-                                                                          final String propName) {
+                                                                          final String propName,
+                                                                          final Project project) {
     return new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expr.getProject());
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         final SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
         final String[] strings = JavaCompletionUtil
           .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
@@ -277,7 +276,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     /* do nothing */
   }
 
-  private static List<PsiMethod> getEnclosingMethods(PsiMethod nearest) {
+  public static List<PsiMethod> getEnclosingMethods(PsiMethod nearest) {
     List<PsiMethod> enclosingMethods = new ArrayList<PsiMethod>();
     enclosingMethods.add(nearest);
     PsiMethod method = nearest;
@@ -406,7 +405,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                   ? new TypeSelectorManagerImpl(myProject, initializerType, myExpr, occurences)
                                                   : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
 
-        NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName);
+        NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName, myProject);
         boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
 
         if (!isInplaceAvailableOnDataContext) {

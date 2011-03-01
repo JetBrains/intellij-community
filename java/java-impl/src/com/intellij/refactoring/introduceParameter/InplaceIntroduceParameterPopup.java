@@ -362,7 +362,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
           final String propName = myLocalVar != null ? JavaCodeStyleManager
             .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-          final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName)
+          final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
             .getSuggestedNameInfo(defaultType).names;
           final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType);
           if (parameter != null) {
