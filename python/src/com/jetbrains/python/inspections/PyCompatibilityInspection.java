@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -166,6 +167,17 @@ public class PyCompatibilityInspection extends PyInspection {
       int len = 0;
       String moduleName = "";
       StringBuilder message = new StringBuilder("Python version ");
+
+      PyTryExceptStatement tryExceptStatement = PsiTreeUtil.getParentOfType(node, PyTryExceptStatement.class);
+      if (tryExceptStatement != null) {
+        PyExceptPart[] parts = tryExceptStatement.getExceptParts();
+        for (PyExceptPart part : parts) {
+          if (part.getExceptClass() != null && part.getExceptClass().getText().equals("ImportError")) {
+            return;
+          }
+        }
+      }
+
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
         for (PyImportElement importElement : importElements) {
