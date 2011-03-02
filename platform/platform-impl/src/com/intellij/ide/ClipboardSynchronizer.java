@@ -110,7 +110,13 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         return myCurrentContent;
       }
     }
-    return doGetContents();
+    try {
+      return doGetContents();
+    }
+    catch (IllegalStateException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   public boolean isDataFlavorAvailable(DataFlavor dataFlavor) {
@@ -148,7 +154,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   public void disposeComponent() {
   }
 
-  private Transferable doGetContents() {
+  private Transferable doGetContents() throws IllegalStateException {
     IllegalStateException last = null;
     for (int i = 0; i < 3; i++) {
       try {
@@ -183,6 +189,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
       catch (IllegalStateException e) {
         try {
+          //noinspection BusyWait
           Thread.sleep(50);
         }
         catch (InterruptedException ignored) {
