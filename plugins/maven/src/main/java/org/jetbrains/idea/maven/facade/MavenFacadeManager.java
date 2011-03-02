@@ -185,7 +185,6 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
         params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
