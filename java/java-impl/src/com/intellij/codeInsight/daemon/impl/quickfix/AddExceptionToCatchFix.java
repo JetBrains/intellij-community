@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,19 +124,30 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     return true;
   }
 
-  private static PsiElement findElement(PsiFile file, int offset) {
+  @Nullable
+  private static PsiElement findElement(final PsiFile file, final int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class);
+
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class);
     if (parent == null || parent instanceof PsiMethod) return null;
-    PsiTryStatement statement = (PsiTryStatement) parent;
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock.getTextRange().getStartOffset() <= offset && tryBlock.getTextRange().getEndOffset() > offset) {
+    final PsiTryStatement statement = (PsiTryStatement) parent;
+
+    final PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock != null && tryBlock.getTextRange().contains(offset)) {
       if (!ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).isEmpty()) {
         return tryBlock;
       }
     }
+
+    final PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null && resourceList.getTextRange().contains(offset)) {
+      if (!ExceptionUtil.collectUnhandledExceptions(resourceList, statement.getParent()).isEmpty()) {
+        return resourceList;
+      }
+    }
+
     return null;
   }
 

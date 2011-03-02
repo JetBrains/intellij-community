@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -175,6 +176,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return QuickFixBundle.message("add.exception.to.throws.family");
   }
 
+  @Nullable
   private static PsiElement findElement(PsiElement element, PsiMethod topElement) {
     if (element == null) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
