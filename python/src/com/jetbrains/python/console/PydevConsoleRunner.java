@@ -269,4 +269,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
   }
+
+  @Override
+  protected boolean shouldAddNumberToTitle() {
+    return true;
+  }
 }

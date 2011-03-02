@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.actions;
 
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,10 +27,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PydevLanguageConsoleView;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class ExecuteInConsoleAction extends AnAction {
   public ExecuteInConsoleAction() {
@@ -38,9 +42,14 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    String selectionText = getSelectionText(e);
+    final String selectionText = getSelectionText(e);
     if (selectionText != null) {
-      executeInConsole(getConsole(e), selectionText);
+      selectConsole(e, new Consumer<PydevLanguageConsoleView>() {
+        @Override
+        public void consume(PydevLanguageConsoleView pydevLanguageConsole) {
+          executeInConsole(pydevLanguageConsole, selectionText);
+        }
+      });
     }
   }
 
@@ -55,7 +64,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    boolean enabled = !StringUtil.isEmpty(getSelectionText(e)) && isPython(e) && getConsole(e) != null;
+    boolean enabled = !StringUtil.isEmpty(getSelectionText(e)) && isPython(e) && canFindConsole(e);
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
@@ -75,22 +84,53 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   @Nullable
-  private static PydevLanguageConsoleView getConsole(@NotNull Project project) {
-    RunContentDescriptor descriptor = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-    if (descriptor != null && descriptor.getExecutionConsole() instanceof PydevLanguageConsoleView) {
-      return (PydevLanguageConsoleView)descriptor.getExecutionConsole();
-    }
+  private static PydevLanguageConsoleView selectConsole(@NotNull Project project,
+                                                        @NotNull Editor editor,
+                                                        final Consumer<PydevLanguageConsoleView> consumer) {
+    Collection<RunContentDescriptor> consoles = getConsoles(project);
+
+    ExecutionHelper.selectContentDescriptor(editor, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
+      @Override
+      public void consume(RunContentDescriptor descriptor) {
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PydevLanguageConsoleView) {
+          consumer.consume((PydevLanguageConsoleView)descriptor.getExecutionConsole());
+        }
+      }
+    });
+
     return null;
   }
 
+  private static Collection<RunContentDescriptor> getConsoles(Project project) {
+    return ExecutionHelper.findRunningConsoleByTitle(project, new NotNullFunction<String, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(String dom) {
+        return dom.contains("Python") || dom.contains("Django");
+      }
+    });
+  }
+
   @Nullable
-  private static PydevLanguageConsoleView getConsole(AnActionEvent e) {
+  private static PydevLanguageConsoleView selectConsole(AnActionEvent e, Consumer<PydevLanguageConsoleView> consumer) {
+    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project != null) {
-      return getConsole(project);
+    if (project != null && editor != null) {
+      return selectConsole(project, editor, consumer);
     }
     else {
       return null;
+    }
+  }
+
+  private static boolean canFindConsole(AnActionEvent e) {
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project != null) {
+      Collection<RunContentDescriptor> descriptors = getConsoles(project);
+      return descriptors.size() > 0;
+    }
+    else {
+      return false;
     }
   }
 

@@ -9,13 +9,17 @@
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
-    <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateFoldingBuilder"/>
+    <lang.foldingBuilder language="DjangoTemplate"
+                         implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
-    <lang.whiteSpaceFormattingStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
+    <lang.whiteSpaceFormattingStrategy language="Python"
+                                       implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
-    <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
-    <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
@@ -36,18 +40,22 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperClassAttributesCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.PySuperClassAttributesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
-    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
+    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
+                             implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
 
     <projectService serviceInterface="com.jetbrains.python.psi.PyElementGenerator"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
     <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="pyCommaAfterKwd"/>
-    <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler" id="pyDjangoBraceInterpolation"/>
+    <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
+                  id="pyDjangoBraceInterpolation"/>
     <typedHandler implementation="com.jetbrains.python.editor.ColonTypedHandler" id="pyColonUnindent"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
 
@@ -189,11 +197,13 @@
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
-    <lang.refactoringSupport.classMembersRefactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport"/>
+    <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
+                                                            implementationClass="com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport"/>
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
-    <lang.smartEnterProcessor language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
+    <lang.smartEnterProcessor language="Python"
+                              implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
                           order="before line"/>
 
@@ -204,9 +214,12 @@
     <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
 
     <languageInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
-    <lang.parserDefinition language="PythonRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
-    <lang.parserDefinition language="PythonVerboseRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="PythonVerboseRegExp" implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="PythonRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
+    <lang.parserDefinition language="PythonVerboseRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="PythonVerboseRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
@@ -308,7 +321,8 @@
     <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagNameSelectionHandler"/>
 
-    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateNamesValidator"/>
+    <lang.namesValidator language="DjangoTemplate"
+                         implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateNamesValidator"/>
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
 
@@ -317,30 +331,40 @@
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
-    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateTagSurroundDescriptor"
+    <lang.surroundDescriptor language="DjangoTemplate"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateTagSurroundDescriptor"
                              order="first"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor" order="after djangoHtmlSurround"/>
-    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor" order="after djangoXmlSurround"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoHtmlSurround"/>
-    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor"
+                             order="after djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor"
+                             order="after djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor"
+                             order="first" id="djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor"
+                             order="first" id="djangoXmlSurround"/>
 
     <lang.elementManipulator forClass="com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl"
                              implementationClass="com.jetbrains.django.lang.template.ref.DjangoStringLiteralManipulator"/>
 
     <lang.findUsagesProvider language="DjangoTemplate"
                              implementationClass="com.jetbrains.django.lang.template.ref.DjangoTemplateFindUsagesProvider"/>
-    
+
     <referencesSearch implementation="com.jetbrains.django.lang.template.ref.DjangoTemplateStringReferenceSearch"/>
 
     <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
 
-    <lang.formatter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
+    <lang.formatter language="DjangoTemplate"
+                    implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
 
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
 
-    <completion.contributor language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
+    <completion.contributor language="DjangoTemplate"
+                            implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
 
-    <lang.psiStructureViewFactory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
+    <lang.psiStructureViewFactory language="DjangoTemplate"
+                                  implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
 
     <editorSmartKeysConfigurable instance="com.jetbrains.django.lang.template.editor.DjangoEditorSmartKeysConfigurable"/>
 
@@ -394,10 +418,9 @@
     <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
     <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
     <projectService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
-                        serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
+                    serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
-
 
 
     <!-- Locale -->
@@ -425,7 +448,8 @@
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
     <extensionPoint qualifiedName="Pythonid.unusedLocalFilter" interface="com.jetbrains.python.inspections.UnusedLocalFilter"/>
-    <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType" interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
+    <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
+                    interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
   </extensionPoints>
 
@@ -551,8 +575,13 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="ExecuteInPyConsoleAction" class="com.jetbrains.python.actions.ExecuteInConsoleAction">
+    <action id="ExecuteInPyConsoleAction"
+            class="com.jetbrains.python.actions.ExecuteInConsoleAction"
+            text="Execute selection in console"
+            description="Executes selected code fragment in Python/Django console">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
