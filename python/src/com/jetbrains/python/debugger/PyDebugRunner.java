@@ -99,9 +99,12 @@ public class PyDebugRunner extends GenericProgramRunner {
         new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
       pythonDebugConsoleView.setConsoleCommunication(consoleCommunication);
 
+
       PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonDebugConsoleView,
                                                                                                                     processHandler,
                                                                                                                     consoleCommunication);
+
+      pythonDebugConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
 

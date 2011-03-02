@@ -29,7 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
-import com.jetbrains.python.console.PydevLanguageConsoleView;
+import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +44,10 @@ public class ExecuteInConsoleAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final String selectionText = getSelectionText(e);
     if (selectionText != null) {
-      selectConsole(e, new Consumer<PydevLanguageConsoleView>() {
+      findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
         @Override
-        public void consume(PydevLanguageConsoleView pydevLanguageConsole) {
-          executeInConsole(pydevLanguageConsole, selectionText);
+        public void consume(PyCodeExecutor codeExecutor) {
+          executeInConsole(codeExecutor, selectionText);
         }
       });
     }
@@ -83,43 +83,36 @@ public class ExecuteInConsoleAction extends AnAction {
     return psi instanceof PyFile;
   }
 
-  @Nullable
-  private static PydevLanguageConsoleView selectConsole(@NotNull Project project,
-                                                        @NotNull Editor editor,
-                                                        final Consumer<PydevLanguageConsoleView> consumer) {
+  private static void selectConsole(@NotNull Project project,
+                                    @NotNull Editor editor,
+                                    final Consumer<PyCodeExecutor> consumer) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper.selectContentDescriptor(editor, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
       @Override
       public void consume(RunContentDescriptor descriptor) {
-        if (descriptor != null && descriptor.getExecutionConsole() instanceof PydevLanguageConsoleView) {
-          consumer.consume((PydevLanguageConsoleView)descriptor.getExecutionConsole());
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
         }
       }
     });
-
-    return null;
   }
 
   private static Collection<RunContentDescriptor> getConsoles(Project project) {
-    return ExecutionHelper.findRunningConsoleByTitle(project, new NotNullFunction<String, Boolean>() {
+    return ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
       @NotNull
       @Override
-      public Boolean fun(String dom) {
-        return dom.contains("Python") || dom.contains("Django");
+      public Boolean fun(RunContentDescriptor dom) {
+        return dom.getExecutionConsole() instanceof PyCodeExecutor;
       }
     });
   }
 
-  @Nullable
-  private static PydevLanguageConsoleView selectConsole(AnActionEvent e, Consumer<PydevLanguageConsoleView> consumer) {
+  private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer) {
     Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null && editor != null) {
-      return selectConsole(project, editor, consumer);
-    }
-    else {
-      return null;
+      selectConsole(project, editor, consumer);
     }
   }
 
@@ -134,7 +127,7 @@ public class ExecuteInConsoleAction extends AnAction {
     }
   }
 
-  private static void executeInConsole(@NotNull PydevLanguageConsoleView pydevConsole, @NotNull String text) {
-    pydevConsole.executeMultiline(text);
+  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text) {
+    codeExecutor.executeCode(text);
   }
 }

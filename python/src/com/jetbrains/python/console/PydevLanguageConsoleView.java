@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class PydevLanguageConsoleView extends LanguageConsoleViewImpl {
+public class PydevLanguageConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
   private ConsoleExecuteActionHandler myExecuteActionHandler;
 
 
@@ -36,11 +36,11 @@ public class PydevLanguageConsoleView extends LanguageConsoleViewImpl {
     myExecuteActionHandler.processLine(statement);
   }
 
-  public void executeMultiline(@NotNull String text) {
-    getPydevLanguageConsole().addTextRangeToHistory(text);
+  @Override
+  public void executeCode(@NotNull String code) {
+    getPydevLanguageConsole().addTextToCurrentEditor(code);
     myExecuteActionHandler.runExecuteAction(getPydevLanguageConsole());
   }
-
 
   public void flushUIUpdates() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {

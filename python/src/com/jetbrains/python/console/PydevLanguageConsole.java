@@ -19,13 +19,4 @@ public class PydevLanguageConsole extends LanguageConsoleImpl {
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
   }
-
-  public void addTextRangeToHistory(final String text) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        getCurrentEditor().getDocument().insertString(0, text);
-      }
-    });
-    queueUiUpdate(true);
-  }
 }

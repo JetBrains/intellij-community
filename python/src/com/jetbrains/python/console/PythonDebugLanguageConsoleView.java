@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleView, ObservableConsoleView {
+public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleView, ObservableConsoleView, PyCodeExecutor {
 
   private final static String TEXT_CONSOLE_PANEL = "TEXT_CONSOLE_PANEL";
   private final static String PYDEV_CONSOLE_PANEL = "PYDEV_CONSOLE_PANEL";
@@ -50,6 +50,12 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
     showDebugConsole(false);
+  }
+
+  @Override
+  public void executeCode(@NotNull String code) {
+    showDebugConsole(true);
+    getPydevConsoleView().executeCode(code);
   }
 
   private static PythonDebugConsoleView createConsoleView(Project project) {

@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -14,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class PythonDebugConsoleView extends LanguageConsoleViewImpl {
+public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
+  private ConsoleExecuteActionHandler myExecuteActionHandler;
+
   public PythonDebugConsoleView(final Project project, final String title) {
     super(project, new PythonLanguageConsole(project, title));
     getPythonLanguageConsole().setPythonDebugConsoleView(this);
@@ -25,12 +28,22 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl {
     getPythonLanguageConsole().setConsoleCommunication(communication);
   }
 
+  public void setExecutionHandler(@NotNull ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    myExecuteActionHandler = consoleExecuteActionHandler;
+  }
+
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   private PythonLanguageConsole getPythonLanguageConsole() {
     return ((PythonLanguageConsole)myConsole);
+  }
+
+  @Override
+  public void executeCode(@NotNull String code) {
+    getPythonLanguageConsole().addTextToCurrentEditor(code);
+    myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
   }
 
   private static class PythonLanguageConsole extends LanguageConsoleImpl {
