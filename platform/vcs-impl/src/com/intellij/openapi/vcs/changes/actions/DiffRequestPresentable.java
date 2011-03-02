@@ -18,20 +18,39 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffRequest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface DiffRequestPresentable {
   MyResult step(DiffChainContext context);
   boolean haveStuff();
   List<? extends AnAction> createActions(final ShowDiffAction.DiffExtendUIFactory uiFactory);
+  String getPathPresentation();
 
   class MyResult {
+    private final List<String> myErrors;
     private final DiffRequest myRequest;
     private final DiffPresentationReturnValue myReturnValue;
 
     public MyResult(DiffRequest request, DiffPresentationReturnValue returnValue) {
       myRequest = request;
       myReturnValue = returnValue;
+      myErrors = new ArrayList<String>();
+    }
+
+    public MyResult(DiffRequest request, DiffPresentationReturnValue returnValue, final String error) {
+      myRequest = request;
+      myReturnValue = returnValue;
+      myErrors = new ArrayList<String>();
+      myErrors.add(error);
+    }
+
+    public void addError(final String e) {
+      myErrors.add(e);
+    }
+
+    public List<String> getErrors() {
+      return myErrors;
     }
 
     public DiffRequest getRequest() {

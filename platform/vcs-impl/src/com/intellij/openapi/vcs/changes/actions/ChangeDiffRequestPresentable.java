@@ -31,10 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +49,17 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   public MyResult step(DiffChainContext context) {
     final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-    return new MyResult(request, getRequestForChange(request, context));
+    if (! canShowChange(context)) {
+      return new MyResult(request, DiffPresentationReturnValue.removeFromList,
+                          "Can not show diff for binary '" + ChangesUtil.getFilePath(myChange).getPath() + "'");
+    }
+    if (! loadCurrentContents(request, myChange)) return new MyResult(request, DiffPresentationReturnValue.quit);
+    return new MyResult(request, DiffPresentationReturnValue.useRequest);
   }
 
-  @Nullable
-  private DiffPresentationReturnValue getRequestForChange(final SimpleDiffRequest request, final DiffChainContext context) {
-    if (! canShowChange(context)) return DiffPresentationReturnValue.removeFromList;
-    if (! loadCurrentContents(request, myChange)) return DiffPresentationReturnValue.quit;
-    return DiffPresentationReturnValue.useRequest;
+  @Override
+  public String getPathPresentation() {
+    return ChangesUtil.getFilePath(myChange).getPath();
   }
 
   public boolean haveStuff() {
