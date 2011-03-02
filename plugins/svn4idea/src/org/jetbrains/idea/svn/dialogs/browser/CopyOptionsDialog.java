@@ -17,9 +17,14 @@ package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -34,6 +39,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -42,7 +48,7 @@ import java.util.Collections;
 public class CopyOptionsDialog extends DialogWrapper {
 
   private final SVNURL myURL;
-  private JTextArea myCommitMessage;
+  private EditorTextField myCommitMessage;
   private final Project myProject;
   private JTextField myNameField;
   private JLabel myURLLabel;
@@ -51,10 +57,20 @@ public class CopyOptionsDialog extends DialogWrapper {
   private JComboBox myMessagesBox;
   private JPanel myMainPanel;
 
-  public CopyOptionsDialog(String title, Project project, final RepositoryTreeNode root, final RepositoryTreeNode node) {
+  public CopyOptionsDialog(String title, Project project, final RepositoryTreeNode root, final RepositoryTreeNode node,
+                           final boolean copy) {
     super(project, true);
     myProject = project;
     myURL = node.getURL();
+    createUI();
+
+    if (copy) {
+      myTargetURL.setForeground(FileStatus.COLOR_ADDED);
+      setOKButtonText("Copy");
+    } else {
+      myTargetURL.setForeground(FileStatus.COLOR_MODIFIED);
+      setOKButtonText("Move");
+    }
 
     myURLLabel.setText(myURL.toString());
 
@@ -98,17 +114,90 @@ public class CopyOptionsDialog extends DialogWrapper {
         }
       }
     });
+    Disposer.register(getDisposable(), myBrowser);
 
     setTitle(title);
     init();
     update();
-    
   }
 
-  @Override
-  protected void dispose() {
-    super.dispose();
-    Disposer.dispose(myBrowser);
+  private void createUI() {
+    myMainPanel = new JPanel(new BorderLayout());
+    myBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
+
+    final Splitter splitter = new Splitter(true);
+    splitter.setProportion(0.7f);
+    final JPanel wrapper = createBrowserPartWrapper();
+    splitter.setFirstComponent(wrapper);
+    final JPanel commitMessageWrapper = createCommitMessageWrapper();
+    splitter.setSecondComponent(commitMessageWrapper);
+
+    myMainPanel.add(splitter, BorderLayout.CENTER);
+    final JPanel recentMessagesWrapper = new JPanel(new BorderLayout());
+    recentMessagesWrapper.add(new JLabel("Recent Messages:"), BorderLayout.NORTH);
+    myMessagesBox = new JComboBox();
+    recentMessagesWrapper.add(myMessagesBox, BorderLayout.SOUTH);
+    recentMessagesWrapper.setBorder(BorderFactory.createEmptyBorder(4,0,0,0));
+    myMainPanel.add(recentMessagesWrapper, BorderLayout.SOUTH);
+  }
+
+  private JPanel createCommitMessageWrapper() {
+    final JPanel commitMessageWrapper = new JPanel(new BorderLayout());
+    commitMessageWrapper.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
+
+    myCommitMessage = CommitMessage.createCommitTextEditor(myProject, true);
+
+    commitMessageWrapper.add(myCommitMessage, BorderLayout.CENTER);
+    return commitMessageWrapper;
+  }
+
+  private JPanel createBrowserPartWrapper() {
+    final JPanel wrapper = new JPanel(new GridBagLayout());
+    final GridBag gridBag = new GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST)
+      .setDefaultFill(GridBagConstraints.NONE).setDefaultInsets(1,1,1,1).setDefaultWeightX(1).setDefaultWeightY(0);
+
+    gridBag.nextLine().next();
+    gridBag.weightx(0);
+    wrapper.add(new JLabel("Source URL:"), gridBag);
+
+    gridBag.next();
+    gridBag.fillCellHorizontally();
+    myURLLabel = new JLabel();
+    myURLLabel.setFont(myURLLabel.getFont().deriveFont(Font.BOLD));
+    wrapper.add(myURLLabel, gridBag);
+
+    gridBag.nextLine().next();
+    gridBag.weightx(0);
+    gridBag.pady(4);
+    wrapper.add(new JLabel("Target Location:"), gridBag);
+
+    gridBag.nextLine().next();
+    gridBag.fillCell();
+    gridBag.weighty(1);
+    gridBag.coverLine(2);
+    wrapper.add(myBrowser, gridBag);
+
+    gridBag.nextLine().next();
+    gridBag.weightx(0);
+    gridBag.pady(4);
+    wrapper.add(new JLabel("Target Name:"), gridBag);
+
+    gridBag.next();
+    gridBag.fillCellHorizontally();
+    myNameField = new JTextField();
+    wrapper.add(myNameField, gridBag);
+
+    gridBag.nextLine().next();
+    gridBag.weightx(0);
+    gridBag.pady(2);
+    wrapper.add(new JLabel("Target URL:"), gridBag);
+
+    gridBag.next();
+    gridBag.fillCellHorizontally();
+    myTargetURL = new JLabel();
+    myTargetURL.setFont(myTargetURL.getFont().deriveFont(Font.BOLD));
+    wrapper.add(myTargetURL, gridBag);
+    return wrapper;
   }
 
   @NonNls
@@ -148,10 +237,6 @@ public class CopyOptionsDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     return myMainPanel;
-  }
-
-  private void createUIComponents() {
-    myBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
   }
 
   private void update() {

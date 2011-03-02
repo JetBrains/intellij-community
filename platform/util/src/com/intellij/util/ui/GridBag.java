@@ -152,6 +152,11 @@ public class GridBag extends GridBagConstraints {
     return this;
   }
 
+  public GridBag fillCellNone() {
+    fill = GridBagConstraints.NONE;
+    return this;
+  }
+
   @NotNull
   public GridBag weightx(double weight) {
     weightx = weight;
