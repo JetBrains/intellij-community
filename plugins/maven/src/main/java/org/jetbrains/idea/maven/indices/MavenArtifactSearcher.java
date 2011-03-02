@@ -20,13 +20,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
 import java.util.*;
 
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
-  public static final String TERM = MavenFacadeIndexer.SEARCH_TERM_COORDINATES;
+  public static final String TERM = MavenServerIndexer.SEARCH_TERM_COORDINATES;
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();

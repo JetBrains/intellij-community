@@ -44,12 +44,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
 
 import javax.swing.*;
@@ -200,7 +200,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
-          MavenFacadeManager facade = MavenFacadeManager.getInstance();
+          MavenServerManager facade = MavenServerManager.getInstance();
           final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList =
             new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
           for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
@@ -246,7 +246,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<MavenRepositoryInfo>> result = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         try {
-          final MavenFacadeManager manager = MavenFacadeManager.getInstance();
+          final MavenServerManager manager = MavenServerManager.getInstance();
           final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<MavenRepositoryInfo>();
           for (String nexusUrl : nexusUrls) {
             final List<MavenRepositoryInfo> repositories;

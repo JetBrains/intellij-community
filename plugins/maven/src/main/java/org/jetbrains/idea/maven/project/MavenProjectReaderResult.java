@@ -16,10 +16,10 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.Collection;
 import java.util.Map;

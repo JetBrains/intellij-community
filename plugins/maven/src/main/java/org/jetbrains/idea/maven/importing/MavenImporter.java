@@ -20,10 +20,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 

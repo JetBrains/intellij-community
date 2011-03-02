@@ -23,10 +23,10 @@ import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
-import org.jetbrains.idea.maven.facade.embedder.MavenIndexFetcher;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.embedder.MavenFacadeEmbedderImpl;
+import org.jetbrains.idea.maven.server.embedder.MavenIndexFetcher;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.updater.IndexUpdateRequest;
@@ -55,7 +55,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
 
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));
+    myEmbedder = MavenFacadeEmbedderImpl.create(MavenServerManager.convertSettings(getMavenGeneralSettings()));
 
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);

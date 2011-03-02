@@ -23,10 +23,10 @@ import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
-import org.jetbrains.idea.maven.facade.embedder.MavenIndexFetcher;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
+import org.jetbrains.idea.maven.server.embedder.Maven2ServerIndexFetcher;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.updater.IndexUpdateRequest;
@@ -39,7 +39,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class NexusIndexerTest extends MavenIndicesTestCase {
-  private MavenFacadeEmbedderImpl myEmbedder;
+  private Maven2ServerEmbedderImpl myEmbedder;
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private NexusIndexer myIndexer;
   private IndexUpdater myUpdater;
@@ -55,7 +55,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
 
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));
+    myEmbedder = Maven2ServerEmbedderImpl.create(MavenServerManager.convertSettings(getMavenGeneralSettings()));
 
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
@@ -94,7 +94,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     IndexingContext c = addContext(id, myIndexDir, null, url);
 
     IndexUpdateRequest request = new IndexUpdateRequest(c);
-    request.setResourceFetcher(new MavenIndexFetcher(id, url, myEmbedder.getComponent(WagonManager.class), new NullTransferListener()));
+    request.setResourceFetcher(new Maven2ServerIndexFetcher(id, url, myEmbedder.getComponent(WagonManager.class), new NullTransferListener()));
     myUpdater.fetchAndUpdateIndex(request);
 
     assertSearchWorks();

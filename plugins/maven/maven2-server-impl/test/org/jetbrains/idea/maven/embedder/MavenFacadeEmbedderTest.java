@@ -22,13 +22,13 @@ import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facade.MavenFacadeEmbedder;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenWrapperExecutionResult;
-import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -37,7 +37,7 @@ import java.util.Collections;
 
 public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
   private MavenEmbedderWrapper myEmbedder;
-  private MavenFacadeEmbedderImpl myEmbedderImpl;
+  private Maven2ServerEmbedderImpl myEmbedderImpl;
 
   @Override
   protected void setUp() throws Exception {
@@ -54,11 +54,11 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
   private void initEmbedder() throws RemoteException {
     if (myEmbedder != null) releaseEmbedder();
 
-    myEmbedderImpl = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));
+    myEmbedderImpl = Maven2ServerEmbedderImpl.create(MavenServerManager.convertSettings(getMavenGeneralSettings()));
     myEmbedder = new MavenEmbedderWrapper(null) {
       @NotNull
       @Override
-      protected MavenFacadeEmbedder create() throws RemoteException {
+      protected MavenServerEmbedder create() throws RemoteException {
         return myEmbedderImpl;
       }
     };
@@ -92,7 +92,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "<version>1</version>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.execute(myProjectPom, Collections.<String>emptyList(), Arrays.asList("compile"));
+    MavenServerExecutionResult result = myEmbedder.execute(myProjectPom, Collections.<String>emptyList(), Arrays.asList("compile"));
 
     assertNotNull(result.projectData);
     assertNotNull(new File(getProjectPath(), "target").exists());
@@ -117,7 +117,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts);
 
@@ -133,7 +133,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "<version>1</version>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     MavenModel project = result.projectData.mavenModel;
     assertNotNull(project);
@@ -169,7 +169,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</build>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts);
@@ -201,7 +201,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts);
@@ -262,7 +262,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("fff", "zzz", "666"));
@@ -284,7 +284,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("fff", "zzz", "666"));
@@ -337,7 +337,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result.projectData);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("test", "foo-parent", "1"));
@@ -359,7 +359,7 @@ public class MavenFacadeEmbedderTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
-    MavenWrapperExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
+    MavenServerExecutionResult result = myEmbedder.resolveProject(myProjectPom, Collections.<String>emptyList());
 
     assertNotNull(result);
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("fff", "zzz", "666"));

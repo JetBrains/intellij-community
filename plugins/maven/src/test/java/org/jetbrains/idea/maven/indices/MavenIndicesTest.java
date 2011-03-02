@@ -21,10 +21,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenServerIndexer;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -62,7 +62,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   private void initIndices(String relativeDir) {
-    myIndexer = MavenFacadeManager.getInstance().createIndexer();
+    myIndexer = MavenServerManager.getInstance().createIndexer();
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myIndexer, myIndicesDir, new MavenIndex.IndexListener() {
       @Override
@@ -329,12 +329,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    MavenFacadeManager.getInstance().shutdown(true);
+    MavenServerManager.getInstance().shutdown(true);
     initIndices();
 
     i = myIndices.getIndices().get(0);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -342,12 +342,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
 
-    MavenFacadeManager.getInstance().shutdown(true);
+    MavenServerManager.getInstance().shutdown(true);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -424,7 +424,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -434,7 +434,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
   }
 
   private void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
@@ -449,7 +449,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES, "*runwith*")), "junit:junit:4.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*runwith*")), "junit:junit:4.0");
   }
 
   public void testSearchingForClassesAfterArtifactAddition() throws Exception {
@@ -458,6 +458,6 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES, "*mock*")), "jmock:jmock:1.0.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*mock*")), "jmock:jmock:1.0.0");
   }
 }
