@@ -504,19 +504,43 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 }
                 final PsiVariable variable =
                         (PsiVariable)declaredElement;
-                contentVariableName = variable.getName();
-                statementToSkip = declarationStatement;
-                if(variable.hasModifierProperty(PsiModifier.FINAL)){
-                    finalString = "final ";
-                } else{
-                    finalString = "";
+                if (VariableAccessUtils.variableIsAssigned(variable,
+                        forStatement)) {
+                    final String collectionName =
+                            arrayReference.getReferenceName();
+                    contentVariableName = createNewVariableName(forStatement,
+                            componentType, collectionName);
+                    final Project project = forStatement.getProject();
+                    final CodeStyleSettings codeStyleSettings =
+                            CodeStyleSettingsManager.getSettings(project);
+                    if(codeStyleSettings.GENERATE_FINAL_LOCALS){
+                        finalString = "final ";
+                    } else{
+                        finalString = "";
+                    }
+                    statementToSkip = null;
+                } else {
+                    contentVariableName = variable.getName();
+                    statementToSkip = declarationStatement;
+                    if(variable.hasModifierProperty(PsiModifier.FINAL)){
+                        finalString = "final ";
+                    } else{
+                        finalString = "";
+                    }
                 }
             } else{
                 final String collectionName =
                         arrayReference.getReferenceName();
                 contentVariableName = createNewVariableName(forStatement,
                         componentType, collectionName);
-                finalString = "";
+                final Project project = forStatement.getProject();
+                final CodeStyleSettings codeStyleSettings =
+                        CodeStyleSettingsManager.getSettings(project);
+                if(codeStyleSettings.GENERATE_FINAL_LOCALS){
+                    finalString = "final ";
+                } else{
+                    finalString = "";
+                }
                 statementToSkip = null;
             }
             @NonNls final StringBuilder out = new StringBuilder();
