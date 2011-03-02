@@ -305,6 +305,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyUnnecessaryBackslashInspection() {    //PY-2952
+    setLanguageLevel(LanguageLevel.PYTHON27);
     doHighlightingTest(PyUnnecessaryBackslashInspection.class);
   }
 }

@@ -20,8 +20,8 @@ var2 = [1,2,<warning descr="Unnecessary backslash in expression.">\</warning>
      3,<warning descr="Unnecessary backslash in expression.">\</warning>
      4]
 
-var3 = <warning descr="Python version 2.5 does not support set literal expressions">{1, 2,<warning descr="Unnecessary backslash in expression.">\</warning>
-     3,4}</warning>
+var3 = {1, 2,<warning descr="Unnecessary backslash in expression.">\</warning>
+     3,4}
 
 var4 = {1:1, 2:2,<warning descr="Unnecessary backslash in expression.">\</warning>
     3:3,
