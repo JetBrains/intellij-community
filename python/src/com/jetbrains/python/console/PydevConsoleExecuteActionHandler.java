@@ -3,7 +3,6 @@ package com.jetbrains.python.console;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -23,6 +22,8 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
+
+import java.util.Scanner;
 
 /**
  * @author traff
@@ -51,7 +52,22 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void processLine(final String line) {
+  public void processLine(final String text) {
+    Scanner s = new Scanner(text);
+    while (s.hasNextLine()) {
+      String line = s.nextLine();
+      int indentSize = myIndentHelper.getIndent(line, false);
+      if (indentSize < myCurrentIndentSize) {
+        doProcessLine("\n");
+        doProcessLine(line);
+      }
+      else {
+        doProcessLine(line);
+      }
+    }
+  }
+
+  public void doProcessLine(final String line) {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getCurrentEditor();
 
@@ -181,11 +197,12 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     });
   }
 
-  public void runExecuteAction(LanguageConsoleImpl languageConsole,
-                                  ConsoleHistoryModel consoleHistoryModel) {
+  @Override
+  public void runExecuteAction(LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
-      super.runExecuteAction(languageConsole, consoleHistoryModel);
-    } else {
+      super.runExecuteAction(languageConsole);
+    }
+    else {
       HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());
     }
   }
