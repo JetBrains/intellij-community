@@ -184,6 +184,16 @@ public class AndroidApkBuilder {
         return result;
       }
 
+      for (String externalJar : externalJars) {
+        if (new File(externalJar).isDirectory()) {
+          result.get(CompilerMessageCategory.ERROR).add(externalJar + " is directory. Directory libraries are not supported");
+        }
+      }
+
+      if (result.get(CompilerMessageCategory.ERROR).size() > 0) {
+        return result;
+      }
+
       fos = new FileOutputStream(outputApk);
       SignedJarBuilder builder = new SignedJarBuilder(fos, key, certificate);
       FileInputStream fis = new FileInputStream(apkPath);
