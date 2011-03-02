@@ -69,4 +69,8 @@ public class UpdateChannel {
   public String getFeedbackUrl() {
     return myFeedbackUrl;
   }
+
+  public String getName() {
+    return myName;
+  }
 }

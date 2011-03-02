@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -25,6 +26,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -37,7 +42,7 @@ import org.jdom.Element;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class UpdateSettings implements PersistentStateComponent<Element> {
+public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 
 
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
@@ -48,6 +53,8 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
 
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
+
+  public String selectedChannel;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -70,6 +77,49 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
     }
     catch (InvalidDataException e) {
       LOG.info(e);
+    }
+  }
+
+  @Override
+  public String getSelectedChannelId() {
+    return selectedChannel;
+  }
+
+  @Override
+  public boolean isCheckingDisabled() {
+    return !CHECK_NEEDED;
+  }
+
+  @Override
+  public List<String> getKnownChannelsIds() {
+    if (myKnownUpdateChannels==null){
+      return null;
+    }
+    List<String> ids = new ArrayList<String>();
+    for (String channel : myKnownUpdateChannels) {
+      ids.add(channel);
+    }
+    return ids;
+  }
+
+  @NotNull
+  @Override
+  public String getAppDefaultChannelId() {
+    return ApplicationInfo.getInstance().getDefaultUpdateChannel();
+  }
+
+  @Override
+  public void setSelectedChannelId(String channel) {
+    selectedChannel = channel;
+  }
+
+  @Override
+  public void setKnownChannelIds(List<String> ids) {
+    myKnownUpdateChannels.clear();
+    if (ids!=null){
+      for (String id : ids) {
+        myKnownUpdateChannels.add(id);
+      }
     }
   }
 }

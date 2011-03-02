@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,24 +30,37 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(true, null);
+    actionPerformed(true, null, null);
   }
 
-  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
-    try {
-      final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
-      if (newVersion != null) {
-        UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-        UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);
-      }
-      else {
-        UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
-      }
+  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable, final @Nullable String forcedChannel) {
+    final CheckForUpdateResult result =
+      (forcedChannel == null ? UpdateChecker.checkForUpdates() :
+       UpdateChecker.checkForUpdates(forcedChannel));
+
+    final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
+
+
+    if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
+      UpdateChecker.showConnectionErrorDialog();
+      return;
     }
-    catch (ConnectionException e) {
-      Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
-                               IdeBundle.message("title.connection.error"));
+
+    if (result.getState() != UpdateStrategy.State.LOADED) {
+      //not a connection error... something happened but user has nothing to do with it
+      return;
     }
+
+    if (result.hasNewBuildInSelectedChannel()) {
+      //information about new channel could be there
+      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+      UpdateSettings.getInstance().setSelectedChannelId(result.getSelected().getId());
+      UpdateChecker.showUpdateInfoDialog(enableLink, result.getSelected(), updatedPlugins);
+    }else{
+      //information about new channel could be there
+      UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
+    }
+
+
   }
 }

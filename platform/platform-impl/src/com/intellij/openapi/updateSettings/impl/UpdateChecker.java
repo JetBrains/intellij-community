@@ -90,6 +90,11 @@ public final class UpdateChecker {
   private UpdateChecker() {
   }
 
+  public static void showConnectionErrorDialog() {
+    Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
+                             IdeBundle.message("title.connection.error"));
+  }
+
   public static enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
@@ -132,7 +137,8 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
+                                                     final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(settingsConfigurable)) {
@@ -226,7 +232,9 @@ public final class UpdateChecker {
   }
 
   @Nullable
-  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile, @NotNull @NonNls String relPath, final HttpFileSystem fileSystem) {
+  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile,
+                                                     @NotNull @NonNls String relPath,
+                                                     final HttpFileSystem fileSystem) {
     if (relPath.length() == 0) return hostFile;
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();
@@ -253,89 +261,60 @@ public final class UpdateChecker {
     }
   }
 
-  @Nullable
-  private static Product findProduct(Element products, String code) {
-    for (Object productNode : products.getChildren("product")) {
-      Product product = new Product((Element)productNode);
-      if (product.hasCode(code)) {
-        return product;
-      }
-    }
-    return null;
+  @NotNull
+  public static UpdateStrategy getUpdateStrategy(@Nullable String forcedChannelId){
+    BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
+    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
+    final UpdateSettings settings = UpdateSettings.getInstance();
+    return new UpdateStrategy(ourBuild, loader, settings, forcedChannelId);
   }
 
-  @Nullable
-  public static UpdateChannel checkForUpdates() throws ConnectionException {
-    try {
-      BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("enter: checkForUpdates()");
-      }
 
-      final Document document;
-      try {
-        document = loadVersionInfo(getUpdateUrl());
-        if (document == null) return null;
-      }
-      catch (Throwable t) {
-        LOG.debug(t);
-        throw new ConnectionException(t);
-      }
 
-      Element root = document.getRootElement();
-      UpdateChannel channel = findUpdateChannel(root, ourBuild.getProductCode());
-      if (channel == null) return null;
-
-      BuildInfo latestBuild = channel.getLatestBuild();
-      if (latestBuild == null) return null;
-
-      if (ourBuild.compareTo(latestBuild.getNumber()) < 0) {
-        return channel;
-      }
-
-      return null;
+  @NotNull
+  public static CheckForUpdateResult checkForUpdates() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: auto checkForUpdates()");
     }
-    catch (Throwable t) {
-      LOG.debug(t);
-      return null;
+
+    final UpdateSettings settings = UpdateSettings.getInstance();
+
+    final CheckForUpdateResult result = getUpdateStrategy(null).checkForUpdates();
+
+    if (result.getState() == UpdateStrategy.State.LOADED) {
+      settings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      settings.setKnownChannelIds(result.getAllChannelsIds());
+      settings.setSelectedChannelId(result.getSelected().getId());
     }
-    finally {
-      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-    }
+
+    return result;
   }
 
-  @Nullable
-  private static UpdateChannel findUpdateChannel(Element root, String productCode) {
-    if (root == null) {
-      LOG.info("cannot read " + getUpdateUrl());
-      return null;
+  /**
+   *
+   * This method is called during action 'Update' directly from 'application settings' panel. The main differences with
+   * checkForUpdates() - selected update channel could not be yet saved to UpdateSetting component.
+   * CheckForUpdateResult processing is slightly different - we don't care about overriding user setting
+   * @param forcedChannel - the selected channel to check (will be used even if it is not stored in the component)
+   * @return
+   */
+  @NotNull
+  public static CheckForUpdateResult checkForUpdates(@Nullable String forcedChannel) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: manual checkForUpdates()");
     }
 
-    Product product = findProduct(root, productCode);
-    if (product == null) return null;
+ final UpdateSettings settings = UpdateSettings.getInstance();
+    final CheckForUpdateResult result = getUpdateStrategy(forcedChannel).checkForUpdates();
 
-    UpdateChannel channel = product.findUpdateChannelById(ApplicationInfo.getInstance().getDefaultUpdateChannel());
-    if (channel != null) return channel;
-
-    for (UpdateChannel c : product.getChannels()) {
-      BuildInfo cBuild = c.getLatestBuild();
-      if (cBuild == null) continue;
-
-      if (channel == null) {
-        channel = c;
-      }
-      else {
-        BuildInfo build = channel.getLatestBuild();
-        assert build != null;
-
-        if (build.compareTo(cBuild) < 0) {
-          channel = c;
-        }
-      }
+    if (result.getState() == UpdateStrategy.State.LOADED) {
+      settings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
-    return channel;
+    return result;
   }
+
 
   private static Document loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
@@ -350,7 +329,8 @@ public final class UpdateChecker {
 
           String uid = getInstallationUID();
 
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
+          final URL requestUrl =
+            new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
@@ -444,7 +424,7 @@ public final class UpdateChecker {
 
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              Notifications.Bus.notify(new Notification("Updater", 
+              Notifications.Bus.notify(new Notification("Updater",
                                                         "Failed to download patch file",
                                                         e.getMessage(),
                                                         NotificationType.ERROR));

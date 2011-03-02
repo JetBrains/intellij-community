@@ -20,6 +20,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -60,7 +61,12 @@ public class Product {
     return null;
   }
 
+  @NotNull
   public List<UpdateChannel> getChannels() {
     return myChannels;
+  }
+
+  public String getName() {
+    return myName;
   }
 }

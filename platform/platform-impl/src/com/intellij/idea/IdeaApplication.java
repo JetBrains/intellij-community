@@ -19,7 +19,6 @@ import com.intellij.ExtensionPoints;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -29,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -128,6 +127,7 @@ public class IdeaApplication {
 
   protected class IdeStarter implements ApplicationStarter {
     private Splash mySplash;
+
     public String getCommandName() {
       return null;
     }
@@ -205,17 +205,14 @@ public class IdeaApplication {
     }
 
     private void updatePlugins(boolean showConfirmation) {
-      try {
-        final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
-        if (newVersion != null) {
-          UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
-        } else if (updatedPlugins != null) {
-          UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
-        }
+      final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
+
+      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
+      if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
+        UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getSelected(), updatedPlugins);
       }
-      catch (ConnectionException e) {
-        // It's not a problem on automatic check
+      else if (updatedPlugins != null) {
+        UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
       }
     }
   }
