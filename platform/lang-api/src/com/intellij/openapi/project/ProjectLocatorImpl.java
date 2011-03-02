@@ -21,11 +21,13 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ProjectLocatorImpl extends ProjectLocator {
 
@@ -52,13 +54,16 @@ public class ProjectLocatorImpl extends ProjectLocator {
   @Override
   @NotNull
   public Collection<Project> getProjectsForFile(VirtualFile file) {
-    final Collection<Project> result = new HashSet<Project>();
+    ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager == null || file == null) {
+      return Collections.emptyList();
+    }
+    Project[] openProjects = projectManager.getOpenProjects();
+    if (openProjects.length == 0) {
+      return Collections.emptyList();
+    }
 
-    final ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null || file == null) { return result; }
-    final Project[] openProjects = projectManager.getOpenProjects();
-    if (openProjects.length == 0) { return result; }
-
+    List<Project> result = new ArrayList<Project>(openProjects.length);
     for (Project project : openProjects) {
       if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         result.add(project);
