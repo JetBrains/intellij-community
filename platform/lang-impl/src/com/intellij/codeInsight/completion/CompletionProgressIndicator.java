@@ -23,7 +23,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -488,7 +487,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void updateFocus() {
-    if (myLookup.isSelectionTouched() || myLookup.isHintMode()) {
+    if (myLookup.isSelectionTouched()) {
       return;
     }
 
@@ -497,10 +496,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    for (LookupElement item : myLookup.getItems()) {
-      if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
-        myLookup.setFocused(false);
-        return;
+    if (!myLookup.isHintMode()) {
+      for (LookupElement item : myLookup.getItems()) {
+        if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+          myLookup.setFocused(false);
+          return;
+        }
       }
     }
 
