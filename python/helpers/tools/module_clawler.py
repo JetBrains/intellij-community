@@ -5,7 +5,7 @@ import datetime
 from BeautifulSoup import BeautifulSoup
 from xml.dom import minidom
 
-exclude = ['StringIO', 'cStringIO']
+exclude = ['StringIO', 'cStringIO', 'logging.config']
 exclude_builtin = ['coerce', 'bytearray', 'apply', 'bin', 'bytes', 'format', 'buffer']
 
 def get_address(version):
