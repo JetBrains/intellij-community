@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utilities for git plugin user interface
@@ -55,13 +53,26 @@ public class GitUIUtil {
    */
   private GitUIUtil() { }
 
-  public static void notifyMessage(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+  public static void notifyMessages(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
     String desc = description.replace("\n", "<br/>");
-    if (errors != null && !errors.isEmpty()) {
-      desc += "<hr/>" + stringifyErrors(errors);
+    if (messages != null && !messages.isEmpty()) {
+      desc += "<hr/>" + StringUtil.join(messages, "<br/>");
     }
     String id = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
     Notifications.Bus.notify(new Notification(id, title, desc, type), project);
+  }
+
+  public static void notifyMessage(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+    Collection<String> errorMessages;
+    if (errors == null) {
+      errorMessages = null;
+    } else {
+      errorMessages = new HashSet<String>(errors.size());
+      for (VcsException error : errors) {
+        errorMessages.addAll(Arrays.asList(error.getMessages()));
+      }
+    }
+    notifyMessages(project, title, description, type, important, errorMessages);
   }
 
   public static void notifyError(Project project, String title, String description, boolean important, @Nullable VcsException error) {
