@@ -342,8 +342,8 @@ public class MavenDomUtil {
 
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
-                                                @Nullable Editor editor,
-                                                @NotNull final MavenId id) {
+                                                       @Nullable Editor editor,
+                                                       @NotNull final MavenId id) {
     MavenDomDependency dep = createDomDependency(model, editor);
 
     dep.getGroupId().setStringValue(id.getGroupId());

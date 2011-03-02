@@ -101,8 +101,8 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
           vFile = LocalFileSystem.getInstance().findFileByPath("/");
         }
 
-        if(ApplicationManager.getApplication().isUnitTestMode()) {
-            assert vFile != null : ""; //
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          assert vFile != null : ""; //
         }
 
         if (vFile != null) {

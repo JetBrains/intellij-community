@@ -75,7 +75,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
       result = Comparing.compare(f1.getPackaging(), f2.getPackaging());
       if (result != 0) return result;
 
-      result = Comparing.compare(f1.getClassifier(), f2. getClassifier());
+      result = Comparing.compare(f1.getClassifier(), f2.getClassifier());
       if (result != 0) return result;
 
       return Comparing.compare(f1.getRepositoryId(), f2.getRepositoryId());

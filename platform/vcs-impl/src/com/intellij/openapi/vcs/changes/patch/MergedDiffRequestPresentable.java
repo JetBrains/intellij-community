@@ -50,6 +50,11 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
     return new MyResult(request, DiffPresentationReturnValue.useRequest);
   }
 
+  @Override
+  public String getPathPresentation() {
+    return myFile.getPath();
+  }
+
   public boolean haveStuff() {
     return true;
   }

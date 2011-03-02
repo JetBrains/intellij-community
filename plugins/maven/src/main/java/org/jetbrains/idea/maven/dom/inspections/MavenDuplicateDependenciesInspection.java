@@ -85,11 +85,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
         processed.add(model);
       }
     }
-    holder.createProblem(dependency, HighlightSeverity.WARNING, MavenDomBundle.message("MavenDuplicateDependenciesInspection.has.duplicates", sb.toString()));
+    holder.createProblem(dependency, HighlightSeverity.WARNING,
+                         MavenDomBundle.message("MavenDuplicateDependenciesInspection.has.duplicates", sb.toString()));
   }
 
-  private static String createLinkText(@NotNull MavenDomProjectModel model,@NotNull MavenDomDependency dependency) {
-    StringBuffer sb =new StringBuffer();
+  private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
+    StringBuffer sb = new StringBuffer();
 
     XmlTag tag = dependency.getXmlTag();
     if (tag == null) return getProjectName(model);
@@ -104,7 +105,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     sb.append(getProjectName(model));
     sb.append("</a>");
 
-    return sb.toString(); 
+    return sb.toString();
   }
 
   @NotNull
@@ -112,7 +113,8 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       return mavenProject.getDisplayName();
-    } else {
+    }
+    else {
       String name = model.getName().getStringValue();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
@@ -163,8 +165,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     String type = coordinates.getType().getStringValue();
     String classifier = coordinates.getClassifier().getStringValue();
 
-    return groupId +":" + artifactId + ":" + version + ":" + type + ":" + classifier;
-
+    return groupId + ":" + artifactId + ":" + version + ":" + type + ":" + classifier;
   }
 
   @NotNull

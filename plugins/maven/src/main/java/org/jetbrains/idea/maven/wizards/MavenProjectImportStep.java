@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 
 public class MavenProjectImportStep extends ProjectImportWizardStep {
   private final JPanel myPanel;
@@ -181,6 +181,6 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     }
 
     public void disposeUIResources() {
-    }                             
+    }
   }
 }

@@ -26,6 +26,6 @@ import com.intellij.conversion.ConversionProcessor;
 public class AndroidProjectConverter extends ProjectConverter {
   @Override
   public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
-    return new AndroidModuleConverter();
+    return new AndroidModuleConverter1();
   }
 }

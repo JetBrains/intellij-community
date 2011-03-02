@@ -340,7 +340,6 @@ public class MavenRootModelAdapter {
     String name = library.getName();
     for (MavenArtifact each : project.getDependencies()) {
       if (makeLibraryName(each).equals(name)) return each;
-
     }
     return null;
   }

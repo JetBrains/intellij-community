@@ -24,7 +24,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -35,7 +34,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -54,7 +55,6 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,6 @@ import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotE
 public class AndroidModuleBuilder extends JavaModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.newProject.AndroidModuleBuilder");
 
-  private AndroidPlatform myPlatform;
   private String myPackageName;
   private String myApplicationName;
   private String myActivityName;
@@ -86,11 +85,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
-    PropertiesComponent.getInstance().setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, myPlatform.getName());
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
-      final AndroidFacet facet = addAndroidFacetAndLibrary(rootModel, contentRoot);
+      final AndroidFacet facet = addAndroidFacet(rootModel, contentRoot);
       final Project project = rootModel.getProject();
       final VirtualFile sourceRoot = findSourceRoot(rootModel);
 
@@ -392,22 +390,21 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   }
 
   @NotNull
-  private AndroidFacet addAndroidFacetAndLibrary(ModifiableRootModel rootModel, VirtualFile contentRoot) {
+  private AndroidFacet addAndroidFacet(ModifiableRootModel rootModel, VirtualFile contentRoot) {
     Module module = rootModel.getModule();
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
     AndroidFacet facet = facetManager.createFacet(AndroidFacet.getFacetType(), "Android", null);
     AndroidFacetConfiguration configuration = facet.getConfiguration();
     configuration.init(module, contentRoot);
-    configuration.setAndroidPlatform(myPlatform);
     if (myProjectType == ProjectType.LIBRARY) {
       configuration.LIBRARY_PROJECT = true;
     }
     model.addFacet(facet);
-    if (configuration.ADD_ANDROID_LIBRARY) {
+    /*if (configuration.ADD_ANDROID_LIBRARY) {
       LibraryOrderEntry libraryEntry = rootModel.addLibraryEntry(myPlatform.getLibrary());
       libraryEntry.setScope(DependencyScope.PROVIDED);
-    }
+    }*/
     model.commit();
     return facet;
   }
@@ -465,10 +462,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   public void setPackageName(String packageName) {
     myPackageName = packageName;
-  }
-
-  public void setPlatform(@NotNull AndroidPlatform platform) {
-    myPlatform = platform;
   }
 
   public ModuleType getModuleType() {

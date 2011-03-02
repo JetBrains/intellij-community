@@ -15,21 +15,14 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import com.google.gson.JsonParseException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeIndexerImpl;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
-import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class MavenFacadeImpl extends MavenRemoteObject implements MavenFacade {
   public void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) throws RemoteException {
@@ -91,54 +84,6 @@ public class MavenFacadeImpl extends MavenRemoteObject implements MavenFacade {
     catch (Exception e) {
       throw rethrowException(e);
     }
-  }
-
-  public List<MavenRepositoryInfo> getRepositories(String url) throws RemoteException {
-    try {
-      for (MavenManagementService service : MavenManagementService.getServices()) {
-        try {
-          final List<MavenRepositoryInfo> repositories = service.getRepositories(url);
-          if (repositories != null) {
-            return repositories;
-          }
-        }
-        catch (JAXBException e) {
-          // ignore
-        }
-        catch (JsonParseException e) {
-          // ignore
-        }
-      }
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-    throw new RuntimeException("Unknown Repository Service. Supported Services are " + Arrays.asList(MavenManagementService.getServices()));
-  }
-
-  @Nullable
-  public List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) throws RemoteException {
-    try {
-      List<MavenArtifactInfo> result = null;
-      for (MavenManagementService service : MavenManagementService.getServices()) {
-        try {
-          final List<MavenArtifactInfo> artifacts = service.findArtifacts(template, url);
-          if (result == null) result = artifacts;
-          result.addAll(artifacts);
-        }
-        catch (JAXBException e) {
-          // ignore
-        }
-        catch (JsonParseException e) {
-          // ignore
-        }
-      }
-      if (result != null) return result;
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-    throw new RuntimeException("Unknown Repository Service. Supported Services are " + Arrays.asList(MavenManagementService.getServices()));
   }
 
   @Override

@@ -9,19 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.AndroidTestCase;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   private static final String BASE_PATH = "addStringRes/";
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
-  }
 
   @Override
   public void setUp() throws Exception {

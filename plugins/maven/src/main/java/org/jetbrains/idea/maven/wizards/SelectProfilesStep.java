@@ -22,8 +22,8 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -51,7 +51,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     return (MavenProjectBuilder)super.getBuilder();
   }
 
-  public void createUIComponents (){
+  public void createUIComponents() {
     profileChooser = new ElementsChooser<String>(true);
   }
 

@@ -627,12 +627,23 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         rootNode = (RepositoryTreeNode) rootNode.getParent();
       }
 
-      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message(myDialogTitleKey), myProject, rootNode, node);
+      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message(myDialogTitleKey), myProject, rootNode, node, ! myMove);
       dialog.show();
       VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
         SVNURL src = dialog.getSourceURL();
+        final String path = src.getPath();
+        final int folder = path.replace('\\', '/').lastIndexOf('/');
+        if (folder != -1) {
+          final String lastFolder = path.substring(folder + 1, path.length());
+          if (myMove && "trunk".equalsIgnoreCase(lastFolder)) {
+            final int result =
+              Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
+                                                     "'. Are you sure?", SvnBundle.message(myDialogTitleKey), Messages.getWarningIcon());
+            if (DialogWrapper.CANCEL_EXIT_CODE == result) return;
+          }
+        }
         String message = dialog.getCommitMessage();
         doCopy(src, dst, myMove, message);
 

@@ -7,8 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 import java.util.List;
 
@@ -18,11 +16,6 @@ import java.util.List;
 public class AndroidLayoutDomTest extends AndroidDomTest {
   public AndroidLayoutDomTest() {
     super(false, "dom/layout");
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   @Override

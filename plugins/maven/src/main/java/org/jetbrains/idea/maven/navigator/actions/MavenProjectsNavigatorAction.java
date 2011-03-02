@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
+import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   @Override

@@ -45,7 +45,7 @@ public class MavenJDOMUtil {
           return VfsUtil.loadText(file);
         }
         catch (IOException e) {
-          if(handler != null) handler.onReadError(e);
+          if (handler != null) handler.onReadError(e);
           return null;
         }
       }
@@ -79,7 +79,8 @@ public class MavenJDOMUtil {
         Element parent = stack.isEmpty() ? null : stack.getLast();
         if (parent == null) {
           result[0] = newElement;
-        } else {
+        }
+        else {
           parent.addContent(newElement);
         }
         stack.addLast(newElement);

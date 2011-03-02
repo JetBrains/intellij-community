@@ -21,6 +21,8 @@ import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,15 +52,9 @@ public class AndroidSdkUtils {
   }
 
   public static boolean isAndroidSdk(@NotNull String path) {
-    if (AndroidSdk.isAndroid15Sdk(path)) {
-      path = FileUtil.toSystemDependentName(path);
-      SdkManager manager = SdkManager.createManager(path, new EmptySdkLog());
-      return manager != null;
-    }
-    else {
-      LegacyAndroidSdk legacySdk = new LegacyAndroidSdk(path);
-      return legacySdk.isValid();
-    }
+    path = FileUtil.toSystemDependentName(path);
+    SdkManager manager = SdkManager.createManager(path, new EmptySdkLog());
+    return manager != null;
   }
 
   public static boolean isAndroidPlatform(@NotNull VirtualFile file) {
@@ -90,7 +87,7 @@ public class AndroidSdkUtils {
     });
   }
 
-  public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target, @NotNull String sdkPath) {
+  public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target, @Nullable String sdkPath) {
     List<OrderRoot> result = new ArrayList<OrderRoot>();
     VirtualFile platformDir = getPlatformDir(target);
     if (platformDir == null) return result;
@@ -114,7 +111,7 @@ public class AndroidSdkUtils {
     if (targetDir != null) {
       addJavaDocAndSources(result, targetDir);
     }
-    VirtualFile sdkDir = LocalFileSystem.getInstance().findFileByPath(sdkPath);
+    VirtualFile sdkDir = sdkPath != null ? LocalFileSystem.getInstance().findFileByPath(sdkPath) : null;
     if (sdkDir != null) {
       addJavaDocAndSources(result, sdkDir);
     }
@@ -152,5 +149,69 @@ public class AndroidSdkUtils {
       return target.getName() + " (" + parentTarget.getVersionName() + ')';
     }
     return target.getName();
+  }
+
+  public static Sdk createNewAndroidPlatform(@NotNull IAndroidTarget target, @NotNull String sdkPath, boolean addRoots) {
+    ProjectJdkTable table = ProjectJdkTable.getInstance();
+    String sdkName = SdkConfigurationUtil.createUniqueSdkName(AndroidSdkType.SDK_NAME, Arrays.asList(table.getAllJdks()));
+
+    Sdk sdk = table.createSdk(sdkName, SdkType.findInstance(AndroidSdkType.class));
+
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath(sdkPath);
+    sdkModificator.commitChanges();
+
+    setUpSdk(sdk, null, table.getAllJdks(), target, addRoots);
+
+    return sdk;
+  }
+
+  public static String chooseNameForNewLibrary(IAndroidTarget target) {
+    if (target.isPlatform()) {
+      return target.getName() + " Platform";
+    }
+    IAndroidTarget parentTarget = target.getParent();
+    if (parentTarget != null) {
+      return "Android " + parentTarget.getVersionName() + ' ' + target.getName();
+    }
+    return "Android " + target.getName();
+  }
+
+  public static String getTargetPresentableName(IAndroidTarget target) {
+    return target.isPlatform() ?
+           target.getName() :
+           target.getName() + " (" + target.getVersionName() + ')';
+  }
+
+  public static void setUpSdk(Sdk androidSdk, Sdk javaSdk, Sdk[] allSdks, IAndroidTarget target, boolean addRoots) {
+    AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(androidSdk, javaSdk);
+
+    data.setBuildTarget(target);
+
+    String sdkName = chooseNameForNewLibrary(target);
+    sdkName = SdkConfigurationUtil.createUniqueSdkName(sdkName, Arrays.asList(allSdks));
+
+    final SdkModificator sdkModificator = androidSdk.getSdkModificator();
+
+    sdkModificator.setName(sdkName);
+    String versionString = target.getVersionName();
+    sdkModificator.setVersionString(versionString != null ? versionString : "unknown");
+    sdkModificator.setSdkAdditionalData(data);
+
+    if (addRoots) {
+      for (OrderRoot orderRoot : getLibraryRootsForTarget(target, androidSdk.getHomePath())) {
+        sdkModificator.addRoot(orderRoot.getFile(), orderRoot.getType());
+      }
+    }
+
+    sdkModificator.commitChanges();
+  }
+
+  public static boolean isApplicableJdk(Sdk jdk) {
+    if (!(jdk.getSdkType() instanceof JavaSdk)) {
+      return false;
+    }
+    String versionString = jdk.getVersionString();
+    return versionString != null && (versionString.contains("1.5") || versionString.contains("1.6"));
   }
 }

@@ -34,9 +34,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
 public class ChooseFileIntentionAction implements IntentionAction {
   private FileChooserFactory myTestFileChooserFactory;
@@ -69,8 +69,8 @@ public class ChooseFileIntentionAction implements IntentionAction {
     final MavenDomDependency dep = getDependency(file, editor);
     PsiFile currentValue = dep.getSystemPath().getValue();
     FileChooserDialog dialog =
-        getFileChooserFactory().createFileChooser(new FileChooserDescriptor(true, false, true, true, false, false),
-                                                           project);
+      getFileChooserFactory().createFileChooser(new FileChooserDescriptor(true, false, true, true, false, false),
+                                                project);
     VirtualFile[] files = dialog.choose(currentValue == null ? null : currentValue.getVirtualFile(), project);
     if (files.length == 0) return;
 

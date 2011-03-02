@@ -76,33 +76,33 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
         EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
         multicaster.addCaretListener(new CaretListener() {
-          public void caretPositionChanged(CaretEvent e) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, MavenMergingUpdateQueue.this);
+            public void caretPositionChanged(CaretEvent e) {
+              MavenMergingUpdateQueue.this.restartTimer();
+            }
+          }, MavenMergingUpdateQueue.this);
 
         multicaster.addDocumentListener(new DocumentAdapter() {
-          public void documentChanged(DocumentEvent event) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, MavenMergingUpdateQueue.this);
+            public void documentChanged(DocumentEvent event) {
+              MavenMergingUpdateQueue.this.restartTimer();
+            }
+          }, MavenMergingUpdateQueue.this);
 
         ProjectRootManager.getInstance(project).addModuleRootListener(new ModuleRootListener() {
-          boolean beforeCalled = false;
+            boolean beforeCalled = false;
 
-          public void beforeRootsChange(ModuleRootEvent event) {
-            suspend();
-            beforeCalled = true;
-          }
+            public void beforeRootsChange(ModuleRootEvent event) {
+              suspend();
+              beforeCalled = true;
+            }
 
-          public void rootsChanged(ModuleRootEvent event) {
-            if (!beforeCalled) return;
-            beforeCalled = false;
-            
-            resume();
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, MavenMergingUpdateQueue.this);
+            public void rootsChanged(ModuleRootEvent event) {
+              if (!beforeCalled) return;
+              beforeCalled = false;
+
+              resume();
+              MavenMergingUpdateQueue.this.restartTimer();
+            }
+          }, MavenMergingUpdateQueue.this);
       }
     }.execute();
   }
@@ -141,7 +141,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
             }
           }
         };
-        LaterInvocator.addModalityStateListener(listener,MavenMergingUpdateQueue.this);
+        LaterInvocator.addModalityStateListener(listener, MavenMergingUpdateQueue.this);
         if (MavenUtil.isInModalContext()) {
           suspend();
         }

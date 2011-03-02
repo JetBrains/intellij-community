@@ -15,15 +15,12 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
-import java.util.List;
 
 public interface MavenFacade extends Remote {
   void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) throws RemoteException;
@@ -40,8 +37,4 @@ public interface MavenFacade extends Remote {
                                          File basedir,
                                          Collection<String> explicitProfiles,
                                          Collection<String> alwaysOnProfiles) throws RemoteException;
-
-  List<MavenRepositoryInfo> getRepositories(String nexusUrl) throws RemoteException;
-
-  List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String nexusUrl) throws RemoteException;
 }

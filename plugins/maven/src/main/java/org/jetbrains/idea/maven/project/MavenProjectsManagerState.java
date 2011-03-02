@@ -22,7 +22,10 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MavenProjectsManagerState {
   public List<String> originalFiles = new ArrayList<String>();

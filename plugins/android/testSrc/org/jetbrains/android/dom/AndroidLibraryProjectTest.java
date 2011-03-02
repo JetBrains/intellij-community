@@ -1,6 +1,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +24,6 @@ import org.jetbrains.android.AndroidResourcesLineMarkerProvider;
 import org.jetbrains.android.AndroidResourcesLineMarkerTest;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -44,8 +43,6 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   private Module myLibModule;
   private AndroidFacet myLibFacet;
 
-  private final AndroidSdkTestProfile myTestProfile = new Android15TestProfile();
-
   protected JavaCodeInsightTestFixture myFixture;
 
   public AndroidLibraryProjectTest() {
@@ -58,17 +55,15 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
 
-    String androidJarPath = getTestSdkPath() + myTestProfile.getAndroidJarDirPath();
-
     final JavaModuleFixtureBuilder appModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String appModuleDir = myFixture.getTempDirPath() + "/app";
     new File(appModuleDir).mkdir();
-    AndroidTestCase.tuneModule(appModuleBuilder, androidJarPath, AndroidTestCase.getAbsoluteTestDataPath(), appModuleDir);
+    AndroidTestCase.tuneModule(appModuleBuilder, appModuleDir);
 
     final JavaModuleFixtureBuilder libModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String libModuleDir = myFixture.getTempDirPath() + "/lib";
     new File(libModuleDir).mkdir();
-    AndroidTestCase.tuneModule(libModuleBuilder, androidJarPath, AndroidTestCase.getAbsoluteTestDataPath(), libModuleDir);
+    AndroidTestCase.tuneModule(libModuleBuilder, libModuleDir);
 
     myFixture.setUp();
     myFixture.setTestDataPath(AndroidTestCase.getAbsoluteTestDataPath());
@@ -76,8 +71,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myAppModule = appModuleBuilder.getFixture().getModule();
     myLibModule = libModuleBuilder.getFixture().getModule();
 
-    myAppFacet = AndroidTestCase.addAndroidFacet(myAppModule, myTestProfile, getTestSdkPath());
-    myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, myTestProfile, getTestSdkPath());
+    myAppFacet = AndroidTestCase.addAndroidFacet(myAppModule, getTestSdkPath());
+    myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, getTestSdkPath());
 
     final ModifiableRootModel model = ModuleRootManager.getInstance(myAppModule).getModifiableModel();
     model.addModuleOrderEntry(myLibModule);
@@ -110,25 +105,30 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   }
 
   private String getTestSdkPath() {
-    return AndroidTestCase.getAbsoluteTestDataPath() + '/' + myTestProfile.getSdkDirName();
+    return AndroidTestCase.getAbsoluteTestDataPath() + "/sdk1.5";
   }
 
   public void testHighlighting() {
     String to = "app/res/layout/" + getTestName(true) + ".xml";
-    myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
-    myFixture.testHighlighting(to);
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.checkHighlighting(true, true, true);
   }
 
   public void testCompletion() {
-    String to = "app/res/layout/" + getTestName(true) + ".xml";
-    myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
-    myFixture.testCompletion(to, BASE_PATH + getTestName(true) + "_after.xml");
+    doTestCompletion();
   }
 
   public void testCompletion1() {
+    doTestCompletion();
+  }
+
+  private void doTestCompletion() {
     String to = "app/res/layout/" + getTestName(true) + ".xml";
-    myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
-    myFixture.testCompletion(to, BASE_PATH + getTestName(true) + "_after.xml");
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(true) + ".xml", to);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile(BASE_PATH + getTestName(true) + "_after.xml");
   }
 
   public void testRJavaFileMarkers() throws Exception {
@@ -180,7 +180,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/lib/R.java");
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "lib/src/p1/p2/lib/R.java");
     List<LineMarkerInfo> markers =
-      AndroidResourcesLineMarkerTest.collectMarkers(myFixture, "res/layout/main.xml", "lib/res/layout/main.xml");
+      AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + "res/layout/main.xml", "lib/res/layout/main.xml");
     assertEquals(2, markers.size());
 
     boolean fileMarker = false;
