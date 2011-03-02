@@ -47,7 +47,8 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void checkCorrectRestart(String text) {
-    String allTokens = printTokens(text, 0);
+    Lexer mainLexer = createLexer();
+    String allTokens = printTokens(text, 0, mainLexer);
 
     Lexer auxLexer = createLexer();
     auxLexer.start(text);
@@ -58,7 +59,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
       }
       if (auxLexer.getState() == 0) {
         int tokenStart = auxLexer.getTokenStart();
-        String subTokens = printTokens(text, tokenStart);
+        String subTokens = printTokens(text, tokenStart, mainLexer);
         if (!allTokens.endsWith(subTokens)) {
           assertEquals("Restarting impossible from offset " + tokenStart + "; lexer state should not return 0 at this point", allTokens, subTokens);
         }
