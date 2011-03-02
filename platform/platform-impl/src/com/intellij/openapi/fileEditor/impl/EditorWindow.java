@@ -129,7 +129,7 @@ public class EditorWindow {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       public void run(EditorsSplitters splitters) {
-        final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
+        final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
         if (editors.isEmpty()) return;
         try {
           final EditorWithProviderComposite editor = findFileComposite(file);
@@ -178,10 +178,10 @@ public class EditorWindow {
             }
           });
 
-          myOwner.afterFileClosed(file);
+          splitters.afterFileClosed(file);
         }
       }
-    });
+    }, myOwner);
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {

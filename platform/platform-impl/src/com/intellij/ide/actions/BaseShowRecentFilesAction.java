@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -62,13 +63,16 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
   private void show(final Project project){
     final DefaultListModel model = new DefaultListModel();
 
-    VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
+    FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(project);
+    VirtualFile[] selectedFiles = fem.getSelectedFiles();
+    VirtualFile currentFile = fem.getCurrentFile();
     VirtualFile[] files = filesToShow(project);
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
 
     for(int i=files.length-1; i>= 0; i--){ // reverse order of files
       VirtualFile file = files[i];
-      if(ArrayUtil.find(selectedFiles, file) == -1 && editorProviderManager.getProviders(project, file).length > 0){
+      boolean isSelected = ArrayUtil.find(selectedFiles, file) >= 0;
+      if((!isSelected || !file.equals(currentFile)) && editorProviderManager.getProviders(project, file).length > 0){
         // 1. do not put currently selected file
         // 2. do not include file with no corresponding editor providers
         model.addElement(file);
