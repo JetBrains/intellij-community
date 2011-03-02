@@ -73,12 +73,18 @@ public abstract class AndroidSdk {
 
   @Nullable
   public IAndroidTarget findTargetByApiLevel(@NotNull String apiLevel) {
+    IAndroidTarget candidate = null;
     for (IAndroidTarget target : getTargets()) {
       if (apiLevel.equals(target.getVersion().getApiString())) {
-        return target;
+        if (target.isPlatform()) {
+          return target;
+        }
+        else if (candidate == null) {
+          candidate = target;
+        }
       }
     }
-    return null;
+    return candidate;
   }
 
   @Nullable
