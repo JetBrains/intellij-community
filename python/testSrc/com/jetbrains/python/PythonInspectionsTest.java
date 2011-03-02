@@ -304,4 +304,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyStringFormatInspection.class);
   }
 
+  public void testPyUnnecessaryBackslashInspection() {    //PY-2952
+    doHighlightingTest(PyUnnecessaryBackslashInspection.class);
+  }
 }

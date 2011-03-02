@@ -220,6 +220,26 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.list.creation"), true, true);
   }
 
+  public void testUnnecessaryBackslash() {
+    String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
+    myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
+    myFixture.configureByFiles(testFiles);
+    myFixture.checkHighlighting(true, false, true);
+    IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.remove.unnecessary.backslash"));
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
+  }
+
+  public void testUnnecessaryBackslashInArgumentList() {
+    String[] testFiles = new String[]{"UnnecessaryBackslashInArguments.py"};
+    myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
+    myFixture.configureByFiles(testFiles);
+    myFixture.checkHighlighting(true, false, true);
+    IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.remove.unnecessary.backslash"));
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

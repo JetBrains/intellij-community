@@ -54,6 +54,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyOldStyleClassesInspection.class,
       PyCompatibilityInspection.class,
       PyListCreationInspection.class,
+      PyUnnecessaryBackslashInspection.class,
     };
   }
 }
