@@ -36,8 +36,43 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void doTest(@NonNls String text, @Nullable String expected) {
-    Lexer lexer = createLexer();
-    lexer.start(text);
+    String result = printTokens(text, 0);
+
+    if (expected != null) {
+      assertSameLines(expected, result);
+    }
+    else {
+      assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+    }
+  }
+
+  protected void checkCorrectRestart(String text) {
+    String allTokens = printTokens(text, 0);
+
+    Lexer auxLexer = createLexer();
+    auxLexer.start(text);
+    while (true) {
+      IElementType type = auxLexer.getTokenType();
+      if (type == null) {
+        break;
+      }
+      if (auxLexer.getState() == 0) {
+        int tokenStart = auxLexer.getTokenStart();
+        String subTokens = printTokens(text, tokenStart);
+        if (!allTokens.endsWith(subTokens)) {
+          assertEquals("Restarting impossible from offset " + tokenStart + "; lexer state should not return 0 at this point", allTokens, subTokens);
+        }
+      }
+      auxLexer.advance();
+    }
+  }
+
+  private String printTokens(String text, int start) {
+    return printTokens(text, start, createLexer());
+  }
+
+  private static String printTokens(String text, int start, Lexer lexer) {
+    lexer.start(text, start, text.length());
     String result = "";
     while (true) {
       IElementType tokenType = lexer.getTokenType();
@@ -50,13 +85,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
       result += line;
       lexer.advance();
     }
-
-    if (expected != null) {
-      assertSameLines(expected, result);
-    }
-    else {
-      assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
-    }
+    return result;
   }
 
   protected void doFileTest(@NonNls String fileExt) {
