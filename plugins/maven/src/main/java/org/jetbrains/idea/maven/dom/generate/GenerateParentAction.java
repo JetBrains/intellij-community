@@ -32,25 +32,25 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
     super(new MavenGenerateProvider<MavenDomParent>(MavenDomBundle.message("generate.parent"), MavenDomParent.class) {
-      protected MavenDomParent doGenerate(@NotNull final MavenDomProjectModel mavenModel, Editor editor) {
-        SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
-        d.show();
-        if (!d.isOK()) return null;
-        final MavenProject parentProject = d.getResult();
-        if (parentProject == null) return null;
+        protected MavenDomParent doGenerate(@NotNull final MavenDomProjectModel mavenModel, Editor editor) {
+          SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
+          d.show();
+          if (!d.isOK()) return null;
+          final MavenProject parentProject = d.getResult();
+          if (parentProject == null) return null;
 
-        return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
-          protected void run(Result result) throws Throwable {
-            result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
-          }
-        }.execute().getResultObject();
-      }
+          return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
+            protected void run(Result result) throws Throwable {
+              result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
+            }
+          }.execute().getResultObject();
+        }
 
-      @Override
-      protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
-        return !DomUtil.hasXml(mavenModel.getMavenParent());
-      }
-    }, MavenIcons.MAVEN_PROJECT_ICON);
+        @Override
+        protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
+          return !DomUtil.hasXml(mavenModel.getMavenParent());
+        }
+      }, MavenIcons.MAVEN_PROJECT_ICON);
   }
 
   @Override

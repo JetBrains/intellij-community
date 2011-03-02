@@ -103,47 +103,47 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     final boolean[] result = new boolean[1];
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          final Project project = PlatformDataKeys.PROJECT.getData(context);
-          final Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
+          public void run() {
+            final Project project = PlatformDataKeys.PROJECT.getData(context);
+            final Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
 
-          if (project == null || project.isDisposed() || projectAndGoal == null) return;
+            if (project == null || project.isDisposed() || projectAndGoal == null) return;
 
-          FileDocumentManager.getInstance().saveAllDocuments();
+            FileDocumentManager.getInstance().saveAllDocuments();
 
-          targetDone.down();
-          new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
-            public void run(@NotNull ProgressIndicator indicator) {
-              try {
-                MavenRunnerParameters params = new MavenRunnerParameters(
-                  true,
-                  projectAndGoal.first.getDirectory(),
-                  Collections.singletonList(projectAndGoal.second),
-                  MavenProjectsManager.getInstance(project).getExplicitProfiles());
+            targetDone.down();
+            new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
+              public void run(@NotNull ProgressIndicator indicator) {
+                try {
+                  MavenRunnerParameters params = new MavenRunnerParameters(
+                    true,
+                    projectAndGoal.first.getDirectory(),
+                    Collections.singletonList(projectAndGoal.second),
+                    MavenProjectsManager.getInstance(project).getExplicitProfiles());
 
-                result[0] = MavenRunner.getInstance(project).runBatch(Collections.singletonList(params),
-                                                                      null,
-                                                                      null,
-                                                                      TasksBundle.message("maven.tasks.executing"),
-                                                                      indicator);
+                  result[0] = MavenRunner.getInstance(project).runBatch(Collections.singletonList(params),
+                                                                        null,
+                                                                        null,
+                                                                        TasksBundle.message("maven.tasks.executing"),
+                                                                        indicator);
+                }
+                finally {
+                  targetDone.up();
+                }
               }
-              finally {
-                targetDone.up();
+
+              @Override
+              public boolean shouldStartInBackground() {
+                return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
               }
-            }
 
-            @Override
-            public boolean shouldStartInBackground() {
-              return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
-            }
-
-            @Override
-            public void processSentToBackground() {
-              MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
-            }
-          }.queue();
-        }
-      }, ModalityState.NON_MODAL);
+              @Override
+              public void processSentToBackground() {
+                MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
+              }
+            }.queue();
+          }
+        }, ModalityState.NON_MODAL);
     }
     catch (Exception e) {
       MavenLog.LOG.error(e);

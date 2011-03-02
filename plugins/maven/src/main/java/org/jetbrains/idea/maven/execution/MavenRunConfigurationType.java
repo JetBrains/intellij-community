@@ -144,7 +144,6 @@ public class MavenRunConfigurationType implements ConfigurationType {
   }
 
 
-
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
                                       @Nullable ProgramRunner.Callback callback) {
@@ -176,9 +175,9 @@ public class MavenRunConfigurationType implements ConfigurationType {
   }
 
   static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
-                                                                                     MavenRunnerSettings runnerSettings,
-                                                                                     MavenRunnerParameters params,
-                                                                                     Project project) {
+                                                                             MavenRunnerSettings runnerSettings,
+                                                                             MavenRunnerParameters params,
+                                                                             Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
     final RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project)

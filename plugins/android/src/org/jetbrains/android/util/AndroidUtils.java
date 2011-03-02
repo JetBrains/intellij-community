@@ -37,12 +37,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -73,8 +73,10 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.run.AndroidRunConfiguration;
 import org.jetbrains.android.run.AndroidRunConfigurationType;
-import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.sdk.EmptySdkLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -486,12 +488,23 @@ public class AndroidUtils {
   }
 
   @Nullable
-  public static Library findAppropriateAndroidPlatform(IAndroidTarget target, AndroidSdk sdk) {
-    Library[] libraries = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries();
-    for (Library library : libraries) {
-      AndroidPlatform platform = AndroidPlatform.parse(library, null, null);
-      if (platform != null && platform.getSdk().equals(sdk) && platform.getTarget().equals(target)) {
-        return library;
+  public static Sdk findAppropriateAndroidPlatform(IAndroidTarget target, AndroidSdk sdk) {
+    String targetName = target.getName();
+    if (targetName == null) {
+      return null;
+    }
+    for (Sdk library : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (library.getSdkType().equals(AndroidSdkType.getInstance())) {
+        AndroidSdk sdk1 = AndroidSdk.parse(library.getHomePath(), new EmptySdkLog());
+        if (sdk1 != null && sdk1.equals(sdk)) {
+          AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)library.getSdkAdditionalData();
+          if (data != null) {
+            IAndroidTarget target1 = data.getBuildTarget(sdk1);
+            if (target1 != null && target.hashString().equals(target1.hashString())) {
+              return library;
+            }
+          }
+        }
       }
     }
     return null;

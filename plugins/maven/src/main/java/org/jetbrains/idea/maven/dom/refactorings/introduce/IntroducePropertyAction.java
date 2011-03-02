@@ -64,7 +64,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
     return new MyRefactoringActionHandler();
-
   }
 
   @Override
@@ -101,7 +100,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         range = new TextRange(startOffset, endOffset);
       }
       else {
-        range = elementAt.getTextRange(); 
+        range = elementAt.getTextRange();
       }
 
       return Pair.create((XmlElement)elementAt, range);
@@ -200,7 +199,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       if (manager == null) return;
 
       assureFindToolWindowRegistered(project);
-      
+
       FindManager findManager = FindManager.getInstance(project);
       FindModel findModel = createFindModel(findManager, selectedString, replaceWith);
 
@@ -214,13 +213,11 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
                              processPresentation,
                              findManager);
-
     }
 
     //IDEA-54113
     private static void assureFindToolWindowRegistered(@NotNull Project project) {
       com.intellij.usageView.UsageViewManager uvm = com.intellij.usageView.UsageViewManager.getInstance(project);
-
     }
 
     private static FindModel createFindModel(FindManager findManager, String selectedString, String replaceWith) {
@@ -246,7 +243,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         myModel = model;
         myPropertyName = propertyName;
         mySelectedString = selectedString;
-
       }
 
       public UsageSearcher create() {
@@ -298,7 +294,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             for (UsageInfo2UsageAdapter adapter : UsageInfo2UsageAdapter.convert(usages.toArray(new UsageInfo[usages.size()]))) {
               processor.process(adapter);
             }
-
           }
         };
       }
@@ -322,8 +317,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         }
         return usages;
       }
-
-
     }
   }
 

@@ -315,7 +315,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
               }
             }
 
-            updateArchetypeDescription();                     
+            updateArchetypeDescription();
           }
         });
       }
@@ -327,7 +327,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     String desc = sel == null ? null : sel.description;
     if (StringUtil.isEmptyOrSpaces(desc)) {
       myArchetypeDescriptionScrollPane.setVisible(false);
-    } else {
+    }
+    else {
       myArchetypeDescriptionScrollPane.setVisible(true);
       myArchetypeDescriptionField.setText(desc);
     }

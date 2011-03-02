@@ -130,7 +130,7 @@ public class MavenModuleBuilderHelper {
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
       public void run() {
         if (!pom.isValid()) return;
-        
+
         EditorHelper.openInEditor(getPsiFile(project, pom));
         if (myArchetype != null) generateFromArchetype(project, pom);
       }

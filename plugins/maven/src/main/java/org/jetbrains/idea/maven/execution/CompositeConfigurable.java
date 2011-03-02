@@ -30,7 +30,7 @@ public class CompositeConfigurable implements Configurable {
   private JTabbedPane tabbedPane;
   private int selectedTabIndex = 0;
 
-  public CompositeConfigurable (Configurable ... configurables){
+  public CompositeConfigurable(Configurable... configurables) {
     for (Configurable configurable : configurables) {
       registerConfigurable(configurable);
     }

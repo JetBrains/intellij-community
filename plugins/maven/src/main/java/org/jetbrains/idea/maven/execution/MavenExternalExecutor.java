@@ -52,15 +52,16 @@ public class MavenExternalExecutor extends MavenExecutor {
 
     try {
       myProcessHandler =
-          new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myProject, myParameters, myCoreSettings, myRunnerSettings)) {
-            public void notifyTextAvailable(String text, Key outputType) {
-              // todo move this logic to ConsoleAdapter class
-              if (!myConsole.isSuppressed(text)) {
-                super.notifyTextAvailable(text, outputType);
-              }
-              updateProgress(indicator, text);
+        new DefaultJavaProcessHandler(
+          MavenExternalParameters.createJavaParameters(myProject, myParameters, myCoreSettings, myRunnerSettings)) {
+          public void notifyTextAvailable(String text, Key outputType) {
+            // todo move this logic to ConsoleAdapter class
+            if (!myConsole.isSuppressed(text)) {
+              super.notifyTextAvailable(text, outputType);
             }
-          };
+            updateProgress(indicator, text);
+          }
+        };
 
       myConsole.attachToProcess(myProcessHandler);
     }

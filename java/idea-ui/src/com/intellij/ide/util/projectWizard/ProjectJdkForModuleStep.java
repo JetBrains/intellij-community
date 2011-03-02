@@ -142,6 +142,10 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return myJdkChooser.getChosenJdk();
   }
 
+  public Object[] getAllJdks() {
+    return myJdkChooser.getAllJdks();
+  }
+
   public Icon getIcon() {
     return NEW_PROJECT_ICON;
   }

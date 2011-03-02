@@ -124,6 +124,8 @@
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidDocumentationProvider" order="first"/>
     <weigher key="completion" implementationClass="org.jetbrains.android.AndroidCompletionWeighter" order="first"/>
     <weigher key="proximity" implementationClass="org.jetbrains.android.AndroidProximityWeigher" order="first"/>
+
+    <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
   </extensions>
 
   <extensionPoints>

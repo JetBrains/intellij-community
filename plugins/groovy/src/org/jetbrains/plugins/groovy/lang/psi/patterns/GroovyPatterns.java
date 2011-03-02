@@ -75,11 +75,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return new GroovyElementPattern.Capture<GrLiteralImpl>(new InitialPatternCondition<GrLiteralImpl>(GrLiteralImpl.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (!(o instanceof GrLiteralImpl)) return false;
-        PsiElement child = ((GrLiteralImpl)o).getFirstChild();
-        if (child == null) return false;
-
-        IElementType elementType = child.getNode().getElementType();
-        return elementType == mGSTRING_LITERAL || elementType == mSTRING_LITERAL;
+        return ((GrLiteralImpl)o).isStringLiteral();
       }
     });
   }

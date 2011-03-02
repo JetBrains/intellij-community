@@ -42,7 +42,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private final WizardContext myContext;
 
-  private final ProjectJdksConfigurable myProjectJdksConfigurable;
+  protected final ProjectJdksConfigurable myProjectJdksConfigurable;
 
   private final JComponent myJDKsComponent;
 

@@ -16,8 +16,6 @@
 
 package org.jetbrains.android.dom;
 
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
-import org.jetbrains.android.sdk.Android15TestProfile;
 import com.android.sdklib.SdkConstants;
 
 /**
@@ -42,12 +40,6 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   protected String getPathToCopy(String testFileName) {
     return "res/xml/" + testFileName;
   }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
-  }
-
 
   public void testPreferenceRootCompletion() throws Throwable {
     toTestCompletion("pref1.xml", "pref1_after.xml");

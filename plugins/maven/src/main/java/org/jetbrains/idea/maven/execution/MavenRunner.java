@@ -123,7 +123,7 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
                           @Nullable final String action,
                           ProgressIndicator indicator) {
     if (commands.isEmpty()) return true;
-    
+
     final MavenGeneralSettings effectiveCoreSettings = coreSettings != null ? coreSettings : getGeneralSettings();
     final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
 

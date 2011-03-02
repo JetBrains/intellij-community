@@ -88,11 +88,11 @@ public class MavenUtil {
     }
     else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (p.isDisposed()) return;
-          r.run();
-        }
-      }, state);
+          public void run() {
+            if (p.isDisposed()) return;
+            r.run();
+          }
+        }, state);
     }
   }
 
@@ -110,11 +110,11 @@ public class MavenUtil {
       }
       else {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            if (p.isDisposed()) return;
-            r.run();
-          }
-        }, state);
+            public void run() {
+              if (p.isDisposed()) return;
+              r.run();
+            }
+          }, state);
       }
     }
   }

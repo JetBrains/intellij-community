@@ -25,7 +25,6 @@ import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenRepositoryLayoutConverter;
-import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
 import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoryConverter;
 
 public interface MavenDomRepositoryBase extends MavenDomElement {

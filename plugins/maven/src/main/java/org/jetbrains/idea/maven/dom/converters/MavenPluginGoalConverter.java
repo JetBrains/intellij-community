@@ -21,9 +21,9 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,7 +57,7 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> {
   public PsiElement resolve(String text, ConvertContext context) {
     MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return null;
-    
+
     for (MavenDomMojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (text.equals(goal)) return each.getXmlElement();

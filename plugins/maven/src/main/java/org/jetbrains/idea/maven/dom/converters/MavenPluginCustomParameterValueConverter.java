@@ -47,5 +47,4 @@ public class MavenPluginCustomParameterValueConverter extends WrappingConverter 
 
     return null;
   }
-
 }

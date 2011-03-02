@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
+import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 public class ToggleOfflineAction extends MavenToggleAction {
   @Override

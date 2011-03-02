@@ -103,6 +103,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (item instanceof AptGenerationItem) {
         final AptGenerationItem aptItem = (AptGenerationItem)item;
 
+        if (!AndroidCompileUtil.isModuleAffected(context, aptItem.myModule)) {
+          continue;
+        }
+
         try {
           Map<CompilerMessageCategory, List<String>> messages = AndroidApt
             .compile(aptItem.myAndroidTarget, aptItem.myManifestPath, aptItem.mySourceRootPath, aptItem.myResourcesPaths,

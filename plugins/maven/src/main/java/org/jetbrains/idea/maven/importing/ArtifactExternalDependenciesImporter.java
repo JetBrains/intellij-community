@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -28,7 +27,6 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
-import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,22 +60,25 @@ public class ArtifactExternalDependenciesImporter {
 
   public void applyChanges(ModifiableArtifactModel artifactModel, final PackagingElementResolvingContext context) {
     myManifestFiles.saveManifestFiles();
-    final List<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>> elementsToInclude = new ArrayList<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>>();
+    final List<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>> elementsToInclude =
+      new ArrayList<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>>();
     for (Artifact artifact : artifactModel.getArtifacts()) {
-      ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new PackagingElementProcessor<ArtifactPackagingElement>() {
-        @Override
-        public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement, @NotNull PackagingElementPath path) {
-          final Artifact included = artifactPackagingElement.findArtifact(context);
-          final CompositePackagingElement<?> parent = path.getLastParent();
-          if (parent != null && included != null) {
-            final List<PackagingElement<?>> elements = myExternalDependencies.get(included);
-            if (elements != null) {
-              elementsToInclude.add(Pair.create(parent, elements));
-            }
-          }
-          return true;
-        }
-      }, context, false);
+      ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE,
+                                            new PackagingElementProcessor<ArtifactPackagingElement>() {
+                                              @Override
+                                              public boolean process(@NotNull ArtifactPackagingElement artifactPackagingElement,
+                                                                     @NotNull PackagingElementPath path) {
+                                                final Artifact included = artifactPackagingElement.findArtifact(context);
+                                                final CompositePackagingElement<?> parent = path.getLastParent();
+                                                if (parent != null && included != null) {
+                                                  final List<PackagingElement<?>> elements = myExternalDependencies.get(included);
+                                                  if (elements != null) {
+                                                    elementsToInclude.add(Pair.create(parent, elements));
+                                                  }
+                                                }
+                                                return true;
+                                              }
+                                            }, context, false);
     }
 
     for (Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>> pair : elementsToInclude) {

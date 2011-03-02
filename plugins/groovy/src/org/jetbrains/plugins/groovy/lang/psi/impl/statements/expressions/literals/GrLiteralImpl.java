@@ -118,6 +118,14 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
     return null; //todo
   }
 
+  public boolean isStringLiteral() {
+    PsiElement child = getFirstChild();
+    if (child == null) return false;
+
+    IElementType elementType = child.getNode().getElementType();
+    return elementType == mGSTRING_LITERAL || elementType == mSTRING_LITERAL;
+  }
+
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, GrLiteral.class);

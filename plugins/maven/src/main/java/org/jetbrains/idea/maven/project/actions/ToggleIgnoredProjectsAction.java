@@ -89,7 +89,8 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      ShowSettingsUtil.getInstance().editConfigurable(MavenActionUtil.getProject(context), new MavenIgnoredFilesConfigurable(projectsManager));
+      ShowSettingsUtil.getInstance()
+        .editConfigurable(MavenActionUtil.getProject(context), new MavenIgnoredFilesConfigurable(projectsManager));
     }
     else {
       projectsManager.setIgnoredState(projects, !isIgnored(projectsManager, projects));

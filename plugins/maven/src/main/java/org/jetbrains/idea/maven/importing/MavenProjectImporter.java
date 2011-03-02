@@ -227,17 +227,17 @@ public class MavenProjectImporter {
 
   private static String formatProjectsWithModules(List<Pair<MavenProject, Module>> projectsWithModules) {
     return StringUtil.join(projectsWithModules, new Function<Pair<MavenProject, Module>, String>() {
-      public String fun(Pair<MavenProject, Module> each) {
-        MavenProject project = each.first;
-        Module module = each.second;
-        return module.getModuleType().getName() +
-               " '" +
-               module.getName() +
-               "' for Maven project '" +
-               project.getMavenId().getDisplayString() +
-               "'";
-      }
-    }, "<br>");
+        public String fun(Pair<MavenProject, Module> each) {
+          MavenProject project = each.first;
+          Module module = each.second;
+          return module.getModuleType().getName() +
+                 " '" +
+                 module.getName() +
+                 "' for Maven project '" +
+                 project.getMavenId().getDisplayString() +
+                 "'";
+        }
+      }, "<br>");
   }
 
   private boolean deleteObsoleteModules() {
@@ -284,10 +284,10 @@ public class MavenProjectImporter {
 
   private static String formatModules(final Collection<Module> modules) {
     return StringUtil.join(modules, new Function<Module, String>() {
-      public String fun(final Module m) {
-        return "'" + m.getName() + "'";
-      }
-    }, "\n");
+        public String fun(final Module m) {
+          return "'" + m.getName() + "'";
+        }
+      }, "\n");
   }
 
   private void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {

@@ -73,7 +73,7 @@ public class MavenConsoleImpl extends MavenConsole {
   public static TextConsoleBuilder createConsoleBuilder(Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
 
-    Filter[] filters = { new ExceptionFilter(project), new RegexpFilter(project, CONSOLE_FILTER_REGEXP)};
+    Filter[] filters = {new ExceptionFilter(project), new RegexpFilter(project, CONSOLE_FILTER_REGEXP)};
     for (Filter filter : filters) {
       builder.addFilter(filter);
     }

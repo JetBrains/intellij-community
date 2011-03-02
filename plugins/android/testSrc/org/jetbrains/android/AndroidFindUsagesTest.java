@@ -21,8 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.usageView.UsageInfo;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 import java.util.Collection;
 import java.util.List;
@@ -127,8 +125,4 @@ public class AndroidFindUsagesTest extends AndroidTestCase {
     return fixture.findUsages(targetElement);
   }
 
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
-  }
 }

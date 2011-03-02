@@ -95,7 +95,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
         String classFQName = matcher.group(1);
         classFQName = classFQName.replace("/", ".");
         if (classFQName.startsWith(".")) classFQName = classFQName.substring(1);
-        
+
         String key = makeKey(classFQName, each);
 
         MavenClassSearchResult classResult = result.get(key);

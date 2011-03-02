@@ -39,29 +39,29 @@ import java.util.List;
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
     super(new MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency"), MavenDomDependency.class) {
-      @Nullable
-      @Override
-      protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
-        MavenProjectsManager manager = MavenProjectsManager.getInstance(editor.getProject());
-        MavenProject project = manager.findProject(mavenModel.getModule());
-        if (project == null) return null;
+        @Nullable
+        @Override
+        protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
+          MavenProjectsManager manager = MavenProjectsManager.getInstance(editor.getProject());
+          MavenProject project = manager.findProject(mavenModel.getModule());
+          if (project == null) return null;
 
-        final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
-        if (ids.isEmpty()) return null;
+          final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
+          if (ids.isEmpty()) return null;
 
-        PsiDocumentManager.getInstance(mavenModel.getManager().getProject()).commitAllDocuments();
+          PsiDocumentManager.getInstance(mavenModel.getManager().getProject()).commitAllDocuments();
 
-        XmlFile psiFile = DomUtil.getFile(mavenModel);
-        return new WriteCommandAction<MavenDomDependency>(psiFile.getProject(), "Generate Dependency", psiFile) {
-          @Override
-          protected void run(Result<MavenDomDependency> result) throws Throwable {
-            for (MavenId each : ids) {
-              result.setResult(MavenDomUtil.createDomDependency(mavenModel, editor, each));
+          XmlFile psiFile = DomUtil.getFile(mavenModel);
+          return new WriteCommandAction<MavenDomDependency>(psiFile.getProject(), "Generate Dependency", psiFile) {
+            @Override
+            protected void run(Result<MavenDomDependency> result) throws Throwable {
+              for (MavenId each : ids) {
+                result.setResult(MavenDomUtil.createDomDependency(mavenModel, editor, each));
+              }
             }
-          }
-        }.execute().getResultObject();
-      }
-    }, MavenIcons.DEPENDENCY_ICON);
+          }.execute().getResultObject();
+        }
+      }, MavenIcons.DEPENDENCY_ICON);
   }
 
   @Override

@@ -67,7 +67,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
         new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                     myInheritVersion, myArchetype,"Create new Maven module").configure(project, root, false);
+                                     myInheritVersion, myArchetype, "Create new Maven module").configure(project, root, false);
       }
     });
   }

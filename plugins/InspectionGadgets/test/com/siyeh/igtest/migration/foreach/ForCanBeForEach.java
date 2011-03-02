@@ -169,7 +169,7 @@ public class ForCanBeForEach {
     }
 
     public class Phases implements Iterable<String> {
-        @Override
+
         public Iterator<String> iterator() {
             return null;
         }
@@ -194,5 +194,13 @@ public class ForCanBeForEach {
                 this.get(i);
             }
         }
+    }
+
+    List<String> equations;
+
+    Iterator<String> getNextAfter(String eqp) {
+        for(Iterator<String> eqpIter = equations.iterator(); eqpIter.hasNext();)
+            if(eqpIter.next() == eqp) return eqpIter;
+        throw new AssertionError("equation panel not found");
     }
 }
