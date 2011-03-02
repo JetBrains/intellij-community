@@ -238,6 +238,12 @@ public class FilePatchInProgress implements Strippable {
             return new ChangeDiffRequestPresentable(project, PatchChange.this);
           }
         }
+
+        @Override
+        public String getPathPresentation() {
+          final File ioCurrentBase = myPatchInProgress.getIoCurrentBase();
+          return ioCurrentBase == null ? myPatchInProgress.getCurrentPath() : ioCurrentBase.getPath();
+        }
       };
     }
   }

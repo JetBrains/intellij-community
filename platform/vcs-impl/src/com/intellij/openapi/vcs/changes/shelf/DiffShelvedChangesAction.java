@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
@@ -103,6 +104,11 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
             else {
               return new ChangeDiffRequestPresentable(project, change);
             }
+          }
+
+          @Override
+          public String getPathPresentation() {
+            return ChangesUtil.getFilePath(change).getPath();
           }
         });
       }

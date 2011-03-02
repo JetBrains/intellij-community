@@ -46,7 +46,8 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
   public MyResult step(DiffChainContext context) {
     final DiffRequestPresentable request = initRequest();
     if (request == null) {
-      return new MyResult(null, DiffPresentationReturnValue.removeFromList);
+      return new MyResult(null, DiffPresentationReturnValue.removeFromList,
+                          "Can not find context for '" + getPathPresentation() + "'");
     }
     myStepResult = request.step(context);
     return myStepResult;
