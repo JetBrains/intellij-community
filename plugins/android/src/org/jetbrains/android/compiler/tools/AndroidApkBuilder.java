@@ -184,6 +184,17 @@ public class AndroidApkBuilder {
         return result;
       }
 
+      if (!new File(apkPath).exists()) {
+        result.get(CompilerMessageCategory.ERROR).add("File " + apkPath + " not found. Try to rebuild project");
+        return result;
+      }
+
+      File dexEntryFile = new File(dexPath);
+      if (!dexEntryFile.exists()) {
+        result.get(CompilerMessageCategory.ERROR).add("File " + dexEntryFile.getPath() + " not found. Try to rebuild project");
+        return result;
+      }
+
       for (String externalJar : externalJars) {
         if (new File(externalJar).isDirectory()) {
           result.get(CompilerMessageCategory.ERROR).add(externalJar + " is directory. Directory libraries are not supported");
@@ -196,6 +207,7 @@ public class AndroidApkBuilder {
 
       fos = new FileOutputStream(outputApk);
       SignedJarBuilder builder = new SignedJarBuilder(fos, key, certificate);
+
       FileInputStream fis = new FileInputStream(apkPath);
       try {
         builder.writeZip(fis, null);
@@ -203,8 +215,8 @@ public class AndroidApkBuilder {
       finally {
         fis.close();
       }
-      File entryFile = new File(dexPath);
-      builder.writeFile(entryFile, AndroidUtils.CLASSES_FILE_NAME);
+
+      builder.writeFile(dexEntryFile, AndroidUtils.CLASSES_FILE_NAME);
       for (VirtualFile sourceRoot : sourceRoots) {
         writeStandardSourceFolderResources(builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), new HashSet<String>());
       }

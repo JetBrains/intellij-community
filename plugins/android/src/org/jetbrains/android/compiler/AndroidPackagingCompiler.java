@@ -108,19 +108,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
             File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
             String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
-            if (!resPackage.exists()) {
-              context.addMessage(CompilerMessageCategory.ERROR, "File " + resPackagePath + " not found. Try to rebuild project",
-                                 null, -1, -1);
-              continue;
-            }
 
             File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
             String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
-            if (!classesDexFile.exists()) {
-              context.addMessage(CompilerMessageCategory.ERROR, "File " + classesDexPath + " not found. Try to rebuild project",
-                                 null, -1, -1);
-              continue;
-            }
 
             AndroidPlatform platform = configuration.getAndroidPlatform();
             if (platform == null) {
