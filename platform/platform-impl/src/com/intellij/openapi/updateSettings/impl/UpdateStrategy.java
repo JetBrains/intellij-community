@@ -16,7 +16,6 @@
 package com.intellij.openapi.updateSettings.impl;
 
 
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
@@ -30,43 +29,29 @@ import java.util.List;
 @SuppressWarnings({"ConstantConditions"})
 
 public class UpdateStrategy {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateStrategy");
-
   public static enum State {LOADED, CONNECTION_ERROR, NOTHING_LOADED}
 
-  private UpdatesInfoLoader infoLoader;
   private UserUpdateSettings updateSettings;
   private BuildNumber ourBuild;
 
-  private State state;
   private String selectedChannel;
   private UpdatesInfo updatesInfo;
-  private Exception error;
   private boolean forced;
 
 
-  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfoLoader infoLoader, @NotNull UserUpdateSettings updateSettings, @Nullable String forcedChannel) {
-    this.infoLoader = infoLoader;
+  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings, @Nullable String forcedChannel) {
+    this.updatesInfo = updatesInfo;
     this.updateSettings = updateSettings;
     this.ourBuild = ourBuild;
     this.selectedChannel = forcedChannel!=null?forcedChannel:updateSettings.getSelectedChannelId();
     forced = forcedChannel!=null;
   }
 
-  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfoLoader infoLoader, @NotNull UserUpdateSettings updateSettings) {
-    this(ourBuild,infoLoader,updateSettings,null);
+  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings) {
+    this(ourBuild, updatesInfo, updateSettings,null);
   }
 
   public final CheckForUpdateResult checkForUpdates() {
-    load();
-    if (state == State.CONNECTION_ERROR) {
-      return new CheckForUpdateResult(state, error);
-    }
-    if (updatesInfo==null){
-      return new CheckForUpdateResult(State.NOTHING_LOADED);
-    }
-
     final Product product = updatesInfo.getProduct(ourBuild.getProductCode());
 
     if (product.getChannels().isEmpty()) {
@@ -127,19 +112,6 @@ public class UpdateStrategy {
       }
     }
     return null;
-  }
-
-
-  private void load() {
-    try {
-      updatesInfo = infoLoader.loadUpdatesInfo();
-      state = State.LOADED;
-    }
-    catch (ConnectionException e) {
-      LOG.debug(e);
-      this.error = e;
-      state = State.CONNECTION_ERROR;
-    }
   }
 
 

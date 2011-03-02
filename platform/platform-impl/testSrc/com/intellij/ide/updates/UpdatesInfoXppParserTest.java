@@ -85,18 +85,14 @@ public class UpdatesInfoXppParserTest extends TestCase {
   }
 
   public static class InfoReader {
-    @Nullable
     public static UpdatesInfo read(String fileName)  {
       final InputStream stream = UpdatesInfoXppParserTest.class.getResourceAsStream(fileName);
       try {
         return new UpdatesInfo(JDOMUtil.loadDocument(stream).getRootElement());
       }
       catch (Exception e) {
-        try{
-        stream.close();
-        }catch (Exception ignore){}
+        throw new RuntimeException(e);
       }
-      return null;
     }
   }
 }

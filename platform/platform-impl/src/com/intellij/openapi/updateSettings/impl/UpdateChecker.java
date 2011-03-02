@@ -262,11 +262,23 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static UpdateStrategy getUpdateStrategy(@Nullable String forcedChannelId){
+  public static CheckForUpdateResult doCheckForUpdates(@Nullable String forcedChannelId){
     BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
     final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
     final UpdateSettings settings = UpdateSettings.getInstance();
-    return new UpdateStrategy(ourBuild, loader, settings, forcedChannelId);
+    final UpdatesInfo info;
+    try {
+      info = loader.loadUpdatesInfo();
+      if (info == null) {
+        return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
+      }
+    }
+    catch (ConnectionException e) {
+      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
+    }
+
+    UpdateStrategy strategy = new UpdateStrategy(ourBuild, info, settings, forcedChannelId);
+    return strategy.checkForUpdates();
   }
 
 
@@ -279,7 +291,7 @@ public final class UpdateChecker {
 
     final UpdateSettings settings = UpdateSettings.getInstance();
 
-    final CheckForUpdateResult result = getUpdateStrategy(null).checkForUpdates();
+    final CheckForUpdateResult result = doCheckForUpdates(null);
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
       settings.LAST_TIME_CHECKED = System.currentTimeMillis();
@@ -305,7 +317,7 @@ public final class UpdateChecker {
     }
 
  final UpdateSettings settings = UpdateSettings.getInstance();
-    final CheckForUpdateResult result = getUpdateStrategy(forcedChannel).checkForUpdates();
+    final CheckForUpdateResult result = doCheckForUpdates(forcedChannel);
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
       settings.LAST_TIME_CHECKED = System.currentTimeMillis();

@@ -36,7 +36,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class UpdatesXmlLoader implements UpdatesInfoLoader {
+public class UpdatesXmlLoader {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdatesXmlLoader");
 
