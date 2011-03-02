@@ -1201,14 +1201,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final List<LookupElement> items = getItems();
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1);
     for (int i = 0; i < Math.min(maxAutopopupItems, items.size()); i++) {
-      /*
-      if (i == 1) {
-        JLabel more = normalizedLabel("Other suggestions (" + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorLookupDown")) + " to choose):", editorFont);
-        more.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(5, 2, 5, 7)));
-        pane.add(more, gb.nextLine());
-      }
-      */
-
       final LookupElement element = items.get(i);
       final LookupElementPresentation presentation = new LookupElementPresentation();
       element.renderElement(presentation);
@@ -1216,7 +1208,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         final JPanel row = new JPanel(gridBagLayout);
-        row.setBackground(pane.getBackground());
+        row.setOpaque(false);
 
         GridBag rgb = new GridBag().setDefaultAnchor(GridBagConstraints.BASELINE);
 
@@ -1226,6 +1218,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         final int style = presentation.isItemTextBold() ? Font.BOLD : Font.PLAIN;
         myCellRenderer.renderItemName(element, LookupCellRenderer.FOREGROUND_COLOR, false, style,
                                       StringUtil.notNullize(presentation.getItemText()), nameLabel);
+        nameLabel.setOpaque(false);
         row.add(nameLabel, rgb.next());
 
         final JLabel tailLabel = normalizedLabel(presentation.getTailText(), editorFont);
@@ -1239,7 +1232,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
         row.add(normalizedLabel("   " + StringUtil.notNullize(presentation.getTypeText()) + " ", editorFont), rgb.next());
 
-        row.setBorder(new EmptyBorder(0, itemTextPadding, 0, 0));
+        if (i == 1) {
+          row.setBorder(BorderFactory.createCompoundBorder(new EmptyBorder(5, 0, 0, 0),
+                                                           BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray),
+                                                                                              new EmptyBorder(5, itemTextPadding, 0, 0))));
+        }
+        else {
+          row.setBorder(new EmptyBorder(0, itemTextPadding, 0, 0));
+        }
+
 
         row.addMouseListener(new MouseAdapter() {
           @Override
@@ -1258,22 +1259,20 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     }
 
-    {
-      final JPanel ad = new JPanel(new BorderLayout());
-      ad.setBorder(BorderFactory.createCompoundBorder(new MatteBorder(1, 0, 0, 0, Color.lightGray), new EmptyBorder(0, 2, 0, 7)));
-      ad.setOpaque(false);
+    if (items.size() > maxAutopopupItems) {
+      final JPanel lastLine = new JPanel(new BorderLayout());
+      lastLine.setBorder(new EmptyBorder(4, 0, 2, 0));
+      lastLine.setOpaque(false);
 
-      if (items.size() > maxAutopopupItems) {
-        if (StringUtil.isNotEmpty(ctrlSpace)) {
-          //ad.add(normalizedLabel(ctrlSpace + " for more  ", editorFont), BorderLayout.WEST);
-          //ad.add(normalizedLabel("Other suggestions (" + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorLookupDown")) + " to choose):", editorFont), BorderLayout.WEST);
-        }
-      }
+      JLabel moreLabel = new JLabel("  " + (items.size() - maxAutopopupItems) + " more...");
+      moreLabel.setFont(moreLabel.getFont().deriveFont(Font.ITALIC, editorFont.getSize()));
+      lastLine.add(moreLabel, BorderLayout.WEST);
 
-      if (StringUtil.isNotEmpty(ctrlSpace)) {
-        ad.add(normalizedLabel("Press " + ctrlSpace + " for the complete list", editorFont), BorderLayout.EAST);
-      }
-      pane.add(ad, gb.nextLine().padx(5).pady(2).coverColumn());
+      JLabel keyLabel = new JLabel("  [" + ctrlSpace + "]");
+      keyLabel.setFont(keyLabel.getFont().deriveFont(Font.BOLD, editorFont.getSize()));
+      lastLine.add(keyLabel);
+
+      pane.add(lastLine, gb.nextLine().padx(5).pady(2).coverColumn());
     }
 
     return pane;
