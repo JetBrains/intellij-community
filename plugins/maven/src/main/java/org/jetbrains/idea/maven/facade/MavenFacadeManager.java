@@ -187,7 +187,7 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
-        params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
+        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder().first);
 
         params.setMainClass(MAIN_CLASS);
 
@@ -229,17 +229,17 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
     };
   }
 
-  public static Pair<List<File>, File> collectClassPathAndLIbsFolder() {
+  public static Pair<List<File>, File> collectClassPathAndLibsFolder() {
     File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenFacadeManager.class));
 
     File libDir;
     List<File> classpath = new SmartList<File>();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-api"));
-      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-impl"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven-server-api"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
       File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-      libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "facade-impl/lib");
+      libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
     }
     else {
       libDir = pluginFileOrDir.getParentFile();

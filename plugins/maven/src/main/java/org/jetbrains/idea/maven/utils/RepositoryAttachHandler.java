@@ -205,13 +205,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
             new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
           for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
             final List<MavenArtifactInfo> artifacts;
-            try {
-              artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
-            }
-            catch (Exception ex) {
-              MavenLog.LOG.warn("Accessing Service at: " + serviceUrl, ex);
-              continue;
-            }
+            artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
             if (!artifacts.isEmpty()) {
               final List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
               final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
