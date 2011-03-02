@@ -560,7 +560,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           }
         }
       }
-    });
+    }, getActiveSplitters(true).getResult());
   }
 
 //-------------------------------------- Open File ----------------------------------------
@@ -576,13 +576,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter) {
-      for (EditorsSplitters splitters : getAllSplitters()) {
-        final EditorWindow window = splitters.getCurrentWindow();
-        if (window == null) continue;
+      Set<EditorsSplitters> all = getAllSplitters();
+      EditorsSplitters active = getActiveSplitters(true).getResult();
+      if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
+        wndToOpenIn = active.getCurrentWindow();
+      } else {
+        for (EditorsSplitters splitters : all) {
+          final EditorWindow window = splitters.getCurrentWindow();
+          if (window == null) continue;
 
-        if (window.isFileOpen(file)) {
-          wndToOpenIn = window;
-          break;
+          if (window.isFileOpen(file)) {
+            wndToOpenIn = window;
+            break;
+          }
         }
       }
     }
@@ -1346,8 +1352,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  public void runChange(FileEditorManagerChange change) {
-    for (EditorsSplitters each : getAllSplitters()) {
+  public void runChange(FileEditorManagerChange change, EditorsSplitters splitters) {
+    Set<EditorsSplitters> target = new HashSet<EditorsSplitters>();
+    if (splitters == null) {
+      target.addAll(getAllSplitters());
+    } else {
+      target.add(splitters);
+    }
+
+    for (EditorsSplitters each : target) {
       each.myInsideChange++;
       try {
         change.run(each);
