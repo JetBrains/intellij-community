@@ -18,10 +18,7 @@ package com.intellij.execution.runners;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -46,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +137,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, myConsoleTitle);
+      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
 // tool bar actions
     final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
@@ -150,6 +148,39 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
 // Run
     myProcessHandler.startNotify();
+  }
+
+  private String constructConsoleTitle(final @NotNull String consoleTitle) {
+    if (shouldAddNumberToTitle()) {
+      List<RunContentDescriptor> consoles = ExecutionHelper.collectConsolesByDisplayName(myProject, new NotNullFunction<String, Boolean>() {
+        @NotNull
+        @Override
+        public Boolean fun(String dom) {
+          return dom.contains(consoleTitle);
+        }
+      });
+      int max = consoles.size() > 0 ? 1 : 0;
+      for (RunContentDescriptor dsc : consoles) {
+        try {
+          int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length()+1, dsc.getDisplayName().length()-1));
+          if (num > max) {
+            max = num;
+          }
+        }
+        catch (Exception e) {
+          //skip
+        }
+      }
+      if (max >= 1) {
+        return consoleTitle + "(" + (max + 1) + ")";
+      }
+    }
+
+    return consoleTitle;
+  }
+
+  protected boolean shouldAddNumberToTitle() {
+    return false;
   }
 
   protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {

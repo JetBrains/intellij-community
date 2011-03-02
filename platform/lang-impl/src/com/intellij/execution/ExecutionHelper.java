@@ -16,30 +16,36 @@
 
 package com.intellij.execution;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
@@ -48,6 +54,7 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -140,35 +147,113 @@ public class ExecutionHelper {
     }
   }
 
-  public static Collection<RunContentDescriptor> findRunningConsole(final Project project,
-                                                                    @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
-    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
-    final ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(DefaultRunExecutor.getRunExecutorInstance().getId());
-    if (runToolWindow != null && runToolWindow.isVisible()) {
-      final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
-      if (selectedContent != null){
+  public static Collection<RunContentDescriptor> findRunningConsoleByCmdLine(final Project project,
+                                                                             @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
+    return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(RunContentDescriptor selectedContent) {
         final ProcessHandler processHandler = selectedContent.getProcessHandler();
         if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
           final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
-          if (cmdLineMatcher.fun(commandLine).booleanValue()) {
-            return Collections.singletonList(selectedContent);
-          }
+          return cmdLineMatcher.fun(commandLine);
+        }
+        return false;
+      }
+    });
+  }
+
+  public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
+                                                                           @NotNull final NotNullFunction<String, Boolean> titleMatcher) {
+    return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
+      @NotNull
+      @Override
+      public Boolean fun(RunContentDescriptor selectedContent) {
+        return titleMatcher.fun(selectedContent.getDisplayName());
+      }
+    });
+  }
+
+  public static Collection<RunContentDescriptor> findRunningConsole(final Project project,
+                                                                    @NotNull final NotNullFunction<RunContentDescriptor, Boolean> descriptorMatcher) {
+    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
+    final ToolWindow runToolWindow =
+      ToolWindowManager.getInstance(project).getToolWindow(DefaultRunExecutor.getRunExecutorInstance().getId());
+    if (runToolWindow != null && runToolWindow.isVisible()) {
+      final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
+      if (selectedContent != null) {
+        if (descriptorMatcher.fun(selectedContent)) {
+          return Collections.singletonList(selectedContent);
         }
       }
     }
 
-    final ArrayList<RunContentDescriptor> result = new ArrayList<RunContentDescriptor>();
+    final ArrayList<RunContentDescriptor> result = Lists.newArrayList();
     final RunContentDescriptor[] runContentDescriptors = ((RunContentManagerImpl)executionManager.getContentManager()).getAllDescriptors();
     for (RunContentDescriptor runContentDescriptor : runContentDescriptors) {
-      final ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
-      if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
-        final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
-        if (cmdLineMatcher.fun(commandLine).booleanValue()) {
-          result.add(runContentDescriptor);
-        }
+      if (descriptorMatcher.fun(runContentDescriptor)) {
+        result.add(runContentDescriptor);
       }
     }
     return result;
+  }
+
+  public static List<RunContentDescriptor> collectConsolesByDisplayName(final Project project,
+                                                                        @NotNull NotNullFunction<String, Boolean> titleMatcher) {
+    List<RunContentDescriptor> result = Lists.newArrayList();
+    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
+    final RunContentDescriptor[] runContentDescriptors = ((RunContentManagerImpl)executionManager.getContentManager()).getAllDescriptors();
+    for (RunContentDescriptor runContentDescriptor : runContentDescriptors) {
+      if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
+        result.add(runContentDescriptor);
+      }
+    }
+    return result;
+  }
+
+  public static void selectContentDescriptor(final @NotNull Editor editor,
+                                                             @NotNull Collection<RunContentDescriptor> consoles,
+                                                             String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
+    if (consoles.size() == 1) {
+      RunContentDescriptor descriptor = consoles.iterator().next();
+      descriptorConsumer.consume(descriptor);
+      descriptorToFront(editor, descriptor);
+    }
+    else if (consoles.size() > 1) {
+      final JList list = new JBList(consoles);
+      final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
+      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>(list.getCellRenderer()) {
+        @Override
+        public void customize(final JList list,
+                              final RunContentDescriptor value,
+                              final int index,
+                              final boolean selected,
+                              final boolean hasFocus) {
+          setText(value.getDisplayName());
+          setIcon(icon);
+        }
+      });
+
+      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      builder.setTitle(selectDialogTitle);
+
+      builder.setItemChoosenCallback(new Runnable() {
+        @Override
+        public void run() {
+          final Object selectedValue = list.getSelectedValue();
+          if (selectedValue instanceof RunContentDescriptor) {
+            RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+            descriptorConsumer.consume(descriptor);
+            descriptorToFront(editor, descriptor);
+          }
+        }
+      }).createPopup().showInBestPositionFor(editor);
+    }
+  }
+
+  private static void descriptorToFront(Editor editor, RunContentDescriptor descriptor) {
+    ExecutionManager.getInstance(editor.getProject()).getContentManager()
+      .toFrontRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
   }
 
   public static class RailsErrorViewPanel extends NewErrorTreeViewPanel {
@@ -199,7 +284,8 @@ public class ExecutionHelper {
             processHandler.waitFor();
           }
         };
-      } else {
+      }
+      else {
         process = createTimelimitedExecutionProcess(processHandler, mode.getTimeout());
       }
     }
@@ -302,7 +388,8 @@ public class ExecutionHelper {
               LOG.error("Timeout (" + timeout + " sec) on executing: " + processHandler.getCommandLine());
               processHandler.destroyProcess();
             }
-          } finally {
+          }
+          finally {
             mySemaphore.up();
           }
         }
