@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -44,6 +45,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -177,11 +179,11 @@ public class ExecutionHelper {
   public static Collection<RunContentDescriptor> findRunningConsole(final Project project,
                                                                     @NotNull final NotNullFunction<RunContentDescriptor, Boolean> descriptorMatcher) {
     final ExecutionManager executionManager = ExecutionManager.getInstance(project);
-    final ToolWindow runToolWindow =
-      ToolWindowManager.getInstance(project).getToolWindow(DefaultRunExecutor.getRunExecutorInstance().getId());
-    if (runToolWindow != null && runToolWindow.isVisible()) {
-      final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
-      if (selectedContent != null) {
+
+    final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
+    if (selectedContent != null) {
+      final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(selectedContent);
+      if (toolWindow != null && toolWindow.isVisible()) {
         if (descriptorMatcher.fun(selectedContent)) {
           return Collections.singletonList(selectedContent);
         }
@@ -212,8 +214,8 @@ public class ExecutionHelper {
   }
 
   public static void selectContentDescriptor(final @NotNull Editor editor,
-                                                             @NotNull Collection<RunContentDescriptor> consoles,
-                                                             String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
+                                             @NotNull Collection<RunContentDescriptor> consoles,
+                                             String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);
@@ -251,9 +253,21 @@ public class ExecutionHelper {
     }
   }
 
-  private static void descriptorToFront(Editor editor, RunContentDescriptor descriptor) {
-    ExecutionManager.getInstance(editor.getProject()).getContentManager()
-      .toFrontRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
+  private static void descriptorToFront(final Editor editor, final RunContentDescriptor descriptor) {
+    final Project project = editor.getProject();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
+
+        if (toolWindow != null) {
+          toolWindow.show(null);
+
+          final ContentManager contentManager = toolWindow.getContentManager();
+
+          contentManager.setSelectedContent(descriptor.getAttachedContent());
+        }
+      }
+    });
   }
 
   public static class RailsErrorViewPanel extends NewErrorTreeViewPanel {

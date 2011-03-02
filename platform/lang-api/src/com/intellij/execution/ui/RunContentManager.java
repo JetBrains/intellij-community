@@ -19,6 +19,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,4 +62,7 @@ public interface RunContentManager {
   void removeRunContentListener(RunContentListener listener);
 
   void addRunContentListener(RunContentListener myContentListener, Executor executor);
+
+  @Nullable
+  ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);
 }
