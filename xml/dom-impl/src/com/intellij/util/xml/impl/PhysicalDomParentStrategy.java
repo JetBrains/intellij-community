@@ -66,6 +66,11 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return this;
   }
 
+  @Override
+  public String toString() {
+    return "Physical:" + myElement;
+  }
+
   @NotNull
   public DomParentStrategy clearXmlElement() {
     final DomInvocationHandler parent = getParentHandler();

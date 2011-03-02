@@ -39,6 +39,11 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     myGetterMethods = getterMethods;
   }
 
+  @Override
+  public String toString() {
+    return "CollectionChildDescription:" + getXmlName();
+  }
+
   public NotNullFunction<DomInvocationHandler, List<XmlTag>> getTagsGetter() {
     return myTagsGetter;
   }
