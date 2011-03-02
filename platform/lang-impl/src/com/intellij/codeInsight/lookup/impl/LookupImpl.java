@@ -1264,7 +1264,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       lastLine.setBorder(new EmptyBorder(4, 0, 2, 0));
       lastLine.setOpaque(false);
 
-      JLabel moreLabel = new JLabel("  " + (items.size() - maxAutopopupItems) + " more...");
+      JLabel moreLabel = new JLabel("  " + (items.size() - maxAutopopupItems) + " more");
       moreLabel.setFont(moreLabel.getFont().deriveFont(Font.ITALIC, editorFont.getSize()));
       lastLine.add(moreLabel, BorderLayout.WEST);
 
