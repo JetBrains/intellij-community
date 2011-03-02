@@ -39,10 +39,10 @@ import javax.swing.*;
 
 public class ForCanBeForeachInspection extends BaseInspection{
 
-  /** @noinspection PublicField*/
-  public boolean REPORT_INDEXED_LOOP = true;
+    /** @noinspection PublicField*/
+    public boolean REPORT_INDEXED_LOOP = true;
 
-  @Override @NotNull
+    @Override @NotNull
     public String getID(){
         return "ForLoopReplaceableByForEach";
     }
@@ -149,18 +149,21 @@ public class ForCanBeForeachInspection extends BaseInspection{
             } else {
                 listReference = (PsiReferenceExpression) qualifier;
             }
-            final PsiType parameterType;
+            PsiType parameterType;
             if(listReference == null) {
-                parameterType = extractTypeFromContainingClass(forStatement);
+                parameterType =
+                        extractListTypeFromContainingClass(forStatement);
             } else {
                 final PsiType type = listReference.getType();
                 if (type == null) {
                     return null;
                 }
-                parameterType = extractContentTypeFromType(type, forStatement);
+                parameterType = extractContentTypeFromType(type);
             }
             if(parameterType == null){
-                return null;
+                parameterType = PsiType.getJavaLangObject(
+                        forStatement.getManager(),
+                        forStatement.getResolveScope());
             }
             final String typeString = parameterType.getCanonicalText();
             final PsiVariable listVariable;
@@ -234,20 +237,18 @@ public class ForCanBeForeachInspection extends BaseInspection{
 
         @Nullable
         private static PsiType extractContentTypeFromType(
-                PsiType collectionType, PsiElement context) {
+                PsiType collectionType) {
             if(!(collectionType instanceof PsiClassType)){
                 return null;
             }
             final PsiClassType classType = (PsiClassType)collectionType;
             final PsiType[] parameterTypes = classType.getParameters();
             if (parameterTypes.length == 0) {
-                return PsiType.getJavaLangObject(context.getManager(),
-                        context.getResolveScope());
+                return null;
             }
             final PsiType parameterType = parameterTypes[0];
             if (parameterType == null) {
-                return PsiType.getJavaLangObject(context.getManager(),
-                        context.getResolveScope());
+                return null;
             }
             if (parameterType instanceof PsiWildcardType) {
                 final PsiWildcardType wildcardType =
@@ -264,9 +265,9 @@ public class ForCanBeForeachInspection extends BaseInspection{
         }
 
         @Nullable
-        private static PsiType extractTypeFromContainingClass(
-                PsiForStatement forStatement) {
-            PsiClass listClass = PsiTreeUtil.getParentOfType(forStatement,
+        private static PsiType extractListTypeFromContainingClass(
+                PsiElement element) {
+            PsiClass listClass = PsiTreeUtil.getParentOfType(element,
                     PsiClass.class);
             if (listClass == null) {
                 return null;
@@ -291,14 +292,14 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 listClass = listClass.getSuperClass();
             }
             if (listClass == null || subClass == null) {
-                return PsiType.getJavaLangObject(forStatement.getManager(),
-                        forStatement.getResolveScope());
+                return PsiType.getJavaLangObject(element.getManager(),
+                        element.getResolveScope());
             }
             final PsiTypeParameter[] typeParameters =
                     listClass.getTypeParameters();
             if (!parameterClass.equals(typeParameters[0])) {
-                return PsiType.getJavaLangObject(forStatement.getManager(),
-                        forStatement.getResolveScope());
+                return PsiType.getJavaLangObject(element.getManager(),
+                        element.getResolveScope());
             }
             final PsiReferenceList extendsList = subClass.getExtendsList();
             if (extendsList == null) {
@@ -312,8 +313,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
             final PsiType[] types =
                     referenceElements[0].getTypeParameters();
             if (types.length == 0) {
-                return PsiType.getJavaLangObject(forStatement.getManager(),
-                        forStatement.getResolveScope());
+                return PsiType.getJavaLangObject(element.getManager(),
+                        element.getResolveScope());
             }
             return types[0];
         }
@@ -336,38 +337,39 @@ public class ForCanBeForeachInspection extends BaseInspection{
             if (!(declaredIterator instanceof PsiVariable)) {
                 return null;
             }
-            final PsiVariable iterator = (PsiVariable)declaredIterator;
-            final PsiType iteratorType = iterator.getType();
-            final PsiType iteratedContentsType =
-                    extractContentTypeFromType(iteratorType, iterator);
+            final PsiVariable iteratorVariable = (PsiVariable)declaredIterator;
             final PsiMethodCallExpression initializer =
-                    (PsiMethodCallExpression) iterator.getInitializer();
+                    (PsiMethodCallExpression) iteratorVariable.getInitializer();
             if(initializer == null){
                 return null;
+            }
+            final PsiType iteratorType = initializer.getType();
+            if (iteratorType == null) {
+                return null;
+            }
+            final PsiType iteratorContentType =
+                    extractContentTypeFromType(iteratorType);
+            final PsiType iteratorVariableType = iteratorVariable.getType();
+            final PsiType contentType;
+            final PsiClassType javaLangObject = PsiType.getJavaLangObject(
+                    forStatement.getManager(),
+                    forStatement.getResolveScope());
+            if (iteratorContentType == null) {
+                final PsiType iteratorVariableContentType =
+                        extractContentTypeFromType(iteratorVariableType);
+                if (iteratorVariableContentType == null) {
+                    contentType = javaLangObject;
+                } else {
+                    contentType = iteratorVariableContentType;
+                }
+            } else {
+                contentType = iteratorContentType;
             }
             final PsiReferenceExpression methodExpression =
                     initializer.getMethodExpression();
             final PsiExpression collection =
                     methodExpression.getQualifierExpression();
-            final PsiType collectionContentsType;
-            if(collection == null){
-                collectionContentsType =
-                        extractTypeFromContainingClass(forStatement);
-            } else {
-                final PsiType collectionType = collection.getType();
-                collectionContentsType =
-                        extractContentTypeFromType(collectionType, collection);
-            }
-            if(collectionContentsType == null){
-                return null;
-            }
-            final PsiType contentType;
-            if(iteratedContentsType == null){
-                contentType = collectionContentsType;
-            } else {
-                contentType = iteratedContentsType;
-            }
-            final String iteratorName = iterator.getName();
+            final String iteratorName = iteratorVariable.getName();
             final boolean isDeclaration =
                     isIteratorNextDeclaration(firstStatement, iteratorName,
                             contentType);
@@ -415,16 +417,6 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 statementToSkip = null;
             }
             final String contentTypeString = contentType.getCanonicalText();
-            @NonNls final String iterableTypeString =
-                    "java.lang.Iterable<" + contentTypeString + '>';
-            final String castString;
-            if(iteratedContentsType == null ||
-                    iteratedContentsType.isAssignableFrom(
-                            collectionContentsType)){
-                castString = "";
-            } else{
-                castString = '(' + iterableTypeString + ')';
-            }
             @NonNls final StringBuilder out = new StringBuilder();
             out.append("for(");
             out.append(finalString);
@@ -432,7 +424,15 @@ public class ForCanBeForeachInspection extends BaseInspection{
             out.append(' ');
             out.append(contentVariableName);
             out.append(": ");
-            out.append(castString);
+            if (!contentType.equals(javaLangObject)) {
+                @NonNls final String iterableTypeString =
+                        "java.lang.Iterable<" + contentTypeString + '>';
+                if(iteratorContentType == null){
+                    out.append('(');
+                    out.append(iterableTypeString);
+                    out.append(')');
+                }
+            }
             if (collection == null) {
                 out.append("this");
             } else {
