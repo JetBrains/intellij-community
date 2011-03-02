@@ -112,14 +112,20 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private JCheckBox myCbMatchCase;
   private JPanel myReplacementPane;
 
-  private static FindModel createDefaultFindModel(Project p) {
+  private static FindModel createDefaultFindModel(Project p, Editor e) {
     FindModel findModel = new FindModel();
     findModel.copyFrom(FindManager.getInstance(p).getFindInFileModel());
+    if (e.getSelectionModel().hasSelection()) {
+      String selectedText = e.getSelectionModel().getSelectedText();
+      if (selectedText != null) {
+        findModel.setStringToFind(selectedText);
+      }
+    }
     return findModel;
   }
 
   public EditorSearchComponent(Editor editor, Project project) {
-    this(editor, project, createDefaultFindModel(project));
+    this(editor, project, createDefaultFindModel(project, editor));
   }
 
   @Nullable
