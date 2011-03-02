@@ -57,9 +57,6 @@ public abstract class AndroidSdk {
   public abstract String getLocation();
 
   @NotNull
-  public abstract String getName();
-
-  @NotNull
   public abstract IAndroidTarget[] getTargets();
 
   // be careful! target name is NOT unique
@@ -95,17 +92,14 @@ public abstract class AndroidSdk {
     return null;
   }
 
+  public abstract IAndroidTarget findTargetByHashString(@NotNull String hashString);
+
   @Nullable
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
     path = FileUtil.toSystemDependentName(path);
-    if (isAndroid15Sdk(path)) {
-      SdkManager manager = SdkManager.createManager(path + File.separatorChar, log);
-      if (manager != null) {
-        return new AndroidSdkImpl(manager);
-      }
-    }
-    else {
-      return new LegacyAndroidSdk(path);
+    SdkManager manager = SdkManager.createManager(path + File.separatorChar, log);
+    if (manager != null) {
+      return new AndroidSdkImpl(manager);
     }
     return null;
   }

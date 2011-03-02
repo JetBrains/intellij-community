@@ -18,15 +18,16 @@ package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,12 +41,10 @@ import java.util.Set;
 public class AndroidPlatform {
   private final AndroidSdk mySdk;
   private final IAndroidTarget myTarget;
-  private final Library myLibrary;
 
-  public AndroidPlatform(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target, @NotNull Library library) {
+  public AndroidPlatform(@NotNull AndroidSdk sdk, @NotNull IAndroidTarget target) {
     mySdk = sdk;
     myTarget = target;
-    myLibrary = library;
   }
 
   @NotNull
@@ -58,20 +57,28 @@ public class AndroidPlatform {
     return myTarget;
   }
 
-  @NotNull
-  public Library getLibrary() {
-    if (myLibrary == null) {
-      throw new UnsupportedOperationException();
-    }
-    return myLibrary;
-  }
-
-  @NotNull
-  public String getName() {
-    return myLibrary.getName();
-  }
-
   @Nullable
+  public static AndroidPlatform parse(@NotNull Sdk sdk) {
+    if (!(sdk.getSdkType().equals(AndroidSdkType.getInstance()))) {
+      return null;
+    }
+    String sdkPath = sdk.getHomePath();
+    if (sdkPath != null) {
+      AndroidSdk sdkObject = AndroidSdk.parse(sdkPath, new EmptySdkLog());
+      if (sdkObject != null) {
+        AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+        IAndroidTarget target = data != null ? data.getBuildTarget(sdkObject) : null;
+        if (target != null) {
+          return new AndroidPlatform(sdkObject, target);
+        }
+      }
+    }
+    return null;
+  }
+
+  // deprecated, use only for converting
+  @Nullable
+  @Deprecated
   public static AndroidPlatform parse(@NotNull Library library,
                                       @Nullable Library.ModifiableModel model,
                                       @Nullable Map<String, AndroidSdk> parsedSdks) {
@@ -88,8 +95,7 @@ public class AndroidPlatform {
       }
     }
     if (frameworkLibrary != null) {
-      VirtualFile platformDir = frameworkLibrary.getParent();
-      VirtualFile sdkDir = platformDir;
+      VirtualFile sdkDir = frameworkLibrary.getParent();
       if (sdkDir != null) {
         VirtualFile platformsDir = sdkDir.getParent();
         if (platformsDir != null && platformsDir.getName().equals(SdkConstants.FD_PLATFORMS)) {
@@ -131,7 +137,7 @@ public class AndroidPlatform {
           }
         }
         if (resultTarget != null) {
-          return new AndroidPlatform(sdk, resultTarget, library);
+          return new AndroidPlatform(sdk, resultTarget);
         }
       }
     }
@@ -145,11 +151,6 @@ public class AndroidPlatform {
 
     AndroidPlatform platform = (AndroidPlatform)o;
 
-    if (myLibrary == null || platform.myLibrary == null) {
-      throw new UnsupportedOperationException();
-    }
-
-    if (!myLibrary.equals(platform.myLibrary)) return false;
     if (!mySdk.equals(platform.mySdk)) return false;
     if (!myTarget.equals(platform.myTarget)) return false;
 
@@ -158,12 +159,8 @@ public class AndroidPlatform {
 
   @Override
   public int hashCode() {
-    if (myLibrary == null) {
-      throw new UnsupportedOperationException();
-    }
     int result = mySdk.hashCode();
     result = 31 * result + myTarget.hashCode();
-    result = 31 * result + myLibrary.hashCode();
     return result;
   }
 }

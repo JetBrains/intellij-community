@@ -1,5 +1,8 @@
 package org.jetbrains.android.dom;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
@@ -42,8 +45,12 @@ abstract class AndroidDomTest extends AndroidTestCase {
   }
 
   protected void doTestCompletionVariants(String fileName, String... variants) throws Throwable {
-    String path = copyFileToProject(fileName);
-    myFixture.testCompletionVariants(path, variants);
+    VirtualFile file = copyFileToProject(fileName);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    UsefulTestCase.assertSameElements(lookupElementStrings, variants);
   }
 
   protected static List<String> getAllResources() {
@@ -55,25 +62,26 @@ abstract class AndroidDomTest extends AndroidTestCase {
   }
 
   protected void doTestHighlighting(String file) throws Throwable {
-    String path = copyFileToProject(file);
-    myFixture.testHighlighting(false, false, false, path);
+    VirtualFile virtualFile = copyFileToProject(file);
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    myFixture.checkHighlighting(false, false, false);
   }
 
   protected void toTestCompletion(String fileBefore, String fileAfter) throws Throwable {
-    String path = copyFileToProject(fileBefore);
-    myFixture.testCompletion(path, testFolder + '/' + fileAfter);
+    VirtualFile file = copyFileToProject(fileBefore);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile(testFolder + '/' + fileAfter);
   }
 
   protected abstract String getPathToCopy(String testFileName);
 
-  protected String copyFileToProject(String path) throws IOException {
+  protected VirtualFile copyFileToProject(String path) throws IOException {
     return copyFileToProject(path, getPathToCopy(path));
   }
 
-  protected String copyFileToProject(String from, String to) throws IOException {
-    String pathToCopy = getPathToCopy(from);
-    myFixture.copyFileToProject(testFolder + '/' + from, to);
-    return pathToCopy;
+  protected VirtualFile copyFileToProject(String from, String to) throws IOException {
+    return myFixture.copyFileToProject(testFolder + '/' + from, to);
   }
 }
 

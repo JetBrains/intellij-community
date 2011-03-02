@@ -17,8 +17,6 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,11 +39,6 @@ public class AndroidDrawableResourcesTest extends AndroidDomTest {
   @Override
   protected String getPathToCopy(String testFileName) {
     return "res/drawable/" + testFileName;
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   public void testHighlighting() throws Throwable {

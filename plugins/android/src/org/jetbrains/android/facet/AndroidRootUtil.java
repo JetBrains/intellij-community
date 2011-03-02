@@ -154,7 +154,7 @@ public class AndroidRootUtil {
   private static void fillExternalLibrariesAndModules(final Module module,
                                                       final Set<VirtualFile> outputDirs,
                                                       @Nullable final Set<VirtualFile> libraries,
-                                                      final Library platformLibrary,
+                                                      @Nullable final Library platformLibrary,
                                                       final Set<Module> visited) {
     if (!visited.add(module)) {
       return;
@@ -168,8 +168,7 @@ public class AndroidRootUtil {
           }
           if (libraries != null && entry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry)entry).getLibrary();
-            assert platformLibrary != null;
-            if (!platformLibrary.equals(library)) {
+            if (platformLibrary == null || !platformLibrary.equals(library)) {
               if (library != null) {
                 for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
                   if (file.exists()) {
@@ -212,7 +211,7 @@ public class AndroidRootUtil {
   }
 
   @NotNull
-  public static List<VirtualFile> getExternalLibraries(Module module, Library platformLibrary) {
+  public static List<VirtualFile> getExternalLibraries(Module module, @Nullable Library platformLibrary) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
     fillExternalLibrariesAndModules(module, files, libs, platformLibrary, new HashSet<Module>());

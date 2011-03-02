@@ -148,7 +148,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             }
             Set<VirtualFile> files = new HashSet<VirtualFile>();
             addModuleOutputDir(files, outputDir);
-            files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
+            files.addAll(AndroidRootUtil.getExternalLibraries(module, null));
             for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
               addModuleOutputDir(files, file);
             }

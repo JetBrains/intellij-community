@@ -18,26 +18,21 @@ package org.jetbrains.android.newProject;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidPlatformChooser;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -47,7 +42,6 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidModuleWizardStep extends ModuleWizardStep {
-  private final AndroidPlatformChooser myPlatformChooser;
 
   private final AndroidAppPropertiesEditor myAppPropertiesEditor;
 
@@ -55,35 +49,25 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   private final AndroidTestPropertiesEditor myTestPropertiesEditor;
 
   private final AndroidModuleBuilder myModuleBuilder;
-  private LibraryTable.ModifiableModel myModel;
 
   private JPanel myPanel;
-  private JPanel mySdkPanel;
   private JRadioButton myApplicationProjectButton;
   private JRadioButton myLibProjectButton;
   private JRadioButton myTestProjectButton;
   private JPanel myPropertiesPanel;
 
-  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, Project project) {
-    super();
-    myModel = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
-    myPlatformChooser = new AndroidPlatformChooser(myModel, null);
-    List<Library> platformLibraries = myPlatformChooser.rebuildPlatforms();
-    String defaultPlatformName = PropertiesComponent.getInstance().getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
-    if (defaultPlatformName != null) {
-      for (Library library : platformLibraries) {
-        if (defaultPlatformName.equals(library.getName())) {
-          myPlatformChooser.setSelectedPlatform(library);
-          break;
-        }
-      }
-    }
-    mySdkPanel.setLayout(new BorderLayout(1, 1));
-    mySdkPanel.add(myPlatformChooser.getComponent());
+  private AndroidSdkComboBoxWithBrowseButton mySdkComboBoxWithBrowseButton;
 
+  private final WizardContext myWizardContext;
+
+  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context) {
+    super();
+
+    myWizardContext = context;
     myApplicationProjectButton.setSelected(true);
 
     myAppPropertiesEditor = new AndroidAppPropertiesEditor(moduleBuilder.getName());
+    Project project = context.getProject();
     myTestPropertiesEditor = project != null ? new AndroidTestPropertiesEditor(project) : null;
     myPropertiesPanel.setLayout(new OverlayLayout(myPropertiesPanel));
     if (myTestPropertiesEditor != null) {
@@ -129,12 +113,25 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
   public JComponent getComponent() {
     myAppPropertiesEditor.getApplicationNameField().setText(myModuleBuilder.getName());
+
+    Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+    if (selectedSdk == null) {
+      String defaultPlatformName = PropertiesComponent.getInstance().getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
+      if (defaultPlatformName != null) {
+        Sdk sdk = ProjectJdkTable.getInstance().findJdk(defaultPlatformName);
+        if (sdk != null && sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
+          selectedSdk = sdk;
+        }
+      }
+    }
+    mySdkComboBoxWithBrowseButton.rebuildSdksListAndSelectSdk(selectedSdk);
+
     return myPanel;
   }
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (myPlatformChooser.getSelectedPlatform() == null) {
+    if (mySdkComboBoxWithBrowseButton.getSelectedSdk() == null) {
       throw new ConfigurationException(AndroidBundle.message("select.platform.error"));
     }
 
@@ -150,9 +147,12 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   }
 
   public void updateDataModel() {
-    AndroidPlatform selectedPlatform = myPlatformChooser.getSelectedPlatform();
-    assert selectedPlatform != null;
-    myModuleBuilder.setPlatform(selectedPlatform);
+    Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+    assert selectedSdk != null;
+
+    PropertiesComponent.getInstance().setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
+    myWizardContext.setProjectJdk(selectedSdk);
+
     if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
       myModuleBuilder.setProjectType(myApplicationProjectButton.isSelected() ? ProjectType.APPLICATION : ProjectType.LIBRARY);
       myModuleBuilder.setActivityName(myAppPropertiesEditor.getActivityName());
@@ -164,22 +164,10 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       assert myTestPropertiesEditor != null;
       myModuleBuilder.setTestedModule(myTestPropertiesEditor.getModule());
     }
-
-    myPlatformChooser.apply();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myModel.commit();
-      }
-    });
   }
 
   @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch.android";
-  }
-
-  @Override
-  public void disposeUIResources() {
-    Disposer.dispose(myPlatformChooser);
   }
 }
