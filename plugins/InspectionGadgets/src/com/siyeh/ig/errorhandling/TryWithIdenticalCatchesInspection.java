@@ -17,7 +17,6 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -58,17 +57,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
-  public TextRange getProblemTextRange(PsiElement element) {
-    if (element instanceof PsiCatchSection) {
-      PsiJavaToken rParenth = ((PsiCatchSection)element).getRParenth();
-      if (rParenth != null) {
-        return new TextRange(0, rParenth.getTextOffset() + 1 - element.getTextOffset());
-      }
-    }
-    return null;
-  }
-
-  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new CollapseCatchSectionsFix((Integer) infos[0]);
   }
@@ -100,7 +88,10 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           if (otherCatchBlock == null) continue;
           Match match = finder.isDuplicate(otherCatchBlock, true);
           if (match != null) {
-            registerError(otherSection, i);
+            PsiJavaToken rParenth = otherSection.getRParenth();
+            if (rParenth != null) {
+                registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
+            }
             duplicates[i] = true;
             duplicates[j] = true;
           }
