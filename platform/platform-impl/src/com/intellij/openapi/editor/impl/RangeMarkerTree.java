@@ -148,6 +148,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     public long getId() {
       return myId;
     }
+
+    @Override
+    public String toString() {
+      return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+    }
   }
 
   private void updateMarkersOnChange(DocumentEvent e) {
