@@ -40,6 +40,7 @@ public class UnshelveChangesAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
     final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     List<ShelvedChange> changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGE_KEY);
     List<ShelvedBinaryFile> binaryFiles = e.getData(ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY);
@@ -52,7 +53,19 @@ public class UnshelveChangesAction extends AnAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
     String defaultName = changeLists.length == 1 ? changeLists [0].DESCRIPTION : null;
-    ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, null,
+    LocalChangeList list = null;
+    if (defaultName == null) {
+      // use first
+      list = allChangeLists.get(0);
+    } else {
+      final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
+      if (sameNamedList != null) {
+        list = sameNamedList;
+        defaultName = null;
+      }
+    }
+    defaultName = changeLists.length == 1 ? changeLists [0].DESCRIPTION : null;
+    ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
                                                       VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
     chooser.show();
     if (!chooser.isOK()) {
