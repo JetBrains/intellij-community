@@ -320,6 +320,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return checkValidity() == null;
   }
 
+  String toStringEx() {
+    return toString() + "&handler=" + super.toString();
+  }
+
   @Nullable
   protected String checkValidity() {
     ProgressManager.checkCanceled();
@@ -339,7 +343,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final SemService semService = SemService.getSemService(myManager.getProject());
       final DomInvocationHandler actual = semService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, xmlElement);
       if (!equals(actual)) {
-        return "element changed: " + this + "!=" + actual;
+        return "element changed: " + this.toStringEx() + "!=" + (actual == null ? null : actual.toStringEx());
       }
       myLastModCount = modCount;
       return null;
