@@ -201,4 +201,15 @@ public class ModuleScopesTest extends ModuleTestCase {
 
     return libraryRoot;
   }
+
+  public void testLibUnderModuleContent() throws IOException {
+    VirtualFile lib = myFixture.findOrCreateDir("lib");
+    ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    model.addContentEntry(lib);
+    model.commit();
+
+    VirtualFile file = lib.createChildData(this, "a.txt");
+    addLibrary(myModule, DependencyScope.COMPILE);
+    assertTrue(myModule.getModuleWithDependenciesAndLibrariesScope(false).contains(file));
+  }
 }

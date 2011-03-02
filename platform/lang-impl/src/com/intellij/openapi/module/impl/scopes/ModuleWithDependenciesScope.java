@@ -118,7 +118,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(VirtualFile file) {
-    return myRoots.contains(getFileRoot(file));
+    if (myProjectFileIndex.isInContent(file) && myRoots.contains(myProjectFileIndex.getSourceRootForFile(file))) {
+      return true;
+    }
+    return myRoots.contains(myProjectFileIndex.getClassRootForFile(file));
   }
 
   @Override
