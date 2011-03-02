@@ -270,6 +270,11 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
       for (ProcessingItem item : myItems) {
         if (item instanceof DexItem) {
           DexItem dexItem = (DexItem)item;
+
+          if (!AndroidCompileUtil.isModuleAffected(myContext, dexItem.myModule)) {
+            continue;
+          }
+
           AndroidDx1 dxTool = new AndroidDx1();
           String outputDirPath = FileUtil.toSystemDependentName(dexItem.myClassDir.getPath());
           String[] files = new String[dexItem.myFiles.size()];

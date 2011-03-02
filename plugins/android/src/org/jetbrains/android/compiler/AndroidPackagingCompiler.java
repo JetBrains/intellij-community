@@ -136,7 +136,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
             AptPackagingItem item =
-              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
+              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK, module);
             item.setNativeLibsFolders(collectNativeLibsFolders(facet));
             item.setClassesDexPath(classesDexPath);
             item.setSourceRoots(sourceRoots);
@@ -180,6 +180,11 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     final List<ProcessingItem> result = new ArrayList<ProcessingItem>();
     for (ProcessingItem processingItem : items) {
       AptPackagingItem item = (AptPackagingItem)processingItem;
+
+      if (!AndroidCompileUtil.isModuleAffected(context, item.myModule)) {
+        continue;
+      }
+
       try {
 
         String[] externalLibPaths = getPaths(item.getExternalLibraries());
@@ -234,17 +239,20 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private VirtualFile[] mySourceRoots;
     private VirtualFile[] myExternalLibraries;
     private final boolean myGenerateUnsignedApk;
+    private final Module myModule;
 
     private AptPackagingItem(String sdkPath,
                              @NotNull VirtualFile manifestFile,
                              @NotNull String resPackagePath,
                              @NotNull String finalPath,
-                             boolean generateUnsignedApk) {
+                             boolean generateUnsignedApk,
+                             @NotNull Module module) {
       mySdkPath = sdkPath;
       myManifestFile = manifestFile;
       myResPackagePath = resPackagePath;
       myFinalPath = finalPath;
       myGenerateUnsignedApk = generateUnsignedApk;
+      myModule = module;
     }
 
     @NotNull

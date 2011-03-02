@@ -230,6 +230,11 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     for (GenerationItem item : items) {
       if (item instanceof IdlGenerationItem) {
         final IdlGenerationItem idlItem = (IdlGenerationItem)item;
+
+        if (!AndroidCompileUtil.isModuleAffected(context, idlItem.myModule)) {
+          continue;
+        }
+
         try {
           VirtualFile[] sourceRoots = AndroidPackagingCompiler.getSourceRootsForModuleAndDependencies(idlItem.myModule);
           final Map<CompilerMessageCategory, List<String>> messages = AndroidIdl

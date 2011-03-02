@@ -230,6 +230,10 @@ public class AndroidCompileUtil {
     generate(compiler, contextWrapper[0]);
   }
 
+  public static boolean isModuleAffected(CompileContext context, Module module) {
+    return ArrayUtil.find(context.getCompileScope().getAffectedModules(), module) >= 0;
+  }
+
   public static void generate(GeneratingCompiler compiler, final CompileContext context) {
     if (context != null) {
 
