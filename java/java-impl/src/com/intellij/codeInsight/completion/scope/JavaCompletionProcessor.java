@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -108,6 +109,15 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
+  private static boolean isInitializedImplicitly(final PsiField field) {
+    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensions()) {
+      if (provider.isImplicitWrite(field)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static Set<PsiField> getNonInitializedFields(PsiElement element) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
@@ -131,7 +141,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     final PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
     for (PsiField field : containingClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null && !isInitializedImplicitly(field)) {
         fields.add(field);
       }
     }
