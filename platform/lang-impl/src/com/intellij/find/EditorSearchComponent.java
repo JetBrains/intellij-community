@@ -29,8 +29,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.IncrementalFindAction;
-import com.intellij.openapi.editor.actions.ReplaceAction;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -208,8 +206,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     group.add(new PrevOccurrenceAction());
     group.add(new NextOccurrenceAction());
     group.add(new FindAllAction());
-    group.add(new IncrementalFindAction());
-    group.add(new ReplaceAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", group, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -235,7 +231,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myOptionsPane.add(myCbInLiterals);
     }
 
-    myMoreOptionsButton = new LinkLabel("more options", null, new LinkListener() {
+    myMoreOptionsButton = new LinkLabel("More options", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myOptionsBalloon == null || myOptionsBalloon.isDisposed()) {
@@ -256,6 +252,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       @Override
       public void findModelChanged(FindModel findModel) {
         syncFindModels(FindManager.getInstance(myProject).getFindInFileModel(), myFindModel);
+        String stringToFind = myFindModel.getStringToFind();
+        if (!wholeWordsApplicable(stringToFind)) {
+          myFindModel.setWholeWordsOnly(false);
+        }
         updateUIWithFindModel();
         updateResults(true);
       }
@@ -267,7 +267,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     myCbMatchCase.setMnemonic('C');
     myCbWholeWords.setMnemonic('M');
-    myCbRegexp.setMnemonic('x');
+    myCbRegexp.setMnemonic('e');
     myCbInComments.setMnemonic('o');
     myCbInLiterals.setMnemonic('l');
 
@@ -431,9 +431,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myCbInLiterals.setSelected(myFindModel.isInStringLiteralsOnly());
 
     String stringToFind = myFindModel.getStringToFind();
+
     if (!StringUtil.equals(stringToFind, mySearchField.getText())) {
       mySearchField.setText(stringToFind);
     }
+
+    myCbWholeWords.setEnabled(wholeWordsApplicable(stringToFind));
 
     setTrackingSelection(!myFindModel.isGlobal());
 
@@ -454,6 +457,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
       updateExcludeStatus();
     }
+  }
+
+  private boolean wholeWordsApplicable(String stringToFind) {
+    return !stringToFind.startsWith(" ") &&
+           !stringToFind.startsWith("\t") &&
+           !stringToFind.endsWith(" ") &&
+           !stringToFind.endsWith("\t");
   }
 
   private static FindModel createFindModel(FindModel findInFileModel, boolean isReplace) {
@@ -557,7 +567,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private void updateExcludeStatus() {
     if (myExcludeButton != null) {
       LiveOccurrence cursor = mySearchResults.getCursor();
-      myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "exclude" : "include");
+      myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "Exclude" : "Include");
       myReplaceAllButton.setEnabled(mySearchResults.hasMatches());
       if (cursor != null) {
         myExcludeButton.setEnabled(true);
@@ -1025,7 +1035,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     @Override
     public void getFocusBack() {
-      mySearchField.requestFocus();
+      if (myFindModel != null && myFindModel.isReplaceState()) {
+        requestFocus(myReplaceField);
+      } else {
+        requestFocus(mySearchField);
+      }
     }
 
     public void performReplace() {
