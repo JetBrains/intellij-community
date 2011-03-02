@@ -16,10 +16,9 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ImmutableUserMap;
 
-import java.util.List;
+import java.util.LinkedList;
 
 /**
  * @author peter
@@ -30,8 +29,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   private final Lexer myBaseLexer;
   private int myTokenStart;
-  private final List<IElementType> myTypeCache = new SmartList<IElementType>();
-  private final List<Integer> myEndOffsetCache = new SmartList<Integer>();
+  private final LinkedList<IElementType> myTypeCache = new LinkedList<IElementType>();
+  private final LinkedList<Integer> myEndOffsetCache = new LinkedList<Integer>();
 
   public LookAheadLexer(final Lexer baseLexer) {
     myBaseLexer = baseLexer;
@@ -52,8 +51,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   public void advance() {
     if (!myTypeCache.isEmpty()) {
-      myTypeCache.remove(0);
-      myTokenStart = myEndOffsetCache.remove(0);
+      myTypeCache.removeFirst();
+      myTokenStart = myEndOffsetCache.removeFirst();
     }
     if (myTypeCache.isEmpty()) {
       doLookAhead();
@@ -77,12 +76,12 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public int getState() {
-    int offset = myTypeCache.size() - 1;
+    int offset = myTokenStart - myLastOffset;
     return myLastState | (offset << 16);
   }
 
   public int getTokenEnd() {
-    return myEndOffsetCache.get(0);
+    return myEndOffsetCache.getFirst();
   }
 
   public int getTokenStart() {
@@ -105,7 +104,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   public IElementType getTokenType() {
-    return myTypeCache.get(0);
+    return myTypeCache.getFirst();
   }
 
   @Override
