@@ -39,7 +39,7 @@ public class UpdateStrategy {
     myMajorVersion = majorVersion;
     myUpdatesInfo = updatesInfo;
     myUpdateSettings = updateSettings;
-    this.myCurrentBuild = currentBuild;
+    myCurrentBuild = currentBuild;
     myChannelStatus = updateSettings.getSelectedChannelStatus();
   }
 
@@ -96,9 +96,11 @@ public class UpdateStrategy {
   }
 
   private boolean hasNewVersion(@NotNull UpdateChannel channel) {
-    if (channel.getLatestBuild() == null || channel.getLatestBuild().getNumber() == null) {
+    BuildInfo latestBuild = channel.getLatestBuild();
+    if (latestBuild == null || latestBuild.getNumber() == null ||
+        myUpdateSettings.getIgnoredBuildNumbers().contains(latestBuild.getNumber().asStringWithoutProductCode())) {
       return false;
     }
-    return myCurrentBuild.compareTo(channel.getLatestBuild().getNumber()) < 0;
+    return myCurrentBuild.compareTo(latestBuild.getNumber()) < 0;
   }
 }

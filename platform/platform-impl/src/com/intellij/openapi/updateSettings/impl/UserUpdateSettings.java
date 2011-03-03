@@ -23,6 +23,7 @@ public interface UserUpdateSettings {
   @NotNull
   List<String> getKnownChannelsIds();
 
+  List<String> getIgnoredBuildNumbers();
 
   void setKnownChannelIds(List<String> ids);
 

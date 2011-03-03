@@ -49,6 +49,19 @@ public class UpdateStrategyTest extends TestCase {
     Assert.assertEquals("95.627", update.getNumber().toString());
   }
 
+  public void testIgnore() {
+    //assume user has version 9 eap - and used eap channel - we want to introduce new eap
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    settings.addIgnoredBuildNumber("95.627");
+    //first time load
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
+
+    final CheckForUpdateResult result = strategy.checkForUpdates();
+    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    final BuildInfo update = result.getNewBuildInSelectedChannel();
+    Assert.assertNull(update);
+  }
+
   public void testNewChannelAppears() {
     // assume user has version 9 eap subscription (default or selected)
     // and new channel appears - eap of version 10 is there

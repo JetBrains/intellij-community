@@ -23,7 +23,7 @@
             </build>
         </channel>
 
-        <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" majorVersion="9"
+        <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" majorVersion="10"
                  url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP">
             <build number="98.620" version="10">
                 <message>IntelliJ IDEA X RC is available.

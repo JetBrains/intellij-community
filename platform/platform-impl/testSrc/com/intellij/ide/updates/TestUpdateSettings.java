@@ -20,22 +20,33 @@ import com.intellij.openapi.updateSettings.impl.ChannelStatus;
 import com.intellij.openapi.updateSettings.impl.UserUpdateSettings;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class TestUpdateSettings implements UserUpdateSettings {
   private ChannelStatus myChannelStatus;
   private List<String> myKnownChannelIds;
+  private final List<String> myIgnoredBuildNumbers = new ArrayList<String>();
 
   public TestUpdateSettings(ChannelStatus channelStatus, String... knownChannelIds) {
     myChannelStatus = channelStatus;
-    this.myKnownChannelIds = Arrays.asList(knownChannelIds);
+    myKnownChannelIds = Arrays.asList(knownChannelIds);
   }
 
   @NotNull
   @Override
   public List<String> getKnownChannelsIds() {
     return myKnownChannelIds;
+  }
+
+  @Override
+  public List<String> getIgnoredBuildNumbers() {
+    return myIgnoredBuildNumbers;
+  }
+
+  public void addIgnoredBuildNumber(String buildNumber) {
+    myIgnoredBuildNumbers.add(buildNumber);
   }
 
   @Override

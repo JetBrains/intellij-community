@@ -50,6 +50,9 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
 
+  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+  public JDOMExternalizableStringList myIgnoredBuildNumbers = new JDOMExternalizableStringList();
+
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
   public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
@@ -96,6 +99,11 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
         myKnownUpdateChannels.add(id);
       }
     }
+  }
+
+  @Override
+  public List<String> getIgnoredBuildNumbers() {
+    return myIgnoredBuildNumbers;
   }
 
   @NotNull
