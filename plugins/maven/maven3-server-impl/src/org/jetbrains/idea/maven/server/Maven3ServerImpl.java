@@ -16,8 +16,6 @@
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.server.embedder.MavenFacadeEmbedderImpl;
-import org.jetbrains.idea.maven.server.embedder.MavenFacadeIndexerImpl;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -36,7 +34,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
 
   public MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException {
     try {
-      MavenFacadeEmbedderImpl result = MavenFacadeEmbedderImpl.create(settings);
+      Maven3ServerEmbedderImpl result = Maven3ServerEmbedderImpl.create(settings);
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -47,7 +45,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
 
   public MavenServerIndexer createIndexer() throws RemoteException {
     try {
-      MavenFacadeIndexerImpl result = new MavenFacadeIndexerImpl();
+      Maven3FacadeIndexerImpl result = new Maven3FacadeIndexerImpl();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -58,7 +56,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
 
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
     try {
-      return MavenFacadeEmbedderImpl.interpolateAndAlignModel(model, basedir);
+      return Maven3ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -67,7 +65,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
 
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
     try {
-      return MavenFacadeEmbedderImpl.assembleInheritance(model, parentModel);
+      return Maven3ServerEmbedderImpl.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -79,7 +77,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
                                                 Collection<String> explicitProfiles,
                                                 Collection<String> alwaysOnProfiles) {
     try {
-      return MavenFacadeEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
       throw rethrowException(e);

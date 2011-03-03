@@ -15,22 +15,20 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class Maven3ServerGlobals {
-  private static MavenServerLoggerWrapper myLogger;
-  private static MavenServerDownloadListener myDownloadListener;
+public class ExecutorManager {
+  private static final ExecutorService myExecutor = new ThreadPoolExecutor(3, Integer.MAX_VALUE, 30 * 60L, TimeUnit.SECONDS,
+                                                                           new SynchronousQueue<Runnable>(),new ThreadFactory() {
+      AtomicInteger num = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Maven Embedder "+num.getAndIncrement());
+      }
+    });
 
-  public static MavenServerLoggerWrapper getLogger() {
-    return myLogger;
-  }
-
-  public static MavenServerDownloadListener getDownloadListener() {
-    return myDownloadListener;
-  }
-
-
-  public static void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) {
-    myLogger = new MavenServerLoggerWrapper(logger);
-    myDownloadListener = downloadListener;
+  public static Future<?> execute(Runnable r) {
+    return myExecutor.submit(r);
   }
 }

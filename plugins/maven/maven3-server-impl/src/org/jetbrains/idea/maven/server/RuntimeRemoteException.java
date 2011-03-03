@@ -15,22 +15,15 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import java.rmi.RemoteException;
 
-public class Maven3ServerGlobals {
-  private static MavenServerLoggerWrapper myLogger;
-  private static MavenServerDownloadListener myDownloadListener;
-
-  public static MavenServerLoggerWrapper getLogger() {
-    return myLogger;
+public class RuntimeRemoteException extends RuntimeException {
+  public RuntimeRemoteException(RemoteException cause) {
+    super(cause);
   }
 
-  public static MavenServerDownloadListener getDownloadListener() {
-    return myDownloadListener;
-  }
-
-
-  public static void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) {
-    myLogger = new MavenServerLoggerWrapper(logger);
-    myDownloadListener = downloadListener;
+  @Override
+  public RemoteException getCause() {
+    return (RemoteException)super.getCause();
   }
 }

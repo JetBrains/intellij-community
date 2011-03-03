@@ -10,74 +10,114 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="maven-server-api" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module-library">
-      <library>
+      <library name="Maven3">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/classworlds-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Maven">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Maven Embedder">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
+          <root url="file://$MODULE_DIR$/lib/maven3/lib" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../../maven/nexus-1.2.3/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/nexus-1.2.3/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-core/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/aggregate-mojo-failure/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-artifact/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-model-builder/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/mojo-config-error/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/missing-req-mojo-param/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/bad-ext-plugin-dep-ver/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-artifact/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/project-mojo-failure/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/ext-realm-error/ext/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-compat/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/project-dep-missing/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/err-resolving-project-dep/project/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-core/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/projects/isolated-project-getting-parent-pom/project/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-model/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/missing-module-pom/child1/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/projects/isolated-project-getting-parent-pom/project/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-settings/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/project-dep-missing/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/missing-module-pom/child1/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-plugin-api/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-core/src/test/projects/lifecycle-executor/project-with-additional-lifecycle-elements/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/bad-build-plan/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/err-resolving-project-dep/project/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/duplicated-attachments/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-core/src/test/projects/lifecycle-executor/project-with-additional-lifecycle-elements/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-aether-provider/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/missing-direct-invoke-mojo/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/embedder-test-project/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-aether-provider/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/profile-activator-lookup-err/ext/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-model-builder/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-settings-builder/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/mojo-lookup-err/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/ext-plugin-version-err/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-model/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/ext-plugin-realm-error/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-plugin-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/project-mojo-failure/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/embedder-test-project/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-settings-builder/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-compat/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/examples/simple-project/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/mojo-exec-err/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/bad-ext-plugin-maven-ver/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/test/error-reporting-projects/config-rdonly-mojo-param/plugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/apache-maven/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/apache-maven-3.0.3-src.zip!/apache-maven-3.0.3/maven-embedder/src/examples/simple-project/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-scm/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-tcks/wagon-tck-http/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-webdav-jackrabbit/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ftp/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh-common/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-scm/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh-common/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-provider-api/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-webdav-jackrabbit/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ftp/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-tcks/wagon-tck-http/sample-tck-consumer/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http-shared/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http-lightweight/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-provider-test/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-file/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh-external/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh-common-test/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http-shared/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-file/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-ssh-external/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-provider-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib-src/wagon-1.0-beta-7-source-release.zip!/wagon-1.0-beta-7/wagon-providers/wagon-http-lightweight/src/test/java" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/lib/maven3/lib" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/nexus-indexer-3.0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib-src/nexus-indexer-3.0.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/activation-1.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="commons-logging" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-beanutils.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib-src/maven-dependency-tree-1.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven" scope="TEST" />

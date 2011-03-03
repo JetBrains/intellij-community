@@ -12,7 +12,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/lucene-core-2.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
