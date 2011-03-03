@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -161,7 +162,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       int max = consoles.size() > 0 ? 1 : 0;
       for (RunContentDescriptor dsc : consoles) {
         try {
-          int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length()+1, dsc.getDisplayName().length()-1));
+          int num = Integer.parseInt(dsc.getDisplayName().substring(consoleTitle.length() + 1, dsc.getDisplayName().length() - 1));
           if (num > max) {
             max = num;
           }
@@ -328,7 +329,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     private final AnAction myRunAction;
     private final AnAction myNextAction;
     private final AnAction myPrevAction;
-
+    private final List<AnAction> myAdditionalActions = Lists.newArrayList();
 
     public ConsoleExecutionActions(AnAction runAction, AnAction nextAction, AnAction prevAction) {
       myRunAction = runAction;
@@ -340,9 +341,14 @@ public abstract class AbstractConsoleRunnerWithHistory {
       return getActionsAsList().toArray(new AnAction[getActionsAsList().size()]);
     }
 
-
     public List<AnAction> getActionsAsList() {
-      return Lists.newArrayList(myRunAction, myNextAction, myPrevAction);
+      ArrayList<AnAction> list = Lists.newArrayList(myRunAction, myNextAction, myPrevAction);
+      list.addAll(myAdditionalActions);
+      return list;
+    }
+
+    public boolean addAdditionalAction(AnAction action) {
+      return myAdditionalActions.add(action);
     }
 
     public AnAction getRunAction() {

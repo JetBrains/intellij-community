@@ -17,7 +17,6 @@
 package com.intellij.execution;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
