@@ -307,6 +307,21 @@ public final class UpdateChecker {
     return result;
   }
 
+  public static void showUpdateResult(CheckForUpdateResult checkForUpdateResult,
+                                      List<PluginDownloader> updatedPlugins,
+                                      boolean showConfirmation,
+                                      boolean enableLink,
+                                      final boolean alwaysShowResults) {
+    if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
+      new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink).show();
+    }
+    else if (updatedPlugins != null || alwaysShowResults) {
+      NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
+      dialog.setShowConfirmation(showConfirmation);
+      dialog.show();
+    }
+}
+
   private static Document loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + url + "' )");
@@ -372,16 +387,6 @@ public final class UpdateChecker {
       uid = propertiesComponent.getValue(INSTALLATION_UID);
     }
     return uid;
-  }
-
-  public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins, boolean showConfirmation) {
-    NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins, enableLink);
-    dialog.setShowConfirmation(showConfirmation);
-    dialog.show();
-  }
-
-  public static void showUpdateInfoDialog(boolean enableLink, final UpdateChannel channel, final List<PluginDownloader> updatePlugins) {
-    new UpdateInfoDialog(true, channel, updatePlugins, enableLink).show();
   }
 
   public static boolean install(List<PluginDownloader> downloaders) {

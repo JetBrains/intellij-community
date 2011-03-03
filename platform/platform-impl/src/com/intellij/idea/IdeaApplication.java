@@ -215,12 +215,7 @@ public class IdeaApplication {
           app.invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
-                UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins);
-              }
-              else if (updatedPlugins != null) {
-                UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
-              }
+              UpdateChecker.showUpdateResult(checkForUpdateResult, updatedPlugins, showConfirmation, true, false);
             }
           });
         }

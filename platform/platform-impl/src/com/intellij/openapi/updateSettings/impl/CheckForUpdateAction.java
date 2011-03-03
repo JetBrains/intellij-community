@@ -56,15 +56,8 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
               return;
             }
 
-            if (result.hasNewBuildInSelectedChannel()) {
-              //information about new channel could be there
-              UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-              UpdateChecker.showUpdateInfoDialog(enableLink, result.getUpdatedChannel(), updatedPlugins);
-            }
-            else {
-              //information about new channel could be there
-              UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
-            }
+            UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+            UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
           }
         });
       }
