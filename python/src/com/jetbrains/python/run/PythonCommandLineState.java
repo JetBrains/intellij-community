@@ -39,6 +39,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -234,9 +235,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected Collection<String> collectPythonPath() {
+    final Module module = myConfig.getModule();
+    return collectPythonPath(module);
+  }
+
+  @NotNull
+  public static Collection<String> collectPythonPath(@Nullable Module module) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
-    final Module module = myConfig.getModule();
     if (module != null) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       addRoots(pythonPathList, moduleRootManager.getContentRoots());
@@ -275,6 +281,4 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
   }
-
-
 }
