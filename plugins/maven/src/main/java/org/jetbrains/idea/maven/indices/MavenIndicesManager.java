@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -72,7 +73,8 @@ public class MavenIndicesManager {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
   private volatile MavenIndex myUpdatingIndex;
-  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(IndicesBundle.message("maven.indices.updating"));
+  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(ProjectManager.getInstance().getDefaultProject(),
+                                                                              IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<MavenArchetype>();
 

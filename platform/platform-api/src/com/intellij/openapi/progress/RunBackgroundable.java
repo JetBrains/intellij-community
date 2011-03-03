@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RunBackgroundable {
   private RunBackgroundable() {
@@ -30,21 +28,30 @@ public class RunBackgroundable {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       pm.run(task);
     } else {
-      try {
-        task.run(pm.getProgressIndicator());
-      } catch (ProcessCanceledException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            task.onCancel();
-          }
-        });
-        return;
+      runIfBackgroundThread(task, pm.getProgressIndicator(), null);
+    }
+  }
+
+  public static void runIfBackgroundThread(final Task task, final ProgressIndicator pi, @Nullable final Runnable pooledContinuation) {
+    boolean canceled = true;
+    try {
+      task.run(pi);
+      if (pooledContinuation != null) {
+        pooledContinuation.run();
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
+      canceled = pi != null && pi.isCanceled();
+    } catch (ProcessCanceledException e) {
+      //
+    }
+    final boolean finalCanceled = canceled;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (finalCanceled) {
+          task.onCancel();
+        } else {
           task.onSuccess();
         }
-      });
-    }
+      }
+    });
   }
 }
