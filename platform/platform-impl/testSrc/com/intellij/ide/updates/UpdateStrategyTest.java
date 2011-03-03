@@ -28,7 +28,7 @@ public class UpdateStrategyTest extends TestCase {
   public void testWithUndefinedSelection() {
     final TestUpdateSettings settings = new TestUpdateSettings();
     //first time load
-    UpdateStrategy strategy = new UpdateStrategy(BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
 
     final CheckForUpdateResult result1 = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result1.getState());
@@ -54,7 +54,7 @@ public class UpdateStrategyTest extends TestCase {
     //assume user has version 9 eap - and used eap channel - we want to introduce new eap
     final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
     //first time load
-    UpdateStrategy strategy = new UpdateStrategy(BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
 
     final CheckForUpdateResult result = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -68,7 +68,7 @@ public class UpdateStrategyTest extends TestCase {
     // and new channel appears - eap of version 10 is there
     final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
     //first time load
-    UpdateStrategy strategy = new UpdateStrategy(BuildNumber.fromString("IU-95.627"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 
 
     final CheckForUpdateResult result = strategy.checkForUpdates();
@@ -89,7 +89,7 @@ public class UpdateStrategyTest extends TestCase {
     //we need to show only one dialog
     final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
     //first time load
-    UpdateStrategy strategy = new UpdateStrategy(BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 
     final CheckForUpdateResult result = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());

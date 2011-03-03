@@ -29,6 +29,7 @@ public class UpdateChannel {
   private final String myId;
   private final String myName;
   private final ChannelStatus myStatus;
+  private final int myMajorVersion;
   private final String myHomePageUrl;
   private final String myFeedbackUrl;
   private final List<BuildInfo> myBuilds;
@@ -37,6 +38,10 @@ public class UpdateChannel {
     myId = node.getAttributeValue("id");
     myName = node.getAttributeValue("name");
     myStatus = ChannelStatus.fromCode(node.getAttributeValue("status"));
+
+    String majorVersion = node.getAttributeValue("majorVersion");
+    myMajorVersion = majorVersion != null ? Integer.parseInt(majorVersion) : -1;
+
     myHomePageUrl = node.getAttributeValue("url");
     myFeedbackUrl = node.getAttributeValue("feedback");
 
@@ -56,6 +61,10 @@ public class UpdateChannel {
     }
 
     return build;
+  }
+
+  public int getMajorVersion() {
+    return myMajorVersion;
   }
 
   public String getId() {

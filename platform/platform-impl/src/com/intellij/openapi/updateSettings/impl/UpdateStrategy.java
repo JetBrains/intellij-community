@@ -31,16 +31,19 @@ public class UpdateStrategy {
   public static enum State {LOADED, CONNECTION_ERROR, NOTHING_LOADED}
 
   private UserUpdateSettings updateSettings;
+  private int myMajorVersion;
   private BuildNumber ourBuild;
 
   private ChannelStatus myChannelStatus;
   private UpdatesInfo updatesInfo;
 
 
-  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings) {
+  public UpdateStrategy(int majorVersion, @NotNull BuildNumber currentBuild, @NotNull UpdatesInfo updatesInfo,
+                        @NotNull UserUpdateSettings updateSettings) {
+    myMajorVersion = majorVersion;
     this.updatesInfo = updatesInfo;
     this.updateSettings = updateSettings;
-    this.ourBuild = ourBuild;
+    this.ourBuild = currentBuild;
     myChannelStatus = updateSettings.getSelectedChannelStatus();
   }
 

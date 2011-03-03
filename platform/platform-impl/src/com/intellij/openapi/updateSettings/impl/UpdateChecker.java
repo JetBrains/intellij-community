@@ -263,7 +263,9 @@ public final class UpdateChecker {
 
   @NotNull
   public static CheckForUpdateResult doCheckForUpdates() {
-    BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    BuildNumber currentBuild = appInfo.getBuild();
+    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
     final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
     final UpdateSettings settings = UpdateSettings.getInstance();
     final UpdatesInfo info;
@@ -277,7 +279,7 @@ public final class UpdateChecker {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
 
-    UpdateStrategy strategy = new UpdateStrategy(ourBuild, info, settings);
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, currentBuild, info, settings);
     return strategy.checkForUpdates();
   }
 
