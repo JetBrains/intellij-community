@@ -22,9 +22,8 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -126,16 +125,11 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null || lastParent.getParent() != this)
+    if (lastParent == null || lastParent.getParent() != this || lastParent == getIteratedValue())
       // Parent element should not see our vars
       return true;
 
-    final PsiParameter iterationParameter = getIterationParameter();
-    if (iterationParameter != null) {
-      return processor.execute(iterationParameter, state);
-    }
-
-    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+    return processor.execute(getIterationParameter(), state);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
