@@ -52,7 +52,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     if (result.hasNewBuildInSelectedChannel()) {
       //information about new channel could be there
       UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-      UpdateChecker.showUpdateInfoDialog(enableLink, result.getSelected(), updatedPlugins);
+      UpdateChecker.showUpdateInfoDialog(enableLink, result.getUpdatedChannel(), updatedPlugins);
     }else{
       //information about new channel could be there
       UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);

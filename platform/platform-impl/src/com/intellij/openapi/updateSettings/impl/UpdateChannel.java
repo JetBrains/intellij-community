@@ -82,4 +82,8 @@ public class UpdateChannel {
   public String getName() {
     return myName;
   }
+
+  public ChannelStatus getStatus() {
+    return myStatus;
+  }
 }

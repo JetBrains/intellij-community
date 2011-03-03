@@ -26,7 +26,7 @@ public class UpdateStrategyTest extends TestCase {
 
   //could be if somebody used before previous version of IDEA
   public void testWithUndefinedSelection() {
-    final TestUpdateSettings settings = new TestUpdateSettings();
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, false, null);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
 

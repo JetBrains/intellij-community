@@ -32,27 +32,40 @@ public class UpdateStrategy {
 
   private UserUpdateSettings updateSettings;
   private int myMajorVersion;
-  private BuildNumber ourBuild;
+  private BuildNumber myCurrentBuild;
 
   private ChannelStatus myChannelStatus;
-  private UpdatesInfo updatesInfo;
+  private UpdatesInfo myUpdatesInfo;
 
 
   public UpdateStrategy(int majorVersion, @NotNull BuildNumber currentBuild, @NotNull UpdatesInfo updatesInfo,
                         @NotNull UserUpdateSettings updateSettings) {
     myMajorVersion = majorVersion;
-    this.updatesInfo = updatesInfo;
+    myUpdatesInfo = updatesInfo;
     this.updateSettings = updateSettings;
-    this.ourBuild = currentBuild;
+    this.myCurrentBuild = currentBuild;
     myChannelStatus = updateSettings.getSelectedChannelStatus();
   }
 
   public final CheckForUpdateResult checkForUpdates() {
-    final Product product = updatesInfo.getProduct(ourBuild.getProductCode());
+    final Product product = myUpdatesInfo.getProduct(myCurrentBuild.getProductCode());
 
-    if (product.getChannels().isEmpty()) {
+    if (product == null || product.getChannels().isEmpty()) {
       return new CheckForUpdateResult(State.NOTHING_LOADED);
     }
+
+    UpdateChannel updatedChannel = null;
+    BuildInfo newBuild = null;
+    List<UpdateChannel> activeChannels = getActiveChannels(product);
+    for (UpdateChannel channel : activeChannels) {
+      if (hasNewVersion(channel)) {
+        updatedChannel = channel;
+        newBuild = updatedChannel.getLatestBuild();
+        break;
+      }
+    }
+
+    return new CheckForUpdateResult(updatedChannel, newBuild, null, Collections.<String>emptyList(), null);
 
     /*
     boolean replacedWithAppDef = false;
@@ -79,7 +92,17 @@ public class UpdateStrategy {
       newChannels.getFirst(), getFilteredKnownChannels(product),
       newChannels.getSecond());
     */
-    return new CheckForUpdateResult(State.NOTHING_LOADED);
+  }
+
+  private List<UpdateChannel> getActiveChannels(Product product) {
+    List<UpdateChannel> channels = product.getChannels();
+    List<UpdateChannel> result = new ArrayList<UpdateChannel>();
+    for (UpdateChannel channel : channels) {
+      if (channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) {
+        result.add(channel);
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -93,11 +116,11 @@ public class UpdateStrategy {
     return result;
   }
 
-  private boolean isChannelIsOlderThenBuild(@NotNull UpdateChannel channel) {
+  private boolean hasNewVersion(@NotNull UpdateChannel channel) {
     if (channel.getLatestBuild() == null || channel.getLatestBuild().getNumber() == null) {
-      return true;
+      return false;
     }
-    return ourBuild.compareTo(channel.getLatestBuild().getNumber()) >= 0;
+    return myCurrentBuild.compareTo(channel.getLatestBuild().getNumber()) < 0;
   }
 
   @Nullable
@@ -117,7 +140,7 @@ public class UpdateStrategy {
   @Nullable
   private BuildInfo getNewVersionInSelectedChannel(@NotNull UpdateChannel channel) {
     final BuildInfo latestBuild = channel.getLatestBuild();
-    if (ourBuild.compareTo(latestBuild.getNumber()) < 0) {
+    if (myCurrentBuild.compareTo(latestBuild.getNumber()) < 0) {
       return latestBuild;
     }
     return null;
@@ -153,10 +176,10 @@ public class UpdateStrategy {
 
 
   private boolean isInteresting(UpdateChannel channel) {
-    return ourBuild.getBaselineVersion() <= channel.getLatestBuild().getNumber().getBaselineVersion();
+    return myCurrentBuild.getBaselineVersion() <= channel.getLatestBuild().getNumber().getBaselineVersion();
   }
 
   private boolean isNewer(UpdateChannel channel) {
-    return channel.getLatestBuild().getNumber().getBaselineVersion() > ourBuild.getBaselineVersion();
+    return channel.getLatestBuild().getNumber().getBaselineVersion() > myCurrentBuild.getBaselineVersion();
   }
 }

@@ -23,8 +23,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class CheckForUpdateResult {
-  @NotNull
-  private final UpdateChannel selected;
+  @Nullable
+  private final UpdateChannel myUpdatedChannel;
 
   @Nullable
   private final BuildInfo newBuildInSelectedChannel;
@@ -44,12 +44,12 @@ public class CheckForUpdateResult {
   private final Exception error;
 
 
-  public CheckForUpdateResult(@NotNull UpdateChannel selected,
+  public CheckForUpdateResult(@Nullable UpdateChannel updated,
                               @Nullable BuildInfo newBuildInSelectedChannel,
                               @Nullable Collection<UpdateChannel> newChannels, List<String> allChannelsIds,
                               @Nullable UpdateChannel channelToPropose) {
     this.newBuildInSelectedChannel = newBuildInSelectedChannel;
-    this.selected = selected;
+    myUpdatedChannel = updated;
     this.newChannels = newChannels;
     this.allChannelsIds = allChannelsIds;
     this.newChannelToPropose = channelToPropose;
@@ -62,7 +62,7 @@ public class CheckForUpdateResult {
     this.newChannels = null;
     this.allChannelsIds = null;
     this.newChannelToPropose = null;
-    this.selected = null;
+    this.myUpdatedChannel = null;
     this.state = state;
     this.error = e;
   }
@@ -106,7 +106,7 @@ public class CheckForUpdateResult {
   }
 
   @NotNull
-  public UpdateChannel getSelected() {
-    return selected;
+  public UpdateChannel getUpdatedChannel() {
+    return myUpdatedChannel;
   }
 }

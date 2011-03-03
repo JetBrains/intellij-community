@@ -209,7 +209,7 @@ public class IdeaApplication {
 
       final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
       if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
-        UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getSelected(), updatedPlugins);
+        UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins);
       }
       else if (updatedPlugins != null) {
         UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);

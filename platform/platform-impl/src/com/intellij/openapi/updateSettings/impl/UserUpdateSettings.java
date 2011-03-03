@@ -32,5 +32,6 @@ public interface UserUpdateSettings {
 
   void setKnownChannelIds(List<String> ids);
 
+  @NotNull
   ChannelStatus getSelectedChannelStatus();
 }

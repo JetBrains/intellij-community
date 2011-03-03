@@ -28,9 +28,6 @@ public class TestUpdateSettings implements UserUpdateSettings {
   private boolean disabled;
   private List<String> knowsChannels;
 
-  public TestUpdateSettings() {
-  }
-
   public TestUpdateSettings(ChannelStatus channelStatus, boolean disabled, String[] knowsChannels) {
     myChannelStatus = channelStatus;
     this.disabled = disabled;
@@ -58,6 +55,7 @@ public class TestUpdateSettings implements UserUpdateSettings {
     knowsChannels = ids;
   }
 
+  @NotNull
   @Override
   public ChannelStatus getSelectedChannelStatus() {
     return myChannelStatus;

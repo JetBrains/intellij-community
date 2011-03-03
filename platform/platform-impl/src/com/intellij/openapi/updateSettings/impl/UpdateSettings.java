@@ -112,6 +112,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     }
   }
 
+  @NotNull
   @Override
   public ChannelStatus getSelectedChannelStatus() {
     return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
