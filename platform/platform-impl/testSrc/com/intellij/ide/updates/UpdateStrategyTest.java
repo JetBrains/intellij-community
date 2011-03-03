@@ -32,7 +32,6 @@ public class UpdateStrategyTest extends TestCase {
 
     final CheckForUpdateResult result1 = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result1.getState());
-    Assert.assertTrue(result1.isReplacedWithAppDef());
     Assert.assertNull(result1.getNewBuildInSelectedChannel());
 
     /*
@@ -59,7 +58,6 @@ public class UpdateStrategyTest extends TestCase {
 
     final CheckForUpdateResult result = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    Assert.assertFalse(result.isReplacedWithAppDef());
     final BuildInfo update = result.getNewBuildInSelectedChannel();
     Assert.assertNotNull(update);
     Assert.assertEquals("95.627", update.getNumber().toString());

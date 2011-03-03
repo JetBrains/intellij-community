@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class CheckForUpdateResult {
-
-  private final boolean replacedWithAppDef;
-
   @NotNull
   private final UpdateChannel selected;
 
@@ -47,11 +44,10 @@ public class CheckForUpdateResult {
   private final Exception error;
 
 
-  public CheckForUpdateResult(boolean replacedWithAppDef, @NotNull UpdateChannel selected,
+  public CheckForUpdateResult(@NotNull UpdateChannel selected,
                               @Nullable BuildInfo newBuildInSelectedChannel,
                               @Nullable Collection<UpdateChannel> newChannels, List<String> allChannelsIds,
                               @Nullable UpdateChannel channelToPropose) {
-    this.replacedWithAppDef = replacedWithAppDef;
     this.newBuildInSelectedChannel = newBuildInSelectedChannel;
     this.selected = selected;
     this.newChannels = newChannels;
@@ -62,7 +58,6 @@ public class CheckForUpdateResult {
   }
 
   public CheckForUpdateResult(UpdateStrategy.State state, Exception e) {
-    this.replacedWithAppDef = false;
     this.newBuildInSelectedChannel = null;
     this.newChannels = null;
     this.allChannelsIds = null;
@@ -74,23 +69,6 @@ public class CheckForUpdateResult {
 
   public CheckForUpdateResult(UpdateStrategy.State state) {
     this(state,null);
-  }
-
-
-  /**
-   * @return true - if we need to override user channel selection, for example:
-   *         - user has no preferences defined (old settings config)
-   *         - user selection has no sense any more, e.g. user selected IDEA 9.x eap, then he/she upgraded his IDEA to version 10.x,
-   *         it means that we need to override his channel with new one (should we ask him or just override the channel silently?
-   *         if we could select the channel with correct type - we could do it silently, if user setting pointed to eap - we could pick new eap chanel
-   *         also we could show an notification (not modal))
-   */
-  private boolean isReplacedWithAddDefault() {
-    return replacedWithAppDef;
-  }
-
-  public boolean isReplacedWithAppDef() {
-    return replacedWithAppDef;
   }
 
   @Nullable
