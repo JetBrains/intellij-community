@@ -26,7 +26,7 @@ public class UpdateStrategyTest extends TestCase {
 
   //could be if somebody used before previous version of IDEA
   public void testWithUndefinedSelection() {
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, false);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
 
@@ -38,7 +38,7 @@ public class UpdateStrategyTest extends TestCase {
 
   public void testWithUserSelection() {
     //assume user has version 9 eap - and used eap channel - we want to introduce new eap
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
 
@@ -52,7 +52,7 @@ public class UpdateStrategyTest extends TestCase {
   public void testNewChannelAppears() {
     // assume user has version 9 eap subscription (default or selected)
     // and new channel appears - eap of version 10 is there
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 
@@ -73,7 +73,7 @@ public class UpdateStrategyTest extends TestCase {
     //and new channels appears - eap of version 10 is there
     //and new build withing old channel appears also
     //we need to show only one dialog
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 

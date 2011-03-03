@@ -25,29 +25,22 @@ import java.util.List;
 
 public class TestUpdateSettings implements UserUpdateSettings {
   private ChannelStatus myChannelStatus;
-  private boolean disabled;
-  private List<String> knowsChannels;
+  private List<String> myKnownChannelIds;
 
-  public TestUpdateSettings(ChannelStatus channelStatus, boolean disabled, String... knowsChannels) {
+  public TestUpdateSettings(ChannelStatus channelStatus, String... knownChannelIds) {
     myChannelStatus = channelStatus;
-    this.disabled = disabled;
-    this.knowsChannels = Arrays.asList(knowsChannels);
-  }
-
-  @Override
-  public boolean isCheckingDisabled() {
-    return disabled;
+    this.myKnownChannelIds = Arrays.asList(knownChannelIds);
   }
 
   @NotNull
   @Override
   public List<String> getKnownChannelsIds() {
-    return knowsChannels;
+    return myKnownChannelIds;
   }
 
   @Override
   public void setKnownChannelIds(List<String> ids) {
-    knowsChannels = ids;
+    myKnownChannelIds = ids;
   }
 
   @NotNull

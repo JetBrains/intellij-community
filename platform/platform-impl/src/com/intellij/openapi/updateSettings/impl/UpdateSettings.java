@@ -78,11 +78,6 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     }
   }
 
-  @Override
-  public boolean isCheckingDisabled() {
-    return !CHECK_NEEDED;
-  }
-
   @NotNull
   @Override
   public List<String> getKnownChannelsIds() {

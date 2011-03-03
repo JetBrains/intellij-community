@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface UserUpdateSettings {
-  boolean isCheckingDisabled();
-
   @NotNull
   List<String> getKnownChannelsIds();
 
