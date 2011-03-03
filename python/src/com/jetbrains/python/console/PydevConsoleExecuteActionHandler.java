@@ -110,10 +110,14 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
 
     if (myCurrentIndentSize != -1 && !StringUtil.isEmptyOrSpaces(line)) {
-      final int indent = myIndentHelper.getIndent(line, false);
+      int indent = myIndentHelper.getIndent(line, false);
+      if (line.endsWith(":")) {
+        indent += getPythonIndent();
+      }
       if (indent >= myCurrentIndentSize) {
         indentEditor(currentEditor, indent);
         scrollDown(currentEditor);
+
         return;
       }
     }
