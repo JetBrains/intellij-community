@@ -240,7 +240,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       VirtualFile[] value = computeFiles(param, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile 
       Object[] deps = new Object[value.length + 2];
-      deps[deps.length - 2] = param.getVirtualFile();
+      deps[deps.length - 2] = param;
       deps[deps.length - 1] = VirtualFileManager.getInstance();
 
       return CachedValueProvider.Result.create(value, deps);
