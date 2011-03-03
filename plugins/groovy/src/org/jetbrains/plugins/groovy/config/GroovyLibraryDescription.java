@@ -80,10 +80,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Nullable
   public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
-    if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length == 0) {
-      return null;
-    }
-
     final String name = dir.getName();
 
     final List<GroovyLibraryPresentationProviderBase> providers = ContainerUtil.findAll(LibraryPresentationProvider.EP_NAME.getExtensions(), GroovyLibraryPresentationProviderBase.class);
