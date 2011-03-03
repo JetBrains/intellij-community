@@ -45,3 +45,7 @@ def foo(a, b,<warning descr="Unnecessary backslash in expression."> \</warning>
 
 foo(1, 2,<warning descr="Unnecessary backslash in expression."> \</warning>
     3)
+
+# PY-3036
+v = [ "some"<warning descr="Unnecessary backslash in expression."> \</warning>
+"long string" ]

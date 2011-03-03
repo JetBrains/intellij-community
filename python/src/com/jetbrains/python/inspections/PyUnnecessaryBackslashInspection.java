@@ -75,6 +75,14 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
       findProblem(expression);
     }
 
+    @Override
+    public void visitPyStringLiteralExpression(final PyStringLiteralExpression stringLiteralExpression) {
+      PsiElement parent = stringLiteralExpression.getParent();
+      if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
+          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression)
+        findProblem(stringLiteralExpression);
+    }
+
     private void findProblem (final PsiElement expression) {
       PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
