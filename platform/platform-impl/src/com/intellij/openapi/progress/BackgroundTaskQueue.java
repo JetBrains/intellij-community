@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
@@ -29,8 +30,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Runs backgroundable tasks one by one.
@@ -133,12 +132,7 @@ public class BackgroundTaskQueue {
           ((BackgroundableProcessIndicator) pi[0]).setTitle(myTitle);
         }
 
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            pm.runProcess(wrappedTask, pi[0]);
-          }
-        });
+        ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, pi[0], runnable);
       }
     }
   }

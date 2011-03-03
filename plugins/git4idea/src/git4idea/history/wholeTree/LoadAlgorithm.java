@@ -34,14 +34,17 @@ public class LoadAlgorithm {
   private final List<ByRootLoader> myShortLoaders;
   private final Continuation myContinuation;
 
-  public LoadAlgorithm(final Project project, final List<LoaderAndRefresher<CommitHashPlusParents>> loaders, final List<ByRootLoader> shortLoaders) {
+  public LoadAlgorithm(final Project project,
+                       final List<LoaderAndRefresher<CommitHashPlusParents>> loaders,
+                       final List<ByRootLoader> shortLoaders,
+                       Continuation continuation) {
     myProject = project;
     myLoaders = loaders;
     myShortLoaders = shortLoaders;
-    myContinuation = new Continuation(myProject, false);
+    myContinuation = continuation;
   }
 
-  public void execute() {
+  public void fillContinuation() {
     final ContinuationContext.GatheringContinuationContext initContext =
       new ContinuationContext.GatheringContinuationContext();
 
@@ -53,7 +56,7 @@ public class LoadAlgorithm {
     for (ByRootLoader shortLoader : myShortLoaders) {
       initContext.next(shortLoader);
     }
-    myContinuation.run(initContext.getList());
+    myContinuation.add(initContext.getList());
   }
 
   @CalledInAwt
@@ -61,6 +64,10 @@ public class LoadAlgorithm {
     for (LoaderAndRefresher loader : myLoaders) {
       loader.interrupt();
     }
+  }
+
+  public Continuation getContinuation() {
+    return myContinuation;
   }
 
   public void resume() {

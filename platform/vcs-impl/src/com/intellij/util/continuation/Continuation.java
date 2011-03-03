@@ -17,8 +17,9 @@ package com.intellij.util.continuation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -76,6 +77,18 @@ public class Continuation {
     }
   }
 
+  public void clearQueue() {
+    myGeneralRunner.cancelEverything();
+  }
+
+  public void cancelCurrent() {
+    myGeneralRunner.cancelCurrent();
+  }
+
+  public void add(List<TaskDescriptor> list) {
+    myGeneralRunner.next(list);
+  }
+
   private static class TaskWrapper extends Task.Backgroundable {
     private final TaskDescriptor myTaskDescriptor;
     private final GeneralRunner myGeneralRunner;
@@ -106,6 +119,7 @@ public class Continuation {
     private final boolean myCancellable;
     private final List<TaskDescriptor> myQueue;
     private boolean myTriggerSuspend;
+    private BackgroundableProcessIndicator myIndicator;
 
     private GeneralRunner(final Project project, boolean cancellable) {
       myProject = project;
@@ -116,6 +130,12 @@ public class Continuation {
     @CalledInAny
     public void cancelEverything() {
       myQueue.clear();
+    }
+
+    public void cancelCurrent() {
+      if (myIndicator != null) {
+        myIndicator.cancel();
+      }
     }
 
     public void suspend() {
@@ -160,10 +180,12 @@ public class Continuation {
         TaskDescriptor current = myQueue.remove(0);
 
         if (Where.AWT.equals(current.getWhere())) {
+          myIndicator = null;
           current.run(this);
         } else {
-          // dont forget cases here if more than 2 instances of Where
-          ProgressManager.getInstance().run(new TaskWrapper(myProject, current.getName(), myCancellable, current, this));
+          final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current, this);
+          myIndicator = new BackgroundableProcessIndicator(task);
+          ProgressManagerImpl.runProcessWithProgressAsynchronously(task, myIndicator);
           return;
         }
       }
