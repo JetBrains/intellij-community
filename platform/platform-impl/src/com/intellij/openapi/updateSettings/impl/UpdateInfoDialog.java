@@ -44,16 +44,23 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected Action[] createActions() {
+    AbstractAction ignore = new AbstractAction("&Ignore This Update") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UpdateSettings.getInstance().getIgnoredBuildNumbers().add(myLatestBuild.getNumber().asStringWithoutProductCode());
+        doCancelAction();
+      }
+    };
     if (hasPatch()) {
       AbstractAction moreInfo = new AbstractAction(IdeBundle.message("updates.more.info.button")) {
         public void actionPerformed(ActionEvent e) {
           openDownloadPage();
         }
       };
-      return new Action[]{getOKAction(), moreInfo, getCancelAction()};
+      return new Action[]{getOKAction(), moreInfo, getCancelAction(), ignore };
     }
 
-    return super.createActions();
+    return new Action[] { getOKAction(), getCancelAction(), ignore };
   }
 
   private void openDownloadPage() {
@@ -69,6 +76,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     else {
       return IdeBundle.message("updates.more.info.button");
     }
+  }
+
+  @Override
+  protected String getCancelButtonText() {
+    return "&Remind Me Later";
   }
 
   protected JComponent createCenterPanel() {

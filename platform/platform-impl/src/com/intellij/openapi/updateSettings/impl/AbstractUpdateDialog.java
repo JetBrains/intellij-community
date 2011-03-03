@@ -88,7 +88,11 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
   private void setButtonsText() {
     setOKButtonText(getOkButtonText());
-    setCancelButtonText(CommonBundle.getCancelButtonText());
+    setCancelButtonText(getCancelButtonText());
+  }
+
+  protected String getCancelButtonText() {
+    return CommonBundle.getCancelButtonText();
   }
 
   protected String getOkButtonText() {
