@@ -367,7 +367,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
-    return doc != null && doc.getModificationStamp() != file.getModificationStamp();
+    return doc != null && isDocumentUnsaved(doc);
   }
 
   public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
