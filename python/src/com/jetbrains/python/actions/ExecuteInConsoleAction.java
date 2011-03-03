@@ -16,6 +16,7 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.execution.ExecutionHelper;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -105,9 +106,14 @@ public class ExecuteInConsoleAction extends AnAction {
       @NotNull
       @Override
       public Boolean fun(RunContentDescriptor dom) {
-        return dom.getExecutionConsole() instanceof PyCodeExecutor;
+        return dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom);
       }
     });
+  }
+
+  private static boolean isAlive(RunContentDescriptor dom) {
+    ProcessHandler processHandler = dom.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
   }
 
   private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer) {
@@ -132,7 +138,6 @@ public class ExecuteInConsoleAction extends AnAction {
         selectConsole(project, editor, consumer);
       }
     });
-
   }
 
   private static boolean canFindConsole(AnActionEvent e) {
