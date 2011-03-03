@@ -67,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -816,7 +817,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
+    PsiElement target = GroovyTargetElementEvaluator.correctSearchTargets(resolve());
+    if (getManager().areElementsEquivalent(element, target)) {
+      return true;
+    }
+
+    if (element instanceof PsiMethod && target instanceof PsiMethod) {
+      PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
+      if (Arrays.asList(superMethods).contains((PsiMethod)element)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @NotNull

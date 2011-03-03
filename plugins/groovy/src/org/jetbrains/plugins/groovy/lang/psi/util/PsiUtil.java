@@ -304,7 +304,7 @@ public class PsiUtil {
 
   public static <Qualifier extends PsiElement> boolean shortenReference(GrQualifiedReference<Qualifier> ref) {
     final Qualifier qualifier = ref.getQualifier();
-    if (qualifier != null &&
+    if (qualifier != null && !(qualifier instanceof GrSuperReferenceExpression) &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
          PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
         PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
