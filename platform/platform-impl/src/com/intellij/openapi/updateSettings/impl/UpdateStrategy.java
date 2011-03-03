@@ -33,7 +33,7 @@ public class UpdateStrategy {
   private UserUpdateSettings updateSettings;
   private BuildNumber ourBuild;
 
-  private UpdateChannelType myChannelType;
+  private ChannelStatus myChannelStatus;
   private UpdatesInfo updatesInfo;
 
 
@@ -41,7 +41,7 @@ public class UpdateStrategy {
     this.updatesInfo = updatesInfo;
     this.updateSettings = updateSettings;
     this.ourBuild = ourBuild;
-    myChannelType = updateSettings.getSelectedChannelType();
+    myChannelStatus = updateSettings.getSelectedChannelStatus();
   }
 
   public final CheckForUpdateResult checkForUpdates() {

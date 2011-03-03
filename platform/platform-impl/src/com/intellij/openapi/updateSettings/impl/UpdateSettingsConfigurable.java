@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -75,7 +76,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     settings.myPluginHosts.clear();
     settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
-    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType();
+    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
   }
 
   public void reset() {
@@ -83,7 +84,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
     myUpdatesSettingsPanel.updateLastCheckedLabel();
     myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
-    myUpdatesSettingsPanel.setSelectedChannelType(settings.UPDATE_CHANNEL_TYPE);
+    myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
   }
 
   public boolean isModified() {
@@ -205,8 +206,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
 
       final UpdateSettings settings = UpdateSettings.getInstance();
-      myUpdateChannelsBox.setModel(new EnumComboBoxModel<UpdateChannelType>(UpdateChannelType.class));
-      myUpdateChannelsBox.setSelectedItem(settings.UPDATE_CHANNEL_TYPE);
+      myUpdateChannelsBox.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
     }
 
     private void updateLastCheckedLabel() {
@@ -231,12 +231,12 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
 
-    public UpdateChannelType getSelectedChannelType() {
-      return (UpdateChannelType) myUpdateChannelsBox.getSelectedItem();
+    public ChannelStatus getSelectedChannelType() {
+      return (ChannelStatus) myUpdateChannelsBox.getSelectedItem();
     }
 
-    public void setSelectedChannelType(UpdateChannelType channelType) {
-      myUpdateChannelsBox.setSelectedItem(channelType != null ? channelType : UpdateChannelType.Release);
+    public void setSelectedChannelType(ChannelStatus channelType) {
+      myUpdateChannelsBox.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
     }
   }
 

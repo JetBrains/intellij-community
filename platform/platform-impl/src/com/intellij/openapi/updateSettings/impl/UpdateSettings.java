@@ -53,7 +53,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
-  public UpdateChannelType UPDATE_CHANNEL_TYPE = UpdateChannelType.Release;
+  public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -113,7 +113,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   @Override
-  public UpdateChannelType getSelectedChannelType() {
-    return UPDATE_CHANNEL_TYPE;
+  public ChannelStatus getSelectedChannelStatus() {
+    return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
   }
 }
