@@ -392,6 +392,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     });
 
     new VariantsCompletionAction(mySearchField); // It registers a shortcut set automatically on construction
+
+    new SwitchToFind();
+    new SwitchToReplace();
   }
 
   @Override
@@ -908,9 +911,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       getTemplatePresentation().setText("Search History");
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
+      if (myTextField == mySearchField) {
+        ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
+        ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts());
+      }
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), null));
-      ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts());
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
@@ -949,6 +954,34 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
     showCompletionPopup(new JBList(ArrayUtil.reverseArray(recents)), "Recent Searches",
                         byClickingToolbarButton, textField);
+  }
+
+  private class SwitchToFind extends AnAction {
+    private SwitchToFind() {
+      AnAction findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND);
+      if (findAction != null) {
+        registerCustomShortcutSet(findAction.getShortcutSet(), EditorSearchComponent.this);
+      }
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myFindModel.setReplaceState(false);
+    }
+  }
+
+  private class SwitchToReplace extends AnAction {
+    private SwitchToReplace() {
+      AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
+      if (replaceAction != null) {
+        registerCustomShortcutSet(replaceAction.getShortcutSet(), EditorSearchComponent.this);
+      }
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myFindModel.setReplaceState(true);
+    }
   }
 
   private class VariantsCompletionAction extends AnAction {
