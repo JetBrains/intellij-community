@@ -17,25 +17,20 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+import java.util.List;
 
 /**
  * @author yole
  */
-public abstract class LicenseeInfoProvider {
-  public static LicenseeInfoProvider ourInstance;
+public abstract class LicensingFacade {
+  public static LicensingFacade ourInstance;
 
   @Nullable
-  public static LicenseeInfoProvider getInstance() {
+  public static LicensingFacade getInstance() {
     return ourInstance;
   }
 
   public abstract String getLicensedToMessage();
-  public abstract String getLicenseRestrictionsMessage();
+  public abstract List<String> getLicenseRestrictionsMessages();
   public abstract boolean isEvaluationLicense();
-
-  @Nullable
-  public  Date getMaintenanceDueDate(){
-    return null;
-  }
 }

@@ -31,7 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.LicenseeInfoProvider;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -195,13 +195,11 @@ public class AboutAction extends AnAction implements DumbAware {
       buildDate += DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime());
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", buildDate)));
       myLines.add(new AboutBoxLine(""));
-      LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
+      LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, false));
-        myLines.add(new AboutBoxLine(provider.getLicenseRestrictionsMessage()));
-        final Date mdd = provider.getMaintenanceDueDate();
-        if (mdd != null) {
-          myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.maintenance.due", mdd)));
+        for (String message : provider.getLicenseRestrictionsMessages()) {
+          myLines.add(new AboutBoxLine(message));
         }
       }
       myLines.add(new AboutBoxLine(""));
