@@ -17,7 +17,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -145,8 +144,7 @@ public class PsiChangeTracker {
       return null;
     }
 
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null && document.getModificationStamp() != file.getModificationStamp()) {
+    if (FileDocumentManager.getInstance().isFileModified(file)) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
           return LoadTextUtil.loadText(file).toString();
