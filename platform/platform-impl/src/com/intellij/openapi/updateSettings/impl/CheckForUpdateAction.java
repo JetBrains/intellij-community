@@ -30,13 +30,11 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(true, null, null);
+    actionPerformed(true, null);
   }
 
-  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable, final @Nullable String forcedChannel) {
-    final CheckForUpdateResult result =
-      (forcedChannel == null ? UpdateChecker.checkForUpdates() :
-       UpdateChecker.checkForUpdates(forcedChannel));
+  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable) {
+    final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
 
     final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
 
@@ -54,7 +52,6 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     if (result.hasNewBuildInSelectedChannel()) {
       //information about new channel could be there
       UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-      UpdateSettings.getInstance().setSelectedChannelId(result.getSelected().getId());
       UpdateChecker.showUpdateInfoDialog(enableLink, result.getSelected(), updatedPlugins);
     }else{
       //information about new channel could be there

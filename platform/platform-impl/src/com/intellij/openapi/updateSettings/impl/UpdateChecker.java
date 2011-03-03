@@ -262,7 +262,7 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static CheckForUpdateResult doCheckForUpdates(@Nullable String forcedChannelId){
+  public static CheckForUpdateResult doCheckForUpdates() {
     BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
     final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
     final UpdateSettings settings = UpdateSettings.getInstance();
@@ -277,7 +277,7 @@ public final class UpdateChecker {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
 
-    UpdateStrategy strategy = new UpdateStrategy(ourBuild, info, settings, forcedChannelId);
+    UpdateStrategy strategy = new UpdateStrategy(ourBuild, info, settings);
     return strategy.checkForUpdates();
   }
 
@@ -291,33 +291,7 @@ public final class UpdateChecker {
 
     final UpdateSettings settings = UpdateSettings.getInstance();
 
-    final CheckForUpdateResult result = doCheckForUpdates(null);
-
-    if (result.getState() == UpdateStrategy.State.LOADED) {
-      settings.LAST_TIME_CHECKED = System.currentTimeMillis();
-      settings.setKnownChannelIds(result.getAllChannelsIds());
-      settings.setSelectedChannelId(result.getSelected().getId());
-    }
-
-    return result;
-  }
-
-  /**
-   *
-   * This method is called during action 'Update' directly from 'application settings' panel. The main differences with
-   * checkForUpdates() - selected update channel could not be yet saved to UpdateSetting component.
-   * CheckForUpdateResult processing is slightly different - we don't care about overriding user setting
-   * @param forcedChannel - the selected channel to check (will be used even if it is not stored in the component)
-   * @return
-   */
-  @NotNull
-  public static CheckForUpdateResult checkForUpdates(@Nullable String forcedChannel) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: manual checkForUpdates()");
-    }
-
- final UpdateSettings settings = UpdateSettings.getInstance();
-    final CheckForUpdateResult result = doCheckForUpdates(forcedChannel);
+    final CheckForUpdateResult result = doCheckForUpdates();
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
       settings.LAST_TIME_CHECKED = System.currentTimeMillis();
@@ -326,7 +300,6 @@ public final class UpdateChecker {
 
     return result;
   }
-
 
   private static Document loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {

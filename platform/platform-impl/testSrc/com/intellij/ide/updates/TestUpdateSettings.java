@@ -16,30 +16,25 @@
 package com.intellij.ide.updates;
 
 
+import com.intellij.openapi.updateSettings.impl.UpdateChannelType;
 import com.intellij.openapi.updateSettings.impl.UserUpdateSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class TestUpdateSettings implements UserUpdateSettings{
-
-  private String selectedChannel;
+public class TestUpdateSettings implements UserUpdateSettings {
+  private UpdateChannelType myUpdateChannelType;
   private boolean disabled;
   private List<String> knowsChannels;
 
   public TestUpdateSettings() {
   }
 
-  public TestUpdateSettings(String selectedChannel, boolean disabled, String[] knowsChannels) {
-    this.selectedChannel = selectedChannel;
+  public TestUpdateSettings(UpdateChannelType channelType, boolean disabled, String[] knowsChannels) {
+    myUpdateChannelType = channelType;
     this.disabled = disabled;
     this.knowsChannels = knowsChannels!=null?Arrays.asList(knowsChannels):null;
-  }
-
-  @Override
-  public String getSelectedChannelId() {
-    return selectedChannel;
   }
 
   @Override
@@ -59,12 +54,12 @@ public class TestUpdateSettings implements UserUpdateSettings{
   }
 
   @Override
-  public void setSelectedChannelId(String channel) {
-    selectedChannel = channel;
+  public void setKnownChannelIds(List<String> ids) {
+    knowsChannels = ids;
   }
 
   @Override
-  public void setKnownChannelIds(List<String> ids) {
-    knowsChannels = ids;
+  public UpdateChannelType getSelectedChannelType() {
+    return myUpdateChannelType;
   }
 }

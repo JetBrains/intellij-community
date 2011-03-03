@@ -24,12 +24,11 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,7 +75,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     settings.myPluginHosts.clear();
     settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
-    settings.setSelectedChannelId(myUpdatesSettingsPanel.getSelectedChannelId());
+    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType();
   }
 
   public void reset() {
@@ -84,7 +83,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
     myUpdatesSettingsPanel.updateLastCheckedLabel();
     myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
-    myUpdatesSettingsPanel.resetSelectedChannelId(settings.getSelectedChannelId(), settings.getAppDefaultChannelId());
+    myUpdatesSettingsPanel.setSelectedChannelType(settings.UPDATE_CHANNEL_TYPE);
   }
 
   public boolean isModified() {
@@ -92,8 +91,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected()) return true;
-    final JComboBox channelsBox = myUpdatesSettingsPanel.updateChannelsBox;
-    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(settings.getSelectedChannelId()));
+    final JComboBox channelsBox = myUpdatesSettingsPanel.myUpdateChannelsBox;
+    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(settings.UPDATE_CHANNEL_TYPE));
   }
 
   public void disposeUIResources() {
@@ -117,7 +116,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JButton myDeleteButton;
     private JBList myUrlsList;
     private JButton myEditButton;
-    private JComboBox updateChannelsBox;
+    private JComboBox myUpdateChannelsBox;
 
     public UpdatesSettingsPanel() {
 
@@ -138,7 +137,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          CheckForUpdateAction.actionPerformed(false, UpdateSettingsConfigurable.this, getSelectedChannelId());
+          CheckForUpdateAction.actionPerformed(false, UpdateSettingsConfigurable.this);
           updateLastCheckedLabel();
         }
       });
@@ -206,19 +205,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
 
       final UpdateSettings settings = UpdateSettings.getInstance();
-      final String toSelect = settings.getSelectedChannelId() != null ? settings.getSelectedChannelId() : settings.getAppDefaultChannelId();
-      List<String> toShow = settings.getKnownChannelsIds();
-      if (toShow==null || toShow.size()==0){
-        UpdateChecker.checkForUpdates();
-        toShow = settings.getKnownChannelsIds();
-      }
-      if (toShow==null){
-        toShow = new ArrayList<String>();
-      }
-      if (!toShow.contains(toSelect)){
-        toShow.add(toSelect);
-      }
-      updateChannelsBox.setModel(new CollectionComboBoxModel(toShow, toSelect));
+      myUpdateChannelsBox.setModel(new EnumComboBoxModel<UpdateChannelType>(UpdateChannelType.class));
+      myUpdateChannelsBox.setSelectedItem(settings.UPDATE_CHANNEL_TYPE);
     }
 
     private void updateLastCheckedLabel() {
@@ -243,14 +231,12 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
 
-    public void resetSelectedChannelId(String selectedChannelId, String appDefaultChannelId) {
-      String toSelect = (selectedChannelId != null ? selectedChannelId : appDefaultChannelId);
-      updateChannelsBox.getModel().setSelectedItem(toSelect);
+    public UpdateChannelType getSelectedChannelType() {
+      return (UpdateChannelType) myUpdateChannelsBox.getSelectedItem();
     }
 
-    @NotNull
-    public String getSelectedChannelId() {
-      return (String)updateChannelsBox.getSelectedItem();
+    public void setSelectedChannelType(UpdateChannelType channelType) {
+      myUpdateChannelsBox.setSelectedItem(channelType != null ? channelType : UpdateChannelType.Release);
     }
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.updateSettings.impl;
 
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -34,21 +33,15 @@ public class UpdateStrategy {
   private UserUpdateSettings updateSettings;
   private BuildNumber ourBuild;
 
-  private String selectedChannel;
+  private UpdateChannelType myChannelType;
   private UpdatesInfo updatesInfo;
-  private boolean forced;
 
 
-  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings, @Nullable String forcedChannel) {
+  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings) {
     this.updatesInfo = updatesInfo;
     this.updateSettings = updateSettings;
     this.ourBuild = ourBuild;
-    this.selectedChannel = forcedChannel!=null?forcedChannel:updateSettings.getSelectedChannelId();
-    forced = forcedChannel!=null;
-  }
-
-  public UpdateStrategy(@NotNull BuildNumber ourBuild, @NotNull UpdatesInfo updatesInfo, @NotNull UserUpdateSettings updateSettings) {
-    this(ourBuild, updatesInfo, updateSettings,null);
+    myChannelType = updateSettings.getSelectedChannelType();
   }
 
   public final CheckForUpdateResult checkForUpdates() {
@@ -58,6 +51,7 @@ public class UpdateStrategy {
       return new CheckForUpdateResult(State.NOTHING_LOADED);
     }
 
+    /*
     boolean replacedWithAppDef = false;
 
     UpdateChannel channel = getChannelByIds(selectedChannel, product);
@@ -81,6 +75,8 @@ public class UpdateStrategy {
       getNewVersionInSelectedChannel(channel),
       newChannels.getFirst(), getFilteredKnownChannels(product),
       newChannels.getSecond());
+    */
+    return new CheckForUpdateResult(State.NOTHING_LOADED);
   }
 
   @Nullable
@@ -133,8 +129,7 @@ public class UpdateStrategy {
   @NotNull
   private Pair<List<UpdateChannel>, UpdateChannel> getNewChannels(@NotNull Product product) {
     List<String> knownChannels =
-      updateSettings.getKnownChannelsIds() != null ? updateSettings.getKnownChannelsIds() : Collections.singletonList(
-        selectedChannel);
+      updateSettings.getKnownChannelsIds() != null ? updateSettings.getKnownChannelsIds() : Collections.<String>emptyList();
 
     UpdateChannel versionUpgradeChannel = null;
     List<UpdateChannel> newChannels = new ArrayList<UpdateChannel>();

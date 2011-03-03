@@ -53,8 +53,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
-
-  public String selectedChannel;
+  public UpdateChannelType UPDATE_CHANNEL_TYPE = UpdateChannelType.Release;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -81,11 +80,6 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   @Override
-  public String getSelectedChannelId() {
-    return selectedChannel;
-  }
-
-  @Override
   public boolean isCheckingDisabled() {
     return !CHECK_NEEDED;
   }
@@ -109,11 +103,6 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   @Override
-  public void setSelectedChannelId(String channel) {
-    selectedChannel = channel;
-  }
-
-  @Override
   public void setKnownChannelIds(List<String> ids) {
     myKnownUpdateChannels.clear();
     if (ids!=null){
@@ -121,5 +110,10 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
         myKnownUpdateChannels.add(id);
       }
     }
+  }
+
+  @Override
+  public UpdateChannelType getSelectedChannelType() {
+    return UPDATE_CHANNEL_TYPE;
   }
 }
