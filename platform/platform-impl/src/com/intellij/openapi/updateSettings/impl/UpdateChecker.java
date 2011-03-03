@@ -312,7 +312,11 @@ public final class UpdateChecker {
                                       boolean showConfirmation,
                                       boolean enableLink,
                                       final boolean alwaysShowResults) {
-    if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
+    UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
+    if (channelToPropose != null && channelToPropose.getLatestBuild() != null) {
+      new NewChannelDialog(channelToPropose).show();
+    }
+    else if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
       new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink).show();
     }
     else if (updatedPlugins != null || alwaysShowResults) {
