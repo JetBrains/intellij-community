@@ -112,6 +112,10 @@ public final class UpdateChecker {
   }
 
   private static String getUpdateUrl() {
+    String url = System.getProperty("idea.updates.url");
+    if (url != null) {
+      return url;
+    }
     return StringHolder.UPDATE_URL;
   }
 

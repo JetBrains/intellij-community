@@ -22,8 +22,10 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,12 +62,12 @@ public class UpdatesXmlLoader {
       return null;
     }
 
+    final Ref<Exception> error = new Ref<Exception>();
     FutureTask<UpdatesInfo> ft = new FutureTask<UpdatesInfo>(new Callable<UpdatesInfo>() {
       @Nullable
       @Override
       public UpdatesInfo call() throws Exception {
         try {
-
           prepareUrl(updateUrl);
 
           URL requestUrl = prepareRequestUrl(updateUrl);
@@ -75,7 +77,7 @@ public class UpdatesXmlLoader {
           try {
             return new UpdatesInfo(JDOMUtil.loadDocument(inputStream).getRootElement());
           }
-          catch (Exception e) {
+          catch (JDOMException e) {
             LOG.info(e); // Broken xml downloaded. Don't bother telling user.
           }
           finally {
@@ -83,19 +85,20 @@ public class UpdatesXmlLoader {
             inputStream.close();
           }
         }
-        catch (ConnectionException e) {
-          LOG.debug(e);
-          throw new ConnectionException(e);
-        }
         catch (Exception e) {
-          LOG.debug(e);
+          error.set(e);
         }
         return null;
       }
     });
     ApplicationManager.getApplication().executeOnPooledThread(ft);
     try {
-      return ft.get(5, TimeUnit.SECONDS);
+      UpdatesInfo result = ft.get(5, TimeUnit.SECONDS);
+      if (!error.isNull()) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        throw new ConnectionException(error.get());
+      }
+      return result;
     }
     catch (TimeoutException e) {
       // ignore
@@ -124,6 +127,9 @@ public class UpdatesXmlLoader {
 
   protected URL prepareRequestUrl(@NotNull String url) throws ConnectionException {
     try {
+      if (url.startsWith("file:")) {
+        return new URL(url);
+      }
       return new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + additionalRequestOptions);
     }
     catch (Exception e) {
