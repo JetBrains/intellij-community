@@ -47,7 +47,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type('er')
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
     assertEquals 'iter', lookup.currentItem.lookupString
-    assert !lookup.focused
+    assert lookup.focused
 
     type 'a'
     assert lookup.focused
