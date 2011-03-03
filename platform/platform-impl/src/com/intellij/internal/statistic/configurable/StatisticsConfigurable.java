@@ -44,7 +44,7 @@ public class StatisticsConfigurable implements SearchableConfigurable {
 
   @Nls
   public String getDisplayName() {
-    return "Usage statistics";
+    return "Usage Statistics";
   }
 
   @Nullable
