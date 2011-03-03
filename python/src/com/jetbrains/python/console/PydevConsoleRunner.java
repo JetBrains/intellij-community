@@ -1,6 +1,7 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,6 +48,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+  private List<ConsoleListener> myConsoleListeners = Lists.newArrayList();
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -63,7 +66,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     myPorts = ports;
   }
 
-  public static void run(@NotNull final Project project,
+  @Nullable
+  public static PydevConsoleRunner run(@NotNull final Project project,
                          @NotNull final Sdk sdk,
                          final String consoleTitle,
                          final String projectRoot,
@@ -76,7 +80,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
     catch (IOException e) {
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
-      return;
+      return null;
     }
     final ArrayList<String> args = new ArrayList<String>();
     args.add(sdk.getHomePath());
@@ -114,6 +118,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
         }
       }
     });
+    return consoleRunner;
   }
 
   @Override
@@ -164,6 +169,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
           }
 
           consoleView.flushUIUpdates();
+
+          fireConsoleInitializedEvent();
         }
       });
     }
@@ -273,5 +280,23 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   @Override
   protected boolean shouldAddNumberToTitle() {
     return true;
+  }
+
+  public void addConsoleListener(ConsoleListener consoleListener) {
+    myConsoleListeners.add(consoleListener);
+  }
+
+  public void removeConsoleListener(ConsoleListener consoleListener) {
+    myConsoleListeners.remove(consoleListener);
+  }
+
+  private void fireConsoleInitializedEvent() {
+    for (ConsoleListener listener: myConsoleListeners) {
+      listener.handleConsoleInitialized();
+    }
+  }
+
+  public interface ConsoleListener {
+    void handleConsoleInitialized();
   }
 }

@@ -30,6 +30,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.RunPythonConsoleAction;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    boolean enabled = !StringUtil.isEmpty(getSelectionText(e)) && isPython(e) && canFindConsole(e);
+    boolean enabled = !StringUtil.isEmpty(getSelectionText(e)) && isPython(e);
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
@@ -112,8 +114,25 @@ public class ExecuteInConsoleAction extends AnAction {
     Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null && editor != null) {
-      selectConsole(project, editor, consumer);
+      if (canFindConsole(e)) {
+        selectConsole(project, editor, consumer);
+      }
+      else {
+        startConsole(project, editor, consumer);
+      }
     }
+  }
+
+  private static void startConsole(final Project project, final Editor editor, final Consumer<PyCodeExecutor> consumer) {
+    PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project);
+    assert runner != null;
+    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+      @Override
+      public void handleConsoleInitialized() {
+        selectConsole(project, editor, consumer);
+      }
+    });
+
   }
 
   private static boolean canFindConsole(AnActionEvent e) {

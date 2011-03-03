@@ -13,6 +13,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
@@ -42,30 +43,34 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getData(LangDataKeys.PROJECT);
-      assert project != null : "Project is null";
-      Sdk sdk = null;
-      Module module = null;
-      for (Module m : ModuleManager.getInstance(project).getModules()) {
-        module = m;
-        sdk = PythonSdkType.findPythonSdk(module);
-        if (sdk != null){
-          break;
-        }
-      }
-      assert module != null : "Module is null";
-      assert sdk != null : "Sdk is null";
-
-      String[] setup_fragment;
-
-      final String path = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
-      final String self_path_append = "sys.path.append('" + path + "')";
-      BuildoutFacet facet = BuildoutFacet.getInstance(module);
-      if (facet != null) {
-        setup_fragment = new String[]{facet.getPathPrependStatement(), self_path_append};
-      }
-      else setup_fragment = new String[]{self_path_append};
-
-      PydevConsoleRunner.run(project, sdk, PyBundle.message("python.console"), path, setup_fragment);
+      runPythonConsole(project);
     }
 
+  @Nullable
+  public static PydevConsoleRunner runPythonConsole(Project project) {
+    assert project != null : "Project is null";
+    Sdk sdk = null;
+    Module module = null;
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      module = m;
+      sdk = PythonSdkType.findPythonSdk(module);
+      if (sdk != null){
+        break;
+      }
+    }
+    assert module != null : "Module is null";
+    assert sdk != null : "Sdk is null";
+
+    String[] setup_fragment;
+
+    final String path = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
+    final String self_path_append = "sys.path.append('" + path + "')";
+    BuildoutFacet facet = BuildoutFacet.getInstance(module);
+    if (facet != null) {
+      setup_fragment = new String[]{facet.getPathPrependStatement(), self_path_append};
+    }
+    else setup_fragment = new String[]{self_path_append};
+
+    return PydevConsoleRunner.run(project, sdk, PyBundle.message("python.console"), path, setup_fragment);
+  }
 }
