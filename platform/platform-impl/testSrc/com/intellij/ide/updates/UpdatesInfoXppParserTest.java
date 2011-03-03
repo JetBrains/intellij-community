@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.InputStream;
+import java.util.Calendar;
 
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "ConstantConditions"})
@@ -45,6 +46,12 @@ public class UpdatesInfoXppParserTest extends TestCase {
     final BuildInfo build = channel.getLatestBuild();
 
     Assert.assertEquals(BuildNumber.fromString("98.520"), build.getNumber());
+    Calendar releaseDate = Calendar.getInstance();
+    releaseDate.setTime(build.getReleaseDate());
+    Assert.assertEquals(3, releaseDate.get(Calendar.DAY_OF_MONTH));
+    Assert.assertEquals(Calendar.APRIL, releaseDate.get(Calendar.MONTH));
+    Assert.assertEquals(2011, releaseDate.get(Calendar.YEAR));
+
   }
 
   public void testBrokenXmlParsing() throws Exception {
