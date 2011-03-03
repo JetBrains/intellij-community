@@ -45,7 +45,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -117,13 +116,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (holder.getCurrentAnnotationSession().getUserData(CLEAR_IMPORTS) == null) {
-      final PsiFile file = element.getContainingFile();
-      if (file instanceof GroovyFile) {
-        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)file);
-      }
-      holder.getCurrentAnnotationSession().putUserData(CLEAR_IMPORTS, Boolean.TRUE);
-    }
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);
@@ -155,22 +147,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(myHolder, element);
     }
-    else {
-      final ASTNode node = element.getNode();
-      if (!(element instanceof PsiWhiteSpace) &&
-          !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
-          element.getContainingFile() instanceof GroovyFile &&
-          !isDocCommentElement(element)) {
-        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
-      }
-    }
   }
 
   @Override
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
-    registerUsedImport(refElement, resolveResult);
     highlightAnnotation(myHolder, refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
@@ -187,9 +169,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkStringNameIdentifier(referenceExpression);
     GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
-    for (GroovyResolveResult result : results) {
-      registerUsedImport(referenceExpression, result);
-    }
 
     PsiElement resolved = resolveResult.getElement();
     final PsiElement parent = referenceExpression.getParent();
@@ -1459,18 +1438,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (member instanceof PsiClass) {
       highligtClassReference(holder, refExpr);
-    }
-  }
-
-
-  private static void registerUsedImport(GrReferenceElement referenceElement, GroovyResolveResult resolveResult) {
-    GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
-    if (context instanceof GrImportStatement) {
-      PsiFile file = referenceElement.getContainingFile();
-      if (file instanceof GroovyFile) {
-        GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(referenceElement.getProject());
-        importsTracker.registerImportUsed((GrImportStatement)context);
-      }
     }
   }
 
