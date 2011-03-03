@@ -57,7 +57,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     while (s.hasNextLine()) {
       String line = s.nextLine();
       int indentSize = myIndentHelper.getIndent(line, false);
-      if (indentSize < myCurrentIndentSize) {
+      if (indentSize < myCurrentIndentSize &&!shouldIndent(line)) {
         doProcessLine("\n");
         doProcessLine(line);
       }
@@ -109,18 +109,22 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       return;
     }
 
-    if (myCurrentIndentSize != -1 && !StringUtil.isEmptyOrSpaces(line)) {
+    if (!StringUtil.isEmptyOrSpaces(line)) {
       int indent = myIndentHelper.getIndent(line, false);
-      if (line.endsWith(":")) {
+      boolean flag = false;
+      if (shouldIndent(line)) {
         indent += getPythonIndent();
+        flag = true;
       }
-      if (indent >= myCurrentIndentSize) {
+      if ((myCurrentIndentSize != -1 && indent >= myCurrentIndentSize) || flag) {
+        myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
         scrollDown(currentEditor);
 
         return;
       }
     }
+
 
     if (myConsoleCommunication != null) {
       final boolean waitedForInputBefore = myConsoleCommunication.isWaitingForInput();
@@ -173,6 +177,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         scrollDown(currentEditor);
       }
     }
+  }
+
+  private boolean shouldIndent(String line) {
+    return line.endsWith(":");
   }
 
   private int getPythonIndent() {
