@@ -117,6 +117,10 @@ public class PsiScopesUtil {
         substitutor = substitutor.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType());
       }
       arrayClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), arrayClass, place);
+    } else if (type instanceof PsiIntersectionType) {
+      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+        processTypeDeclarations(psiType, place, processor);
+      }
     } else {
       final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
       final PsiClass clazz = (PsiClass)result.getElement();
