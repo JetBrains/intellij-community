@@ -21,74 +21,71 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * TODO[vova] rewrite comments
  * Current implementation of the dispatcher is intended to filter mouse event addressed to
  * the editor. Also it allows to map middle mouse's button to some action.
  *
  * @author Vladimir Kondratyev
+ * @author Konstantin Bulenkov
  */
-public final class IdeMouseEventDispatcher{
-  private final PresentationFactory myPresentationFactory;
-  private final ArrayList<AnAction> myActions;
-
+public final class IdeMouseEventDispatcher {
+  private final PresentationFactory myPresentationFactory = new PresentationFactory();
+  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
 
-  public IdeMouseEventDispatcher(){
-    myPresentationFactory=new PresentationFactory();
-    myActions=new ArrayList<AnAction>(1);
+  public IdeMouseEventDispatcher() {
   }
 
-  private void fillActionsList(Component component,MouseShortcut shortcut,boolean isModalContext){
+  private void fillActionsList(Component component, MouseShortcut mouseShortcut, boolean isModalContext) {
     myActions.clear();
 
     // here we try to find "local" shortcuts
-
-    if(component instanceof JComponent){
-      ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
+    if (component instanceof JComponent) {
+      final ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
       if (listOfActions != null) {
         for (AnAction action : listOfActions) {
-          Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-          for (Shortcut shortcut1 : shortcuts) {
-            if (shortcut.equals(shortcut1) && !myActions.contains(action)) {
+          final Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
+          for (Shortcut shortcut : shortcuts) {
+            if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
               myActions.add(action);
             }
           }
         }
         // once we've found a proper local shortcut(s), we exit
-        if (!myActions.isEmpty()) {
+        if (! myActions.isEmpty()) {
           return;
         }
       }
     }
 
     // search in main keymap
-
     if (KeymapManagerImpl.ourKeymapManagerInitialized) {
-      KeymapManager keymapManager = KeymapManager.getInstance();
+      final KeymapManager keymapManager = KeymapManager.getInstance();
       if (keymapManager != null) {
-        Keymap keymap = keymapManager.getActiveKeymap();
-        String[] actionIds=keymap.getActionIds(shortcut);
+        final Keymap keymap = keymapManager.getActiveKeymap();
+        final String[] actionIds = keymap.getActionIds(mouseShortcut);
 
         ActionManager actionManager = ActionManager.getInstance();
         for (String actionId : actionIds) {
           AnAction action = actionManager.getAction(actionId);
-          if (action == null) {
-            continue;
-          }
-          if (isModalContext && !action.isEnabledInModalContext()) {
-            continue;
-          }
+
+          if (action == null) continue;
+
+          if (isModalContext && !action.isEnabledInModalContext()) continue;
+
           if (!myActions.contains(action)) {
             myActions.add(action);
           }
@@ -99,84 +96,87 @@ public final class IdeMouseEventDispatcher{
 
   /**
    * @return <code>true</code> if and only if the passed event is already dispatched by the
-   * <code>IdeMouseEventDispatcher</code> and there is no need for any other processing of the event.
-   * If the method returns <code>false</code> then it means that the event should be delivered
-   * to normal event dispatching.
+   *         <code>IdeMouseEventDispatcher</code> and there is no need for any other processing of the event.
+   *         If the method returns <code>false</code> then it means that the event should be delivered
+   *         to normal event dispatching.
    */
-  public boolean dispatchMouseEvent(MouseEvent e){
-    boolean toIgnore = false;
+  public boolean dispatchMouseEvent(MouseEvent e) {
+    boolean ignore = false;
 
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
           e.getID() == MouseEvent.MOUSE_CLICKED)) {
-      toIgnore = true;
+      ignore = true;
     }
 
 
-    if(
-      e.isConsumed()||
-      e.isPopupTrigger()||
-      MouseEvent.MOUSE_RELEASED!=e.getID()||
-      e.getClickCount()<1  ||// TODO[vova,anton] is it possible. it seems that yes! but how???
-      e.getButton() == MouseEvent.NOBUTTON // See #16995. It did happen
-    ){
-      toIgnore = true;
+    if (e.isConsumed()
+        || e.isPopupTrigger()
+        || MouseEvent.MOUSE_RELEASED != e.getID()
+        || e.getClickCount() < 1 // TODO[vova,anton] is it possible. it seems that yes! but how???
+        || e.getButton() == MouseEvent.NOBUTTON) { // See #16995. It did happen
+      ignore = true;
     }
 
-
-    JRootPane root = findRoot(e);
-
+    final JRootPane root = findRoot(e);
     if (root != null) {
       final Integer lastId = myRootPane2BlockedId.get(root);
       if (lastId != null) {
         if (e.getID() <= lastId.intValue()) {
           myRootPane2BlockedId.remove(root);
-        } else {
+        }
+        else {
           myRootPane2BlockedId.put(root, e.getID());
           return true;
         }
       }
     }
 
-    if (toIgnore) return false;
 
-    Component component=e.getComponent();
-    if(component==null){
+    Component component = e.getComponent();
+    if (component == null) {
       throw new IllegalStateException("component cannot be null");
     }
-    component=SwingUtilities.getDeepestComponentAt(component,e.getX(),e.getY());
+    component = SwingUtilities.getDeepestComponentAt(component, e.getX(), e.getY());
 
     if (component instanceof IdeGlassPaneImpl) {
       component = ((IdeGlassPaneImpl)component).getTargetComponentFor(e);
     }
 
-    if(component==null){ // do nothing if component doesn't contains specified point
+    if (component == null) { // do nothing if component doesn't contains specified point
       return false;
     }
+
+    if (isHorizontalScrolling(component, e)) {
+      boolean done = doHorizontalScrolling(component, (MouseWheelEvent)e);
+      if (done) return true;
+    }
+
+    if (ignore) return false;
 
     // avoid "cyclic component initialization error" in case of dialogs shown because of component initialization failure
     if (!KeymapManagerImpl.ourKeymapManagerInitialized) {
       return false;
     }
 
-    MouseShortcut shortcut=new MouseShortcut(e.getButton(),e.getModifiersEx(),e.getClickCount());
-    fillActionsList(component,shortcut,IdeKeyEventDispatcher.isModalContext(component));
-    ActionManagerEx actionManager=ActionManagerEx.getInstanceEx();
+    final MouseShortcut shortcut = new MouseShortcut(e.getButton(), e.getModifiersEx(), e.getClickCount());
+    fillActionsList(component, shortcut, IdeKeyEventDispatcher.isModalContext(component));
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
-      for(int i=0;i<myActions.size();i++){
-        AnAction action=myActions.get(i);
-        DataContext dataContext=DataManager.getInstance().getDataContext(component);
-        Presentation presentation=myPresentationFactory.getPresentation(action);
-        AnActionEvent actionEvent=new AnActionEvent(e,dataContext,ActionPlaces.MAIN_MENU,presentation,
-                                                    ActionManager.getInstance(),
-                                                    e.getModifiers());
+      for (AnAction action : myActions) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        Presentation presentation = myPresentationFactory.getPresentation(action);
+        AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
+                                                      ActionManager.getInstance(),
+                                                      e.getModifiers());
         action.beforeActionPerformedUpdate(actionEvent);
-        if(presentation.isEnabled()){
+
+        if (presentation.isEnabled()) {
           actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-          Component c = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-          if (c != null && !c.isShowing()) {
-            continue;
-          }
+          final Component c = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+
+          if (c != null && !c.isShowing()) continue;
+
           action.actionPerformed(actionEvent);
           e.consume();
         }
@@ -185,23 +185,60 @@ public final class IdeMouseEventDispatcher{
     return false;
   }
 
+  private static boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
+    final JScrollPane pane = findScrollPane(c);
+    if (pane != null && pane.isWheelScrollingEnabled()) {
+      final JScrollBar scrollBar = pane.getHorizontalScrollBar();
+      if (scrollBar != null) {
+        int totalScrollAmount = me.getUnitsToScroll() * scrollBar.getUnitIncrement() * 3;
+        scrollBar.setValue(scrollBar.getValue() + totalScrollAmount);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
+    if (!SystemInfo.isMac && e instanceof MouseWheelEvent) {
+      final MouseWheelEvent mwe = (MouseWheelEvent)e;
+      return mwe.isShiftDown()
+             && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
+             && findScrollPane(c) != null;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static JScrollPane findScrollPane(Component c) {
+    if (c == null) return null;
+    if (c instanceof JScrollPane) {
+      return (JScrollPane)c;
+    }
+    return findScrollPane(c.getParent());
+  }
+
   public void blockNextEvents(final MouseEvent e) {
-    JRootPane root = findRoot(e);
+    final JRootPane root = findRoot(e);
     if (root == null) return;
 
     myRootPane2BlockedId.put(root, e.getID());
   }
 
-  private JRootPane findRoot(MouseEvent e) {
-    Component parent = UIUtil.findUltimateParent(e.getComponent());
+  @Nullable
+  private static JRootPane findRoot(MouseEvent e) {
+    final Component parent = UIUtil.findUltimateParent(e.getComponent());
     JRootPane root = null;
+
     if (parent instanceof JWindow) {
       root = ((JWindow)parent).getRootPane();
-    } else if (parent instanceof JDialog) {
+    }
+    else if (parent instanceof JDialog) {
       root = ((JDialog)parent).getRootPane();
-    } else if (parent instanceof JFrame) {
+    }
+    else if (parent instanceof JFrame) {
       root = ((JFrame)parent).getRootPane();
     }
+
     return root;
   }
 }
