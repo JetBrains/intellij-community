@@ -98,11 +98,13 @@ public class ByRootLoader extends TaskDescriptor {
     myGitLogFilters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
       @Override
       public void consume(List<ChangesFilter.Filter> filters) {
+        ProgressManager.checkCanceled();
         try {
           final List<Pair<String,GitCommit>> stash = GitHistoryUtils.loadStashStackAsCommits(myProject, myRootHolder.getRoot(),
                                                                              mySymbolicRefs, ChangesFilter.filtersToParameterArray(filters));
           if (stash == null) return;
           for (Pair<String, GitCommit> pair : stash) {
+            ProgressManager.checkCanceled();
             final GitCommit gitCommit = pair.getSecond();
             if (stashMap.containsKey(gitCommit.getShortHash())) continue;
 
@@ -121,6 +123,7 @@ public class ByRootLoader extends TaskDescriptor {
     }, true);
 
     myDetailsCache.putStash(myRootHolder.getRoot(), stashMap);
+    ProgressManager.checkCanceled();
     // does not work
     //myDetailsCache.acceptAnswer(details, myRootHolder.getRoot());
     myMediator.appendResult(myTicket, commits, parents);
