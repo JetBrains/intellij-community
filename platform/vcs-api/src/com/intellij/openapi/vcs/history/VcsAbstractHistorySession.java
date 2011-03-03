@@ -87,4 +87,10 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   }
 
   public abstract VcsHistorySession copy();
+
+  public VcsHistorySession copyWithCachedRevision() {
+    final VcsAbstractHistorySession copy = (VcsAbstractHistorySession)copy();
+    copy.setCachedRevision(myCachedRevisionNumber);
+    return copy;
+  }
 }

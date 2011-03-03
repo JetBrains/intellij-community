@@ -147,7 +147,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
         public void consume(List<VcsFileRevision> vcsFileRevisions) {
           mySession.getRevisionList().addAll(vcsFileRevisions);
-          final VcsHistorySession copy = mySession.copy();
+          final VcsHistorySession copy = mySession.copyWithCachedRevision();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy);
@@ -164,7 +164,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private FileHistoryPanelImpl ensureHistoryPanelCreated() {
       if (myFileHistoryPanel == null) {
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        final VcsHistorySession copy = mySession.copy();
+        final VcsHistorySession copy = mySession.copyWithCachedRevision();
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
                                                       myAnnotationProvider, contentManager, myRefresher);
       }
@@ -173,6 +173,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
       mySession = session;
+      mySession.shouldBeRefreshed();  // to init current revision!
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
