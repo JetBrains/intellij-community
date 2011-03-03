@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -84,22 +83,14 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     return !CHECK_NEEDED;
   }
 
+  @NotNull
   @Override
   public List<String> getKnownChannelsIds() {
-    if (myKnownUpdateChannels==null){
-      return null;
-    }
     List<String> ids = new ArrayList<String>();
     for (String channel : myKnownUpdateChannels) {
       ids.add(channel);
     }
     return ids;
-  }
-
-  @NotNull
-  @Override
-  public String getAppDefaultChannelId() {
-    return ApplicationInfo.getInstance().getDefaultUpdateChannel();
   }
 
   @Override

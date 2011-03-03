@@ -16,19 +16,15 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface UserUpdateSettings {
   boolean isCheckingDisabled();
 
-  @Nullable
+  @NotNull
   List<String> getKnownChannelsIds();
 
-
-  @NotNull
-  String getAppDefaultChannelId();
 
   void setKnownChannelIds(List<String> ids);
 

@@ -19,7 +19,9 @@ package com.intellij.openapi.updateSettings.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class CheckForUpdateResult {
@@ -29,14 +31,14 @@ public class CheckForUpdateResult {
   @Nullable
   private final BuildInfo newBuildInSelectedChannel;
 
-  @Nullable
-  private final Collection<UpdateChannel> newChannels;
+  @NotNull
+  private final Collection<UpdateChannel> myNewChannels;
 
   @Nullable
   private final List<String> allChannelsIds;
 
   @Nullable
-  private final UpdateChannel newChannelToPropose;
+  private UpdateChannel myChannelToPropose;
 
   @NotNull
   private final UpdateStrategy.State state;
@@ -46,22 +48,20 @@ public class CheckForUpdateResult {
 
   public CheckForUpdateResult(@Nullable UpdateChannel updated,
                               @Nullable BuildInfo newBuildInSelectedChannel,
-                              @Nullable Collection<UpdateChannel> newChannels, List<String> allChannelsIds,
-                              @Nullable UpdateChannel channelToPropose) {
+                              List<String> allChannelsIds) {
     this.newBuildInSelectedChannel = newBuildInSelectedChannel;
     myUpdatedChannel = updated;
-    this.newChannels = newChannels;
+    myNewChannels = new ArrayList<UpdateChannel>();
     this.allChannelsIds = allChannelsIds;
-    this.newChannelToPropose = channelToPropose;
     this.state = UpdateStrategy.State.LOADED;
     this.error = null;
   }
 
   public CheckForUpdateResult(UpdateStrategy.State state, Exception e) {
     this.newBuildInSelectedChannel = null;
-    this.newChannels = null;
+    myNewChannels = Collections.emptyList();
     this.allChannelsIds = null;
-    this.newChannelToPropose = null;
+    this.myChannelToPropose = null;
     this.myUpdatedChannel = null;
     this.state = state;
     this.error = e;
@@ -80,9 +80,13 @@ public class CheckForUpdateResult {
     return newBuildInSelectedChannel!=null;
   }
 
-  @Nullable
+  public void addNewChannel(UpdateChannel channel) {
+    myNewChannels.add(channel);
+  }
+
+  @NotNull
   public Collection<UpdateChannel> getNewChannels() {
-    return newChannels;
+    return myNewChannels;
   }
 
   @Nullable
@@ -91,8 +95,12 @@ public class CheckForUpdateResult {
   }
 
   @Nullable
-  public UpdateChannel getNewChannelToPropose() {
-    return newChannelToPropose;
+  public UpdateChannel getChannelToPropose() {
+    return myChannelToPropose;
+  }
+
+  public void setChannelToPropose(@Nullable UpdateChannel channelToPropose) {
+    myChannelToPropose = channelToPropose;
   }
 
   @NotNull

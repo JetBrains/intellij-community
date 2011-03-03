@@ -26,33 +26,19 @@ public class UpdateStrategyTest extends TestCase {
 
   //could be if somebody used before previous version of IDEA
   public void testWithUndefinedSelection() {
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, false, null);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, false);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
 
     final CheckForUpdateResult result1 = strategy.checkForUpdates();
     Assert.assertEquals(UpdateStrategy.State.LOADED, result1.getState());
     Assert.assertNull(result1.getNewBuildInSelectedChannel());
-
-    /*
-    settings.setSelectedChannelId(result1.getSelected().getId());
-
-    //second time load
-    strategy = new UpdateStrategy(BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
-
-
-    final CheckForUpdateResult result2 = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result2.getState());
-    Assert.assertFalse(result2.isReplacedWithAppDef());
-    Assert.assertNull(result2.getNewBuildInSelectedChannel());
-    Assert.assertEquals(settings.getAppDefaultChannelId(), settings.getSelectedChannelId());
-    */
   }
 
 
   public void testWithUserSelection() {
     //assume user has version 9 eap - and used eap channel - we want to introduce new eap
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
 
@@ -66,7 +52,7 @@ public class UpdateStrategyTest extends TestCase {
   public void testNewChannelAppears() {
     // assume user has version 9 eap subscription (default or selected)
     // and new channel appears - eap of version 10 is there
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 
@@ -76,7 +62,7 @@ public class UpdateStrategyTest extends TestCase {
     final BuildInfo update = result.getNewBuildInSelectedChannel();
     Assert.assertNull(update);
 
-    final UpdateChannel newChannel = result.getNewChannelToPropose();
+    final UpdateChannel newChannel = result.getChannelToPropose();
     Assert.assertNotNull(newChannel);
     Assert.assertEquals("IDEA10EAP", newChannel.getId());
     Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
@@ -87,7 +73,7 @@ public class UpdateStrategyTest extends TestCase {
     //and new channels appears - eap of version 10 is there
     //and new build withing old channel appears also
     //we need to show only one dialog
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true, null);
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, true);
     //first time load
     UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
 
@@ -97,7 +83,7 @@ public class UpdateStrategyTest extends TestCase {
     Assert.assertNotNull(update);
     Assert.assertEquals("95.627", update.getNumber().toString());
 
-    final UpdateChannel newChannel = result.getNewChannelToPropose();
+    final UpdateChannel newChannel = result.getChannelToPropose();
     Assert.assertNotNull(newChannel);
     Assert.assertEquals("IDEA10EAP", newChannel.getId());
     Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());

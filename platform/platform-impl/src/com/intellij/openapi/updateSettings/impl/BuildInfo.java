@@ -70,4 +70,9 @@ public class BuildInfo implements Comparable<BuildInfo> {
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "BuildInfo(number=" + myNumber + ")";
+  }
 }

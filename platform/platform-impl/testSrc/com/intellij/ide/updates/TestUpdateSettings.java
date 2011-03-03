@@ -28,10 +28,10 @@ public class TestUpdateSettings implements UserUpdateSettings {
   private boolean disabled;
   private List<String> knowsChannels;
 
-  public TestUpdateSettings(ChannelStatus channelStatus, boolean disabled, String[] knowsChannels) {
+  public TestUpdateSettings(ChannelStatus channelStatus, boolean disabled, String... knowsChannels) {
     myChannelStatus = channelStatus;
     this.disabled = disabled;
-    this.knowsChannels = knowsChannels!=null?Arrays.asList(knowsChannels):null;
+    this.knowsChannels = Arrays.asList(knowsChannels);
   }
 
   @Override
@@ -39,15 +39,10 @@ public class TestUpdateSettings implements UserUpdateSettings {
     return disabled;
   }
 
+  @NotNull
   @Override
   public List<String> getKnownChannelsIds() {
     return knowsChannels;
-  }
-
-  @NotNull
-  @Override
-  public String getAppDefaultChannelId() {
-    return "IDEA10EAP";
   }
 
   @Override
