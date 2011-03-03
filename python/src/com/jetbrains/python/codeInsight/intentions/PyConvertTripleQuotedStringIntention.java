@@ -11,6 +11,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: catherine
  * Intention to convert triple quoted string to single-quoted
@@ -58,8 +60,20 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
       StringBuilder strBuilder = new StringBuilder();
-      for (ASTNode node : string.getStringNodes())
-        strBuilder.append(node.getText());
+      List<ASTNode> nodes = string.getStringNodes();
+      if (nodes.size() == 1)
+        strBuilder.append(string.getText());
+      else {
+        // There possible situation that several triple quoted string are situated together
+        String firstNode = nodes.get(0).getText();
+        strBuilder.append(firstNode.substring(0, firstNode.length()-3));
+        for (int i = 1; i != nodes.size()-1; ++i) {
+          ASTNode node = nodes.get(i);
+          String text = node.getText();
+          strBuilder.append(text.substring(3, text.length()-3));
+        }
+        strBuilder.append(nodes.get(nodes.size()-1).getText().substring(3));
+      }
       String stringText = strBuilder.toString();
       String[] subStrings = stringText.split("\n");
 
