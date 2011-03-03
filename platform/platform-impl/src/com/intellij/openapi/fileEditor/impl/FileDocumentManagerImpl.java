@@ -360,11 +360,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return myUnsavedDocuments.contains(document);
   }
 
-  public boolean isFileModifiedAndDocumentUnsaved(@NotNull final VirtualFile file) {
-    final Document doc = getCachedDocument(file);
-    return doc != null && doc.getModificationStamp() != file.getModificationStamp() && isDocumentUnsaved(doc);
-  }
-
   public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc);
