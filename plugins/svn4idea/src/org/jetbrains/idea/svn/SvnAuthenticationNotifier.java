@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -79,28 +78,21 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @Override
   protected boolean ask(final AuthenticationRequest obj) {
-    final Ref<Boolean> resultRef = new Ref<Boolean>();
-    final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        final boolean result = interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
-        log("ask result for: " + obj.getUrl() + " is: " + result);
-        resultRef.set(result);
-        if (result) {
+    final boolean result = interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
+    log("ask result for: " + obj.getUrl() + " is: " + result);
+    if (result) {
+      myCopiesPassiveResults.put(getKey(obj), true);
+      final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
           onStateChangedToSuccess(obj);
         }
-      }
-    }, "Checking authorization state", true, myVcs.getProject());
-    return done && Boolean.TRUE.equals(resultRef.get());
+      }, "Checking authorization state", true, myVcs.getProject());
+    }
+    return result;
   }
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {
     myVcs.invokeRefreshSvnRoots(false);
-    myCopiesPassiveResults.put(getKey(obj), true);
-    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myVcs.invokeRefreshSvnRoots(false);
-      }
-    });*/
 
     final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
