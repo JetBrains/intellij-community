@@ -120,9 +120,14 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
           apiLevel = platform.getValue();
         }
       }
+
+      if (apiLevel == null) {
+        return null;
+      }
+
       AndroidSdk sdk = AndroidSdk.parse(sdkPath, new EmptySdkLog());
       if (sdk != null) {
-        IAndroidTarget target = apiLevel != null ? sdk.findTargetByApiLevel(apiLevel) : sdk.getNewerPlatformTarget();
+        IAndroidTarget target = sdk.findTargetByApiLevel(apiLevel);
         if (target != null) {
           Library library = AndroidUtils.findAppropriateAndroidPlatform(target, sdk);
           if (library == null) {
