@@ -140,7 +140,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   public void searchResultsUpdated(SearchResults sr) {
     int count = sr.getActualFound();
     if (mySearchField.getText().isEmpty()) {
-      nothingToSearchFor();
+      updateUIWithEmptyResults();
     } else {
       if (count <= mySearchResults.getMatchesLimit()) {
         myClickToHighlightLabel.setVisible(false);
@@ -363,6 +363,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         if (!StringUtil.isEmpty(text)) {
           myFindModel.setStringToFind(text);
           updateResults(true);
+        } else {
+          nothingToSearchFor();
         }
       }
     });
@@ -760,6 +762,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myEditor.getDocument().removeDocumentListener(myDocumentListener);
       myDocumentListener = null;
     }
+    mySearchResults.dispose();
     myLivePreview.cleanUp();
     if (myListeningSelection) {
       myEditor.getSelectionModel().removeSelectionListener(this);
@@ -803,12 +806,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void nothingToSearchFor() {
+    updateUIWithEmptyResults();
+    mySearchResults.clear();
+  }
+
+  private void updateUIWithEmptyResults() {
     setRegularBackground();
     myMatchInfoLabel.setText("");
     myClickToHighlightLabel.setVisible(false);
-    if (myLivePreview != null) {
-      myLivePreview.cleanUp();
-    }
   }
 
   private void boldMatchInfo() {
