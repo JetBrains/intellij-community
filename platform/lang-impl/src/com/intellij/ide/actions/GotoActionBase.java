@@ -120,8 +120,8 @@ public abstract class GotoActionBase extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
-    assert myInAction != null;
     final Class startedAction = myInAction;
+    LOG.assertTrue(startedAction != null);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)), mayRequestOpenInCurrentWindow);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 

@@ -1,4 +1,3 @@
-import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
@@ -162,6 +161,7 @@ def layoutFull(String home, String targetDirectory) {
         jar("maven-facade-impl.jar") {
           module("maven-facade-impl")
         }
+        fileset(dir: "$home/plugins/maven/lib")
         fileset(dir: "$home/plugins/maven/facade-impl/lib")
         fileset(dir: "$home/plugins/maven/facade-api/lib")
       }

@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +52,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private final SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
   private final int myInitialState;
-  public static final Key<Integer> CHANGED_TOKEN_START_OFFSET = Key.create("CHANGED_TOKEN_START_OFFSET");
 
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
@@ -88,7 +86,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     mySegments = storage;
   }
 
-  public Lexer getLexer() {
+  protected Lexer getLexer() {
     return myLexer;
   }
 

@@ -34,7 +34,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenConfigurationProducer extends RuntimeConfigurationProducer{
+public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
 
   public MavenConfigurationProducer() {
@@ -63,7 +63,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer{
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
       if (configuration instanceof MavenRunConfiguration &&
-             ((MavenRunConfiguration)configuration).getRunnerParameters().equals(runnerParameters)) {
+          ((MavenRunConfiguration)configuration).getRunnerParameters().equals(runnerParameters)) {
         return existingConfiguration;
       }
     }

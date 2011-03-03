@@ -15,14 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.module.Module;
-import org.jdom.Element;
-import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-
-import java.util.List;
-import java.util.Map;
-
 public class Groovy_1_0_Importer extends GroovyImporter {
   public Groovy_1_0_Importer() {
     super("org.codehaus.groovy.maven", "gmaven-plugin");

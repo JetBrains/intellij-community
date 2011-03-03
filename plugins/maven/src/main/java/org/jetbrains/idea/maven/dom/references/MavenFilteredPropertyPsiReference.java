@@ -44,7 +44,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
       Property property = MavenDomUtil.findProperty(myProject, file, myText);
       if (property != null) return property;
     }
-    
+
     return null;
   }
 

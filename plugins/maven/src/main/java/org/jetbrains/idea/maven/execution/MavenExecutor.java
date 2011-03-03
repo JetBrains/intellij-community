@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import java.text.MessageFormat;
 
-public abstract class MavenExecutor  {
+public abstract class MavenExecutor {
   final MavenRunnerParameters myParameters;
   final MavenGeneralSettings myCoreSettings;
   final MavenRunnerSettings myRunnerSettings;
@@ -107,7 +107,8 @@ public abstract class MavenExecutor  {
       return true;
     }
     else {
-      myConsole.systemMessage(MavenFacadeConsole.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+      myConsole
+        .systemMessage(MavenFacadeConsole.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
       return false;
     }
   }

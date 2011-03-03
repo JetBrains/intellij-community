@@ -187,9 +187,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
 
           PsiElement psiElement = descriptor.getPsiElement();
+          if (psiElement == null) continue;
           if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) continue;
           HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
-          HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
+          HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered, psiElement);
           if (info == null) continue;
           List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
           for (TextRange editable : editables) {
@@ -434,7 +435,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
           infos.clear();
-          createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor);
+          createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement,
+                                        psiElement.getText());
           for (HighlightInfo info : infos) {
             final EditorColorsScheme colorsScheme = getColorsScheme();
             UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
@@ -525,11 +527,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
       List<InspectionResult> resultList = entry.getValue();
+      Map<PsiElement, String> text = new THashMap<PsiElement, String>(resultList.size());
       for (InspectionResult inspectionResult : resultList) {
         LocalInspectionTool tool = inspectionResult.tool;
         HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor);
+          PsiElement element = descriptor.getPsiElement();
+          String psiText = element == null ? null : text.get(element);
+          if (psiText == null && element != null) {
+            psiText = element.getText();
+            //text.put(element, psiText);
+          }
+          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element, psiText);
         }
       }
     }
@@ -542,12 +551,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              Document documentRange,
                                              LocalInspectionTool tool,
                                              HighlightSeverity severity,
-                                             ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return;
-    if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) return;
+                                             ProblemDescriptor descriptor, PsiElement element, String psiText) {
+    if (element == null) return;
+    if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(element, tool)) return;
     HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
-    HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered);
+    HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered, element);
     if (info == null) return;
 
     if (file == myFile) {
@@ -560,7 +568,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
-      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(),
+      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, element, hostRange.getStartOffset(),
                                                                  hostRange.getEndOffset(), info.description, info.toolTip);
       if (patched != null) {
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
@@ -570,19 +578,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   @Nullable
-  private HighlightInfo createHighlightInfo(final ProblemDescriptor descriptor,
-                                            final LocalInspectionTool tool,
-                                            final HighlightInfoType level,
-                                            final Set<TextRange> emptyActionRegistered) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return null;
-    @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor);
+  private HighlightInfo createHighlightInfo(@NotNull ProblemDescriptor descriptor,
+                                            @NotNull LocalInspectionTool tool,
+                                            @NotNull HighlightInfoType level,
+                                            @NotNull Set<TextRange> emptyActionRegistered,
+                                            @NotNull PsiElement element) {
+    @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor, element);
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (!inspectionProfile.isToolEnabled(key, myFile)) return null;
 
-    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
+    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
                                 "</a>" + myShortcutText;

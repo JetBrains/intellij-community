@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -207,5 +208,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     if (fixes != null && fixes.length != 0) return;
     ((SmartPointerEx)myStartSmartPointer).dispose();
     if (myEndSmartPointer != null) ((SmartPointerEx)myEndSmartPointer).dispose();
+  }
+
+  @Override
+  public String toString() {
+    PsiElement element = getPsiElement();
+    return ProblemDescriptionNode.renderDescriptionMessage(this, element);
   }
 }

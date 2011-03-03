@@ -33,7 +33,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
   @NonNls public static final String SYSTEM_PROPERTIES_FILE = "System.properties";
   @NonNls public static final String ENV_PROPERTIES_FILE = "Environment.properties";
 
-  public static final String[] PROPERTIES_FILES = new String[] { SYSTEM_PROPERTIES_FILE, ENV_PROPERTIES_FILE };
+  public static final String[] PROPERTIES_FILES = new String[]{SYSTEM_PROPERTIES_FILE, ENV_PROPERTIES_FILE};
 
   private final Map<String, VirtualFile> myFiles = new THashMap<String, VirtualFile>();
 

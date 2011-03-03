@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
@@ -284,5 +287,19 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "for (   ; ;         )",
       "for (; ; )"
     );
+  }
+
+  public void testSpacesInDisjunctiveType() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().CATCH_ON_NEW_LINE = false;
+
+    getSettings().SPACE_AROUND_BITWISE_OPERATORS = true;
+    doMethodTest("try { } catch (E1|E2 e) { }",
+                 "try { } catch (E1 | E2 e) { }");
+
+    getSettings().SPACE_AROUND_BITWISE_OPERATORS = false;
+    doMethodTest("try { } catch (E1 | E2 e) { }",
+                 "try { } catch (E1|E2 e) { }");
   }
 }

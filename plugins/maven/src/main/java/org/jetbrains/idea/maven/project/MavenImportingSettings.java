@@ -201,7 +201,9 @@ public class MavenImportingSettings implements Cloneable {
 
   public interface Listener {
     void autoImportChanged();
+
     void createModuleGroupsChanged();
+
     void createModuleForAggregatorsChanged();
   }
 }

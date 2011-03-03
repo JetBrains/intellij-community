@@ -18,9 +18,9 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import java.util.Collection;
 import java.util.List;

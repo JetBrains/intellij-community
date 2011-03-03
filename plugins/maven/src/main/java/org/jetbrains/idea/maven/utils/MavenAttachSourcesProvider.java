@@ -46,7 +46,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     Collection<MavenProject> projects = getMavenProjects(psiFile);
     if (projects.isEmpty()) return Collections.emptyList();
     if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
-                                      
+
     return Collections.<AttachSourcesAction>singleton(new AttachSourcesAction() {
       public String getName() {
         return ProjectBundle.message("maven.action.download.sources");
@@ -96,7 +96,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
                 }
               });
             }
-            
+
             if (downloadResult.resolvedSources.isEmpty()) {
               resultWrapper.setRejected();
             }

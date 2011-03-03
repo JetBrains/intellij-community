@@ -81,6 +81,26 @@ public class StringUtil {
     }
   }
 
+  @NotNull
+  public static String replaceChar(@NotNull String buffer, char oldChar, char newChar) {
+    StringBuilder newBuffer = null;
+    for (int i = 0; i < buffer.length(); i++) {
+      char c = buffer.charAt(i);
+      if (c == oldChar) {
+        if (newBuffer == null) {
+          newBuffer = new StringBuilder(buffer.length());
+          newBuffer.append(buffer, 0, i);
+        }
+
+        newBuffer.append(newChar);
+      }
+      else if (newBuffer != null) {
+        newBuffer.append(c);
+      }
+    }
+    return newBuffer == null ? buffer : newBuffer.toString();
+  }
+
   public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
@@ -1441,8 +1461,8 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String first(@NotNull String text, final int length, final boolean appendEllipsis) {
-    return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
+  public static String first(@NotNull String text, final int maxLength, final boolean appendEllipsis) {
+    return text.length() > maxLength ? text.substring(0, maxLength) + (appendEllipsis ? "..." : "") : text;
   }
 
   @NotNull

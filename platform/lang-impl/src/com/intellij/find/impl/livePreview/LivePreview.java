@@ -221,7 +221,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
       String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (replacementPreviewText != null) {
+      if (replacementPreviewText != null && mySearchResults.getFindModel().isRegularExpressions()) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
         replacementView.setDelegate(this);

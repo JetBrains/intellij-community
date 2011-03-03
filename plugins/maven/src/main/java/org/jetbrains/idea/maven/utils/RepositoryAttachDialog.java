@@ -92,7 +92,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myCaptionLabel.setUI(new MultiLineLabelUI());
     myInfoLabel.setUI(new MultiLineLabelUI());
     myInfoLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-    myInfoLabel.setPreferredSize(new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
+    myInfoLabel.setPreferredSize(
+      new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
     myComboComponent.setButtonIcon(IconLoader.findIcon("/actions/menu-find.png"));
     myComboComponent.getButton().addActionListener(new ActionListener() {
@@ -224,32 +225,34 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myCoordinates.contains(text)) return false;
     if (myProgressIcon.isRunning()) return false;
     myProgressIcon.resume();
-    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
-      public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
-        if (myProgressIcon.isDisposed()) return true;
-        myProgressIcon.suspend();
-        final int prevSize = myCoordinates.size();
-        for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
-          myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
-          if (each.second != null && !myRepositories.containsKey(each.second.getUrl())) {
-            myRepositories.put(each.second.getUrl(), each.second);
+    RepositoryAttachHandler
+      .searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
+        public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
+          if (myProgressIcon.isDisposed()) return true;
+          myProgressIcon.suspend();
+          final int prevSize = myCoordinates.size();
+          for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
+            myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
+            if (each.second != null && !myRepositories.containsKey(each.second.getUrl())) {
+              myRepositories.put(each.second.getUrl(), each.second);
+            }
           }
+          if (Boolean.TRUE.equals(tooMany)) {
+            final Point point = new Point(myCombobox.getWidth() / 2, 0);
+            JBPopupFactory.getInstance()
+              .createHtmlTextBalloonBuilder("Too many results found, please refine your query.", MessageType.WARNING, null).
+              setHideOnClickOutside(true).
+              createBalloon().show(new RelativePoint(myCombobox, point), Balloon.Position.above);
+          }
+          updateComboboxSelection(prevSize != myCoordinates.size());
+          return true;
         }
-        if (Boolean.TRUE.equals(tooMany)) {
-          final Point point = new Point(myCombobox.getWidth() / 2, 0);
-          JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Too many results found, please refine your query.", MessageType.WARNING, null).
-            setHideOnClickOutside(true).
-            createBalloon().show(new RelativePoint(myCombobox, point), Balloon.Position.above);
-        }
-        updateComboboxSelection(prevSize != myCoordinates.size());
-        return true;
-      }
-    });
+      });
     return true;
   }
 
   private void updateInfoLabel() {
-    myInfoLabel.setText("Found: " + myCoordinates.size()+ "\nShowing: " + myCombobox.getModel().getSize());
+    myInfoLabel.setText("Found: " + myCoordinates.size() + "\nShowing: " + myCombobox.getModel().getSize());
   }
 
   @Override

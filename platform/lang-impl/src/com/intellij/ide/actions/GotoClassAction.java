@@ -40,7 +40,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       DumbService.getInstance(project).showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
 
       myInAction = null;
-      new GotoFileAction().gotoActionPerformed(e);
+      new GotoFileAction().actionPerformed(e);
       return;
     }
 

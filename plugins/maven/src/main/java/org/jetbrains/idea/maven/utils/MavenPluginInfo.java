@@ -31,7 +31,7 @@ public class MavenPluginInfo {
   private final String myGoalPrefix;
   private final Map<String, Mojo> myMojos;
 
-  public MavenPluginInfo(byte[] text)  {
+  public MavenPluginInfo(byte[] text) {
     Element plugin = MavenJDOMUtil.read(text, null);
 
     myGroupId = MavenJDOMUtil.findChildValueByPath(plugin, "groupId", MavenId.UNKNOWN_VALUE);

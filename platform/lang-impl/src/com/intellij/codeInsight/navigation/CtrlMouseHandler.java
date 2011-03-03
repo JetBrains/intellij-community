@@ -31,6 +31,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -47,6 +49,9 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -463,11 +468,32 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              doExecute(file, offset);
+          final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
+          final ApplicationAdapter listener = new ApplicationAdapter() {
+            @Override
+            public void beforeWriteActionStart(Object action) {
+              progressIndicator.cancel();
             }
-          });
+          };
+          final Application application = ApplicationManager.getApplication();
+          try {
+            application.addApplicationListener(listener);
+            ProgressManager.getInstance().runProcess(new Runnable(){
+                @Override
+                public void run() {
+                  // This read action can possibe last for a long time, we want it to stop immediately on the first write access.
+                  // For this purpose we launch it under empty progress and invoke progressIndicator#cancel on write access to avoid possible write lock delays.
+                  application.runReadAction(new Runnable() {
+                    public void run() {
+                      doExecute(file, offset);
+                    }
+                  });
+                }
+              }, progressIndicator);
+          }
+          finally {
+            application.removeApplicationListener(listener);
+          }
         }
       });
     }

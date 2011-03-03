@@ -4,6 +4,8 @@ import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsSer
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
@@ -23,24 +25,20 @@ public class StatisticsNotificationManager {
                                               getText(),
                                               NotificationType.INFORMATION,
                                               new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent
-                                                .getInstance())), NotificationDisplayType.STICKY_BALLOON, project);
+                                                .getInstance())), project);
   }
 
   private static String getText() {
     return
-      "<html>We're asking your permission to send information about your IntelliJ IDEA plugins configuration (what is enabled and what is not), and feature usage statistics (e.g. how frequently you're using code completion)." +
+      "<html>Please click <a href='allow'>Agree</a> if you want to help make "+ ApplicationNamesInfo.getInstance().getFullProductName() +
+      " better or <a href='decline'>Don't agree</a> otherwise." +
       "<br/>" +
-      "This data is anonymous, does not contain any personal information, collected for use only by JetBrains, and will never be transmitted to any third party." +
-      "<br/>" +
-      "Please click <a href='allow'>Agree</a> if you want to help make IntelliJ IDEA better  " +
-      "or <a href='decline'>Don't agree</a> otherwise." +
-      "<br/>" +
-      "You can customize settings on <a href='settings'>IDE Settings -> Usage statistics</a> pane" +
+      "You can customize settings on <a href='settings'>IDE Settings -> Usage Statistics</a> pane" +
       "</html>";
   }
 
   private static String getTitle() {
-    return "Help improve IntelliJ IDEA by sending anonymous usage statistics to JetBrains";
+    return "Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() +" by sending anonymous usage statistics to JetBrains";
   }
 
   private static class MyNotificationListener implements NotificationListener {

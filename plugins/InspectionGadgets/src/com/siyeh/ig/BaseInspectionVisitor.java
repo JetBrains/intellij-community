@@ -168,13 +168,21 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor{
             fix.setOnTheFly(onTheFly);
         }
         final String description = inspection.buildErrorString(infos);
-        TextRange range = inspection.getProblemTextRange(location);
-        if (range != null) {
-            holder.registerProblem(location, range, description, fixes);
+        holder.registerProblem(location, description, fixes);
+    }
+
+    protected final void registerError(@NotNull PsiElement location,
+                                       int offset, int length, Object... infos){
+        if (location.getTextLength() == 0 || length == 0) {
+            return;
         }
-        else {
-            holder.registerProblem(location, description, fixes);
+        final InspectionGadgetsFix[] fixes = createFixes(infos);
+        for (InspectionGadgetsFix fix : fixes) {
+            fix.setOnTheFly(onTheFly);
         }
+        final String description = inspection.buildErrorString(infos);
+        final TextRange range = new TextRange(offset, offset + length);
+        holder.registerProblem(location, range, description, fixes);
     }
 
     @NotNull
@@ -198,6 +206,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor{
         visitExpression(expression);
     }
 
+    @Override
     public final void visitWhiteSpace(PsiWhiteSpace space){
         // none of our inspections need to do anything with white space,
         // so this is a performance optimization

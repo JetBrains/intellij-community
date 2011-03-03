@@ -155,7 +155,9 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
   private static void addRequiredAnnotation(DomExtension e, ParameterData data) {
     if (!StringUtil.isEmptyOrSpaces(data.defaultValue)
-        || !StringUtil.isEmptyOrSpaces(data.expression)) return;
+        || !StringUtil.isEmptyOrSpaces(data.expression)) {
+      return;
+    }
 
     final String required = data.parameter.getRequired().getStringValue();
     if (!StringUtil.isEmptyOrSpaces(required)) {

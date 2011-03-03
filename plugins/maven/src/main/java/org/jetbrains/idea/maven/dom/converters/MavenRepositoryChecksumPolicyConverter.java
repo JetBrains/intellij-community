@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenRepositoryChecksumPolicyConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES = Arrays.asList("ignore",  "fail", "warn");
+  private static final List<String> VALUES = Arrays.asList("ignore", "fail", "warn");
 
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;

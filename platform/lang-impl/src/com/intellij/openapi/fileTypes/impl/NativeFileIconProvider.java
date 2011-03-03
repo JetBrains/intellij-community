@@ -17,6 +17,7 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.FileIconProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,6 @@ import java.util.*;
  * @author yole
  */
 public class NativeFileIconProvider implements FileIconProvider {
-  private final JFileChooser myFileChooser = new JFileChooser();
   private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
@@ -68,8 +68,9 @@ public class NativeFileIconProvider implements FileIconProvider {
           return null;
         }
         Icon icon;
-        try {
-          icon = myFileChooser.getIcon(f);
+        try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
+          assert !ApplicationManager.getApplication().isReadAccessAllowed();
+          icon = SwingComponentHolder.ourFileChooser.getIcon(f);
         }
         catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
           return null;
@@ -87,6 +88,10 @@ public class NativeFileIconProvider implements FileIconProvider {
         return icon;
       }
     });
+  }
+
+  static class SwingComponentHolder {
+    private static final JFileChooser ourFileChooser = new JFileChooser();
   }
 
   protected boolean isNativeFileType(VirtualFile file) {

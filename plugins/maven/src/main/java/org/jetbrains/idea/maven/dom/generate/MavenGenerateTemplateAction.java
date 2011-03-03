@@ -18,9 +18,9 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
  */
 public class MavenGenerateTemplateAction extends GenerateDomElementAction {
   public MavenGenerateTemplateAction(@NotNull final String description,
-                                        @NotNull final Class<? extends DomElement> childElementClass,
-                                        @Nullable final String mappingId,
-                                        @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
+                                     @NotNull final Class<? extends DomElement> childElementClass,
+                                     @Nullable final String mappingId,
+                                     @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {
     super(new MavenGenerateDomElementProvider(description, childElementClass, mappingId, parentFunction));
 
     getTemplatePresentation().setIcon(ElementPresentationManager.getIconForClass(childElementClass));

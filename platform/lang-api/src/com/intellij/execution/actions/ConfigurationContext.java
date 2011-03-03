@@ -102,7 +102,7 @@ public class ConfigurationContext {
     LOG.assertTrue(myConfiguration == null);
     final Location location = getLocation();
     myConfiguration = location != null ?
-        PreferedProducerFind.createConfiguration(location, this) :
+        PreferredProducerFind.createConfiguration(location, this) :
         null;
   }
 
@@ -187,7 +187,7 @@ public class ConfigurationContext {
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
-      myPreferredProducers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
+      myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
     }
     return myPreferredProducers;
   }

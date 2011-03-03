@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
@@ -96,7 +94,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     private String m_shortName = null;
     private long timestamp = -1L;
-    private InspectionGadgetsPlugin inspectionGadgetsPlugin;
+    private InspectionGadgetsPlugin inspectionGadgetsPlugin = null;
 
 
     @Override @NotNull
@@ -208,7 +206,8 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         for (List<String> out : outs) {
             out.clear();
         }
-        for (int i = 0, iMax = strings.size(); i < iMax; i += outs.length) {
+        int iMax = strings.size();
+        for (int i = 0; i < iMax; i += outs.length) {
             for (int j = 0; j < outs.length; j++) {
                 final List<String> out = outs[j];
                 if (i + j >= iMax) {
@@ -272,6 +271,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         if (inspectionGadgetsPlugin != null) {
           return;
         }
+        @NonNls
         final Application application = ApplicationManager.getApplication();
         inspectionGadgetsPlugin = (InspectionGadgetsPlugin)
                 application.getComponent("InspectionGadgets");
@@ -284,10 +284,5 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         if (openProjects.length == 0) {
             inspectionGadgetsPlugin = null;
         }
-    }
-
-    @Nullable
-    public TextRange getProblemTextRange(PsiElement element) {
-        return null;
     }
 }

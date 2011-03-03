@@ -114,11 +114,14 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
   public String toString() {
     CommonProblemDescriptor descriptor = getDescriptor();
-    return descriptor == null ? "" : renderDescriptionMessage(descriptor).replaceAll("<[^>]*>", "");
+    if (descriptor == null) return "";
+    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+
+    return renderDescriptionMessage(descriptor, element).replaceAll("<[^>]*>", "");
   }
 
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+  @NotNull
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
     String message = descriptor.getDescriptionTemplate();
 
     // no message. Should not be the case if inspection correctly implemented.
@@ -129,7 +132,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     message = StringUtil.replace(message, "</code>", "'");
     message = StringUtil.replace(message, "#loc", "");
     if (message.contains("#ref")) {
-      String ref = extractHighlightedText(descriptor, psiElement);
+      String ref = extractHighlightedText(descriptor, element);
       message = StringUtil.replace(message, "#ref", ref);
     }
     final int endIndex = message.indexOf("#end");
@@ -141,7 +144,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return message;
   }
 
-  public static String extractHighlightedText(CommonProblemDescriptor descriptor, PsiElement psiElement) {
+  public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
     if (descriptor instanceof ProblemDescriptorImpl) {
@@ -149,15 +152,13 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
       final TextRange elementRange = psiElement.getTextRange();
       if (textRange != null && elementRange != null) {
         textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length()) {
+        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= elementRange.getLength()) {
           ref = textRange.substring(ref);
         }
       }
     }
-    ref = ref.replaceAll("\n", " ").trim();
-    if (ref.length() > 100) {
-      ref = ref.substring(0, 100).trim() + "...";
-    }
+    ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
+    ref = StringUtil.first(ref, 100, true);
     return ref;
   }
 }

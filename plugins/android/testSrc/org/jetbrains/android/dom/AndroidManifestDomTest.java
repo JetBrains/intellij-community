@@ -3,8 +3,6 @@ package org.jetbrains.android.dom;
 import com.android.sdklib.SdkConstants;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
-import org.jetbrains.android.sdk.Android15TestProfile;
-import org.jetbrains.android.sdk.AndroidSdkTestProfile;
 
 import java.util.List;
 
@@ -14,11 +12,6 @@ import java.util.List;
 public class AndroidManifestDomTest extends AndroidDomTest {
   public AndroidManifestDomTest() {
     super(false, "dom/manifest");
-  }
-
-  @Override
-  public AndroidSdkTestProfile getTestProfile() {
-    return new Android15TestProfile();
   }
 
   @Override

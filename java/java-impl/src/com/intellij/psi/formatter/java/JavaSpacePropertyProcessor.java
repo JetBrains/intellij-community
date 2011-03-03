@@ -68,8 +68,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     init(child);
     mySettings = settings;
 
-    if (myChild1.getPsi().getLanguage() != StdLanguages.JAVA ||
-      myChild2.getPsi().getLanguage() != StdLanguages.JAVA) {
+    final PsiElement myChild1Psi1 = myChild1.getPsi();
+    final PsiElement myChild1Psi2 = myChild2.getPsi();
+    if (myChild1Psi1 == null || myChild1Psi1.getLanguage() != StdLanguages.JAVA ||
+        myChild1Psi2 == null || myChild1Psi2.getLanguage() != StdLanguages.JAVA) {
       return;
     }
 
@@ -492,8 +494,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
       if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings);
       int emptyLines = myImportHelper.getEmptyLinesBetween(
-        (PsiImportStatementBase)SourceTreeToPsiMap.treeElementToPsi(myChild1),
-        (PsiImportStatementBase)SourceTreeToPsiMap.treeElementToPsi(myChild2)
+        SourceTreeToPsiMap.<PsiImportStatementBase>treeToPsiNotNull(myChild1),
+        SourceTreeToPsiMap.<PsiImportStatementBase>treeToPsiNotNull(myChild2)
       ) + 1;
       myResult = Spacing.createSpacing(0, 0, emptyLines,
                                        mySettings.KEEP_LINE_BREAKS,
@@ -1338,6 +1340,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myChild2.getElementType() == JavaTokenType.LBRACKET || myChild2.getElementType() == JavaTokenType.RBRACKET) {
       createSpaceInCode(false);
+    }
+    else if (type.getType() instanceof PsiDisjunctionType) {
+      createSpaceInCode(mySettings.SPACE_AROUND_BITWISE_OPERATORS);
     }
     else {
       createSpaceInCode(true);

@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.facet.FacetModel;
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,8 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Collection;
+import java.util.Map;
 
 public abstract class MavenBaseModifiableModelsProvider implements MavenModifiableModelsProvider {
   protected ModifiableModuleModel myModuleModel;
@@ -159,7 +159,6 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
       final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myProject);
       return table != null ? table.getLibraryByName(libraryName) : null;
     }
-
   }
 
   private class MavenModulesProvider implements ModulesProvider {

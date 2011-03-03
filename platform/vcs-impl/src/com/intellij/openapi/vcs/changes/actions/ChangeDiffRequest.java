@@ -21,12 +21,14 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.DiffToolbar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,10 +98,11 @@ public class ChangeDiffRequest implements ChangeRequestChain {
 
   @Nullable
   public DiffRequest moveForward() {
-    return moveImpl(new MoveDirection() {
+    return moveWithErrorReport(new MoveDirection() {
       public boolean canMove() {
         return canMoveForward();
       }
+
       public int direction() {
         return 1;
       }
@@ -107,7 +110,15 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
-  private DiffRequest moveImpl(final MoveDirection moveDirection) {
+  private DiffRequest moveWithErrorReport(final MoveDirection moveDirection) {
+    final List<String> errors = new ArrayList<String>();
+    final DiffRequest diffRequest = moveImpl(moveDirection, errors);
+    showErrors(errors);
+    return diffRequest;
+  }
+
+  @Nullable
+  private DiffRequest moveImpl(final MoveDirection moveDirection, final List<String> errors) {
     while (moveDirection.canMove()) {
       final int nextIdx = myIndex + moveDirection.direction();
 
@@ -115,10 +126,12 @@ public class ChangeDiffRequest implements ChangeRequestChain {
       final DiffRequestPresentable.MyResult result = diffRequestPresentable.step(myContext);
       final DiffPresentationReturnValue returnValue = result.getReturnValue();
       if (DiffPresentationReturnValue.quit.equals(returnValue)) {
+        errors.addAll(result.getErrors());
         return null;
       }
       if (DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
         mySteps.remove(nextIdx);
+        errors.addAll(result.getErrors());
         if (moveDirection.direction() < 0) {
           // our position moves to head
           myIndex += moveDirection.direction();
@@ -134,6 +147,15 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     return null;
   }
 
+  private void showErrors(final List<String> errors) {
+    if (errors.isEmpty()) return;
+    final StringBuilder sb = new StringBuilder("Following problems have occured:\n\n");
+    for (String error : errors) {
+      sb.append(error).append('\n');
+    }
+    Messages.showErrorDialog(myProject, sb.toString(), "Show Diff");
+  }
+
   private interface MoveDirection {
     boolean canMove();
     int direction();
@@ -141,10 +163,11 @@ public class ChangeDiffRequest implements ChangeRequestChain {
 
   @Nullable
   public DiffRequest moveBack() {
-    return moveImpl(new MoveDirection() {
+    return moveWithErrorReport(new MoveDirection() {
       public boolean canMove() {
         return canMoveBack();
       }
+
       public int direction() {
         return -1;
       }

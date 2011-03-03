@@ -37,9 +37,10 @@ public class MavenArtifactDownloader {
   private static final ThreadPoolExecutor EXECUTOR =
     new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
       AtomicInteger num = new AtomicInteger();
+
       @Override
       public Thread newThread(Runnable r) {
-        return new Thread(r, "Maven Artifact Downloader "+num.getAndIncrement());
+        return new Thread(r, "Maven Artifact Downloader " + num.getAndIncrement());
       }
     });
 

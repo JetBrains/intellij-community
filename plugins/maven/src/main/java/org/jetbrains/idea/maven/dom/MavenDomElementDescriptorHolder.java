@@ -40,15 +40,18 @@ public class MavenDomElementDescriptorHolder {
     PROJECT_FILE {
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
-      }},
+      }
+    },
     PROFILES_FILE {
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROFILES_SCHEMA_URL;
-      }},
+      }
+    },
     SETTINGS_FILE {
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
-      }};
+      }
+    };
 
     public abstract String getSchemaUrl();
   }

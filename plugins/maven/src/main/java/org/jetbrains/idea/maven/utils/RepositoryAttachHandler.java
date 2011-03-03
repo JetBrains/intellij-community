@@ -50,7 +50,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.services.MavenServicesManager;
+import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -201,18 +201,19 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           MavenFacadeManager facade = MavenFacadeManager.getInstance();
-          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-          for (String serviceUrl : MavenServicesManager.getServiceUrls()) {
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList =
+            new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+          for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
             final List<MavenArtifactInfo> artifacts;
             try {
-              artifacts = facade.findArtifacts(template, serviceUrl);
+              artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
             }
             catch (Exception ex) {
               MavenLog.LOG.warn("Accessing Service at: " + serviceUrl, ex);
               continue;
             }
             if (!artifacts.isEmpty()) {
-              final List<MavenRepositoryInfo> repositories = facade.getRepositories(serviceUrl);
+              final List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
               final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
@@ -243,7 +244,9 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
-  public static void searchRepositories(final Project project, final Collection<String> nexusUrls, final Processor<Collection<MavenRepositoryInfo>> resultProcessor) {
+  public static void searchRepositories(final Project project,
+                                        final Collection<String> nexusUrls,
+                                        final Processor<Collection<MavenRepositoryInfo>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
@@ -254,7 +257,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           for (String nexusUrl : nexusUrls) {
             final List<MavenRepositoryInfo> repositories;
             try {
-              repositories = manager.getRepositories(nexusUrl);
+              repositories = MavenRepositoryServicesManager.getRepositories(nexusUrl);
             }
             catch (Exception ex) {
               MavenLog.LOG.warn("Accessing Service at: " + nexusUrl, ex);
@@ -281,9 +284,8 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   private static MavenId getMavenId(final String coord) {
     final String[] parts = coord.split(":");
     return new MavenId(parts.length > 0 ? parts[0] : null,
-                                 parts.length > 1 ? parts[1] : null,
-                                 parts.length > 2 ? parts[2] : null);
-
+                       parts.length > 1 ? parts[1] : null,
+                       parts.length > 2 ? parts[2] : null);
   }
 
   private static void handleError(String message, Exception e) {

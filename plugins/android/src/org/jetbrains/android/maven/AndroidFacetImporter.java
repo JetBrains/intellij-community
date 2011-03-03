@@ -19,7 +19,9 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,9 +33,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.facet.AndroidRootUtil;
-import org.jetbrains.android.sdk.AndroidLibraryManager;
-import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.sdk.EmptySdkLog;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -98,18 +99,22 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   }
 
   private void configureAndroidPlatform(AndroidFacet facet, MavenProject project) {
-    Library platformLib = findOrCreateAndroidPlatform(project);
+    Sdk platformLib = findOrCreateAndroidPlatform(project);
     if (platformLib != null) {
-      AndroidPlatform platform = AndroidPlatform.parse(platformLib, null, null);
-      if (platform != null) {
-        facet.getConfiguration().setAndroidPlatform(platform);
-      }
+      final ModifiableRootModel model = ModuleRootManager.getInstance(facet.getModule()).getModifiableModel();
+      model.setSdk(platformLib);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          model.commit();
+        }
+      });
     }
-    facet.getConfiguration().ADD_ANDROID_LIBRARY = false;
+    //facet.getConfiguration().ADD_ANDROID_LIBRARY = false;
   }
 
   @Nullable
-  private Library findOrCreateAndroidPlatform(MavenProject project) {
+  private Sdk findOrCreateAndroidPlatform(MavenProject project) {
     String sdkPath = System.getenv("ANDROID_HOME");
     String apiLevel = null;
     if (sdkPath != null) {
@@ -124,12 +129,10 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
       if (sdk != null) {
         IAndroidTarget target = apiLevel != null ? sdk.findTargetByApiLevel(apiLevel) : sdk.getNewerPlatformTarget();
         if (target != null) {
-          Library library = AndroidUtils.findAppropriateAndroidPlatform(target, sdk);
+          Sdk library = AndroidUtils.findAppropriateAndroidPlatform(target, sdk);
           if (library == null) {
             final LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
-            AndroidLibraryManager manager = new AndroidLibraryManager(model);
-            library = manager.createNewAndroidPlatform(target, sdkPath);
-            manager.apply();
+            library = AndroidSdkUtils.createNewAndroidPlatform(target, sdkPath, true);
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 model.commit();

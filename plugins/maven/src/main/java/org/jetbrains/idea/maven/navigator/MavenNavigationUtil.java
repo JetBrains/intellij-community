@@ -64,7 +64,7 @@ public class MavenNavigationUtil {
         }
         navigate(project, file, offset, requestFocus);
       }
-    };    
+    };
   }
 
   @Nullable

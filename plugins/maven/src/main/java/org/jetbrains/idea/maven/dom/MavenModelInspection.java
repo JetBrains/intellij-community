@@ -41,6 +41,6 @@ public class MavenModelInspection extends BasicDomElementsInspection<MavenDomPro
   }
 
   public Class[] getInspectionClasses() {
-    return new Class[] {MavenModelInspection.class};
+    return new Class[]{MavenModelInspection.class};
   }
 }

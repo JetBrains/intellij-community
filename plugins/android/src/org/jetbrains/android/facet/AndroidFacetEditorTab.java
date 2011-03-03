@@ -29,13 +29,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -52,9 +52,6 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidIdlCompiler;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidPlatformChooser;
-import org.jetbrains.android.sdk.AndroidPlatformChooserListener;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
@@ -74,13 +71,9 @@ import java.util.*;
 public class AndroidFacetEditorTab extends FacetEditorTab {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.facet.AndroidFacetEditorTab");
 
-  private final AndroidPlatformChooser myPlatformChooser;
   private final AndroidFacetConfiguration myConfiguration;
   private final FacetEditorContext myContext;
-  private AndroidPlatform myAppliedPlatform;
-  private JPanel myPlatformChooserWrapper;
   private JPanel myContentPanel;
-  private JCheckBox myAddAndroidLibrary;
   private TextFieldWithBrowseButton myRGenPathField;
   private TextFieldWithBrowseButton myAidlGenPathField;
   private JButton myResetPathsButton;
@@ -114,10 +107,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
     LibraryTable.ModifiableModel model = GlobalLibrariesConfigurable.getInstance(project).getModelProvider().getModifiableModel();
-    myPlatformChooser = new AndroidPlatformChooser(model, project);
     myConfiguration = androidFacetConfiguration;
     myContext = context;
-    myPlatformChooserWrapper.add(myPlatformChooser.getComponent());
 
     myManifestFileLabel.setLabelFor(myManifestFileField);
     myResFolderLabel.setLabelFor(myResFolderField);
@@ -144,27 +135,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCustomAptSourceDirField.getButton().addActionListener(new MyFolderFieldListener(myCustomAptSourceDirField,
                                                                                       AndroidAptCompiler.getCustomResourceDirForApt(facet),
                                                                                       false));
-
-    myPlatformChooser.addListener(new AndroidPlatformChooserListener() {
-      @Override
-      public void platformChanged(AndroidPlatform oldPlatform) {
-        if (myAddAndroidLibrary.isSelected()) {
-          updateAndroidLibrary(oldPlatform, myPlatformChooser.getSelectedPlatform());
-        }
-      }
-    });
-    myAddAndroidLibrary.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AndroidPlatform platform = myPlatformChooser.getSelectedPlatform();
-        if (myAddAndroidLibrary.isSelected()) {
-          addAndroidLibrary(platform);
-        }
-        else {
-          removeAndroidLibrary(platform);
-        }
-      }
-    });
 
     myResetPathsButton.addActionListener(new ActionListener() {
       @Override
@@ -303,10 +273,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    AndroidPlatform selectedPlatform = myPlatformChooser.getSelectedPlatform();
-    AndroidPlatform currentPlatform = myAppliedPlatform != null ? myAppliedPlatform : myConfiguration.getAndroidPlatform();
-    if (!Comparing.equal(selectedPlatform, currentPlatform)) return true;
-    if (myAddAndroidLibrary.isSelected() != myConfiguration.ADD_ANDROID_LIBRARY) return true;
+    //if (myAddAndroidLibrary.isSelected() != myConfiguration.ADD_ANDROID_LIBRARY) return true;
     if (myIsLibraryProjectCheckbox.isSelected() != myConfiguration.LIBRARY_PROJECT) return true;
 
     if (checkRelativePath(myConfiguration.GEN_FOLDER_RELATIVE_PATH_APT, myRGenPathField.getText())) {
@@ -483,7 +450,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myConfiguration.LIBS_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absLibsPath, false);
 
-    myConfiguration.ADD_ANDROID_LIBRARY = myAddAndroidLibrary.isSelected();
+    //myConfiguration.ADD_ANDROID_LIBRARY = myAddAndroidLibrary.isSelected();
 
     if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
       // todo: after X release
@@ -541,14 +508,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     else {
       String relPath = toRelativePath(absAptSourcePath);
       myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
-    }
-
-    final AndroidPlatform platform = myPlatformChooser.getSelectedPlatform();
-    myConfiguration.setAndroidPlatform(platform);
-    final AndroidFacet facet = myConfiguration.getFacet();
-    if (facet != null) {
-      myPlatformChooser.apply();
-      myAppliedPlatform = platform;
     }
 
     runApt = runApt && myConfiguration.REGENERATE_R_JAVA && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
@@ -624,44 +583,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     return relativeGenPathR;
   }
 
-  private void updateAndroidLibrary(AndroidPlatform oldPlatform, AndroidPlatform platform) {
-    removeAndroidLibrary(oldPlatform);
-    addAndroidLibrary(platform);
-  }
-
-  private void addAndroidLibrary(AndroidPlatform platform) {
-    if (platform != null) {
-      Library library = platform.getLibrary();
-      // library can be removed in the same session
-      if (ArrayUtil.find(myPlatformChooser.getLibraryTableModel().getLibraries(), library) >= 0) {
-        LibraryOrderEntry entry = myContext.getModifiableRootModel().addLibraryEntry(library);
-        entry.setScope(DependencyScope.PROVIDED);
-      }
-    }
-  }
-
-  private void removeAndroidLibrary(AndroidPlatform platform) {
-    if (platform != null) {
-      ModifiableRootModel model = myContext.getModifiableRootModel();
-      LibraryOrderEntry entry = model.findLibraryOrderEntry(platform.getLibrary());
-      if (entry == null) {
-        entry = findLibraryOrderEntryByName(model, platform.getLibrary().getName());
-      }
-      if (entry != null) {
-        model.removeOrderEntry(entry);
-      }
-    }
-  }
-
   public void reset() {
-    myAppliedPlatform = null;
-    myPlatformChooser.rebuildPlatforms();
-    AndroidPlatform platform = myConfiguration.getAndroidPlatform();
-    myPlatformChooser.setSelectedPlatform(platform);
-
     resetOptions(myConfiguration);
 
-    myAddAndroidLibrary.setSelected(myConfiguration.ADD_ANDROID_LIBRARY);
+    //myAddAndroidLibrary.setSelected(myConfiguration.ADD_ANDROID_LIBRARY);
     myIsLibraryProjectCheckbox.setSelected(myConfiguration.LIBRARY_PROJECT);
   }
 
@@ -745,7 +670,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   }
 
   public void disposeUIResources() {
-    Disposer.dispose(myPlatformChooser);
   }
 
   private void createUIComponents() {

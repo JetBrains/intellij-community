@@ -162,45 +162,21 @@ public class TodoCheckinHandler extends CheckinHandler {
     }
 
     final String text = createMessage(worker);
-    final String[] buttons = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0 ?
-      new String[] {VcsBundle.message("todo.in.new.review.button"), commitButtonText, CommonBundle.getCancelButtonText()} :
-      new String[] {commitButtonText, CommonBundle.getCancelButtonText()};
-    final int answer = Messages.showDialog(text, "TODO", buttons, 0, UIUtil.getWarningIcon());
-    if (answer == 0) {
-      TodoView todoView = ServiceManager.getService(myProject, TodoView.class);
-      final String title = "For commit (" + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ")";
-      todoView.addCustomTodoView(new TodoTreeBuilderFactory() {
-        @Override
-        public TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-          return new CustomChangelistTodosTreeBuilder(tree, treeModel, myProject, title, worker.inOneList());
-        }
-      }, title, new TodoPanelSettings(myConfiguration.myTodoPanelSettings));
+    final String[] buttons;
+    final boolean thereAreTodoFound = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0;
+    if (thereAreTodoFound) {
+      buttons = new String[]{VcsBundle.message("todo.in.new.review.button"), commitButtonText, CommonBundle.getCancelButtonText()};
+    }
+    else {
+      buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
+    }
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
-          if (manager != null) {
-            final ToolWindow window = manager.getToolWindow("TODO");
-            if (window != null) {
-              window.show(new Runnable() {
-                @Override
-                public void run() {
-                  final ContentManager cm = window.getContentManager();
-                  final Content[] contents = cm.getContents();
-                  if (contents.length > 0) {
-                    cm.setSelectedContent(contents[contents.length - 1], true);
-                  }
-                }
-              });
-            }
-          }
-        }
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
-      // show for review
+    final int answer = Messages.showDialog(text, "TODO", buttons, 0, UIUtil.getWarningIcon());
+    if (thereAreTodoFound && answer == 0) {
+      showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (answer == 2 || answer == -1) {
+    else if (thereAreTodoFound && ((answer == 2 || answer == -1)) || (! thereAreTodoFound) && answer == 1) {
       return ReturnResult.CANCEL;
     }
     else {
@@ -208,34 +184,51 @@ public class TodoCheckinHandler extends CheckinHandler {
     }
   }
 
-  private static String createMessage(TodoCheckinHandlerWorker worker) {
-    final StringBuilder text = new StringBuilder("<html><body>");
-    if (worker.getAddedOrEditedTodos().isEmpty() && worker.getInChangedTodos().isEmpty()) {
-      text.append("No new, edited, or located in changed fragments TODO items found.<br/>").append(worker.getSkipped().size())
-        .append(" file(s) were skipped.");
-    } else {
-      final int inChanged = worker.getInChangedTodos().size();
-      final int added = worker.getAddedOrEditedTodos().size();
-      if (added == 0) {
-        text.append("There ").append(wereWas(inChanged)).append(inChanged).append(" located in changed fragments TODO item(s) found.<br/>");
-      } else {
-        if (inChanged == 0) {
-          text.append("<b>There ").append(wereWas(added)).append(added).append(" added or edited TODO item(s) found.</b><br/>");
-        } else {
-          text.append("<b>There were ").append(added).append(" added or edited,</b><br/>and ")
-            .append(inChanged).append(" located in changed fragments TODO item(s) found.<br/>");
+  private void showTodo(final TodoCheckinHandlerWorker worker) {
+    TodoView todoView = ServiceManager.getService(myProject, TodoView.class);
+    final String title = "For commit (" + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ")";
+    todoView.addCustomTodoView(new TodoTreeBuilderFactory() {
+      @Override
+      public TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
+        return new CustomChangelistTodosTreeBuilder(tree, treeModel, myProject, title, worker.inOneList());
+      }
+    }, title, new TodoPanelSettings(myConfiguration.myTodoPanelSettings));
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
+        if (manager != null) {
+          final ToolWindow window = manager.getToolWindow("TODO");
+          if (window != null) {
+            window.show(new Runnable() {
+              @Override
+              public void run() {
+                final ContentManager cm = window.getContentManager();
+                final Content[] contents = cm.getContents();
+                if (contents.length > 0) {
+                  cm.setSelectedContent(contents[contents.length - 1], true);
+                }
+              }
+            });
+          }
         }
       }
-      if (! worker.getSkipped().isEmpty()) {
-        text.append(worker.getSkipped().size()).append(" file(s) were skipped.<br/>");
-      }
-      text.append("Would you like to review them?");
-    }
-    text.append("</body></html>");
-    return text.toString();
+    }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
-  private static String wereWas(final int num) {
-    return num == 1 ? "was " : "were ";
+  private static String createMessage(TodoCheckinHandlerWorker worker) {
+    final int added = worker.getAddedOrEditedTodos().size();
+    final int changed = worker.getInChangedTodos().size();
+    final int skipped = worker.getSkipped().size();
+    if (added == 0 && changed == 0) {
+      return VcsBundle.message("todo.handler.only.skipped", skipped);
+    } else if (changed == 0) {
+      return VcsBundle.message("todo.handler.only.added", added, skipped);
+    } else if (added == 0) {
+      return VcsBundle.message("todo.handler.only.in.changed", changed, skipped);
+    } else {
+      return VcsBundle.message("todo.handler.only.both", added, changed, skipped);
+    }
   }
 }

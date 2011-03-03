@@ -15,11 +15,12 @@
  */
 package com.intellij.cvsSupport2.history;
 
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsFileContent;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.CvsBundle;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsFileContent;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CvsFileContent implements VcsFileContent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.CvsFileContent");
@@ -37,8 +38,9 @@ public abstract class CvsFileContent implements VcsFileContent{
     return myComparableCvsRevisionOnOperation.isLoaded();
   }
 
+  @Nullable
   public byte[] getContent() {
-    LOG.assertTrue(isLoaded());
+    if (! isLoaded()) return null;
     return myComparableCvsRevisionOnOperation.getContent();
   }
 
