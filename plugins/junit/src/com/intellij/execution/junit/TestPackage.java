@@ -73,6 +73,7 @@ public class TestPackage extends TestObject {
   @Override
   protected JUnitProcessHandler createHandler() throws ExecutionException {
     final JUnitProcessHandler handler = super.createHandler();
+    final MySearchForTestsTask[] tasks = new MySearchForTestsTask[1];
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(ProcessEvent event) {
@@ -86,7 +87,7 @@ public class TestPackage extends TestObject {
           //should not happen
           return;
         }
-        findTestsWithProgress(new FindCallback() {
+        tasks[0] = findTestsWithProgress(new FindCallback() {
           public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
             addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
               @Nullable
@@ -112,6 +113,9 @@ public class TestPackage extends TestObject {
         handler.removeProcessListener(this);
         if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
           mySearchForTestsIndicator.cancel(); //ensure that search for tests stops anyway
+          if (tasks[0] != null) {
+            tasks[0].connect();
+          }
         }
       }
     });
@@ -211,73 +215,18 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
+  private MySearchForTestsTask findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
       callback.found(classes, isJUnit4);
-      return;
+      return null;
     }
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
     final boolean[] isJunit4 = new boolean[1];
-    final Task.Backgroundable task =
-      new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
-        private Socket mySocket;
-
-        
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            mySocket = myServerSocket.accept();
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-          isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-        }
-
-        @Override
-        public void onSuccess() {
-          callback.found(classes, isJunit4[0]);
-          connect();
-        }
-
-        @Override
-        public void onCancel() {
-          connect();
-        }
-
-        @Override
-        public DumbModeAction getDumbModeAction() {
-          return DumbModeAction.WAIT;
-        }
-
-        private void connect() {
-          DataOutputStream os = null;
-          try {
-            os = new DataOutputStream(mySocket.getOutputStream());
-            os.writeBoolean(true);
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-          finally {
-            try {
-              if (os != null) os.close();
-            }
-            catch (Throwable e) {
-              LOG.info(e);
-            }
-
-            try {
-              myServerSocket.close();
-            }
-            catch (Throwable e) {
-              LOG.info(e);
-            }
-          }
-        }
-      };
+    final MySearchForTestsTask task =
+      new MySearchForTestsTask(classFilter, isJunit4, classes, callback);
     mySearchForTestsIndicator = new BackgroundableProcessIndicator(task) {
       @Override
       public void cancel() {
@@ -293,6 +242,7 @@ public class TestPackage extends TestObject {
       }
     };
     ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+    return task;
   }
 
   private static boolean isSyncSearch() {
@@ -304,5 +254,74 @@ public class TestPackage extends TestObject {
      * Invoked in dispatch thread
      */
     void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
+  }
+
+  private class MySearchForTestsTask extends Task.Backgroundable {
+    private Socket mySocket;
+    private final TestClassFilter myClassFilter;
+    private final boolean[] myJunit4;
+    private final THashSet<PsiClass> myClasses;
+    private final FindCallback myCallback;
+
+    public MySearchForTestsTask(TestClassFilter classFilter, boolean[] junit4, THashSet<PsiClass> classes, FindCallback callback) {
+      super(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true);
+      myClassFilter = classFilter;
+      myJunit4 = junit4;
+      myClasses = classes;
+      myCallback = callback;
+    }
+
+
+    public void run(@NotNull ProgressIndicator indicator) {
+      try {
+        mySocket = myServerSocket.accept();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+    }
+
+    @Override
+    public void onSuccess() {
+      myCallback.found(myClasses, myJunit4[0]);
+      connect();
+    }
+
+    @Override
+    public void onCancel() {
+      connect();
+    }
+
+    @Override
+    public DumbModeAction getDumbModeAction() {
+      return DumbModeAction.WAIT;
+    }
+
+    private void connect() {
+      DataOutputStream os = null;
+      try {
+        os = new DataOutputStream(mySocket.getOutputStream());
+        os.writeBoolean(true);
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+      }
+      finally {
+        try {
+          if (os != null) os.close();
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+
+        try {
+          myServerSocket.close();
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+      }
+    }
   }
 }

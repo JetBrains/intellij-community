@@ -70,7 +70,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         return MavenExternalParameters
-          .createJavaParameters(mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
+          .createJavaParameters(env.getProject(), mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
       }
 
       @Override

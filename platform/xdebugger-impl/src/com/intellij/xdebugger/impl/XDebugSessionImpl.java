@@ -86,6 +86,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myStopped;
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
+  private ConsoleView myConsoleView;
 
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env,
                            final @NotNull ProgramRunner runner,
@@ -197,11 +198,18 @@ public class XDebugSessionImpl implements XDebugSession {
         stopImpl();
       }
     });
+    //todo[nik] make 'createConsole()' method return ConsoleView
+    myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend) {
       initSessionTab();
     }
 
     return mySessionTab;
+  }
+
+  @Override
+  public ConsoleView getConsoleView() {
+    return myConsoleView;
   }
 
   public XDebugSessionTab getSessionTab() {
@@ -214,7 +222,7 @@ public class XDebugSessionImpl implements XDebugSession {
       mySessionTab.setEnvironment(myEnvironment);
     }
     Disposer.register(myProject, mySessionTab);
-    mySessionTab.attachToSession(this, myRunner, myEnvironment, mySessionData);
+    mySessionTab.attachToSession(this, myRunner, myEnvironment, mySessionData, myConsoleView);
     myDebugProcess.sessionInitialized();
   }
 
@@ -514,18 +522,16 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void printMessage(final String message, final String hyperLinkText, @Nullable final HyperlinkInfo info) {
-    assertSessionTabInitialized();
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
-        final ConsoleView consoleView = (ConsoleView)mySessionTab.getConsole();
-        consoleView.print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
+        myConsoleView.print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
         if (info != null) {
-          consoleView.printHyperlink(hyperLinkText, info);
+          myConsoleView.printHyperlink(hyperLinkText, info);
         }
         else if (hyperLinkText != null) {
-          consoleView.print(hyperLinkText, ConsoleViewContentType.SYSTEM_OUTPUT);
+          myConsoleView.print(hyperLinkText, ConsoleViewContentType.SYSTEM_OUTPUT);
         }
-        consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+        myConsoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
       }
     });
   }

@@ -56,6 +56,8 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
+    <toolWindow anchor="right" icon="/general/toolWindowAnt.png" id="Ant Build"
+                factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
   </extensions>
 
   <application-components>

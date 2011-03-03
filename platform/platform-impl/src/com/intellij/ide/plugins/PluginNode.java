@@ -56,6 +56,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String url;
   private long date = Long.MAX_VALUE;
   private List<PluginId> depends;
+  private PluginId[] myOptionalDependencies;
 
   private int status = STATUS_UNKNOWN;
   private boolean loaded = false;
@@ -221,8 +222,9 @@ public class PluginNode implements IdeaPluginDescriptor {
     return depends;
   }
 
-  public void setDepends(List<PluginId> depends) {
+  public void setDepends(List<PluginId> depends, PluginId[] optionalDependencies) {
     this.depends = depends;
+    myOptionalDependencies = optionalDependencies;
   }
 
 
@@ -258,7 +260,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Nullable
   public PluginId[] getOptionalDependentPluginIds() {
-    return null;
+    return myOptionalDependencies;
   }
 
   @Nullable

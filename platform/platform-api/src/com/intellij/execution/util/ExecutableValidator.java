@@ -122,8 +122,13 @@ public abstract class ExecutableValidator {
   }
 
   public boolean showDialog() {
-    ExecutableDialog dialog = new ExecutableDialog(myProject, this);
-    dialog.show();
+    final ExecutableDialog dialog = new ExecutableDialog(myProject, this);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        dialog.show();
+      }
+    });
     if (dialog.isOK()) {
       saveCurrentExecutable(dialog.getPath());
       return true;

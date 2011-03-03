@@ -18,7 +18,6 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
-import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -30,30 +29,16 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 24, 2007
  */
 public class AntToolwindowRegistrar extends AbstractProjectComponent {
-  private AntExplorer myAntExplorer;
-  private final ToolWindowManager myToolWindowManager;
-
-  public AntToolwindowRegistrar(Project project, ToolWindowManager toolWindowManager) {
+  public AntToolwindowRegistrar(Project project) {
     super(project);
-    myToolWindowManager = toolWindowManager;
   }
 
   public void projectOpened() {
@@ -86,23 +71,6 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
         return config.executeTargetAfterCompile(dataContext);
       }
     });
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        final JPanel explorerPanel = new JPanel(new BorderLayout()) {
-          boolean explorerInitialized = false;
-          public void addNotify() {
-            super.addNotify();
-            if (!explorerInitialized) {
-              explorerInitialized = true;
-              add(myAntExplorer = new AntExplorer(myProject), BorderLayout.CENTER);
-            }
-          }
-        };
-        ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.ANT_BUILD, explorerPanel, ToolWindowAnchor.RIGHT);
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowAnt.png"));
-      }
-    });
   }
 
   public void projectClosed() {
@@ -110,11 +78,6 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(myProject));
     for (String oldId : oldIds) {
       actionManager.unregisterAction(oldId);
-    }
-    if (myAntExplorer != null) {
-      myToolWindowManager.unregisterToolWindow(ToolWindowId.ANT_BUILD);
-      Disposer.dispose(myAntExplorer);
-      myAntExplorer = null;
     }
   }
 

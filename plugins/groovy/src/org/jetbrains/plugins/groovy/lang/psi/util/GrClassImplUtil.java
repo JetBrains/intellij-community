@@ -17,14 +17,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +33,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -48,10 +51,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -104,13 +104,52 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType) {
+    Set<PsiClass> visited = new com.intellij.util.containers.hash.HashSet<PsiClass>();
+    List<PsiClassType> result = new ArrayList<PsiClassType>();
+    getImplementListsInner(grType, result, visited);
+    return result.toArray(new PsiClassType[result.size()]);
+  }
+
+  private static void getImplementListsInner(GrTypeDefinition grType, List<PsiClassType> result, Set<PsiClass> visited) {
+    if (!visited.add(grType)) return;
+
     final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
+    getImplementsFromDelegate(grType, result, visited);
+    result.addAll(Arrays.asList(implementsTypes));
+
     if (!grType.isInterface() &&
         !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
         !ContainerUtil.or(getReferenceListTypes(grType.getExtendsClause()), IS_GROOVY_OBJECT)) {
-      return ArrayUtil.append(implementsTypes, getGroovyObjectType(grType), PsiClassType.ARRAY_FACTORY);
+      result.add(getGroovyObjectType(grType));
     }
-    return implementsTypes;
+  }
+
+  private static List<PsiClassType> getImplementsFromDelegate(GrTypeDefinition grType, List<PsiClassType> result, Set<PsiClass> visited) {
+    final GrField[] fields = grType.getFields();
+    for (GrField field : fields) {
+      final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
+      if (delegate == null) continue;
+
+      final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
+      if (!shouldImplement) continue;
+
+      final PsiType type = field.getDeclaredType();
+      if (!(type instanceof PsiClassType)) continue;
+
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass == null) continue;
+
+      if (psiClass instanceof GrTypeDefinition) {
+        getImplementListsInner((GrTypeDefinition)psiClass, result, visited);
+      }
+      else {
+        result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
+      }
+      if (psiClass.isInterface()) {
+        result.add((PsiClassType)type);
+      }
+    }
+    return result;
   }
 
   public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {
@@ -455,4 +494,106 @@ public class GrClassImplUtil {
   public static boolean isClassEquivalentTo(GrTypeDefinitionImpl definition, PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(definition, another);
   }
+
+  private static final Key<CachedValue<Collection<PsiMethod>>> DELEGATE_METHOD_CACHE_KEY = Key.create("delegate method cache");
+
+  public static Collection<PsiMethod> getDelegatedMethods(final GrTypeDefinition clazz) {
+    CachedValue<Collection<PsiMethod>> cachedValue = clazz.getUserData(DELEGATE_METHOD_CACHE_KEY);
+    if (cachedValue == null) {
+      final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(clazz.getProject());
+      cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Collection<PsiMethod>>() {
+        @Override
+        public Result<Collection<PsiMethod>> compute() {
+          List<PsiMethod> result = new ArrayList<PsiMethod>();
+          final GrField[] fields = clazz.getFields();
+          for (GrField field : fields) {
+            final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
+            if (delegate == null) continue;
+
+            final PsiType type = field.getDeclaredType();
+            if (!(type instanceof PsiClassType)) continue;
+
+            final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+            final PsiClass psiClass = resolveResult.getElement();
+            if (psiClass == null) continue;
+
+            final boolean deprecated = shouldDelegateDeprecated(delegate);
+            final List<PsiMethod> methods;
+            if (psiClass instanceof GrTypeDefinition) {
+              methods = ((GrTypeDefinition)psiClass).getBody().getMethods();
+            }
+            else {
+              methods = Arrays.asList(psiClass.getMethods());
+            }
+            for (PsiMethod method : methods) {
+              if (method.isConstructor()) continue;
+              if (!deprecated && getAnnotation(method, "java.lang.Deprecated") != null) continue;
+              result.add(generateDelegateMethod(method, clazz, resolveResult.getSubstitutor()));
+            }
+          }
+          return new Result<Collection<PsiMethod>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      }, false);
+      clazz.putUserData(DELEGATE_METHOD_CACHE_KEY, cachedValue);
+    }
+    return cachedValue.getValue();
+  }
+
+  private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass clazz, PsiSubstitutor substitutor) {
+    final LightMethodBuilder builder = new LightMethodBuilder(clazz.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
+    builder.setContainingClass(clazz);
+    builder.setReturnType(substitutor.substitute(method.getReturnType()));
+    builder.setNavigationElement(method);
+    builder.addModifier(PsiModifier.PUBLIC);
+    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
+    for (PsiParameter originalParameter : originalParameters) {
+      builder.addParameter(originalParameter.getName(), substitutor.substitute(originalParameter.getType()));
+    }
+    builder.setBaseIcon(GroovyIcons.METHOD);
+    return builder;
+  }
+
+  @Nullable
+  private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner field, @NotNull String annotationName) {
+    final PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null) return null;
+    return modifierList.findAnnotation(annotationName);
+  }
+
+  private static boolean shouldDelegateDeprecated(PsiAnnotation delegate) {
+    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
+    final PsiNameValuePair[] attributes = parameterList.getAttributes();
+    for (PsiNameValuePair attribute : attributes) {
+      final String name = attribute.getName();
+      if ("deprecated".equals(name)) {
+        final PsiAnnotationMemberValue value = attribute.getValue();
+        if (value instanceof GrLiteral) {
+          final Object innerValue = ((GrLiteral)value).getValue();
+          if (innerValue instanceof Boolean) {
+            return (Boolean)innerValue;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {
+    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
+    final PsiNameValuePair[] attributes = parameterList.getAttributes();
+    for (PsiNameValuePair attribute : attributes) {
+      final String name = attribute.getName();
+      if ("interfaces".equals(name)) {
+        final PsiAnnotationMemberValue value = attribute.getValue();
+        if (value instanceof GrLiteral) {
+          final Object innerValue = ((GrLiteral)value).getValue();
+          if (innerValue instanceof Boolean) {
+            return (Boolean)innerValue;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
 }

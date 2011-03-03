@@ -68,14 +68,8 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 }
             } else {
                 if (proxy.getResultMessage() != null) {
-                    TestResultMessage result = proxy.getResultMessage();
-                  String name;
-                  if (node.getChildCount() == 0) {
-                    name = TestProxy.toDisplayText(result, consoleProperties.getProject());
-                  }
-                  else {
-                    name = result.getTestClass();
-                  }
+                  final TestResultMessage result = proxy.getResultMessage();
+                  final String name = TestProxy.toDisplayText(result, consoleProperties.getProject());
                   append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
                   final String description = result.getTestDescription();
                   if (description != null && description.startsWith(name) && description.length() > name.length()) {
@@ -116,6 +110,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 if (resultMessage != null && resultMessage.getResult() == MessageHelper.PASSED_TEST) {
                   return PoolOfTestIcons.FAILED_ICON;
                 }
+                return PoolOfTestIcons.SKIPPED_ICON;
               }
               return PoolOfTestIcons.NOT_RAN;
             }

@@ -117,6 +117,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       }
     });
     rootNode = new TreeRootNode();
+    console.getUnboundOutput().addChild(rootNode);
   }
 
   protected JComponent createTestTreeView() {
@@ -261,7 +262,12 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       //do not remember testresultmessage: test hierarchy is not set
       testCase = new TestProxy(TestProxy.toDisplayText(result, project));
       testCase.appendStacktrace(result);
-      failedToStart = testCase;
+      if (failedToStart != null) {
+        failedToStart.addChild(testCase);
+        failedToStart.setTearDownFailure(true);
+      } else {
+        failedToStart = testCase;
+      }
     }
 
     testCase.setExceptionMark(exceptionMark);

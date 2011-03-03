@@ -58,11 +58,10 @@ public class GeneratorTest extends LightGroovyTestCase {
   public void testThrowsCheckedException() throws Throwable { doTest(); }
   public void testSubclassProperty() throws Throwable { doTest(); }
 
-  public void testRawReturnTypeInImplementation() throws Throwable {
-    myFixture.addClass("package java.util.concurrent;" +
-                       "public interface Callable<V>   {" +
-                       "  V call() throws java.lang.Exception;" +
-                       "}");
+  public void testRawReturnTypeInImplementation() throws Throwable { doTest(); }
+
+  public void testDelegationGenerics() throws Throwable {
+    myFixture.addClass("package groovy.lang; public @interface Delegate { boolean interfaces() default true; }");
     doTest();
   }
 
@@ -75,8 +74,7 @@ public class GeneratorTest extends LightGroovyTestCase {
   }
 
   public void testInaccessiblePropertyType() throws Throwable {
-    myFixture.addClass("package foo;" +
-                       "class Hidden {}");
+    myFixture.addClass("package foo; class Hidden {}");
     doTest();
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.GeneratingCompiler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +57,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class AndroidCompileUtil {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
+
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
   private AndroidCompileUtil() {
@@ -225,6 +230,10 @@ public class AndroidCompileUtil {
     generate(compiler, contextWrapper[0]);
   }
 
+  public static boolean isModuleAffected(CompileContext context, Module module) {
+    return ArrayUtil.find(context.getCompileScope().getAffectedModules(), module) >= 0;
+  }
+
   public static void generate(GeneratingCompiler compiler, final CompileContext context) {
     if (context != null) {
 
@@ -286,7 +295,7 @@ public class AndroidCompileUtil {
   // must be invoked in a read action!
 
   public static void removeDuplicatingClasses(final Module module, @NotNull final String packageName, @NotNull String className,
-                                              @Nullable final File classFile, String sourceRootPath) {
+                                              @Nullable File classFile, String sourceRootPath) {
     if (sourceRootPath == null) {
       return;
     }
@@ -306,17 +315,25 @@ public class AndroidCompileUtil {
         if (virtualFile != null && projectFileIndex.getSourceRootForFile(virtualFile) == sourceRoot) {
           final String path = virtualFile.getPath();
           File f = new File(path);
-          if (!f.equals(classFile) && f.exists()) {
-            if (f.delete()) {
-              virtualFile.refresh(true, false);
+
+          try {
+            f = f.getCanonicalFile();
+            classFile = classFile != null ? classFile.getCanonicalFile() : null;
+            if (f != null && !f.equals(classFile) && f.exists()) {
+              if (f.delete()) {
+                virtualFile.refresh(true, false);
+              }
+              else {
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    Messages.showErrorDialog(project, "Can't delete file " + path, CommonBundle.getErrorTitle());
+                  }
+                }, project.getDisposed());
+              }
             }
-            else {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(project, "Can't delete file " + path, CommonBundle.getErrorTitle());
-                }
-              }, project.getDisposed());
-            }
+          }
+          catch (IOException e) {
+            LOG.info(e);
           }
         }
       }

@@ -47,6 +47,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 public class EditLibraryDialog extends DialogWrapper {
@@ -377,19 +378,29 @@ public class EditLibraryDialog extends DialogWrapper {
         fireTableDataChanged();
       }
     }
+    
+    public void removeFiles(List<VirtualFile> files) {
+      if (myFiles.removeAll(files)) {
+        fireTableDataChanged();
+      }
+    }
 
-    public VirtualFile[] getSourceFiles() {
-      ArrayList<VirtualFile> sourceFiles = new ArrayList<VirtualFile>();
+    public VirtualFile[] getFiles(boolean isCompact) {
+      ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       for (VirtualFile file : myFiles) {
-        if (!myCompactFiles.contains(file)) {
-          sourceFiles.add(file);
+        if (myCompactFiles.contains(file) == isCompact) {
+          files.add(file);
         }
       }
-      return sourceFiles.toArray(new VirtualFile[sourceFiles.size()]);
+      return files.toArray(new VirtualFile[files.size()]);
     }
 
     public VirtualFile[] getCompactFiles() {
-      return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
+      return getFiles(true);
+    }
+    
+    private VirtualFile[] getSourceFiles() {
+      return getFiles(false);
     }
   }
 
@@ -405,7 +416,12 @@ public class EditLibraryDialog extends DialogWrapper {
   }
 
   private void removeSelected() {
-     myFileTableModel.removeFile(mySelectedFile);
+    int[] rows = myFileTable.getSelectedRows();
+    ArrayList<VirtualFile> filesToDelete = new ArrayList<VirtualFile>(); 
+    for (int selectionRow : rows) {
+      filesToDelete.add(myFileTableModel.getFileAt(selectionRow));
+    }
+    myFileTableModel.removeFiles(filesToDelete);
   }
 
   public VirtualFile[] getSourceFiles() {

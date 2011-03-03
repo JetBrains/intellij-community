@@ -108,19 +108,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
             File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
             String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
-            if (!resPackage.exists()) {
-              context.addMessage(CompilerMessageCategory.ERROR, "File " + resPackagePath + " not found. Try to rebuild project",
-                                 null, -1, -1);
-              continue;
-            }
 
             File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
             String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
-            if (!classesDexFile.exists()) {
-              context.addMessage(CompilerMessageCategory.ERROR, "File " + classesDexPath + " not found. Try to rebuild project",
-                                 null, -1, -1);
-              continue;
-            }
 
             AndroidPlatform platform = configuration.getAndroidPlatform();
             if (platform == null) {
@@ -136,7 +126,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
             AptPackagingItem item =
-              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
+              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK, module);
             item.setNativeLibsFolders(collectNativeLibsFolders(facet));
             item.setClassesDexPath(classesDexPath);
             item.setSourceRoots(sourceRoots);
@@ -180,6 +170,11 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     final List<ProcessingItem> result = new ArrayList<ProcessingItem>();
     for (ProcessingItem processingItem : items) {
       AptPackagingItem item = (AptPackagingItem)processingItem;
+
+      if (!AndroidCompileUtil.isModuleAffected(context, item.myModule)) {
+        continue;
+      }
+
       try {
 
         String[] externalLibPaths = getPaths(item.getExternalLibraries());
@@ -234,17 +229,20 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private VirtualFile[] mySourceRoots;
     private VirtualFile[] myExternalLibraries;
     private final boolean myGenerateUnsignedApk;
+    private final Module myModule;
 
     private AptPackagingItem(String sdkPath,
                              @NotNull VirtualFile manifestFile,
                              @NotNull String resPackagePath,
                              @NotNull String finalPath,
-                             boolean generateUnsignedApk) {
+                             boolean generateUnsignedApk,
+                             @NotNull Module module) {
       mySdkPath = sdkPath;
       myManifestFile = manifestFile;
       myResPackagePath = resPackagePath;
       myFinalPath = finalPath;
       myGenerateUnsignedApk = generateUnsignedApk;
+      myModule = module;
     }
 
     @NotNull

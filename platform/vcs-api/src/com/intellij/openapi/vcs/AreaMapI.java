@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-contributor(ctype:hasField(hasAnnotation("groovy.lang.Delegate"))) {
-  for (f in psiClass?.fields) {
-    delegatesTo(f.classType)
-  }
+package com.intellij.openapi.vcs;
+
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Map;
+
+/**
+ * @author irengrig
+ *         Date: 2/11/11
+ *         Time: 7:34 PM
+ */
+public interface AreaMapI<Key, Val> {
+  void putAll(AreaMapI<Key, Val> other);
+  void put(Key key, Val val);
+  Collection<Val> values();
+  Collection<Key> keySet();
+  @Nullable
+  Val getExact(Key key);
+  void remove(Key key);
+  boolean contains(Key key);
+  void clear();
 }

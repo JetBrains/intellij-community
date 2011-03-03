@@ -6,12 +6,14 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author oleg
  * @date 10/22/10
  */
 public class GithubShareDialog extends DialogWrapper {
+  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
   private GithubSharePanel myGithubSharePanel;
   private final Set<String> myAvailableNames;
 
@@ -56,6 +58,11 @@ public class GithubShareDialog extends DialogWrapper {
     }
     if (myAvailableNames.contains(repositoryName)){
       setErrorText("Repository with selected name already exists");
+      setOKActionEnabled(false);
+      return;
+    }
+    if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()){
+      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes and underscores");
       setOKActionEnabled(false);
       return;
     }
