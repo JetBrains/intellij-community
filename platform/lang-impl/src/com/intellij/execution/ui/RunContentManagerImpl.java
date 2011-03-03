@@ -58,7 +58,8 @@ import javax.swing.*;
 import java.util.*;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
-  public static final Topic<RunContentWithExecutorListener> RUN_CONTENT_TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
+  public static final Topic<RunContentWithExecutorListener> RUN_CONTENT_TOPIC =
+    Topic.create("Run Content", RunContentWithExecutorListener.class);
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
@@ -132,16 +133,18 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final ContentManager contentManager = toolWindow.getContentManager();
     class MyDataProvider implements DataProvider {
       private int myInsideGetData = 0;
+
       public Object getData(String dataId) {
-        myInsideGetData ++;
+        myInsideGetData++;
         try {
-          if(PlatformDataKeys.HELP_ID.is(dataId)) {
+          if (PlatformDataKeys.HELP_ID.is(dataId)) {
             return executor.getHelpId();
           }
           else {
             return myInsideGetData == 1 ? DataManager.getInstance().getDataContext(contentManager.getComponent()).getData(dataId) : null;
           }
-        } finally {
+        }
+        finally {
           myInsideGetData--;
         }
       }
@@ -251,14 +254,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    final ContentManager contentManager  = getContentManagerForRunner(executor);
+    final ContentManager contentManager = getContentManagerForRunner(executor);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor);
 
     final Content content;
 
-    if(oldDescriptor != null) {
+    if (oldDescriptor != null) {
       content = oldDescriptor.getAttachedContent();
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       oldDescriptor.dispose(); // is of the same category, can be reused
@@ -322,12 +325,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     return getReuseContent(requestor, GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext));
   }
 
   public RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse) {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (contentToReuse != null) return contentToReuse;
 
     final ContentManager contentManager = getContentManagerForRunner(requestor);
@@ -339,14 +342,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
-    if(contentToReuse != null) {
+    if (contentToReuse != null) {
       descriptor.setAttachedContent(contentToReuse.getAttachedContent());
     }
     showRunContent(info, descriptor);
   }
 
   @Nullable
-  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
+  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager,
+                                                                      final RunContentDescriptor descriptor) {
     Content content = null;
     if (descriptor != null) {
       if (descriptor.isContentReuseProhibited()) {
@@ -399,8 +403,21 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
   }
 
-  public static RunContentDescriptor getRunContentDescriptorByContent(final Content content) {
+  @Nullable
+  public static RunContentDescriptor getRunContentDescriptorByContent(@NotNull final Content content) {
     return content.getUserData(DESCRIPTOR_KEY);
+  }
+
+
+  @Override
+  @Nullable
+  public ToolWindow getToolWindowByDescriptor(@NotNull final RunContentDescriptor descriptor) {
+    for (Map.Entry<String, ContentManager> entry : myToolwindowIdToContentManagerMap.entrySet()) {
+      if (getRunContentByDescriptor(entry.getValue(), descriptor) != null) {
+        return ToolWindowManager.getInstance(myProject).getToolWindow(entry.getKey());
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -614,15 +631,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
             }
           }
         });
-        
+
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
         if (progressIndicator != null) {
           progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
             public void run() {
-              while(true) {
-                if(progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
+              while (true) {
+                if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
                   semaphore.up();
                   break;
                 }

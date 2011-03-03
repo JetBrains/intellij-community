@@ -246,6 +246,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
+  public void addTextToCurrentEditor(final String text) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        getCurrentEditor().getDocument().insertString(0, text);
+      }
+    });
+    queueUiUpdate(true);
+  }
+
   private static void setupEditorDefault(EditorEx editor) {
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.setHorizontalScrollbarVisible(false);
