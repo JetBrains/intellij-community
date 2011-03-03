@@ -161,4 +161,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testConvertVariadicParam() { //PY-2264
     doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
+  public void testConvertTripleQuotedString() { //PY-2697
+    doTest(PyBundle.message("INTN.triple.quoted.string"));
+  }
 }
