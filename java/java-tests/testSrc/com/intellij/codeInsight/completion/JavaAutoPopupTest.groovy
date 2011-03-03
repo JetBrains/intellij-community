@@ -125,7 +125,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
-  public void testNoAutopopupInTheMiddleOfIdentifier() {
+  public void _testNoAutopopupInTheMiddleOfIdentifier() {
     myFixture.configureByText("a.java", """
       class Foo {
         String foo(String iterable) {

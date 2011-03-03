@@ -91,6 +91,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
 
+    /*
     if (!CompletionProgressIndicator.showHintAutopopup()) {
       final CharSequence text = editor.getDocument().getCharsSequence();
       final int offset = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
@@ -98,6 +99,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
     }
+    */
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
