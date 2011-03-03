@@ -1654,15 +1654,19 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
   }
 
   public List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
-    final List<Pair<VirtualFile, EditorWindow>> toRemove = new ArrayList<Pair<VirtualFile, EditorWindow>>();
+    List<Pair<VirtualFile, EditorWindow>> copy = new ArrayList<Pair<VirtualFile, EditorWindow>>();
     for (Pair<VirtualFile, EditorWindow> pair : mySelectionHistory) {
       if (pair.second.getFiles().length == 0) {
-        toRemove.add(pair);
+        final EditorWindow[] windows = pair.second.getOwner().getWindows();
+        if (windows.length > 0 && windows[0] != null && windows[0].getFiles().length > 0) {
+          copy.add(Pair.create(pair.first, windows[0]));
+        }
+      } else {
+        copy.add(pair);
       }
     }
-    if (!toRemove.isEmpty()) {
-      mySelectionHistory.removeAll(toRemove);
-    }
+    mySelectionHistory.clear();
+    mySelectionHistory.addAll(copy);
     return mySelectionHistory;
   }
 

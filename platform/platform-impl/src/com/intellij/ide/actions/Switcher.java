@@ -52,6 +52,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -452,12 +453,25 @@ public class Switcher extends AnAction implements DumbAware {
         final VirtualFile virtualFile = info.first;
         final FileEditorManagerImpl editorManager = ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
         final JList jList = getSelectedList();
-        if (info.second == null) {
+        final EditorWindow wnd = findAppropriateWindow(info);
+        if (wnd == null) {
           editorManager.closeFile(virtualFile, false);
         } else {
-          editorManager.closeFile(virtualFile, info.second, false);
+          editorManager.closeFile(virtualFile, wnd, false);
         }
         final int selectedIndex = jList.getSelectedIndex();
+        final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
+        new Thread() { //TODO[kb]: think how to do it better. Need to remove all hacks & work correctly with activateEditorComponentImpl method
+          @Override
+          public void run() {
+            try {
+              sleep(300);
+            }
+            catch (InterruptedException e) {//
+            }
+            focusManager.requestFocus(SwitcherPanel.this, true);
+          }
+        }.start();
         if (jList.getModel().getSize() == 1) {
           goLeft();
           ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
@@ -465,13 +479,6 @@ public class Switcher extends AnAction implements DumbAware {
           this.remove(separator);
           final Dimension size = toolWindows.getSize();
           myPopup.setSize(new Dimension(size.width, myPopup.getSize().height));
-          final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-          focusManager.doWhenFocusSettlesDown(new Runnable() {
-            @Override
-            public void run() {
-              focusManager.requestFocus(SwitcherPanel.this, true);
-            }
-          });
         } else {
           goForward();
           ((DefaultListModel)jList.getModel()).removeElementAt(selectedIndex);
@@ -593,14 +600,24 @@ public class Switcher extends AnAction implements DumbAware {
           public void run() {
             final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
             if (info.second != null) {
-              manager.openFileImpl2(info.second, info.first, true);
-              manager.addSelectionRecord(info.first, info.second);
+              EditorWindow wnd = findAppropriateWindow(info);
+              if (wnd != null) {
+                manager.openFileImpl2(wnd, info.first, true);
+                manager.addSelectionRecord(info.first, wnd);
+              }
             } else {
               manager.openFile(info.first, true);
             }
           }
         });
       }
+    }
+
+    @Nullable
+    private EditorWindow findAppropriateWindow(FileInfo info) {
+      if (info.second == null) return null;
+      final EditorWindow[] windows = info.second.getOwner().getWindows();
+      return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
     }
 
     public void mouseClicked(MouseEvent e) {
