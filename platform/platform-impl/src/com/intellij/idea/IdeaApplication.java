@@ -204,16 +204,27 @@ public class IdeaApplication {
       }, ModalityState.NON_MODAL);
     }
 
-    private void updatePlugins(boolean showConfirmation) {
-      final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
+    private void updatePlugins(final boolean showConfirmation) {
+      final Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
 
-      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
-      if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
-        UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins);
-      }
-      else if (updatedPlugins != null) {
-        UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
-      }
+          final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
+          app.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
+                UpdateChecker.showUpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins);
+              }
+              else if (updatedPlugins != null) {
+                UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
+              }
+            }
+          });
+        }
+      });
     }
   }
 

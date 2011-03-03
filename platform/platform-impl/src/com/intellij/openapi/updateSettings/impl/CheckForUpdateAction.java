@@ -17,8 +17,15 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,34 +37,37 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(true, null);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    actionPerformed(project, true, null);
   }
 
-  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable) {
-    final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
+  public static void actionPerformed(Project project, final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Checking for updates", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
 
-    final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
+              UpdateChecker.showConnectionErrorDialog();
+              return;
+            }
 
-
-    if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
-      UpdateChecker.showConnectionErrorDialog();
-      return;
-    }
-
-    if (result.getState() != UpdateStrategy.State.LOADED) {
-      //not a connection error... something happened but user has nothing to do with it
-      return;
-    }
-
-    if (result.hasNewBuildInSelectedChannel()) {
-      //information about new channel could be there
-      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-      UpdateChecker.showUpdateInfoDialog(enableLink, result.getUpdatedChannel(), updatedPlugins);
-    }else{
-      //information about new channel could be there
-      UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
-    }
-
-
+            if (result.hasNewBuildInSelectedChannel()) {
+              //information about new channel could be there
+              UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+              UpdateChecker.showUpdateInfoDialog(enableLink, result.getUpdatedChannel(), updatedPlugins);
+            }
+            else {
+              //information about new channel could be there
+              UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
+            }
+          }
+        });
+      }
+    });
   }
 }

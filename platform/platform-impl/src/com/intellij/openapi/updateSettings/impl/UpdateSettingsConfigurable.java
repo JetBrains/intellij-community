@@ -15,17 +15,19 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -138,7 +140,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          CheckForUpdateAction.actionPerformed(false, UpdateSettingsConfigurable.this);
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
+          CheckForUpdateAction.actionPerformed(project, false, UpdateSettingsConfigurable.this);
           updateLastCheckedLabel();
         }
       });
