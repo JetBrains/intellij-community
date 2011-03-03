@@ -69,4 +69,12 @@ public class Product {
   public String getName() {
     return myName;
   }
+
+  public List<String> getAllChannelIds() {
+    List<String> result = new ArrayList<String>();
+    for (UpdateChannel channel : myChannels) {
+      result.add(channel.getId());
+    }
+    return result;
+  }
 }

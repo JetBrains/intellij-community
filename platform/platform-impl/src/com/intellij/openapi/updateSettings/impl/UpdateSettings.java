@@ -92,13 +92,15 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   @Override
-  public void setKnownChannelIds(List<String> ids) {
+  public void setKnownChannelIds(@NotNull List<String> ids) {
     myKnownUpdateChannels.clear();
-    if (ids!=null){
-      for (String id : ids) {
-        myKnownUpdateChannels.add(id);
-      }
+    for (String id : ids) {
+      myKnownUpdateChannels.add(id);
     }
+  }
+
+  public void forgetChannelId(String id) {
+    myKnownUpdateChannels.remove(id);
   }
 
   @Override

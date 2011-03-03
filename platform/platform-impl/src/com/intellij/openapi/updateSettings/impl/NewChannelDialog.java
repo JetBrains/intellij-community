@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.LicensingFacade;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author yole
@@ -34,6 +36,21 @@ public class NewChannelDialog extends DialogWrapper {
     setTitle("New " + ApplicationNamesInfo.getInstance().getFullProductName() + " Version Available");
     initInfo();
     init();
+    setOKButtonText("More Info...");
+    setOKButtonMnemonic('M');
+    setCancelButtonText("Ignore This Update");
+  }
+
+  @Override
+  protected Action[] createActions() {
+    Action remindLater = new AbstractAction("Remind Me Later") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UpdateSettings.getInstance().forgetChannelId(myChannel.getId());
+        doCancelAction();
+      }
+    };
+    return new Action[] { getOKAction(), remindLater, getCancelAction() };
   }
 
   @Override
@@ -61,5 +78,11 @@ public class NewChannelDialog extends DialogWrapper {
       }
     }
     myInformationText = builder.toString();
+  }
+
+  @Override
+  protected void doOKAction() {
+    BrowserUtil.launchBrowser(myChannel.getHomePageUrl());
+    super.doOKAction();
   }
 }

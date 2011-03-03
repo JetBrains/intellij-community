@@ -34,8 +34,8 @@ public class CheckForUpdateResult {
   @NotNull
   private final Collection<UpdateChannel> myNewChannels;
 
-  @Nullable
-  private final List<String> allChannelsIds;
+  @NotNull
+  private final List<String> myAllChannelIds;
 
   @Nullable
   private UpdateChannel myChannelToPropose;
@@ -48,11 +48,11 @@ public class CheckForUpdateResult {
 
   public CheckForUpdateResult(@Nullable UpdateChannel updated,
                               @Nullable BuildInfo newBuildInSelectedChannel,
-                              List<String> allChannelsIds) {
+                              @NotNull List<String> allChannelsIds) {
     this.newBuildInSelectedChannel = newBuildInSelectedChannel;
     myUpdatedChannel = updated;
     myNewChannels = new ArrayList<UpdateChannel>();
-    this.allChannelsIds = allChannelsIds;
+    this.myAllChannelIds = allChannelsIds;
     this.state = UpdateStrategy.State.LOADED;
     this.error = null;
   }
@@ -60,7 +60,7 @@ public class CheckForUpdateResult {
   public CheckForUpdateResult(UpdateStrategy.State state, Exception e) {
     this.newBuildInSelectedChannel = null;
     myNewChannels = Collections.emptyList();
-    this.allChannelsIds = null;
+    myAllChannelIds = Collections.emptyList();
     this.myChannelToPropose = null;
     this.myUpdatedChannel = null;
     this.state = state;
@@ -89,9 +89,9 @@ public class CheckForUpdateResult {
     return myNewChannels;
   }
 
-  @Nullable
+  @NotNull
   public List<String> getAllChannelsIds() {
-    return allChannelsIds;
+    return myAllChannelIds;
   }
 
   @Nullable

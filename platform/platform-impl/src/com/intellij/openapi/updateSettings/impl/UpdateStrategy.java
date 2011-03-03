@@ -20,7 +20,6 @@ import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class UpdateStrategy {
@@ -61,7 +60,7 @@ public class UpdateStrategy {
       }
     }
 
-    CheckForUpdateResult result = new CheckForUpdateResult(updatedChannel, newBuild, Collections.<String>emptyList());
+    CheckForUpdateResult result = new CheckForUpdateResult(updatedChannel, newBuild, product.getAllChannelIds());
 
     UpdateChannel channelToPropose = null;
     for (UpdateChannel channel : product.getChannels()) {
