@@ -339,6 +339,11 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task, @NotNull final ProgressIndicator progressIndicator) {
+    runProcessWithProgressAsynchronously(task, progressIndicator, null);
+  }
+
+  public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task, @NotNull final ProgressIndicator progressIndicator,
+                                                          @Nullable final Runnable continuation) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
@@ -351,6 +356,9 @@ public class ProgressManagerImpl extends ProgressManager {
         final long start = System.currentTimeMillis();
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
+          if (continuation != null) {
+            continuation.run();
+          }
         }
         catch (ProcessCanceledException e) {
           canceled = true;
