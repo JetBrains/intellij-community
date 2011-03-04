@@ -20,10 +20,11 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 
- /**
+/**
  * @author peter
  */
 abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
@@ -63,8 +64,8 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     for (i in 0..<s.size()) {
       final c = s.charAt(i)
       myFixture.type(c)
-      ApplicationManager.application.invokeAndWait({ } as Runnable, ModalityState.NON_MODAL) // for the autopopup handler's alarm, or the restartCompletion's invokeLater
-      ApplicationManager.application.invokeAndWait({ } as Runnable, ModalityState.NON_MODAL) // for invokeLater in CompletionProgressIndicator.stop()
+      ApplicationManager.application.invokeAndWait({ PlatformTestUtil.waitForAlarm(0) } as Runnable, ModalityState.NON_MODAL) // for the autopopup handler's alarm, or the restartCompletion's invokeLater
+      ApplicationManager.application.invokeAndWait({ PlatformTestUtil.waitForAlarm(0) } as Runnable, ModalityState.NON_MODAL) // for invokeLater in CompletionProgressIndicator.stop()
     }
   }
 

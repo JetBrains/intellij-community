@@ -702,4 +702,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   public void dispose() {
   }
+
+  public boolean isPopupWasShown() {
+    return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
+  }
 }

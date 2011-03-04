@@ -87,10 +87,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       a = asArray();
     }
     if (a != null) {
-      Object encoded = encodeName(name);
-      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
-      for (VirtualFile file : a) {
-        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
+      final boolean ignoreCase = !getFileSystem().isCaseSensitive();
+      for (VirtualFile vf : a) {
+        if (namesEqual(name, ignoreCase, vf)) return vf;
       }
 
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
@@ -126,19 +125,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
-  private boolean namesEqual(String name, byte[] encoded, VirtualFile file) {
-    if (encoded != null && file instanceof VirtualFileSystemEntry) {
-      Object o = ((VirtualFileSystemEntry)file).rawName();
-      if (!(o instanceof byte[])) return false;
-
-      if (encoded.length != ((byte[])o).length) return false;
+  private static boolean namesEqual(String name, boolean ignoreCase, VirtualFile file) {
+    if (file instanceof VirtualFileSystemEntry) {
+      return (((VirtualFileSystemEntry)file).nameMatches(name, ignoreCase));
     }
 
     final String name2 = file.getName();
-    if (getFileSystem().isCaseSensitive()) {
-      return name.equals(name2);
+    if (ignoreCase) {
+      return name.equalsIgnoreCase(name2);
     }
-    return name.equalsIgnoreCase(name2);
+    return name.equals(name2);
   }
 
   @NotNull
@@ -183,10 +179,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public synchronized NewVirtualFile findChildIfCached(@NotNull String name) {
     final VirtualFile[] a = asArray();
     if (a != null) {
-      Object encoded = encodeName(name);
-      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
+      final boolean ignoreCase = !getFileSystem().isCaseSensitive();
       for (VirtualFile file : a) {
-        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
+        if (namesEqual(name, ignoreCase, file)) return (NewVirtualFile)file;
       }
 
       return null;
