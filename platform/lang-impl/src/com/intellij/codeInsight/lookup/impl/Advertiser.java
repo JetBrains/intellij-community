@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author peter
  */
 public class Advertiser implements Disposable {
-  public static final int ourScrollingResolution = 15;
+  private static final int ourScrollingResolution = 15;
   private final List<String> myTexts = new CopyOnWriteArrayList<String>();
   private final JPanel myComponent = new JPanel() {
 
