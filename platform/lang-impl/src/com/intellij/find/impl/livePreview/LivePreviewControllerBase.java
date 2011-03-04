@@ -17,7 +17,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
-  private static final int USER_ACTIVITY_TRIGGERING_DELAY = 300;
+  private static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
@@ -32,7 +32,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     Editor editor = mySearchResults.getEditor();
     SelectionModel selection = editor.getSelectionModel();
     FindModel findModel = mySearchResults.getFindModel();
-    if (myToChangeSelection && findModel.isGlobal()) {
+    if (myToChangeSelection && findModel != null && findModel.isGlobal()) {
       LiveOccurrence cursor = mySearchResults.getCursor();
       if (cursor != null) {
         TextRange range = cursor.getPrimaryRange();
@@ -180,9 +180,11 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public void performReplaceAll(Editor e) {
-    FindUtil.replace(e.getProject(), e,
-                     mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),
-                     mySearchResults.getFindModel(), this);
+    if (mySearchResults.getFindModel() != null) {
+      FindUtil.replace(e.getProject(), e,
+                       mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),
+                       mySearchResults.getFindModel(), this);
+    }
   }
 
   @Override

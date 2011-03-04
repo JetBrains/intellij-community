@@ -647,7 +647,7 @@ public class FindUtil {
     }
   }
 
-  private static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
+  public static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
     String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
     if (model.isGlobal()) {
