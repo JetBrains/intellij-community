@@ -171,9 +171,8 @@ public class ArrayUtil {
     return result;
   }
 
-  //todo[nik] use this method where possible
   @NotNull
-  public static String[] mergeArrays(@NotNull String[] a1, @NotNull String[] a2) {
+  public static String[] mergeArrays(@NotNull String[] a1, @NotNull String... a2) {
     return mergeArrays(a1, a2, STRING_ARRAY_FACTORY);
   }
 

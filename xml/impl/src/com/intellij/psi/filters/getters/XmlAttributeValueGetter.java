@@ -67,7 +67,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
         if(values == null || values.length==0) {
           values = strings;
         } else if (strings != null) {
-          values = ArrayUtil.mergeArrays(values, strings, ArrayUtil.STRING_ARRAY_FACTORY);
+          values = ArrayUtil.mergeArrays(values, strings);
         }
 
         return values == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : values;

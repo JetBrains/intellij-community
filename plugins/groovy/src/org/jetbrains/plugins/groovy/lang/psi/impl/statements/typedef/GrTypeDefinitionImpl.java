@@ -186,7 +186,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (stub != null) {
       return stub.getSuperClassNames();
     }
-    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), ArrayUtil.STRING_ARRAY_FACTORY);
+    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames());
   }
 
   protected String[] getImplementsNames() {
