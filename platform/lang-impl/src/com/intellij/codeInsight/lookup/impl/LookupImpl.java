@@ -295,7 +295,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void setAdvertisementText(@Nullable String text) {
     myAdText = text;
     if (StringUtil.isNotEmpty(text)) {
-      myAdComponent.addAdvertisement(text);
+      addAdvertisement(text);
     }
   }
 
@@ -1163,6 +1163,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myModel.clearItems();
     myAdComponent.clearAdvertisements();
     myPreselectedItem = null;
+  }
+
+  public void addAdvertisement(@NotNull String text) {
+    myAdComponent.addAdvertisement(text);
   }
 
   public boolean isLookupDisposed() {

@@ -84,6 +84,8 @@ public class Advertiser implements Disposable {
 
   public synchronized void clearAdvertisements() {
     myTexts.clear();
+    myCurrentItem = 0;
+    myScrollingOffset = 0;
   }
 
   private static Font adFont() {
