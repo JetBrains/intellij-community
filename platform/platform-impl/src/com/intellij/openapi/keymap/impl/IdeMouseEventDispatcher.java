@@ -186,35 +186,50 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
-    final JScrollPane pane = findScrollPane(c);
-    if (pane != null && pane.isWheelScrollingEnabled()) {
-      final JScrollBar scrollBar = pane.getHorizontalScrollBar();
-      if (scrollBar != null) {
-        int totalScrollAmount = me.getUnitsToScroll() * scrollBar.getUnitIncrement() * 3;
-        scrollBar.setValue(scrollBar.getValue() + totalScrollAmount);
-        return true;
-      }
+    final JScrollBar scrollBar = findHorizontalScrollBar(c);
+    if (scrollBar != null) {
+      int totalScrollAmount = me.getUnitsToScroll() * scrollBar.getUnitIncrement() * 3;
+      scrollBar.setValue(scrollBar.getValue() + totalScrollAmount);
+      return true;
     }
     return false;
   }
 
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
-    if (!SystemInfo.isMac && e instanceof MouseWheelEvent) {
+    if ( c != null
+         && e instanceof MouseWheelEvent
+         && (!SystemInfo.isMac || isDiagramViewComponent(c.getParent()))) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
-             && findScrollPane(c) != null;
+             && findHorizontalScrollBar(c) != null;
     }
     return false;
   }
 
   @Nullable
-  private static JScrollPane findScrollPane(Component c) {
+  private static JScrollBar findHorizontalScrollBar(Component c) {
     if (c == null) return null;
     if (c instanceof JScrollPane) {
-      return (JScrollPane)c;
+      return ((JScrollPane)c).getHorizontalScrollBar();
     }
-    return findScrollPane(c.getParent());
+
+    if (isDiagramViewComponent(c)) {
+      final JComponent view = (JComponent)c;
+      for (int i = 0; i < view.getComponentCount(); i++) {
+         if (view.getComponent(i) instanceof JScrollBar) {
+           final JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+           if (scrollBar.getOrientation() == Adjustable.HORIZONTAL) {
+            return scrollBar;
+           }
+         }
+      }
+    }
+    return findHorizontalScrollBar(c.getParent());
+  }
+
+  private static boolean isDiagramViewComponent(Component c) {
+    return c != null && "y.view.Graph2DView".equals(c.getClass().getName());
   }
 
   public void blockNextEvents(final MouseEvent e) {
