@@ -122,6 +122,9 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   }
 
   private boolean alreadyHasImportKeyword() {
+    if (PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class) != null) {
+      return true;
+    }
     ASTNode node = myElement.getNode();
     while (node != null) {
       final IElementType node_type = node.getElementType();

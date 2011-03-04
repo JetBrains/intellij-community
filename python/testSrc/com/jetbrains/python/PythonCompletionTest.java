@@ -293,4 +293,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testImport() {
     doTest();
   }
+
+  public void testDuplicateImportKeyword() {  // PY-3034
+    myFixture.copyDirectoryToProject("completion/duplicateImportKeyword", "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/duplicateImportKeyword/a.after.py");
+  }
 }
