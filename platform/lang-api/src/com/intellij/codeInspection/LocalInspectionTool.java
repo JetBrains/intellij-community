@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
+  public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
   private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
 
   /**

@@ -427,7 +427,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[0];
+    return LocalInspectionTool.EMPTY_ARRAY;
   }
 
   @Override
