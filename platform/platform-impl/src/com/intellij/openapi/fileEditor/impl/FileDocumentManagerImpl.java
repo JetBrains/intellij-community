@@ -234,7 +234,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     try {
       VirtualFile file = getFile(document);
 
-      if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isDocumentUnsaved(document) || document.getModificationStamp() == file.getModificationStamp()) {
+      if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
         myUnsavedDocuments.remove(document);
         fireUnsavedDocumentsDropped();
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
@@ -355,7 +355,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
-    return doc != null && isDocumentUnsaved(doc);
+    return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
 
   public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
