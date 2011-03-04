@@ -1161,7 +1161,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void markReused() {
     myReused = true;
     myModel.clearItems();
-    setAdvertisementText(null);
+    myAdComponent.clearAdvertisements();
     myPreselectedItem = null;
   }
 

@@ -82,6 +82,10 @@ public class Advertiser implements Disposable {
     return new ArrayList<String>(myTexts);
   }
 
+  public synchronized void clearAdvertisements() {
+    myTexts.clear();
+  }
+
   private static Font adFont() {
     Font font = UIUtil.getLabelFont();
     return font.deriveFont((float)(font.getSize() - 2));
