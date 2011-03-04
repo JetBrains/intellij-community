@@ -16,7 +16,7 @@ class Test {
             }
         });
         final Object u = new Object();
-        if (<warning descr="Condition 'u != null'  is always 'true'">u != null</warning>) {
+        if (<warning descr="Condition 'u != null' is always 'true'">u != null</warning>) {
           System.out.println("y");
         }
         obj = null;
