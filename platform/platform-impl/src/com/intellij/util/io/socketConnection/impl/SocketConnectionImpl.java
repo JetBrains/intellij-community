@@ -53,7 +53,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
         }
         catch (IOException e) {
           LOG.info(e);
-          setStatus(ConnectionStatus.CONNECTION_FAILED, e.getMessage());
+          setStatus(ConnectionStatus.CONNECTION_FAILED, "Connection failed: " + e.getMessage());
         }
       }
     });
