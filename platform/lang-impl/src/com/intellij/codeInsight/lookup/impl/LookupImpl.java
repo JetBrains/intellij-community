@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
@@ -113,7 +112,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private volatile boolean myCalculating;
-  private final JLabel myAdComponent;
+  private final Advertiser myAdComponent;
   private volatile String myAdText;
   private volatile int myLookupTextWidth = 50;
   private boolean myReused;
@@ -123,8 +122,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private Alarm myHintAlarm = new Alarm();
   private JLabel mySortingLabel;
   private final JScrollPane myScrollPane;
-  private boolean myHintMode;
-  private MyLightweightHint myAutopopupHint;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -148,8 +145,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(myScrollPane, BorderLayout.NORTH);
     myScrollPane.setBorder(null);
 
-    myAdComponent = HintUtil.createAdComponent(null, new EmptyBorder(1, 2, 1, 2 + relevanceSortIcon.getIconWidth()));
-    getComponent().add(myAdComponent, BorderLayout.SOUTH);
+    myAdComponent = new Advertiser(this);
+    JComponent adComponent = myAdComponent.getAdComponent();
+    adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + relevanceSortIcon.getIconWidth()));
+    getComponent().add(adComponent, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
     myIconPanel.setBackground(Color.LIGHT_GRAY);
@@ -295,6 +294,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void setAdvertisementText(@Nullable String text) {
     myAdText = text;
+    if (StringUtil.isNotEmpty(text)) {
+      myAdComponent.addAdvertisement(text);
+    }
   }
 
   public String getAdvertisementText() {
@@ -384,10 +386,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateListHeight(listModel);
 
-    myAdComponent.setText(myAdText);
-
     if (!model.isEmpty()) {
-      myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getPreferredSize().width));
+      myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
 
       if (isFocused() && (!isExactPrefixItem(model.iterator().next()) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant);
@@ -772,9 +772,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         setFocused(true);
         markSelectionTouched();
 
-        final Point point = e.getPoint();
-        final int i = myList.locationToIndex(point);
-
         if (e.getClickCount() == 2){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {
@@ -1145,7 +1142,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final Dimension sortSize = mySortingLabel.getPreferredSize();
     final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, layeredPane);
 
-    final int sortHeight = (StringUtil.isNotEmpty(myAdText) ? myAdComponent : mySortingLabel).getPreferredSize().height;
+    final int sortHeight = (StringUtil.isNotEmpty(myAdText) ? myAdComponent.getAdComponent() : mySortingLabel).getPreferredSize().height;
     mySortingLabel.setBounds(sbLocation.x, layeredPane.getHeight() - sortHeight, sortSize.width, sortHeight);
 
   }
@@ -1234,24 +1231,4 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myModel.getRelevanceStrings();
   }
 
-  private class MyLightweightHint extends LightweightHint {
-    private boolean myHidden;
-
-    public MyLightweightHint(JPanel panel) {
-      super(panel);
-    }
-
-    @Override
-    public void hide() {
-      if (myHidden) return;
-
-      hideLookup(true);
-      justHide();
-    }
-
-    private void justHide() {
-      myHidden = true;
-      super.hide();
-    }
-  }
 }
