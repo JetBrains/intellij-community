@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -64,7 +65,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final String name = node.getReferencedName();
-        final Scope scope = owner.getScope();
+        final Scope scope = ControlFlowCache.getScope(owner);
         // Ignore globals and if scope even doesn't contain such a declaration
         if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
           return;
@@ -100,7 +101,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           }
 
           final Ref<Boolean> readAccessSeen = new Ref<Boolean>(false);
-          final Instruction[] instructions = owner.getControlFlow().getInstructions();
+          final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
           final int number = ControlFlowUtil.findInstructionNumberByElement(instructions, node);
           // Do not perform this check if we cannot find corresponding instruction
           if (number != -1) {

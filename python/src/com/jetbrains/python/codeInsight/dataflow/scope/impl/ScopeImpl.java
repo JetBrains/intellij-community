@@ -1,10 +1,10 @@
 package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.dataflow.DFAEngine;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -28,7 +28,7 @@ public class ScopeImpl implements Scope {
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
-    myFlow = flowOwner.getControlFlow().getInstructions();
+    myFlow = ControlFlowCache.getControlFlow(flowOwner).getInstructions();
   }
 
   @NotNull

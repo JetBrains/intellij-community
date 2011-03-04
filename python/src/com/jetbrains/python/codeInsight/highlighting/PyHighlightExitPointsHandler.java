@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
 
   private void highlightExitPoints(final PyReturnStatement statement,
                                    final PyFunction function) {
-    final ControlFlow flow = function.getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow(function);
     final Collection<PsiElement> exitStatements = findExitPointsAndStatements(flow);
     if (!exitStatements.contains(statement)) {
       return;

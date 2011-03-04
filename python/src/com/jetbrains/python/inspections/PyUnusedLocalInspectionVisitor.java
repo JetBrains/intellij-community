@@ -21,6 +21,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -79,8 +80,8 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (callsLocals(owner)) return;
 
     // If method overrides others or is overridden, do not mark parameters as unused if they are
-    final Scope scope = owner.getScope();
-    final ControlFlow flow = owner.getControlFlow();
+    final Scope scope = ControlFlowCache.getScope(owner);
+    final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
     final Instruction[] instructions = flow.getInstructions();
 
     // Iteration over write accesses
