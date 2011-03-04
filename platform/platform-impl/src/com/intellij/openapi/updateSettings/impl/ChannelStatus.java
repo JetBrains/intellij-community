@@ -46,9 +46,9 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
   }
 
   public static ChannelStatus fromCode(String code) {
-    if ("eap".equals(code)) return EAP;
-    if ("milestone".equals(code)) return MILESTONE;
-    if ("beta".equals(code)) return BETA;
+    if ("eap".equalsIgnoreCase(code)) return EAP;
+    if ("milestone".equalsIgnoreCase(code)) return MILESTONE;
+    if ("beta".equalsIgnoreCase(code)) return BETA;
 
     return RELEASE;
   }
@@ -67,5 +67,10 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
 
   public static List<ChannelStatus> all() {
     return ALL_TYPES;
+  }
+
+  @Override
+  public String toString() {
+    return myDisplayName;
   }
 }

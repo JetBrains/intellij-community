@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.UpdateInfoDialog.UpdateInfoPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="122" y="198" width="478" height="239"/>
+      <xy x="122" y="198" width="478" height="184"/>
     </constraints>
     <properties/>
     <border type="etched"/>
@@ -107,18 +107,9 @@
           </component>
         </children>
       </grid>
-      <component id="99079" class="javax.swing.JLabel" binding="myMessageLabel">
-        <constraints>
-          <grid row="5" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/IdeBundle" key="updates.press.more.info.label"/>
-        </properties>
-      </component>
       <component id="969e3" class="javax.swing.JLabel">
         <constraints>
-          <grid row="6" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -136,19 +127,28 @@
       </component>
       <vspacer id="59641">
         <constraints>
-          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </vspacer>
-      <component id="eb5b7" class="javax.swing.JLabel" binding="myUpdateMessageLabel">
+      <scrollpane id="aeca2" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane">
         <constraints>
-          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
-        <properties>
-          <text value=""/>
-        </properties>
-      </component>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="54ce5" class="javax.swing.JEditorPane" binding="myUpdateMessageLabel">
+            <constraints/>
+            <properties>
+              <contentType value="text/html"/>
+              <editable value="false"/>
+              <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
     </children>
   </grid>
 </form>

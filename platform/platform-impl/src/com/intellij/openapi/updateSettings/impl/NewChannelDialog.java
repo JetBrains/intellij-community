@@ -74,14 +74,17 @@ public class NewChannelDialog extends DialogWrapper {
     JEditorPane pane = new JEditorPane("text/html", myInformationText);
     pane.addHyperlinkListener(new BrowserHyperlinkListener());
     pane.setEditable(false);
-    return new JBScrollPane(pane);
+    pane.setBackground(UIUtil.getLabelBackground());
+    JBScrollPane scrollPane = new JBScrollPane(pane);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    return scrollPane;
   }
 
   private void initInfo() {
     StringBuilder builder = new StringBuilder().append("<html>");
     builder.append("<head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
     builder.append("<b>").append(myChannel.getName()).append("</b><br>");
-    builder.append(myChannel.getLatestBuild().getMessage()).append("<br><br>");
+    builder.append(AbstractUpdateDialog.formatLinks(myChannel.getLatestBuild().getMessage())).append("<br><br>");
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
       if (!myChannel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {

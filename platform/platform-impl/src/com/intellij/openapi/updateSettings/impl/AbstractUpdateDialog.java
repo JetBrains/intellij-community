@@ -33,6 +33,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
@@ -127,5 +129,16 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
   public boolean isShowConfirmation() {
     return myShowConfirmation;
+  }
+
+  public static String formatLinks(String message) {
+    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9\\./]+");
+    StringBuffer result = new StringBuffer();
+    Matcher m = linkPattern.matcher(message);
+    while (m.find()) {
+      m.appendReplacement(result, "<a href=\"" + m.group() + "\">" + m.group() + "</a>");
+    }
+    m.appendTail(result);
+    return result.toString();
   }
 }

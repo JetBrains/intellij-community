@@ -19,6 +19,9 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -128,8 +131,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JLabel myNewBuildNumber;
     private JLabel myPatchAvailableLabel;
     private JLabel myPatchSizeLabel;
-    private JLabel myUpdateMessageLabel;
-    private JLabel myMessageLabel;
+    private JEditorPane myUpdateMessageLabel;
+    private JBScrollPane myScrollPane;
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -152,8 +155,15 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(myLatestBuild.getNumber().asStringWithoutProductCode() + ")");
       myNewVersionNumber.setText(myLatestBuild.getVersion());
+      myUpdateMessageLabel.setBackground(UIUtil.getLabelBackground());
+      myScrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       if (myLatestBuild.getMessage() != null) {
-        myUpdateMessageLabel.setText("<html><body><br>" + myLatestBuild.getMessage() + "</body></html>");
+        StringBuilder builder = new StringBuilder();
+        builder.append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>")
+          .append(AbstractUpdateDialog.formatLinks(myLatestBuild.getMessage()))
+          .append("</body></html>");
+        myUpdateMessageLabel.setText(builder.toString());
+        myUpdateMessageLabel.addHyperlinkListener(new BrowserHyperlinkListener());
       }
       else {
         myUpdateMessageLabel.setVisible(false);
