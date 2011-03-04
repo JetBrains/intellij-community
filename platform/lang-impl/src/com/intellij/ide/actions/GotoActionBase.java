@@ -102,7 +102,7 @@ public abstract class GotoActionBase extends AnAction {
     public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
-  private static String getInitialText(Editor editor) {
+  public static String getInitialText(Editor editor) {
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
       if (selectedText != null && selectedText.indexOf("\n") < 0) {
