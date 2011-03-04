@@ -141,7 +141,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
 // tool bar actions
-    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, myDescriptor);
+    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
