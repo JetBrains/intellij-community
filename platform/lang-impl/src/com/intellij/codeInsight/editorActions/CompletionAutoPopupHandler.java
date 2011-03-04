@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.*;
@@ -87,6 +88,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.NoCompletion.getClass())) {
+      if ("peter".equals(System.getProperty("user.name")) && ApplicationManagerEx.getApplicationEx().isInternal()) {
+        System.out.println(CompletionServiceImpl.getCompletionPhase() + " at " + System.currentTimeMillis());
+      }
       return Result.CONTINUE;
     }
 
