@@ -36,10 +36,18 @@ import java.util.*;
 /**
  * @author nik
  */
-abstract class OrderEnumeratorBase extends OrderEnumerator {
+abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEnumeratorBase");
-
-  protected final OrderEnumeratorSettings mySettings = new OrderEnumeratorSettings();
+  private boolean myProductionOnly;
+  private boolean myCompileOnly;
+  private boolean myRuntimeOnly;
+  private boolean myWithoutJdk;
+  private boolean myWithoutLibraries;
+  protected boolean myWithoutDepModules;
+  private boolean myWithoutModuleSourceEntries;
+  protected boolean myRecursively;
+  protected boolean myRecursivelyExportedOnly;
+  private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
   private final List<OrderEnumerationHandler> myCustomHandlers;
   protected ModulesProvider myModulesProvider;
@@ -59,66 +67,61 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     this.myCustomHandlers = customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
   }
 
-  @NotNull
-  public OrderEnumeratorSettings getSettings() {
-    return mySettings;
-  }
-
   @Override
   public OrderEnumerator productionOnly() {
-    mySettings.productionOnly = true;
+    myProductionOnly = true;
     return this;
   }
 
   @Override
   public OrderEnumerator compileOnly() {
-    mySettings.compileOnly = true;
+    myCompileOnly = true;
     return this;
   }
 
   @Override
   public OrderEnumerator runtimeOnly() {
-    mySettings.runtimeOnly = true;
+    myRuntimeOnly = true;
     return this;
   }
 
   @Override
   public OrderEnumerator withoutSdk() {
-    mySettings.withoutJdk = true;
+    myWithoutJdk = true;
     return this;
   }
 
   @Override
   public OrderEnumerator withoutLibraries() {
-    mySettings.withoutLibraries = true;
+    myWithoutLibraries = true;
     return this;
   }
 
   @Override
   public OrderEnumerator withoutDepModules() {
-    mySettings.withoutDepModules = true;
+    myWithoutDepModules = true;
     return this;
   }
 
   @Override
   public OrderEnumerator withoutModuleSourceEntries() {
-    mySettings.withoutModuleSourceEntries = true;
+    myWithoutModuleSourceEntries = true;
     return this;
   }
 
   @Override
   public OrderEnumerator recursively() {
-    mySettings.recursively = true;
+    myRecursively = true;
     return this;
   }
 
   @Override
   public OrderEnumerator exportedOnly() {
-    if (mySettings.recursively) {
-      mySettings.recursivelyExportedOnly = true;
+    if (myRecursively) {
+      myRecursivelyExportedOnly = true;
     }
     else {
-      mySettings.exportedOnly = true;
+      myExportedOnly = true;
     }
     return this;
   }
@@ -133,10 +136,6 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   public OrderEnumerator using(@NotNull ModulesProvider provider) {
     myModulesProvider = provider;
     return this;
-  }
-
-  public int getFlags() {
-    return mySettings.getFlags();
   }
 
   @Override
@@ -173,6 +172,30 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return myCache;
   }
 
+  public int getFlags() {
+    int flags = 0;
+    if (myProductionOnly) flags |= 1;
+    flags <<= 1;
+    if (myCompileOnly) flags |= 1;
+    flags <<= 1;
+    if (myRuntimeOnly) flags |= 1;
+    flags <<= 1;
+    if (myWithoutJdk) flags |= 1;
+    flags <<= 1;
+    if (myWithoutLibraries) flags |= 1;
+    flags <<= 1;
+    if (myWithoutDepModules) flags |= 1;
+    flags <<= 1;
+    if (myWithoutModuleSourceEntries) flags |= 1;
+    flags <<= 1;
+    if (myRecursively) flags |= 1;
+    flags <<= 1;
+    if (myRecursivelyExportedOnly) flags |= 1;
+    flags <<= 1;
+    if (myExportedOnly) flags |= 1;
+    return flags;
+  }
+
   protected void processEntries(final ModuleRootModel rootModel,
                                 Processor<OrderEntry> processor,
                                 Set<Module> processed, boolean firstLevel) {
@@ -181,17 +204,17 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (myCondition != null && !myCondition.value(entry)) continue;
 
-      if (mySettings.withoutJdk && entry instanceof JdkOrderEntry) continue;
-      if (mySettings.withoutLibraries && entry instanceof LibraryOrderEntry) continue;
-      if (mySettings.withoutDepModules) {
-        if (!mySettings.recursively && entry instanceof ModuleOrderEntry) continue;
+      if (myWithoutJdk && entry instanceof JdkOrderEntry) continue;
+      if (myWithoutLibraries && entry instanceof LibraryOrderEntry) continue;
+      if (myWithoutDepModules) {
+        if (!myRecursively && entry instanceof ModuleOrderEntry) continue;
         if (entry instanceof ModuleSourceOrderEntry && !isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
       }
-      if (mySettings.withoutModuleSourceEntries && entry instanceof ModuleSourceOrderEntry) continue;
+      if (myWithoutModuleSourceEntries && entry instanceof ModuleSourceOrderEntry) continue;
 
       OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
       for (OrderEnumerationHandler handler : myCustomHandlers) {
-        shouldAdd = handler.shouldAddDependency(entry, mySettings);
+        shouldAdd = handler.shouldAddDependency(entry, this);
         if (shouldAdd != OrderEnumerationHandler.AddDependencyType.DEFAULT) break;
       }
       if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DO_NOT_ADD) continue;
@@ -202,12 +225,12 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
         if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
           final DependencyScope scope = exportableEntry.getScope();
-          if (mySettings.compileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
-          if (mySettings.runtimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
-          if (mySettings.productionOnly) {
+          if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
+          if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
+          if (myProductionOnly) {
             if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
-                || mySettings.compileOnly && !scope.isForProductionCompile()
-                || mySettings.runtimeOnly && !scope.isForProductionRuntime()) {
+                || myCompileOnly && !scope.isForProductionCompile()
+                || myRuntimeOnly && !scope.isForProductionRuntime()) {
               continue;
             }
           }
@@ -215,11 +238,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         exported = exportableEntry.isExported();
       }
       if (!exported) {
-        if (mySettings.exportedOnly) continue;
-        if (mySettings.recursivelyExportedOnly && !firstLevel) continue;
+        if (myExportedOnly) continue;
+        if (myRecursivelyExportedOnly && !firstLevel) continue;
       }
 
-      if (mySettings.recursively && entry instanceof ModuleOrderEntry) {
+      if (myRecursively && entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
@@ -238,7 +261,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         }
       }
 
-      if (mySettings.withoutDepModules && entry instanceof ModuleOrderEntry) continue;
+      if (myWithoutDepModules && entry instanceof ModuleOrderEntry) continue;
       if (!processor.process(entry)) {
         return;
       }
@@ -286,7 +309,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
       final List<String> urls = new ArrayList<String>();
       final boolean added =
-        handler.addCustomOutput(forModule, orderEntryRootModel, type, mySettings, urls);
+        handler.addCustomOutput(forModule, orderEntryRootModel, type, this, urls);
       for (String url : urls) {
         ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
       }
@@ -299,7 +322,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   boolean addCustomOutputUrls(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<String> result) {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      if (handler.addCustomOutput(forModule, orderEntryRootModel, type, mySettings, result)) {
+      if (handler.addCustomOutput(forModule, orderEntryRootModel, type, this, result)) {
         return true;
       }
     }
@@ -309,7 +332,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   void addAdditionalRoots(Module forModule, Collection<VirtualFile> result) {
     final List<String> urls = new ArrayList<String>();
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      handler.addAdditionalRoots(forModule, mySettings, urls);
+      handler.addAdditionalRoots(forModule, this, urls);
     }
     for (String url : urls) {
       ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
@@ -318,8 +341,23 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   void addAdditionalRootsUrls(Module forModule, Collection<String> result) {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      handler.addAdditionalRoots(forModule, mySettings, result);
+      handler.addAdditionalRoots(forModule, this, result);
     }
+  }
+
+  @Override
+  public boolean isRuntimeOnly() {
+    return myRuntimeOnly;
+  }
+
+  @Override
+  public boolean isCompileOnly() {
+    return myCompileOnly;
+  }
+
+  @Override
+  public boolean isProductionOnly() {
+    return myProductionOnly;
   }
 
   public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
