@@ -108,6 +108,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   private static void replaceInsertHandler(Object[] variants, final InsertHandler<LookupElement> insertHandler) {
     for (int i=0; i < variants.length; i+=1) {
       Object item = variants[i];
+      if (hasChildPackages(item)) continue;
       if (item instanceof LookupElementBuilder) {
         variants[i] = ((LookupElementBuilder)item).setInsertHandler(insertHandler);
       }
@@ -119,6 +120,20 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           .setInsertHandler(insertHandler);
       }
     }
+  }
+
+  private static boolean hasChildPackages(Object item) {
+    PsiElement itemElement = null;
+    if (item instanceof PsiElement) {
+      itemElement = (PsiElement) item;
+    }
+    else if (item instanceof LookupElement) {
+      LookupElement lookupElement = (LookupElement) item;
+      if (lookupElement.getObject() instanceof PsiElement) {
+        itemElement = (PsiElement) lookupElement.getObject();
+      }
+    }
+    return !(itemElement instanceof PsiFile);  // TODO deeper check?
   }
 
   private boolean alreadyHasImportKeyword() {

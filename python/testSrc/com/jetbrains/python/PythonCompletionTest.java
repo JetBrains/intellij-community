@@ -300,4 +300,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/duplicateImportKeyword/a.after.py");
   }
+
+  public void testImportInMiddleOfHierarchy() {  // PY-3016
+    myFixture.copyDirectoryToProject("completion/importInMiddleOfHierarchy", "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/importInMiddleOfHierarchy/a.after.py");
+  }
 }
