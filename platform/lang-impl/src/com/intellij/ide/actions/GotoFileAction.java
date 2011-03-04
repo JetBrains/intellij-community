@@ -22,7 +22,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -53,7 +55,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, gotoFileModel, getPsiContext(e),
-                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)), FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows());
     final ChooseByNameFilter filterUI = new GotoFileFilter(popup, gotoFileModel, project);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
