@@ -145,6 +145,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
+    showConsole(defaultExecutor, contentDescriptor);
 
 // Run
     myProcessHandler.startNotify();
@@ -194,8 +195,6 @@ public abstract class AbstractConsoleRunnerWithHistory {
         IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
       }
     });
-// Run
-    myProcessHandler.startNotify();
   }
 
   protected void finishConsole() {
@@ -226,7 +225,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
                                           final Executor defaultExecutor,
-                                          final RunContentDescriptor myDescriptor) {
+                                          final RunContentDescriptor contentDescriptor) {
 
     List<AnAction> actionList = Lists.newArrayList();
 
@@ -235,14 +234,12 @@ public abstract class AbstractConsoleRunnerWithHistory {
     actionList.add(stopAction);
 
 //close
-    final AnAction closeAction = createCloseAction(defaultExecutor, myDescriptor);
+    final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
     actionList.add(closeAction);
 
 // run and history actions
 
-    ConsoleExecutionActions executionActions =
-      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
-    myRunAction = executionActions.getRunAction();
+    ConsoleExecutionActions executionActions = createExecuteAction();
     actionList.addAll(executionActions.getActionsAsList());
 
 // Help
@@ -253,6 +250,13 @@ public abstract class AbstractConsoleRunnerWithHistory {
     toolbarActions.addAll(actions);
 
     return actions;
+  }
+
+  protected ConsoleExecutionActions createExecuteAction() {
+    ConsoleExecutionActions executionActions =
+      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
+    myRunAction = executionActions.getRunAction();
+    return executionActions;
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
