@@ -582,7 +582,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
-      <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" remove="true"/>
+      <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
