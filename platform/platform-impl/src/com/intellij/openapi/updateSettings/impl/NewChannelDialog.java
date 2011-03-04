@@ -29,6 +29,7 @@ import java.awt.event.ActionEvent;
 public class NewChannelDialog extends DialogWrapper {
   private final UpdateChannel myChannel;
   private String myInformationText;
+  private boolean myShowUpgradeButton = false;
 
   public NewChannelDialog(UpdateChannel channel) {
     super(true);
@@ -50,6 +51,18 @@ public class NewChannelDialog extends DialogWrapper {
         doCancelAction();
       }
     };
+    if (myShowUpgradeButton) {
+      Action upgrade = new AbstractAction("Upgrade Online") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          LicensingFacade facade = LicensingFacade.getInstance();
+          assert facade != null;
+          BrowserUtil.launchBrowser(facade.getUpgradeUrl());
+          doCancelAction();
+        }
+      };
+      return new Action[] { getOKAction(), upgrade, remindLater, getCancelAction() };
+    }
     return new Action[] { getOKAction(), remindLater, getCancelAction() };
   }
 
@@ -67,6 +80,7 @@ public class NewChannelDialog extends DialogWrapper {
         if (paidUpgrade != null) {
           if (paidUpgrade) {
             builder.append("The new version requires upgrading your license key.");
+            myShowUpgradeButton = true;
           }
           else {
             builder.append("The new version can be used with your existing license key.");
