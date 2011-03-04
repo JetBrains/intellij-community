@@ -34,6 +34,7 @@ public class UpdateChannel {
   private final String myHomePageUrl;
   private final String myFeedbackUrl;
   private final List<BuildInfo> myBuilds;
+  private final int myEvalDays;
 
   public static final String LICENSING_EAP = "eap";
   public static final String LICENSING_PRODUCTION = "production";
@@ -47,6 +48,9 @@ public class UpdateChannel {
 
     String majorVersion = node.getAttributeValue("majorVersion");
     myMajorVersion = majorVersion != null ? Integer.parseInt(majorVersion) : -1;
+
+    String evalDays = node.getAttributeValue("evalDays");
+    myEvalDays = evalDays != null ? Integer.parseInt(evalDays) : 30;
 
     myHomePageUrl = node.getAttributeValue("url");
     myFeedbackUrl = node.getAttributeValue("feedback");
@@ -95,5 +99,9 @@ public class UpdateChannel {
 
   public String getLicensing() {
     return myLicensing;
+  }
+
+  public int getEvalDays() {
+    return myEvalDays;
   }
 }

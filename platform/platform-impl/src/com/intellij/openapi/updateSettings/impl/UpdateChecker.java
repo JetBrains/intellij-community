@@ -314,10 +314,14 @@ public final class UpdateChecker {
                                       final boolean alwaysShowResults) {
     UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
     if (channelToPropose != null && channelToPropose.getLatestBuild() != null) {
-      new NewChannelDialog(channelToPropose).show();
+      NewChannelDialog dialog = new NewChannelDialog(channelToPropose);
+      dialog.setModal(alwaysShowResults);
+      dialog.show();
     }
     else if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
-      new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink).show();
+      UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink);
+      dialog.setModal(alwaysShowResults);
+      dialog.show();
     }
     else if (updatedPlugins != null || alwaysShowResults) {
       NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);

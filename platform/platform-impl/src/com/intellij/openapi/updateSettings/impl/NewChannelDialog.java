@@ -18,7 +18,10 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -52,7 +55,7 @@ public class NewChannelDialog extends DialogWrapper {
       }
     };
     if (myShowUpgradeButton) {
-      Action upgrade = new AbstractAction("Upgrade Online") {
+      Action upgrade = new AbstractAction("Buy Upgrade Online") {
         @Override
         public void actionPerformed(ActionEvent e) {
           LicensingFacade facade = LicensingFacade.getInstance();
@@ -68,18 +71,26 @@ public class NewChannelDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return new JLabel(myInformationText);
+    JEditorPane pane = new JEditorPane("text/html", myInformationText);
+    pane.addHyperlinkListener(new BrowserHyperlinkListener());
+    pane.setEditable(false);
+    return new JBScrollPane(pane);
   }
 
   private void initInfo() {
-    StringBuilder builder = new StringBuilder().append("<html><b>").append(myChannel.getName()).append("</b><br>");
+    StringBuilder builder = new StringBuilder().append("<html>");
+    builder.append("<head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
+    builder.append("<b>").append(myChannel.getName()).append("</b><br>");
+    builder.append(myChannel.getLatestBuild().getMessage()).append("<br><br>");
     LicensingFacade facade = LicensingFacade.getInstance();
     if (facade != null) {
       if (!myChannel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
         Boolean paidUpgrade = facade.isPaidUpgrade(myChannel.getMajorVersion(), myChannel.getLatestBuild().getReleaseDate());
         if (paidUpgrade != null) {
           if (paidUpgrade) {
-            builder.append("The new version requires upgrading your license key.");
+            builder.append("You can evaluate the new version for ")
+              .append(myChannel.getEvalDays())
+              .append(" days or buy a license key or an upgrade online.");
             myShowUpgradeButton = true;
           }
           else {
