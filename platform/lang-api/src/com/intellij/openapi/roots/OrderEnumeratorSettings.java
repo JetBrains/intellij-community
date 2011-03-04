@@ -15,39 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
-public class OrderEnumeratorSettings {
-  public boolean productionOnly;
-  public boolean compileOnly;
-  public boolean runtimeOnly;
-  public boolean withoutJdk;
-  public boolean withoutLibraries;
-  public boolean withoutDepModules;
-  public boolean withoutModuleSourceEntries;
-  public boolean recursively;
-  public boolean recursivelyExportedOnly;
-  public boolean exportedOnly;
-
-  public int getFlags() {
-    int flags = 0;
-    if (productionOnly) flags |= 1;
-    flags <<= 1;
-    if (compileOnly) flags |= 1;
-    flags <<= 1;
-    if (runtimeOnly) flags |= 1;
-    flags <<= 1;
-    if (withoutJdk) flags |= 1;
-    flags <<= 1;
-    if (withoutLibraries) flags |= 1;
-    flags <<= 1;
-    if (withoutDepModules) flags |= 1;
-    flags <<= 1;
-    if (withoutModuleSourceEntries) flags |= 1;
-    flags <<= 1;
-    if (recursively) flags |= 1;
-    flags <<= 1;
-    if (recursivelyExportedOnly) flags |= 1;
-    flags <<= 1;
-    if (exportedOnly) flags |= 1;
-    return flags;
-  }
+public interface OrderEnumeratorSettings {
+  boolean isProductionOnly();
+  boolean isCompileOnly();
+  boolean isRuntimeOnly();
 }

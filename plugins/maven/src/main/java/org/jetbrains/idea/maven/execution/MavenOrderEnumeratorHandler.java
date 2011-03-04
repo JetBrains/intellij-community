@@ -78,11 +78,11 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   private boolean shouldAddArtifact(MavenArtifact artifact, OrderEnumeratorSettings settings) {
-    if (settings.productionOnly) {
+    if (settings.isProductionOnly()) {
       String scope = artifact.getScope();
       if (scope != null) {
-        if (settings.compileOnly && MavenConstants.SCOPE_RUNTIME.endsWith(scope)) return false;
-        if (settings.runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(scope)) return false;
+        if (settings.isCompileOnly() && MavenConstants.SCOPE_RUNTIME.endsWith(scope)) return false;
+        if (settings.isRuntimeOnly() && MavenConstants.SCOPE_PROVIDEED.equals(scope)) return false;
         if (MavenConstants.SCOPE_TEST.equals(scope)) return false;
       }
     }
@@ -142,7 +142,7 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   public void addAdditionalRoots(@NotNull Module forModule,
                                  @NotNull OrderEnumeratorSettings settings,
                                  @NotNull Collection<String> urls) {
-    if (settings.productionOnly) return;
+    if (settings.isProductionOnly()) return;
 
     MavenProject project = MavenProjectsManager.getInstance(forModule.getProject()).findProject(forModule);
     if (project == null) return;
