@@ -219,7 +219,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   @NotNull
   private LookupImpl obtainLookup(Editor editor) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (existing != null && existing.isCompletion() && !existing.isHintMode()) {
+    if (existing != null && existing.isCompletion()) {
       existing.markReused();
       if (!autopopup) {
         existing.setFocused(true);

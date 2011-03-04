@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiReference;
@@ -329,20 +328,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      if (isAutopopupCompletion() && showHintAutopopup()) {
-        myLookup.setHintMode(true);
-      }
-      else {
-        myLookup.show();
-      }
+      myLookup.show();
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
     updateFocus();
-  }
-
-   public static boolean showHintAutopopup() {
-    return "true".equals(Registry.stringValue("hint.autopopup")) && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   final boolean isInsideIdentifier() {
