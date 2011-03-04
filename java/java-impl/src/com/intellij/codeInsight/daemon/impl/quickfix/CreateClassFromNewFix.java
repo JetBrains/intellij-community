@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewFix");
   private final SmartPsiElementPointer myNewExpression;
 
   public CreateClassFromNewFix(PsiNewExpression newExpression) {
