@@ -16,12 +16,11 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -96,6 +95,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      assert lookup != null;
+      if (!CompletionProgressIndicator.showHintAutopopup()) {
+        lookup.hide();
+        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
+        return;
+      }
+
+
       lookup.setHintMode(false);
       lookup.refreshUi();
       UpHandler.executeUp(lookup);
@@ -113,6 +120,13 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      assert lookup != null;
+      if (!CompletionProgressIndicator.showHintAutopopup()) {
+        lookup.hide();
+        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
+        return;
+      }
+
       lookup.setHintMode(false);
       lookup.refreshUi();
       DownHandler.executeDown(lookup);
