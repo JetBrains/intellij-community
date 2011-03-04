@@ -17,6 +17,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
@@ -182,6 +184,53 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       ListScrollingUtil.movePageUp(lookup.getList());
+    }
+  }
+
+  public static class LeftHandler extends LookupActionHandler {
+    public LeftHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
+    }
+
+    @Override
+    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
+    }
+  }
+  public static class RightHandler extends LookupActionHandler {
+    public RightHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
+    }
+
+    @Override
+    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      final Editor editor = lookup.getEditor();
+      final int offset = editor.getCaretModel().getOffset();
+      CharSequence seq = editor.getDocument().getCharsSequence();
+      if (seq.length() <= offset) {
+        myOriginalHandler.execute(editor, context);
+        return;
+      }
+
+      char c = seq.charAt(offset);
+      CharFilter.Result lookupAction = TypedHandler.getLookupAction(c, lookup);
+      if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
+        myOriginalHandler.execute(editor, context);
+        return;
+      }
+
+      lookup.performGuardedChange(new Runnable() {
+        @Override
+        public void run() {
+          editor.getCaretModel().moveToOffset(offset + 1);
+        }
+      });
+
+      lookup.appendPrefix(c);
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      if (completion != null) {
+        completion.prefixUpdated();
+      }
     }
   }
 
