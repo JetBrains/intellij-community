@@ -405,6 +405,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
 
     assertFalse(getPsiManager().isDisposed());
+    assertTrue(getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
