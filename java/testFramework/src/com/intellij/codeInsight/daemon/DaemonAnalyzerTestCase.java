@@ -193,7 +193,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void tearDown() throws Exception {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
     if (toInitializeDaemon) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(false);
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
     }
     super.tearDown();
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
@@ -226,7 +226,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[0];
+    return LocalInspectionTool.EMPTY_ARRAY;
   }
 
   protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {

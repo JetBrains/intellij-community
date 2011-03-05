@@ -979,7 +979,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myProjectFixture.setUp();
     myTempDirFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
+    configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
@@ -1011,7 +1011,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       editorManager.closeFile(openFile);
     }
     if (toInitializeDaemon) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(false);
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
     }
 
     myEditor = null;
