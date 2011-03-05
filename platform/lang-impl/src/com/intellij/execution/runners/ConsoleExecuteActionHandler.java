@@ -80,4 +80,7 @@ public class ConsoleExecuteActionHandler {
       // ignore
     }
   }
+
+  public void finishExecution() {
+  }
 }
