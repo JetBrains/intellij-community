@@ -669,7 +669,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
       EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
       if (searchComponent.hasMatches()) {
-        searchComponent.moveCursor(forwardOrBackward);
+        if (forwardOrBackward == SearchResults.Direction.UP) {
+          searchComponent.searchBackward();
+        } else {
+          searchComponent.searchForward();
+        }
         return true;
       }
     }
