@@ -220,6 +220,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.list.creation"), true, true);
   }
 
+  public void testConvertSingleQuotedDocstring() {                      //PY-1445
+    doInspectionTest("ConvertSingleQuotedDocstring.py", PySingleQuotedDocstringInspection.class,
+                     PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);

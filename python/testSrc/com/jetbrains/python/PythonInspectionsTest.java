@@ -308,4 +308,8 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     setLanguageLevel(LanguageLevel.PYTHON27);
     doHighlightingTest(PyUnnecessaryBackslashInspection.class);
   }
+
+  public void testPySingleQuotedDocstringInspection() {    //PY-1445
+    doHighlightingTest(PySingleQuotedDocstringInspection.class);
+  }
 }
