@@ -63,6 +63,28 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     return myParentSettings;
   }
 
+  /**
+   * Get common code style settings by language name. <code>getCommonSettings(Language)</code> is a preferred method but
+   * sometimes (for example, in plug-ins which do not depend on a specific language support) language settings can be
+   * obtained by name.
+   * 
+   * @param langName The display name of the language whose settings must be returned.
+   * @return Common code style settings for the given language or parent (shared) settings if not found.
+   */
+  @NotNull
+  public CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
+    if (myCommonSettingsMap == null) {
+      initCommonSettingsMap();
+      initNonReadSettings();
+    }
+    for (Language lang : myCommonSettingsMap.keySet()) {
+      if (langName.equals(lang.getDisplayName())) {
+        return myCommonSettingsMap.get(lang);
+      }
+    }
+    return myParentSettings;
+  }  
+
 
   private void initNonReadSettings() {
     final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
