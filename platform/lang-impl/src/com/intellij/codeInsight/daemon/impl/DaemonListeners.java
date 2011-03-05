@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -51,6 +52,8 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,6 +66,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -89,12 +93,18 @@ class DaemonListeners implements Disposable {
 
   private volatile boolean cutOperationJustHappened;
   private final EditorTracker myEditorTracker;
+  private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
 
+  private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
   public DaemonListeners(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, EditorTracker editorTracker) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE), "Daemon listeners already initialized for the project "+myProject);
 
-    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    MessageBus messageBus = myProject.getMessageBus();
+    myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
+    final MessageBusConnection connection = messageBus.connect();
+
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
@@ -184,11 +194,11 @@ class DaemonListeners implements Disposable {
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       public void enteredDumbMode() {
-        myDaemonCodeAnalyzer.restart();
+        stopDaemonAndRestartAllFiles();
       }
 
       public void exitDumbMode() {
-        myDaemonCodeAnalyzer.restart();
+        stopDaemonAndRestartAllFiles();
       }
     });
 
@@ -198,6 +208,7 @@ class DaemonListeners implements Disposable {
         stopDaemon(true);
       }
     });
+
 
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
     ApplicationListener applicationListener = new MyApplicationListener();
@@ -210,7 +221,7 @@ class DaemonListeners implements Disposable {
       public void propertyChanged(VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          myDaemonCodeAnalyzer.restart();
+          stopDaemonAndRestartAllFiles();
           PsiFile psiFile = PsiManager.getInstance(myProject).findFile(event.getFile());
           if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
             Document document = FileDocumentManager.getInstance().getCachedDocument(event.getFile());
@@ -274,6 +285,7 @@ class DaemonListeners implements Disposable {
   }
 
   public void dispose() {
+    LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, null), "Daemon listeners already disposed for the project "+myProject);
   }
 
   boolean canChangeFileSilently(PsiFileSystemItem file) {
@@ -382,25 +394,25 @@ class DaemonListeners implements Disposable {
 
   private class MyEditorColorsListener implements EditorColorsListener {
     public void globalSchemeChange(EditorColorsScheme scheme) {
-      myDaemonCodeAnalyzer.restart();
+      stopDaemonAndRestartAllFiles();
     }
   }
 
   private class MyTodoListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
-        myDaemonCodeAnalyzer.restart();
+        stopDaemonAndRestartAllFiles();
       }
     }
   }
 
   private class MyProfileChangeListener extends ProfileChangeAdapter {
     public void profileChanged(Profile profile) {
-      myDaemonCodeAnalyzer.restart();
+      stopDaemonAndRestartAllFiles();
     }
 
     public void profileActivated(Profile oldProfile, Profile profile) {
-      myDaemonCodeAnalyzer.restart();
+      stopDaemonAndRestartAllFiles();
     }
   }
 
@@ -469,7 +481,13 @@ class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm) {
+    myDaemonEventPublisher.daemonCancelEventOccurred();
     myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
+  }
+
+  private void stopDaemonAndRestartAllFiles() {
+    myDaemonEventPublisher.daemonCancelEventOccurred();
+    myDaemonCodeAnalyzer.restart();
   }
 
   Collection<FileEditor> getSelectedEditors() {
