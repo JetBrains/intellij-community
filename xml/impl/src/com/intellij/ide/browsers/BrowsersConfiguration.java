@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -59,7 +60,12 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return new FirefoxSettings();
       }
     },
-    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png"));
+    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
+      @Override
+      public BrowserSpecificSettings createBrowserSpecificSettings() {
+        return new ChromeSettings();
+      }
+    };
 
     private final String myName;
     private final String myWindowsPath;
