@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -24,172 +25,177 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     return PythonTestUtil.getTestDataPath() + "/codeInsight/controlflow/";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
-    final ControlFlow flow = ((PyFile)myFile).getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow((PyFile)myFile);
     final String fullPath = getTestDataPath() + testName + ".txt";
     check(fullPath, flow);
    }
 
-  public void testAssert() throws Exception {
+  public void testAssert() {
     doTest();
   }
 
-  public void testAssertFalse() throws Exception {
+  public void testAssertFalse() {
     doTest();
   }
 
-  public void testFile() throws Exception {
+  public void testFile() {
     doTest();
   }
 
-  public void testIf() throws Exception {
+  public void testIf() {
     doTest();
   }
 
-  public void testFor() throws Exception {
+  public void testFor() {
     doTest();
   }
 
-  public void testWhile() throws Exception {
+  public void testWhile() {
     doTest();
   }
 
-  public void testBreak() throws Exception {
+  public void testBreak() {
     doTest();
   }
 
-  public void testContinue() throws Exception {
+  public void testContinue() {
     doTest();
   }
 
-  public void testReturn() throws Exception {
+  public void testReturn() {
     doTest();
   }
 
-  public void testTry() throws Exception {
+  public void testTry() {
     doTest();
   }
 
-  public void testImport() throws Exception {
+  public void testImport() {
     doTest();
   }
 
-  public void testListComp() throws Exception {
+  public void testListComp() {
     doTest();
   }
 
-  public void testAssignment() throws Exception {
+  public void testAssignment() {
     doTest();
   }
 
-  public void testAssignment2() throws Exception {
+  public void testAssignment2() {
     doTest();
   }
 
-  public void testAugAssignment() throws Exception {
+  public void testAugAssignment() {
     doTest();
   }
 
-  public void testSliceAssignment() throws Exception {
+  public void testSliceAssignment() {
     doTest();
   }
 
-  public void testIfElseReturn() throws Exception {
+  public void testIfElseReturn() {
     doTest();
   }
 
-  public void testRaise() throws Exception {
+  public void testRaise() {
     doTest();
   }
 
-  public void testReturnFor() throws Exception {
+  public void testReturnFor() {
     doTest();
   }
 
-  public void testForIf() throws Exception {
+  public void testForIf() {
     doTest();
   }
 
-  public void testForReturn() throws Exception {
+  public void testForReturn() {
     doTest();
   }
 
-  public void testForTryContinue() throws Exception {
+  public void testForTryContinue() {
     doTest();
   }
 
-  public void testTryRaiseFinally() throws Exception {
+  public void testTryRaiseFinally() {
     doTest();
   }
 
-  public void testTryExceptElseFinally() throws Exception {
+  public void testTryExceptElseFinally() {
     doTest();
   }
 
-  public void testTryFinally() throws Exception {
+  public void testTryFinally() {
     doTest();
   }
 
-  public void testDoubleTry() throws Exception {
+  public void testDoubleTry() {
     doTest();
   }
 
-  public void testIsinstance() throws Exception {
+  public void testIsinstance() {
     doTest();
   }
 
-  public void testLambda() throws Exception {
+  public void testLambda() {
     doTest();
   }
 
-  public void testManyIfs() throws Exception {
+  public void testManyIfs() {
     doTest();
   }
 
-  public void testQualifiedSelfReference() throws Exception {
+  public void testQualifiedSelfReference() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
-    final ControlFlow flow = pyClass.getMethods() [0].getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods()[0]);
     check(fullPath, flow);
   }
 
-  public void testSelf() throws Exception {
+  public void testSelf() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
-    final ControlFlow flow = pyClass.getMethods() [0].getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods()[0]);
     check(fullPath, flow);
   }
 
-  public void testTryBreak() throws Exception {
+  public void testTryBreak() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
-    final ControlFlow flow = ((PyFunction)((PyFile)myFile).getStatements().get(0)).getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow((PyFunction)((PyFile)myFile).getStatements().get(0));
     final String fullPath = getTestDataPath() + testName + ".txt";
     check(fullPath, flow);
   }
 
-  public void testFunction() throws Exception {
+  public void testFunction() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
-    final ControlFlow flow = ((PyFunction)((PyFile)myFile).getStatements().get(0)).getControlFlow();
+    final ControlFlow flow = ControlFlowCache.getControlFlow((PyFunction)((PyFile)myFile).getStatements().get(0));
     check(fullPath, flow);
   }
 
-  private static void check(final String fullPath, final ControlFlow flow) throws IOException {
+  private static void check(final String fullPath, final ControlFlow flow) {
     final StringBuffer buffer = new StringBuffer();
     final Instruction[] instructions = flow.getInstructions();
     for (Instruction instruction : instructions) {
       buffer.append(instruction).append("\n");
     }
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-    assertEquals(fileText.trim(), buffer.toString().trim());
+    try {
+      final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+      assertEquals(fileText.trim(), buffer.toString().trim());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

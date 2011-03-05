@@ -68,7 +68,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    *         not suitable for import.
    */
   @NotNull
-  private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory) {
+  public static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory) {
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
 
     if (directory != null) { // just in case

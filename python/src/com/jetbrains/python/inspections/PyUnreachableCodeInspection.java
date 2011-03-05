@@ -1,11 +1,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyExceptPart;
 import org.jetbrains.annotations.Nls;
@@ -39,7 +39,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
     public void visitElement(final PsiElement element) {
       if (element instanceof ScopeOwner) {
         // Look for decoupled components of control flow graph
-        final Instruction[] flow = ((ScopeOwner)element).getControlFlow().getInstructions();
+        final Instruction[] flow = ControlFlowCache.getControlFlow((ScopeOwner)element).getInstructions();
         final int[] colors = new int[flow.length];
         for (int i = 0;i<flow.length;i++){
           colors[i] = i;

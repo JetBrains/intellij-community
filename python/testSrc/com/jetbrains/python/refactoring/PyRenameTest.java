@@ -50,6 +50,10 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     doTest("bar");
   }
 
+  public void testRenameLocalWithGenerator() {  // PY-3030
+    doTest("bar");
+  }
+
   public void testUpdateAll() {  // PY-986
     doTest("bar");
   }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBinaryExpressionNavigator;
@@ -56,7 +57,7 @@ public class PyCodeFragmentUtil {
     // Control flow inspection
     final HashSet<Instruction> outerInstructions = new HashSet<Instruction>();
     boolean returnInstructionInside = false;
-    final Instruction[] flow = owner.getControlFlow().getInstructions();
+    final Instruction[] flow = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (Instruction instruction : flow) {
       final PsiElement element = instruction.getElement();
       if (element!=null && CodeFragmentUtil.elementFit(element, start, end)){

@@ -19,6 +19,7 @@ import com.intellij.util.containers.SortedList;
 import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
@@ -244,7 +245,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     
     if (myElement instanceof PyTargetExpression) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      if (scopeOwner != null && !scopeOwner.getScope().isGlobal(myElement.getName())) {
+      if (scopeOwner != null && !ControlFlowCache.getScope(scopeOwner).isGlobal(myElement.getName())) {
         return scopeOwner;
       }
     }
@@ -325,10 +326,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           // TODO support nonlocal statement
           final ScopeOwner ourScope = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
           final ScopeOwner theirScope = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-          if (ourScope != null && ourScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
+          if (ourScope != null && ControlFlowCache.getScope(ourScope).isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
             return true;
           }
-          if (theirScope != null && theirScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
+          if (theirScope != null && ControlFlowCache.getScope(theirScope).isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
             return true;
           }
         }

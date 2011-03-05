@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +16,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
@@ -344,41 +343,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    if (myControlFlowRef != null) {
-      myControlFlowRef.clear();
-    }
-    if (myScopeRef != null) {
-      myScopeRef.clear();
-    }
-  }
-
-  private SoftReference<ControlFlow> myControlFlowRef;
-
-  @NotNull
-  public ControlFlow getControlFlow() {
-    ControlFlow flow = getRefValue(myControlFlowRef);
-    if (flow == null) {
-      flow = new PyControlFlowBuilder().buildControlFlow(this);
-      myControlFlowRef = new SoftReference<ControlFlow>(flow);
-    }
-    return flow;
-  }
-
-  private SoftReference<Scope> myScopeRef;
-
-  @NotNull
-  public Scope getScope() {
-    Scope scope = getRefValue(myScopeRef);
-    if (scope == null) {
-      scope = new ScopeImpl(this);
-      myScopeRef = new SoftReference<Scope>(scope);
-    }
-    return scope;
-  }
-
-  @Nullable
-  private static <T> T getRefValue(final SoftReference<T> reference) {
-    return reference != null ? reference.get() : null;
+    ControlFlowCache.clear(this);
   }
 
   public Property getProperty() {

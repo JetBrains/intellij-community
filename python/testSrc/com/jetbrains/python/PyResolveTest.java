@@ -396,4 +396,13 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testRedeclaredInstanceVar() {  // PY-2740
     assertResolvesTo(PyFunction.class, "jobsDoneCount");
   }
+
+  public void testNoResolveIntoGenerator() {  // PY-3030
+    PyTargetExpression expr = assertResolvesTo(PyTargetExpression.class, "foo");
+    assertEquals("foo = 1", expr.getParent().getText());
+  }
+
+  public void testResolveInGenerator() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
 }

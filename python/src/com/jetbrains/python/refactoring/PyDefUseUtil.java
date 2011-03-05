@@ -6,6 +6,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyElement;
@@ -26,7 +27,7 @@ public class PyDefUseUtil {
 
   @NotNull
   public static PyElement[] getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
-    final ControlFlow controlFlow = block.getControlFlow();
+    final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     if (instr < 0) {
@@ -72,7 +73,7 @@ public class PyDefUseUtil {
 
   @NotNull
   public static PsiElement[] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
-    final ControlFlow controlFlow = block.getControlFlow();
+    final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     assert instr >= 0;
