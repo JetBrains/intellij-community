@@ -35,11 +35,11 @@ public final class GroovyUnresolvedReferenceFilterByFile extends GroovyUnresolve
 
     if (cachedValue != null) return cachedValue;
 
-    boolean res = true;
+    boolean res = false;
 
     for (GroovyUnresolvedHighlightFileFilter filter : GroovyUnresolvedHighlightFileFilter.EP_NAME.getExtensions()) {
       if (filter.isReject(file)) {
-        res = false;
+        res = true;
         break;
       }
     }
