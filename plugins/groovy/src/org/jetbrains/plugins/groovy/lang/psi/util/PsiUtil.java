@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
@@ -304,39 +305,57 @@ public class PsiUtil {
 
   public static <Qualifier extends PsiElement> boolean shortenReference(GrQualifiedReference<Qualifier> ref) {
     final Qualifier qualifier = ref.getQualifier();
-    if (qualifier != null && !(qualifier instanceof GrSuperReferenceExpression) &&
-        (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
-         PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
-        PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
-        PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved != null) {
-        ref.setQualifier(null);
-        if (ref.isReferenceTo(resolved)) return true;
+    if (qualifier == null || qualifier instanceof GrSuperReferenceExpression || cannotShortenInContext(ref)) {
+      return false;
+    }
+    if (!canShorten(qualifier)) return false;
 
-        if (resolved instanceof PsiClass) {
-          final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-          final PsiClass clazz = (PsiClass)resolved;
-          final String qName = clazz.getQualifiedName();
-          if (qName != null) {
-            if (mayInsertImport(ref)) {
-              final GrImportStatement added = file.addImportForClass(clazz);
-              if (!ref.isReferenceTo(resolved)) {
-                file.removeImport(added);
-              }
-            }
+    final PsiElement resolved = ref.resolve();
+    if (resolved == null) return false;
+
+    ref.setQualifier(null);
+    if (ref.isReferenceTo(resolved)) return true;
+
+    if (resolved instanceof PsiClass) {
+      final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
+      final PsiClass clazz = (PsiClass)resolved;
+      final String qName = clazz.getQualifiedName();
+      if (qName != null) {
+        if (mayInsertImport(ref)) {
+          final GrImportStatement added = file.addImportForClass(clazz);
+          if (!ref.isReferenceTo(resolved)) {
+            file.removeImport(added);
           }
-        }
-
-        if (!ref.isReferenceTo(resolved)) {
-          ref.setQualifier((Qualifier)qualifier.copy());
-          return false;
-        } else {
-          return true;
         }
       }
     }
+
+    if (!ref.isReferenceTo(resolved)) {
+      ref.setQualifier((Qualifier)qualifier.copy());
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+
+  private static <Qualifier extends PsiElement> boolean canShorten(Qualifier qualifier) {
+    if (qualifier instanceof GrCodeReferenceElement) return true;
+    if (qualifier instanceof GrExpression) {
+      if (qualifier instanceof GrThisReferenceExpression) return true;
+      if (seemsToBeQualifiedClassName((GrExpression)qualifier)) {
+        final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass || resolved instanceof PsiPackage) return true;
+      }
+    }
     return false;
+  }
+
+  private static <Qualifier extends PsiElement> boolean cannotShortenInContext(GrQualifiedReference<Qualifier> ref) {
+    return (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) == null &&
+            PsiTreeUtil.getParentOfType(ref, GrDocComment.class) != null) ||
+           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
+           PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) != null;
   }
 
   private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
@@ -1068,5 +1087,14 @@ public class PsiUtil {
     if (!(firstArg instanceof GrListOrMap)) return GrNamedArgument.EMPTY_ARRAY;
 
     return ((GrListOrMap)firstArg).getNamedArguments();
+  }
+
+  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
+    if (qualifier == null) return false;
+    while (qualifier instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
+      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
+    }
+    return qualifier == null;
   }
 }

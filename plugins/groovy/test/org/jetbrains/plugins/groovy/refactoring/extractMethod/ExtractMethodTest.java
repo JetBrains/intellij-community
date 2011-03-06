@@ -96,4 +96,5 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testMultiOutput4() {doTest();}
   public void testMultiOutput5() {doTest();}
 
+  public void testDontShortenRefsIncorrect() {doTest();}
 }
