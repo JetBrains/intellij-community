@@ -363,4 +363,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.txt", psiAfter);
     myFixture.checkResultByFile(getTestName(false) + "2.txt");
   }
+
+  public void testDuplicatedNamedArgs() {doTest();}
 }

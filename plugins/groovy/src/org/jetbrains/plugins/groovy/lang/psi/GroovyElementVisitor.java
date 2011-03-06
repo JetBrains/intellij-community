@@ -298,7 +298,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitConstructorInvocation(GrConstructorInvocation invocation) {
-    visitElement(invocation);
+    visitStatement(invocation);
   }
 
   public void visitThrowsClause(GrThrowsClause throwsClause) {
