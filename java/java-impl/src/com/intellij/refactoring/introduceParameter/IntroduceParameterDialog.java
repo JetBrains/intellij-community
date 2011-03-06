@@ -40,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 
 public class IntroduceParameterDialog extends RefactoringDialog {
@@ -60,8 +58,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   //  private JComponent myParameterNameField = null;
   private NameSuggestionsField myParameterNameField;
-  private JCheckBox myCbReplaceAllOccurences = null;
-  private JCheckBox myCbGenerateDelegate = null;
+
 
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
@@ -106,13 +103,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     return myCbDeclareFinal != null && myCbDeclareFinal.isSelected();
   }
 
-  private boolean isReplaceAllOccurences() {
-    return myPanel.myIsInvokedOnDeclaration || myCbReplaceAllOccurences != null && myCbReplaceAllOccurences.isSelected();
-  }
 
-  private boolean isGenerateDelegate() {
-    return myCbGenerateDelegate != null && myCbGenerateDelegate.isSelected();
-  }
 
   private String getParameterName() {
     return  myParameterNameField.getEnteredName().trim();
@@ -196,11 +187,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.gridwidth = 2;
     if (myOccurenceNumber > 1 && !myPanel.myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
-      myCbReplaceAllOccurences = new NonFocusableCheckBox();
-      myCbReplaceAllOccurences.setText(RefactoringBundle.message("replace.all.occurences", myOccurenceNumber));
-
-      panel.add(myCbReplaceAllOccurences, gbConstraints);
-      myCbReplaceAllOccurences.setSelected(false);
+      myPanel.createOccurrencesCb(gbConstraints, panel, myOccurenceNumber);
     }
 
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
@@ -218,29 +205,17 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myCbDeclareFinal.setEnabled(false);
     }
 
-    if(myCbReplaceAllOccurences != null) {
+    if(myPanel.myCbReplaceAllOccurences != null) {
       gbConstraints.insets = new Insets(0, 16, 4, 8);
     }
     myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
-
+    myPanel.createRemoveParamsPanel(gbConstraints, panel);
     gbConstraints.insets =  new Insets(4, 0, 4, 8);
     gbConstraints.gridy++;
-    myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
-    panel.add(myCbGenerateDelegate, gbConstraints);
+    myPanel.createDelegateCb(gbConstraints, panel);
 
-    final JCheckBox[] removeParamsCb = myPanel.createRemoveParamsPanel(gbConstraints, panel);
-    if (myCbReplaceAllOccurences != null) {
-      myCbReplaceAllOccurences.addItemListener(
-        new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            myPanel.updateControls(removeParamsCb);
-          }
-        }
-      );
-    }
     return panel;
   }
-
 
 
   protected JComponent createCenterPanel() {
@@ -276,8 +251,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myProject, myMethodToReplaceIn, myMethodToSearchFor,
       parameterInitializer, myExpression,
       myLocalVar, isDeleteLocalVariable,
-      getParameterName(), isReplaceAllOccurences(),
-      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), isGenerateDelegate(), getSelectedType(), myPanel.getParametersToRemove());
+      getParameterName(), myPanel.isReplaceAllOccurences(),
+      myPanel.getReplaceFieldsWithGetters(), isDeclareFinal(), myPanel.isGenerateDelegate(), getSelectedType(), myPanel.getParametersToRemove());
     invokeRefactoring(processor);
     myParameterNameField.requestFocusInWindow();
   }
@@ -299,29 +274,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       super(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     }
 
+
     @Override
-    protected void updateControls(JCheckBox[] removeParamsCb) {
-      if (myCbReplaceAllOccurences != null) {
-        for (JCheckBox box : removeParamsCb) {
-          if (box != null) {
-            box.setEnabled(myCbReplaceAllOccurences.isSelected());
-          }
-        }
-        myTypeSelectorManager.setAllOccurences(myCbReplaceAllOccurences.isSelected());
-        if (myCbReplaceAllOccurences.isSelected()) {
-          if (myCbDeleteLocalVariable != null) {
-            myCbDeleteLocalVariable.makeSelectable();
-          }
-        }
-        else {
-          if (myCbDeleteLocalVariable != null) {
-            myCbDeleteLocalVariable.makeUnselectable(false);
-          }
-        }
-      }
-      else {
-        myTypeSelectorManager.setAllOccurences(myIsInvokedOnDeclaration);
-      }
+    protected TypeSelectorManager getTypeSelectionManager() {
+      return myTypeSelectorManager;
     }
   }
 }
