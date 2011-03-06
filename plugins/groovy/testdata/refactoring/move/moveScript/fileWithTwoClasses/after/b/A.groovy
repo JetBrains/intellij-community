@@ -1,0 +1,5 @@
+package b
+
+class A {
+
+}

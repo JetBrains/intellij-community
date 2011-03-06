@@ -188,7 +188,7 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
       }
     });
 
-    assertEquals(ch1.length, ch2.length);
+    assertEquals("check dir '"+d1.getName()+"': ", ch1.length, ch2.length);
     for (int i = 1; i < ch1.length; i++) {
       assertEquals(ch1[i].isDirectory(), ch2[i].isDirectory());
       if (ch1[i].isDirectory() && !".svn".equals(ch1[i].getName())) {

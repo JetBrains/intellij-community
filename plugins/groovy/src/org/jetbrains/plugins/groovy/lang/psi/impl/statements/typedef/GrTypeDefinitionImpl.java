@@ -234,10 +234,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       }
     }
 
-    ASTNode astNode = parent.getNode();
-    if (astNode != null) {
-      astNode.removeChild(getNode());
-    }
+    super.delete();
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
