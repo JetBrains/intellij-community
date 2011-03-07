@@ -3,6 +3,7 @@ import java.util.List;
 
 class Test {
   List<String> queue = new ArrayList<>();
+  ArrayList l = new ArrayList<>(8);
 }
 
 class DD {
