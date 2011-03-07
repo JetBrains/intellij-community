@@ -65,7 +65,9 @@ public class Advertiser implements Disposable {
       int y = (height - metrics.getHeight()) / 2 + metrics.getAscent() - (myScrollingOffset * height / ourScrollingResolution);
       int x = getBorder().getBorderInsets(this).left;
 
-      g.drawString(texts.get(myCurrentItem), x, y);
+      if (myCurrentItem >= 0) {
+        g.drawString(texts.get(myCurrentItem), x, y);
+      }
       if (myScrollingOffset != 0) {
         g.drawString(texts.get((myCurrentItem + 1) % texts.size()), x, y + height);
       }
@@ -96,27 +98,20 @@ public class Advertiser implements Disposable {
   public synchronized void addAdvertisement(@NotNull String text) {
     myTexts.add(text);
     if (myTexts.size() == 2) {
+      if (!myComponent.isShowing()) {
+        myCurrentItem = -1;
+      }
       int interCycleGap = 4000;
       Animator animator = new Animator("completion ad", ourScrollingResolution, 800, true, interCycleGap, -1) {
-        boolean first = true;
         @Override
         public void paintNow(float frame, float totalFrames, float cycle) {
-          if (first && frame > 0) {
-            return;
-          }
-
           myScrollingOffset = (int)frame;
           if (myScrollingOffset == 0) {
-            if (first) {
-              first = false;
-            } else {
-              myCurrentItem = (myCurrentItem + 1) % getTexts().size();
-            }
+            myCurrentItem = (myCurrentItem + 1) % getTexts().size();
           }
           myComponent.paintImmediately(0, 0, myComponent.getWidth(), myComponent.getHeight());
         }
       };
-      animator.setTakInitialDelay(true);
       animator.resume();
       Disposer.register(this, animator);
     }
