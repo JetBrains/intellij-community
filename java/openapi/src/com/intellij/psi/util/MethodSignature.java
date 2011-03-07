@@ -23,16 +23,23 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-
 public interface MethodSignature {
   MethodSignature[] EMPTY_ARRAY = new MethodSignature[0];
-  @NotNull PsiSubstitutor getSubstitutor();
-  @NotNull String getName();
-  /**
-   * already substituted
-   */
-  @NotNull PsiType[] getParameterTypes();
-  @NotNull PsiTypeParameter[] getTypeParameters();
-  boolean isRaw();
 
+  @NotNull
+  PsiSubstitutor getSubstitutor();
+
+  @NotNull
+  String getName();
+
+  /**
+   * @return array of parameter types (already substituted)
+   */
+  @NotNull
+  PsiType[] getParameterTypes();
+
+  @NotNull
+  PsiTypeParameter[] getTypeParameters();
+
+  boolean isRaw();
 }
