@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package org.jetbrains.plugins.groovy.extensions;
 
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Date;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author Sergey Evdokimov
  */
-public abstract class LicenseeInfoProvider {
-  public static LicenseeInfoProvider ourInstance;
+public abstract class GroovyUnresolvedHighlightFileFilter {
 
-  @Nullable
-  public static LicenseeInfoProvider getInstance() {
-    return ourInstance;
-  }
+  public static final ExtensionPointName<GroovyUnresolvedHighlightFileFilter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.unresolvedHighlightFileFilter");
 
-  public abstract String getLicensedToMessage();
-  public abstract String getLicenseRestrictionsMessage();
-  public abstract boolean isEvaluationLicense();
+  public abstract boolean isReject(@NotNull PsiFile file);
 
-  @Nullable
-  public  Date getMaintenanceDueDate(){
-    return null;
-  }
 }

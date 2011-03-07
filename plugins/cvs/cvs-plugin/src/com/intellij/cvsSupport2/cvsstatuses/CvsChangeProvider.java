@@ -365,7 +365,7 @@ public class CvsChangeProvider implements ChangeProvider {
       LOG.debug("processStatus: filePath=" + filePath + " status=" + status);
     }
     if (status == FileStatus.NOT_CHANGED) {
-      if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
+      if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
           new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED), CvsVcs2.getKey());
       }

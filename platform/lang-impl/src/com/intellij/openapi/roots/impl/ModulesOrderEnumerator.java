@@ -45,7 +45,7 @@ public class ModulesOrderEnumerator extends OrderEnumeratorBase {
 
   @Override
   public void forEach(@NotNull Processor<OrderEntry> processor) {
-    mySettings.recursivelyExportedOnly = false;
+    myRecursivelyExportedOnly = false;
 
     final THashSet<Module> processed = new THashSet<Module>();
     for (Module module : myModules) {

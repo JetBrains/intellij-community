@@ -23,7 +23,6 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -131,13 +130,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     final boolean[] result = new boolean[]{false};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-        if (document == null) {
-          result[0] = false;
-        }
-        else {
-          result[0] = document.getModificationStamp() != file.getModificationStamp();
-        }
+        result[0] = FileDocumentManager.getInstance().isFileModified(file);
       }
     });
     return result[0];

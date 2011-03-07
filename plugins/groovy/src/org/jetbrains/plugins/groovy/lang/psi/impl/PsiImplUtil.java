@@ -381,7 +381,7 @@ public class PsiImplUtil {
         container.deleteChildRange(next, next);
         next = nnext;
       }
-      else if (type == mNLS) {
+      else if (type == mNLS || type == TokenType.WHITE_SPACE && next.getText().contains("\n")) {
         final String text = next.getText();
         final int first = text.indexOf("\n");
         final int second = text.indexOf("\n", first + 1);
@@ -391,7 +391,7 @@ public class PsiImplUtil {
         }
         final String substring = text.substring(second);
         container.getNode()
-          .replaceChild(node, createSingleLeafElement(mNLS, substring, 0, substring.length(), null, container.getManager()));
+          .replaceChild(node, createSingleLeafElement(type, substring, 0, substring.length(), null, container.getManager()));
         return;
       }
       else {

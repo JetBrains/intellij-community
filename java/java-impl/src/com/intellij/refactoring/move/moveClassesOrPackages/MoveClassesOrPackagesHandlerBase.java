@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,10 +32,9 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -70,8 +70,8 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
 
   public static boolean invalid4Move(PsiElement element) {
     PsiFile parentFile;
-    if (element instanceof PsiJavaFile) {
-      final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+    if (element instanceof PsiClassOwner) {
+      final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length == 0) return true;
       for (PsiClass aClass : classes) {
         if (aClass instanceof JspClass) return true;
@@ -81,8 +81,9 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
     else {
       if (element instanceof JspClass) return true;
       if (!(element instanceof PsiClass)) return true;
-      if (!(element.getParent() instanceof PsiFile)) return true;
-      parentFile = (PsiFile)element.getParent();
+      if (element instanceof PsiAnonymousClass) return true;
+      if (((PsiClass)element).getContainingClass() != null) return true;
+      parentFile = element.getContainingFile();
     }
     if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(parentFile)) return true;
     return false;
@@ -313,12 +314,10 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isPackageOrDirectory(element)) return false;
-    if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return false;
     if (isReferenceInAnonymousClass(reference)) return false;
 
-    if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && element.getParent() instanceof PsiFile) {
-      MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{element},
-                                       LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
+    if (!invalid4Move(element)) {
+      MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{element}, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
       return true;
     }
     return false;

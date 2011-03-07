@@ -238,12 +238,26 @@ public class CompileDriver {
 
   public void compile(CompileScope scope, CompileStatusNotification callback, boolean clearingOutputDirsPossible) {
     myShouldClearOutputDirectory &= clearingOutputDirsPossible;
+    if (containsFileIndexScopes(scope)) {
+      scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
+    }
     if (validateCompilerConfiguration(scope, false)) {
       startup(scope, false, true, callback, null, true);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
     }
+  }
+
+  private static boolean containsFileIndexScopes(CompileScope scope) {
+    if (scope instanceof CompositeScope) {
+      for (CompileScope childScope : ((CompositeScope)scope).getScopes()) {
+        if (containsFileIndexScopes(childScope)) {
+          return true;
+        }
+      }
+    }
+    return scope instanceof FileIndexCompileScope;
   }
 
   private static class CompileStatus {

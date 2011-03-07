@@ -28,6 +28,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -552,15 +553,18 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       public void pass(final ElementToWorkOn elementToWorkOn) {
         if (elementToWorkOn == null) return;
 
+        final boolean hasRunTemplate = LookupManager.getActiveLookup(editor) == null;
         if (elementToWorkOn.getExpression() == null) {
           final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
-          final boolean result = invokeImpl(project, localVariable, editor);
+          final boolean result = invokeImpl(project, localVariable, editor) && hasRunTemplate;
           if (result) {
             editor.getSelectionModel().removeSelection();
           }
         }
-        else if (invokeImpl(project, elementToWorkOn.getExpression(), editor)) {
-          editor.getSelectionModel().removeSelection();
+        else {
+          if (invokeImpl(project, elementToWorkOn.getExpression(), editor) && hasRunTemplate) {
+            editor.getSelectionModel().removeSelection();
+          }
         }
       }
     };

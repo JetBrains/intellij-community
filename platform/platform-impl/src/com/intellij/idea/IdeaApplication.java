@@ -19,7 +19,6 @@ import com.intellij.ExtensionPoints;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -29,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -128,6 +127,7 @@ public class IdeaApplication {
 
   protected class IdeStarter implements ApplicationStarter {
     private Splash mySplash;
+
     public String getCommandName() {
       return null;
     }
@@ -204,19 +204,22 @@ public class IdeaApplication {
       }, ModalityState.NON_MODAL);
     }
 
-    private void updatePlugins(boolean showConfirmation) {
-      try {
-        final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
-        if (newVersion != null) {
-          UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
-        } else if (updatedPlugins != null) {
-          UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
+    private void updatePlugins(final boolean showConfirmation) {
+      final Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final CheckForUpdateResult checkForUpdateResult = UpdateChecker.checkForUpdates();
+
+          final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false, null);
+          app.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              UpdateChecker.showUpdateResult(checkForUpdateResult, updatedPlugins, showConfirmation, true, false);
+            }
+          });
         }
-      }
-      catch (ConnectionException e) {
-        // It's not a problem on automatic check
-      }
+      });
     }
   }
 

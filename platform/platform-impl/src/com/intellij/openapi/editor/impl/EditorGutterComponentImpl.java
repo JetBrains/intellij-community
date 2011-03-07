@@ -913,6 +913,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.getSettings().isLineNumbersShown();
   }
 
+  public boolean isAnnotationsShown() {
+    return myTextAnnotationGutters.size() > 0;
+  }
+
   public boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled();

@@ -701,7 +701,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkForeachLoopParameterType(PsiForeachStatement statement) {
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression expression = statement.getIteratedValue();
-    if (expression == null) return null;
+    if (expression == null || expression.getType() == null) return null;
     final PsiType itemType = getCollectionItemType(expression);
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",

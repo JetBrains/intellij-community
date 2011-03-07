@@ -18,6 +18,7 @@ package git4idea.history;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -43,7 +44,6 @@ import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -551,17 +551,12 @@ public class GitHistoryUtils {
     parser.parseStatusBeforeName(true);
 
     String out;
-    try {
-      h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(project, root)));
-      out = h.run();
-    }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(project, e, h.printableCommandLine());
-      return null;
-    }
+    h.setCharset(Charset.forName(GitConfigUtil.getLogEncoding(project, root)));
+    out = h.run();
     final List<GitLogRecord> gitLogRecords = parser.parse(out);
     final List<Pair<String, GitCommit>> result = new ArrayList<Pair<String, GitCommit>>();
     for (GitLogRecord gitLogRecord : gitLogRecords) {
+      ProgressManager.checkCanceled();
       final GitCommit gitCommit = createCommit(project, refs, root, gitLogRecord);
       result.add(new Pair<String, GitCommit>(gitLogRecord.getShortenedRefLog(), gitCommit));
     }

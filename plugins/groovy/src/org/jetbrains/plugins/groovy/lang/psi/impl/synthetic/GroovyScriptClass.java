@@ -34,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -56,6 +57,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   private final GroovyFile myFile;
   private final PsiMethod myMainMethod;
   private final PsiMethod myRunMethod;
+
+  private final LightModifierList myModifierList;
+
   private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
   private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
 
@@ -64,6 +68,8 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     myFile = file;
     myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
     myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
+
+    myModifierList = new LightModifierList(myManager, Collections.singleton(GrModifier.PUBLIC));
   }
 
 
@@ -319,11 +325,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public PsiModifierList getModifierList() {
-    return null;
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
-    return PsiModifier.PUBLIC.equals(name);
+    return myModifierList.hasModifierProperty(name);
   }
 
   public PsiDocComment getDocComment() {

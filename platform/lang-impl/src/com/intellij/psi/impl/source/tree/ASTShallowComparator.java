@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (TreeUtil.isCollapsedChameleon(oldNode)) {
       return ((TreeElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
     }
-
     if (TreeUtil.isCollapsedChameleon(newNode)) {
       return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
     }
 
     if (oldNode instanceof LeafElement) {
       return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+    }
+    if (newNode instanceof LeafElement) {
+      return ((LeafElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
 
     if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
@@ -69,5 +71,4 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();
   }
-
 }

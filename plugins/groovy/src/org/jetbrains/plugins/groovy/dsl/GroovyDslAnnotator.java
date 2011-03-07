@@ -20,7 +20,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -39,9 +38,8 @@ public class GroovyDslAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof GroovyFile) {
       final VirtualFile vfile = ((GroovyFile)psiElement).getVirtualFile();
-      Document document = ((GroovyFile)psiElement).getViewProvider().getDocument();
       if (vfile != null && "gdsl".equals(vfile.getExtension()) &&
-          (!GroovyDslFileIndex.isActivated(vfile) || document != null && FileDocumentManager.getInstance().isDocumentUnsaved(document))) {
+          (!GroovyDslFileIndex.isActivated(vfile) || FileDocumentManager.getInstance().isFileModified(vfile))) {
         final Annotation annotation = holder.createWarningAnnotation(psiElement, "DSL descriptor file has been changed and isn't currently executed. Click to activate it back.");
         annotation.setFileLevelAnnotation(true);
         annotation.registerFix(new IntentionAction() {

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.continuation.Continuation;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 
@@ -80,8 +81,17 @@ public class LoadController implements Loader {
 
     myUsersComponent.acceptUpdate(myUsersIndex.getKeys());
 
-    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders);
-    myPreviousAlgorithm.execute();
+    final Continuation continuation;
+    if (myPreviousAlgorithm != null) {
+      continuation = myPreviousAlgorithm.getContinuation();
+      continuation.clearQueue();
+    } else {
+      continuation = new Continuation(myProject, true);
+    }
+    myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders, continuation);
+    myPreviousAlgorithm.fillContinuation();
+    continuation.cancelCurrent();
+    continuation.resume();
   }
 
   @Override

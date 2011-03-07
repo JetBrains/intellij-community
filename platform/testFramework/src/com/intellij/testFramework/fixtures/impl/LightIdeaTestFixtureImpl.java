@@ -48,7 +48,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     super.setUp();
 
     LightPlatformTestCase.initApplication(new MyDataProvider());
-    LightPlatformTestCase.doSetup(myProjectDescriptor, new LocalInspectionTool[0], null);
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, null);
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
     storeSettings();
   }

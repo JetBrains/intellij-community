@@ -181,7 +181,7 @@ public class a  {
     }
 
     void forEachParam(java.io.File x) {
-        for (java.io.File f: <error descr="Variable 'f' might not have been initialized">f</error>.listFiles()) {
+        for (java.io.File f: <error descr="Cannot resolve symbol 'f'">f</error>.listFiles()) {
            forEachParam(f);
         }
     }

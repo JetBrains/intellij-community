@@ -20,6 +20,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -60,7 +61,20 @@ public class Product {
     return null;
   }
 
+  @NotNull
   public List<UpdateChannel> getChannels() {
     return myChannels;
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  public List<String> getAllChannelIds() {
+    List<String> result = new ArrayList<String>();
+    for (UpdateChannel channel : myChannels) {
+      result.add(channel.getId());
+    }
+    return result;
   }
 }

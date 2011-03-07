@@ -130,6 +130,8 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
+    message = StringUtil.replace(message, "#loc ", "");
+    message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
     if (message.contains("#ref")) {
       String ref = extractHighlightedText(descriptor, element);

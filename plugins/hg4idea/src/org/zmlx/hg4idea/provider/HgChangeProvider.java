@@ -159,7 +159,7 @@ public class HgChangeProvider implements ChangeProvider {
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     for (FilePath filePath : dirtyFiles) {
       final VirtualFile vf = filePath.getVirtualFile();
-      if (vf != null &&  fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
+      if (vf != null &&  fileDocumentManager.isFileModified(vf)) {
         final VirtualFile root = vcsManager.getVcsRootFor(vf);
         if (root != null) {
           final HgRevisionNumber beforeRevisionNumber = new HgWorkingCopyRevisionsCommand(myProject).tip(root);

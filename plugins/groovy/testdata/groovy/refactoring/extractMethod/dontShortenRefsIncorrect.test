@@ -1,0 +1,7 @@
+<begin>print 1.getClass()<end>
+-----
+testMethod()
+
+private def testMethod() {
+    print 1.getClass()
+}

@@ -348,7 +348,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'");
+      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
     return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);

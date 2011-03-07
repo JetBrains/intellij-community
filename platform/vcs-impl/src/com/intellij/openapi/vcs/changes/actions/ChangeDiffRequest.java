@@ -85,7 +85,12 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   public DiffRequest init(final int idx) {
     if (idx < 0 || idx > (mySteps.size() - 1)) return null;
     myIndex = idx - 1;
-    return moveForward();
+    final DiffRequest result = moveForward();
+    if (result == null && idx > 0) {
+      myIndex = -1;
+      return moveForward();
+    }
+    return result;
   }
 
   public boolean canMoveForward() {

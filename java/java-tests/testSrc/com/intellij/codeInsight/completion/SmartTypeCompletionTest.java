@@ -910,6 +910,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testEmptyListWithCollectionsPrefix() throws Throwable { doItemTest(); }
 
+  public void testForeachLoopVariableInIterableExpression() throws Throwable { doAntiTest(); }
+
   public void testStaticallyImportedMagicMethod() throws Throwable {
     configureByTestName();
     assertStringItems("foo");

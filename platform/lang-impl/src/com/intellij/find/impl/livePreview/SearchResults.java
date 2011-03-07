@@ -4,6 +4,7 @@ package com.intellij.find.impl.livePreview;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class SearchResults {
 
-  public enum Direction {UP, DOWN}
+  public enum Direction {UP, DOWN;}
 
   private int myActualFound = 0;
 
@@ -28,18 +29,27 @@ public class SearchResults {
   private LiveOccurrence myCursor;
 
   private List<LiveOccurrence> myOccurrences = new ArrayList<LiveOccurrence>();
+
   private Set<LiveOccurrence> myExcluded = new HashSet<LiveOccurrence>();
 
   private Editor myEditor;
-
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
-  private boolean myNotFound = false;
-  private boolean myDisposed = false;
 
+  private boolean myNotFoundState = false;
+
+  private boolean myDisposed = false;
   public SearchResults(Editor editor) {
     myEditor = editor;
+  }
+
+  public void setNotFoundState(boolean isForward) {
+    myNotFoundState = true;
+    FindModel findModel = new FindModel();
+    findModel.copyFrom(myFindModel);
+    findModel.setForward(isForward);
+    FindUtil.processNotFound(myEditor, findModel.getStringToFind(), findModel, getProject());
   }
 
   public int getActualFound() {
@@ -72,12 +82,12 @@ public class SearchResults {
   }
 
   public interface SearchResultsListener {
+
     void searchResultsUpdated(SearchResults sr);
     void editorChanged(SearchResults sr, Editor oldEditor);
-
     void cursorMoved();
-  }
 
+  }
   public void addListener(SearchResultsListener srl) {
     myListeners.add(srl);
   }
@@ -130,7 +140,12 @@ public class SearchResults {
     }
   }
 
+  public void clear() {
+    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null);
+  }
+
   public void updateThreadSafe(final FindModel findModel) {
+    if (myDisposed) return;
     final ArrayList<LiveOccurrence> occurrences = new ArrayList<LiveOccurrence>();
     final Editor editor = getEditor();
 
@@ -198,8 +213,8 @@ public class SearchResults {
         }
       });
 
-      updateCursor(oldCursorRange);
       myFindModel = findModel;
+      updateCursor(oldCursorRange);
       myActualFound = size;
       notifyChanged();
       if (oldCursorRange == null) {
@@ -210,16 +225,20 @@ public class SearchResults {
 
   private void updateCursor(TextRange oldCursorRange) {
     if (!tryToRepairOldCursor(oldCursorRange)) {
-      if (myFindModel != null && oldCursorRange != null && !myFindModel.isGlobal()) {
-        myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
-      } else {
-        LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
-        if (afterCaret != null) {
-          myCursor = afterCaret;
+      if (myFindModel != null) {
+        if(oldCursorRange != null && !myFindModel.isGlobal()) {
+          myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
         } else {
-          LiveOccurrence occurrence = firstVisibleOccurrence();
-          myCursor = occurrence;
+          LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
+          if (afterCaret != null) {
+            myCursor = afterCaret;
+          } else {
+            //setNotFoundState(true);
+            myCursor = null;
+          }
         }
+      } else {
+        myCursor = null;
       }
     }
   }
@@ -335,13 +354,25 @@ public class SearchResults {
 
   public void prevOccurrence() {
     LiveOccurrence next = null;
+    if (myFindModel == null) return;
+    boolean processFromTheBeginning = false;
+    if (myNotFoundState) {
+      myNotFoundState = false;
+      processFromTheBeginning = true;
+    }
     if (!myFindModel.isGlobal()) {
       next = prevOccurrence(myCursor);
     } else {
       next = firstOccurrenceBeforeCaret();
     }
-    if (next == null && !getOccurrences().isEmpty()) {
-      next = getOccurrences().get(getOccurrences().size()-1);
+    if (next == null) {
+      if (processFromTheBeginning) {
+        if (hasMatches()) {
+          next = getOccurrences().get(getOccurrences().size()-1);
+        }
+      } else {
+        setNotFoundState(false);
+      }
     }
 
     moveCursorTo(next);
@@ -349,13 +380,25 @@ public class SearchResults {
 
   public void nextOccurrence() {
     LiveOccurrence next = null;
+    if (myFindModel == null) return;
+    boolean processFromTheBeginning = false;
+    if (myNotFoundState) {
+      myNotFoundState = false;
+      processFromTheBeginning = true;
+    }
     if (!myFindModel.isGlobal()) {
       next = nextOccurrence(myCursor);
     } else {
       next = firstOccurrenceAfterCaret();
     }
-    if (next == null && !getOccurrences().isEmpty()) {
-      next = getOccurrences().get(0);
+    if (next == null) {
+      if (processFromTheBeginning) {
+        if (hasMatches()) {
+          next = getOccurrences().get(0);
+        }
+      } else {
+        setNotFoundState(true);
+      }
     }
 
     moveCursorTo(next);

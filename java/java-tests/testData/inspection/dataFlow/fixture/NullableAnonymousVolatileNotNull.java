@@ -12,7 +12,7 @@ class Test {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 Object o = obj;
-                if (<warning descr="Condition 'o != null'  is always 'true'">o != null</warning>) {
+                if (<warning descr="Condition 'o != null' is always 'true'">o != null</warning>) {
                     System.out.println("x");
                 }
             }

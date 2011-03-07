@@ -1,0 +1,186 @@
+<products>
+    <product name="IntelliJ IDEA">
+        <code>IU</code>
+        <code>IC</code>
+
+        <channel id="maiaEAP" name="IntelliJ IDEA 9 updates" status="release"
+                 url="http://www.jetbrains.com/idea/whatsnew"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="95.627" version="9.0.4">
+                <message>IntelliJ IDEA 9.0.4 is available.
+                    Please visit http://www.jetbrains.com/idea to learn more and download it.
+                </message>
+                <patch from="95.429" size="2"/>
+            </build>
+        </channel>
+
+        <channel id="idea90" name="IntelliJ IDEA 9 updates" status="release" url="http://www.jetbrains.com/idea/whatsnew">
+            <build number="95.627" version="9.0.4">
+                <message>IntelliJ IDEA 9.0.4 is available.
+                    Please visit http://www.jetbrains.com/idea to learn more and download it.
+                </message>
+                <patch from="95.429" size="2"/>
+            </build>
+        </channel>
+
+        <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP">
+            <build number="98.520" version="10" date="03.04.2011">
+                <message>IntelliJ IDEA X RC is available.
+                    Please visit http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP to learn more and download it.
+                </message>
+                <!--<patch from="98.486" size="1"/>-->
+            </build>
+        </channel>
+    </product>
+
+    <product name="RubyMine">
+        <code>RM</code>
+        <channel id="rm20" name="RubyMine 2.0.2" status="Release"
+                 url="http://www.jetbrains.com/ruby"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.122" version="3.0">
+                <message>RubyMine 3.0 is available.
+                    Please visit http://www.jetbrains.com/ruby to learn more and download it.
+                </message>
+            </build>
+        </channel>
+        <channel id="rm25" name="RubyMine 3.0" status="Release"
+                 url="http://www.jetbrains.com/ruby/"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.122" version="3.0">
+                <message>RubyMine 3.0 is available.
+                    Please visit http://www.jetbrains.com/ruby to learn more and download it.
+                </message>
+            </build>
+        </channel>
+        <channel id="rm30" name="RubyMine 3.0" status="Release"
+                 url="http://www.jetbrains.com/ruby/"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.122" version="3.0">
+                <message>RubyMine 3.0 Release Candidate 2 is available.
+                    Please visit http://www.jetbrains.com/ruby to learn more and download it.
+                </message>
+            </build>
+        </channel>
+        <channel id="rm25EAP" name="RubyMine 3.0" status="EAP"
+                 url="http://www.jetbrains.com/ruby/"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.122" version="3.0">
+                <message>RubyMine 3.0 is available.
+                    Please visit http://www.jetbrains.com/ruby to learn more and download it.
+                </message>
+            </build>
+        </channel>
+    </product>
+
+    <product name="PyCharm">
+        <code>PY</code>
+        <channel id="pycharm" name="PyCharm 1.0" status="EAP"
+                 url="http://www.jetbrains.com/pycharm"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.87" version="1.0.1">
+                <message>PyCharm 1.0.1 is available.
+                    Please visit www.jetbrains.com/pycharm to download it.
+                </message>
+            </build>
+        </channel>
+
+        <channel id="pycharm10" name="PyCharm 1.0" status="Release"
+                 url="http://www.jetbrains.com/pycharm"
+                 feedback="http://youtrack.jetbrains.net">
+            <build number="97.87" version="1.0.1">
+                <message>PyCharm 1.0.1 is available.
+                    Please visit www.jetbrains.com/pycharm to download it.
+                </message>
+            </build>
+        </channel>
+    </product>
+
+    <product name="PhpStorm">
+        <code>PS</code>
+        <channel id="WI1EAP" name="PhpStorm 1.0.2" status="EAP"
+                url="http://www.jetbrains.com/phpstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="1.0.2">
+                <message>PhpStorm 1.0.2 is available.
+                    Please visit http://www.jetbrains.com/phpstorm to download it.
+                </message>
+            </build>
+        </channel>
+
+        <channel id="WI1" name="PhpStorm 1.0.2" status="release"
+                url="http://www.jetbrains.com/phpstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="1.0.2">
+                <message>PhpStorm 1.0.2 is available.
+                    Please visit http://www.jetbrains.com/phpstorm to download it.
+                </message>
+            </build>
+        </channel>
+
+        <channel id="WI2EAP" name="PhpStorm 2.0" status="EAP"
+                url="http://confluence.jetbrains.net/display/WI/"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="98.521" version="2.0">
+                <message>PhpStorm 2.0 EAP update is available.
+                    Please visit http://confluence.jetbrains.net/display/WI/ to download it.
+                </message>
+                <patch from="98.458" size="2"/>
+            </build>
+        </channel>
+
+        <channel id="WI2" name="PhpStorm 2.0" status="release"
+                url="http://www.jetbrains.com/phpstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="2.0">
+                <message>PhpStorm 2.0 is available.
+                    Please visit http://www.jetbrains.com/phpstorm to download it.
+                </message>
+            </build>
+        </channel>
+    </product>
+
+    <product name="WebStorm">
+        <code>WS</code>
+        <channel id="WI1EAP" name="WebStorm 1.0.2" status="EAP"
+                url="http://www.jetbrains.com/webstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="1.0.2">
+                <message>WebStorm 1.0.2 is available.
+                    Please visit http://www.jetbrains.com/webstorm to download it.
+                </message>
+            </build>
+        </channel>
+
+        <channel id="WI1" name="WebStorm 1.0.2" status="release"
+                url="http://www.jetbrains.com/webstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="1.0.2">
+                <message>WebStorm 1.0.2 is available.
+                    Please visit http://www.jetbrains.com/webstorm to download it.
+                </message>
+            </build>
+        </channel>
+
+        <channel id="WI2EAP" name="WebStorm 2.0" status="EAP"
+                url="http://confluence.jetbrains.net/display/WI/"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="98.521" version="2.0">
+                <message>WebStorm 2.0 EAP update is available.
+                    Please visit http://confluence.jetbrains.net/display/WI/ to download it.
+                </message>
+                <patch from="98.458" size="2"/>
+            </build>
+        </channel>
+
+        <channel id="WI2" name="WebStorm 2.0" status="release"
+                url="http://www.jetbrains.com/webstorm"
+                feedback="http://devnet.jetbrains.net/community/wi/">
+            <build number="95.503" version="1.0.2">
+                <message>WebStorm 1.0.2 is available.
+                    Please visit http://www.jetbrains.com/webstorm to download it.
+                </message>
+            </build>
+        </channel>
+    </product>
+</products>

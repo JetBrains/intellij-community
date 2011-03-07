@@ -139,6 +139,10 @@ public class FindUsagesTest extends LightGroovyTestCase {
     doTestImpl("A.groovy", 1);
   }
 
+  public void testOverridingMethodUsage() throws Throwable {
+    doTestImpl("OverridingMethodUsage.groovy", 2);
+  }
+
   public void testAnnotatedMemberSearch() throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition("A.groovy");

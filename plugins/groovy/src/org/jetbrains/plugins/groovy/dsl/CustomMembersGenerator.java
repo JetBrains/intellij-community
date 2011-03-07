@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.dsl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -21,6 +22,7 @@ import java.util.Set;
  * @author peter
  */
 public class CustomMembersGenerator implements GdslMembersHolderConsumer {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
@@ -136,10 +138,14 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   }
 
   private static String stringifyType(Object type) {
-    return type instanceof Closure ? GroovyCommonClassNames.GROOVY_LANG_CLOSURE :
-    type instanceof Map ? "java.util.Map" :
-    type instanceof Class ? ((Class)type).getName() :
-    type != null ? type.toString() : CommonClassNames.JAVA_LANG_OBJECT;
+    if (type == null) return CommonClassNames.JAVA_LANG_OBJECT;
+    if (type instanceof Closure) return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+    if (type instanceof Map) return "java.util.Map";
+    if (type instanceof Class) return ((Class)type).getName();
+
+    String s = type.toString();
+    LOG.assertTrue(!s.startsWith("? extends"), s);
+    return s;
   }
 
 }

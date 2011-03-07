@@ -1,0 +1,28 @@
+package com.intellij.find.editorHeaderActions;
+
+import com.intellij.find.EditorSearchComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+
+/**
+* Created by IntelliJ IDEA.
+* User: zajac
+* Date: 05.03.11
+* Time: 10:57
+* To change this template use File | Settings | File Templates.
+*/
+public class SwitchToReplace extends EditorHeaderAction {
+  public SwitchToReplace(EditorSearchComponent editorSearchComponent) {
+    super(editorSearchComponent);
+    AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
+    if (replaceAction != null) {
+      registerCustomShortcutSet(replaceAction.getShortcutSet(), editorSearchComponent);
+    }
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    getEditorSearchComponent().getFindModel().setReplaceState(true);
+  }
+}

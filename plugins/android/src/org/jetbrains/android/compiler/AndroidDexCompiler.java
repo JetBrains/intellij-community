@@ -75,6 +75,10 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
+    if (!AndroidCompileUtil.isFullBuild(context)) {
+      return ProcessingItem.EMPTY_ARRAY;
+    }
+
     return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 

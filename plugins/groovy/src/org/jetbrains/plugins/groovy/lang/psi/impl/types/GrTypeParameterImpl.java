@@ -313,8 +313,8 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
-    if (parentParent != null && !(parentParent instanceof PsiTypeParameterListOwner)) {
-      throw new AssertionError("CCE: " + parentParent);
+    if (!(parentParent instanceof PsiTypeParameterListOwner)) {
+      return null;
     }
     return (PsiTypeParameterListOwner)parentParent;
   }

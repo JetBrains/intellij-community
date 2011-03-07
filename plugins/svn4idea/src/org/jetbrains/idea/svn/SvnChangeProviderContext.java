@@ -235,7 +235,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       }
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
-        if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
+        if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
           myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
                                                    CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status),
                                                   SvnVcs.getKey());

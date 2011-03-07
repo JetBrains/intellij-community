@@ -129,7 +129,16 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   public int getExpressionArgumentIndex(final GrExpression arg) {
-    return ArrayUtil.indexOf(getExpressionArguments(), arg);    
+    int res = 0;
+
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) {
+        if (arg == cur) return res;
+        res++;
+      }
+    }
+
+    return -1;
   }
 
   @Nullable

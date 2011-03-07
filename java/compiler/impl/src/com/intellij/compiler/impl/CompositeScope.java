@@ -32,10 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CompositeScope extends UserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
@@ -101,5 +98,9 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
       }
     }
     return super.getUserData(key);
+  }
+  
+  public Collection<CompileScope> getScopes() {
+    return Collections.unmodifiableList(myScopes);
   }
 }

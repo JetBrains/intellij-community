@@ -786,6 +786,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  public void testIntersectionTypeMembers() throws Throwable {
+    configure()
+    assertStringItems "fooa", "foob"
+  }
+
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
 

@@ -25,6 +25,7 @@ import java.io.IOException;
  * @author nik
  */
 public interface SocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends Disposable {
+  @NotNull
   ConnectionStatus getStatus();
 
   void open() throws IOException;
@@ -33,6 +34,7 @@ public interface SocketConnection<Request extends AbstractRequest, Response exte
 
   int getPort();
 
+  @NotNull
   String getStatusMessage();
 
   void sendRequest(@NotNull Request request);

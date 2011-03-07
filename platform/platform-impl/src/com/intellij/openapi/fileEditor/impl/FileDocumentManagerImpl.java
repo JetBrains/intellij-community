@@ -188,7 +188,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
       myUnsavedDocuments.clear();
-      fireUnsavedDocumensDropped();
+      fireUnsavedDocumentsDropped();
     }
     myTrailingSpacesStripper.dropAll();
   }
@@ -234,16 +234,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     try {
       VirtualFile file = getFile(document);
 
-      if (file == null || !file.isValid() || file instanceof LightVirtualFile) {
+      if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
         myUnsavedDocuments.remove(document);
-        fireUnsavedDocumensDropped();
-        LOG.assertTrue(!myUnsavedDocuments.contains(document));
-        return;
-      }
-
-      if (!isFileModified(file)) {
-        myUnsavedDocuments.remove(document);
-        fireUnsavedDocumensDropped();
+        fireUnsavedDocumentsDropped();
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
@@ -360,14 +353,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return myUnsavedDocuments.contains(document);
   }
 
-  public boolean isFileModifiedAndDocumentUnsaved(@NotNull final VirtualFile file) {
-    final Document doc = getCachedDocument(file);
-    return doc != null && doc.getModificationStamp() != file.getModificationStamp() && isDocumentUnsaved(doc);
-  }
-
   public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
-    return doc != null && doc.getModificationStamp() != file.getModificationStamp();
+    return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
 
   public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
@@ -594,7 +582,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentReloaded(file, document);
   }
 
-  private void fireUnsavedDocumensDropped() {
+  private void fireUnsavedDocumentsDropped() {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).unsavedDocumentsDropped();
   }
 

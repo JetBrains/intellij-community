@@ -31,16 +31,16 @@ public abstract class DaemonCodeAnalyzer {
   public abstract void settingsChanged();
 
   @Deprecated
-  public abstract void updateVisibleHighlighters(Editor editor);
+  public abstract void updateVisibleHighlighters(@NotNull Editor editor);
 
   public abstract void setUpdateByTimerEnabled(boolean value);
 
   public abstract boolean isHighlightingAvailable(PsiFile file);
 
-  public abstract void setImportHintsEnabled(PsiFile file, boolean value);
+  public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
   public abstract void resetImportHintsEnabledForProject(); 
-  public abstract void setHighlightingEnabled(PsiFile file, boolean value);
-  public abstract boolean isImportHintsEnabled(PsiFile file);
+  public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
+  public abstract boolean isImportHintsEnabled(@NotNull PsiFile file);
   public abstract boolean isAutohintsAvailable(PsiFile file);
 
   /**
@@ -55,5 +55,6 @@ public abstract class DaemonCodeAnalyzer {
 
   public interface DaemonListener {
     void daemonFinished();
+    void daemonCancelEventOccurred();
   }
 }

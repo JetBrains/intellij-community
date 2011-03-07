@@ -211,7 +211,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
         return true;
       }
     });
-    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs), ArrayUtil.STRING_ARRAY_FACTORY);
+    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
     return resourceUrls;
   }
 

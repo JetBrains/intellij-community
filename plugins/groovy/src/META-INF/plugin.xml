@@ -39,6 +39,8 @@
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
     <extensionPoint name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
     <extensionPoint name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
+    <extensionPoint name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
+    <extensionPoint name="unresolvedHighlightFileFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
 
     <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
 
@@ -60,6 +62,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gradle.GradlePositionManager"/>
+
+    <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" order="last" />
 
@@ -280,8 +284,6 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
-                    serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 

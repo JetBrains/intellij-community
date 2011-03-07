@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -128,15 +129,21 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if(userData != null) return userData;
 
     PsiFile psiFile = getCachedPsiFile(document);
-    if (psiFile == null){
-      final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile == null || !virtualFile.isValid()) return null;
-      psiFile = getPsiFile(virtualFile);
-      if (psiFile == null) return null;
+    if (psiFile != null) return psiFile;
 
-      //psiFile.setModificationStamp(document.getModificationStamp());
-      fireFileCreated(document, psiFile);
+    final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || !virtualFile.isValid()) return null;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
+      LOG.assertTrue(projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" + virtualFile + "; myProject=" + myProject);
     }
+
+    psiFile = getPsiFile(virtualFile);
+    if (psiFile == null) return null;
+
+    //psiFile.setModificationStamp(document.getModificationStamp());
+    fireFileCreated(document, psiFile);
 
     return psiFile;
   }

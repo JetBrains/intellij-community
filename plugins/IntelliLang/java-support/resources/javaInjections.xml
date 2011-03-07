@@ -260,6 +260,7 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("replaceFirst").withParameters("java.lang.String", "java.lang.String").definedInClass("java.lang.String"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("split").withParameters("java.lang.String").definedInClass("java.lang.String"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("split").withParameters("java.lang.String", "int").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").withParameters("java.lang.String").definedInClass("java.lang.String"))]]></place>
   </injection>
   <injection language="SQL" injector-id="java">
     <display-name>UpdatableSqlQuery.UpdatableSqlQuery (org.springframework.jdbc.object)</display-name>

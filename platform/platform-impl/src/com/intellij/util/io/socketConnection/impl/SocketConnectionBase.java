@@ -130,13 +130,14 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     return myPort;
   }
 
+  @NotNull
   public String getStatusMessage() {
     synchronized (myLock) {
-      return myStatusMessage;
+      return myStatusMessage != null ? myStatusMessage : myStatus.getStatusText();
     }
   }
 
-  protected void setStatus(ConnectionStatus status, String message) {
+  protected void setStatus(@NotNull ConnectionStatus status, @Nullable String message) {
     synchronized (myLock) {
       myStatus = status;
       myStatusMessage = message;
@@ -144,6 +145,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     myDispatcher.getMulticaster().statusChanged(status);
   }
 
+  @NotNull
   public ConnectionStatus getStatus() {
     synchronized (myLock) {
       return myStatus;

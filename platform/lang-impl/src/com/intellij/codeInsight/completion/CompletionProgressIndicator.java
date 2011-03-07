@@ -469,13 +469,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return false;
         }
 
-        if (showHintAutopopup()) {
+        //if (showHintAutopopup()) {
           final LookupElementPresentation presentation = new LookupElementPresentation();
           item.renderElement(presentation);
           if (StringUtil.isNotEmpty(presentation.getTailText())) {
             return false;
           }
-        }
+        //}
       }
 
       myLookup.hideLookup(false);
@@ -496,6 +496,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
+    /*
     if (!myLookup.isHintMode()) {
       for (LookupElement item : myLookup.getItems()) {
         if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
@@ -504,6 +505,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
+    */
 
     final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     myLookup.setFocused(phase instanceof CompletionPhase.ItemsCalculated && ((CompletionPhase.ItemsCalculated)phase).focusLookup);

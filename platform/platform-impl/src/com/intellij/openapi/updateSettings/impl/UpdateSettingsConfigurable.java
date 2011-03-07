@@ -15,20 +15,23 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -75,6 +78,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     settings.myPluginHosts.clear();
     settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
+    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
   }
 
   public void reset() {
@@ -82,13 +86,16 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
     myUpdatesSettingsPanel.updateLastCheckedLabel();
     myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
+    myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
   }
 
   public boolean isModified() {
     if (myUpdatesSettingsPanel == null) return false;
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
-    return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
+    if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected()) return true;
+    final JComboBox channelsBox = myUpdatesSettingsPanel.myUpdateChannelsBox;
+    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(settings.UPDATE_CHANNEL_TYPE));
   }
 
   public void disposeUIResources() {
@@ -112,6 +119,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JButton myDeleteButton;
     private JBList myUrlsList;
     private JButton myEditButton;
+    private JComboBox myUpdateChannelsBox;
 
     public UpdatesSettingsPanel() {
 
@@ -132,7 +140,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          CheckForUpdateAction.actionPerformed(false, UpdateSettingsConfigurable.this);
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
+          CheckForUpdateAction.actionPerformed(project, false, UpdateSettingsConfigurable.this);
           updateLastCheckedLabel();
         }
       });
@@ -151,7 +160,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         }
       });
 
-      myAddButton.addActionListener(new ActionListener(){
+      myAddButton.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
                                                                                     IdeBundle.message("update.plugin.host.url.message"),
@@ -166,7 +175,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         }
       });
 
-      myEditButton.addActionListener(new ActionListener(){
+      myEditButton.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
                                                                                     IdeBundle.message("update.plugin.host.url.message"),
@@ -197,6 +206,10 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       });
       myEditButton.setEnabled(false);
       myDeleteButton.setEnabled(false);
+
+
+      final UpdateSettings settings = UpdateSettings.getInstance();
+      myUpdateChannelsBox.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
     }
 
     private void updateLastCheckedLabel() {
@@ -207,7 +220,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     public List<String> getPluginsHosts() {
       final List<String> result = new ArrayList<String>();
-      for (int i = 0;i < myUrlsList.getModel().getSize(); i++) {
+      for (int i = 0; i < myUrlsList.getModel().getSize(); i++) {
         result.add((String)myUrlsList.getModel().getElementAt(i));
       }
       return result;
@@ -220,9 +233,16 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         model.addElement(host);
       }
     }
+
+    public ChannelStatus getSelectedChannelType() {
+      return (ChannelStatus) myUpdateChannelsBox.getSelectedItem();
+    }
+
+    public void setSelectedChannelType(ChannelStatus channelType) {
+      myUpdateChannelsBox.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
+    }
   }
 
-  @NotNull
   public String getId() {
     return getHelpTopic();
   }
@@ -236,7 +256,12 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     public static class InputHostDialog extends InputDialog {
       private final Component myParentComponent;
 
-      public InputHostDialog(Component parentComponent, String message, String title, Icon icon, String initialValue, InputValidator validator) {
+      public InputHostDialog(Component parentComponent,
+                             String message,
+                             String title,
+                             Icon icon,
+                             String initialValue,
+                             InputValidator validator) {
         super(parentComponent, message, title, icon, initialValue, validator);
         myParentComponent = parentComponent;
       }
@@ -248,7 +273,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
             try {
               if (UpdateChecker.checkPluginsHost(getTextField().getText(), new ArrayList<PluginDownloader>())) {
                 showInfoMessage(myParentComponent, "Plugins Host was successfully checked", "Check Plugins Host");
-              } else {
+              }
+              else {
                 showErrorDialog(myParentComponent, "Plugin descriptions contain some errors. Please, check idea.log for details.");
               }
             }
@@ -260,5 +286,4 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
   }
-
 }

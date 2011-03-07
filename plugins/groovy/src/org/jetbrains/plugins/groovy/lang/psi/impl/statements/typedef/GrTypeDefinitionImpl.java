@@ -186,7 +186,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (stub != null) {
       return stub.getSuperClassNames();
     }
-    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), ArrayUtil.STRING_ARRAY_FACTORY);
+    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames());
   }
 
   protected String[] getImplementsNames() {
@@ -234,10 +234,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       }
     }
 
-    ASTNode astNode = parent.getNode();
-    if (astNode != null) {
-      astNode.removeChild(getNode());
-    }
+    super.delete();
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

@@ -30,6 +30,12 @@ import javax.swing.*;
  * @author nik
  */
 public interface XValueNode extends Obsolescent {
+  /**
+   * If value text exceeds this constant it's recommended to truncate it and use {@link #setFullValueEvaluator(XFullValueEvaluator)} method
+   * to provide full value
+   */
+  int MAX_VALUE_LENGTH = 100;
+
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
@@ -39,6 +45,7 @@ public interface XValueNode extends Obsolescent {
    * method and call this method to provide full value.
    * This will add a link to the node and show popup with full value if an user clicks on that link.
    * @param fullValueEvaluator will be used to obtain full text of the value
+   * @see #MAX_VALUE_LENGTH
    */
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
 

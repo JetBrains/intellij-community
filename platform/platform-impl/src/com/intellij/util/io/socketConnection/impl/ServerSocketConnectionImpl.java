@@ -54,7 +54,7 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
         }
         catch (IOException e) {
           LOG.info(e);
-          setStatus(ConnectionStatus.CONNECTION_FAILED, e.getMessage());
+          setStatus(ConnectionStatus.CONNECTION_FAILED, "Connection failed: " + e.getMessage());
         }
       }
     });

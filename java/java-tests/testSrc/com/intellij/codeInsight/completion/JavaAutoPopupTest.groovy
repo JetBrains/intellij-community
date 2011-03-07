@@ -47,7 +47,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type('er')
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
     assertEquals 'iter', lookup.currentItem.lookupString
-    assert !lookup.focused
+    assert lookup.focused
 
     type 'a'
     assert lookup.focused
@@ -125,7 +125,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
-  public void testNoAutopopupInTheMiddleOfIdentifier() {
+  public void _testNoAutopopupInTheMiddleOfIdentifier() {
     myFixture.configureByText("a.java", """
       class Foo {
         String foo(String iterable) {
@@ -539,5 +539,37 @@ public interface Test {
 
   }
 
+  public void testLeftRightMovements() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          <caret>ter
+        }
+      }
+    """)
+    type('i')
+    def offset = myFixture.editor.caretModel.offset
+    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    assert myFixture.editor.caretModel.offset == offset + 1
+    assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    assertEquals 'iterable', lookup.currentItem.lookupString
+
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    assert myFixture.editor.caretModel.offset == offset
+    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+    assertEquals 'iterable', lookup.currentItem.lookupString
+
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    joinAlarm()
+    joinCompletion()
+    assert lookup.items.size() > 3
+
+    for (i in 0.."iter".size()) {
+      edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    }
+    assert !lookup
+  }
 
 }

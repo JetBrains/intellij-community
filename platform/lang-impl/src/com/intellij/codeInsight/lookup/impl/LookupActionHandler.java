@@ -16,12 +16,13 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -96,6 +97,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      assert lookup != null;
+      if (!CompletionProgressIndicator.showHintAutopopup()) {
+        lookup.hide();
+        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
+        return;
+      }
+
+
       lookup.setHintMode(false);
       lookup.refreshUi();
       UpHandler.executeUp(lookup);
@@ -113,6 +122,13 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      assert lookup != null;
+      if (!CompletionProgressIndicator.showHintAutopopup()) {
+        lookup.hide();
+        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
+        return;
+      }
+
       lookup.setHintMode(false);
       lookup.refreshUi();
       DownHandler.executeDown(lookup);
@@ -168,6 +184,53 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       ListScrollingUtil.movePageUp(lookup.getList());
+    }
+  }
+
+  public static class LeftHandler extends LookupActionHandler {
+    public LeftHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
+    }
+
+    @Override
+    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
+    }
+  }
+  public static class RightHandler extends LookupActionHandler {
+    public RightHandler(EditorActionHandler originalHandler) {
+      super(originalHandler, false);
+    }
+
+    @Override
+    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      final Editor editor = lookup.getEditor();
+      final int offset = editor.getCaretModel().getOffset();
+      CharSequence seq = editor.getDocument().getCharsSequence();
+      if (seq.length() <= offset) {
+        myOriginalHandler.execute(editor, context);
+        return;
+      }
+
+      char c = seq.charAt(offset);
+      CharFilter.Result lookupAction = TypedHandler.getLookupAction(c, lookup);
+      if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
+        myOriginalHandler.execute(editor, context);
+        return;
+      }
+
+      lookup.performGuardedChange(new Runnable() {
+        @Override
+        public void run() {
+          editor.getCaretModel().moveToOffset(offset + 1);
+        }
+      });
+
+      lookup.appendPrefix(c);
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      if (completion != null) {
+        completion.prefixUpdated();
+      }
     }
   }
 

@@ -93,6 +93,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsInLibraryContent = false;
     }
     catch (EvaluateException e) {
+      LOG.info(e);
       myLocation = null;
       myMethodOccurrence = tracker.getMethodOccurrence(null);
       myIsSynthetic = false;

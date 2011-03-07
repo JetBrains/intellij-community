@@ -151,10 +151,10 @@ public class ArrayUtil {
     if (a2.length == 0) {
       return a1;
     }
-    T[] highlights = (T[])Array.newInstance(aClass, a1.length + a2.length);
-    System.arraycopy(a1, 0, highlights, 0, a1.length);
-    System.arraycopy(a2, 0, highlights, a1.length, a2.length);
-    return highlights;
+    T[] result = (T[])Array.newInstance(aClass, a1.length + a2.length);
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
   }
 
   @NotNull
@@ -165,10 +165,15 @@ public class ArrayUtil {
     if (a2.length == 0) {
       return a1;
     }
-    T[] highlights = factory.create(a1.length + a2.length);
-    System.arraycopy(a1, 0, highlights, 0, a1.length);
-    System.arraycopy(a2, 0, highlights, a1.length, a2.length);
-    return highlights;
+    T[] result = factory.create(a1.length + a2.length);
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
+  }
+
+  @NotNull
+  public static String[] mergeArrays(@NotNull String[] a1, @NotNull String... a2) {
+    return mergeArrays(a1, a2, STRING_ARRAY_FACTORY);
   }
 
 

@@ -18,7 +18,6 @@ package com.intellij.errorreport;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.itn.ITNProxy;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.BuildInfo;
-import com.intellij.openapi.updateSettings.impl.UpdateChannel;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -50,15 +49,9 @@ public class ErrorReportSender {
 
   @Nullable
   public static String checkNewBuild() {
-    BuildInfo newVersion = null;
-    try {
-      UpdateChannel channel = UpdateChecker.checkForUpdates();
-      newVersion = channel != null ? channel.getLatestBuild() : null;
-    }
-    catch (ConnectionException e) {
-      // ignore
-    }
-    return newVersion != null ? newVersion.getNumber().asString() : null;
+    final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
+    final BuildInfo newBuild = result.getNewBuildInSelectedChannel();
+    return (newBuild != null && newBuild.getNumber() != null ? newBuild.getNumber().asString() : null);
   }
 
   static class SendTask {
@@ -108,8 +101,8 @@ public class ErrorReportSender {
   }
 
   public static void sendError(Project project, String login, String password, ErrorBean error,
-                              Consumer<Integer> callback, Consumer<Exception> errback) {
-    SendTask sendTask = new SendTask (project, error);
+                               Consumer<Integer> callback, Consumer<Exception> errback) {
+    SendTask sendTask = new SendTask(project, error);
     sendTask.setCredentials(login, password);
     sendTask.sendReport(callback, errback);
   }

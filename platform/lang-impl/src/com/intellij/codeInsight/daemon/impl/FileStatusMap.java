@@ -50,6 +50,7 @@ public class FileStatusMap implements Disposable {
   }
 
   public void dispose() {
+    // clear dangling references to PsiFiles/Documents. SCR#10358
     markAllFilesDirty();
   }
 

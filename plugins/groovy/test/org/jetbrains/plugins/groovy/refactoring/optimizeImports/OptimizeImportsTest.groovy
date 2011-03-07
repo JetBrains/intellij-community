@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -204,6 +205,22 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     myFixture.doHighlighting()
     myFixture.checkResult "import java.util.String\nimport java.lang.String<caret>"
   }
+
+  public void testNoOptimizeOnDummyChange() {
+    myFixture.addClass "package foo; public class Foo {}"
+    myFixture.configureByText "a.groovy", "import foo.Foo\n\ndef foo() { <caret> Foo f}"
+    myFixture.doHighlighting()
+    myFixture.type '\n'
+    myFixture.doHighlighting()
+    myFixture.checkResult "import foo.Foo\n\ndef foo() { \n    <caret>Foo f}"
+  }
+
+  public void testUnusedImportsForImportsOnDemand() throws Exception {
+    myFixture.enableInspections(new GroovyAccessibilityInspection())
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
 
 
 }

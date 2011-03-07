@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +54,7 @@ import java.util.List;
  */
 public class RegistryUi implements Disposable {
 
-  private final JTable myTable;
+  private final JBTable myTable;
   private final JTextArea myDescriptionLabel;
 
   private final JPanel myContent = new JPanel();
@@ -66,6 +68,8 @@ public class RegistryUi implements Disposable {
 
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
+    myTable.setCellSelectionEnabled(true);
+    myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();
 
     final TableColumn c0 = myTable.getColumnModel().getColumn(0);
@@ -97,7 +101,7 @@ public class RegistryUi implements Disposable {
 
         final int selected = myTable.getSelectedRow();
         if (selected != -1) {
-          final RegistryValue value = (RegistryValue) myTable.getModel().getValueAt(selected, 0);
+          final RegistryValue value = myModel.getRegistryValue(selected);
           String desc = value.getDescription();
           if (value.isRestartRequired()) {
             String required = "Requires IDE restart.";
@@ -124,6 +128,7 @@ public class RegistryUi implements Disposable {
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
+    new TableSpeedSearch(myTable).setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
   }
 
 
@@ -140,14 +145,14 @@ public class RegistryUi implements Disposable {
       e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
 
       if (e.getPresentation().isEnabled()) {
-        final RegistryValue rv = (RegistryValue) myTable.getValueAt(myTable.getSelectedRow(), 0);
+        final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
         e.getPresentation().setEnabled(rv.isChangedFromDefault());
       }
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final RegistryValue value = (RegistryValue) myTable.getValueAt(myTable.getSelectedRow(), 0);
-      value.resetToDefault();
+      final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
+      rv.resetToDefault();
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 0);
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 1);
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 2);
@@ -209,6 +214,20 @@ public class RegistryUi implements Disposable {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
+      RegistryValue value = getRegistryValue(rowIndex);
+      switch (columnIndex) {
+        case 0:
+          return "";
+        case 1:
+          return value.getKey();
+        case 2:
+          return value.asString();
+        default:
+          return value;
+      }
+    }
+
+    private RegistryValue getRegistryValue(final int rowIndex) {
       return myAll.get(rowIndex);
     }
 
@@ -309,7 +328,7 @@ public class RegistryUi implements Disposable {
     private final JLabel myLabel = new JLabel();
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final RegistryValue v = (RegistryValue) value;
+      final RegistryValue v = ((MyTableModel)table.getModel()).getRegistryValue(row);
       myLabel.setIcon(null);
       myLabel.setText(null);
       myLabel.setHorizontalAlignment(JLabel.LEFT);
@@ -371,7 +390,7 @@ public class RegistryUi implements Disposable {
 
     @Nullable
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      myValue = (RegistryValue) value;
+      myValue = ((MyTableModel)table.getModel()).getRegistryValue(row);
       if (myValue.asColor(null) != null) {
         final Color color = ColorChooser.chooseColor(table, "Choose color", ((RegistryValue)value).asColor(Color.WHITE));
         if (color != null) {
