@@ -523,6 +523,10 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (wordIndex == words.size() - 1) {
+        if (patternIndex + i == myPattern.length() - 1 && ' ' == myPattern.charAt(patternIndex + i)) {
+          return i == w.length();
+        }
+
         return false;
       }
       while (i > 0) {
