@@ -4,8 +4,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -47,9 +45,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testInlineTagAsDescription() throws Exception {
-    doTest();
-  }
+  public void testInlineTagAsDescription() throws Exception { doTest(); }
 
   public void testParam0() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testParam1() throws Exception { doTest(); }
@@ -62,8 +58,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSee3() throws Exception { doTest(); }
   public void testSee4() throws Exception { doTest(); }
   public void testSee5() throws Exception { doTest(); }
-  public void testSee6() throws Exception {doTest();}
-  public void testSeeConstants() throws Exception { doTest();}
+  public void testSee6() throws Exception { doTest(); }
+  public void testSeeConstants() throws Exception { doTest(); }
   public void testReturn0() throws Exception { doTest(); }
   public void testException0() throws Exception { doTest(); }
   public void testException1() throws Exception { doTest(); }
@@ -73,7 +69,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMultipleThrows() throws Exception { doTest(); }
   public void testInheritJavaDoc() throws Exception {doTestWithLangLevel(LanguageLevel.JDK_1_3);}
   public void testLink0() throws Exception { doTest(); }
-  public void testLinkFromInnerClassToSelfMethod() throws Exception {doTest();}
+  public void testLinkFromInnerClassToSelfMethod() throws Exception { doTest(); }
 
   public void testValueBadReference() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueGoodReference() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
@@ -83,20 +79,18 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testValueNotOnStaticField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueOnNotInitializedField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
 
-  public void testUnknownInlineTag() throws Exception {doTest();}
-  public void testUnknownTags() throws Exception {doTest();}
+  public void testUnknownInlineTag() throws Exception { doTest(); }
+  public void testUnknownTags() throws Exception { doTest(); }
 
-  public void testBadCharacters() throws Exception {doTest();}
+  public void testBadCharacters() throws Exception { doTest(); }
 
-  public void testVararg() throws Exception {doTest();}
+  public void testVararg() throws Exception { doTest(); }
 
-  public void testInnerClassReferenceInSignature() throws Exception {doTest();}
+  public void testInnerClassReferenceInSignature() throws Exception { doTest(); }
 
-  public void testBadReference() throws Exception{
-    doTest();
-  }
+  public void testBadReference() throws Exception { doTest(); }
 
-  public void testMissingReturnDescription() throws Exception {doTest();}
+  public void testMissingReturnDescription() throws Exception { doTest(); }
 
   private void doTestWithLangLevel(final LanguageLevel langLevel) throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(langLevel);

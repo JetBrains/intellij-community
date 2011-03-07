@@ -79,21 +79,21 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testImportDefaultPackage2() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH+"/importDefaultPackage", false, false); }
 
   public void testScopeBased() throws Exception {
-    NamedScope xscope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
-    NamedScope utilscope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
     NamedScopeManager scopeManager = NamedScopeManager.getInstance(getProject());
-    scopeManager.addScope(xscope);
-    scopeManager.addScope(utilscope);
+    scopeManager.addScope(xScope);
+    scopeManager.addScope(utilScope);
 
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xscope.getName());
+    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilscope.getName());
+    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
@@ -105,21 +105,21 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     }
   }
   public void testSharedScopeBased() throws Exception {
-    NamedScope xscope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
-    NamedScope utilscope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
     NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(getProject());
-    scopeManager.addScope(xscope);
-    scopeManager.addScope(utilscope);
+    scopeManager.addScope(xScope);
+    scopeManager.addScope(utilScope);
 
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xscope.getName());
+    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, null, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilscope.getName());
+    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
@@ -158,6 +158,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
       }
     });
 
+    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
     Collection<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
@@ -168,6 +169,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     loadAllModulesUnder(root);
 
+    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("client/src/BugTest.java"));
     Collection<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
@@ -178,12 +180,18 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     loadAllModulesUnder(root);
 
+    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("src/ppp/SomeClass.java"));
     PsiField field = ((PsiJavaFile)myFile).getClasses()[0].findFieldByName("f", false);
+    assert field != null;
     PsiClass aClass = ((PsiClassType)field.getType()).resolve();
+    assert aClass != null;
     assertEquals("ppp.BadClass", aClass.getQualifiedName());
     //lies in source
-    assertEquals(myFile.getVirtualFile().getParent(), aClass.getContainingFile().getVirtualFile().getParent());
+    final VirtualFile vFile1 = myFile.getVirtualFile();
+    final VirtualFile vFile2 = aClass.getContainingFile().getVirtualFile();
+    assert vFile1 != null;
+    assert vFile2 != null;
+    assertEquals(vFile1.getParent(), vFile2.getParent());
   }
-
 }
