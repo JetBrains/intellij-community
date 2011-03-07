@@ -126,14 +126,18 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
     else {
       PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
+      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
           hideAction(e);
           return;
         }
         element = getElementAtCaret(editor, file);
+        if (element != null) {
+          languages = new Language[] {element.getLanguage()};
+        }
       }
-      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
+
       if (element == null || element instanceof SyntheticElement || languages == null) {
         hideAction(e);
         return;
