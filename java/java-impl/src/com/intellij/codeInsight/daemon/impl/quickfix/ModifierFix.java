@@ -54,6 +54,7 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
   }
+
   public ModifierFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     this(owner.getModifierList(), modifier, shouldHave, showContainingClass);
     if (owner instanceof PsiVariable) {
@@ -79,8 +80,9 @@ public class ModifierFix extends IntentionAndQuickFixAction {
       else if (parent instanceof PsiClassInitializer) {
         PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
         String className = containingClass instanceof PsiAnonymousClass
-                           ? QuickFixBundle.message("anonymous.class.presentation", ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
-                           : containingClass.getName();
+                           ? QuickFixBundle.message("anonymous.class.presentation",
+                                                    ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
+                           : containingClass != null ? containingClass.getName() : "unknown";
         name = QuickFixBundle.message("class.initializer.presentation", className);
       }
     }
@@ -99,7 +101,7 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     return myModifierList != null &&
            myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&
-           myModifierList.hasModifierProperty(myModifier) != myShouldHave &&
+           myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (myVariable == null || myVariable.isValid());
   }
 
