@@ -648,6 +648,10 @@ public class TypeCookTest extends MultiFileTestCase {
         start();
   }
 
+  public void testT152() throws Exception {
+        start();
+  }
+
   public void start() throws Exception {
     start(false);
   }
