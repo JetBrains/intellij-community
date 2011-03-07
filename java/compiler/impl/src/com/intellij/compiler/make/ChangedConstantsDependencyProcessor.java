@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
@@ -88,7 +89,7 @@ class ChangedConstantsDependencyProcessor {
           }
         }
         catch (CacheCorruptedException e) {
-         _ex[0] = e;
+          _ex[0] = e;
         }
         catch (ProcessCanceledException e) {
           // supressed deliberately
@@ -100,7 +101,7 @@ class ChangedConstantsDependencyProcessor {
     }
   }
 
-  private void processFieldRemoved(FieldInfo info, PsiClass aClass) throws CacheCorruptedException {
+  private void processFieldRemoved(FieldInfo info, final PsiClass aClass) throws CacheCorruptedException {
     if (info.isPrivate()) {
       return; // optimization: don't need to search, cause may be used only in this class
     }
@@ -118,39 +119,52 @@ class ChangedConstantsDependencyProcessor {
     }
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
 
+    final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
     final long analysisStart = System.currentTimeMillis();
-    boolean skipResolve = mySkipExpressionResolve;
-
-    PsiIdentifier[] identifiers = findIdentifiers(psiSearchHelper, myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
-    for (PsiIdentifier identifier : identifiers) {
-      PsiElement parent = identifier.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
-        PsiReference reference = refExpr.getReference();
-        skipResolve = skipResolve || (System.currentTimeMillis() - analysisStart) > ANALYSIS_DURATION_THRESHOLD_MILLIS;
-        if (skipResolve || reference == null || reference.resolve() == null) {
-          PsiClass ownerClass = getOwnerClass(refExpr);
-          if (ownerClass != null && !ownerClass.equals(aClass)) {
-            int qualifiedName = myDependencyCache.getSymbolTable().getId(ownerClass.getQualifiedName());
-            // should force marking of the class no matter was it compiled or not
-            // This will ensure the class was recompiled _after_ all the constants get their new values
-            if (myDependencyCache.markClass(qualifiedName, true)) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Mark dependent class " + myDependencyCache.resolve(qualifiedName) +
-                          "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
+    
+    processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
+      private boolean skipResolve = mySkipExpressionResolve;
+      @Override
+      public boolean execute(PsiIdentifier identifier) {
+        try {
+          final PsiElement parent = identifier.getParent();
+          if (parent instanceof PsiReferenceExpression) {
+            PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
+            PsiReference reference = refExpr.getReference();
+            skipResolve = skipResolve || (System.currentTimeMillis() - analysisStart) > ANALYSIS_DURATION_THRESHOLD_MILLIS;
+            if (skipResolve || reference == null || reference.resolve() == null) {
+              final PsiClass ownerClass = getOwnerClass(refExpr);
+              if (ownerClass != null && !ownerClass.equals(aClass)) {
+                final String _qName = ownerClass.getQualifiedName();
+                if (_qName != null) {
+                  int qualifiedName = myDependencyCache.getSymbolTable().getId(_qName);
+                  // should force marking of the class no matter was it compiled or not
+                  // This will ensure the class was recompiled _after_ all the constants get their new values
+                  if (myDependencyCache.markClass(qualifiedName, true)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
+                    }
+                  }
+                }
+                else {
+                  LOG.warn("Class with null qualified name was not expected here: " + ownerClass);
+                }
               }
             }
           }
+          return true;
+        }
+        catch (CacheCorruptedException e) {
+          exRef.set(e);
+          return false;
         }
       }
+    }, myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
+    
+    final CacheCorruptedException cacheCorruptedException = exRef.get();
+    if (cacheCorruptedException != null) {
+      throw cacheCorruptedException;
     }
-  }
-
-  @NotNull
-  private static PsiIdentifier[] findIdentifiers(PsiSearchHelper helper, @NotNull String identifier, @NotNull SearchScope searchScope, short searchContext) {
-    PsiElementProcessor.CollectElements<PsiIdentifier> processor = new PsiElementProcessor.CollectElements<PsiIdentifier>();
-    processIdentifiers(helper, processor, identifier, searchScope, searchContext);
-    return processor.toArray(PsiIdentifier.EMPTY_ARRAY);
   }
 
   private static boolean processIdentifiers(PsiSearchHelper helper,
@@ -196,7 +210,7 @@ class ChangedConstantsDependencyProcessor {
         if (myDependencyCache.markClass(qualifiedName, true)) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Marked dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: constants changed in " +
-                      myDependencyCache.resolve(myQName));
+                        myDependencyCache.resolve(myQName));
           }
         }
       }
