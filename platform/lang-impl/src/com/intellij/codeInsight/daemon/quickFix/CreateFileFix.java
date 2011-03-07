@@ -60,13 +60,6 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     myDirectory = directory;
     myText = text;
     myKey = key;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      System.out.println("CreateFileFix.CreateFileFix");
-      System.out.println(newFileName);
-      System.out.println(isDirectory);
-      System.out.println(FileTypeManager.getInstance().getFileTypeByFileName(newFileName));
-      System.out.println(FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary());
-    }
     myIsAvailable = isDirectory || !FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary();
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
