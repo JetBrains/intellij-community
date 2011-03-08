@@ -119,7 +119,7 @@ public class PsiDiamondType extends PsiType {
     final PsiTypeParameter[] classParameters = psiClass.getTypeParameters();
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
-    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
+    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>", newExpression.getProject());
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {
@@ -245,12 +245,14 @@ public class PsiDiamondType extends PsiType {
     private String myErrorMessage;
 
     private String myNewExpressionPresentableText;
+    private Project myProject;
 
     public DiamondInferenceResult() {
     }
 
-    public DiamondInferenceResult(String expressionPresentableText) {
+    public DiamondInferenceResult(String expressionPresentableText, Project project) {
       myNewExpressionPresentableText = expressionPresentableText;
+      myProject = project;
     }
 
     public PsiType[] getTypes() {
@@ -272,7 +274,13 @@ public class PsiDiamondType extends PsiType {
         myErrorMessage = "Cannot infer type arguments for " +
                          myNewExpressionPresentableText + " because type " + psiType.getPresentableText() + " inferred is not allowed in current context";
       } else {
-        myInferredTypes.add(psiType);
+        if (psiType instanceof PsiWildcardType) {
+          final PsiType bound = ((PsiWildcardType)psiType).getBound();
+          myInferredTypes.add(bound != null ? bound : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject)));
+        }
+        else {
+          myInferredTypes.add(psiType);
+        }
       }
     }
 

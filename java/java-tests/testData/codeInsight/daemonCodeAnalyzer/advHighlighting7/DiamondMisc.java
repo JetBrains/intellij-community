@@ -74,3 +74,24 @@ class NonParameterized {
     new NonParameterized<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
   }
 }
+
+
+interface I<T> {
+  T m();
+}
+
+class FI1 {
+  I<? extends String> i1 = new I<>() {
+    @Override
+    public String m() {
+      return null;
+    }
+  };
+
+  I<?> i2 = new I<>() {
+    @Override
+    public Object m() {
+      return null;
+    }
+  };
+}
