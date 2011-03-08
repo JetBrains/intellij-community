@@ -35,6 +35,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
           return xx<caret>
         }
     """)
+    edt { myFixture.doHighlighting() }
     type 'x'
     assert !lookup.focused
   }
