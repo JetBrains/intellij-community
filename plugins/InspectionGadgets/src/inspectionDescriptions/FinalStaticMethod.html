@@ -1,9 +1,11 @@
 <html>
 <body>
-This inspection reports methods
-declared <b>final</b> and <b>static</b>.
-As <b>static</b> methods cannot be meaningfully overridden, declaring them
-<b>final</b> is redundant.
+This inspection reports methods declared <b>final</b> and <b>static</b>.
+When a <b>static</b> method is overridden in a subclass it can still be
+accessed via the super class, making a <b>final</b> declaration not very necessary.
+Declaring a <b>static</b> method <b>final</b>
+does prevent subclasses from defining a <b>static</b> method with the same
+signature.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>
