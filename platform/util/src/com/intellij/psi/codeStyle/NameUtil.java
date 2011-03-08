@@ -39,7 +39,7 @@ public class NameUtil {
     }
   };
   private static final int MAX_LENGTH = 40;
-  public static final boolean useMinusculeHumpMatcher = "true".equals(System.getProperty("minuscule.humps.sorting"));
+  public static final boolean useMinusculeHumpMatcher = "true".equals(System.getProperty("minuscule.humps.matching"));
 
   private NameUtil() {}
 
