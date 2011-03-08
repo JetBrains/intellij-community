@@ -1058,12 +1058,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       super.hide();
 
       Disposer.dispose(this);
+
+      assert myDisposed;
     }
     catch (Throwable e) {
       LOG.error(e);
     }
 
-    assert myDisposed;
 
     if (fireCanceled) {
       fireLookupCanceled(explicitly);
@@ -1081,7 +1082,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void dispose() {
     assert ApplicationManager.getApplication().isDispatchThread();
     assert myHidden;
-    assert !myDisposed : disposeTrace;
+    if (myDisposed) {
+      LOG.error(disposeTrace);
+      return;
+    }
 
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
