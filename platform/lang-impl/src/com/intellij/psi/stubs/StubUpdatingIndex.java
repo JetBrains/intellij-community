@@ -407,12 +407,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         super.dispose();
       }
       finally {
-        try {
-          getStubIndex().dispose();
-        }
-        finally {
-          ((SerializationManagerImpl)SerializationManager.getInstance()).disposeComponent();
-        }
+        getStubIndex().dispose();
       }
     }
   }

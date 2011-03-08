@@ -57,6 +57,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -132,7 +133,7 @@ public class FileBasedIndex implements ApplicationComponent {
     boolean acceptInput(VirtualFile file);
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
