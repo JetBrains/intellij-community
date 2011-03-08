@@ -77,21 +77,14 @@ public class UsageRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            FieldUsage that = (FieldUsage) o;
+            final FieldUsage that = (FieldUsage) o;
 
-            if (type != null ? !type.equals(that.type) : that.type != null) return false;
-            if (name != null ? !name.equals(that.name) : that.name != null) return false;
-            if (owner != null ? !owner.equals(that.owner) : that.owner != null) return false;
-
-            return true;
+            return type.equals(that.type) && name.equals(that.name) && owner.equals(that.owner);
         }
 
         @Override
         public int hashCode() {
-            int result = type != null ? type.hashCode() : 0;
-            result += result*31 + (name != null ? name.hashCode() : 0);
-
-            return result * 31 + (owner != null ? owner.hashCode() : 0);
+            return 31 * (31 * type.hashCode() + (name.hashCode())) + owner.hashCode();
         }
     }
 
@@ -124,22 +117,22 @@ public class UsageRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            MethodUsage that = (MethodUsage) o;
+            final MethodUsage that = (MethodUsage) o;
 
             if (!Arrays.equals(argumentTypes, that.argumentTypes)) return false;
             if (returnType != null ? !returnType.equals(that.returnType) : that.returnType != null) return false;
             if (name != null ? !name.equals(that.name) : that.name != null) return false;
             if (owner != null ? !owner.equals(that.owner) : that.owner != null) return false;
 
-            return true;
+            return Arrays.equals(argumentTypes, that.argumentTypes) &&
+                   returnType.equals(that.returnType) &&
+                   name.equals(that.name) &&
+                   owner.equals(that.owner);
         }
 
         @Override
         public int hashCode() {
-            int result = argumentTypes != null ? Arrays.hashCode(argumentTypes) : 0;
-            result = 31 * result + (returnType != null ? returnType.hashCode() : 0);
-            result += result*31 + (name != null ? name.hashCode() : 0);
-            return result * 31 + (owner != null ? owner.hashCode() : 0);
+            return ((31 * Arrays.hashCode(argumentTypes) + (returnType.hashCode())) * 31 + (name.hashCode())) * 31 + (owner.hashCode());
         }
     }
 
@@ -173,16 +166,14 @@ public class UsageRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            ClassUsage that = (ClassUsage) o;
+            final ClassUsage that = (ClassUsage) o;
 
-            if (className != null ? !className.equals(that.className) : that.className != null) return false;
-
-            return true;
+            return className.equals(that.className);
         }
 
         @Override
         public int hashCode() {
-            return className != null ? className.hashCode() : 0;
+            return className.hashCode();
         }
     }
 

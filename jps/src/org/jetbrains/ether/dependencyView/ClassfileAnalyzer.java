@@ -97,11 +97,10 @@ public class ClassfileAnalyzer {
         String[] interfaces;
         String signature;
 
-        List<MethodRepr> methods = new ArrayList<MethodRepr>();
-        List<FieldRepr> fields = new ArrayList<FieldRepr>();
-        List<String> nestedClasses = new ArrayList<String>();
-
-        Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+        final Set<MethodRepr> methods = new HashSet<MethodRepr>();
+        final Set<FieldRepr> fields = new HashSet<FieldRepr>();
+        final List<String> nestedClasses = new ArrayList<String>();
+        final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
 
         public ClassCrawler(final StringCache.S fn) {
             fileName = fn;
@@ -136,22 +135,22 @@ public class ClassfileAnalyzer {
         }
 
         @Override
-        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        public FieldVisitor visitField(int access, String n, String desc, String signature, Object value) {
             processSignature(signature);
 
             if (notPrivate(access)) {
-                fields.add(new FieldRepr(access, name, desc, signature, value));
+                fields.add(new FieldRepr(access, n, desc, signature, value));
             }
 
             return null;
         }
 
         @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        public MethodVisitor visitMethod(int access, String n, String desc, String signature, String[] exceptions) {
             processSignature(signature);
 
             if (notPrivate(access)) {
-                methods.add(new MethodRepr(access, name, signature, desc, exceptions));
+                methods.add(new MethodRepr(access, n, signature, desc, exceptions));
             }
 
             return new EmptyVisitor() {

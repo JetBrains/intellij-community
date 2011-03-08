@@ -87,13 +87,30 @@ public class MethodRepr extends ProtoMember {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        MethodRepr that = (MethodRepr) o;
+        final MethodRepr that = (MethodRepr) o;
 
-        return name.equals(that.name) && type.equals(that.type) && Arrays.equals(argumentTypes, that.argumentTypes);
+        return name .equals(that.name ) &&
+               type .equals(that.type) &&
+               Arrays.equals(argumentTypes, that.argumentTypes);
     }
 
     @Override
     public int hashCode() {
-        return 31 * (31 * (argumentTypes != null ? Arrays.hashCode(argumentTypes) : 0) + type.hashCode()) + name.hashCode();
+        return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name.hashCode();
+    }
+
+    public UsageRepr.Usage createUsage (final StringCache.S owner) {
+        final StringBuffer buf = new StringBuffer ();
+
+        buf.append("(");
+
+        for (TypeRepr.AbstractType t : argumentTypes) {
+            buf.append(t.getDescr());
+        }
+
+        buf.append(")");
+        buf.append(type.getDescr());
+
+        return UsageRepr.createMethodUsage(name.value, owner.value, buf.toString());
     }
 }

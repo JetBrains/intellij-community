@@ -3,6 +3,7 @@ package org.jetbrains.ether.dependencyView;
 import com.sun.tools.javac.util.Pair;
 import org.jetbrains.ether.ProjectWrapper;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.util.*;
@@ -16,63 +17,111 @@ import java.util.*;
  */
 public class Mappings {
 
-    private Map<StringCache.S, Set<ClassRepr>> sourceFileToClasses = new HashMap<StringCache.S, Set<ClassRepr>>();
-    private Map<StringCache.S, Set<UsageRepr.Usage>> sourceFileToUsages = new HashMap<StringCache.S, Set<UsageRepr.Usage>>();
+    private static FoxyMap.CollectionConstructor<ClassRepr> classSetConstructor = new FoxyMap.CollectionConstructor<ClassRepr>() {
+        public Collection<ClassRepr> create() {
+            return new HashSet<ClassRepr>();
+        }
+    };
+
+    private static FoxyMap.CollectionConstructor<UsageRepr.Usage> usageSetConstructor = new FoxyMap.CollectionConstructor<UsageRepr.Usage>() {
+        public Collection<UsageRepr.Usage> create() {
+            return new HashSet<UsageRepr.Usage>();
+        }
+    };
+
+    private static FoxyMap.CollectionConstructor<StringCache.S> stringSetConstructor = new FoxyMap.CollectionConstructor<StringCache.S>() {
+        public Collection<StringCache.S> create() {
+            return new HashSet<StringCache.S>();
+        }
+    };
+
+    private FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
+    private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
     private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
-    private Map<StringCache.S, Set<StringCache.S>> fileToFileDependency = new HashMap<StringCache.S, Set<StringCache.S>>();
-    private Map<StringCache.S, Set<StringCache.S>> waitingForResolve = new HashMap<StringCache.S, Set<StringCache.S>>();
+    private FoxyMap<StringCache.S, StringCache.S> fileToFileDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
+    private FoxyMap<StringCache.S, StringCache.S> waitingForResolve = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
+
+    private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
+        final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
+
+        if (dependants != null) {
+            affectedFiles.addAll(dependants);
+        }
+    }
 
     public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> affectedFiles) {
-        boolean incremental = true;
-
         if (removed != null) {
             for (StringCache.S file : removed) {
-                final Set<StringCache.S> dependants = fileToFileDependency.get(file);
-
-                if (dependants != null) {
-                    for (StringCache.S d : dependants) {
-                        affectedFiles.add(d);
-                    }
-                }
+                affectAll(file, affectedFiles);
             }
         }
 
-        for (Map.Entry<StringCache.S, Set<ClassRepr>> e : delta.sourceFileToClasses.entrySet()) {
-            final StringCache.S fileName = e.getKey();
-            final Map<ClassRepr, ClassRepr> classes = new HashMap<ClassRepr, ClassRepr>();
+        for (StringCache.S fileName : delta.sourceFileToClasses.keySet()) {
+            final Set<ClassRepr> classes = (Set<ClassRepr>) delta.sourceFileToClasses.foxyGet(fileName);
+            final Set<ClassRepr> pastClasses = (Set<ClassRepr>) sourceFileToClasses.foxyGet(fileName);
+            final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
+            final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
 
-            for (ClassRepr cr : e.getValue()) {
-                classes.put(cr, cr);
-            }
+            final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
-            final Set<ClassRepr> pastClasses = sourceFileToClasses.get(fileName);
-            final Set<StringCache.S> dependants = fileToFileDependency.get(fileName);
+            for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
+                final ClassRepr it = changed.fst;
+                final ClassRepr.Diff diff = (ClassRepr.Diff) changed.snd;
 
-            if (pastClasses != null) {
-                for (ClassRepr past : pastClasses) {
-                    final ClassRepr present = classes.get(past);
+                if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
+                    affectedUsages.add(it.createUsage ());
+                }
 
-                    if (present != null) {
-                        if (present.differentiate(past)) {
-                            if (dependants != null)
-                                for (StringCache.S d : dependants) {
-                                    affectedFiles.add(d);
-                                }
-                        } else {
-                            incremental = false;
+                for (MethodRepr m : diff.methods().removed()) {
+                    affectedUsages.add(m.createUsage (it.name));
+                }
+
+                for (Pair<MethodRepr, Difference> m : diff.methods().changed()) {
+                    affectedUsages.add(m.fst.createUsage(it.name));
+                }
+
+                for (FieldRepr f : diff.fields().removed()) {
+                    affectedUsages.add(f.createUsage (it.name));
+                }
+
+                for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
+                    final Difference d = f.snd;
+                    final FieldRepr field = f.fst;
+
+                    final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+
+                    if (((field.access & Opcodes.ACC_PUBLIC) > 0 || (field.access & Opcodes.ACC_PROTECTED) > 0) && ((field.access & mask) == mask)) {
+                        if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
+                            return false;
                         }
                     }
+
+                    affectedUsages.add(field.createUsage(it.name));
+                }
+            }
+
+            for (ClassRepr c : classDiff.removed()) {
+                affectedUsages.add (c.createUsage());
+            }
+
+            for (StringCache.S depFile : dependants) {
+                final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage> (sourceFileToUsages.foxyGet(depFile));
+
+                usages.retainAll(affectedUsages);
+
+                if (! usages.isEmpty()) {
+                    affectedFiles.add(depFile);
                 }
             }
         }
 
-        return incremental;
+        return true;
     }
 
     public void integrate(final Mappings delta, final Set<StringCache.S> removed) {
         if (removed != null) {
             for (StringCache.S file : removed) {
-                final Set<ClassRepr> classes = sourceFileToClasses.get(file);
+                final Set<ClassRepr> classes = (Set<ClassRepr>) sourceFileToClasses.foxyGet(file);
 
                 if (classes != null) {
                     for (ClassRepr cr : classes) {
@@ -92,84 +141,28 @@ public class Mappings {
         fileToFileDependency.putAll(delta.fileToFileDependency);
     }
 
-    public class Depender {
-        boolean resolved;
-        StringCache.S value;
-
-        private Depender(StringCache.S value) {
-            this.resolved = false;
-            this.value = value;
-        }
-
-        public StringCache.S getSourceFile() {
-            if (!resolved) {
-                value = classToSourceFile.get(value);
-                resolved = true;
-            }
-
-            return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Depender depender = (Depender) o;
-
-            if (value != null ? !value.equals(depender.value) : depender.value != null) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return value != null ? value.hashCode() : 0;
-        }
-    }
-
-    private <T> void updateMap(final Map<StringCache.S, Set<T>> map, final StringCache.S a, final T b) {
-        Set<T> d = map.get(a);
-
-        if (d == null) {
-            d = new HashSet<T>();
-            map.put(a, d);
-        }
-
-        d.add(b);
-    }
-
-    private <T> void updateMap(final Map<StringCache.S, Set<T>> map, final StringCache.S a, final Set<T> b) {
-        final Set<T> d = map.get(a);
-
-        if (d == null)
-            map.put(a, b);
-        else
-            d.addAll(b);
-    }
-
     private void updateSourceToUsages(final StringCache.S source, final Set<UsageRepr.Usage> usages) {
-        updateMap(sourceFileToUsages, source, usages);
+        sourceFileToUsages.put(source, usages);
     }
 
     private void updateSourceToClasses(final StringCache.S source, final ClassRepr classRepr) {
-        updateMap(sourceFileToClasses, source, classRepr);
+        sourceFileToClasses.put(source, classRepr);
     }
 
     private void updateDependency(final StringCache.S a, final StringCache.S owner) {
         final StringCache.S sourceFile = classToSourceFile.get(owner);
 
         if (sourceFile == null) {
-            updateMap(waitingForResolve, owner, a);
+            waitingForResolve.put(owner, a);
         } else {
-            updateMap(fileToFileDependency, sourceFile, a);
+            fileToFileDependency.put(sourceFile, a);
         }
     }
 
     private void updateClassToSource(final StringCache.S className, final StringCache.S sourceName) {
         classToSourceFile.put(className, sourceName);
 
-        final Set<StringCache.S> waiting = waitingForResolve.get(className);
+        final Set<StringCache.S> waiting = (Set<StringCache.S>) waitingForResolve.foxyGet(className);
 
         if (waiting != null) {
             for (StringCache.S f : waiting) {
@@ -229,29 +222,31 @@ public class Mappings {
     }
 
     public Set<ClassRepr> getClasses(final StringCache.S sourceFileName) {
-        return sourceFileToClasses.get(sourceFileName);
+        return (Set<ClassRepr>) sourceFileToClasses.foxyGet(sourceFileName);
     }
 
     public Set<ClassRepr> getClasses(final String sourceFileName) {
-        return sourceFileToClasses.get(StringCache.get(sourceFileName));
+        return (Set<ClassRepr>) sourceFileToClasses.foxyGet(StringCache.get(sourceFileName));
     }
 
     public Set<UsageRepr.Usage> getUsages(final String sourceFileName) {
-        return sourceFileToUsages.get(StringCache.get(sourceFileName));
+        return (Set<UsageRepr.Usage>) sourceFileToUsages.foxyGet(StringCache.get(sourceFileName));
     }
 
     public Set<UsageRepr.Usage> getUsages(final StringCache.S sourceFileName) {
-        return sourceFileToUsages.get(sourceFileName);
+        return (Set<UsageRepr.Usage>) sourceFileToUsages.foxyGet(sourceFileName);
     }
 
     public void print() {
         try {
             final BufferedWriter w = new BufferedWriter(new FileWriter("dep.txt"));
-            for (Map.Entry<StringCache.S, Set<StringCache.S>> e : fileToFileDependency.entrySet()) {
-                w.write(e.getKey().value + " -->");
+            for (StringCache.S key : fileToFileDependency.keySet()) {
+                final Set<StringCache.S> value = (Set<StringCache.S>) fileToFileDependency.foxyGet(key);
+
+                w.write(key.value + " -->");
                 w.newLine();
 
-                for (StringCache.S s : e.getValue()) {
+                for (StringCache.S s : value) {
                     if (s == null)
                         w.write("  <null>");
                     else

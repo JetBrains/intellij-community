@@ -21,10 +21,17 @@ public class TypeRepr {
 
     public static abstract class AbstractType implements RW.Writable {
         public abstract void updateClassUsages(Set<UsageRepr.Usage> s);
+
+        public abstract String getDescr();
     }
 
     public static class PrimitiveType extends AbstractType {
         public final StringCache.S type;
+
+        @Override
+        public String getDescr() {
+            return type.value;
+        }
 
         @Override
         public void updateClassUsages(Set<UsageRepr.Usage> s) {
@@ -45,21 +52,24 @@ public class TypeRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            PrimitiveType that = (PrimitiveType) o;
+            final PrimitiveType that = (PrimitiveType) o;
 
-            if (type != null ? !type.equals(that.type) : that.type != null) return false;
-
-            return true;
+            return type.equals(that.type);
         }
 
         @Override
         public int hashCode() {
-            return type != null ? type.hashCode() : 0;
+            return type.hashCode();
         }
     }
 
     public static class ArrayType extends AbstractType {
         public final AbstractType elementType;
+
+        @Override
+        public String getDescr() {
+            return "[" + elementType.getDescr();
+        }
 
         @Override
         public void updateClassUsages(Set<UsageRepr.Usage> s) {
@@ -75,17 +85,14 @@ public class TypeRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            ArrayType arrayType = (ArrayType) o;
+            final ArrayType arrayType = (ArrayType) o;
 
-            if (elementType != null ? !elementType.equals(arrayType.elementType) : arrayType.elementType != null)
-                return false;
-
-            return true;
+            return elementType.equals(arrayType.elementType);
         }
 
         @Override
         public int hashCode() {
-            return elementType != null ? elementType.hashCode() : 0;
+            return elementType.hashCode();
         }
 
         public void write(BufferedWriter w) {
@@ -96,6 +103,11 @@ public class TypeRepr {
 
     public static class ClassType extends AbstractType {
         public final StringCache.S className;
+
+        @Override
+        public String getDescr() {
+            return "L" + className.value + ";";
+        }
 
         @Override
         public void updateClassUsages(Set<UsageRepr.Usage> s) {
@@ -111,11 +123,9 @@ public class TypeRepr {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            ClassType classType = (ClassType) o;
+            final ClassType classType = (ClassType) o;
 
-            if (className != null ? !className.equals(classType.className) : classType.className != null) return false;
-
-            return true;
+            return className.equals(classType.className);
         }
 
         @Override

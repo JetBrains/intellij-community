@@ -15,6 +15,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class FieldRepr extends ProtoMember {
+
     public final Object value;
 
     public Difference difference(final Proto past) {
@@ -86,7 +87,7 @@ public class FieldRepr extends ProtoMember {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        FieldRepr fieldRepr = (FieldRepr) o;
+        final FieldRepr fieldRepr = (FieldRepr) o;
 
         return name.equals(fieldRepr.name) && type.equals(fieldRepr.type);
     }
@@ -125,4 +126,8 @@ public class FieldRepr extends ProtoMember {
             return new FieldRepr(r);
         }
     };
+
+    public UsageRepr.Usage createUsage (final StringCache.S owner) {
+        return UsageRepr.createFieldUsage(name.value, owner.value, type.getDescr());
+    }
 }

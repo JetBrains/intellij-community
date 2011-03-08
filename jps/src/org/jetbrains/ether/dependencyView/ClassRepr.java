@@ -1,6 +1,8 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.sun.tools.javac.util.Pair;
 import org.jetbrains.ether.RW;
+import org.objectweb.asm.Opcodes;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,37 +16,22 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
-
     public final StringCache.S fileName;
     public final TypeRepr.AbstractType superClass;
     public final Set<TypeRepr.AbstractType> interfaces;
     public final Set<TypeRepr.AbstractType> nestedClasses;
-    public final FoxyMap<StringCache.S, FieldRepr> fields;
-    public final FoxyMap<StringCache.S, MethodRepr> methods;
 
-    private static FoxyMap.CollectionConstructor<FieldRepr> fieldListConstructor = new FoxyMap.CollectionConstructor<FieldRepr> () {
-        public Collection<FieldRepr> create() {
-            return new LinkedList<FieldRepr>();
-        }
-    };
-
-    private static FoxyMap.CollectionConstructor<MethodRepr> methodListConstructor = new FoxyMap.CollectionConstructor<MethodRepr> () {
-        public Collection<MethodRepr> create() {
-            return new LinkedList<MethodRepr>();
-        }
-    };
+    private final Set<FieldRepr> fields;
+    private final Set<MethodRepr> methods;
 
     public abstract class Diff extends Difference {
         public abstract Difference.Specifier<TypeRepr.AbstractType> interfaces();
-
         public abstract Difference.Specifier<TypeRepr.AbstractType> nestedClasses();
-
         public abstract Difference.Specifier<FieldRepr> fields();
-
         public abstract Difference.Specifier<MethodRepr> methods();
     }
 
-    public Diff difference(final Proto past) {
+    public Diff difference (final Proto past) {
         final ClassRepr pastClass = (ClassRepr) past;
 
         int diff = super.difference(past).base();
@@ -65,11 +52,11 @@ public class ClassRepr extends Proto {
             }
 
             public Difference.Specifier<FieldRepr> fields() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                return Difference.make (pastClass.fields, fields);
             }
 
             public Difference.Specifier<MethodRepr> methods() {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                return Difference.make (pastClass.methods, methods);
             }
 
             public int base() {
@@ -78,28 +65,10 @@ public class ClassRepr extends Proto {
         };
     }
 
-    public boolean differentiate(final ClassRepr past) {
+    public boolean differentiate(final ClassRepr past, final Set<StringCache.S> affected) {
         boolean incremental = true;
+        final Diff diff = difference(past);
 
-        /*for (List<FieldRepr> fs : past.fields.values()) {
-            for (FieldRepr pastField : fs)
-                if ((pastField.access & (Opcodes.ACC_FINAL | Opcodes.ACC_STATIC)) > 0) {
-                    for (List<FieldRepr> pfs : fields.values())
-                        for (FieldRepr presentField : pfs) {
-                            if (presentField.name.equals(pastField.name)) {
-                                if (presentField.access != pastField.access ||
-                                        (presentField.value != null && pastField.value != null &&
-                                                !presentField.value.equals(pastField.value)
-                                        ) ||
-                                        (presentField.value != pastField.value && (presentField.value == null || pastField.value == null))
-                                        ) {
-                                    incremental = false;
-                                }
-                            }
-                        }
-                }
-        }
-*/
         return incremental;
     }
 
@@ -110,32 +79,24 @@ public class ClassRepr extends Proto {
             t.updateClassUsages(s);
         }
 
-        for (MethodRepr m : methods.foxyValues()) {
+        for (MethodRepr m : methods) {
             m.updateClassUsages(s);
         }
 
-        for (FieldRepr f : fields.foxyValues()) {
+        for (FieldRepr f : fields) {
             f.updateClassUsages(s);
         }
     }
 
-    public ClassRepr(final int a, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Collection<FieldRepr> f, final Collection<MethodRepr> m) {
+    public ClassRepr(final int a, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
         super(a, sig, n);
         fileName = fn;
         superClass = TypeRepr.createClassType(sup);
         interfaces = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(i, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
-        fields = new FoxyMap<StringCache.S, FieldRepr>(fieldListConstructor);
-        methods = new FoxyMap<StringCache.S, MethodRepr>(methodListConstructor);
-
-        for (FieldRepr fr : f) {
-            fields.put(fr.name, fr);
-        }
-
-        for (MethodRepr mr : m) {
-            methods.put(mr.name, mr);
-        }
-    }
+        fields = f;
+        methods = m;
+   }
 
     public ClassRepr(final BufferedReader r) {
         super(r);
@@ -143,16 +104,8 @@ public class ClassRepr extends Proto {
         superClass = TypeRepr.reader.read(r);
         interfaces = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
-
-        fields = new FoxyMap<StringCache.S, FieldRepr>(fieldListConstructor);
-        for (FieldRepr fr : RW.readMany(r, FieldRepr.reader, new LinkedList<FieldRepr>())) {
-            fields.put(fr.name, fr);
-        }
-
-        methods = new FoxyMap<StringCache.S, MethodRepr>(methodListConstructor);
-        for (MethodRepr mr : RW.readMany(r, MethodRepr.reader, new LinkedList<MethodRepr>())) {
-            methods.put(mr.name, mr);
-        }
+        fields = (Set<FieldRepr>) RW.readMany(r, FieldRepr.reader, new HashSet<FieldRepr>());
+        methods = (Set<MethodRepr>) RW.readMany(r, MethodRepr.reader, new HashSet<MethodRepr>());
     }
 
     public static RW.Reader<ClassRepr> reader = new RW.Reader<ClassRepr>() {
@@ -167,8 +120,8 @@ public class ClassRepr extends Proto {
         superClass.write(w);
         RW.writeln(w, interfaces);
         RW.writeln(w, nestedClasses);
-        RW.writeln(w, fields.foxyValues());
-        RW.writeln(w, methods.foxyValues());
+        RW.writeln(w, fields);
+        RW.writeln(w, methods);
     }
 
     @Override
@@ -189,5 +142,9 @@ public class ClassRepr extends Proto {
         int result = fileName != null ? fileName.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         return result;
+    }
+
+    public UsageRepr.Usage createUsage () {
+        return UsageRepr.createClassUsage(name);
     }
 }

@@ -2,10 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import com.sun.tools.javac.util.Pair;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +23,7 @@ public abstract class Difference {
         public Collection<T> added ();
         public Collection<T> removed ();
         public Collection<Pair<T, Difference>> changed();
+        public boolean unchanged ();
     }
 
     public static <T> Specifier<T> make (final Set<T> past, final Set<T> now) {
@@ -38,6 +36,27 @@ public abstract class Difference {
         removed.removeAll(now);
 
         final Set<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>> ();
+        final Set<T> intersect = new HashSet<T> (past);
+        final Map<T, T> nowMap = new HashMap<T, T> ();
+
+        for (T s : now) {
+            if (intersect.contains(s)) {
+                nowMap.put(s, s);
+            }
+        }
+
+        intersect.retainAll(now);
+
+        for (T x : intersect) {
+            final T y = nowMap.get(x);
+
+            if (x instanceof Proto) {
+                final Proto px = (Proto) x;
+                final Proto py = (Proto) y;
+
+                changed.add(new Pair<T, Difference> (x, py.difference(px)));
+            }
+        }
 
         return new Specifier<T> () {
             public Collection<T> added () {
@@ -47,14 +66,16 @@ public abstract class Difference {
             public Collection<T> removed () {
                 return removed;
             }
+
             public Collection<Pair<T, Difference>> changed () {
                 return changed;
             }
-        };
-    }
 
-    public static <T> Specifier<T> make (final Map<StringCache.S, T> past, final Map<StringCache.S, T> now) {
-        return null;
+            public boolean unchanged (){
+                return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
+            }
+
+        };
     }
 
     public abstract int base ();

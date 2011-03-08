@@ -3,23 +3,23 @@ package org.jetbrains.ether.dependencyView;
 import java.util.*;
 
 /**
-* Created by IntelliJ IDEA.
-* User: db
-* Date: 08.03.11
-* Time: 15:38
-* To change this template use File | Settings | File Templates.
-*/
+ * Created by IntelliJ IDEA.
+ * User: db
+ * Date: 08.03.11
+ * Time: 15:38
+ * To change this template use File | Settings | File Templates.
+ */
 public class FoxyMap<K, V> implements Map<K, Object> {
 
     public interface CollectionConstructor<X> {
-        public Collection<X> create ();
+        public Collection<X> create();
     }
 
     private final Map<K, Object> map = new HashMap<K, Object>();
 
     private final CollectionConstructor<V> constr;
 
-    public FoxyMap (final CollectionConstructor<V> c) {
+    public FoxyMap(final CollectionConstructor<V> c) {
         constr = c;
     }
 
@@ -68,12 +68,19 @@ public class FoxyMap<K, V> implements Map<K, Object> {
             map.put(key, value);
         } else {
             if (c instanceof Collection) {
-                ((Collection) c).add(value);
+                if (value instanceof Collection)
+                    ((Collection) c).addAll((Collection) value);
+                else
+                    ((Collection) c).add(value);
             } else {
-                final List d = new LinkedList();
+                final Collection d = constr.create();
 
                 d.add(c);
-                d.add(value);
+
+                if (value instanceof Collection)
+                    d.addAll((Collection) value);
+                else
+                    d.add(value);
 
                 map.put(key, d);
             }
