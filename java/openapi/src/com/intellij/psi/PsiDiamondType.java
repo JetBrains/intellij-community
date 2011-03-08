@@ -259,7 +259,22 @@ public class PsiDiamondType extends PsiType {
       if (myErrorMessage != null) {
         return NULL_TYPES;
       }
-      return myInferredTypes.toArray(new PsiType[myInferredTypes.size()]);
+      final PsiType[] result = new PsiType[myInferredTypes.size()];
+      for (int i = 0, myInferredTypesSize = myInferredTypes.size(); i < myInferredTypesSize; i++) {
+        PsiType inferredType = myInferredTypes.get(i);
+        if (inferredType instanceof PsiWildcardType) {
+          final PsiType bound = ((PsiWildcardType)inferredType).getBound();
+          result[i] = bound != null ? bound : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+        }
+        else {
+          result[i] = inferredType;
+        }
+      }
+      return result;
+    }
+
+    public List<PsiType> getInferredTypes() {
+      return myInferredTypes;
     }
 
     public String getErrorMessage() {
@@ -274,13 +289,7 @@ public class PsiDiamondType extends PsiType {
         myErrorMessage = "Cannot infer type arguments for " +
                          myNewExpressionPresentableText + " because type " + psiType.getPresentableText() + " inferred is not allowed in current context";
       } else {
-        if (psiType instanceof PsiWildcardType) {
-          final PsiType bound = ((PsiWildcardType)psiType).getBound();
-          myInferredTypes.add(bound != null ? bound : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject)));
-        }
-        else {
-          myInferredTypes.add(psiType);
-        }
+        myInferredTypes.add(psiType);
       }
     }
 

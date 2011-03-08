@@ -27,6 +27,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: 1/28/11
@@ -77,13 +79,13 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
                 if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return;
                 final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression);
                 if (inferenceResult.getErrorMessage() == null) {
-                  final PsiType[] types = inferenceResult.getTypes();
+                  final List<PsiType> types = inferenceResult.getInferredTypes();
                   final PsiType[] typeArguments = parameterList.getTypeArguments();
-                  if (types.length == typeArguments.length) {
+                  if (types.size() == typeArguments.length) {
                     for (int i = 0, typeArgumentsLength = typeArguments.length; i < typeArgumentsLength; i++) {
                       PsiType typeArgument = typeArguments[i];
-                      if (types[i] instanceof PsiWildcardType) {
-                        final PsiWildcardType wildcardType = (PsiWildcardType)types[i];
+                      if (types.get(i) instanceof PsiWildcardType) {
+                        final PsiWildcardType wildcardType = (PsiWildcardType)types.get(i);
                         final PsiType bound = wildcardType.getBound();
                         if (bound != null) {
                           if (wildcardType.isExtends()) {
@@ -93,7 +95,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
                           }
                         }
                       }
-                      if (!typeArgument.equals(types[i])) {
+                      if (!typeArgument.equals(types.get(i))) {
                         return;
                       }
                     }
