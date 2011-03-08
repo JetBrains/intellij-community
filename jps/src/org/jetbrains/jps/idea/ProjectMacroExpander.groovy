@@ -19,8 +19,8 @@ public class ProjectMacroExpander implements MacroExpander {
     if (path == null) return path
     path = path.replace("\$PROJECT_DIR\$", projectBasePath)
     pathVariables.each { name, value ->
-      path = path.replace("\$${name}\$", value)
+      path = path.replace("\$${name}\$", value);
     }
-    return path
+    return path.replace("/", File.separator);
   }
 }
