@@ -14,23 +14,40 @@ import java.util.Set;
  * Time: 4:56
  * To change this template use File | Settings | File Templates.
  */
-public class FieldRepr implements RW.Writable {
-    public final StringCache.S name;
-    public final int access;
+public class FieldRepr extends ProtoMember {
     public final Object value;
-    public final TypeRepr.AbstractType type;
-    public final String signature;
 
-    public void updateClassUsages (final Set<UsageRepr.Usage> s) {
+    public Difference difference(final Proto past) {
+        int diff = super.difference(past).base();
+
+        final FieldRepr field = (FieldRepr) past;
+
+        switch ((value == null ? 0 : 1) + (field.value == null ? 0 : 2)) {
+            case 3:
+                if (!value.equals(field.value)) {
+                    diff |= Difference.VALUE;
+                }
+                break;
+
+            case 2:
+            case 1:
+                diff |= Difference.VALUE;
+                break;
+
+            case 0:
+                break;
+        }
+
+        return Difference.createBase(diff);
+    }
+
+    public void updateClassUsages(final Set<UsageRepr.Usage> s) {
         type.updateClassUsages(s);
     }
 
     public FieldRepr(final int a, final String n, final String d, final String s, final Object v) {
-        name = StringCache.get (n);
-        access = a;
+        super(a, StringCache.get(s), StringCache.get(n), TypeRepr.getType(d));
         value = v;
-        type = TypeRepr.getType (d);
-        signature = s;
     }
 
     private static Object readTyped(final BufferedReader r, final String tag) {
@@ -60,18 +77,8 @@ public class FieldRepr implements RW.Writable {
     }
 
     public FieldRepr(final BufferedReader r) {
-        name = StringCache.get(RW.readString(r));
-        access = RW.readInt(r);
-
-        final String s = RW.readString(r);
-
-        signature = s.length() == 0 ? null : s;
-
-        type = TypeRepr.reader.read(r);
-
-        final String t = RW.readString(r);
-
-        value = readTyped(r, t);
+        super(r);
+        value = readTyped(r, RW.readString(r));
     }
 
     @Override
@@ -81,22 +88,16 @@ public class FieldRepr implements RW.Writable {
 
         FieldRepr fieldRepr = (FieldRepr) o;
 
-        if (name != null ? !name.equals(fieldRepr.name) : fieldRepr.name != null) return false;
-
-        return true;
+        return name.equals(fieldRepr.name) && type.equals(fieldRepr.type);
     }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return 31 * name.hashCode() + type.hashCode();
     }
 
     public void write(final BufferedWriter w) {
-        RW.writeln(w, name.value);
-        RW.writeln(w, Integer.toString(access));
-        RW.writeln(w, signature);
-
-        type.write(w);
+        super.write(w);
 
         if (value instanceof String) {
             RW.writeln(w, "string");

@@ -91,6 +91,7 @@ public class ClassfileAnalyzer {
         Boolean takeIntoAccount = false;
 
         final StringCache.S fileName;
+        int access;
         StringCache.S name;
         String superClass;
         String[] interfaces;
@@ -112,7 +113,7 @@ public class ClassfileAnalyzer {
 
         public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
-                    new ClassRepr(fileName, name, signature, superClass, interfaces, nestedClasses, fields, methods) : null;
+                    new ClassRepr(access, fileName, name, StringCache.get(signature), superClass, interfaces, nestedClasses, fields, methods) : null;
 
             if (repr != null) {
                 repr.updateClassUsages(usages);
@@ -122,9 +123,10 @@ public class ClassfileAnalyzer {
         }
 
         @Override
-        public void visit(int version, int access, String n, String sig, String s, String[] i) {
-            takeIntoAccount = notPrivate(access);
+        public void visit(int version, int a, String n, String sig, String s, String[] i) {
+            takeIntoAccount = notPrivate(a);
 
+            access = a;
             name = StringCache.get (n);
             signature = sig;
             superClass = s;

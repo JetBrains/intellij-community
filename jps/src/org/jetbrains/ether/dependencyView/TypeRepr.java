@@ -148,7 +148,7 @@ public class TypeRepr {
     }
 
     public static Collection<AbstractType> createClassType(final String[] s, final Collection<AbstractType> acc) {
-        if (s == null) {
+        if (s != null) {
             for (String ss : s) {
                 acc.add(createClassType(ss));
             }

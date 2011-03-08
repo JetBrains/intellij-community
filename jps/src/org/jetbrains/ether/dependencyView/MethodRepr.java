@@ -6,6 +6,8 @@ import org.objectweb.asm.Type;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -15,61 +17,63 @@ import java.util.Set;
  * Time: 5:03
  * To change this template use File | Settings | File Templates.
  */
-public class MethodRepr implements RW.Writable {
-    private static String[] dummyString = new String[0];
+public class MethodRepr extends ProtoMember {
     private static TypeRepr.AbstractType[] dummyAbstractType = new TypeRepr.AbstractType[0];
 
-    public final StringCache.S name;
-    public final String signature;
-    public final int access;
-    public final TypeRepr.AbstractType returnType;
     public final TypeRepr.AbstractType[] argumentTypes;
-    public final TypeRepr.AbstractType[] exceptions;
+    public final Set<TypeRepr.AbstractType> exceptions;
+
+    public abstract class Diff extends Difference {
+        public abstract Specifier<TypeRepr.AbstractType> exceptions();
+    }
+
+    @Override
+    public Difference difference(Proto past) {
+        final int d = super.difference(past).base();
+        final Difference.Specifier<TypeRepr.AbstractType> excs = Difference.make(((MethodRepr) past).exceptions, exceptions);
+
+        return new Diff() {
+            @Override
+            public Specifier<TypeRepr.AbstractType> exceptions() {
+                return excs;
+            }
+
+            @Override
+            public int base() {
+                return d;
+            }
+        };
+    }
 
     public void updateClassUsages(final Set<UsageRepr.Usage> s) {
-        returnType.updateClassUsages(s);
+        type.updateClassUsages(s);
 
         for (int i = 0; i < argumentTypes.length; i++) {
             argumentTypes[i].updateClassUsages(s);
         }
 
         if (exceptions != null)
-            for (int i = 0; i < exceptions.length; i++) {
-                exceptions[i].updateClassUsages(s);
+            for (TypeRepr.AbstractType typ : exceptions) {
+                typ.updateClassUsages(s);
             }
     }
 
     public MethodRepr(final int a, final String n, final String s, final String d, final String[] e) {
-        name = StringCache.get(n);
-        exceptions = TypeRepr.createClassType(e);
-        signature = s;
-        access = a;
+        super(a, StringCache.get(s), StringCache.get(n), TypeRepr.getType(Type.getReturnType(d)));
+        exceptions = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(e, new HashSet<TypeRepr.AbstractType>());
         argumentTypes = TypeRepr.getType(Type.getArgumentTypes(d));
-        returnType = TypeRepr.getType(Type.getReturnType(d));
     }
 
     public MethodRepr(final BufferedReader r) {
-        name = StringCache.get(RW.readString(r));
-        access = RW.readInt(r);
-
-        final String s = RW.readString(r);
-
-        signature = s.length() == 0 ? null : s;
-
+        super(r);
         argumentTypes = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
-        returnType = TypeRepr.reader.read(r);
-
-        exceptions = RW.readMany(r, TypeRepr.reader, new ArrayList<TypeRepr.AbstractType>()).toArray(dummyAbstractType);
+        exceptions = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
     }
 
     public void write(final BufferedWriter w) {
-        RW.writeln(w, name.value);
-        RW.writeln(w, Integer.toString(access));
-        RW.writeln(w, signature);
-
+        super.write(w);
         RW.writeln(w, argumentTypes, TypeRepr.fromAbstractType);
-        returnType.write(w);
-        RW.writeln(w, exceptions, TypeRepr.fromAbstractType);
+        RW.writeln(w, exceptions);
     }
 
     public static RW.Reader<MethodRepr> reader = new RW.Reader<MethodRepr>() {
@@ -85,13 +89,11 @@ public class MethodRepr implements RW.Writable {
 
         MethodRepr that = (MethodRepr) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-        return true;
+        return name.equals(that.name) && type.equals(that.type) && Arrays.equals(argumentTypes, that.argumentTypes);
     }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return 31 * (31 * (argumentTypes != null ? Arrays.hashCode(argumentTypes) : 0) + type.hashCode()) + name.hashCode();
     }
 }
