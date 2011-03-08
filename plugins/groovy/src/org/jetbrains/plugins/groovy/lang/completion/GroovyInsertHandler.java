@@ -153,26 +153,6 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     addTailType(item).processTail(context.getEditor(), context.getTailOffset());
   }
 
-  /*
-  private static boolean isExpressionStatement(PsiFile psiFile, int offset) {
-    PsiElement elementAt = psiFile.findElementAt(offset);
-    if (elementAt == null) return false;
-    GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
-    if (expr == null) return false;
-    final PsiElement parent = expr.getParent();
-    if (parent instanceof GrControlFlowOwner) return true;
-    if (parent instanceof GrExpression ||
-        parent instanceof GrArgumentList ||
-        parent instanceof GrReturnStatement ||
-        parent instanceof GrAssertStatement ||
-        parent instanceof GrThrowStatement ||
-        parent instanceof GrSwitchStatement) {
-      return false;
-    }
-    return true;
-  }
-  */
-
   private static void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;

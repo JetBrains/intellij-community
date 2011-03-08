@@ -89,20 +89,29 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
          expression != null;
          expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
-      if (expressions.contains(expression) || expression instanceof GrParenthesizedExpression) continue;
-      if (expression instanceof GrSuperReferenceExpression || expression.getType() == PsiType.VOID) continue;
-
-      if (expression instanceof GrApplicationStatement) continue;
-      if (expression instanceof GrReferenceExpression &&
-          (expression.getParent() instanceof GrMethodCall && ((GrReferenceExpression)expression).resolve() instanceof PsiMethod ||
-           ((GrReferenceExpression)expression).resolve() instanceof PsiClass)) {
-        continue;
-      }
-      if (expression instanceof GrAssignmentExpression) continue;
+      if (expressions.contains(expression)) continue;
+      if (expressionIsNotCorrect(expression)) continue;
 
       expressions.add(expression);
     }
     return expressions;
+  }
+
+  private static boolean expressionIsNotCorrect(GrExpression expression) {
+    if (expression instanceof GrParenthesizedExpression) return true;
+    if (expression instanceof GrSuperReferenceExpression) return true;
+    if (expression.getType() == PsiType.VOID) return true;
+    if (expression instanceof GrAssignmentExpression) return true;
+    if (expression instanceof GrReferenceExpression && expression.getParent() instanceof GrCall) {
+      final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+      return resolved instanceof PsiMethod || resolved instanceof PsiClass;
+    }
+    if (expression instanceof GrApplicationStatement) {
+      return !PsiUtil.isExpressionStatement(expression);
+    }
+    if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
+
+    return false;
   }
 
   private static int correctOffset(Editor editor, int offset) {
@@ -290,23 +299,17 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   public static GrExpression findExpression(GroovyFileBase file, int startOffset, int endOffset) {
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     if (selectedExpr == null) return null;
-    if (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrStringInjection) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
-    }
-
-    if (selectedExpr instanceof GrReferenceExpression &&
-        selectedExpr.getParent() instanceof GrMethodCall &&
-        (((GrMethodCall)selectedExpr.getParent()).isCommandExpression() || selectedExpr.getParent() instanceof GrApplicationStatement) ||
-        selectedExpr instanceof GrApplicationStatement) {
-      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.expression.in.command.expression"));
-    }
-
     PsiType type = selectedExpr.getType();
     if (type != null) type = TypeConversionUtil.erasure(type);
 
     if (PsiType.VOID.equals(type)) {
       throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
+
+    if (expressionIsNotCorrect(selectedExpr)) {
+      throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
+    }
+
     return selectedExpr;
   }
 
