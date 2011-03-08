@@ -133,9 +133,6 @@ public abstract class BaseRefactoringAction extends AnAction {
           return;
         }
         element = getElementAtCaret(editor, file);
-        if (element != null) {
-          languages = new Language[] {element.getLanguage()};
-        }
       }
 
       if (element == null || element instanceof SyntheticElement || languages == null) {
