@@ -70,6 +70,14 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testNewExpressionWithDiamond() throws Exception {
+    doTest(false);
+  }
+
+  public void testNewExpressionWithPreservedDiamond() throws Exception {
+    doTest(false);
+  }
+
   public void testAugmentedAssignment() throws Exception {
     String exception = null;
     try {
