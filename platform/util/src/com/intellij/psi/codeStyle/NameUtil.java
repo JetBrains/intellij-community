@@ -480,7 +480,7 @@ public class NameUtil {
     private final String myPattern;
 
     public MinusculeMatcher(String pattern) {
-      myPattern = pattern.replaceAll(":", "\\*:");
+      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.");
     }
 
     private boolean matches(int patternIndex, List<String> words, int wordIndex) {
