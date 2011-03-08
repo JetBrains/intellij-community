@@ -487,7 +487,7 @@ form<caret>"""
 
     myFixture.completeBasic()
     myFixture.checkResult """import static java.lang.String.format
-format<caret>"""
+format(<caret>)"""
   }
   
   public void testImportAsterisk() {
