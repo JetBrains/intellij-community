@@ -15,115 +15,24 @@ import java.util.*;
  */
 public class ClassRepr extends Proto {
 
-    public class FoxyMap<K, V> implements Map<K, Object> {
-        private final Map<K, Object> map = new HashMap<K, Object>();
-
-        public int size() {
-            return map.size();
-        }
-
-        public boolean isEmpty() {
-            return map.isEmpty();
-        }
-
-        public boolean containsKey(final Object key) {
-            return map.containsKey(key);
-        }
-
-        public boolean containsValue(final Object value) {
-            return map.containsValue(value);
-        }
-
-        public Object get(final Object key) {
-            return map.get(key);
-        }
-
-        public Collection<V> foxyGet(final K key) {
-            final Object c = get(key);
-
-            if (c == null) {
-                return null;
-            }
-
-            if (c instanceof Collection) {
-                return (Collection) c;
-            }
-
-            final List<V> l = new LinkedList<V>();
-
-            l.add((V) c);
-
-            return l;
-        }
-
-        public Object put(final K key, final Object value) {
-            final Object c = get(key);
-
-            if (c == null) {
-                map.put(key, value);
-            } else {
-                if (c instanceof Collection) {
-                    ((Collection) c).add(value);
-                } else {
-                    final List d = new LinkedList();
-
-                    d.add(c);
-                    d.add(value);
-
-                    map.put(key, d);
-                }
-            }
-
-            return c;
-        }
-
-        public Object remove(final Object key) {
-            return map.remove(key);
-        }
-
-        public void putAll(Map<? extends K, ? extends Object> m) {
-            for (Entry<? extends K, ? extends Object> e : m.entrySet()) {
-                put(e.getKey(), e.getValue());
-            }
-        }
-
-        public void clear() {
-            map.clear();
-        }
-
-        public Set<K> keySet() {
-            return map.keySet();
-        }
-
-        public Collection<Object> values() {
-            final List l = new LinkedList();
-
-            for (Object value : map.values()) {
-                if (value instanceof Collection) {
-                    l.addAll((Collection) value);
-                } else {
-                    l.add(value);
-                }
-            }
-
-            return l;
-        }
-
-        public Collection<V> foxyValues() {
-            return (Collection<V>) values();
-        }
-
-        public Set<Entry<K, Object>> entrySet() {
-            return map.entrySet();
-        }
-    }
-
     public final StringCache.S fileName;
     public final TypeRepr.AbstractType superClass;
     public final Set<TypeRepr.AbstractType> interfaces;
     public final Set<TypeRepr.AbstractType> nestedClasses;
     public final FoxyMap<StringCache.S, FieldRepr> fields;
     public final FoxyMap<StringCache.S, MethodRepr> methods;
+
+    private static FoxyMap.CollectionConstructor<FieldRepr> fieldListConstructor = new FoxyMap.CollectionConstructor<FieldRepr> () {
+        public Collection<FieldRepr> create() {
+            return new LinkedList<FieldRepr>();
+        }
+    };
+
+    private static FoxyMap.CollectionConstructor<MethodRepr> methodListConstructor = new FoxyMap.CollectionConstructor<MethodRepr> () {
+        public Collection<MethodRepr> create() {
+            return new LinkedList<MethodRepr>();
+        }
+    };
 
     public abstract class Diff extends Difference {
         public abstract Difference.Specifier<TypeRepr.AbstractType> interfaces();
@@ -216,8 +125,8 @@ public class ClassRepr extends Proto {
         superClass = TypeRepr.createClassType(sup);
         interfaces = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(i, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
-        fields = new FoxyMap<StringCache.S, FieldRepr>();
-        methods = new FoxyMap<StringCache.S, MethodRepr>();
+        fields = new FoxyMap<StringCache.S, FieldRepr>(fieldListConstructor);
+        methods = new FoxyMap<StringCache.S, MethodRepr>(methodListConstructor);
 
         for (FieldRepr fr : f) {
             fields.put(fr.name, fr);
@@ -235,12 +144,12 @@ public class ClassRepr extends Proto {
         interfaces = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
 
-        fields = new FoxyMap<StringCache.S, FieldRepr>();
+        fields = new FoxyMap<StringCache.S, FieldRepr>(fieldListConstructor);
         for (FieldRepr fr : RW.readMany(r, FieldRepr.reader, new LinkedList<FieldRepr>())) {
             fields.put(fr.name, fr);
         }
 
-        methods = new FoxyMap<StringCache.S, MethodRepr>();
+        methods = new FoxyMap<StringCache.S, MethodRepr>(methodListConstructor);
         for (MethodRepr mr : RW.readMany(r, MethodRepr.reader, new LinkedList<MethodRepr>())) {
             methods.put(mr.name, mr);
         }
