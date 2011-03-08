@@ -1051,20 +1051,22 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
-    assert !myDisposed : disposeTrace;
-    myHidden = true;
+    if (myDisposed) {
+      LOG.error(disposeTrace);
+    } else {
+      myHidden = true;
 
-    try {
-      super.hide();
+      try {
+        super.hide();
 
-      Disposer.dispose(this);
+        Disposer.dispose(this);
 
-      assert myDisposed;
+        assert myDisposed;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-
 
     if (fireCanceled) {
       fireLookupCanceled(explicitly);
