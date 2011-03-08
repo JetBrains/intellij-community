@@ -59,6 +59,7 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
+    if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 
     if (c == '#' && PsiTreeUtil.getParentOfType(lookup.getPsiElement(), PsiDocComment.class) != null) {
       final LookupElement item = lookup.getCurrentItem();
