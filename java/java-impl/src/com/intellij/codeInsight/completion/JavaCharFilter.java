@@ -41,22 +41,24 @@ public class JavaCharFilter extends CharFilter {
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!lookup.isCompletion()) return null;
 
+    if (!(lookup.getPsiFile() instanceof PsiJavaFile)) {
+      return null;
+    }
+
     LookupElement item = lookup.getCurrentItem();
     if (item == null) return null;
 
     if (c == '!') {
-      if (lookup.getPsiFile() instanceof PsiJavaFile) {
-        final Object o = item.getObject();
-        if (o instanceof PsiVariable) {
-          if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-        }
-        if (o instanceof PsiMethod) {
-          final PsiType type = ((PsiMethod)o).getReturnType();
-          if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-        }
-
-        return null;
+      final Object o = item.getObject();
+      if (o instanceof PsiVariable) {
+        if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
+      if (o instanceof PsiMethod) {
+        final PsiType type = ((PsiMethod)o).getReturnType();
+        if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+
+      return null;
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;

@@ -604,4 +604,34 @@ return fo<caret>"""
 def foo(def a) {2}
 return foo()"""
   }
+
+  void checkCompletion(String before, String type, String after) {
+    myFixture.configureByText("a.groovy", before)
+    myFixture.completeBasic()
+    myFixture.type(type)
+    myFixture.checkResult(after)
+  }
+
+  public void testFinishClassNameWithSquareBracket() {
+    myFixture.addClass("class AbcdClass {}; class AbcdeClass {}")
+    checkCompletion("Abcd<caret>", '[', "AbcdClass[<caret>]")
+  }
+
+  public void testFinishMethodNameWithSquareBracket() {
+    myFixture.addClass("""class AbcdClass {
+      static int[] foo(int x){}
+      static int[] fobar(){}
+    }""")
+    checkCompletion("AbcdClass.fo<caret>", '[', "AbcdClass.fobar()[<caret>]")
+  }
+
+  public void testFinishVariableNameWithSquareBracket() {
+    checkCompletion("int[] fooo, foobar; foo<caret>", '[', "int[] fooo, foobar; foobar[<caret>]")
+  }
+
+  public void testFinishClassNameWithLt() {
+    myFixture.addClass("class AbcdClass {}; class AbcdeClass {}")
+    checkCompletion("Abcd<caret>", '<', "AbcdClass<<caret>>")
+  }
+
 }

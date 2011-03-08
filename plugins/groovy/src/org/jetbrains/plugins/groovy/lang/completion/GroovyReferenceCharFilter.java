@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -30,12 +32,15 @@ public class GroovyReferenceCharFilter extends CharFilter {
     final PsiFile psiFile = lookup.getPsiFile();
     if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyFileType.GROOVY_LANGUAGE)) return null;
 
+    LookupElement item = lookup.getCurrentItem();
+    if (item == null) return null;
+
     if (Character.isJavaIdentifierPart(c) || c == '\'') {
       return Result.ADD_TO_PREFIX;
     }
-    if (c == '\n' || c == '\t') {
-      return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-    }
+
+    if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 
     return null;
   }
