@@ -601,7 +601,10 @@ public interface Test {
       }
       joinAlarm()
       joinCompletion()
-      assert !LookupManager.getActiveLookup(another)
+      def l1 = LookupManager.getActiveLookup(another)
+      if (l1) {
+        assert false : l1.items
+      }
       type 'l'
       assert lookup
     }
