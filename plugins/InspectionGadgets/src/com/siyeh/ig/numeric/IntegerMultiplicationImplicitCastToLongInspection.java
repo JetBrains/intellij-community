@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,19 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +35,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
         BaseInspection {
 
     /** @noinspection StaticCollection*/
-    private static final Set<String> s_typesToCheck = new HashSet<String>(10);
+    @NonNls
+    private static final Set<String> s_typesToCheck = new HashSet<String>(4);
     static {
         s_typesToCheck.add("int");
         s_typesToCheck.add("short");
@@ -38,23 +44,36 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
         s_typesToCheck.add("char");
     }
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreNonOverflowingCompileTimeConstants = true;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "integer.multiplication.implicit.cast.to.long.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "integer.multiplication.implicit.cast.to.long.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "integer.multiplication.implicit.cast.to.long.option"),
+                this, "ignoreNonOverflowingCompileTimeConstants");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new IntegerMultiplicationImplicitlyCastToLongVisitor();
     }
 
-    private static class IntegerMultiplicationImplicitlyCastToLongVisitor
+    private class IntegerMultiplicationImplicitlyCastToLongVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitBinaryExpression(
@@ -90,10 +109,19 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
             if (!contextType.equals(PsiType.LONG)) {
                 return;
             }
+            try {
+                final Object result =
+                        ExpressionUtils.computeConstantExpression(expression,
+                                true);
+                if (ignoreNonOverflowingCompileTimeConstants &&
+                        result != null) {
+                    return;
+                }
+            } catch (ConstantEvaluationOverflowException ignore) {}
             registerError(expression);
         }
 
-        private static PsiExpression getContainingExpression(
+        private PsiExpression getContainingExpression(
                 PsiExpression expression) {
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiBinaryExpression ||
@@ -105,15 +133,12 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
             return expression;
         }
 
-        private static boolean isNonLongInteger(PsiType type) {
+        private boolean isNonLongInteger(PsiType type) {
             if (type == null) {
                 return false;
             }
             final String text = type.getCanonicalText();
-            if (text == null) {
-                return false;
-            }
-            return s_typesToCheck.contains(text);
+            return text != null && s_typesToCheck.contains(text);
         }
     }
 }
