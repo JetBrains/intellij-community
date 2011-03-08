@@ -41,11 +41,11 @@ public class JavaCharFilter extends CharFilter {
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!lookup.isCompletion()) return null;
 
+    LookupElement item = lookup.getCurrentItem();
+    if (item == null) return null;
+
     if (c == '!') {
       if (lookup.getPsiFile() instanceof PsiJavaFile) {
-        final LookupElement item = lookup.getCurrentItem();
-        if (item == null) return null;
-
         final Object o = item.getObject();
         if (o instanceof PsiVariable) {
           if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
@@ -60,10 +60,10 @@ public class JavaCharFilter extends CharFilter {
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 
     if (c == '#' && PsiTreeUtil.getParentOfType(lookup.getPsiElement(), PsiDocComment.class) != null) {
-      final LookupElement item = lookup.getCurrentItem();
-      if (item != null && item.getObject() instanceof PsiClass) {
+      if (item.getObject() instanceof PsiClass) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     }
