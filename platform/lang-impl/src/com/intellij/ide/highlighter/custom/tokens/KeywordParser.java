@@ -31,7 +31,6 @@ import java.util.Set;
 public class KeywordParser extends TokenParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
   private final HashSet[] myKeywordSets = new HashSet[CustomHighlighterTokenType.KEYWORD_TYPE_COUNT];
-  private final int mySmartUpdateShift;
   private final boolean myIgnoreCase;
   private final BitSet myFirstCharacters = new BitSet();
   private final BitSet myCharacters = new BitSet();
@@ -66,7 +65,6 @@ public class KeywordParser extends TokenParser {
         }
       }
     }
-    mySmartUpdateShift = maxLength;
   }
 
   private HashSet getKeywordSet(Set keywordSet) {
@@ -115,9 +113,5 @@ public class KeywordParser extends TokenParser {
       case 3: return CustomHighlighterTokenType.KEYWORD_4;
     }
     return null;
-  }
-
-  public int getSmartUpdateShift() {
-    return mySmartUpdateShift;
   }
 }

@@ -41,8 +41,4 @@ public class IdentifierParser extends TokenParser {
   private boolean isIdentifierPart(final char c) {
     return Character.isJavaIdentifierPart(c) || c == '-';
   }
-
-  public int getSmartUpdateShift() {
-    return 0;
-  }
 }
