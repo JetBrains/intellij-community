@@ -587,9 +587,7 @@ public interface Test {
     def wca = new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
       @Override
       protected void run() {
-        for (i in 1..10) {
-          EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
-        }
+        EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
       }
     }
 
@@ -599,7 +597,7 @@ public interface Test {
         def file = myFixture.addFileToProject("b.java", "")
         another = EditorFactory.instance.createEditor(file.viewProvider.document, project)
         wca.execute()
-        assert another.document.text.startsWith('xxxx')
+        assert 'x' == another.document.text
       }
       joinAlarm()
       joinCompletion()
