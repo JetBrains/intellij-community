@@ -36,17 +36,18 @@ public class InsertionContext {
   private final PsiFile myFile;
   private final Editor myEditor;
   private Runnable myLaterRunnable;
-  private boolean myAddCompletionChar = true;
+  private boolean myAddCompletionChar;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
                           @NotNull final PsiFile file,
-                          @NotNull final Editor editor) {
+                          @NotNull final Editor editor, final boolean addCompletionChar) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     myElements = elements;
     myFile = file;
     myEditor = editor;
     setTailOffset(editor.getCaretModel().getOffset());
+    myAddCompletionChar = addCompletionChar;
   }
 
   public void setTailOffset(final int offset) {

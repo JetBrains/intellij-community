@@ -842,8 +842,9 @@ public class JavaCompletionUtil {
     final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
     final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
-    final boolean addCompletionChar = context.shouldAddCompletionChar();
-    context.setAddCompletionChar(false);
+    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';') {
+      context.setAddCompletionChar(false);
+    }
 
     final boolean needRightParenth = forceClosingParenthesis || !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET || hasTail);
     if (hasTail) {
@@ -863,7 +864,7 @@ public class JavaCompletionUtil {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (smart || needRightParenth && addCompletionChar) {
+    if (smart || needRightParenth) {
       TailType toInsert = tailType;
       LookupItem lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
       if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
@@ -877,7 +878,7 @@ public class JavaCompletionUtil {
       }
       toInsert.processTail(editor, context.getTailOffset());
 
-      if (context.getCompletionChar() == '.') {
+      if (completionChar == '.') {
         AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
       }
     }

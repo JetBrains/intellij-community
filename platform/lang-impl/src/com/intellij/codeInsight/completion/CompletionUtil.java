@@ -175,7 +175,8 @@ public class CompletionUtil {
 
   private static InsertionContext newContext(InsertionContext oldContext, LookupElement forElement) {
     final Editor editor = oldContext.getEditor();
-    return new InsertionContext(new OffsetMap(editor.getDocument()), Lookup.AUTO_INSERT_SELECT_CHAR, new LookupElement[]{forElement}, oldContext.getFile(), editor);
+    return new InsertionContext(new OffsetMap(editor.getDocument()), Lookup.AUTO_INSERT_SELECT_CHAR, new LookupElement[]{forElement}, oldContext.getFile(), editor,
+                                oldContext.shouldAddCompletionChar());
   }
 
   public static InsertionContext newContext(InsertionContext oldContext, LookupElement forElement, int startOffset, int tailOffset) {

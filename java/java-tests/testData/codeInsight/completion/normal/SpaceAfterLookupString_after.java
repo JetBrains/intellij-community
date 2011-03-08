@@ -3,7 +3,7 @@ class Foo {
     {
         String abc;
         String abcdef;
-        abc <caret>d
+        abc <caret> d
     }
 
 }
