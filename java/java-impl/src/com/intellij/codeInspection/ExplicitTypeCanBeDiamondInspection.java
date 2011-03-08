@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -109,6 +110,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
   }
 
   private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
+    public static final Logger LOG = Logger.getInstance("#" + ReplaceWithDiamondFix.class.getName());
     @NotNull
     @Override
     public String getName() {
@@ -126,8 +128,13 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiReferenceParameterList) {
         if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
-        final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
-        psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
+        final PsiNewExpression expression =
+          (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("new a<>()", psiElement);
+        final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+        LOG.assertTrue(classReference != null);
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        LOG.assertTrue(parameterList != null);
+        psiElement.replace(parameterList);
       }
     }
   }
