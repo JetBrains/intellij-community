@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -22,11 +23,17 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class PublicMethodNotExposedInInterfaceInspection
         extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
 
     @Override
     @NotNull
@@ -43,11 +50,18 @@ public class PublicMethodNotExposedInInterfaceInspection
     }
 
     @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "public.method.not.in.interface.option"),
+                this, "onlyWarnIfContainingClassImplementsAnInterface");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PublicMethodNotExposedInInterface();
     }
 
-    private static class PublicMethodNotExposedInInterface
+    private class PublicMethodNotExposedInInterface
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
@@ -75,6 +89,20 @@ public class PublicMethodNotExposedInInterfaceInspection
             if (!containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
+            if (onlyWarnIfContainingClassImplementsAnInterface) {
+                final PsiClass[] superClasses = containingClass.getSupers();
+                boolean implementsInterface = false;
+                for (PsiClass superClass : superClasses) {
+                    if (superClass.isInterface() &&
+                            !LibraryUtil.classIsInLibrary(superClass)) {
+                        implementsInterface = true;
+                        break;
+                    }
+                }
+                if (!implementsInterface) {
+                    return;
+                }
+            }
             if (exposedInInterface(method)) {
                 return;
             }
@@ -84,7 +112,7 @@ public class PublicMethodNotExposedInInterfaceInspection
             registerMethodError(method);
         }
 
-        private static boolean exposedInInterface(PsiMethod method) {
+        private boolean exposedInInterface(PsiMethod method) {
             final PsiMethod[] superMethods = method.findSuperMethods();
             for(final PsiMethod superMethod : superMethods) {
                 final PsiClass superClass = superMethod.getContainingClass();
