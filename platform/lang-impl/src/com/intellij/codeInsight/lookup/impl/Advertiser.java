@@ -78,6 +78,26 @@ public class Advertiser implements Disposable {
 
   public Advertiser(Disposable parentDisposable) {
     Disposer.register(parentDisposable, this);
+    int interCycleGap = 4000;
+    Animator animator = new Animator("completion ad", ourScrollingResolution, 800, true, interCycleGap, -1) {
+      @Override
+      public void paintNow(float frame, float totalFrames, float cycle) {
+        int adCount = getTexts().size();
+        if (adCount <= 1) {
+          myCurrentItem = myScrollingOffset = 0;
+          myComponent.repaint();
+          return;
+        }
+
+        myScrollingOffset = ((int)frame + 1) % ourScrollingResolution;
+        if (myScrollingOffset == 0) {
+          myCurrentItem = (myCurrentItem + 1) % adCount;
+        }
+        myComponent.paintImmediately(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      }
+    };
+    animator.resume();
+    Disposer.register(this, animator);
   }
 
   private synchronized List<String> getTexts() {
@@ -86,8 +106,6 @@ public class Advertiser implements Disposable {
 
   public synchronized void clearAdvertisements() {
     myTexts.clear();
-    myCurrentItem = 0;
-    myScrollingOffset = 0;
   }
 
   private static Font adFont() {
@@ -98,22 +116,9 @@ public class Advertiser implements Disposable {
   public synchronized void addAdvertisement(@NotNull String text) {
     myTexts.add(text);
     if (myTexts.size() == 2) {
-      if (!myComponent.isShowing()) {
+     if (!myComponent.isShowing()) {
         myCurrentItem = -1;
       }
-      int interCycleGap = 4000;
-      Animator animator = new Animator("completion ad", ourScrollingResolution, 800, true, interCycleGap, -1) {
-        @Override
-        public void paintNow(float frame, float totalFrames, float cycle) {
-          myScrollingOffset = (int)frame;
-          if (myScrollingOffset == 0) {
-            myCurrentItem = (myCurrentItem + 1) % getTexts().size();
-          }
-          myComponent.paintImmediately(0, 0, myComponent.getWidth(), myComponent.getHeight());
-        }
-      };
-      animator.resume();
-      Disposer.register(this, animator);
     }
   }
 
