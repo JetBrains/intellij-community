@@ -36,11 +36,11 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
-  private final boolean myinSourceOnly;
+  private final boolean myInSourceOnly;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
     super(text, description, icon);
-    myinSourceOnly = inSourceOnly;
+    myInSourceOnly = inSourceOnly;
   }
 
   @Override
@@ -65,7 +65,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       return false;
     }
 
-    if (!myinSourceOnly) {
+    if (!myInSourceOnly) {
       return true;
     }
 
@@ -82,9 +82,9 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   protected abstract boolean checkPackageExists(PsiDirectory directory);
 
   @Nullable
-   private T checkOrCreate(String newName, PsiDirectory directory, String templateName, boolean check) throws IncorrectOperationException {
-     PsiDirectory dir = directory;
-     String className = newName;
+  private T checkOrCreate(String newName, PsiDirectory directory, String templateName, boolean check) throws IncorrectOperationException {
+    PsiDirectory dir = directory;
+    String className = newName;
 
     final String extension = StringUtil.getShortName(templateName);
     if (StringUtil.isNotEmpty(extension)) {
@@ -92,33 +92,33 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     }
 
     if (className.contains(".")) {
-       String[] names = className.split("\\.");
+      String[] names = className.split("\\.");
 
-       for (int i = 0; i < names.length - 1; i++) {
-         String name = names[i];
-         PsiDirectory subDir = dir.findSubdirectory(name);
+      for (int i = 0; i < names.length - 1; i++) {
+        String name = names[i];
+        PsiDirectory subDir = dir.findSubdirectory(name);
 
-         if (subDir == null) {
-           if (check) {
-             dir.checkCreateSubdirectory(name);
-             return null;
-           }
+        if (subDir == null) {
+          if (check) {
+            dir.checkCreateSubdirectory(name);
+            return null;
+          }
 
-           subDir = dir.createSubdirectory(name);
-         }
+          subDir = dir.createSubdirectory(name);
+        }
 
-         dir = subDir;
-       }
+        dir = subDir;
+      }
 
-       className = names[names.length - 1];
-     }
+      className = names[names.length - 1];
+    }
 
     if (check) {
       doCheckCreate(dir, className, templateName);
       return null;
     }
-     return doCreate(dir, className, templateName);
-   }
+    return doCreate(dir, className, templateName);
+  }
 
   protected abstract void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException;
 

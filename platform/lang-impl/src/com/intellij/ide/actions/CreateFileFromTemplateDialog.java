@@ -58,7 +58,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   private String getEnteredName() {
-    return getNameField().getText();
+    final JTextField nameField = getNameField();
+    final String text = nameField.getText().trim();
+    nameField.setText(text);
+    return text;
   }
 
   @Override
