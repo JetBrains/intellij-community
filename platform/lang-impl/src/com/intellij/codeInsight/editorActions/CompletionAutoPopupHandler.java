@@ -60,6 +60,11 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
+    CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
+    if (oldPhase instanceof CompletionPhase.EmptyAutoPopup && ((CompletionPhase.EmptyAutoPopup)oldPhase).editor != editor) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
+
     if (!Character.isLetter(charTyped) && charTyped != '_') {
       if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class)) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);

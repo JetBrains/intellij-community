@@ -17,14 +17,20 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiFile
 
-/**
+ /**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -570,6 +576,41 @@ public interface Test {
       edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     }
     assert !lookup
+  }
+
+  public void testTypingInAnotherEditor() {
+    myFixture.configureByText("a.java", "")
+    type 'c'
+    assert lookup
+
+    Editor another = null
+    def wca = new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
+      @Override
+      protected void run() {
+        for (i in 1..10) {
+          EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
+        }
+      }
+    }
+
+    try {
+      edt {
+        lookup.hide()
+        def file = myFixture.addFileToProject("b.java", "")
+        another = EditorFactory.instance.createEditor(file.viewProvider.document, project)
+        wca.execute()
+        assert another.document.text.startsWith('xxxx')
+      }
+      joinAlarm()
+      joinCompletion()
+      assert !LookupManager.getActiveLookup(another)
+      type 'l'
+      assert lookup
+    }
+    finally {
+      edt { EditorFactory.instance.releaseEditor(another) }
+    }
+
   }
 
 }

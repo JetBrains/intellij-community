@@ -209,7 +209,7 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
   public static class EmptyAutoPopup extends CompletionPhase {
-    private final Editor editor;
+    public final Editor editor;
     private final Project project;
     private final EditorMouseAdapter mouseListener;
     private final CaretListener caretListener;
@@ -287,11 +287,10 @@ public abstract class CompletionPhase implements Disposable {
       finally {
         changeGuard = false;
       }
-
     }
 
     private static void stopAutoPopup() {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
     }
 
     @Override
