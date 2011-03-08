@@ -34,6 +34,7 @@ import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class JavaTypedHandler extends TypedHandlerDelegate {
+  static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE);
   private boolean myJavaLTTyped;
 
   public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
@@ -106,7 +108,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                PsiUtil.isLanguageLevel5OrHigher(file)) {
-        if (handleJavaGT(editor)) return Result.STOP;
+        if (handleJavaGT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
       }
     }
 
@@ -144,7 +146,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
-      handleAfterJavaLT(editor);
+      handleAfterJavaLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);
       return Result.STOP;
     }
     return Result.CONTINUE;
@@ -170,7 +172,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   //need custom handler, since brace matcher cannot be used
-  private static boolean handleJavaGT(final Editor editor) {
+  public static boolean handleJavaGT(final Editor editor,
+                                      final IElementType lt,
+                                      final IElementType gt,
+                                      final TokenSet invalidInsideReference) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -178,24 +183,23 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (offset == editor.getDocument().getTextLength()) return false;
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    if (iterator.getTokenType() != JavaTokenType.GT) return false;
-    while (!iterator.atEnd() && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    if (iterator.getTokenType() != gt) return false;
+    while (!iterator.atEnd() && !invalidInsideReference.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 
-    if (iterator.atEnd()) return false;
-    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
+    if (!iterator.atEnd() && invalidInsideReference.contains(iterator.getTokenType())) iterator.retreat();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
       final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
+      if (tokenType == lt) {
         balance--;
       }
-      else if (tokenType == JavaTokenType.GT) {
+      else if (tokenType == gt) {
         balance++;
       }
-      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (invalidInsideReference.contains(tokenType)) {
         break;
       }
 
@@ -212,27 +216,30 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   //need custom handler, since brace matcher cannot be used
-  private static void handleAfterJavaLT(final Editor editor) {
+  public static void handleAfterJavaLT(final Editor editor,
+                                        final IElementType lt,
+                                        final IElementType gt,
+                                        final TokenSet invalidInsideReference) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return;
 
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    while (iterator.getStart() > 0 && !invalidInsideReference.contains(iterator.getTokenType())) {
       iterator.retreat();
     }
 
-    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+    if (invalidInsideReference.contains(iterator.getTokenType())) iterator.advance();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
       final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
+      if (tokenType == lt) {
         balance++;
       }
-      else if (tokenType == JavaTokenType.GT) {
+      else if (tokenType == gt) {
         balance--;
       }
-      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (invalidInsideReference.contains(tokenType)) {
         break;
       }
 
@@ -262,7 +269,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == JavaTokenType.DOT) return true;
-    if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
+    return isClassLikeIdentifier(offset, editor, iterator, JavaTokenType.IDENTIFIER);
+  }
+
+  public static boolean isClassLikeIdentifier(int offset, Editor editor, HighlighterIterator iterator, final IElementType idType) {
+    if (iterator.getTokenType() == idType && iterator.getEnd() == offset) {
       final CharSequence chars = editor.getDocument().getCharsSequence();
       final char startChar = chars.charAt(iterator.getStart());
       if (!Character.isUpperCase(startChar)) return false;
