@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ListWithSelection;
 
@@ -58,7 +57,7 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
                                                  boolean hasFocus,
                                                  int row,
                                                  int column) {
-    LOG.assertTrue(value instanceof ListWithSelection, LogUtil.objectAndClass(value));
+    LOG.assertTrue(value instanceof ListWithSelection, value != null ? value.getClass().getName():"null");
     final ListWithSelection tags = (ListWithSelection)value;
     if (tags.getSelection() == null) {
       tags.selectFirst();
