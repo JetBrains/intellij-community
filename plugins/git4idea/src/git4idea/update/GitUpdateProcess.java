@@ -15,7 +15,10 @@
  */
 package git4idea.update;
 
+import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -24,6 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchPair;
 import git4idea.merge.GitMergeConflictResolver;
@@ -54,6 +58,7 @@ public class GitUpdateProcess {
   private final GitChangesSaver mySaver;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
+  private GeneralSettings myGeneralSettings;
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull ProgressIndicator progressIndicator,
@@ -66,6 +71,7 @@ public class GitUpdateProcess {
     myMerger = new GitMerger(myProject);
     mySaver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
+    myGeneralSettings = GeneralSettings.getInstance();
   }
 
   /**
@@ -76,35 +82,72 @@ public class GitUpdateProcess {
     return update(false);
   }
 
+  /**
+   * Perform update on all roots.
+   * 0. Blocks reloading project on external change, saving/syncing on frame deactivation.
+   * 1. Checks if update is possible (rebase/merge in progress, no tracked branches...) and provides merge dialog to solve problems.
+   * 2. Finds updaters to use (merge or rebase).
+   * 3. Preserves local changes if needed (not needed for merge sometimes).
+   * 4. Updates via 'git pull' or equivalent.
+   * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
+   * local changes are not restored.
+   * @param forceRebase
+   * @return
+   */
   public boolean update(boolean forceRebase) {
-    LOG.info("update started");
+    LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
 
+    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
+    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
     myProjectManager.blockReloadingProjectOnExternalChanges();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override public void run() {
+            FileDocumentManager.getInstance().saveAllDocuments();
+            myGeneralSettings.setSaveOnFrameDeactivation(false);
+            myGeneralSettings.setSyncOnFrameActivation(false);
+          }
+        });
+      }
+    });
+
     try {
       // check if update is possible
       if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
       if (!checkTrackedBranchesConfigured()) { return false; }
 
-      // define updaters for each root
-      Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
+      // define updaters for roots
+      final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
       for (VirtualFile root : myRoots) {
-        final GitUpdater updater = forceRebase ? GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles) :
-          new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles);
-        if (updater.isSaveNeeded()) {
-          rootsToSave.add(root);
-        }
+        final GitUpdater updater = forceRebase
+                                   ? new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles)
+                                   : GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
+        updaters.put(root, updater);
+        LOG.info("update| root=" + root + " ,updater=" + updater);
       }
 
+      // save local changes if needed (update via merge may perform without saving).
+      final Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
+      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+        VirtualFile root = entry.getKey();
+        GitUpdater updater = entry.getValue();
+        if (updater.isSaveNeeded()) {
+          rootsToSave.add(root);
+          LOG.info("update| root " + root + " needs save");
+        }
+      }
       mySaver.saveLocalChanges(rootsToSave);
 
       // update each root
       boolean incomplete = false;
       boolean success = true;
-      for (final VirtualFile root : myRoots) {
+      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+        VirtualFile root = entry.getKey();
+        GitUpdater updater = entry.getValue();
         try {
-          final GitUpdater updater = forceRebase ? GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles) :
-            new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles);
           GitUpdateResult res = updater.update();
+          LOG.info("updating root " + root + " finished: " + res);
           if (res == GitUpdateResult.INCOMPLETE) {
             incomplete = true;
           }
@@ -135,6 +178,8 @@ public class GitUpdateProcess {
                   "Update was cancelled.", true, e);
     } finally {
       myProjectManager.unblockReloadingProjectOnExternalChanges();
+      myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
+      myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
     }
     return false;
   }
@@ -157,6 +202,7 @@ public class GitUpdateProcess {
       try {
         final GitBranch branch = GitBranch.current(myProject, root);
         if (branch == null) {
+          LOG.info("checkTrackedBranchesConfigured current branch is null");
           notifyImportantError(myProject, "Can't update: no current branch",
                                "You are in 'detached HEAD' state, which means that you're not on any branch.<br/>" +
                                "Checkout a branch to make update possible.");
@@ -165,6 +211,7 @@ public class GitUpdateProcess {
         final GitBranch tracked = branch.tracked(myProject, root);
         if (tracked == null) {
           final String branchName = branch.getName();
+          LOG.info("checkTrackedBranchesConfigured tracked branch is null for current branch " + branch);
           notifyImportantError(myProject, "Can't update: no tracked branch",
                                "No tracked branch configured for branch " + branchName +
                                "<br/>To make your branch track a remote branch call, for example,<br/>" +
@@ -173,6 +220,7 @@ public class GitUpdateProcess {
         }
         myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
       } catch (VcsException e) {
+        LOG.info("checkTrackedBranchesConfigured ", e);
         notifyImportantError(myProject, "Can't update: error identifying tracked branch", e.getLocalizedMessage());
         return false;
       }
@@ -189,13 +237,14 @@ public class GitUpdateProcess {
     if (mergingRoots.isEmpty()) {
       return false;
     }
+    LOG.info("checkMergeInProgress mergingRoots: " + mergingRoots);
 
     return !new GitMergeConflictResolver(myProject, false, "You have unfinished merge. These conflicts must be resolved before update.", "Can't update", "") {
       @Override protected boolean proceedAfterAllMerged() throws VcsException {
         myMerger.mergeCommit(mergingRoots);
         return true;
       }
-    }.mergeFiles(mergingRoots);
+    }.merge(mergingRoots);
   }
 
   /**
@@ -206,12 +255,13 @@ public class GitUpdateProcess {
     try {
       Collection<VirtualFile> unmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoots);
       if (!unmergedFiles.isEmpty()) {
+        LOG.info("checkUnmergedFiles unmergedFiles: " + unmergedFiles);
         return !new GitMergeConflictResolver(myProject, false, "Unmerged files detected. These conflicts must be resolved before update.", "Can't update", "") {
           @Override protected boolean proceedAfterAllMerged() throws VcsException {
             myMerger.mergeCommit(myRoots);
             return true;
           }
-        }.mergeFiles(myRoots);
+        }.merge(myRoots);
       }
     } catch (VcsException e) {
       LOG.info("areUnmergedFiles. Couldn't get unmerged files", e);
@@ -229,6 +279,7 @@ public class GitUpdateProcess {
     if (rebasingRoots.isEmpty()) {
       return false;
     }
+    LOG.info("checkRebaseInProgress rebasingRoots: " + rebasingRoots);
 
     return !new GitMergeConflictResolver(myProject, true, "You have unfinished rebase process. These conflicts must be resolved before update.", "Can't update",
                                          "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
@@ -239,7 +290,7 @@ public class GitUpdateProcess {
       @Override protected boolean proceedAfterAllMerged() {
         return rebaser.continueRebase(rebasingRoots);
       }
-    }.mergeFiles(rebasingRoots);
+    }.merge(rebasingRoots);
   }
 
 }

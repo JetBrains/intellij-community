@@ -15,13 +15,12 @@
  */
 package git4idea.checkin;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,7 +37,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -72,8 +70,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static git4idea.ui.GitUIUtil.notifyError;
-import static git4idea.ui.GitUIUtil.notifyImportantError;
+import static git4idea.ui.GitUIUtil.*;
 
 /**
  * The dialog that allows pushing active branches.
@@ -97,6 +94,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private JRadioButton myShelveRadioButton;
   private GitVcs myVcs;
   private static final Logger LOG = Logger.getInstance(GitPushActiveBranchesDialog.class.getName());
+  private final GeneralSettings myGeneralSettings;
+  private final ProjectManagerEx myProjectManager;
 
   /**
    * A modification of Runnable with the roots-parameter.
@@ -117,6 +116,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myVcs = GitVcs.getInstance(project);
     myProject = project;
     myVcsRoots = vcsRoots;
+    myGeneralSettings = GeneralSettings.getInstance();
+    myProjectManager = ProjectManagerEx.getInstanceEx();
 
     updateTree(roots, null);
     updateUI();
@@ -255,7 +256,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
           final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, true); // fetch
           if (!exceptions.isEmpty()) {
-            notifyException("Failed to fetch", exceptions);
+            notifyMessage(myProject, "Failed to fetch", null, NotificationType.ERROR, true, exceptions);
             return;
           }
           updateTree(roots, rebaseInfo.uncheckedCommits);
@@ -263,32 +264,15 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
           if (isRebaseNeeded()) {
             executeRebase(exceptions, rebaseInfo);
             if (!exceptions.isEmpty()) {
-              notifyException("Failed to rebase", exceptions);
+              notifyMessage(myProject, "Failed to rebase", null, NotificationType.ERROR, true, exceptions);
               return;
             }
             GitUtil.refreshFiles(myProject, rebaseInfo.roots);
           }
         }
-        notifyException("Failed to push", pushExceptions);
+        notifyMessage(myProject, "Failed to push", "Update project and push again", NotificationType.ERROR, true, pushExceptions);
       }
     });
-  }
-
-  /**
-   * Notifies about errors during background rebase & push tasks.
-   */
-  private void notifyException(String title, Collection<VcsException> exceptions) {
-    String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
-      @Override public String fun(VcsException e) {
-        return e.getLocalizedMessage();
-      }
-    }, "<br/>");
-    if (StringUtil.isEmptyOrSpaces(content)) {
-      content = title;
-    }
-    LOG.info(title + " || " + content);
-    Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.ERROR),
-                             NotificationDisplayType.STICKY_BALLOON, myProject);
   }
 
   /**
@@ -445,7 +429,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       rebaseInfo = collectRebaseInfo();
       return reorderCommitsIfNeeded(rebaseInfo);
     } else {
-      GitUIUtil.notifyMessage(myProject, "Commits weren't pushed", "Rebase failed.", NotificationType.WARNING, true, null);
+      notifyMessage(myProject, "Commits weren't pushed", "Rebase failed.", NotificationType.WARNING, true, null);
       return false;
     }
 
@@ -456,14 +440,28 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       return true;
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator == null) {
       progressIndicator = new EmptyProgressIndicator();
     }
     String stashMessage = "Uncommitted changes before rebase operation at " + DateFormatUtil.formatDateTime(Clock.getTime());
     GitChangesSaver saver = rebaseInfo.policy == GitVcsSettings.UpdateChangesPolicy.SHELVE ? new GitShelveChangesSaver(myProject, progressIndicator, stashMessage) : new GitStashChangesSaver(myProject, progressIndicator, stashMessage);
-    projectManager.blockReloadingProjectOnExternalChanges();
+
+    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
+    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
+    myProjectManager.blockReloadingProjectOnExternalChanges();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override public void run() {
+            FileDocumentManager.getInstance().saveAllDocuments();
+            myGeneralSettings.setSaveOnFrameDeactivation(false);
+            myGeneralSettings.setSyncOnFrameActivation(false);
+          }
+        });
+      }
+    });
+
     try {
       final Set<VirtualFile> rootsToReorder = rebaseInfo.reorderedCommits.keySet();
       saver.saveLocalChanges(rootsToReorder);
@@ -494,8 +492,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
           }
 
         } catch (VcsException e) {
-          GitUIUtil.notifyMessage(myProject, "Commits weren't pushed", "Failed to reorder commits", NotificationType.WARNING, true,
-                                  Collections.singleton(e));
+          notifyMessage(myProject, "Commits weren't pushed", "Failed to reorder commits", NotificationType.WARNING, true,
+                        Collections.singleton(e));
         } finally {
           try {
             saver.restoreLocalChanges();
@@ -511,7 +509,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                   "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
                   "Update was cancelled.", true, e);
     } finally {
-      projectManager.unblockReloadingProjectOnExternalChanges();
+      myProjectManager.unblockReloadingProjectOnExternalChanges();
+      myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
+      myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
     }
     return false;
   }

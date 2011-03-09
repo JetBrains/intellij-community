@@ -53,8 +53,11 @@ public class GitUIUtil {
    */
   private GitUIUtil() { }
 
-  public static void notifyMessages(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
-    String desc = description.replace("\n", "<br/>");
+  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
+    if (StringUtil.isEmptyOrSpaces(title)) {
+      title = description;
+    }
+    String desc = (description != null ? description.replace("\n", "<br/>") : "");
     if (messages != null && !messages.isEmpty()) {
       desc += "<hr/>" + StringUtil.join(messages, "<br/>");
     }
@@ -62,7 +65,7 @@ public class GitUIUtil {
     Notifications.Bus.notify(new Notification(id, title, desc, type), project);
   }
 
-  public static void notifyMessage(Project project, String title, String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
     Collection<String> errorMessages;
     if (errors == null) {
       errorMessages = null;
