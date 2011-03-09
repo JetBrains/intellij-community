@@ -15,12 +15,16 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,18 +32,20 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-class NavBarItem extends SimpleColoredComponent {
+class NavBarItem extends SimpleColoredComponent implements DataProvider{
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
   private final Icon myIcon;
   private final NavBarPanel myPanel;
   private Object myObject;
+  private final boolean isPopupElement;
 
   public NavBarItem(NavBarPanel panel, Object object, int idx) {
     myPanel = panel;
     myObject = object;
     myIndex = idx;
+    isPopupElement = idx == -1;
     if (object != null) {
       Icon closedIcon = NavBarPresentation.getIcon(object, false);
       Icon openIcon = NavBarPresentation.getIcon(object, true);
@@ -63,6 +69,15 @@ class NavBarItem extends SimpleColoredComponent {
     update();
   }
 
+  /**
+   * item for node popup
+   * @param panel
+   * @param object
+   */
+  public NavBarItem(NavBarPanel panel, Object object) {
+    this(panel, object, -1);
+  }
+
   public Object getObject() {
     return myObject;
   }
@@ -75,12 +90,13 @@ class NavBarItem extends SimpleColoredComponent {
     clear();
 
     setIcon(myIcon);
-    boolean focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myPanel;
+    final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    boolean focused = isPopupElement ? myPanel.isNodePopupActive() : focusOwner == myPanel;
 
     final NavBarModel model = myPanel.getModel();
-    boolean selected = model.getSelectedIndex() == myIndex;
+    boolean selected = isPopupElement ? myPanel.isSelectedInPopup(myObject) : model.getSelectedIndex() == myIndex;
 
-    setPaintFocusBorder(!focused && selected);
+    setPaintFocusBorder(!focused && selected && !isPopupElement);
     setFocusBorderAroundIcon(false);
 
     setBackground(selected && focused
@@ -103,8 +119,7 @@ class NavBarItem extends SimpleColoredComponent {
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        final ListPopupImpl nodePopup = myPanel.getNodePopup();
-        if (myPanel.getModel().getSelectedIndex() == idx && nodePopup != null && nodePopup.isVisible()) {
+        if (myPanel.getModel().getSelectedIndex() == idx && myPanel.isNodePopupActive()) {
           openIcon.paintIcon(c, g, x, y);
         }
         else {
@@ -120,5 +135,22 @@ class NavBarItem extends SimpleColoredComponent {
         return openIcon.getIconHeight();
       }
     };
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
+      return myPanel.getProject();
+    }
+
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      return myObject instanceof PsiElement ? myObject : null;
+    }
+
+    if (LangDataKeys.PSI_FILE.is(dataId)) {
+      return myObject instanceof PsiElement ? ((PsiElement)myObject).getContainingFile() : null;
+    }
+
+    return null;
   }
 }
