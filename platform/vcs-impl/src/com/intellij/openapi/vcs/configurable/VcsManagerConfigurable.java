@@ -97,7 +97,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   @NotNull
   public String getId() {
-    return getHelpTopic();
+    return getClass().getName();
   }
 
   protected Configurable[] buildConfigurables() {
