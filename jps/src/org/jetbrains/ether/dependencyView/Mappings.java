@@ -49,7 +49,7 @@ public class Mappings {
         }
     }
 
-    public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> affectedFiles) {
+    public boolean differentiate(final Mappings delta, final Set<StringCache.S> removed, final Set<StringCache.S> compiledFiles, final Set<StringCache.S> affectedFiles) {
         if (removed != null) {
             for (StringCache.S file : removed) {
                 affectAll(file, affectedFiles);
@@ -103,6 +103,8 @@ public class Mappings {
             for (ClassRepr c : classDiff.removed()) {
                 affectedUsages.add (c.createUsage());
             }
+
+            dependants.removeAll(compiledFiles);
 
             for (StringCache.S depFile : dependants) {
                 final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage> (sourceFileToUsages.foxyGet(depFile));

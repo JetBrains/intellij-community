@@ -206,30 +206,25 @@ public class ProjectWrapper {
             };
 
     public class FileWrapper implements RW.Writable {
-        final String myName;
+        final StringCache.S myName;
         final long myModificationTime;
 
-        FileWrapper(final String name) {
-            myName = name;
-            myModificationTime = 0;
-        }
-
         FileWrapper(final File f) {
-            myName = getRelativePath(f.getAbsolutePath());
+            myName = StringCache.get(getRelativePath(f.getAbsolutePath()));
             myModificationTime = f.lastModified();
         }
 
         FileWrapper(final BufferedReader r) {
-            myName = RW.readString(r);
+            myName = StringCache.get(RW.readString(r));
             myModificationTime = RW.readLong(r);
 
             final Set<ClassRepr> classes = (Set<ClassRepr>) RW.readMany(r, ClassRepr.reader, new HashSet<ClassRepr>());
             final Set<UsageRepr.Usage> usages = (Set<UsageRepr.Usage>) RW.readMany(r, UsageRepr.reader, new HashSet<UsageRepr.Usage>());
 
-            backendCallback.associate(classes, usages, myName);
+            backendCallback.associate(classes, usages, myName.value);
         }
 
-        public String getName() {
+        public StringCache.S getName() {
             return myName;
         }
 
@@ -238,9 +233,9 @@ public class ProjectWrapper {
         }
 
         public void write(final BufferedWriter w) {
-            final String name = getName();
+            final StringCache.S name = getName();
 
-            RW.writeln(w, name);
+            RW.writeln(w, name.value);
             RW.writeln(w, Long.toString(getStamp()));
 
             RW.writeln(w, dependencyMapping.getClasses(name));
@@ -281,17 +276,11 @@ public class ProjectWrapper {
             final String myOutput;
             String myOutputStatus;
 
-            final long myLatestSource;
-            final long myEarliestSource;
-
-            long myLatestOutput;
-            long myEarliestOutput;
-
             public Set<StringCache.S> getFiles() {
                 final Set<StringCache.S> result = new HashSet<StringCache.S>();
 
                 for (FileWrapper f : mySources.keySet()) {
-                    result.add(StringCache.get(f.getName()));
+                    result.add(f.getName());
                 }
 
                 return result;
@@ -303,8 +292,8 @@ public class ProjectWrapper {
                 for (FileWrapper now : mySources.keySet()) {
                     final FileWrapper than = past.mySources.get(now);
 
-                    if (than == null || than.getStamp() < now.getStamp()) {
-                        result.add(StringCache.get(now.getName()));
+                    if (than == null || than.getStamp() < now.getStamp() || affectedFiles.contains(now.getName())) {
+                        result.add(now.getName());
                     }
                 }
 
@@ -318,7 +307,7 @@ public class ProjectWrapper {
                     final FileWrapper now = mySources.get(was);
 
                     if (now == null) {
-                        result.add(StringCache.get(was.getName()));
+                        result.add(was.getName());
                     }
                 }
 
@@ -336,22 +325,11 @@ public class ProjectWrapper {
                 RW.writeln(w, myOutput == null ? "" : myOutput);
 
                 RW.writeln(w, "OutputStatus:" + myOutputStatus);
-
-                //writeln(w, "EarliestSource:");
-                //writeln(w, Long.toString(myEarliestSource));
-
-                //writeln(w, "LatestSource:");
-                //writeln(w, Long.toString(myLatestSource));
-
-                //writeln(w, "EarliestOutput:");
-                //writeln(w, Long.toString(myEarliestOutput));
-
-                //writeln(w, "LatestOutput:");
-                //writeln(w, Long.toString(myLatestOutput));
             }
 
             public Properties(final BufferedReader r) {
                 RW.readTag(r, "Roots:");
+
                 myRoots = (Set<String>) RW.readMany(r, RW.myStringReader, new HashSet<String>());
 
                 RW.readTag(r, "Sources:");
@@ -367,53 +345,38 @@ public class ProjectWrapper {
                 myOutput = s.equals("") ? null : s;
 
                 myOutputStatus = RW.readStringAttribute(r, "OutputStatus:");
-
-                //readTag(r, "EarliestSource:");
-                myEarliestSource = 0;//readLong(r);
-
-                //readTag(r, "LatestSource:");
-                myLatestSource = 0;//readLong(r);
-
-                //readTag(r, "EarliestOutput:");
-                myEarliestOutput = 0;//readLong(r);
-
-                //readTag(r, "LatestOutput:");
-                myLatestOutput = 0;//readLong(r);
             }
 
             public Properties(final List<String> sources, final String output, final Set<String> excludes) {
                 myRoots = (Set<String>) getRelativePaths(sources, new HashSet<String>());
+                final DirectoryScanner.Result result = DirectoryScanner.getFiles(myRoots, excludes, ProjectWrapper.this);
 
-                {
-                    final DirectoryScanner.Result result = DirectoryScanner.getFiles(myRoots, excludes, ProjectWrapper.this);
+                mySources = new HashMap<FileWrapper, FileWrapper>();
 
-                    mySources = new HashMap<FileWrapper, FileWrapper>();
-
-                    for (FileWrapper fw : result.getFiles()) {
-                        mySources.put(fw, fw);
-                    }
-
-                    myEarliestSource = result.getEarliest();
-                    myLatestSource = result.getLatest();
+                for (FileWrapper fw : result.getFiles()) {
+                    mySources.put(fw, fw);
                 }
 
-                {
-                    myOutput = getRelativePath(output);
-                    rescan();
-                }
+                myOutput = getRelativePath(output);
+                updateOutputStatus();
             }
 
-            public void rescan() {
-                final DirectoryScanner.Result result = DirectoryScanner.getFiles(myOutput, null, ProjectWrapper.this);
-                myOutputStatus =
-                        result.getFiles().isEmpty()
-                                ? "empty"
-                                : (result.getFiles().contains(new FileWrapper(myOutput + File.separator + Reporter.myOkFlag))
-                                ? "ok"
-                                : "fail"
-                        );
-                myEarliestOutput = result.getEarliest();
-                myLatestOutput = result.getLatest();
+            public void updateOutputStatus() {
+                final String path = getAbsolutePath(myOutput);
+                final File ok = new File (path + File.separator + Reporter.myOkFlag);
+                final File fail = new File (path + File.separator + Reporter.myFailFlag);
+
+                if (ok.exists()) {
+                    myOutputStatus = "ok";
+                    return;
+                }
+
+                if (fail.exists()) {
+                    myOutputStatus = "fail";
+                    return;
+                }
+
+                myOutputStatus = "empty";
             }
 
             public Set<String> getRoots() {
@@ -428,28 +391,8 @@ public class ProjectWrapper {
                 return myOutput;
             }
 
-            public long getEarliestOutput() {
-                return myEarliestOutput;
-            }
-
-            public long getLatestOutput() {
-                return myLatestOutput;
-            }
-
-            public long getEarliestSource() {
-                return myEarliestSource;
-            }
-
-            public long getLatestSource() {
-                return myLatestSource;
-            }
-
             public boolean emptySource() {
                 return mySources.isEmpty();
-            }
-
-            public boolean outputEmpty() {
-                return myOutputStatus.equals("empty");
             }
 
             public boolean outputOk() {
@@ -496,9 +439,9 @@ public class ProjectWrapper {
             return myTest.getFiles();
         }
 
-        public void rescan() {
-            mySource.rescan();
-            myTest.rescan();
+        public void updateOutputStatus() {
+            mySource.updateOutputStatus();
+            myTest.updateOutputStatus();
         }
 
         private ClasspathItemWrapper weaken(final ClasspathItemWrapper x) {
@@ -731,12 +674,6 @@ public class ProjectWrapper {
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
 
-    private void rescan() {
-        for (ModuleWrapper m : myModules.values()) {
-            m.rescan();
-        }
-    }
-
     public ModuleWrapper getModule(final String name) {
         return myModules.get(name);
     }
@@ -755,12 +692,14 @@ public class ProjectWrapper {
 
     final Mappings dependencyMapping;
     final Callbacks.Backend backendCallback;
+    final Set<StringCache.S> affectedFiles;
 
     final ProjectWrapper myHistory;
 
     private ProjectWrapper(final String prjDir, final String setupScript) {
         dependencyMapping = new Mappings(this);
         backendCallback = dependencyMapping.getCallback();
+        affectedFiles = new HashSet<StringCache.S> ();
 
         myProject = new Project(new GantBinding());
         myRoot = new File(prjDir).getAbsolutePath();
@@ -776,11 +715,12 @@ public class ProjectWrapper {
             myLibraries.put(l.getName(), new LibraryWrapper(l));
         }
 
-        myHistory = loadSnapshot(dependencyMapping);
+        myHistory = loadSnapshot(dependencyMapping, affectedFiles);
     }
 
-    private ProjectWrapper(final BufferedReader r, final Mappings mappings) {
+    private ProjectWrapper(final BufferedReader r, final Mappings mappings, final Set<StringCache.S> affected) {
         dependencyMapping = mappings;
+        affectedFiles = affected;
         backendCallback = dependencyMapping.getCallback();
         myProject = null;
         myHistory = null;
@@ -801,6 +741,8 @@ public class ProjectWrapper {
         for (ModuleWrapper m : mods) {
             myModules.put(m.getName(), m);
         }
+
+        RW.readMany (r, StringCache.reader, affectedFiles);
     }
 
     public String getAbsolutePath(final String relative) {
@@ -854,18 +796,20 @@ public class ProjectWrapper {
 
         RW.writeln(w, "Modules:");
         RW.writeln(w, getModules());
+
+        RW.writeln(w, affectedFiles, StringCache.fromS);
     }
 
     private String getProjectSnapshotFileName() {
         return myProjectSnapshot;
     }
 
-    private ProjectWrapper loadSnapshot(final Mappings m) {
+    private ProjectWrapper loadSnapshot(final Mappings mappings, final Set<StringCache.S> affectedFiles) {
         initJPSDirectory();
 
         try {
             final BufferedReader r = new BufferedReader(new FileReader(getProjectSnapshotFileName()));
-            final ProjectWrapper w = new ProjectWrapper(r, m);
+            final ProjectWrapper w = new ProjectWrapper(r, mappings, affectedFiles);
             r.close();
 
             return w;
@@ -929,7 +873,8 @@ public class ProjectWrapper {
 
     public void clean() {
         myProject.clean();
-        rescan();
+        for (ModuleWrapper m : myModules.values())
+            m.updateOutputStatus();
     }
 
     public void rebuild() {
@@ -957,14 +902,13 @@ public class ProjectWrapper {
         makeModules(modules, tests, force);
     }
 
-    class BuildDwarf {
+    class BusyBeaver {
         final ProjectBuilder builder;
         final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
-        final Set<StringCache.S> affectedFiles = new HashSet<StringCache.S>();
         final Set<Module> cleared = new HashSet<Module>();
         final Mappings delta = new Mappings(ProjectWrapper.this);
 
-        BuildDwarf(ProjectBuilder builder) {
+        BusyBeaver(ProjectBuilder builder) {
             this.builder = builder;
         }
 
@@ -1003,8 +947,9 @@ public class ProjectWrapper {
                 builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
 
                 compiledFiles.addAll(filesToCompile);
+                affectedFiles.removeAll(filesToCompile);
 
-                final boolean incremental = dependencyMapping.differentiate(delta, removed, affectedFiles);
+                final boolean incremental = dependencyMapping.differentiate(delta, removed, compiledFiles, affectedFiles);
 
                 dependencyMapping.integrate(delta, removed);
 
@@ -1173,19 +1118,27 @@ public class ProjectWrapper {
         }
 
         final ProjectBuilder builder = myProject.getBuilder();
-        final BuildDwarf dwarf = new BuildDwarf(builder);
+        final BusyBeaver dwarf = new BusyBeaver(builder);
 
         builder.buildStart();
 
-        dwarf.build(modules, false, force);
+        try {
+          dwarf.build(modules, false, force);
 
-        if (tests) {
-            dwarf.build(modules, true, force);
+          if (tests) {
+              dwarf.build(modules, true, force);
+          }
+
+        }
+        catch (Exception e) {
+
         }
 
         builder.buildStop();
 
-        rescan();
+        for (Module mod : modules) {
+            getModule(mod.getName()).updateOutputStatus();
+        }
     }
 
     public void makeModule(final String modName, final boolean force, final boolean tests) {

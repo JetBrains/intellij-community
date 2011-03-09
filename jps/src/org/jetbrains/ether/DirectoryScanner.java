@@ -164,15 +164,6 @@ public class DirectoryScanner {
         return myTrueFilter;
     }
 
-    public static Result getFiles(final String root, final Set<String> excludes, final ProjectWrapper pw) {
-        final Crawler cw = new Crawler(createFilter(excludes), pw);
-
-        if (root != null)
-            cw.run(new File(pw.getAbsolutePath(root)));
-
-        return cw.getResult();
-    }
-
     public static Result getFiles(final Set<String> roots, final Set<String> excludes, final ProjectWrapper pw) {
         final Crawler cw = new Crawler(createFilter(excludes), pw);
 

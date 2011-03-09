@@ -2,7 +2,9 @@ package org.jetbrains.ether.dependencyView;
 
 import org.jetbrains.ether.RW;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,4 +80,16 @@ public class StringCache {
             return RW.fromString.convert(x.value);
         }
     };
+
+    public static RW.Reader<S> reader = new RW.Reader<S>() {
+        public S read(final BufferedReader r) {
+            try {
+                return get (r.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    };
+
 }
