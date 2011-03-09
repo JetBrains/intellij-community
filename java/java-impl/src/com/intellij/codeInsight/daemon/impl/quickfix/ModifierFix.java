@@ -30,6 +30,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -65,12 +66,12 @@ public class ModifierFix extends IntentionAndQuickFixAction {
   @NotNull
   public String getName() {
     String name = null;
-    PsiElement parent = myVariable == null ? myModifierList.getParent() : myVariable;
+    PsiElement parent = myVariable == null ? myModifierList == null ? null : myModifierList.getParent() : myVariable;
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
     else {
-      int options = PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS : 0);
+      int options = PsiFormatUtilBase.SHOW_NAME | (myShowContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0);
       if (parent instanceof PsiMethod) {
         name = PsiFormatUtil.formatMethod((PsiMethod)parent, PsiSubstitutor.EMPTY, options, 0);
       }

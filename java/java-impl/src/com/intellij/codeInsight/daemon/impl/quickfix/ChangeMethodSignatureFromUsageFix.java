@@ -91,6 +91,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   private static String formatTypesList(ParameterInfoImpl[] infos, PsiElement context) {
+    if (infos == null) return null;
     String result = "";
     try {
       for (ParameterInfoImpl info : infos) {
