@@ -95,7 +95,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected()) return true;
     final JComboBox channelsBox = myUpdatesSettingsPanel.myUpdateChannelsBox;
-    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(settings.UPDATE_CHANNEL_TYPE));
+    return (channelsBox.getSelectedItem() != null && !channelsBox.getSelectedItem().equals(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
   }
 
   public void disposeUIResources() {
