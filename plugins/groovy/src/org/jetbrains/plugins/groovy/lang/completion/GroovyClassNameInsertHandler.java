@@ -76,8 +76,16 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     AllClassesGetter.TRY_SHORTENING.handleInsert(context, item);
 
-    if (parens) {
+    if (parens && context.getCompletionChar() != '[') {
+      int identifierEnd = context.getTailOffset();
+
       JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(psiClass));
+
+      if (context.getCompletionChar() == '<') {
+        context.getDocument().insertString(identifierEnd, "<>");
+        context.setAddCompletionChar(false);
+        context.getEditor().getCaretModel().moveToOffset(identifierEnd + 1);
+      }
     }
 
   }
