@@ -72,6 +72,9 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     if (text.endsWith("'") || text.endsWith("\"")){
       text = text.substring(0, text.length() - 1);
     }
+    if (text.startsWith("|")){
+      text = text.substring(1).replaceAll("\n[ \t]+", "; ").substring(2);
+    }
     return text;
   }
 
