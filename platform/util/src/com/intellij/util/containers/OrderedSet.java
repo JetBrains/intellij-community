@@ -21,8 +21,8 @@ import gnu.trove.TObjectHashingStrategy;
 import java.util.*;
 
 public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
-  private final THashSet<T> myHashSet;
-  private final ArrayList<T> myElements;
+  private final Set<T> myHashSet;
+  private final List<T> myElements;
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
     myHashSet = new THashSet<T>(hashingStrategy);

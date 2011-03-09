@@ -123,6 +123,7 @@ public class BraceHighlightingHandler {
            editorProject.isDisposed() || project.isDisposed() || !editor.getComponent().isShowing() || editor.isViewer();
   }
 
+  @NotNull
   private static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
