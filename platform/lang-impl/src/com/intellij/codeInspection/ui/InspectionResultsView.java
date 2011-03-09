@@ -428,10 +428,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : InspectionProfileEntry.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
     tool.createToolNode(myProvider, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
-    regsisterActionShortcuts(tool);
+    registerActionShortcuts(tool);
   }
 
-  private void regsisterActionShortcuts(InspectionTool tool) {
+  private void registerActionShortcuts(InspectionTool tool) {
     final QuickFixAction[] fixes = tool.getQuickFixes(null);
     if (fixes != null) {
       for (QuickFixAction fix : fixes) {
@@ -465,8 +465,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     clearTree();
     boolean resultsFound = buildTree();
-    myTree.sort();
-    myTree.restoreExpantionAndSelection();
+    myTree.restoreExpansionAndSelection();
     return resultsFound;
   }
 
