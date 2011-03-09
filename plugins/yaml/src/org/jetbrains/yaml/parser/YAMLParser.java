@@ -73,7 +73,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (tokenType == SCALAR_KEY) {
       parseScalarKeyValue(indent);
     } else
-    if (SCALAR_VALUES.contains(getTokenType())){
+    if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())){
       parseScalarValue();
     } else {
       advanceLexer();
@@ -82,7 +82,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   private void parseScalarValue() {
     final IElementType tokenType = getTokenType();
-    assert SCALAR_VALUES.contains(tokenType) : "Scalar value expected!";
+    assert YAMLElementTypes.SCALAR_VALUES.contains(tokenType) : "Scalar value expected!";
     if (tokenType == SCALAR_LIST || tokenType == SCALAR_TEXT){
       parseMultiLineScalar(tokenType);
     } else {
@@ -107,7 +107,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     eolSeen = false;
     advanceLexer();
     passJunk();
-    if (SCALAR_VALUES.contains(getTokenType())){
+    if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())){
       parseScalarValue();
     } else {
       final PsiBuilder.Marker valueMarker = mark();

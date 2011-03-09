@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
@@ -53,7 +54,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   public PsiElement getValue() {
     PsiElement element = getKey().getNextSibling();
     while (element != null &&
-           !(element instanceof YAMLCompoundValue || YAMLTokenTypes.SCALAR_VALUES.contains(element.getNode().getElementType()))){
+           !(element instanceof YAMLCompoundValue || YAMLElementTypes.SCALAR_VALUES.contains(element.getNode().getElementType()))){
       element = element.getNextSibling();
     }
     return element;

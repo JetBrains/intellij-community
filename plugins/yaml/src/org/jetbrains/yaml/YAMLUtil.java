@@ -27,7 +27,7 @@ public class YAMLUtil {
     }
     //noinspection ConstantConditions
     final IElementType type = element.getNode().getElementType();
-    return YAMLTokenTypes.SCALAR_VALUES.contains(type) || type == YAMLTokenTypes.TEXT;
+    return YAMLElementTypes.SCALAR_VALUES.contains(type) || type == YAMLTokenTypes.TEXT;
   }
 
   public static boolean isScalarOrEmptyCompoundValue(final PsiElement element) {

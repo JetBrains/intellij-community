@@ -1,7 +1,5 @@
 package org.jetbrains.yaml;
 
-import com.intellij.psi.tree.TokenSet;
-
 /**
  * @author: oleg
  */
@@ -30,13 +28,4 @@ public interface YAMLTokenTypes {
 
   YAMLElementType SCALAR_LIST = new YAMLElementType("scalar list");
   YAMLElementType SCALAR_TEXT = new YAMLElementType("scalar text");
-
-  TokenSet SCALAR_VALUES = TokenSet.create(
-    SCALAR_TEXT,
-    SCALAR_STRING,
-    SCALAR_DSTRING,
-    SCALAR_LIST,
-    TEXT
-  );
-
 }
