@@ -97,11 +97,11 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   protected void configureHttpMethod(HttpMethod method) {}
 
-  public abstract class HttpTestConnection extends CancellableConnection {
+  public abstract class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
 
-    private HttpMethod myMethod;
+    private T myMethod;
 
-    public HttpTestConnection(HttpMethod method) {
+    public HttpTestConnection(T method) {
       myMethod = method;
     }
 
@@ -115,6 +115,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
       myMethod.abort();
     }
 
-    protected abstract void doTest(HttpMethod method) throws Exception;
+    protected abstract void doTest(T method) throws Exception;
   }
 }
