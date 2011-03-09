@@ -94,10 +94,6 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
-    if (!AndroidCompileUtil.isFullBuild(context)) {
-      return ProcessingItem.EMPTY_ARRAY;
-    }
-
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>();
     for (Module module : ModuleManager.getInstance(context.getProject()).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
