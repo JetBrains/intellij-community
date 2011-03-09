@@ -137,10 +137,9 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     Editor editor = mySearchResults.getEditor();
     if (cursor != null) {
       ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
-      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, null, null, 0), dummy);
+      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.get(0);
-        myCursorHighlighter.setCustomRenderer(new CursorRenderer());
       }
 
       if (!SearchResults.insideVisibleArea(editor, cursor.getPrimaryRange()) && scroll) {
@@ -262,37 +261,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
   }
 
-
-
-  private static class CursorRenderer implements CustomHighlighterRenderer {
-    @Override
-    public void paint(Editor editor, RangeHighlighter highlighter, Graphics g) {
-      Document document = editor.getDocument();
-      int offset = highlighter.getStartOffset();
-      while (offset < highlighter.getEndOffset()) {
-        int line = document.getLineNumber(offset);
-        int newOffset = document.getLineEndOffset(line);
-        newOffset = Math.min(highlighter.getEndOffset(), newOffset);
-        drawSegment(editor, new TextRange(offset, newOffset), g);
-        offset = newOffset+1;
-      }
-    }
-
-    private static void drawSegment(Editor editor, Segment highlighter, Graphics g) {
-      Graphics2D g2d = (Graphics2D)g;
-      VisualPosition startVp = editor.offsetToVisualPosition(highlighter.getStartOffset());
-      VisualPosition endVp = editor.offsetToVisualPosition(highlighter.getEndOffset());
-      Point start = editor.visualPositionToXY(startVp);
-      Point end = editor.visualPositionToXY(endVp);
-      g2d.setColor(new Color(50, 50, 50));
-      g2d.translate(0, start.y - 4);
-      Color c1 = new Color(220, 200, 130);
-      Color c2 = new Color(220, 170, 30);
-      int endX = start.x != end.x ? end.x : end.x + 2;
-      UIUtil.drawSearchMatch(g2d, start.x - 1, endX + 1, editor.getLineHeight() + 2 * 4, c1, c2);
-      g2d.translate(0, -start.y + 4);
-    }
-  }
 
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
