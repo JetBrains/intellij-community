@@ -59,6 +59,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -334,7 +335,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
               final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
               descriptor = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
             }
-            if (descriptor != null) {
+
+            // We want to get fixed xmlns attr from dtd and check its default with requested namespace
+            if (descriptor instanceof XmlNSDescriptorImpl) {
               final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
               if (elementDescriptor != null) {
                 final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);

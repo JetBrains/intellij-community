@@ -18,13 +18,10 @@ package com.intellij.xml.index;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -37,32 +34,28 @@ public enum ResourceRelevance {
   SOURCE,
   MAPPED;
 
-  public static ResourceRelevance getRelevance(VirtualFile file, @Nullable Module module, ProjectFileIndex fileIndex) {
+  public static ResourceRelevance getRelevance(VirtualFile resource, @Nullable Module module, ProjectFileIndex fileIndex) {
+    boolean inTest = fileIndex.isInTestSourceContent(resource);
     if (module != null) {
-      Module moduleForFile = fileIndex.getModuleForFile(file);
-      if (moduleForFile != null) { // in module content
-        return module.equals(moduleForFile) || ModuleManager.getInstance(module.getProject()).isModuleDependent(module, moduleForFile) ? SOURCE : NONE;
+      GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(inTest);
+      Module resourceModule = fileIndex.getModuleForFile(resource);
+      if (resourceModule != null &&
+          (resourceModule == module || scope.isSearchInModuleContent(resourceModule)) ||
+        scope.contains(resource)) {
+        return inTest || fileIndex.isInSource(resource) ? SOURCE : LIBRARY;
       }
     }
-    if (fileIndex.isInLibraryClasses(file)) {
-      List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(file);
-      if (orderEntries.isEmpty()) {
-        return NONE;
-      }
-      if (module != null) {
-        for (OrderEntry orderEntry : orderEntries) {
-          Module ownerModule = orderEntry.getOwnerModule();
-          if (ownerModule.equals(module)) {
-            return LIBRARY;
-          }
-        }
-      }
+    else if (inTest ||  fileIndex.isInSource(resource)) {
+      return SOURCE;
+    }
+    else if (fileIndex.isInLibraryClasses(resource)) {
+      return LIBRARY;
     }
     ExternalResourceManagerImpl resourceManager = (ExternalResourceManagerImpl)ExternalResourceManager.getInstance();
-    if (resourceManager.isUserResource(file)) {
+    if (resourceManager.isUserResource(resource)) {
       return MAPPED;
     }
-    if (ExternalResourceManagerImpl.isStandardResource(file)) {
+    if (ExternalResourceManagerImpl.isStandardResource(resource)) {
       return STANDARD;
     }
     return NONE;
