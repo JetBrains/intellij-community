@@ -933,6 +933,10 @@ public class FileUtil {
     writeToFile(file, text, false);
   }
 
+  public static void writeToFile(final File file, final String text) throws IOException {
+    writeToFile(file, text.getBytes("UTF-8"), false);
+  }
+
   public static void writeToFile(final File file, final byte[] text, int off, int len) throws IOException {
     writeToFile(file, text, off, len, false);
   }
