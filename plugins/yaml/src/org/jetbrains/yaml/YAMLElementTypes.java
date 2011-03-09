@@ -23,6 +23,7 @@ public interface YAMLElementTypes {
     YAMLTokenTypes.SCALAR_TEXT,
     YAMLTokenTypes.SCALAR_STRING,
     YAMLTokenTypes.SCALAR_DSTRING,
+    YAMLTokenTypes.SCALAR_LIST,
     YAMLTokenTypes.TEXT,
     SCALAR_LIST_VALUE
   );
