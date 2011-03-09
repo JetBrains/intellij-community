@@ -1,11 +1,11 @@
-// "Remove redundant "unchecked" suppression" "false"
+// "Remove 'unchecked' suppression" "false"
 
-@SuppressWarnings({"unc<caret>hecked", "bla-blah-toolid"})
+@SuppressWarnings({"unchecked", "bla-blah-toolid"})
 public enum Planet {
   MERCURY(),
   VENUS();
 
-  <T> Planet(T... ts) {
+  <T> Plan<caret>et(T... ts) {
   }
 
 }
