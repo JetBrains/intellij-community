@@ -48,6 +48,7 @@ import java.util.*;
 
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "JavadocReference";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.javadoc.ref.display.name");
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,
                                                     boolean onTheFly) {
@@ -192,7 +193,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.javadoc.ref.display.name");
+    return DISPLAY_NAME;
   }
 
   @NotNull
