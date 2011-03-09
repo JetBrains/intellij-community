@@ -10,6 +10,7 @@ public class IdeaProjectLoader {
   private int libraryCount = 0
   Project project
   private String projectOutputPath
+  private String projectLanguageLevel
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
 
@@ -169,6 +170,7 @@ public class IdeaProjectLoader {
     String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
     projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
     project.projectSdk = sdk
+    projectLanguageLevel = componentTag?."@languageLevel"
   }
 
   private NodeList loadProjectLibraries(Node librariesComponent) {
@@ -351,6 +353,9 @@ public class IdeaProjectLoader {
         }
 
         def languageLevel = componentTag."@LANGUAGE_LEVEL"
+        if (languageLevel == null) {
+          languageLevel = projectLanguageLevel
+        }
         if (languageLevel != null) {
           def ll = convertLanguageLevel(languageLevel)
           currentModule["sourceLevel"] = ll
