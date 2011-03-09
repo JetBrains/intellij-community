@@ -313,30 +313,30 @@ public class PsiUtil {
     final PsiElement resolved = ref.resolve();
     if (resolved == null) return false;
 
-    ref.setQualifier(null);
-    if (ref.isReferenceTo(resolved)) return true;
+    final GrQualifiedReference<Qualifier> copy = (GrQualifiedReference<Qualifier>)ref.copy();
 
-    if (resolved instanceof PsiClass) {
-      final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-      final PsiClass clazz = (PsiClass)resolved;
-      final String qName = clazz.getQualifiedName();
-      if (qName != null) {
-        if (mayInsertImport(ref)) {
-          final GrImportStatement added = file.addImportForClass(clazz);
-          if (!ref.isReferenceTo(resolved)) {
-            file.removeImport(added);
+    copy.setQualifier(null);
+    if (!copy.isReferenceTo(resolved)) {
+      if (resolved instanceof PsiClass) {
+        final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
+        final PsiClass clazz = (PsiClass)resolved;
+        final String qName = clazz.getQualifiedName();
+        if (qName != null) {
+          if (mayInsertImport(ref)) {
+            final GrImportStatement added = file.addImportForClass(clazz);
+            if (!copy.isReferenceTo(resolved)) {
+              file.removeImport(added);
+              return false;
+            }
           }
         }
       }
+      else {
+        return false;
+      }
     }
-
-    if (!ref.isReferenceTo(resolved)) {
-      ref.setQualifier((Qualifier)qualifier.copy());
-      return false;
-    }
-    else {
-      return true;
-    }
+    ref.setQualifier(null);
+    return true;
   }
 
   private static <Qualifier extends PsiElement> boolean canShorten(Qualifier qualifier) {

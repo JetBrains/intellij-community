@@ -129,7 +129,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiField) {
         final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return fieldCandidates;
+        if (containingClass != null && PsiTreeUtil.isContextAncestor(containingClass, this, true)) return fieldCandidates;
       }
       else {
         return fieldCandidates;
@@ -227,7 +227,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         final PsiElement element = candidate.getElement();
         if (element instanceof GrField) {
           final PsiClass containingClass = ((PsiField)element).getContainingClass();
-          if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return propertyCandidates;
+          if (containingClass != null && PsiTreeUtil.isContextAncestor(containingClass, this, true)) return propertyCandidates;
         }
       }
     }

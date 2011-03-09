@@ -4,6 +4,6 @@ class Bar {
     def foo() {
         def f = 5
         print f
-        print this.<selection>f</selection>
+        print <selection>this.f</selection>
     }
 }
