@@ -49,6 +49,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final boolean myShowTooltip;
   private final HintAction myHintAction;
   private TextAttributesKey myEnforcedTextAttributes;
+  private int myLineNumber = -1;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
@@ -132,17 +133,20 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   }
 
   public int getLineNumber() {
-    PsiElement psiElement = getPsiElement();
-    if (psiElement == null) return -1;
-    if (!psiElement.isValid()) return -1;
-    LOG.assertTrue(psiElement.isPhysical());
-    PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
-    Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
-    if (document == null) return -1;
-    TextRange textRange = getTextRange();
-    if (textRange == null) return -1;
-    textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
-    return document.getLineNumber(textRange.getStartOffset()) + 1;
+    if (myLineNumber == -1) {
+      PsiElement psiElement = getPsiElement();
+      if (psiElement == null) return -1;
+      if (!psiElement.isValid()) return -1;
+      LOG.assertTrue(psiElement.isPhysical());
+      PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
+      Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
+      if (document == null) return -1;
+      TextRange textRange = getTextRange();
+      if (textRange == null) return -1;
+      textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
+      myLineNumber =  document.getLineNumber(textRange.getStartOffset()) + 1;
+    }
+    return myLineNumber;
   }
 
   public ProblemHighlightType getHighlightType() {
