@@ -131,13 +131,12 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
           final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
           if (languageId != null && languageId.length() > 0) {
             Language target = Language.findLanguageByID(languageId);
-            if (target == null) {
-              target = new Language(languageId) {};
+            if (target != null) {
+              final CommonCodeStyleSettings defaultSettings = LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(target);
+              final CommonCodeStyleSettings settings = defaultSettings != null ? defaultSettings : new CommonCodeStyleSettings(target);
+              settings.readExternal(commonSettingsElement);
+              registerCommonSettings(target, settings);
             }
-            final CommonCodeStyleSettings defaultSettings = LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(target);
-            final CommonCodeStyleSettings settings = defaultSettings != null ? defaultSettings : new CommonCodeStyleSettings(target);
-            settings.readExternal(commonSettingsElement);
-            registerCommonSettings(target, settings);
           }
         }
       }
