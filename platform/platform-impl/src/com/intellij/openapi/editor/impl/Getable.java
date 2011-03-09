@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 
 /**
  * User: cdr
  */
-public interface IntervalTree<T extends Interval> extends Iterable<T> {
-  boolean process(@NotNull Processor<? super T> processor);
-  boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
-  boolean processOverlappingWith(int offset, @NotNull Processor<? super T> processor);
-
-  boolean removeInterval(@NotNull T interval);
+interface Getable<T> {
+  T get();
+}
+class WeakReferencedGetable<T> extends WeakReference<T> implements Getable<T> {
+  public WeakReferencedGetable(T referent, ReferenceQueue<? super T> q) {
+    super(referent, q);
+  }
 }

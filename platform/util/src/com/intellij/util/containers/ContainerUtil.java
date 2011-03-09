@@ -768,15 +768,44 @@ public class ContainerUtil {
     }
     return result;
   }
+  @NotNull
+  public static <T,V> List<V> map(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
+    List<V> result = new ArrayList<V>(iterable.size());
+    for (T t : iterable) {
+      result.add(mapping.fun(t));
+    }
+    return result;
+  }
 
   @NotNull
   public static <T, V> List<V> mapNotNull(@NotNull T[] array, Function<T, V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
+  public static <T, V> V[] mapNotNull(@NotNull T[] arr, @NotNull Function<T, V> mapping, @NotNull V[] emptyArray) {
+    List<V> result = new ArrayList<V>(arr.length);
+    for (T t : arr) {
+      V v = mapping.fun(t);
+      if (v != null) {
+        result.add(v);
+      }
+    }
+    return result.toArray(emptyArray);
+  }
 
   @NotNull
   public static <T, V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
+    for (T t : iterable) {
+      final V o = mapping.fun(t);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result;
+  }
+  @NotNull
+  public static <T, V> List<V> mapNotNull(Collection<? extends T> iterable, Function<T, V> mapping) {
+    List<V> result = new ArrayList<V>(iterable.size());
     for (T t : iterable) {
       final V o = mapping.fun(t);
       if (o != null) {

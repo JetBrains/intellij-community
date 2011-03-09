@@ -23,13 +23,22 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, MutableInterval {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final DocumentEx myDocument;
   RangeMarkerTree.RMNode myNode;
 
+  private final long myId;
+  //private static long counter;
+  private static final AtomicLong counter = new AtomicLong();
+
   protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
+    this(document, start, end, register, false, false);
+  }
+  private RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean greedyToLeft, boolean greedyToRight) {
     if (start < 0) {
       throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
     }
@@ -41,29 +50,38 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
 
     myDocument = document;
+    myId = counter.getAndIncrement();
     if (register) {
-      registerInDocument(start, end);
+      registerInTree(start, end, greedyToLeft, greedyToRight, 0);
     }
   }
 
-  protected void registerInDocument(int start, int end) {
-    myNode = null;
-    myDocument.addRangeMarker(this, start, end);
-    assert myNode != null;
+  private static Object createData(boolean greedyToLeft, boolean greedyToRight) {
+    return (greedyToLeft ? 2 : 0) | (greedyToRight ? 1 : 0);
   }
-  protected boolean unregisterInDocument() {
+
+  protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    ((DocumentImpl)myDocument).addRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
+  }
+
+  protected boolean unregisterInTree() {
+    IntervalTreeImpl tree = myNode.getTree();
+    tree.checkMax(true);
     boolean b = myDocument.removeRangeMarker(this);
     myNode = null;
+    tree.checkMax(true);
     return b;
   }
 
   public long getId() {
-    return myNode.getId();
+    return myId;
   }
 
   @Override
   public void dispose() {
-    unregisterInDocument();
+    if(isValid()) {
+      unregisterInTree();
+    }
   }
 
   public int getStartOffset() {
@@ -85,22 +103,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   public void setGreedyToLeft(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
-    myNode.getTree().changeAttribute(myNode, new Runnable() {
-      @Override
-      public void run() {
-        myNode.setGreedyToLeft(greedy);
-      }
-    });
+
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), 0);
   }
 
   public void setGreedyToRight(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
-    myNode.getTree().changeAttribute(myNode, new Runnable() {
-      @Override
-      public void run() {
-        myNode.setGreedyToRight(greedy);
-      }
-    });
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, 0);
   }
 
   public boolean isGreedyToLeft() {
@@ -210,7 +219,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @NonNls
   public String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(") + (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + (
-      isGreedyToRight() ? "]" : ")");
+      isGreedyToRight() ? "]" : ")") + " " + getId();
   }
 
   @Override
@@ -241,9 +250,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (node == null) {
       return -1;
     }
-    else {
-      return node.intervalStart();
-    }
+    return node.intervalStart();
   }
 
   @Override
@@ -252,8 +259,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (node == null) {
       return -1;
     }
-    else {
-      return node.intervalEnd();
-    }
+    return node.intervalEnd();
   }
 }

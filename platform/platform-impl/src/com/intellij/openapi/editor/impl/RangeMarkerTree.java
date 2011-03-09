@@ -20,22 +20,18 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * User: cdr
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private final PrioritizedDocumentListener myListener;
-  private final Document myDocument;
+  final Document myDocument;
   private final EqualStartIntervalComparator<IntervalNode> myEqualStartIntervalComparator = new EqualStartIntervalComparator<IntervalNode>() {
     @Override
     public int compare(IntervalNode i1, IntervalNode i2) {
@@ -54,9 +50,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       boolean greedyR2 = o2.isGreedyToRight();
       if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
 
-      // for now we tolerate equal range range markers (till lazy creation impl)
-      d = (int)(o1.getId() - o2.getId());
-      return d;
+      return 0;
     }
   };
 
@@ -88,53 +82,49 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected Trinity<Integer, Integer, Integer> checkMax(IntervalNode root,
-                                                        int deltaUpToRootExclusive,
-                                                        boolean assertInvalid,
-                                                        Ref<Boolean> allValid, AtomicInteger counter) {
-    if (root != null) {
-      RangeMarkerImpl r = (RangeMarkerImpl)root.getKey();
-      if (r != null) {
-        assert /*r.myNode == null || */r.myNode == root;
-        assert r.myNode.getTree() == this;
-      }
-    }
-    return super.checkMax(root, deltaUpToRootExclusive, assertInvalid, allValid, counter);
-  }
-
-  @Override
-  public IntervalNode addInterval(@NotNull T interval, int start, int end, Object data) {
+  public MyNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     RangeMarkerImpl marker = (RangeMarkerImpl)interval;
     marker.setValid(true);
-    return super.addInterval(interval, start, end, data);
-  }
+    RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
+    ((RangeMarkerImpl)interval).myNode = node;
 
-  @Override
-  protected RMNode createNewNode(T key, int start, int end, Object data) {
-    RMNode node = new RMNode(key, start, end);
-    ((RangeMarkerImpl)key).myNode = node;
+    checkBelongsToTheTree(interval, true);
+
     return node;
   }
 
-  //private static long counter;
-  private static final AtomicLong counter = new AtomicLong();
+  @NotNull
+  @Override
+  protected RMNode createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    return new RMNode(key, start, end, greedyToLeft, greedyToRight);
+  }
+
+  @Override
+  protected void checkBelongsToTheTree(T interval, boolean assertInvalid) {
+    if (!VERIFY) return;
+    assert ((RangeMarkerImpl)interval).myDocument == myDocument;
+
+    super.checkBelongsToTheTree(interval, assertInvalid);
+  }
+
+  @Override
+  protected MyNode lookupNode(@NotNull T key) {
+    return ((RangeMarkerImpl)key).myNode;
+  }
+
   public class RMNode extends MyNode {
-    private boolean isExpandToLeft = false;
-    private boolean isExpandToRight = false;
-    private final long myId;
+    private final boolean isExpandToLeft;
+    private final boolean isExpandToRight;
 
-    public RMNode(@NotNull T key, int start, int end) {
+    public RMNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight) {
       super(key, start, end);
-      myId = counter.getAndIncrement();
-    //myId = counter++;
+      isExpandToLeft = greedyToLeft;
+      isExpandToRight = greedyToRight;
     }
 
-    public void setGreedyToLeft(boolean greedy) {
-      isExpandToLeft = greedy;
-    }
-
-    public void setGreedyToRight(boolean greedy) {
-      isExpandToRight = greedy;
+    @Override
+    public boolean processAliveKeys(@NotNull Processor processor) {
+      return super.processAliveKeys(processor);
     }
 
     public boolean isGreedyToLeft() {
@@ -145,8 +135,18 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       return isExpandToRight;
     }
 
-    public long getId() {
-      return myId;
+    @Override
+    public void addInterval(@NotNull T interval) {
+      super.addInterval(interval);
+      ((RangeMarkerImpl)interval).myNode = this;
+      checkBelongsToTheTree(interval, true);
+    }
+
+    @Override
+    public boolean removeInterval(@NotNull T key) {
+      boolean removedNode = super.removeInterval(key);
+      ((RangeMarkerImpl)key).myNode = null;
+      return removedNode;
     }
 
     @Override
@@ -159,11 +159,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     try {
       l.writeLock().lock();
       checkMax(true);
-      normalized = false;
 
       modCount++;
       List<IntervalNode> affected = new ArrayList<IntervalNode>();
-      updateMarkersOnChange(getRoot(), e, affected);
+      normalized &= !collectAffectedMarkers(getRoot(), e, affected);
       checkMax(false);
 
       if (!affected.isEmpty()) {
@@ -172,7 +171,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           int startOffset = node.intervalStart();
           int endOffset = node.intervalEnd();
           removeNode(node);
-          node.delta = 0;
+          node.delta = 0;   // we can do it because all the deltas in the way were cleared in the collectAffectedMarkers
           node.setParent(null);
           node.setLeft(null);
           node.setRight(null);
@@ -181,17 +180,26 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         }
         checkMax(true);
         for (IntervalNode node : affected) {
-          RangeMarkerImpl marker = (RangeMarkerImpl)node.getKey();
-          if (marker == null) continue; // collected
+          List<T> aliveKeys = node.getAliveKeys();
+          if (aliveKeys.isEmpty()) continue; // collected
+          RangeMarkerImpl marker = (RangeMarkerImpl)aliveKeys.get(0);
           marker.setValid(true);
           //marker.myNode = null;
           marker.documentChanged(e);
           if (marker.isValid()) {
-            insert(node);
+            RMNode insertedNode = (RMNode)findOrInsert(node);
+            // can change if two range become the one
+            if (insertedNode != node) {
+              // merge happened
+              for (T interval : aliveKeys) {
+                insertedNode.addInterval(interval);
+              }
+            }
+            assert marker.isValid();
           }
         }
-        checkMax(true);
       }
+      checkMax(true);
 
       IntervalNode root = getRoot();
       assert root == null || root.maxEnd + root.delta <= myDocument.getTextLength();
@@ -201,19 +209,20 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
   }
 
-  private static void updateMarkersOnChange(IntervalNode root,
-                                            @NotNull DocumentEvent e,
-                                            @NotNull List<IntervalNode> affected) {
-    if (root == null) return;
-    pushDelta(root);
+  // returns true if some delta was or became not null
+  private boolean collectAffectedMarkers(IntervalNode root,
+                                         @NotNull DocumentEvent e,
+                                         @NotNull List<IntervalNode> affected) {
+    if (root == null) return false;
+    boolean denorm = pushDelta(root);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
 
     int offset = e.getOffset();
     int affectedEndOffset = offset + e.getOldLength();
-    Object key = root.getKey();
-    if (key == null) {
+    boolean hasAliveKeys = root.hasAliveKey(false);
+    if (!hasAliveKeys) {
       // marker was garbage collected
       affected.add(root);
     }
@@ -222,27 +231,30 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     else if (affectedEndOffset < root.intervalStart()) {
       int lengthDelta = e.getNewLength() - e.getOldLength();
-      root.delta += lengthDelta;
-      if (root.getLeft() != null) {
-        root.getLeft().delta -= lengthDelta;
+      int newD = root.delta += lengthDelta;
+      denorm |= newD != 0;
+      IntervalNode left = root.getLeft();
+      if (left != null) {
+        int newL = left.delta -= lengthDelta;
+        denorm |= newL != 0;
       }
-      pushDelta(root);
-      updateMarkersOnChange(root.getLeft(), e, affected);
+      denorm |= pushDelta(root);
+      denorm |= collectAffectedMarkers(left, e, affected);
       correctMax(root, 0);
     }
     else {
       if (offset <= root.intervalEnd()) {
         // unlucky enough so that change affects the interval
-        if (key != null) affected.add(root); // otherwise we've already added it
+        if (hasAliveKeys) affected.add(root); // otherwise we've already added it
         root.setValid(false);  //make invisible
       }
 
-      updateMarkersOnChange(root.getLeft(), e, affected);
-      updateMarkersOnChange(root.getRight(), e, affected);
+      denorm |= collectAffectedMarkers(root.getLeft(), e, affected);
+      denorm |= collectAffectedMarkers(root.getRight(), e, affected);
       correctMax(root,0);
     }
+    return denorm;
   }
-
 
   public boolean sweep(final int start, final int end, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
     normalize();
@@ -252,7 +264,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         return processOverlappingWith(start, end, processor);
       }
     }, sweepProcessor);
-
   }
 
   public interface Generator<T> {
