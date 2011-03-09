@@ -163,7 +163,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             if (cls != null && !cls_type.isDefinition()) is_not_callable = cls.findMethodByName("__call__", true) == null;
           }
         }
-        if (is_not_callable) registerProblem(being_checked, PyBundle.message("INSP.strange.arg.want.callable"));
+        if (is_not_callable && !"None".equals(being_checked.getText()))
+          registerProblem(being_checked, PyBundle.message("INSP.strange.arg.want.callable"));
       }
     }
 
