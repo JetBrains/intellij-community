@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
@@ -33,7 +35,7 @@ import java.util.Collection;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
+public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -126,5 +128,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
         return comp;
       }
     });
+  }
+
+  public void setDataProvider(DataProvider provider) {
+    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 }
