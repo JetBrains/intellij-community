@@ -28,19 +28,19 @@ public class PorterStemmerUtil {
     // check for zero length
     final int strLen = str.length();
     if (strLen > 0) {
-      int lastDigit = -1;
+      int lastNonLetter = -1;
       for (int i = 0; i < strLen; ++i) {
         char c = str.charAt(i);
-        if (Character.isDigit(c)) {
-          lastDigit = i;
+        if (Character.isDigit(c) || c == '-' || c == '_') {
+          lastNonLetter = i;
         }
         else if (!Character.isLetter(c)) {
           return null;
         }
       }
-      ++lastDigit;
-      if (lastDigit > 0 && lastDigit < strLen) {
-        return str.substring(0, lastDigit) + stemString(str.substring(lastDigit));
+      ++lastNonLetter;
+      if (lastNonLetter > 0 && lastNonLetter < strLen) {
+        return str.substring(0, lastNonLetter) + stemString(str.substring(lastNonLetter));
       }
       return stemString(str);
     }

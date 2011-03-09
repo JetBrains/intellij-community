@@ -215,6 +215,12 @@ interface Super {
     assertEquals "C2", resolve("A.groovy").getName()
   }
 
+  void testPreferClassFromCurPackage() {
+    myFixture.addFileToProject "a/Cl.groovy", "package a; class Cl{}"
+    myFixture.addFileToProject "b/Cl.groovy", "package b; class Cl{}"
+    assertEquals "a.Cl", resolve("a.groovy").qualifiedName
+  }
+
   private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

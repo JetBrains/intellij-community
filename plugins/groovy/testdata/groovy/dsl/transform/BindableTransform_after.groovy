@@ -6,4 +6,4 @@ class MyBean {
 
 def bean = new MyBean()
 
-bean.firePropertyChange<caret>
+bean.firePropertyChange(<caret>)

@@ -24,6 +24,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -34,6 +35,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * User: anna
@@ -52,6 +55,9 @@ public abstract class IntroduceParameterSettingsUI {
   protected final PsiParameter[] myParametersToRemove;
   protected final boolean[] myParametersToRemoveChecked;
   protected final boolean myIsLocalVariable;
+
+  protected JCheckBox myCbReplaceAllOccurences = null;
+  private JCheckBox myCbGenerateDelegate = null;
 
   public IntroduceParameterSettingsUI(Project project,
                                       PsiLocalVariable onLocalVariable,
@@ -95,6 +101,14 @@ public abstract class IntroduceParameterSettingsUI {
     }
 
     return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
+  }
+
+  public boolean isReplaceAllOccurences() {
+    return myIsInvokedOnDeclaration || myCbReplaceAllOccurences != null && myCbReplaceAllOccurences.isSelected();
+  }
+
+  public boolean isGenerateDelegate() {
+    return myCbGenerateDelegate != null && myCbGenerateDelegate.isSelected();
   }
 
   protected JPanel createReplaceFieldsWithGettersPanel() {
@@ -169,9 +183,33 @@ public abstract class IntroduceParameterSettingsUI {
     return parameters;
   }
 
-  protected abstract void updateControls(JCheckBox[] removeParamsCb);
+  protected void updateControls(JCheckBox[] removeParamsCb) {
+    if (myCbReplaceAllOccurences != null) {
+      for (JCheckBox box : removeParamsCb) {
+        if (box != null) {
+          box.setEnabled(myCbReplaceAllOccurences.isSelected());
+        }
+      }
+      getTypeSelectionManager().setAllOccurences(myCbReplaceAllOccurences.isSelected());
+      if (myCbReplaceAllOccurences.isSelected()) {
+        if (myCbDeleteLocalVariable != null) {
+          myCbDeleteLocalVariable.makeSelectable();
+        }
+      }
+      else {
+        if (myCbDeleteLocalVariable != null) {
+          myCbDeleteLocalVariable.makeUnselectable(false);
+        }
+      }
+    }
+    else {
+      getTypeSelectionManager().setAllOccurences(myIsInvokedOnDeclaration);
+    }
+  }
 
-  protected JCheckBox[] createRemoveParamsPanel(GridBagConstraints gbConstraints, JPanel panel) {
+  protected abstract TypeSelectorManager getTypeSelectionManager();
+
+  protected void createRemoveParamsPanel(GridBagConstraints gbConstraints, JPanel panel) {
     final JCheckBox[] removeParamsCb = new JCheckBox[myParametersToRemove.length];
     for (int i = 0; i < myParametersToRemove.length; i++) {
       PsiParameter parameter = myParametersToRemove[i];
@@ -192,7 +230,15 @@ public abstract class IntroduceParameterSettingsUI {
     }
 
     updateControls(removeParamsCb);
-    return removeParamsCb;
+    if (myCbReplaceAllOccurences != null) {
+      myCbReplaceAllOccurences.addItemListener(
+        new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            updateControls(removeParamsCb);
+          }
+        }
+      );
+    }
   }
 
   protected void createLocalVariablePanel(GridBagConstraints gbConstraints, JPanel panel, JavaRefactoringSettings settings) {
@@ -215,5 +261,19 @@ public abstract class IntroduceParameterSettingsUI {
         panel.add(myCbUseInitializer, gbConstraints);
       }
     }
+  }
+
+
+  protected void createDelegateCb(GridBagConstraints gbConstraints, JPanel panel) {
+    myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
+    panel.add(myCbGenerateDelegate, gbConstraints);
+  }
+
+  protected void createOccurrencesCb(GridBagConstraints gbConstraints, JPanel panel, final int occurenceNumber) {
+    myCbReplaceAllOccurences = new NonFocusableCheckBox();
+    myCbReplaceAllOccurences.setText(RefactoringBundle.message("replace.all.occurences", occurenceNumber));
+
+    panel.add(myCbReplaceAllOccurences, gbConstraints);
+    myCbReplaceAllOccurences.setSelected(false);
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -373,14 +374,20 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
 
       public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-        List<PsiExpression> exprList = new ArrayList<PsiExpression>();
-        for (SmartPsiElementPointer<PsiExpression> ptr : pointers) {
-          PsiExpression expr = ptr.getElement();
-          if (expr != null && expr.isValid()) {
-            exprList.add(expr);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            List<PsiExpression> exprList = new ArrayList<PsiExpression>();
+            for (SmartPsiElementPointer<PsiExpression> ptr : pointers) {
+              PsiExpression expr = ptr.getElement();
+              if (expr != null && expr.isValid()) {
+                exprList.add(expr);
+              }
+            }
+            new IntroduceConstantHandler().invoke(project, exprList.toArray(new PsiExpression[exprList.size()]));
           }
-        }
-        new IntroduceConstantHandler().invoke(project, exprList.toArray(new PsiExpression[exprList.size()]));
+        };
+        //do it later because it is invoked from write action
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
 
       @NotNull

@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -79,10 +80,9 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   public PsiFile getContainingFile() {
-    PsiFile file = SharedImplUtil.getContainingFile(this);
-    if (file == null || !file.isValid()) {
-      invalid();
-    }
+    final PsiFile file = SharedImplUtil.getContainingFile(this);
+    if (file == null || !file.isValid()) invalid();
+    //noinspection ConstantConditions
     return file;
   }
 
@@ -92,7 +92,15 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
       indicator.checkCanceled();
     }
 
-    throw new PsiInvalidElementAccessException(this);
+    final StringBuilder builder = new StringBuilder();
+    TreeElement element = this;
+    while (element != null) {
+      if (element != this) builder.append(" / ");
+      builder.append(element.getClass().getName()).append(':').append(element.getElementType());
+      element = element.getTreeParent();
+    }
+
+    throw new PsiInvalidElementAccessException(this, builder.toString());
   }
 
   public PsiElement findElementAt(int offset) {
@@ -220,7 +228,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) invalid();
-
+    //noinspection ConstantConditions
     return manager.getProject();
   }
 
@@ -246,7 +254,10 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    final Navigatable descriptor = EditSourceUtil.getDescriptor(this);
+    if (descriptor != null) {
+      descriptor.navigate(requestFocus);
+    }
   }
 
   public boolean canNavigate() {

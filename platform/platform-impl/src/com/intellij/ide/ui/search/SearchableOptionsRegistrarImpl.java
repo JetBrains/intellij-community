@@ -67,7 +67,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
   public static final int LOAD_FACTOR = 20;
   @NonNls
-  private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^_-]]");
+  private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
@@ -360,14 +360,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = REG_EXP.split(toLowerCase);
-    if (options != null) {
-      for (String opt : options) {
-        if (opt == null) continue;
-        if (isStopWord(opt)) continue;
-        final String processed = PorterStemmerUtil.stem(opt);
-        if (isStopWord(processed)) continue;
-        result.add(opt);
-      }
+    for (String opt : options) {
+      if (isStopWord(opt)) continue;
+      final String processed = PorterStemmerUtil.stem(opt);
+      assert processed != null;
+      if (isStopWord(processed)) continue;
+      result.add(opt);
     }
     return result;
   }
@@ -376,13 +374,11 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = REG_EXP.split(toLowerCase);
-    if (options != null) {
-      for (String opt : options) {
-        if (isStopWord(opt)) continue;
-        opt = PorterStemmerUtil.stem(opt);
-        if (opt == null) continue;
-        result.add(opt);
-      }
+    for (String opt : options) {
+      if (isStopWord(opt)) continue;
+      opt = PorterStemmerUtil.stem(opt);
+      assert opt != null;
+      result.add(opt);
     }
     return result;
   }

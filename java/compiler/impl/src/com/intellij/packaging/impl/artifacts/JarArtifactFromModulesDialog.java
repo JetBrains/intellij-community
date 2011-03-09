@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,6 +33,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -74,7 +76,8 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     updateManifestDirField();
     myManifestDirField.addBrowseFolderListener(null, null, project, ManifestFileUtil.createDescriptorForManifestDirectory());
 
-    final Module[] modules = context.getModulesProvider().getModules();
+    final Module[] modules = context.getModulesProvider().getModules().clone();
+    Arrays.sort(modules, ModulesAlphaComparator.INSTANCE);
     if (modules.length > 1) {
       myModuleComboBox.addItem(null);
     }

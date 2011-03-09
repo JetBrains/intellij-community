@@ -44,10 +44,6 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
   public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
     final char c = context.getCompletionChar();
 
-    if (c != '.' && c != ' ' && c != '#') {
-      context.setAddCompletionChar(false);
-    }
-
     int offset = context.getTailOffset() - 1;
     final PsiFile file = context.getFile();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {

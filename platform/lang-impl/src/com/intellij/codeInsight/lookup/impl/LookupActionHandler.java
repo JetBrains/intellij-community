@@ -98,16 +98,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
-      if (!CompletionProgressIndicator.showHintAutopopup()) {
-        lookup.hide();
-        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
-        return;
-      }
-
-
-      lookup.setHintMode(false);
-      lookup.refreshUi();
-      UpHandler.executeUp(lookup);
+      lookup.hide();
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
     }
 
     @Override
@@ -123,15 +115,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     public void actionPerformed(AnActionEvent e) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
-      if (!CompletionProgressIndicator.showHintAutopopup()) {
-        lookup.hide();
-        ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
-        return;
-      }
-
-      lookup.setHintMode(false);
-      lookup.refreshUi();
-      DownHandler.executeDown(lookup);
+      lookup.hide();
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
     }
 
     @Override

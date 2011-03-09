@@ -20,38 +20,33 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
-import java.util.BitSet;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dsl
  */
 public class KeywordParser extends TokenParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
-  private final HashSet[] myKeywordSets = new HashSet[CustomHighlighterTokenType.KEYWORD_TYPE_COUNT];
-  private final int mySmartUpdateShift;
+  private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
   private final boolean myIgnoreCase;
   private final BitSet myFirstCharacters = new BitSet();
   private final BitSet myCharacters = new BitSet();
 
-  public KeywordParser(Set[] keywordSets, boolean ignoreCase) {
-    LOG.assertTrue(keywordSets.length == myKeywordSets.length);
+  public KeywordParser(List<Set<String>> keywordSets, boolean ignoreCase) {
+    LOG.assertTrue(keywordSets.size() == CustomHighlighterTokenType.KEYWORD_TYPE_COUNT);
     myIgnoreCase = ignoreCase;
     int maxLength = 0;
-    for (int i = 0; i < keywordSets.length; i++) {
-      Set keywordSet = keywordSets[i];
-      myKeywordSets[i] = getKeywordSet(keywordSet);
-      for (Iterator iterator = keywordSet.iterator(); iterator.hasNext();) {
-        String s = (String) iterator.next();
+    for (Set<String> keywordSet : keywordSets) {
+      myKeywordSets.add(getKeywordSet(keywordSet));
+      for (String s : keywordSet) {
         maxLength = Math.max(maxLength, s.length());
 
         final char firstChar = s.charAt(0);
         if (ignoreCase) {
           myFirstCharacters.set(Character.toUpperCase(firstChar), Character.toUpperCase(firstChar) + 1);
           myFirstCharacters.set(Character.toLowerCase(firstChar), Character.toLowerCase(firstChar) + 1);
-        } else {
+        }
+        else {
           myFirstCharacters.set(firstChar, firstChar + 1);
         }
         for (int j = 0; j < s.length(); j++) {
@@ -66,20 +61,18 @@ public class KeywordParser extends TokenParser {
         }
       }
     }
-    mySmartUpdateShift = maxLength;
   }
 
-  private HashSet getKeywordSet(Set keywordSet) {
+  private Set<String> getKeywordSet(Set<String> keywordSet) {
     if (!myIgnoreCase) {
-      return new HashSet(keywordSet);
-    } else {
-      final HashSet result = new HashSet();
-      for (Iterator iterator = keywordSet.iterator(); iterator.hasNext();) {
-        String s = (String) iterator.next();
-        result.add(s.toUpperCase());
-      }
-      return result;
+      return new HashSet<String>(keywordSet);
     }
+
+    final Set<String> result = new HashSet<String>();
+    for (String s : keywordSet) {
+      result.add(s.toUpperCase());
+    }
+    return result;
   }
 
 
@@ -96,8 +89,8 @@ public class KeywordParser extends TokenParser {
 
     final String keyword = myBuffer.subSequence(start, position).toString();
     String testKeyword = myIgnoreCase ? keyword.toUpperCase() : keyword;
-    for (int i = 0; i < myKeywordSets.length; i++) {
-      HashSet keywordSet = myKeywordSets[i];
+    for (int i = 0; i < myKeywordSets.size(); i++) {
+      Set<String> keywordSet = myKeywordSets.get(i);
       if (keywordSet.contains(testKeyword)) {
         myTokenInfo.updateData(start, position, getToken(i));
         return true;
@@ -114,10 +107,6 @@ public class KeywordParser extends TokenParser {
       case 2: return CustomHighlighterTokenType.KEYWORD_3;
       case 3: return CustomHighlighterTokenType.KEYWORD_4;
     }
-    return null;
-  }
-
-  public int getSmartUpdateShift() {
-    return mySmartUpdateShift;
+    throw new AssertionError(keywordSetIndex);
   }
 }

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -87,7 +87,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
         return false;
       }
       ParserUtils.getToken(builder, mNLS);
-    } while(Annotation.parse(builder, parser) || Modifier.parse(builder));
+    } while(Annotation.parse(builder, parser) || Modifiers.parseModifier(builder));
 
     modifiersMarker.done(MODIFIERS);
     return true;

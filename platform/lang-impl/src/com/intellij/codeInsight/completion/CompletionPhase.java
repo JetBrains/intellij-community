@@ -16,20 +16,25 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.EventObject;
 
 /**
@@ -204,8 +209,88 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
   public static class EmptyAutoPopup extends CompletionPhase {
+    public final Editor editor;
+    private final Project project;
+    private final EditorMouseAdapter mouseListener;
+    private final CaretListener caretListener;
+    private final DocumentAdapter documentListener;
+    private final PropertyChangeListener lookupListener;
+    private boolean changeGuard = false;
+
     public EmptyAutoPopup(CompletionProgressIndicator indicator) {
       super(indicator);
+      this.editor = indicator.getEditor();
+      this.project = indicator.getProject();
+      MessageBusConnection connection = project.getMessageBus().connect(this);
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+        @Override
+        public void selectionChanged(FileEditorManagerEvent event) {
+          stopAutoPopup();
+        }
+      });
+
+      mouseListener = new EditorMouseAdapter() {
+        @Override
+        public void mouseClicked(EditorMouseEvent e) {
+          stopAutoPopup();
+        }
+      };
+
+      caretListener = new CaretListener() {
+        @Override
+        public void caretPositionChanged(CaretEvent e) {
+          if (!changeGuard) {
+            stopAutoPopup();
+          }
+        }
+      };
+      editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+        @Override
+        public void selectionChanged(SelectionEvent e) {
+          stopAutoPopup();
+        }
+      });
+      documentListener = new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          if (!changeGuard) {
+            stopAutoPopup();
+          }
+        }
+      };
+      lookupListener = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          stopAutoPopup();
+        }
+      };
+
+      editor.addEditorMouseListener(mouseListener);
+      editor.getCaretModel().addCaretListener(caretListener);
+      editor.getDocument().addDocumentListener(documentListener);
+      LookupManager.getInstance(project).addPropertyChangeListener(lookupListener);
+    }
+
+    @Override
+    public void dispose() {
+      editor.removeEditorMouseListener(mouseListener);
+      editor.getCaretModel().removeCaretListener(caretListener);
+      editor.getDocument().removeDocumentListener(documentListener);
+      LookupManager.getInstance(project).removePropertyChangeListener(lookupListener);
+    }
+
+    public void handleTyping(char c) {
+      changeGuard = true;
+      try {
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(c), true);
+      }
+      finally {
+        changeGuard = false;
+      }
+    }
+
+    private static void stopAutoPopup() {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
     }
 
     @Override

@@ -95,11 +95,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testClassStaticMembersInVoidContext() throws Throwable {
-    checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "Inner");
+    checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class");
   }
 
   public void testClassStaticMembersInBooleanContext() throws Throwable {
-    checkPreferredItems(0, "booleanMethod", "voidMethod", "BOOLEAN", "AN_OBJECT", "Inner");
+    checkPreferredItems(0, "booleanMethod", "voidMethod", "BOOLEAN", "AN_OBJECT", "class");
   }
 
   public void testDispreferDeclared() throws Throwable {
@@ -211,6 +211,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferReturn() {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
+  }
+
+  public void testPreferModifiers() {
+    checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
   }
 
 }

@@ -205,9 +205,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       mySyncDocument = null;
     }
   }
-
+  
+  @TestOnly
   public void doCommitTransaction(final Document document){
     doCommitTransaction(document, getTransaction(document));
+    myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, null);
   }
 
   private static void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {

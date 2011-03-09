@@ -489,7 +489,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               Messages.showMessageDialog(ClasspathPanelImpl.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
-            return new ModuleChooser(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
+            return new ModuleChooser(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"),
+                                     ProjectBundle.message("classpath.chooser.description.add.module.dependency"));
           }
         }
       );
@@ -669,8 +670,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   private class ModuleChooser extends ChooseModulesDialog implements ClasspathElementChooser<Module> {
-    public ModuleChooser(final List<Module> items, final String title) {
-      super(ClasspathPanelImpl.this, items, title);
+    public ModuleChooser(final List<Module> items, final String title, String description) {
+      super(ClasspathPanelImpl.this, items, title, description);
     }
 
     public void doChoose() {

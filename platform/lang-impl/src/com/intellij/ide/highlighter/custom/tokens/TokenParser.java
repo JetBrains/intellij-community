@@ -37,6 +37,4 @@ public abstract class TokenParser {
   }
 
   public abstract boolean hasToken(int position);
-
-  public abstract int getSmartUpdateShift();
 }

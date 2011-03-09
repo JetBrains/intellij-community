@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 /**
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RedBlackTree<K> {
   public static boolean VERIFY = false;
   private static final int INDENT_STEP = 4;
-  protected int size;
+  private int nodeSize; // number of nodes
   protected int modCount;
   protected Node<K> root;
 
@@ -32,8 +35,6 @@ public abstract class RedBlackTree<K> {
     root = null;
     verifyProperties();
   }
-
-  protected abstract Node<K> lookupNode(@NotNull K key, Node<K> root);
 
   protected void rotateLeft(Node<K> n) {
     Node<K> r = n.getRight();
@@ -78,7 +79,9 @@ public abstract class RedBlackTree<K> {
     //oldn.right = null;
   }
 
-  protected abstract Node<K> createNewNode(K key, int start, int end, Object data);
+  protected void onInsertNode() {
+    nodeSize++;
+  }
 
   protected void insertCase1(Node<K> n) {
     if (n.getParent() == null) {
@@ -137,12 +140,6 @@ public abstract class RedBlackTree<K> {
     assert node1 == null || node1.getParent() == null || node1.getParent().getLeft() == node1 || node1.getParent().getRight() == node1;
   }
 
-  public Node<K> delete(@NotNull K key) {
-    Node<K> n = lookupNode(key, root);
-    deleteNode(n);
-    return n;
-  }
-
   protected void deleteNode(Node<K> n) {
     modCount++;
     if (n == null) return;  // Key not found, do nothing
@@ -175,7 +172,9 @@ public abstract class RedBlackTree<K> {
     if (nodeColor(root) == Color.RED) {
       root.color = Color.BLACK;
     }
-    size--;
+
+    assert nodeSize > 0 : nodeSize;
+    nodeSize--;
     verifyProperties();
   }
 
@@ -286,10 +285,10 @@ public abstract class RedBlackTree<K> {
       System.err.print(" ");
     }
     if (n.color == Color.BLACK) {
-      System.err.println(n.getKey());
+      System.err.println(n);
     }
     else {
-      System.err.println("<" + n.getKey() + ">");
+      System.err.println("<" + n + ">");
     }
     if (n.getLeft() != null) {
       printHelper(n.getLeft(), indent + INDENT_STEP);
@@ -347,7 +346,10 @@ public abstract class RedBlackTree<K> {
       this.parent = parent;
     }
 
-    public abstract K getKey();
+    public abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
+    @NotNull
+    public abstract List<K> getAliveKeys();
+    public abstract boolean hasAliveKey(boolean purgeDead);
   }
 
   protected static enum Color {
@@ -355,7 +357,10 @@ public abstract class RedBlackTree<K> {
   }
 
   public int size() {
-    return size;
+    return nodeSize;
+  }
+  public int nodeSize() {
+    return nodeSize;
   }
 
   public void verifyProperties() {
@@ -426,6 +431,6 @@ public abstract class RedBlackTree<K> {
   public void clear() {
     modCount++;
     root = null;
-    size = 0;
+    nodeSize = 0;
   }
 }

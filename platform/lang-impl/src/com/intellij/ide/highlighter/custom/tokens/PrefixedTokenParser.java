@@ -42,9 +42,5 @@ public abstract class PrefixedTokenParser extends TokenParser {
     return true;
   }
 
-  public int getSmartUpdateShift() {
-    return myPrefix.length;
-  }
-
   protected abstract int getTokenEnd(int position);
 }

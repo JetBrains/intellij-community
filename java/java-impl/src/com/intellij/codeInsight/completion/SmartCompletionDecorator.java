@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -52,10 +53,12 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   }
 
   protected TailType computeTailType(InsertionContext context) {
-    final TailType defType = LookupItem.getDefaultTailType(context.getCompletionChar());
-    if (defType != null) {
-      context.setAddCompletionChar(false);
-      return defType;
+    if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      return TailType.SMART_COMPLETION;
+    }
+
+    if (LookupItem.getDefaultTailType(context.getCompletionChar()) != null) {
+      return null;
     }
 
     LookupElement delegate = getDelegate();

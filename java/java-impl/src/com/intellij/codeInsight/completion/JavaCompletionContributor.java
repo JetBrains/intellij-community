@@ -30,8 +30,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
@@ -211,15 +215,14 @@ public class JavaCompletionContributor extends CompletionContributor {
                                    PsiElement position,
                                    final InheritorsHolder inheritors) {
     if (shouldRunClassNameCompletion(result, position)) {
-      result.runRemainingContributors(parameters.withType(CompletionType.CLASS_NAME),
-        new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement lookupElement) {
-            if (!inheritors.alreadyProcessed(lookupElement)) {
-              result.addElement(lookupElement);
-            }
+      JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          if (!inheritors.alreadyProcessed(element)) {
+            result.addElement(element);
           }
-        });
+        }
+      });
     }
   }
 
@@ -314,6 +317,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (grand instanceof PsiNewExpression && ((PsiNewExpression)grand).getQualifier() != null) {
       return false;
     }
+
+    if (NameUtil.useMinusculeHumpMatcher) return true;
 
     final String s = result.getPrefixMatcher().getPrefix();
     if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;

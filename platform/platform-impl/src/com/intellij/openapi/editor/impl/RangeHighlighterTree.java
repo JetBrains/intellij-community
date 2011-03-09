@@ -28,8 +28,8 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     public int compare(IntervalNode i1, IntervalNode i2) {
       RHNode o1 = (RHNode)i1;
       RHNode o2 = (RHNode)i2;
-      if (o1.data.getLayer() != o2.data.getLayer()) {
-        return o2.data.getLayer() - o1.data.getLayer();
+      if (o1.myLayer != o2.myLayer) {
+        return o2.myLayer - o1.myLayer;
       }
       boolean greedyL1 = o1.isGreedyToLeft();
       boolean greedyL2 = o2.isGreedyToLeft();
@@ -42,9 +42,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
       boolean greedyR2 = o2.isGreedyToRight();
       if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
 
-      // for now we tolerate equal range range markers (till lazy creation impl)
-      d = (int)(o1.getId() - o2.getId());
-      return d;
+      return 0;
     }
   };
 
@@ -57,19 +55,29 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     return myComparator;
   }
 
+  @NotNull
   @Override
-  protected RHNode createNewNode(RangeHighlighterEx key, int start, int end, Object data) {
-    RHNode node = new RHNode(key, start, end, (RangeHighlighterData)data);
-    ((RangeMarkerImpl)key).myNode = node;
-    return node;
+  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    return new RHNode(key, start, end, greedyToLeft, greedyToRight,layer);
   }
 
   class RHNode extends RMNode {
-    final RangeHighlighterData data;
-    public RHNode(@NotNull final RangeHighlighterEx key, int start, int end, RangeHighlighterData data) {
-      super(key, start, end);
-      this.data = data;
+    final int myLayer;
+
+    public RHNode(@NotNull final RangeHighlighterEx key,
+                  int start,
+                  int end,
+                  boolean greedyToLeft,
+                  boolean greedyToRight,
+                  int layer) {
+      super(key, start, end, greedyToLeft, greedyToRight);
+      myLayer = layer;
+    }
+
+    // range highlighters are strongly referenced
+    @Override
+    protected Getable<RangeHighlighterEx> createGetable(@NotNull RangeHighlighterEx interval) {
+      return (Getable)interval;
     }
   }
-
 }

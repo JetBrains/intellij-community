@@ -30,6 +30,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -54,6 +55,7 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
   }
+
   public ModifierFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
     this(owner.getModifierList(), modifier, shouldHave, showContainingClass);
     if (owner instanceof PsiVariable) {
@@ -64,12 +66,12 @@ public class ModifierFix extends IntentionAndQuickFixAction {
   @NotNull
   public String getName() {
     String name = null;
-    PsiElement parent = myVariable == null ? myModifierList.getParent() : myVariable;
+    PsiElement parent = myVariable == null ? myModifierList == null ? null : myModifierList.getParent() : myVariable;
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
     else {
-      int options = PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS : 0);
+      int options = PsiFormatUtilBase.SHOW_NAME | (myShowContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0);
       if (parent instanceof PsiMethod) {
         name = PsiFormatUtil.formatMethod((PsiMethod)parent, PsiSubstitutor.EMPTY, options, 0);
       }
@@ -79,8 +81,9 @@ public class ModifierFix extends IntentionAndQuickFixAction {
       else if (parent instanceof PsiClassInitializer) {
         PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
         String className = containingClass instanceof PsiAnonymousClass
-                           ? QuickFixBundle.message("anonymous.class.presentation", ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
-                           : containingClass.getName();
+                           ? QuickFixBundle.message("anonymous.class.presentation",
+                                                    ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
+                           : containingClass != null ? containingClass.getName() : "unknown";
         name = QuickFixBundle.message("class.initializer.presentation", className);
       }
     }
@@ -99,7 +102,7 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     return myModifierList != null &&
            myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&
-           myModifierList.hasModifierProperty(myModifier) != myShouldHave &&
+           myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (myVariable == null || myVariable.isValid());
   }
 

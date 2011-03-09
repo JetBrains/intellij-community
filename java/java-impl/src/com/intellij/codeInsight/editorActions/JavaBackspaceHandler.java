@@ -22,6 +22,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
@@ -43,30 +44,33 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
     char c1 = chars.charAt(offset);
     if (c == '<' && myToDeleteGt) {
       if (c1 != '>') return true;
-      handleLTDeletion(editor, offset);
+      handleLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypedHandler.INVALID_INSIDE_REFERENCE);
       return true;
     }
     return false;
   }
 
-  private static void handleLTDeletion(final Editor editor, final int offset) {
+  public static void handleLTDeletion(final Editor editor,
+                                       final int offset,
+                                       final IElementType lt,
+                                       final IElementType gt, final TokenSet invalidInsideReference) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    while (iterator.getStart() > 0 && !invalidInsideReference.contains(iterator.getTokenType())) {
       iterator.retreat();
     }
 
-    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+    if (invalidInsideReference.contains(iterator.getTokenType())) iterator.advance();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
       final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
+      if (tokenType == lt) {
         balance++;
       }
-      else if (tokenType == JavaTokenType.GT) {
+      else if (tokenType == gt) {
         balance--;
       }
-      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (invalidInsideReference.contains(tokenType)) {
         break;
       }
 

@@ -18,11 +18,13 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +99,11 @@ public class PsiDiamondType extends PsiType {
   }
 
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression) {
+    return resolveInferredTypes(newExpression, newExpression);
+  }
+
+  public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
+                                                            PsiElement context) {
     final PsiClass psiClass = findClass(newExpression);
     if (psiClass == null) return DiamondInferenceResult.NULL_RESULT;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -107,12 +114,12 @@ public class PsiDiamondType extends PsiType {
     if (staticFactory == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
-    final PsiSubstitutor inferredSubstitutor = inferTypeParametersForStaticFactory(staticFactory, newExpression);
+    final PsiSubstitutor inferredSubstitutor = inferTypeParametersForStaticFactory(staticFactory, newExpression, context);
     final PsiTypeParameter[] parameters = staticFactory.getTypeParameters();
     final PsiTypeParameter[] classParameters = psiClass.getTypeParameters();
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
-    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
+    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>", newExpression.getProject());
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {
@@ -187,9 +194,10 @@ public class PsiDiamondType extends PsiType {
     }
     else {
       buf.append("(").append(StringUtil.join(constructor.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+        int myIdx = 0;
         @Override
         public String fun(PsiParameter psiParameter) {
-          return psiParameter.getType().getCanonicalText() + " " + psiParameter.getName();
+          return psiParameter.getType().getCanonicalText() + " p" + myIdx++;
         }
       }, ",")).append(")");
     }
@@ -209,14 +217,15 @@ public class PsiDiamondType extends PsiType {
 
 
   private static PsiSubstitutor inferTypeParametersForStaticFactory(@NotNull PsiMethod staticFactoryMethod,
-                                                                    PsiNewExpression expression) {
+                                                                    PsiNewExpression expression,
+                                                                    PsiElement parent) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(staticFactoryMethod.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     final PsiParameter[] parameters = staticFactoryMethod.getParameterList().getParameters();
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     return resolveHelper
-      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, expression, false);
+      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, false);
   }
 
   public static class DiamondInferenceResult {
@@ -236,19 +245,36 @@ public class PsiDiamondType extends PsiType {
     private String myErrorMessage;
 
     private String myNewExpressionPresentableText;
+    private Project myProject;
 
     public DiamondInferenceResult() {
     }
 
-    public DiamondInferenceResult(String expressionPresentableText) {
+    public DiamondInferenceResult(String expressionPresentableText, Project project) {
       myNewExpressionPresentableText = expressionPresentableText;
+      myProject = project;
     }
 
     public PsiType[] getTypes() {
       if (myErrorMessage != null) {
         return NULL_TYPES;
       }
-      return myInferredTypes.toArray(new PsiType[myInferredTypes.size()]);
+      final PsiType[] result = new PsiType[myInferredTypes.size()];
+      for (int i = 0, myInferredTypesSize = myInferredTypes.size(); i < myInferredTypesSize; i++) {
+        PsiType inferredType = myInferredTypes.get(i);
+        if (inferredType instanceof PsiWildcardType) {
+          final PsiType bound = ((PsiWildcardType)inferredType).getBound();
+          result[i] = bound != null ? bound : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+        }
+        else {
+          result[i] = inferredType;
+        }
+      }
+      return result;
+    }
+
+    public List<PsiType> getInferredTypes() {
+      return myInferredTypes;
     }
 
     public String getErrorMessage() {
@@ -299,6 +325,26 @@ public class PsiDiamondType extends PsiType {
           return true;
         }
       });
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DiamondInferenceResult that = (DiamondInferenceResult)o;
+
+      if (myErrorMessage != null ? !myErrorMessage.equals(that.myErrorMessage) : that.myErrorMessage != null) return false;
+      if (!myInferredTypes.equals(that.myInferredTypes)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myInferredTypes.hashCode();
+      result = 31 * result + (myErrorMessage != null ? myErrorMessage.hashCode() : 0);
+      return result;
     }
   }
 

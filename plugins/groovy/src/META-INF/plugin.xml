@@ -162,6 +162,9 @@
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringBackspaceHandlerDelegate"/>
 
+    <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyBackspaceHandler"/>
+
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType"/>
     <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
 

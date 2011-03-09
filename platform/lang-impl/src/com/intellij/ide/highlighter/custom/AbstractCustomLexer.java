@@ -38,11 +38,6 @@ public class AbstractCustomLexer extends LexerBase {
 
   public AbstractCustomLexer(List<TokenParser> tokenParsers) {
     myTokenParsers = tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
-
-    int smartUpdateShift = 0;
-    for (TokenParser tokenParser : myTokenParsers) {
-      smartUpdateShift = Math.max(smartUpdateShift, tokenParser.getSmartUpdateShift());
-    }
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {

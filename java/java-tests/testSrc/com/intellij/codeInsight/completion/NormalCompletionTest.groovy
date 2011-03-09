@@ -569,13 +569,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount();
     assertEquals(0, parametersCount);
-    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
-      @Override
-      protected void run() throws Throwable {
-        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute().throwException();
-
+    type '\n'
     checkResult()
   }
 
@@ -833,6 +827,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
 
   public void testCommaAfterVariable() throws Throwable { doTest(',') }
+
+  public void testClassAngleBracket() throws Throwable { doTest('<') }
+
+  public void testClassSquareBracket() throws Throwable { doTest('[') }
+  public void testPrimitiveSquareBracket() throws Throwable { doTest('[') }
+  public void testVariableSquareBracket() throws Throwable { doTest('[') }
+  public void testMethodSquareBracket() throws Throwable { doTest('[') }
 
   public void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;

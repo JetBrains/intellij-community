@@ -53,7 +53,7 @@ public class InlineUtil {
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
 
     ChangeContextUtil.encodeContextInfo(initializer, false);
-    PsiExpression expr = (PsiExpression)ref.replace(initializer);
+    PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && varType instanceof PsiPrimitiveType
                              || !TypeConversionUtil.isAssignable(varType, exprType))) {
@@ -313,6 +313,46 @@ public class InlineUtil {
         super.visitTypeElement(typeElement);
       }
     });
+  }
+
+  private static PsiElement replaceDiamondWithInferredTypesIfNeeded(PsiExpression initializer, PsiElement ref) {
+    if (initializer instanceof PsiNewExpression) {
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length == 1) {
+            final PsiType type = typeParameterElements[0].getType();
+            if (type instanceof PsiDiamondType) {
+              final PsiDiamondType.DiamondInferenceResult inferenceResult = ((PsiDiamondType)type).resolveInferredTypes();
+              if (inferenceResult.getErrorMessage() == null) {
+                final PsiElement copy = ref.copy();
+                final PsiElement parent = ref.replace(initializer);
+                final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypes((PsiNewExpression)initializer, parent);
+                ref = parent.replace(copy);
+                if (!result.equals(inferenceResult)) {
+                  final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
+                                                                  new Function<PsiType, String>() {
+                                                                    @Override
+                                                                    public String fun(PsiType psiType) {
+                                                                      return psiType.getCanonicalText();
+                                                                    }
+                                                                  }, ", ");
+                  final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+                  if (argumentList != null) {
+                    final PsiExpression expression = JavaPsiFacade.getElementFactory(initializer.getProject())
+                      .createExpressionFromText("new " + classReference.getReferenceName() + "<" + inferredTypeText + ">" + argumentList.getText(), initializer);
+                    return ref.replace(expression);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return ref.replace(initializer);
   }
 
   public enum TailCallType {

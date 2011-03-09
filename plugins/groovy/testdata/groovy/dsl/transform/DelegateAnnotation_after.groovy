@@ -12,4 +12,4 @@ def gr8conf = new Event(title: "GR8 Conference",
                         when: df.parse("2009/05/18"))
 
 
-gr8conf.before<caret>
+gr8conf.before(<caret>)

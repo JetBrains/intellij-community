@@ -59,6 +59,7 @@ import com.intellij.ui.TitledBorderWithMnemonic;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -869,7 +870,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
 
     public void clearSelection() {
-      if (myHighlighter != null && Arrays.asList(myEditor.getMarkupModel().getAllHighlighters()).contains(myHighlighter)) {
+      if (myHighlighter != null && ArrayUtil.contains(myHighlighter, myEditor.getMarkupModel().getAllHighlighters())) {
         myHighlighter.dispose();
         myHighlighter = null;
       }

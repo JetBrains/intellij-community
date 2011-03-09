@@ -56,13 +56,13 @@ public class WrapExpressionFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    final PsiMethod wrapper = myExpression.isValid() ? findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) : null;
-    final String methodPresentation = wrapper != null ? (wrapper.getContainingClass().getName() + "." + wrapper.getName()) : "";
+    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null ? findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) : null;
+    final String methodPresentation = wrapper != null ? wrapper.getContainingClass().getName() + "." + wrapper.getName() : "";
     return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
   }
 
   @Nullable
-  private static PsiMethod findWrapper(PsiType type, PsiClassType expectedType, boolean primitiveExpected) {
+  private static PsiMethod findWrapper(PsiType type, @NotNull PsiClassType expectedType, boolean primitiveExpected) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;

@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -80,8 +79,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     super(project);
     final Set<PsiElement> toMove = new LinkedHashSet<PsiElement>();
     for (PsiElement element : elements) {
-      if (element instanceof PsiJavaFile) {
-        Collections.addAll(toMove, ((PsiJavaFile)element).getClasses());
+      if (element instanceof PsiClassOwner) {
+        Collections.addAll(toMove, ((PsiClassOwner)element).getClasses());
       } else {
         toMove.add(element);
       }
@@ -448,7 +447,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           element = newElement;
         }
         else if (element instanceof PsiClass) {
-          ChangeContextUtil.encodeContextInfo(element, true);
+          MoveClassesOrPackagesUtil.prepareMoveClass((PsiClass)element);
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination.getTargetDirectory(element.getContainingFile()));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
@@ -461,7 +460,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
-          ChangeContextUtil.decodeContextInfo(element, null, null);
+          MoveClassesOrPackagesUtil.finishMoveClass((PsiClass)element);
         }
       }
 

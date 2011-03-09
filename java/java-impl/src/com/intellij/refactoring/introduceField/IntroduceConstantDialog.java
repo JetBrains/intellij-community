@@ -397,7 +397,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       errorString = RefactoringBundle.message("no.field.name.specified");
     } else if (!JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
-    } else if (!myParentClass.getLanguage().equals(newClass.getLanguage())) {
+    } else if (newClass != null && !myParentClass.getLanguage().equals(newClass.getLanguage())) {
       errorString = RefactoringBundle.message("move.to.different.language", UsageViewUtil.getType(myParentClass),
                                               myParentClass.getQualifiedName(), newClass.getQualifiedName());
     }

@@ -50,15 +50,16 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
@@ -304,39 +305,57 @@ public class PsiUtil {
 
   public static <Qualifier extends PsiElement> boolean shortenReference(GrQualifiedReference<Qualifier> ref) {
     final Qualifier qualifier = ref.getQualifier();
-    if (qualifier != null && !(qualifier instanceof GrSuperReferenceExpression) &&
-        (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
-         PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
-        PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
-        PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved != null) {
-        ref.setQualifier(null);
-        if (ref.isReferenceTo(resolved)) return true;
+    if (qualifier == null || qualifier instanceof GrSuperReferenceExpression || cannotShortenInContext(ref)) {
+      return false;
+    }
+    if (!canShorten(qualifier)) return false;
 
-        if (resolved instanceof PsiClass) {
-          final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-          final PsiClass clazz = (PsiClass)resolved;
-          final String qName = clazz.getQualifiedName();
-          if (qName != null) {
-            if (mayInsertImport(ref)) {
-              final GrImportStatement added = file.addImportForClass(clazz);
-              if (!ref.isReferenceTo(resolved)) {
-                file.removeImport(added);
-              }
-            }
+    final PsiElement resolved = ref.resolve();
+    if (resolved == null) return false;
+
+    ref.setQualifier(null);
+    if (ref.isReferenceTo(resolved)) return true;
+
+    if (resolved instanceof PsiClass) {
+      final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
+      final PsiClass clazz = (PsiClass)resolved;
+      final String qName = clazz.getQualifiedName();
+      if (qName != null) {
+        if (mayInsertImport(ref)) {
+          final GrImportStatement added = file.addImportForClass(clazz);
+          if (!ref.isReferenceTo(resolved)) {
+            file.removeImport(added);
           }
-        }
-
-        if (!ref.isReferenceTo(resolved)) {
-          ref.setQualifier((Qualifier)qualifier.copy());
-          return false;
-        } else {
-          return true;
         }
       }
     }
+
+    if (!ref.isReferenceTo(resolved)) {
+      ref.setQualifier((Qualifier)qualifier.copy());
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+
+  private static <Qualifier extends PsiElement> boolean canShorten(Qualifier qualifier) {
+    if (qualifier instanceof GrCodeReferenceElement) return true;
+    if (qualifier instanceof GrExpression) {
+      if (qualifier instanceof GrThisReferenceExpression) return true;
+      if (seemsToBeQualifiedClassName((GrExpression)qualifier)) {
+        final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass || resolved instanceof PsiPackage) return true;
+      }
+    }
     return false;
+  }
+
+  private static <Qualifier extends PsiElement> boolean cannotShortenInContext(GrQualifiedReference<Qualifier> ref) {
+    return (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) == null &&
+            PsiTreeUtil.getParentOfType(ref, GrDocComment.class) != null) ||
+           PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
+           PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) != null;
   }
 
   private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
@@ -1069,4 +1088,28 @@ public class PsiUtil {
 
     return ((GrListOrMap)firstArg).getNamedArguments();
   }
+
+  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
+    if (qualifier == null) return false;
+    while (qualifier instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
+      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
+    }
+    return qualifier == null;
+  }
+
+  public static boolean isExpressionStatement(GrExpression expr) {
+    final PsiElement parent = expr.getParent();
+    if (parent instanceof GrControlFlowOwner) return true;
+    if (parent instanceof GrExpression ||
+        parent instanceof GrArgumentList ||
+        parent instanceof GrReturnStatement ||
+        parent instanceof GrAssertStatement ||
+        parent instanceof GrThrowStatement ||
+        parent instanceof GrSwitchStatement) {
+      return false;
+    }
+    return true;
+  }
+
 }

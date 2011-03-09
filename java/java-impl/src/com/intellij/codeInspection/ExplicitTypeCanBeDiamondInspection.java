@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -25,6 +26,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -76,13 +79,13 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
                 if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return;
                 final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression);
                 if (inferenceResult.getErrorMessage() == null) {
-                  final PsiType[] types = inferenceResult.getTypes();
+                  final List<PsiType> types = inferenceResult.getInferredTypes();
                   final PsiType[] typeArguments = parameterList.getTypeArguments();
-                  if (types.length == typeArguments.length) {
+                  if (types.size() == typeArguments.length) {
                     for (int i = 0, typeArgumentsLength = typeArguments.length; i < typeArgumentsLength; i++) {
                       PsiType typeArgument = typeArguments[i];
-                      if (types[i] instanceof PsiWildcardType) {
-                        final PsiWildcardType wildcardType = (PsiWildcardType)types[i];
+                      if (types.get(i) instanceof PsiWildcardType) {
+                        final PsiWildcardType wildcardType = (PsiWildcardType)types.get(i);
                         final PsiType bound = wildcardType.getBound();
                         if (bound != null) {
                           if (wildcardType.isExtends()) {
@@ -92,7 +95,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
                           }
                         }
                       }
-                      if (!typeArgument.equals(types[i])) {
+                      if (!typeArgument.equals(types.get(i))) {
                         return;
                       }
                     }
@@ -109,6 +112,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
   }
 
   private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
+    public static final Logger LOG = Logger.getInstance("#" + ReplaceWithDiamondFix.class.getName());
     @NotNull
     @Override
     public String getName() {
@@ -126,8 +130,13 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiReferenceParameterList) {
         if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
-        final PsiTypeElement[] parameterElements = ((PsiReferenceParameterList)psiElement).getTypeParameterElements();
-        psiElement.deleteChildRange(parameterElements[0], parameterElements[parameterElements.length - 1]);
+        final PsiNewExpression expression =
+          (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("new a<>()", psiElement);
+        final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+        LOG.assertTrue(classReference != null);
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        LOG.assertTrue(parameterList != null);
+        psiElement.replace(parameterList);
       }
     }
   }
