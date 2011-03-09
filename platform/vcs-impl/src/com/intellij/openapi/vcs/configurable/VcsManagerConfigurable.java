@@ -97,7 +97,13 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   @NotNull
   public String getId() {
-    return getClass().getName();
+    return getDefaultConfigurableIdValue(this);
+  }
+
+  @NotNull
+  private static String getDefaultConfigurableIdValue(final Configurable configurable) {
+    final String helpTopic = configurable.getHelpTopic();
+    return helpTopic == null ? configurable.getClass().getName() : helpTopic;
   }
 
   protected Configurable[] buildConfigurables() {
@@ -214,7 +220,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
       @NotNull
       public String getId() {
-        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).getId() : getHelpTopic();
+        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).getId() : getDefaultConfigurableIdValue(this);
       }
 
       public Runnable enableSearch(String option) {
