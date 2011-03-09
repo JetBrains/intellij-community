@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class PyStringFormatInspection extends PyInspection {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
 
-        final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PySliceExpression.class, PyListCompExpression.class};
+        final Class[] LIST_LIKE_EXPRESSIONS = {PyListLiteralExpression.class, PyListCompExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -156,6 +157,42 @@ public class PyStringFormatInspection extends PyInspection {
           if (myFormatSpec.get("1") != null) {
             checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
             return 1;
+          }
+        }
+        else if (rightExpression instanceof PySliceExpression) {
+          if (myFormatSpec.get("1") != null) {
+            PyType type = ((PySliceExpression)rightExpression).getOperand().getType(myTypeEvalContext);
+            if (type != null) {
+              if ("list".equals(type.getName()) || "str".equals(type.getName())) {
+                checkTypeCompatible(problemTarget, "str", myFormatSpec.get("1"));
+                return 1;
+              }
+            }
+            PySliceItem sliceItem = ((PySliceExpression)rightExpression).getSliceItem();
+            if (sliceItem != null) {
+              PyExpression lower = sliceItem.getLowerBound();
+              PyExpression upper = sliceItem.getUpperBound();
+              PyExpression stride = sliceItem.getStride();
+              if (upper instanceof PyNumericLiteralExpression) {
+                BigInteger lowerVal;
+                if (lower instanceof PyNumericLiteralExpression ) {
+                  lowerVal = ((PyNumericLiteralExpression)lower).getBigIntegerValue();
+                }
+                else {
+                  lowerVal = BigInteger.ZERO;
+                }
+                int count = (((PyNumericLiteralExpression)upper).getBigIntegerValue().subtract(lowerVal)).intValue();
+                int strideVal;
+                if (stride instanceof PyNumericLiteralExpression)
+                  strideVal = ((PyNumericLiteralExpression)stride).getBigIntegerValue().intValue();
+                else
+                  strideVal = 1;
+                int res = count/strideVal;
+                int residue = count%strideVal == 0 ? 0 : 1;
+                return res + residue;
+              }
+            }
+            return -1;
           }
         }
         return -1;

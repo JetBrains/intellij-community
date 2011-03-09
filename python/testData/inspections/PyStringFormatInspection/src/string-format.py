@@ -43,7 +43,7 @@ m = [1, 2, 3, 4, 5]
 "%d %s" % (m[0], m[4])  #ok
 "%s" % m  #ok
 "%s" % m[1:3]  #ok
-"%d" % m[1:2]  #Unexpected type
+"%d" % m[1:2]  #ok
 "%d" % m  #Unexpected type
 "%d" % []  #Unexpected type
 def greet(all):
@@ -82,3 +82,18 @@ def bar():
 
 a = ('a', 1) if 1 else ('b', 2)
 "%s is %d" % a # ok, must infer unified tuple type
+#PY-3064, because original type of a is tuple, not list
+a = (1,2,3)
+print '%d:%d' % a[:2]
+print '%d:%d' % a[1:2]
+
+string = "qwerty"
+print '%d:%d' % string[:2]
+print '%s:%s' % string[:2]
+print '%s' % string[:2]
+print '%d' % string[:2]
+
+my_tuple = (1,2,3,4,5,6,7,8)
+print '%d, %d' % my_tuple[:7:3]
+print '%d, %d, %d' % my_tuple[:7:3]
+print '%d, %d, %d, %d' % my_tuple[:7:3]
