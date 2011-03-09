@@ -114,13 +114,13 @@ public final class QuickFixAction {
     return result;
   }
 
-  private static void addAvailableActionsForGroups(HighlightInfo info,
+  private static void addAvailableActionsForGroups(@NotNull HighlightInfo info,
                                                    Editor editor,
-                                                   PsiFile file,
-                                                   List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
                                                    int group,
                                                    int offset) {
-    if (info == null || info.quickFixActionMarkers == null) return;
+    if (info.quickFixActionMarkers == null) return;
     if (group != -1 && group != info.group) return;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;

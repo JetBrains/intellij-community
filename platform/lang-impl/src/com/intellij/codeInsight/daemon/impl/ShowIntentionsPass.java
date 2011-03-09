@@ -122,11 +122,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state == null || state.isFinished()) {
-      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      getIntentionActionsToShow();
-      updateActions(codeAnalyzer);
-    }
+    if (state != null && !state.isFinished()) return;
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    getIntentionActionsToShow();
+    updateActions(codeAnalyzer);
   }
 
   public void doApplyInformationToEditor() {

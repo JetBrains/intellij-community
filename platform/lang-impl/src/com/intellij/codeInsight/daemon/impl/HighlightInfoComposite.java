@@ -19,13 +19,18 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String HTML_HEADER = "<html>";
@@ -35,21 +40,24 @@ public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String LINE_BREAK = "\n<hr size=1 noshade>";
 
   public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
-    super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
-          createCompositeTooltip(infos));
+    super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos), createCompositeTooltip(infos));
     text = infos.get(0).text;
     highlighter = infos.get(0).highlighter;
     group = infos.get(0).group;
-    quickFixActionMarkers = ContainerUtil.createEmptyCOWList();
-    quickFixActionRanges = ContainerUtil.createEmptyCOWList();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = null;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges = null;
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
-        quickFixActionMarkers.addAll(info.quickFixActionMarkers);
+        if (markers == null) markers = new ArrayList<Pair<IntentionActionDescriptor,RangeMarker>>();
+        markers.addAll(info.quickFixActionMarkers);
       }
       if (info.quickFixActionRanges != null) {
-        quickFixActionRanges.addAll(info.quickFixActionRanges);
+        if (ranges == null) ranges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
+        ranges.addAll(info.quickFixActionRanges);
       }
     }
+    quickFixActionMarkers = markers == null ? ContainerUtil.<Pair<IntentionActionDescriptor,RangeMarker>>createEmptyCOWList() : new CopyOnWriteArrayList<Pair<IntentionActionDescriptor, RangeMarker>>(markers);
+    quickFixActionRanges = ranges == null ? ContainerUtil.<Pair<IntentionActionDescriptor, TextRange>>createEmptyCOWList() : new CopyOnWriteArrayList<Pair<IntentionActionDescriptor, TextRange>>(ranges);
   }
 
   @Nullable
