@@ -50,7 +50,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
 
-  GitStashChangesSaver(Project project, ProgressIndicator progressIndicator, String stashMessage) {
+  public GitStashChangesSaver(Project project, ProgressIndicator progressIndicator, String stashMessage) {
     super(project, progressIndicator, stashMessage);
   }
 
@@ -75,7 +75,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     return !myStashedRoots.isEmpty();
   }
 
-  @Override protected String getSaverName() {
+  @Override public String getSaverName() {
     return "stash";
   }
 

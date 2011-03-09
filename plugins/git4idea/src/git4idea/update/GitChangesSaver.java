@@ -158,7 +158,7 @@ public abstract class GitChangesSaver {
   /**
    * @return name of the save capability provider - stash or shelf.
    */
-  protected abstract String getSaverName();
+  public abstract String getSaverName();
 
   /**
    * Show the saved local changes in the proper viewer.

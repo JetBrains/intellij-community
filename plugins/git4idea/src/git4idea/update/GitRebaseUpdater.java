@@ -30,6 +30,7 @@ import git4idea.rebase.GitRebaser;
 import git4idea.ui.GitUIUtil;
 
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,6 +62,7 @@ public class GitRebaseUpdater extends GitUpdater {
     pullTask.setExecuteResultInAwt(false);
     pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
+    final AtomicBoolean failure = new AtomicBoolean();
     pullTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
         updateResult.set(GitUpdateResult.SUCCESS);
@@ -72,28 +74,35 @@ public class GitRebaseUpdater extends GitUpdater {
       }
 
       @Override protected void onFailure() {
-        if (rebaseConflictDetector.isMergeConflict()) {
-          final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.", "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
-            @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-              return myRebaser.continueRebase(myRoot);
-            }
-
-            @Override protected boolean proceedAfterAllMerged() throws VcsException {
-              return myRebaser.continueRebase(myRoot);
-            }
-          }.mergeFiles(Collections.singleton(myRoot));
-          updateResult.set(allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE);
-        } else {
-          GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(pullHandler.errors()));
-          updateResult.set(GitUpdateResult.ERROR);
-        }
+        failure.set(true);
       }
     });
 
+    if (failure.get()) {
+      updateResult.set(handleRebaseFailure(rebaseConflictDetector, pullHandler));
+    }
     return updateResult.get();
   }
 
-    // TODO
+  private GitUpdateResult handleRebaseFailure(GitRebaseProblemDetector rebaseConflictDetector, GitLineHandler pullHandler) {
+    if (rebaseConflictDetector.isMergeConflict()) {
+      final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.", "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
+        @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+          return myRebaser.continueRebase(myRoot);
+        }
+
+        @Override protected boolean proceedAfterAllMerged() throws VcsException {
+          return myRebaser.continueRebase(myRoot);
+        }
+      }.mergeFiles(Collections.singleton(myRoot));
+      return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
+    } else {
+      GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(pullHandler.errors()));
+      return GitUpdateResult.ERROR;
+    }
+  }
+
+  // TODO
     //if (!checkLocallyModified(myRoot)) {
     //  cancel();
     //  updateSucceeded.set(false);

@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * </p>
  */
 public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
-  private final static String REBASE_CONFLICT_INDICATOR = "Merge conflict in";
+  private final static String[] REBASE_CONFLICT_INDICATORS = {"Merge conflict in", "hint: after resolving the conflicts, mark the corrected paths" };
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
 
   private AtomicBoolean mergeConflict = new AtomicBoolean(false);
@@ -48,9 +48,13 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
 
   @Override
   public void onLineAvailable(String line, Key outputType) {
-    if (line.contains(REBASE_CONFLICT_INDICATOR)) {
-      mergeConflict.set(true);
-    } else if (line.contains(REBASE_NO_CHANGE_INDICATOR)) {
+    for (String conflictIndicator : REBASE_CONFLICT_INDICATORS) {
+      if (line.contains(conflictIndicator)) {
+        mergeConflict.set(true);
+        return;
+      }
+    }
+    if (line.contains(REBASE_NO_CHANGE_INDICATOR)) {
       noChangeError.set(true);
     }
   }

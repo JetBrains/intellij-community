@@ -30,6 +30,7 @@ import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -54,9 +55,9 @@ public class GitUpdateProcess {
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
 
-  public GitUpdateProcess(Project project,
-                          ProgressIndicator progressIndicator,
-                          Set<VirtualFile> roots, UpdatedFiles updatedFiles) {
+  public GitUpdateProcess(@NotNull Project project,
+                          @NotNull ProgressIndicator progressIndicator,
+                          @NotNull Set<VirtualFile> roots, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRoots = roots;
     myUpdatedFiles = updatedFiles;
@@ -72,6 +73,10 @@ public class GitUpdateProcess {
    * In case of error shows notification and returns false. If update completes without errors, returns true.
    */
   public boolean update() {
+    return update(false);
+  }
+
+  public boolean update(boolean forceRebase) {
     LOG.info("update started");
 
     myProjectManager.blockReloadingProjectOnExternalChanges();
@@ -83,7 +88,8 @@ public class GitUpdateProcess {
       // define updaters for each root
       Collection<VirtualFile> rootsToSave = new HashSet<VirtualFile>(1);
       for (VirtualFile root : myRoots) {
-        final GitUpdater updater = GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
+        final GitUpdater updater = forceRebase ? GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles) :
+          new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles);
         if (updater.isSaveNeeded()) {
           rootsToSave.add(root);
         }
@@ -96,7 +102,8 @@ public class GitUpdateProcess {
       boolean success = true;
       for (final VirtualFile root : myRoots) {
         try {
-          final GitUpdater updater = GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
+          final GitUpdater updater = forceRebase ? GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles) :
+            new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles);
           GitUpdateResult res = updater.update();
           if (res == GitUpdateResult.INCOMPLETE) {
             incomplete = true;

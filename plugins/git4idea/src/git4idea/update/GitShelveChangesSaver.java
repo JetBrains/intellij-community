@@ -42,7 +42,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   private final ShelvedChangesViewManager myShelveViewManager;
   private ShelvedChangeList myShelvedChangeList;
 
-  protected GitShelveChangesSaver(Project project, ProgressIndicator indicator, String stashMessage) {
+  public GitShelveChangesSaver(Project project, ProgressIndicator indicator, String stashMessage) {
     super(project, indicator, stashMessage);
     myShelveManager = ShelveChangesManager.getInstance(myProject);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
@@ -82,7 +82,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     return myShelvedChangeList != null;
   }
 
-  @Override protected String getSaverName() {
+  @Override public String getSaverName() {
     return "shelf";
   }
 
