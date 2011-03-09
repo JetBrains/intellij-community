@@ -336,14 +336,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void unsplitWindow() {
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplit(true);
     }
   }
 
   public void unsplitAllWindow() {
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
       currentWindow.unsplitAll();
     }
@@ -351,7 +351,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @Override
   public int getWindowSplitCount() {
-    return getSplitters().getSplitCount();
+    return getActiveSplitters(true).getResult().getSplitCount();
+  }
+
+  @Override
+  public boolean hasSplitOrUndockedWindows() {
+    Set<EditorsSplitters> splitters = getAllSplitters();
+    if (splitters.size() > 1) return true;
+    return getWindowSplitCount() > 1;
   }
 
   @NotNull
@@ -450,12 +457,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public VirtualFile getCurrentFile() {
-    return getSplitters().getCurrentFile();
+    return getActiveSplitters(true).getResult().getCurrentFile();
   }
 
   public AsyncResult<EditorWindow> getActiveWindow() {
+    return _getActiveWindow(false);
+  }
+
+  private AsyncResult<EditorWindow> _getActiveWindow(boolean now) {
     final AsyncResult<EditorWindow> result = new AsyncResult<EditorWindow>();
-    getActiveSplitters(false).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
+    getActiveSplitters(now).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
       @Override
       public void run(EditorsSplitters editorsSplitters) {
         result.setDone(editorsSplitters.getCurrentWindow());
@@ -466,11 +477,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public EditorWindow getCurrentWindow() {
-    return getActiveWindow().getResult();
+    return _getActiveWindow(true).getResult();
   }
 
   public void setCurrentWindow(final EditorWindow window) {
-    getSplitters().setCurrentWindow(window, true);
+    getActiveSplitters(true).getResult().setCurrentWindow(window, true);
   }
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window) {
@@ -542,7 +553,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           }
         }
       }
-    });
+    }, getActiveSplitters(true).getResult());
   }
 
 //-------------------------------------- Open File ----------------------------------------
@@ -558,13 +569,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter) {
-      for (EditorsSplitters splitters : getAllSplitters()) {
-        final EditorWindow window = splitters.getCurrentWindow();
-        if (window == null) continue;
+      Set<EditorsSplitters> all = getAllSplitters();
+      EditorsSplitters active = getActiveSplitters(true).getResult();
+      if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
+        wndToOpenIn = active.getCurrentWindow();
+      } else {
+        for (EditorsSplitters splitters : all) {
+          EditorWindow[] windows = splitters.getWindows();
+          for (EditorWindow window : windows) {
+            if (window == null) continue;
 
-        if (window.isFileOpen(file)) {
-          wndToOpenIn = window;
-          break;
+            if (window.isFileOpen(file)) {
+              wndToOpenIn = window;
+              break;
+            }
+          }
+          if (wndToOpenIn != null) break;
         }
       }
     }
@@ -575,6 +595,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       wndToOpenIn = getSplitters().getOrCreateCurrentWindow(file);
     }
     return openFileImpl2(wndToOpenIn, file, focusEditor);
+  }
+
+  @NotNull
+  @Override
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                        boolean focusEditor,
+                                                                        @NotNull EditorWindow window) {
+    if (!file.isValid()) {
+      throw new IllegalArgumentException("file is not valid: " + file);
+    }
+    assertDispatchThread();
+
+    return openFileImpl2(window, file, focusEditor);
   }
 
   @NotNull
@@ -716,7 +749,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     // Notify editors about selection changes
-    window.getOwner().setCurrentWindow(window, false);
+    window.getOwner().setCurrentWindow(window, focusEditor);
     window.getOwner().afterFileOpen(file);
 
     newSelectedComposite.getSelectedEditor().selectNotify();
@@ -831,6 +864,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
+      realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
       return openEditor(realDescriptor, focusEditor);
     }
 
@@ -838,7 +872,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         VirtualFile file = descriptor.getFile();
-        final FileEditor[] editors = openFile(file, focusEditor);
+        final FileEditor[] editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow());
         ContainerUtil.addAll(result, editors);
 
         boolean navigated = false;
@@ -1306,8 +1340,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  public void runChange(FileEditorManagerChange change) {
-    for (EditorsSplitters each : getAllSplitters()) {
+  public void runChange(FileEditorManagerChange change, EditorsSplitters splitters) {
+    Set<EditorsSplitters> target = new HashSet<EditorsSplitters>();
+    if (splitters == null) {
+      target.addAll(getAllSplitters());
+    } else {
+      target.add(splitters);
+    }
+
+    for (EditorsSplitters each : target) {
       each.myInsideChange++;
       try {
         change.run(each);

@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
@@ -25,6 +26,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -48,7 +51,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
     final GotoClassModel2 model = new GotoClassModel2(project);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e),
-                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)), FileEditorManagerEx
+        .getInstanceEx(project).hasSplitOrUndockedWindows());
     final ChooseByNameFilter filterUI = new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
@@ -61,10 +65,10 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       public void elementChosen(Object element) {
         if (element instanceof PsiElement) {
-          NavigationUtil.activateFileWithPsiElement((PsiElement)element);
+          NavigationUtil.activateFileWithPsiElement((PsiElement)element, !popup.isOpenInCurrentWindowRequested());
         }
         else {
-          ((NavigationItem)element).navigate(true);
+          EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
         }
       }
     }, ModalityState.current(), true);
@@ -73,4 +77,5 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }
+
 }

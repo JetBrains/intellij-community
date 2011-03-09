@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -89,12 +90,34 @@ public final class NavigationUtil {
   }
 
   public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
-    if (!activatePsiElementIfOpen(elt)) {
-      ((NavigationItem)elt).navigate(true);
-    }
+    activateFileWithPsiElement(elt, true);
   }
 
-  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt) {
+  public static void activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
+    boolean openAsNative = false;
+    if (elt instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
+      if (virtualFile != null) {
+        openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
+      }
+    }
+
+    if (searchForOpen) {
+      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+    } else {
+      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
+    }
+
+    if (openAsNative || !activatePsiElementIfOpen(elt, searchForOpen)) {
+      ((NavigationItem)elt).navigate(true);
+    }
+
+    elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+  }
+
+
+
+  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen) {
     if (!elt.isValid()) return false;
     elt = elt.getNavigationElement();
     if (elt == null) return false;
@@ -108,7 +131,7 @@ public final class NavigationUtil {
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
     if (!fem.isFileOpen(vFile)) {
-      fem.openFile(vFile, true);
+      fem.openFile(vFile, true, searchForOpen);
       return true;
     }
 
@@ -122,7 +145,7 @@ public final class NavigationUtil {
         final int offset = text.getCaretModel().getOffset();
 
         if (range.contains(offset)) {
-          fem.openFile(vFile, true);
+          fem.openFile(vFile, true, searchForOpen);
           return true;
         }
       }

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 
@@ -55,15 +56,13 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   }
 
   public void mouseMoved(EditorMouseEvent e) {
-    if (e.isConsumed()) {
-      return;
-    }
+    if (e.isConsumed()) return;
 
     Editor editor = e.getEditor();
     if (editor.getProject() != null && editor.getProject() != myProject) return;
+
     Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null) {
-      if(myRequest.isKeepHint(editor, point)) return;
+    if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
       hideHint();
     }
 
@@ -87,7 +86,6 @@ public class ValueLookupManager implements EditorMouseMotionListener {
     } else {
       showHint(handler, editor, point, type);
     }
-
   }
 
   public void hideHint() {
@@ -99,12 +97,28 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
   public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, ValueHintType type) {
     myAlarm.cancelAllRequests();
-    hideHint();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) return;
 
-    myRequest = handler.createValueHint(myProject, editor, point, type);
-    if (myRequest != null) {
-      myRequest.invokeHint();
+    final AbstractValueHint request = handler.createValueHint(myProject, editor, point, type);
+    if (request != null) {
+      if (myRequest != null && myRequest.equals(request)) {
+        return;
+      }
+
+      if (!request.canShowHint()) return;
+      if (myRequest != null && myRequest.isInsideHint(editor, point)) return;
+
+      hideHint();
+
+      myRequest = request;
+      myRequest.invokeHint(new Runnable() {
+        @Override
+        public void run() {
+          if (myRequest != null && myRequest == request) {
+            myRequest = null;
+          }
+        }
+      });
     }
   }
 

@@ -43,7 +43,8 @@ public class RefreshQueueImpl extends RefreshQueue {
 
   public void execute(final RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, ModalityState.NON_MODAL);
+      ModalityState state = session.getModalityState();
+      queueSession(session, state != null ? state : ModalityState.NON_MODAL);
     }
     else {
       final Application app = ApplicationManager.getApplication();
@@ -92,8 +93,8 @@ public class RefreshQueueImpl extends RefreshQueue {
     });
   }
 
-  public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable) {
-    return new RefreshSessionImpl(async, recursively, finishRunnable);
+  public RefreshSession createSession(final boolean async, boolean recursively, @Nullable final Runnable finishRunnable, ModalityState state) {
+    return new RefreshSessionImpl(async, recursively, finishRunnable, state);
   }
 
   public void processSingleEvent(VFileEvent event) {

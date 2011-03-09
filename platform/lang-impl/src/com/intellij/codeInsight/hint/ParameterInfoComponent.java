@@ -67,7 +67,6 @@ class ParameterInfoComponent extends JPanel{
     myObjects = objects;
 
     setLayout(new GridBagLayout());
-    setBorder(BorderFactory.createCompoundBorder(LineBorder.createGrayLineBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
     setBackground(BACKGROUND_COLOR);
 
     myHandler = handler;
@@ -314,7 +313,9 @@ class ParameterInfoComponent extends JPanel{
       Dimension normalPreferredSize = super.getPreferredSize();
 
       // some fonts (for example, Arial Black Cursiva) have NORMAL characters wider than BOLD characters
-      return new Dimension(Math.max(boldPreferredSize.width, normalPreferredSize.width), Math.max(boldPreferredSize.height, normalPreferredSize.height));
+
+      return new Dimension(Math.max(boldPreferredSize.width, normalPreferredSize.width),
+                                          Math.max(boldPreferredSize.height, normalPreferredSize.height));
     }
   }
 }

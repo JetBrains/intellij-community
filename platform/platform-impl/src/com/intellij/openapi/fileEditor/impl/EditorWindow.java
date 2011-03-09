@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -128,7 +129,7 @@ public class EditorWindow {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       public void run(EditorsSplitters splitters) {
-        final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
+        final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
         if (editors.isEmpty()) return;
         try {
           final EditorWithProviderComposite editor = findFileComposite(file);
@@ -138,7 +139,7 @@ public class EditorWindow {
 
           beforePublisher.beforeFileClosed(editorManager, file);
 
-          if (myTabbedPane != null) {
+          if (myTabbedPane != null && editor != null) {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
@@ -170,17 +171,17 @@ public class EditorWindow {
           final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
+          IdeFocusManager.getInstance(editorManager.getProject()).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(editorManager.getProject()) {
             @Override
             public void run() {
               afterPublisher.fileClosed(editorManager, file);
             }
           });
 
-          myOwner.afterFileClosed(file);
+          splitters.afterFileClosed(file);
         }
       }
-    });
+    }, myOwner);
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
@@ -325,13 +326,28 @@ public class EditorWindow {
     return myTabbedPane;
   }
 
-  protected static class TComp extends JPanel implements DataProvider{
-    final EditorWithProviderComposite myEditor;
+  public void requestFocus(boolean forced) {
+    if (myTabbedPane != null) {
+      myTabbedPane.requestFocus(forced);
+    }
+  }
+  public boolean isValid() {
+     return myPanel.isShowing();
+   }
 
-    TComp(final EditorWithProviderComposite editor) {
+  protected static class TComp extends JPanel implements DataProvider {
+    final EditorWithProviderComposite myEditor;
+    protected final EditorWindow myWindow;
+
+    TComp(final EditorWindow window, final EditorWithProviderComposite editor) {
       super(new BorderLayout());
       myEditor = editor;
+      myWindow = window;
       add(editor.getComponent(), BorderLayout.CENTER);
+    }
+
+    public EditorWindow getEditorWindow() {
+      return myWindow;
     }
 
     public Object getData(String dataId) {
@@ -347,11 +363,8 @@ public class EditorWindow {
   }
 
   protected static class TCompForTablessMode extends TComp{
-    private final EditorWindow myWindow;
-
     TCompForTablessMode(final EditorWindow window, final EditorWithProviderComposite editor) {
-      super(editor);
-      myWindow = window;
+      super(window, editor);
     }
 
     public Object getData(String dataId) {
@@ -434,7 +447,7 @@ public class EditorWindow {
         final int indexToInsert = initialIndex == null ? myTabbedPane.getSelectedIndex() + 1 : initialIndex;
         final VirtualFile file = editor.getFile();
         final Icon template = IconLoader.getIcon("/fileTypes/text.png");
-        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(editor), null, indexToInsert);
+        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);
@@ -899,5 +912,10 @@ public class EditorWindow {
 
   protected VirtualFile getFileAt(int i) {
     return getEditorAt(i).getFile();
+  }
+
+  @Override
+  public String toString() {
+    return "EditorWindow: files=" + Arrays.asList(getFiles());
   }
 }

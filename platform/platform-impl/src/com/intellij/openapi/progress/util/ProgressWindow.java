@@ -642,7 +642,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       protected void init() {
         super.init();
         setUndecorated(true);
-        myPanel.setBorder(PopupBorder.Factory.create(true));
+        myPanel.setBorder(PopupBorder.Factory.create(true, true));
       }
 
       protected boolean isProgressDialog() {

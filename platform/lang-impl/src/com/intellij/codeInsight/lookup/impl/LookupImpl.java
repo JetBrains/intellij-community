@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
@@ -608,8 +609,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().setBorder(null);
 
     Point p = calculatePosition();
-    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
+    HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p,
+                                                     HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false,
+                                                     HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER)
+                                                       .setAwtTooltip(false));
 
     getComponent().getRootPane().getLayeredPane().add(myIconPanel, 42, 0);
   }

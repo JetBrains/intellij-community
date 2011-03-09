@@ -29,9 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +41,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EventObject;
 
 /**
  * @author nik
@@ -76,6 +75,7 @@ public abstract class AbstractValueHint {
   private JBPopup myPopup;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
+  private Runnable myHideRunnable;
 
   public AbstractValueHint(Project project, Editor editor, Point point, ValueHintType type, final TextRange textRange) {
     myPoint = point;
@@ -167,12 +167,14 @@ public abstract class AbstractValueHint {
       myCurrentHint = null;
     }
     if(myHighlighter != null) {
-      myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+      myHighlighter.dispose();
       myHighlighter = null;
     }
   }
 
-  public void invokeHint() {
+  public void invokeHint(Runnable hideRunnable) {
+    myHideRunnable = hideRunnable;
+
     if(!canShowHint()) {
       hideHint();
       return;
@@ -248,15 +250,27 @@ public abstract class AbstractValueHint {
 
   protected boolean showHint(final JComponent component) {
     myCurrentHint = new LightweightHint(component);
+    myCurrentHint.addHintListener(new HintListener() {
+      @Override
+      public void hintHidden(EventObject event) {
+        if (myHideRunnable != null) {
+          myHideRunnable.run();
+        }
+      }
+    });
 
     //Editor may be disposed before later invokator process this action
-    if(getEditor().getComponent().getRootPane() == null) return false;
+    final Editor editor = getEditor();
+    final JRootPane rootPane = editor.getComponent().getRootPane();
+    if(rootPane == null) return false;
 
     short constraint = HintManagerImpl.UNDER;
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), constraint);
-    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, getEditor(), p,
+    Point p = HintManagerImpl.getHintPosition(myCurrentHint, editor, editor.xyToLogicalPosition(myPoint), constraint);
+    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, constraint);
+
+    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,
-                               constraint);
+                               hintHint);
     return true;
   }
 
@@ -322,5 +336,9 @@ public abstract class AbstractValueHint {
 
   public static ValueHintType getType(final EditorMouseEvent e) {
     return isAltMask(e.getMouseEvent().getModifiers()) ? ValueHintType.MOUSE_ALT_OVER_HINT : ValueHintType.MOUSE_OVER_HINT;
+  }
+
+  public boolean isInsideHint(Editor editor, Point point) {
+    return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
   }
 }

@@ -82,6 +82,14 @@ import java.util.Map;
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});
   }
 
+  @NotNull
+  @Override
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                        boolean focusEditor,
+                                                                        @NotNull EditorWindow window) {
+    return openFileWithProviders(file, focusEditor, false);
+  }
+
   @Override
   public boolean isInsideChange() {
     return false;
@@ -442,6 +450,11 @@ import java.util.Map;
   @Override
   public int getWindowSplitCount() {
     return 0;
+  }
+
+  @Override
+  public boolean hasSplitOrUndockedWindows() {
+    return false;
   }
 
   @Override
