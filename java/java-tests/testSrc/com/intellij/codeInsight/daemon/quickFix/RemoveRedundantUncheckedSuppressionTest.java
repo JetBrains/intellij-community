@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantUncheckedSuppressWarningsInspection;
 
 
@@ -24,6 +25,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCa
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new RedundantUncheckedSuppressWarningsInspection(),
+      new PossibleHeapPollutionVarargsInspection(),
     };
   }
 

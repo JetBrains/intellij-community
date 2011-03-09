@@ -125,11 +125,19 @@ public class RedundantUncheckedSuppressWarningsInspection extends BaseJavaLocalI
           warningsElements.add(psiElement);
         }
       };
+    final PossibleHeapPollutionVarargsInspection.HeapPollutionVisitor hVisitor = new PossibleHeapPollutionVarargsInspection.HeapPollutionVisitor() {
+      @Override
+      protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
+        warningsElements.add(method);
+      }
+    };
+
     place.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
         element.accept(visitor);
+        element.accept(hVisitor);
       }
     });
   }

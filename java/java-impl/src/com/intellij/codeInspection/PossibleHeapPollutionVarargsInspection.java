@@ -60,39 +60,21 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
 
   @NotNull
   @Override
+  public String getID() {
+    return "unchecked";
+  }
+
+  @NotNull
+  @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+    return new HeapPollutionVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
-        super.visitMethod(method);
-        if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
-        if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
-        if (!method.isVarArgs()) return;
-
-        final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
-        final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
-        if (GenericsHighlightUtil.isReifiableType(componentType)) {
-          return;
-        }
-        for (PsiReference reference : ReferencesSearch.search(psiParameter)) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
-            return;
-          }
-        }
-        final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-        if (nameIdentifier != null) {
-          //if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-          //final PsiClass containingClass = method.getContainingClass();
-          //if (containingClass == null || containingClass.isInterface()) return; do not add
-          holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
-                                 //todo check if can be final or static
-                                 method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor() ? new AnnotateAsSafeVarargsQuickFix() : null);
-        }
-      }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
+        holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
+                               //todo check if can be final or static
+                               method.hasModifierProperty(PsiModifier.FINAL) ||
+                               method.hasModifierProperty(PsiModifier.STATIC) ||
+                               method.isConstructor() ? new AnnotateAsSafeVarargsQuickFix() : null);
       }
     };
   }
@@ -117,6 +99,42 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
       }
+    }
+  }
+
+  public static abstract class HeapPollutionVisitor extends JavaElementVisitor {
+
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
+      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
+      if (!method.isVarArgs()) return;
+
+      final PsiParameter psiParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
+      final PsiType componentType = ((PsiEllipsisType)psiParameter.getType()).getComponentType();
+      if (GenericsHighlightUtil.isReifiableType(componentType)) {
+        return;
+      }
+      for (PsiReference reference : ReferencesSearch.search(psiParameter)) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
+          return;
+        }
+      }
+      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier != null) {
+        //if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+        //final PsiClass containingClass = method.getContainingClass();
+        //if (containingClass == null || containingClass.isInterface()) return; do not add
+        registerProblem(method, nameIdentifier);
+      }
+    }
+
+    protected abstract void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier);
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
     }
   }
 }
