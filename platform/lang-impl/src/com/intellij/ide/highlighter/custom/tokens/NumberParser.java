@@ -69,10 +69,6 @@ public final class NumberParser extends TokenParser {
     return true;
   }
 
-  public int getSmartUpdateShift() {
-    return 2; // if previous character was a dec point
-  }
-
   static boolean isDigit(char c) {
     return c >= '0' && c <= '9';
   }

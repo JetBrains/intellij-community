@@ -40,7 +40,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
-                                  HighlightUtil.formatType(myCatchParameter.getType()),
+                                  HighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
                                   HighlightUtil.formatType(myUnhandledException));
   }
 

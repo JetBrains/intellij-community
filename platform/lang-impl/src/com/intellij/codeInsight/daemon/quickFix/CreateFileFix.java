@@ -109,7 +109,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     long current = System.currentTimeMillis();
 
     if (ApplicationManager.getApplication().isUnitTestMode() || current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
-      myIsAvailable = myDirectory.getVirtualFile().findChild(myNewFileName) == null;
+      myIsAvailable &= myDirectory.getVirtualFile().findChild(myNewFileName) == null;
       myIsAvailableTimeStamp = current;
     }
 

@@ -26,7 +26,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +48,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
@@ -332,15 +330,8 @@ public class TypedHandler implements TypedActionHandler {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
 
-    Language language = iterator.getTokenType().getLanguage();
-    final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (definition != null && !(language instanceof TemplateLanguage)) {
-      final Lexer lexer = definition.createLexer(editor.getProject());
-      lexer.start(Character.toString(charTyped));
-      final IElementType tokenType = lexer.getTokenType();
-      if (tokenType != iterator.getTokenType()) {
-        return false;
-      }
+    if (iterator.getEnd() - iterator.getStart() != 1 || editor.getDocument().getCharsSequence().charAt(iterator.getStart()) != charTyped) {
+      return false;
     }
 
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);

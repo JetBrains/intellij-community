@@ -106,15 +106,21 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable {
     httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     httpConfigurable.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 
-    httpConfigurable.PROXY_LOGIN = myProxyLoginTextField.getText();
-    httpConfigurable.setPlainProxyPassword(new String (myProxyPasswordTextField.getPassword()));
+    httpConfigurable.PROXY_LOGIN = trimFieldText(myProxyLoginTextField);
+    httpConfigurable.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
 
     try {
-      httpConfigurable.PROXY_PORT = Integer.valueOf(myProxyPortTextField.getText()).intValue();
+      httpConfigurable.PROXY_PORT = Integer.valueOf(trimFieldText(myProxyPortTextField)).intValue();
     } catch (NumberFormatException e) {
       httpConfigurable.PROXY_PORT = 80;
     }
-    httpConfigurable.PROXY_HOST = myProxyHostTextField.getText();
+    httpConfigurable.PROXY_HOST = trimFieldText(myProxyHostTextField);
+  }
+
+  private static String trimFieldText(JTextField field) {
+    String trimmed = field.getText().trim();
+    field.setText(trimmed);
+    return trimmed;
   }
 
   private void enableProxy (boolean enabled) {

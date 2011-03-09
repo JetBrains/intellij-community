@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,11 +35,12 @@ public class HighlightDisplayKey {
   private final String myName;
   private final String myID;
 
-  public static HighlightDisplayKey find(@NonNls @NotNull String name){
+  public static HighlightDisplayKey find(@NonNls @NotNull final String name) {
     return ourNameToKeyMap.get(name);
   }
 
-  public static HighlightDisplayKey findById(@NonNls @NotNull String id){
+  @Nullable
+  public static HighlightDisplayKey findById(@NonNls @NotNull final String id) {
     HighlightDisplayKey key = ourIdToKeyMap.get(id);
     if (key != null) return key;
     key = ourNameToKeyMap.get(id);
@@ -49,7 +49,7 @@ public class HighlightDisplayKey {
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull String name) {
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name) {
     if (find(name) != null) {
       LOG.info("Key with name \'" + name + "\' already registered");
       return null;
@@ -58,7 +58,14 @@ public class HighlightDisplayKey {
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull String name, @NotNull String displayName, @NotNull @NonNls String id){
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull final String displayName) {
+    return register(name, displayName, name);
+  }
+
+  @Nullable
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
+                                             @NotNull final String displayName,
+                                             @NotNull @NonNls final String id) {
     if (find(name) != null) {
       LOG.info("Key with name \'" + name + "\' already registered");
       return null;
@@ -69,19 +76,49 @@ public class HighlightDisplayKey {
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull String name, @NotNull String displayName) {
-    return register(name, displayName, name);
+  public static HighlightDisplayKey register(@NonNls @NotNull final String name,
+                                             @NonNls @NotNull final String displayName,
+                                             @NonNls @NotNull final String id,
+                                             @NonNls @Nullable final String alternativeID) {
+    final HighlightDisplayKey key = register(name, displayName, id);
+    if (alternativeID != null) {
+      ourKeyToAlternativeIDMap.put(key, alternativeID);
+    }
+    return key;
   }
 
-  public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key){
+  @NotNull
+  public static HighlightDisplayKey findOrRegister(@NonNls @NotNull String name, @NotNull final String displayName) {
+    return findOrRegister(name, displayName, null);
+  }
+
+  @NotNull
+  public static HighlightDisplayKey findOrRegister(@NonNls @NotNull final String name,
+                                                   @NotNull final String displayName,
+                                                   @NonNls @Nullable final String id) {
+    HighlightDisplayKey key = find(name);
+    if (key == null) {
+      key = register(name, displayName, id != null ? id : name);
+      assert key != null : name;
+    }
+    return key;
+  }
+
+  @Nullable
+  public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
     return key == null ? null : ourKeyToDisplayNameMap.get(key);
   }
 
-  private HighlightDisplayKey(@NotNull String name) {
+  public static String getAlternativeID(@NotNull HighlightDisplayKey key) {
+    return ourKeyToAlternativeIDMap.get(key);
+  }
+
+
+  private HighlightDisplayKey(@NonNls @NotNull final String name) {
     this(name, name);
   }
 
-  public HighlightDisplayKey(@NonNls @NotNull final String name, @NotNull @NonNls final String ID) {
+  public HighlightDisplayKey(@NonNls @NotNull final String name, @NonNls @NotNull final String ID) {
     myName = name;
     myID = ID;
     ourNameToKeyMap.put(myName, this);
@@ -96,17 +133,5 @@ public class HighlightDisplayKey {
 
   public String getID(){
     return myID;
-  }
-
-  public static HighlightDisplayKey register(@NotNull String shortName, @NotNull String displayName, @NotNull String id, String alternativeID) {
-    final HighlightDisplayKey key = register(shortName, displayName, id);
-    if (alternativeID != null) {
-      ourKeyToAlternativeIDMap.put(key, alternativeID);
-    }
-    return key;
-  }
-
-  public static String getAlternativeID(@NotNull HighlightDisplayKey key) {
-    return ourKeyToAlternativeIDMap.get(key);
   }
 }

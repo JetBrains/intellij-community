@@ -123,6 +123,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     final PsiType type = method.getReturnType();
     if (context.getCompletionChar() == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
+      context.setAddCompletionChar(false);
       context.commitDocument();
       final int offset = context.getOffset(refStart);
       final PsiMethodCallExpression methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethodCallExpression.class, false);

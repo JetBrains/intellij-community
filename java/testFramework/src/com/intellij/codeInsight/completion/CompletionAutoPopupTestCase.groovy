@@ -65,6 +65,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
       }
       Thread.sleep(10)
     }
+    printThreadDump()
     fail("Too long completion")
   }
 

@@ -358,6 +358,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
     List<HighlightInfo> actual = new ArrayList<HighlightInfo>();
     for (RangeHighlighter each : highlighters) {
+      if (!each.isValid()) continue;
       int offset = each.getStartOffset();
       PsiElement element = getTestPsiFile(file).findElementAt(offset);
       element = PsiTreeUtil.getParentOfType(element, XmlTag.class);

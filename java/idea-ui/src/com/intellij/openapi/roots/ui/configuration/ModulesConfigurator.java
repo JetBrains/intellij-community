@@ -73,10 +73,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private final ProjectConfigurable myProjectConfigurable;
   private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
-    final ModulesAlphaComparator myModulesComparator = new ModulesAlphaComparator();
-
     public int compare(ModuleEditor editor1, ModuleEditor editor2) {
-      return myModulesComparator.compare(editor1.getModule(), editor2.getModule());
+      return ModulesAlphaComparator.INSTANCE.compare(editor1.getModule(), editor2.getModule());
     }
 
     @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})

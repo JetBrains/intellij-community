@@ -101,12 +101,10 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   @NonNls
   private String getCollectionsMethodCall() {
     final PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
+    PsiExpression[] expressions = myMethodCall.getArgumentList().getExpressions();
     return "java.util.Collections.addAll(" +
            (qualifierExpression != null ? qualifierExpression.getText() : "this") +
-           ", " +
-           myMethodCall.getArgumentList().getExpressions()[0]
-               .getText() +
-                          ")";
+           ", " + (expressions.length == 0 ? "" : expressions[0].getText()) + ")";
   }
 
   public boolean startInWriteAction() {

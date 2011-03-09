@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -22,7 +21,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
@@ -42,34 +40,36 @@ public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
 
   @NonNls String DEPRECATION_SHORT_NAME = "Deprecation";
-  @NonNls String DEPRECATION_ID = "deprecation";
   @NonNls String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
+  @NonNls String DEPRECATION_ID = "deprecation";
+
+  HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
+  HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
+  /** @deprecated use {@link #WEAK_WARNING} instead */
+  HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
+  HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
+  HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-  HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
-  HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
+  HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(
+    HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
 
   HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
-  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UNUSED_SYMBOL_SHORT_NAME) == null ?
-                                                                       HighlightDisplayKey.register(UNUSED_SYMBOL_SHORT_NAME,
-                                                                                                    UNUSED_SYMBOL_DISPLAY_NAME,
-                                                                                                    UNUSED_SYMBOL_ID) : HighlightDisplayKey.find(UNUSED_SYMBOL_SHORT_NAME),
-                                                                       CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-
+  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
+    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, UNUSED_SYMBOL_DISPLAY_NAME, UNUSED_SYMBOL_ID),
+    CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.find(DEPRECATION_SHORT_NAME) == null ? HighlightDisplayKey
-      .register(DEPRECATION_SHORT_NAME, DEPRECATION_DISPLAY_NAME, DEPRECATION_ID) : HighlightDisplayKey.find(DEPRECATION_SHORT_NAME),
+    HighlightDisplayKey.findOrRegister(DEPRECATION_SHORT_NAME, DEPRECATION_DISPLAY_NAME, DEPRECATION_ID),
     CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
   HighlightInfoType STATIC_FIELD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
   HighlightInfoType PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.PARAMETER_ATTRIBUTES);
-  // t.o.d.o attributes depend on the t.o.d.o text
-  HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, null);
+  HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, null);  // t.o.d.o attributes depend on the t.o.d.o text
   HighlightInfoType METHOD_CALL = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.METHOD_CALL_ATTRIBUTES);
   HighlightInfoType METHOD_DECLARATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
   HighlightInfoType CONSTRUCTOR_CALL = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
@@ -84,20 +84,10 @@ public interface HighlightInfoType {
   HighlightInfoType REASSIGNED_LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
   HighlightInfoType REASSIGNED_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
   HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
+  HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
-  HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
-  /**
-   * use #WEAK_WARNING instead
-   */
-  @Deprecated
-  HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
-  HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
-  HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
   HighlightSeverity INJECTED_FRAGMENT_SEVERITY = new HighlightSeverity("INJECTED_FRAGMENT_SEVERITY", HighlightSeverity.INFORMATION.myVal-1);
   HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
-
-  HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
-  HighlightInfoType JAVA_KEYWORD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, SyntaxHighlighterColors.KEYWORD);
 
   @NotNull
   HighlightSeverity getSeverity(PsiElement psiElement);
@@ -199,8 +189,7 @@ public interface HighlightInfoType {
   }
 
   class HighlightInfoTypeSeverityByKeyAttrBySeverity implements HighlightInfoType {
-    static final Logger LOG = Logger.getInstance(
-      "#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKeyAttrBySeverity");
+    static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKeyAttrBySeverity");
 
     private final HighlightDisplayKey mySeverityKey;
 
@@ -210,9 +199,10 @@ public interface HighlightInfoType {
 
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile().getErrorLevel(mySeverityKey,
-                                                                                                                                                                   psiElement) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey,
-                                                                                                                                                                                                                                                                         psiElement);
+      InspectionProfile profile = psiElement == null
+                                  ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
+      HighlightDisplayLevel level = profile.getErrorLevel(mySeverityKey, psiElement);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level.getSeverity();
     }
@@ -224,14 +214,16 @@ public interface HighlightInfoType {
              ? infoType.getAttributesKey()
              : severity == HighlightSeverity.ERROR
                ? CodeInsightColors.ERRORS_ATTRIBUTES
-               : severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES
-                                                       : severity == HighlightSeverity.WEAK_WARNING ? CodeInsightColors.WEAK_WARNING_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES;
+               : severity == HighlightSeverity.WARNING
+                 ? CodeInsightColors.WARNINGS_ATTRIBUTES
+                 : severity == HighlightSeverity.WEAK_WARNING
+                   ? CodeInsightColors.WEAK_WARNING_ATTRIBUTES
+                   : CodeInsightColors.INFO_ATTRIBUTES;
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeSeverityByKeyAttrBySeverity[severity=" + mySeverityKey + "]";
-
     }
   }
 }

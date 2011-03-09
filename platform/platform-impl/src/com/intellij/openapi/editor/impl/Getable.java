@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.editorActions;
+package com.intellij.openapi.editor.impl;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.JavaTokenType;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 
-public class JavaTypedHandlerUtil {
-  private JavaTypedHandlerUtil() {
-  }
-
-  public static boolean isTokenInvalidInsideReference(final IElementType tokenType) {
-    return tokenType == JavaTokenType.SEMICOLON ||
-           tokenType == JavaTokenType.LBRACE ||
-           tokenType == JavaTokenType.RBRACE;
+/**
+ * User: cdr
+ */
+interface Getable<T> {
+  T get();
+}
+class WeakReferencedGetable<T> extends WeakReference<T> implements Getable<T> {
+  public WeakReferencedGetable(T referent, ReferenceQueue<? super T> q) {
+    super(referent, q);
   }
 }

@@ -20,8 +20,8 @@ import com.intellij.ide.highlighter.custom.tokens.*;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author dsl
@@ -41,8 +41,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
             MultilineCommentParser.create(table.getStartComment(), table.getEndComment());
     final NumberParser numberParser = new NumberParser(table.getNumPostfixChars(), table.isIgnoreCase());
     final HexNumberParser hexNumberParser = HexNumberParser.create(table.getHexPrefix());
-    final KeywordParser keywordParser = new KeywordParser(
-                    new Set[]{table.getKeywords1(), table.getKeywords2(), table.getKeywords3(), table.getKeywords4()},
+    final KeywordParser keywordParser = new KeywordParser(Arrays.asList(table.getKeywords1(), table.getKeywords2(), table.getKeywords3(), table.getKeywords4()),
                     table.isIgnoreCase());
     final IdentifierParser identifierParser = new IdentifierParser();
 

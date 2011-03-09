@@ -39,4 +39,8 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   public void testEnterInMultilineString() throws Throwable { doTest('\n'); }
   public void testEnterInStringInRefExpr() throws Throwable {doTest('\n');}
   public void testEnterInGStringInRefExpr() throws Throwable {doTest('\n');}
+  public void testPairAngleBracketAfterClassName() throws Throwable {doTest('<');}
+  public void testPairAngleBracketAfterClassNameOvertype() throws Throwable {doTest('>');}
+  public void testPairAngleBracketAfterClassNameBackspace() throws Throwable {doTest('\b');}
+  public void testNoPairLess() throws Throwable {doTest('<');}
 }

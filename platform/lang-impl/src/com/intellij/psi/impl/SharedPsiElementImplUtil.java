@@ -86,45 +86,47 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiElement getNextSibling(PsiElement element) {
-    if (element instanceof PsiFile) {
-      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
-      element = viewProvider.getPsi(viewProvider.getBaseLanguage());
-    }
-    PsiElement parent = element.getParent();
+    PsiElement parent = getElementParent(element);
     if (parent == null) return null;
-    PsiElement[] children = parent.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      if (child ==
-          element) { //do not use .equals since some smartheads are used to overriding PsiElement.equals e.g. com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatementImpl.equals()
-        return i < children.length - 1 ? children[i + 1] : null;
-      }
-    }
-    LOG.error("Cannot find element among its parent' children." +
-              " element: '" + element + "';" +
-              " parent: '" + parent + "';" +
-              " children: " + new ArrayList(Arrays.asList(children)) + "; " +
-              " file:" + element.getContainingFile());
-    return null;
+
+    final PsiElement[] children = parent.getChildren();
+    final int index = getChildIndex(children, element);
+    return 0 <= index && index < children.length - 1 ? children[index + 1] : null;
   }
 
   @Nullable
   public static PsiElement getPrevSibling(PsiElement element) {
+    PsiElement parent = getElementParent(element);
+    if (parent == null) return null;
+
+    final PsiElement[] children = parent.getChildren();
+    final int index = getChildIndex(children, element);
+    return index > 0 ? children[index - 1] : null;
+  }
+
+  @Nullable
+  private static PsiElement getElementParent(PsiElement element) {
     if (element instanceof PsiFile) {
       final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());
     }
-    PsiElement parent = element.getParent();
-    if (parent == null) return null;
-    PsiElement[] children = parent.getChildren();
+    if (element == null) return null;
+    return element.getParent();
+  }
+
+  private static int getChildIndex(final PsiElement[] children, final PsiElement child) {
     for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      if (child ==
-          element) { //do not use .equals since some smartheads are used to overriding PsiElement.equals e.g. com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatementImpl.equals()
-        return i > 0 ? children[i - 1] : null;
+      PsiElement candidate = children[i];
+      // do not use equals() since some smart-heads are used to override it (e.g. JspxImportStatementImpl)
+      if (candidate == child) {
+        return i;
       }
     }
-    LOG.assertTrue(false);
-    return null;
+    LOG.error("Cannot find element among its parent' children." +
+              " element: '" + child + "';" +
+              " parent: '" + child.getParent() + "';" +
+              " children: " + Arrays.asList(children) + "; " +
+              " file:" + child.getContainingFile());
+    return -1;
   }
 }

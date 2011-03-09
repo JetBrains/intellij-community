@@ -373,8 +373,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       buffer.append("static ");
     }
     if (myTypeParameterList != null) {
-      buffer.append(myTypeParameterList.getText());
-      buffer.append(" ");
+      final String typeParamsText = myTypeParameterList.getText();
+      if (!typeParamsText.isEmpty()) {
+        buffer.append(typeParamsText);
+        buffer.append(" ");
+      }
     }
 
     if (isChainedConstructor()) {

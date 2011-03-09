@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2010 Bas Leijdekkers
+ * Copyright 2005-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class ExpressionUtils {
 
     public static Object computeConstantExpression(
             @Nullable PsiExpression expression,
-            boolean throwExceptionOnOverflow) {
+            boolean throwConstantEvaluationOverflowException) {
         if (expression == null) {
             return null;
         }
@@ -43,7 +43,7 @@ public class ExpressionUtils {
         final PsiConstantEvaluationHelper constantEvaluationHelper =
                 psiFacade.getConstantEvaluationHelper();
         return constantEvaluationHelper.computeConstantExpression(expression,
-                throwExceptionOnOverflow);
+                throwConstantEvaluationOverflowException);
     }
 
     public static boolean isConstant(PsiField field) {

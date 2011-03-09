@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -51,6 +52,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
   private boolean mySerializersLoaded = false;
+  private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   public SerializationManagerImpl() {
     myFile.getParentFile().mkdirs();
@@ -63,7 +65,14 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       repairNameStorage(); // need this in order for myNameStorage not to be null
       myNameStorageCrashed.set(true);
     }
-    registerSerializer(PsiFileStubImpl.TYPE);
+    finally {
+      registerSerializer(PsiFileStubImpl.TYPE);
+      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        public void run() {
+          performShutdown();
+        }
+      });
+    }
   }
 
   public boolean isNameStorageCorrupted() {
@@ -230,8 +239,17 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   public void disposeComponent() {
+    performShutdown();
+  }
+
+  private void performShutdown() {
+    if (!myShutdownPerformed.compareAndSet(false, true)) {
+      return; // already shut down
+    }
+    LOG.info("START StubSerializationManager SHUTDOWN");
     try {
       myNameStorage.close();
+      LOG.info("END StubSerializationManager SHUTDOWN");
     }
     catch (IOException e) {
       LOG.error(e);

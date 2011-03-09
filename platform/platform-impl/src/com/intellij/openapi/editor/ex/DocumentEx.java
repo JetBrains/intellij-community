@@ -50,7 +50,6 @@ public interface DocumentEx extends Document {
   void clearLineModificationFlags();
 
   boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
-  void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end);
 
   boolean isInBulkUpdate();
 

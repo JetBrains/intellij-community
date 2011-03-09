@@ -85,7 +85,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
         final PsiFile psiFile = context.getFile();
 
         InsertionContext newContext =
-            new InsertionContext(offsetMap, context.getCompletionChar(), LookupElement.EMPTY_ARRAY, psiFile, editor);
+            new InsertionContext(offsetMap, context.getCompletionChar(), LookupElement.EMPTY_ARRAY, psiFile, editor, context.shouldAddCompletionChar());
 
         populateInsertMap(psiFile, offsetMap);
 

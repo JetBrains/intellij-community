@@ -28,41 +28,62 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
+class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getable<RangeHighlighterImpl> {
+  private final RangeHighlighterData data;
+
   RangeHighlighterImpl(@NotNull MarkupModel model,
                        int start,
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes) {
+                       TextAttributes textAttributes, boolean greedyToLeft, boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end,false);
 
-    RangeHighlighterData data = new RangeHighlighterData(model, layer, target, textAttributes) {
+    data = new RangeHighlighterData(model, target, textAttributes) {
       @NotNull
       @Override
       public RangeHighlighterEx getRangeHighlighter() {
         return RangeHighlighterImpl.this;
       }
     };
-    data.registerMe(start, end);
+
+    registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+  }
+
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    if (!isValid() || greedy == isGreedyToLeft()) return;
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), getLayer());
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    if (!isValid() || greedy == isGreedyToRight()) return;
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, getLayer());
   }
 
   protected RangeHighlighterData getData() {
-    return ((RangeHighlighterTree.RHNode)myNode).data;
+    return data;
   }
 
   @Override
-  protected void registerInDocument(int start, int end) {
+  protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     // we store highlighters in MarkupModel
+    ((MarkupModelImpl)data.getMarkupModel()).addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override
-  protected boolean unregisterInDocument() {
+  protected boolean unregisterInTree() {
     if (myNode == null) return false;
     // we store highlighters in MarkupModel
-    getData().unregisterMe();
+    getData().getMarkupModel().removeHighlighter(this);
     myNode = null;
     return true;
+  }
+
+  @Override
+  public RangeHighlighterImpl get() {
+    return this;
   }
 
   // delegates
@@ -74,12 +95,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     getData().setTextAttributes(textAttributes);
   }
 
-  boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
+  boolean changeAttributesNoEvents(@NotNull Consumer<RangeHighlighterEx> change) {
     return getData().changeAttributesInBatch(change);
   }
 
   public int getLayer() {
-    return getData().getLayer();
+    RangeHighlighterTree.RHNode node = (RangeHighlighterTree.RHNode)myNode;
+    return node == null ? -1 : node.myLayer;
   }
 
   public HighlighterTargetArea getTargetArea() {

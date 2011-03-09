@@ -1,5 +1,5 @@
 def ctx = context(filetypes : ["unknown"])
 
 contributor([ctx]) {
-  findClass<caret>
+  findClass(<caret>)
 }

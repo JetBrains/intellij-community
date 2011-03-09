@@ -116,6 +116,7 @@ public class JavaCompletionSorting {
       @Override
       public Comparable weigh(@NotNull LookupElement element) {
         final Object o = element.getObject();
+        if (o instanceof PsiKeyword) return -3;
         if (!(o instanceof PsiMember)) return 0;
 
         if (((PsiMember)o).hasModifierProperty(PsiModifier.STATIC)) {

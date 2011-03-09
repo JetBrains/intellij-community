@@ -271,7 +271,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   private boolean canMoveTo(int line, VirtualFile file) {
-    return file != null && myType.canPutAt(file, line, getProject());
+    return file != null && myType.canPutAt(file, line, getProject()) && getBreakpointManager().findBreakpointAtLine(myType, file, line) == null;
   }
 
   @Nullable

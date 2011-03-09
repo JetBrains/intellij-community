@@ -16,6 +16,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalsControlFlowPolicy implements ControlFlowPolicy {
   private final PsiElement myCodeFragment;
@@ -36,6 +37,7 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     }
   }
 
+  @Nullable
   private PsiVariable checkCodeFragment(PsiElement refElement) {
     PsiElement codeFragement;
     if (refElement instanceof PsiParameter
@@ -45,6 +47,7 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     else{
       codeFragement = ControlFlowUtil.findCodeFragment(refElement);
     }
+    if (codeFragement == null) return null;
     if (myCodeFragment.getContainingFile() == codeFragement.getContainingFile() && //In order for jsp includes to work
         !myCodeFragment.equals(codeFragement)) return null;
     return (PsiVariable)refElement;

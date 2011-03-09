@@ -417,6 +417,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private static void duplicateHighlighters(MarkupModel to, MarkupModel from, int offset, TextRange textRange) {
     for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
+      if (!rangeHighlighter.isValid()) continue;
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
       final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;

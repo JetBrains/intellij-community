@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiReference;
@@ -151,12 +151,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           ((CompletionPhase.BgCalculation)phase).focusLookupWhenDone = true;
         }
       } else {
-        /*
-        myLookup.setAdvertisementText("Press " +
+        myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
                                       " to choose the first suggestion");
-        */
       }
+      myLookup.addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
+                                CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
+                                " will move caret down and up");
     }
 
     ProgressManager.checkCanceled();
@@ -329,20 +330,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
 
-      if (isAutopopupCompletion() && showHintAutopopup()) {
-        myLookup.setHintMode(true);
-      }
-      else {
-        myLookup.show();
-      }
+      myLookup.show();
     }
     myLookup.refreshUi();
     hideAutopopupIfMeaningless();
     updateFocus();
-  }
-
-   public static boolean showHintAutopopup() {
-    return "true".equals(Registry.stringValue("hint.autopopup")) && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   final boolean isInsideIdentifier() {

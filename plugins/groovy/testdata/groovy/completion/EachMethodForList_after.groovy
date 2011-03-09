@@ -1,5 +1,5 @@
 List<String> list=['1', '2', '3']
 list.each{
   it->
-  it.substring<caret>
+  it.substring(<caret>)
 }

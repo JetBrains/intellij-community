@@ -25,6 +25,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.ChooseElementsDialog;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +35,10 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
 
   public ChooseModulesDialog(Component parent, final List<Module> items, final String title) {
     super(parent, items, title, null, true);
+  }
+
+  public ChooseModulesDialog(Component parent, List<Module> items, String title, @Nullable String description) {
+    super(parent, items, title, description, true);
   }
 
   public ChooseModulesDialog(final Project project, final List<? extends Module> items, final String title, final String description) {

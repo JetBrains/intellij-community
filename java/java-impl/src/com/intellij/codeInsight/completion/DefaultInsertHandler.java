@@ -210,7 +210,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '<':
       case '>':
       case '\"':
-      case '[': return TailType.createSimpleTailType(completionChar);
     }
     final TailType attr = item.getTailType();
     return attr == TailType.UNKNOWN ? TailType.NONE : attr;

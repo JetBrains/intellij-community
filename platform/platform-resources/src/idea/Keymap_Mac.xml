@@ -309,8 +309,8 @@
       <keyboard-shortcut first-keystroke="alt DOWN"/>
     </action>
 
-    <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="alt UP"/> </action>
-    <action id="EditorLookupDown"> <keyboard-shortcut first-keystroke="alt DOWN"/> </action>
+    <action id="EditorLookupUp"> <keyboard-shortcut first-keystroke="control UP"/> </action>
+    <action id="EditorLookupDown"> <keyboard-shortcut first-keystroke="control DOWN"/> </action>
 
     <action id="EditorDeleteToWordStart">
       <keyboard-shortcut first-keystroke="alt BACK_SPACE"/>

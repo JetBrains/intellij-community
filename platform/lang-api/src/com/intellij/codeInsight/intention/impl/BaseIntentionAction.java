@@ -37,4 +37,9 @@ public abstract class BaseIntentionAction implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
+
+  @Override
+  public String toString() {
+    return getText();
+  }
 }

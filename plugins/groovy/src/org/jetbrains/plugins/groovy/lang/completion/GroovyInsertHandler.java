@@ -29,16 +29,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -73,14 +66,16 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       CaretModel caretModel = editor.getCaretModel();
       int offset = context.getStartOffset() + method.getName().length();
       PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
+      assert file != null;
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
-      PsiElement parent = elementAt != null ? elementAt.getParent() : null;
+      assert elementAt != null;
+      PsiElement parent = elementAt.getParent();
       if (parent instanceof GrReferenceExpression &&
           ((GrReferenceExpression)parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) {
         return;
       }
 
-      if (parent instanceof GrAnnotationNameValuePair || parent.getParent() instanceof GrAnnotationNameValuePair) {
+      if (parent instanceof GrAnnotationNameValuePair || parent != null && parent.getParent() instanceof GrAnnotationNameValuePair) {
         document.insertString(offset, " = ");
         caretModel.moveToOffset(offset + 3);
         return;
@@ -102,10 +97,13 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
       docManager.commitDocument(document);
+      /*
+      //always use parentheses
+
       PsiFile psiFile = docManager.getPsiFile(document);
       if (method.getParameterList().getParametersCount() > 0 && isExpressionStatement(psiFile, context.getStartOffset())) {
         return;
-      }
+      }*/
 
       new MethodParenthesesHandler(method, true).handleInsert(context, item);
       return;
@@ -122,7 +120,9 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(clazz.getProject()).getPsiFile(document);
+      assert file != null;
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
+      assert elementAt != null;
       CaretModel caretModel = editor.getCaretModel();
       int offset = context.getStartOffset() + elementAt.getTextLength();
 
@@ -151,24 +151,6 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }
 
     addTailType(item).processTail(context.getEditor(), context.getTailOffset());
-  }
-
-  private static boolean isExpressionStatement(PsiFile psiFile, int offset) {
-    PsiElement elementAt = psiFile.findElementAt(offset);
-    if (elementAt == null) return false;
-    GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
-    if (expr == null) return false;
-    final PsiElement parent = expr.getParent();
-    if (parent instanceof GrControlFlowOwner) return true;
-    if (parent instanceof GrExpression ||
-        parent instanceof GrArgumentList ||
-        parent instanceof GrReturnStatement ||
-        parent instanceof GrAssertStatement ||
-        parent instanceof GrThrowStatement ||
-        parent instanceof GrSwitchStatement) {
-      return false;
-    }
-    return true;
   }
 
   private static void handleOverwrite(final int offset, final Document document) {
