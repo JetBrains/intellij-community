@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -105,9 +107,13 @@ public class ExceptionFilter implements Filter, DumbAware {
     try{
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, mySearchScope);
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(manager.getProject());
+      PsiClass aClass = psiFacade.findClass(className, mySearchScope);
       if (aClass == null) {
-        aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, GlobalSearchScope.allScope(myProject));
+        aClass = psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+        if (aClass == null) {//try to find class according to all dollars in package name
+          aClass = psiFacade.findClass(info.first, GlobalSearchScope.allScope(myProject));
+        }
         if (aClass == null) return null;
       }
       final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
