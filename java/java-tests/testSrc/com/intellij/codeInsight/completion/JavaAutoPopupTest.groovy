@@ -29,8 +29,9 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 
- /**
+/**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -601,9 +602,11 @@ public interface Test {
       }
       joinAlarm()
       joinCompletion()
-      joinAlarm()
       def l1 = LookupManager.getActiveLookup(another)
       if (l1) {
+        printThreadDump()
+        println l1.items
+        println CompletionServiceImpl.completionPhase
         assert false : l1.items
       }
       type 'l'
