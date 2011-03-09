@@ -30,6 +30,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   public void testSee0() throws Exception { doTest(); }
   public void testSee1() throws Exception { doTest(); }
   public void testSee2() throws Exception { doTest(); }
+  public void testSee3() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/pkg/" + getTestName(false) + ".java", BASE_PATH, false, false);

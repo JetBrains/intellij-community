@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
@@ -35,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.Impor
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * Parser for Groovy script files
@@ -50,13 +53,13 @@ public class GroovyParser implements PsiParser {
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     //builder.setDebugMode(true);
-    if (root == GroovyElementTypes.OPEN_BLOCK) {
+    if (root == OPEN_BLOCK) {
       OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
     }
-    else if (root == GroovyElementTypes.CLOSABLE_BLOCK) {
+    else if (root == CLOSABLE_BLOCK) {
       OpenOrClosableBlock.parseClosableBlockDeep(builder, this);
     }
-    else if (root == GroovyElementTypes.CONSTRUCTOR_BODY) {
+    else if (root == CONSTRUCTOR_BODY) {
       ConstructorBody.parseConstructorBodyDeep(builder, this);
     }
     else {
@@ -73,12 +76,12 @@ public class GroovyParser implements PsiParser {
 
     ParserUtils.getToken(builder, GroovyTokenTypes.kFOR);
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     }
     if (!ForStatement.forClauseParse(builder, this)) {
       builder.error(GroovyBundle.message("for.clause.expected"));
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     }
 
@@ -88,7 +91,7 @@ public class GroovyParser implements PsiParser {
       while (!builder.eof() && GroovyTokenTypes.mNLS == builder.getTokenType()){
         builder.advanceLexer();
       }
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     }
 
@@ -99,18 +102,18 @@ public class GroovyParser implements PsiParser {
 
     if (parseExtendedStatement(builder)) {
       warn.rollbackTo();
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     }
 
     if (!parseStatement(builder, true)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     } else {
       warn.drop();
-      marker.done(GroovyElementTypes.FOR_STATEMENT);
+      marker.done(FOR_STATEMENT);
       return true;
     }
   }
@@ -126,10 +129,8 @@ public class GroovyParser implements PsiParser {
     }
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
-//      ifStmtMarker.done(IF_STATEMENT);
-//      return IF_STATEMENT;
-      ifStmtMarker.drop();
-      return false;
+      ifStmtMarker.done(IF_STATEMENT);
+      return true;
     }
 
     if (!ConditionalExpression.parse(builder, this)) {
@@ -150,7 +151,7 @@ public class GroovyParser implements PsiParser {
         builder.error(GroovyBundle.message("rparen.expected"));
       }
       if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN)) {
-        ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
+        ifStmtMarker.done(IF_STATEMENT);
         return true;
       }
     }
@@ -163,7 +164,7 @@ public class GroovyParser implements PsiParser {
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-      ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
+      ifStmtMarker.done(IF_STATEMENT);
       return true;
     } else {
       warn.drop();
@@ -184,18 +185,18 @@ public class GroovyParser implements PsiParser {
       if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
-        ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
+        ifStmtMarker.done(IF_STATEMENT);
         return true;
       } else {
         warn.drop();
       }
 
-      ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
+      ifStmtMarker.done(IF_STATEMENT);
       return true;
 
     } else {
       rb.rollbackTo();
-      ifStmtMarker.done(GroovyElementTypes.IF_STATEMENT);
+      ifStmtMarker.done(IF_STATEMENT);
       return true;
     }
   }
@@ -279,7 +280,7 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.kWHILE);
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN, GroovyBundle.message("lparen.expected"))) {
-      marker.done(GroovyElementTypes.WHILE_STATEMENT);
+      marker.done(WHILE_STATEMENT);
       return true;
     }
 
@@ -295,7 +296,7 @@ public class GroovyParser implements PsiParser {
         builder.error(GroovyBundle.message("rparen.expected"));
       }
       if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN)) {
-        marker.done(GroovyElementTypes.WHILE_STATEMENT);
+        marker.done(WHILE_STATEMENT);
         return true;
       }
     }
@@ -306,11 +307,11 @@ public class GroovyParser implements PsiParser {
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(GroovyElementTypes.WHILE_STATEMENT);
+      marker.done(WHILE_STATEMENT);
       return true;
     } else {
       warn.drop();
-      marker.done(GroovyElementTypes.WHILE_STATEMENT);
+      marker.done(WHILE_STATEMENT);
       return true;
     }
   }
@@ -391,7 +392,7 @@ public class GroovyParser implements PsiParser {
     if (isBlockStatementNeeded && GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
       final PsiBuilder.Marker marker = builder.mark();
       OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
-      marker.done(GroovyElementTypes.BLOCK_STATEMENT);
+      marker.done(BLOCK_STATEMENT);
       return true;
     }
 
@@ -467,21 +468,39 @@ public class GroovyParser implements PsiParser {
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    if (!Declaration.parse(builder, false, this)) {
-      declMarker.rollbackTo();
-    } else {
-      declMarker.drop();
+    boolean modifiersParsed = Modifiers.parse(builder, this);
+
+    if (kIMPORT == builder.getTokenType()) {
+      final PsiBuilder.Marker impMarker = declMarker.precede();
+      ImportStatement.parseAfterModifiers(builder);
+      declMarker.done(IMPORT_STATEMENT);
+      impMarker.error(GroovyBundle.message("import.not.allowed"));
       return true;
     }
 
-    PsiBuilder.Marker marker = builder.mark();
-    if (ImportStatement.parse(builder, this)) {
-      marker.error(GroovyBundle.message("import.not.allowed"));
+    if (kCLASS == builder.getTokenType() || kINTERFACE == builder.getTokenType() || kENUM == builder.getTokenType() || mAT == builder.getTokenType()) {
+      final IElementType tdType = TypeDefinition.parseAfterModifiers(builder, this);
+      if (tdType != WRONGWAY) {
+        declMarker.done(tdType);
+        return true;
+      }
     }
-    else {
-      marker.drop();
+
+    final IElementType declType = Declaration.parseAfterModifiers(builder, false, false, this, declMarker, modifiersParsed);
+    if (declType != WRONGWAY) {
+      if (declType != null) {
+        declMarker.done(declType);
+      } else {
+        declMarker.drop();
+      }
+      return true;
     }
-    if (TypeDefinition.parse(builder, this)) return true;
+
+    if (modifiersParsed) {
+      declMarker.done(VARIABLE_DEFINITION_ERROR);
+      return true;
+    }
+    declMarker.rollbackTo();
 
     return AssignmentExpression.parse(builder, this, true);
 
@@ -498,14 +517,14 @@ public class GroovyParser implements PsiParser {
   private boolean parseLabeledStatement(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.eatElement(builder, GroovyElementTypes.LABEL);
+    ParserUtils.eatElement(builder, LABEL);
     ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON);
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     parseStatement(builder, false);
 
-    marker.done(GroovyElementTypes.LABELED_STATEMENT);
+    marker.done(LABELED_STATEMENT);
     return true;
   }
 }

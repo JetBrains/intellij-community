@@ -171,7 +171,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                        final List<PsiMethod> validEnclosingMethods,
                                                        final Introducer introducer) {
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createRoundedBorder());
     final JCheckBox superMethod = new JCheckBox("Choose base method", true);
     superMethod.setMnemonic('b');
     panel.add(superMethod, BorderLayout.SOUTH);
@@ -191,7 +190,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       }
     });
     updateView(validEnclosingMethods.get(0), editor, attributes, highlighters, superMethod);
-    panel.add(ScrollPaneFactory.createScrollPane(list), BorderLayout.CENTER);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
+    scrollPane.setBorder(null);
+    panel.add(scrollPane, BorderLayout.CENTER);
 
     final List<Pair<ActionListener, KeyStroke>>
       keyboardActions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
