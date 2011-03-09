@@ -19,5 +19,8 @@ try:
 except ImportError:
   print ("There is no such settings file " + str(settings_file))
 
+if globals().has_key("TEST_RUNNER"):
+    globals()['USER_TEST_RUNNER'] = globals()['TEST_RUNNER']
+
 TEST_RUNNER = 'pycharm.django_test_runner.run_tests'
 

@@ -6,12 +6,24 @@ from tcmessages import TeamcityServiceMessages
 import django
 import sys
 
+from django.test.simple import settings
+def get_test_suite_runner():
+  if hasattr(settings, "USER_TEST_RUNNER"):
+    from django.test.utils import get_runner
+    class TempSettings:
+      TEST_RUNNER = settings.USER_TEST_RUNNER
+    return get_runner(TempSettings)
+
 try:
   from django.test.simple import DjangoTestSuiteRunner
-  class BaseRunner(TeamcityTestRunner, DjangoTestSuiteRunner):
+
+  SUITE_RUNNER = get_test_suite_runner()
+  BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
+
+  class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
     def __init__(self, stream=sys.stdout):
       TeamcityTestRunner.__init__(self,stream)
-      DjangoTestSuiteRunner.__init__(self)
+      BaseSuiteRunner.__init__(self)
 
 except ImportError:
   class BaseRunner(TeamcityTestRunner):
