@@ -65,6 +65,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   @Override
   protected GitUpdateResult doUpdate() {
+    LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
     final GitLineHandler mergeHandler = new GitLineHandler(myProject, myRoot, GitCommand.MERGE);
     mergeHandler.addParameters("--no-stat", "-v");
@@ -89,7 +90,7 @@ public class GitMergeUpdater extends GitUpdater {
 
       @Override protected void onFailure() {
         final MergeError error = mergeLineListener.getMergeError();
-
+        LOG.info("doUpdate merge error: " + error);
         if (error == MergeError.CONFLICT) {
           final boolean allMerged =
             new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing update.",
@@ -103,7 +104,7 @@ public class GitMergeUpdater extends GitUpdater {
                 merger.mergeCommit(myRoot);
                 return true;
               }
-            }.mergeFiles(Collections.singleton(myRoot));
+            }.merge(Collections.singleton(myRoot));
           updateResult.set(allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE);
         }
         else if (error == MergeError.LOCAL_CHANGES) {
@@ -184,7 +185,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   // git log --name-status master..origin/master
-  private @NotNull Collection<String> getRemotelyChangedPaths(String currentBranch, String remoteBranch) throws VcsException {
+  private @NotNull Collection<String> getRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
     final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
     toPull.addParameters("--name-only", "--pretty=format:");
     toPull.addParameters(currentBranch + ".." + remoteBranch);
@@ -216,7 +217,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
   }
 
-  private List<FilePath> getFilesOverwrittenByMerge(List<String> mergeOutput) {
+  // parses the output of merge conflict returning files which would be overwritten by merge. These files will be stashed.
+  private List<FilePath> getFilesOverwrittenByMerge(@NotNull List<String> mergeOutput) {
     final List<FilePath> paths = new ArrayList<FilePath>();
     for  (String line : mergeOutput) {
       if (StringUtil.isEmptyOrSpaces(line)) {

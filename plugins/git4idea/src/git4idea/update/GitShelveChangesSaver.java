@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -38,6 +39,7 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GitShelveChangesSaver extends GitChangesSaver {
+  private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
   private final ShelveChangesManager myShelveManager;
   private final ShelvedChangesViewManager myShelveViewManager;
   private ShelvedChangeList myShelvedChangeList;
@@ -49,7 +51,8 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
+  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+    LOG.info("save " + rootsToSave);
     ArrayList<Change> changes = new ArrayList<Change>();
     for (LocalChangeList l : myChangeLists) {
       changes.addAll(filterChangesByRoots(l.getChanges(), rootsToSave)); // adding only changes from roots which are to be saved
@@ -59,6 +62,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
       myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
       if (!exceptions.isEmpty()) {
+        LOG.info("save " + exceptions, exceptions.get(0));
         throw exceptions.get(0);
       }
     }
@@ -66,11 +70,13 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   protected void load() throws VcsException {
     if (myShelvedChangeList != null) {
+      LOG.info("load ");
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       if (myShelvedChangeList != null) {
         List<VcsException> exceptions = new ArrayList<VcsException>(1);
         GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, myChangeManager, exceptions);
         if (!exceptions.isEmpty()) {
+          LOG.info("load " + exceptions, exceptions.get(0));
           throw exceptions.get(0);
         }
       }

@@ -51,7 +51,8 @@ public class GitRebaser {
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
 
-  public void abortRebase(VirtualFile root) {
+  public void abortRebase(@NotNull VirtualFile root) {
+    LOG.info("abortRebase " + root);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, "Aborting rebase");
@@ -62,7 +63,21 @@ public class GitRebaser {
     return continueRebase(root, "--continue");
   }
 
-  private boolean continueRebase(final @NotNull VirtualFile root, String startOperation) {
+  /**
+   * Runs 'git rebase --continue' on several roots consequently.
+   * @return true if rebase successfully finished.
+   */
+  public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
+    boolean success = true;
+    for (VirtualFile root : rebasingRoots) {
+      success &= continueRebase(root);
+    }
+    return success;
+  }
+
+  // start operation may be "--continue" or "--skip" depending on the situation.
+  private boolean continueRebase(final @NotNull VirtualFile root, @NotNull String startOperation) {
+    LOG.info("continueRebase " + root + " " + startOperation);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.addParameters(startOperation);
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
@@ -72,14 +87,6 @@ public class GitRebaser {
     rebaseTask.setExecuteResultInAwt(false);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
-  }
-
-  public boolean continueRebase(Collection<VirtualFile> rebasingRoots) {
-    boolean success = true;
-    for (VirtualFile root : rebasingRoots) {
-      success &= continueRebase(root);
-    }
-    return success;
   }
 
   /**
@@ -94,8 +101,6 @@ public class GitRebaser {
     }
     return rebasingRoots;
   }
-
-  // The registration number for the rebase editor
 
   /**
    * Reorders commits so that the given commits go before others, just after the given parentCommit.
@@ -139,7 +144,6 @@ public class GitRebaser {
   private boolean executeRebaseTaskInBackground(VirtualFile root, GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector, GitTask rebaseTask) {
     final AtomicBoolean result = new AtomicBoolean();
     final AtomicBoolean failure = new AtomicBoolean();
-
     rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
         result.set(true);
@@ -153,7 +157,6 @@ public class GitRebaser {
         failure.set(true);
       }
     });
-
     if (failure.get()) {
       result.set(handleRebaseFailure(root, h, rebaseConflictDetector));
     }
@@ -162,6 +165,7 @@ public class GitRebaser {
 
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
+      LOG.info("handleRebaseFailure merge conflict");
       return new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.",
                                               "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
         @Override protected boolean proceedIfNothingToMerge() {
@@ -171,11 +175,13 @@ public class GitRebaser {
         @Override protected boolean proceedAfterAllMerged() {
           return continueRebase(root, "--continue");
         }
-      }.mergeFiles(Collections.singleton(root));
+      }.merge(Collections.singleton(root));
     } else if (rebaseConflictDetector.isNoChangeError()) {
+      LOG.info("handleRebaseFailure no change");
       mySkippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
       return continueRebase(root, "--skip");
     } else {
+      LOG.info("handleRebaseFailure error " + h.errors());
       GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
       return false;
     }

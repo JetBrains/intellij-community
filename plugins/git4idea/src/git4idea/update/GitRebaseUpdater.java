@@ -54,6 +54,7 @@ public class GitRebaseUpdater extends GitUpdater {
   }
 
   protected GitUpdateResult doUpdate() {
+    LOG.info("doUpdate ");
     final GitLineHandler pullHandler = makePullHandler(myRoot);
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     pullHandler.addLineListener(rebaseConflictDetector);
@@ -86,6 +87,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
   private GitUpdateResult handleRebaseFailure(GitRebaseProblemDetector rebaseConflictDetector, GitLineHandler pullHandler) {
     if (rebaseConflictDetector.isMergeConflict()) {
+      LOG.info("handleRebaseFailure merge conflict");
       final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.", "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
         @Override protected boolean proceedIfNothingToMerge() throws VcsException {
           return myRebaser.continueRebase(myRoot);
@@ -94,9 +96,10 @@ public class GitRebaseUpdater extends GitUpdater {
         @Override protected boolean proceedAfterAllMerged() throws VcsException {
           return myRebaser.continueRebase(myRoot);
         }
-      }.mergeFiles(Collections.singleton(myRoot));
+      }.merge(Collections.singleton(myRoot));
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     } else {
+      LOG.info("handleRebaseFailure error " + pullHandler.errors());
       GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(pullHandler.errors()));
       return GitUpdateResult.ERROR;
     }

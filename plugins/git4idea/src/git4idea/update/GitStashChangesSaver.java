@@ -56,6 +56,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
+    LOG.info("save " + rootsToSave);
     Map<VirtualFile, Collection<Change>> changes = groupChangesByRoots(rootsToSave);
     convertSeparatorsIfNeeded(changes);
     stash(changes.keySet());
@@ -95,6 +96,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   private void convertSeparatorsIfNeeded(Map<VirtualFile, Collection<Change>> changes) throws VcsException {
+    LOG.info("convertSeparatorsIfNeeded ");
     GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
     if (settings != null) {
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
@@ -106,6 +108,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   private void loadRoot(final VirtualFile root) throws VcsException {
+    LOG.info("loadRoot " + root);
     myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
     final GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
     handler.setNoSSH(true);
@@ -136,8 +139,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
       @Override protected void onFailure() {
         if (conflict.get()) {
           new GitMergeConflictResolver(myProject, true, "Uncommitted changes that were stashed before update have conflicts with updated files.",
-                                       "Can't update", "").mergeFiles(Collections.singleton(root));
+                                       "Can't update", "").merge(Collections.singleton(root));
         } else {
+          LOG.info("unstash failed " + handler.errors());
           GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
         }
       }

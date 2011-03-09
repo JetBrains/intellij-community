@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * Saves and restores local changes - it is used before and after the update process.
+ * Saves and restores uncommitted local changes - it is used before and after the update process.
  * Respects changelists.
  *
  * @author Kirill Likhodedov
@@ -73,7 +73,7 @@ public abstract class GitChangesSaver {
     return getDefaultSaver(project, progressIndicator, stashMessage);
   }
 
-  // In case of illegal value in the settings or impossibility to get the settings.
+  // In the case of illegal value in the settings or impossibility to get the settings.
   private static GitChangesSaver getDefaultSaver(Project project, ProgressIndicator progressIndicator, String stashMessage) {
     return new GitStashChangesSaver(project, progressIndicator, stashMessage);
   }
@@ -109,6 +109,7 @@ public abstract class GitChangesSaver {
 
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
+      LOG.info("Update is incomplete, changes are not restored");
       Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
                                                 "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
@@ -174,10 +175,10 @@ public abstract class GitChangesSaver {
             if (myChangeLists == null) {
               return;
             }
+            LOG.info("restoreChangeLists " + myChangeLists);
             for (LocalChangeList changeList : myChangeLists) {
               final Collection<Change> changes = changeList.getChanges();
-              LOG.debug(
-                "restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
+              LOG.debug( "restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
               if (!changes.isEmpty()) {
                 LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
                 myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
