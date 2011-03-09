@@ -33,11 +33,13 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
       return 0;
     }
 
-    final String prefixHumps = StringUtil.capitalsOnly(prefix);
     final Set<String> strings = item.getAllLookupStrings();
+    final String prefixHumps = StringUtil.capitalsOnly(prefix);
 
-    for (String lookupString : strings) {
-      if (StringUtil.capitalsOnly(lookupString).startsWith(prefixHumps)) return 100;
+    if (StringUtil.isNotEmpty(prefixHumps)) {
+      for (String lookupString : strings) {
+        if (StringUtil.capitalsOnly(lookupString).startsWith(prefixHumps)) return 100;
+      }
     }
 
     for (String lookupString : strings) {
