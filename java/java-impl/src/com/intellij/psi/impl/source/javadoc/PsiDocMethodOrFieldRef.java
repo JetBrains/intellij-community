@@ -101,7 +101,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
       for (String s : signature) {
         try {
-          types.add(elementFactory.createTypeFromText(s, scope));
+          types.add(elementFactory.createTypeFromText(s, element));
         }
         catch (IncorrectOperationException e) {
           types.add(PsiType.NULL);
