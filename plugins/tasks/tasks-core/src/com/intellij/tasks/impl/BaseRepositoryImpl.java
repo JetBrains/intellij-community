@@ -1,6 +1,5 @@
 package com.intellij.tasks.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
@@ -16,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Base class for HTTP-based repositories.
+ *
  * @author Dmitry Avdeev
  */
 public abstract class BaseRepositoryImpl extends BaseRepository {
@@ -24,8 +25,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   static {
     Protocol.registerProtocol(EASY_HTTPS, new Protocol("https", (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.impl.BaseRepository");
 
   private static final Pattern PATTERN = Pattern.compile("[A-Z]+\\-\\d+");
 
@@ -97,4 +96,25 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected void configureHttpMethod(HttpMethod method) {}
+
+  public abstract class HttpTestConnection extends CancellableConnection {
+
+    private HttpMethod myMethod;
+
+    public HttpTestConnection(HttpMethod method) {
+      myMethod = method;
+    }
+
+    @Override
+    protected void doTest() throws Exception {
+      doTest(myMethod);
+    }
+
+    @Override
+    public void cancel() {
+      myMethod.abort();
+    }
+
+    protected abstract void doTest(HttpMethod method) throws Exception;
+  }
 }

@@ -83,7 +83,11 @@ public class JiraRepository extends BaseRepositoryImpl implements XmlRpcTranspor
   }
 
   private Task[] processRSS(String url) throws IOException, JDOMException {
-    GetMethod method = executeGet(url);
+    HttpClient client = getHttpClient();
+    GetMethod method = new GetMethod(url);
+    configureHttpMethod(method);
+    client.executeMethod(method);
+
     int code = method.getStatusCode();
     if (code != HttpStatus.SC_OK) {
       throw new IOException("HTTP " + code + " (" + HttpStatus.getStatusText(code) + ") " + method.getStatusText());
@@ -109,14 +113,6 @@ public class JiraRepository extends BaseRepositoryImpl implements XmlRpcTranspor
       LOG.warn("JIRA channel not found");
     }
     return Task.EMPTY_ARRAY;
-  }
-
-  private GetMethod executeGet(String url) throws IOException {
-    HttpClient client = getHttpClient();
-    GetMethod method = new GetMethod(url);
-    configureHttpMethod(method);
-    client.executeMethod(method);
-    return method;
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -172,21 +168,28 @@ public class JiraRepository extends BaseRepositoryImpl implements XmlRpcTranspor
     return myServerVersion;
   }
 
-  public void testConnection() throws Exception {
+  @Override
+  public CancellableConnection createCancellableConnection() {
+    final HttpClient client = getHttpClient();
+    GetMethod method = new GetMethod(getUrl() + XMLRPC_PATH);
+    configureHttpMethod(method);
+    return new HttpTestConnection(method) {
 
-    GetMethod getMethod = executeGet(getUrl() + XMLRPC_PATH);
-    try {
-      Element root = new SAXBuilder(false).build(getMethod.getResponseBodyAsStream()).getRootElement();
-      if (!root.getName().equals("methodResponse")) {
-        throw new Exception(root.getName());
+      @Override
+      public void doTest(HttpMethod method) throws Exception {
+        try {
+          client.executeMethod(method);
+          Element root = new SAXBuilder(false).build(method.getResponseBodyAsStream()).getRootElement();
+          if (!root.getName().equals("methodResponse")) {
+            throw new Exception(root.getName());
+          }
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          throw new Exception("JIRA RPC plugin not responded");
+        }
       }
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      throw new Exception("RPC plugin not responded");
-    }
-
-    doXmlRpcRequest("getServerInfo");
+    };
   }
 
   public JiraRepository clone() {
