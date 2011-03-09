@@ -1,6 +1,6 @@
 import os
 
-settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE')
+settings_file = os.getenv('PYCHARM_DJANGO_SETTINGS_MODULE') or os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
     settings_file = 'settings'
 
