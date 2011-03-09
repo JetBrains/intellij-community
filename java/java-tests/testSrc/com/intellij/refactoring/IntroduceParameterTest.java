@@ -260,6 +260,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testDiamond2Raw() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
