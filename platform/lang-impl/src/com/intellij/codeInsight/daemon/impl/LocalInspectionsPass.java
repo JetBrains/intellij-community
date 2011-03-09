@@ -255,7 +255,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     indicator.checkCanceled();
 
     myInfos = new ArrayList<HighlightInfo>();
-    addHighlightsFromResults(myInfos);
+    addHighlightsFromResults(myInfos, indicator);
   }
 
   private void visitPriorityElementsAndInit(@NotNull List<LocalInspectionTool> tools,
@@ -389,7 +389,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   public Collection<HighlightInfo> getHighlights() {
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
 
-    addHighlightsFromResults(highlights);
+    addHighlightsFromResults(highlights, new DaemonProgressIndicator());
     return highlights;
   }
 
@@ -397,13 +397,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                     @NotNull HighlightInfoType highlightInfoType,
                                                     @NotNull String message,
-                                                    String toolTip) {
+                                                    String toolTip, PsiElement psiElement) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
-    PsiElement element = problemDescriptor.getPsiElement();
-    if (textRange == null || element == null) return null;
-    boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
+    if (textRange == null || psiElement == null) return null;
+    boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
 
-    final HighlightSeverity severity = highlightInfoType.getSeverity(element);
+    final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
     return new HighlightInfo(attributes, highlightInfoType, textRange.getStartOffset(),
                              textRange.getEndOffset(), message, toolTip,
@@ -435,8 +434,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
           infos.clear();
-          createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement,
-                                        psiElement.getText());
+          createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
           for (HighlightInfo info : infos) {
             final EditorColorsScheme colorsScheme = getColorsScheme();
             UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
@@ -516,29 +514,26 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
   }
 
-  private void addHighlightsFromResults(final List<HighlightInfo> outInfos) {
+  private void addHighlightsFromResults(@NotNull List<HighlightInfo> outInfos, @NotNull ProgressIndicator indicator) {
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
+      indicator.checkCanceled();
       PsiFile file = entry.getKey();
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
       List<InspectionResult> resultList = entry.getValue();
-      Map<PsiElement, String> text = new THashMap<PsiElement, String>(resultList.size());
       for (InspectionResult inspectionResult : resultList) {
+        indicator.checkCanceled();
         LocalInspectionTool tool = inspectionResult.tool;
         HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
+          indicator.checkCanceled();
           PsiElement element = descriptor.getPsiElement();
-          String psiText = element == null ? null : text.get(element);
-          if (psiText == null && element != null) {
-            psiText = element.getText();
-            //text.put(element, psiText);
-          }
-          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element, psiText);
+          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
         }
       }
     }
@@ -551,7 +546,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              Document documentRange,
                                              LocalInspectionTool tool,
                                              HighlightSeverity severity,
-                                             ProblemDescriptor descriptor, PsiElement element, String psiText) {
+                                             ProblemDescriptor descriptor,
+                                             PsiElement element) {
     if (element == null) return;
     if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(element, tool)) return;
     HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
@@ -603,7 +599,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         tooltip = "<html><body>" + XmlStringUtil.escapeString(message) + link + "</body></html>";
       }
     }
-    HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
+    HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip,element);
     if (highlightInfo != null) {
       registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
     }
