@@ -48,7 +48,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       final PsiElement element = usage.getElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();
-        if (file instanceof GroovyFile) {
+        if (file instanceof GroovyFile && file.isValid()) {
           files.add((GroovyFile)file);
         }
       }
@@ -65,6 +65,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       public void run() {
         final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
         for (final GroovyFile file : files) {
+          if (!file.isValid()) continue;
           final VirtualFile virtualFile = file.getVirtualFile();
           if (!ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile)) {
             continue;
@@ -88,6 +89,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (GroovyFile groovyFile : redundants.keySet()) {
+          if (!groovyFile.isValid()) continue;
           final Pair<List<GrImportStatement>, Set<GrImportStatement>> pair = redundants.get(groovyFile);
           final List<GrImportStatement> redundantPerFile = pair.getFirst();
           final Set<GrImportStatement> usedInFile = pair.getSecond();

@@ -31,9 +31,4 @@ public class PunctuationParser extends TokenParser {
     }
     return false;
   }
-
-  @Override
-  public int getSmartUpdateShift() {
-    return 0;
-  }
 }

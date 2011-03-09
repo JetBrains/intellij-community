@@ -35,17 +35,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +60,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private final GroovyFile myFile;
   private final Editor myEditor;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
-  private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
+  private volatile Set<GrImportStatement> myUnusedImports;
   private volatile Runnable myOptimizeRunnable;
 
   public GroovyUnusedImportPass(GroovyFile file, Editor editor) {
@@ -66,8 +70,24 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    myUnusedImports = GroovyImportsTracker.getInstance(myFile.getProject()).getUnusedImportStatements(myFile);
-    if (!myUnusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
+    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(GroovyImportOptimizer.getValidImportStatements(myFile));
+    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof GrReferenceElement) {
+          for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
+            GroovyPsiElement context = result.getCurrentFileResolveContext();
+            if (context instanceof GrImportStatement) {
+              GrImportStatement importStatement = (GrImportStatement)context;
+              unusedImports.remove(importStatement);
+            }
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    myUnusedImports = unusedImports;
+    if (!unusedImports.isEmpty() && CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
       final VirtualFile vfile = myFile.getVirtualFile();
       if (vfile != null && ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().isInSource(vfile)) {
         final GrImportStatement[] imports = myFile.getImportStatements();
@@ -81,9 +101,10 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
         myOptimizeRunnable = new GroovyImportOptimizer().processFile(myFile);
       }
     }
+
   }
 
-  private IntentionAction createUnusedImportIntention() {
+  private static IntentionAction createUnusedImportIntention() {
     return new IntentionAction() {
 
       @NotNull
@@ -167,7 +188,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       ignoreRange = TextRange.EMPTY_RANGE;
     }
 
-    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+    return !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
       public boolean process(HighlightInfo error) {
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();
@@ -175,7 +196,6 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
         return ignoreRange.containsRange(infoStart,infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       }
     });
-    return hasErrorsExceptUnresolvedImports;
   }
 
 

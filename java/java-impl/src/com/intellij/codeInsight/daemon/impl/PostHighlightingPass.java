@@ -674,7 +674,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo registerRedundantImport(PsiImportStatementBase importStatement, HighlightDisplayKey unusedImportKey) {
-    HighlightInfo info = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNUSED_IMPORT, importStatement, InspectionsBundle.message("unused.import.statement"));
+    HighlightInfo info = HighlightInfo.createHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT, importStatement, InspectionsBundle.message("unused.import.statement"));
 
     QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), unusedImportKey);
     QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), unusedImportKey);

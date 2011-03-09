@@ -520,7 +520,7 @@ public class TemplateState implements Disposable {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       final OffsetMap offsetMap = new OffsetMap(myDocument);
-      final InsertionContext context = new InsertionContext(offsetMap, (char)0, elements, psiFile, myEditor);
+      final InsertionContext context = new InsertionContext(offsetMap, (char)0, elements, psiFile, myEditor, false);
       context.setTailOffset(myEditor.getCaretModel().getOffset());
       offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
       offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());

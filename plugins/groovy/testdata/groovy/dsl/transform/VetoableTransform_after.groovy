@@ -6,4 +6,4 @@ class MyBean {
 
 def bean = new MyBean()
 
-bean.fireVetoableChange<caret>
+bean.fireVetoableChange(<caret>)

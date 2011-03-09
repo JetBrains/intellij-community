@@ -405,6 +405,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
 
     assertFalse(getPsiManager().isDisposed());
+    assertTrue(getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
@@ -427,7 +428,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[0];
+    return LocalInspectionTool.EMPTY_ARRAY;
   }
 
   @Override

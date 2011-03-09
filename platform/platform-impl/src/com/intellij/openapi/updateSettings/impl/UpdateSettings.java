@@ -25,6 +25,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -37,7 +41,7 @@ import org.jdom.Element;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class UpdateSettings implements PersistentStateComponent<Element> {
+public class UpdateSettings implements PersistentStateComponent<Element>, UserUpdateSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateSettings"); 
 
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
@@ -46,8 +50,12 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
   @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
   public JDOMExternalizableStringList myKnownUpdateChannels = new JDOMExternalizableStringList();
 
+  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+  public JDOMExternalizableStringList myIgnoredBuildNumbers = new JDOMExternalizableStringList();
+
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
+  public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -71,5 +79,38 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
     catch (InvalidDataException e) {
       LOG.info(e);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<String> getKnownChannelsIds() {
+    List<String> ids = new ArrayList<String>();
+    for (String channel : myKnownUpdateChannels) {
+      ids.add(channel);
+    }
+    return ids;
+  }
+
+  @Override
+  public void setKnownChannelIds(@NotNull List<String> ids) {
+    myKnownUpdateChannels.clear();
+    for (String id : ids) {
+      myKnownUpdateChannels.add(id);
+    }
+  }
+
+  public void forgetChannelId(String id) {
+    myKnownUpdateChannels.remove(id);
+  }
+
+  @Override
+  public List<String> getIgnoredBuildNumbers() {
+    return myIgnoredBuildNumbers;
+  }
+
+  @NotNull
+  @Override
+  public ChannelStatus getSelectedChannelStatus() {
+    return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
   }
 }

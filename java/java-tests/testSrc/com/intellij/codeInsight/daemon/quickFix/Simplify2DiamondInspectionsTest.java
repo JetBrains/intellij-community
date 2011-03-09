@@ -17,17 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
-import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
-import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 
 //todo test3 should be checked if it compiles - as now javac infers Object instead of String?!

@@ -28,6 +28,8 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightCodeInsightTestCase {
   @Override
@@ -270,6 +272,12 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
+  public void testEnclosingWithParamDeletion() throws Exception {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    perform(true, 0, "anObject", false, true, true, false, 1);
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+  }
+
   private static boolean perform(boolean replaceAllOccurences,
                                  int replaceFieldsWithGetters,
                                  @NonNls String parameterName,
@@ -277,6 +285,18 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
                                  boolean declareFinal,
                                  final boolean removeUnusedParameters,
                                  final boolean generateDelegate) {
+    return perform(replaceAllOccurences, replaceFieldsWithGetters, parameterName, searchForSuper, declareFinal, removeUnusedParameters,
+                   generateDelegate, 0);
+  }
+
+  private static boolean perform(boolean replaceAllOccurences,
+                                 int replaceFieldsWithGetters,
+                                 @NonNls String parameterName,
+                                 boolean searchForSuper,
+                                 boolean declareFinal,
+                                 final boolean removeUnusedParameters,
+                                 final boolean generateDelegate,
+                                 int enclosingLevel) {
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -293,6 +313,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     PsiElement context = expr == null ? localVariable : expr;
     PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
+
+    final List<PsiMethod> methods = IntroduceParameterHandler.getEnclosingMethods(method);
+    assertTrue(methods.size() > enclosingLevel);
+    method = methods.get(enclosingLevel);
 
     final PsiMethod methodToSearchFor;
     if (searchForSuper) {

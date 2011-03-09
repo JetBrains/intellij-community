@@ -48,7 +48,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @NonNls
   public String[] getAllValues() {
-    final String[] strings = ArrayUtil.mergeArrays(getTrueValues(), getFalseValues(), ArrayUtil.STRING_ARRAY_FACTORY);
+    final String[] strings = ArrayUtil.mergeArrays(getTrueValues(), getFalseValues());
 
     Arrays.sort(strings);
 

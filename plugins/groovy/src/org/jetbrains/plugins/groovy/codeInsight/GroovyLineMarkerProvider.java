@@ -30,6 +30,10 @@ import com.intellij.util.NullableFunction;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
 
 import java.util.Collection;
 import java.util.List;
@@ -59,16 +63,16 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
         element1 = element1.getParent();
-        if (element1 instanceof PsiMember) {
+        if (element1 instanceof PsiMember || element1 instanceof GrVariableDeclarationBase) {
           isMember = true;
           break;
         }
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
         boolean drawSeparator = false;
-        int category = getCategory(element1);
+        int category = getGroovyCategory(element1);
         for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-          int category1 = getCategory(child);
+          int category1 = getGroovyCategory(child);
           if (category1 == 0) continue;
           drawSeparator = category != 1 || category1 != 1;
           break;
@@ -92,6 +96,17 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     }
 
     return super.getLineMarkerInfo(element);
+  }
+
+  private static int getGroovyCategory(PsiElement element) {
+    if (element instanceof GrVariableDeclarationBase) {
+      GrVariable[] variables = ((GrVariableDeclarationBase)element).getVariables();
+      if (variables.length == 1 && variables[0] instanceof GrField && variables[0].getInitializerGroovy() instanceof GrClosableBlock) {
+        return 2;
+      }
+    }
+
+    return JavaLineMarkerProvider.getCategory(element);
   }
 
   @Override

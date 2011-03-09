@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -59,7 +60,12 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return new FirefoxSettings();
       }
     },
-    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png"));
+    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
+      @Override
+      public BrowserSpecificSettings createBrowserSpecificSettings() {
+        return new ChromeSettings();
+      }
+    };
 
     private final String myName;
     private final String myWindowsPath;
@@ -192,18 +198,23 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       BrowserUtil.launchBrowser(url);
     }
     else {
-      getInstance()._launchBrowser(family, url);
+      getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY);
     }
   }
 
-  private void _launchBrowser(final BrowserFamily family, @NotNull String url) {
+  public static void launchBrowser(final @NotNull BrowserFamily family, @NotNull final String url, String... parameters) {
+    getInstance().doLaunchBrowser(family, url, parameters);
+  }
+
+  private void doLaunchBrowser(final BrowserFamily family, @NotNull String url, @NotNull String[] additionalParameters) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     final String path = settings.getPath();
     if (path != null && path.length() > 0) {
       url = BrowserUtil.escapeUrl(url);
       try {
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
-        String[] parameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
+        final String[] browserParameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
+        String[] parameters = ArrayUtil.mergeArrays(browserParameters, additionalParameters);
         launchBrowser(path, url, parameters);
       }
       catch (IOException e) {
@@ -230,7 +241,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     if (browserArgs.length > 0) {
       if (SystemInfo.isMac && "open".equals(command[0])) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
-          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs, ArrayUtil.STRING_ARRAY_FACTORY);
+          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs);
         }
         else {
           LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(args));
@@ -240,7 +251,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         args = ArrayUtil.append(browserArgs, url);
       }
     }
-    final String[] commandLine = ArrayUtil.mergeArrays(command, args, ArrayUtil.STRING_ARRAY_FACTORY);
+    final String[] commandLine = ArrayUtil.mergeArrays(command, args);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Launching browser: " + Arrays.toString(commandLine));
     }

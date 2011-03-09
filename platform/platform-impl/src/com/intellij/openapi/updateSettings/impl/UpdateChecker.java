@@ -90,6 +90,11 @@ public final class UpdateChecker {
   private UpdateChecker() {
   }
 
+  public static void showConnectionErrorDialog() {
+    Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
+                             IdeBundle.message("title.connection.error"));
+  }
+
   public static enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
@@ -107,6 +112,10 @@ public final class UpdateChecker {
   }
 
   private static String getUpdateUrl() {
+    String url = System.getProperty("idea.updates.url");
+    if (url != null) {
+      return url;
+    }
     return StringHolder.UPDATE_URL;
   }
 
@@ -132,7 +141,8 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
+                                                     final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(settingsConfigurable)) {
@@ -226,7 +236,9 @@ public final class UpdateChecker {
   }
 
   @Nullable
-  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile, @NotNull @NonNls String relPath, final HttpFileSystem fileSystem) {
+  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile,
+                                                     @NotNull @NonNls String relPath,
+                                                     final HttpFileSystem fileSystem) {
     if (relPath.length() == 0) return hostFile;
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();
@@ -253,89 +265,70 @@ public final class UpdateChecker {
     }
   }
 
-  @Nullable
-  private static Product findProduct(Element products, String code) {
-    for (Object productNode : products.getChildren("product")) {
-      Product product = new Product((Element)productNode);
-      if (product.hasCode(code)) {
-        return product;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static UpdateChannel checkForUpdates() throws ConnectionException {
+  @NotNull
+  public static CheckForUpdateResult doCheckForUpdates() {
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    BuildNumber currentBuild = appInfo.getBuild();
+    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
+    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl(), getInstallationUID(), null);
+    final UpdateSettings settings = UpdateSettings.getInstance();
+    final UpdatesInfo info;
     try {
-      BuildNumber ourBuild = ApplicationInfo.getInstance().getBuild();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("enter: checkForUpdates()");
+      info = loader.loadUpdatesInfo();
+      if (info == null) {
+        return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
       }
-
-      final Document document;
-      try {
-        document = loadVersionInfo(getUpdateUrl());
-        if (document == null) return null;
-      }
-      catch (Throwable t) {
-        LOG.debug(t);
-        throw new ConnectionException(t);
-      }
-
-      Element root = document.getRootElement();
-      UpdateChannel channel = findUpdateChannel(root, ourBuild.getProductCode());
-      if (channel == null) return null;
-
-      BuildInfo latestBuild = channel.getLatestBuild();
-      if (latestBuild == null) return null;
-
-      if (ourBuild.compareTo(latestBuild.getNumber()) < 0) {
-        return channel;
-      }
-
-      return null;
     }
-    catch (Throwable t) {
-      LOG.debug(t);
-      return null;
+    catch (ConnectionException e) {
+      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
-    finally {
-      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-    }
+
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, currentBuild, info, settings);
+    return strategy.checkForUpdates();
   }
 
-  @Nullable
-  private static UpdateChannel findUpdateChannel(Element root, String productCode) {
-    if (root == null) {
-      LOG.info("cannot read " + getUpdateUrl());
-      return null;
+
+
+  @NotNull
+  public static CheckForUpdateResult checkForUpdates() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: auto checkForUpdates()");
     }
 
-    Product product = findProduct(root, productCode);
-    if (product == null) return null;
+    final UpdateSettings settings = UpdateSettings.getInstance();
 
-    UpdateChannel channel = product.findUpdateChannelById(ApplicationInfo.getInstance().getDefaultUpdateChannel());
-    if (channel != null) return channel;
+    final CheckForUpdateResult result = doCheckForUpdates();
 
-    for (UpdateChannel c : product.getChannels()) {
-      BuildInfo cBuild = c.getLatestBuild();
-      if (cBuild == null) continue;
-
-      if (channel == null) {
-        channel = c;
-      }
-      else {
-        BuildInfo build = channel.getLatestBuild();
-        assert build != null;
-
-        if (build.compareTo(cBuild) < 0) {
-          channel = c;
-        }
-      }
+    if (result.getState() == UpdateStrategy.State.LOADED) {
+      settings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
-    return channel;
+    return result;
   }
+
+  public static void showUpdateResult(CheckForUpdateResult checkForUpdateResult,
+                                      List<PluginDownloader> updatedPlugins,
+                                      boolean showConfirmation,
+                                      boolean enableLink,
+                                      final boolean alwaysShowResults) {
+    UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
+    if (channelToPropose != null && channelToPropose.getLatestBuild() != null) {
+      NewChannelDialog dialog = new NewChannelDialog(channelToPropose);
+      dialog.setModal(alwaysShowResults);
+      dialog.show();
+    }
+    else if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
+      UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink);
+      dialog.setModal(alwaysShowResults);
+      dialog.show();
+    }
+    else if (updatedPlugins != null || alwaysShowResults) {
+      NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
+      dialog.setShowConfirmation(showConfirmation);
+      dialog.show();
+    }
+}
 
   private static Document loadVersionInfo(final String url) throws Exception {
     if (LOG.isDebugEnabled()) {
@@ -350,7 +343,8 @@ public final class UpdateChecker {
 
           String uid = getInstallationUID();
 
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
+          final URL requestUrl =
+            new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
@@ -403,16 +397,6 @@ public final class UpdateChecker {
     return uid;
   }
 
-  public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins, boolean showConfirmation) {
-    NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins, enableLink);
-    dialog.setShowConfirmation(showConfirmation);
-    dialog.show();
-  }
-
-  public static void showUpdateInfoDialog(boolean enableLink, final UpdateChannel channel, final List<PluginDownloader> updatePlugins) {
-    new UpdateInfoDialog(true, channel, updatePlugins, enableLink).show();
-  }
-
   public static boolean install(List<PluginDownloader> downloaders) {
     boolean installed = false;
     for (PluginDownloader downloader : downloaders) {
@@ -444,7 +428,7 @@ public final class UpdateChecker {
 
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              Notifications.Bus.notify(new Notification("Updater", 
+              Notifications.Bus.notify(new Notification("Updater",
                                                         "Failed to download patch file",
                                                         e.getMessage(),
                                                         NotificationType.ERROR));

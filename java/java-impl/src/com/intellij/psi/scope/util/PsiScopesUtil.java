@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -39,8 +38,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
@@ -108,6 +107,29 @@ public class PsiScopesUtil {
     return true;
   }
 
+  public static void processTypeDeclarations(PsiType type, PsiElement place, PsiScopeProcessor processor) {
+    if (type instanceof PsiArrayType) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(place);
+      final PsiClass arrayClass = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().getArrayClass(languageLevel);
+      final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      if (arrayTypeParameters.length > 0) {
+        substitutor = substitutor.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType());
+      }
+      arrayClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), arrayClass, place);
+    } else if (type instanceof PsiIntersectionType) {
+      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+        processTypeDeclarations(psiType, place, processor);
+      }
+    } else {
+      final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+      final PsiClass clazz = (PsiClass)result.getElement();
+      if (clazz != null) {
+        clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), clazz, place);
+      }
+    }
+  }
+
   public static boolean resolveAndWalk(PsiScopeProcessor processor, PsiJavaCodeReferenceElement ref, PsiElement maxScope) {
     return resolveAndWalk(processor, ref, maxScope, false);
   }
@@ -127,11 +149,7 @@ public class PsiScopesUtil {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
-          final ClassCandidateInfo result = TypeConversionUtil.splitType(type, qualifier);
-          if (result != null) {
-            target = result.getElement();
-            substitutor = result.getSubstitutor();
-          }
+          processTypeDeclarations(type, ref, processor);
         }
 
         if (type == null && qualifier instanceof PsiJavaCodeReferenceElement) {

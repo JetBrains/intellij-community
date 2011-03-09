@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringTokenizer;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -38,6 +39,7 @@ public class NameUtil {
     }
   };
   private static final int MAX_LENGTH = 40;
+  public static final boolean useMinusculeHumpMatcher = "true".equals(System.getProperty("minuscule.humps.matching"));
 
   private NameUtil() {}
 
@@ -388,7 +390,11 @@ public class NameUtil {
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false));
   }
 
-  private static Matcher buildMatcher(String pattern, String regexp) {
+  private static Matcher buildMatcher(final String pattern, String regexp) {
+    if (useMinusculeHumpMatcher) {
+      return new MinusculeMatcher(pattern);
+    }
+
     return new OptimizedMatcher(pattern, regexp);
   }
 
@@ -466,6 +472,120 @@ public class NameUtil {
       }
 
       return true;
+    }
+  }
+
+
+  public static class MinusculeMatcher implements Matcher {
+    private final String myPattern;
+
+    public MinusculeMatcher(String pattern) {
+      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.");
+    }
+
+    private boolean matches(int patternIndex, List<String> words, int wordIndex) {
+      if (patternIndex == myPattern.length()) {
+        return true;
+      }
+      if (wordIndex == words.size()) {
+        return false;
+      }
+
+      String w = words.get(wordIndex);
+
+      if ('*' == myPattern.charAt(patternIndex)) {
+        return handleAsterisk(patternIndex, words, wordIndex);
+      }
+
+      if (isWordSeparator(w.charAt(0))) {
+        assert w.length() == 1 : "'" + w + "'";
+        return matches(isWordSeparator(myPattern.charAt(patternIndex)) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
+      }
+
+      if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern.charAt(patternIndex))) {
+        return false;
+      }
+
+      int i = 1;
+      while (true) {
+        if (patternIndex + i == myPattern.length()) {
+          return true;
+        }
+        if (i == w.length()) {
+          break;
+        }
+        char p = myPattern.charAt(patternIndex + i);
+        char n = w.charAt(i);
+        if (n != p && (!Character.isLowerCase(p) || StringUtil.toLowerCase(n) != p)) {
+          break;
+        }
+        i++;
+      }
+      // there's more in the pattern, but no more words
+      if (wordIndex == words.size() - 1) {
+        if (patternIndex + i == myPattern.length() - 1 && ' ' == myPattern.charAt(patternIndex + i)) {
+          return i == w.length();
+        }
+
+        return false;
+      }
+      while (i > 0) {
+        if (matches(patternIndex + i, words, wordIndex + 1)) {
+          return true;
+        }
+        i--;
+      }
+      return false;
+    }
+
+    private boolean handleAsterisk(int patternIndex, List<String> words, int wordIndex) {
+      while ('*' == myPattern.charAt(patternIndex)) {
+        patternIndex++;
+        if (patternIndex == myPattern.length()) {
+          return true;
+        }
+      }
+
+      String nextChar = String.valueOf(myPattern.charAt(patternIndex));
+
+      for (int i = wordIndex; i < words.size(); i++) {
+        String s = words.get(i);
+        int fromIndex = 0;
+        while (true) {
+          int next = StringUtil.indexOfIgnoreCase(s, nextChar, fromIndex);
+          if (next < 0) {
+            break;
+          }
+          List<String> newWords = new ArrayList<String>();
+          newWords.add(s.substring(fromIndex));
+          newWords.addAll(words.subList(i + 1, words.size()));
+          if (matches(patternIndex, newWords, 0)) {
+            return true;
+          }
+          fromIndex = next + 1;
+        }
+      }
+      return false;
+    }
+
+    private static boolean isWordSeparator(char c) {
+      return Character.isWhitespace(c) || c == '_' || c == '-';
+    }
+
+    @Override
+    public boolean matches(String name) {
+      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:", true);
+      List<String> words = new ArrayList<String>();
+      while (tokenizer.hasMoreTokens()) {
+        String token = tokenizer.nextToken();
+        addAllWords(token, words);
+      }
+
+      if (words.isEmpty()) {
+        return myPattern.equals(name);
+      }
+
+      return matches(0, words, 0);
     }
   }
 }

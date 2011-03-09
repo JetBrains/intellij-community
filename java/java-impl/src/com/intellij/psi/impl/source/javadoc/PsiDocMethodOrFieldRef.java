@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
@@ -29,9 +29,9 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -85,8 +85,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   @Nullable
   private PsiReference getReferenceInScope(PsiElement scope, PsiElement element) {
     final String name = element.getText();
-
-
     final String[] signature = getSignature();
 
     if (signature == null) {
@@ -97,49 +95,44 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
 
-    final PsiMethod[] methods = getAllMethods(scope, this);
-
-    nextMethod:
-    for (PsiMethod method : methods) {
-      if (!method.getName().equals(name)) continue;
-
-      if (signature == null) {
-        return new MyReference(method);
-      }
-      else {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length != signature.length) continue;
-        for (int j = 0; j < parameters.length; j++) {
-          PsiParameter parameter = parameters[j];
-          PsiType type1 = TypeConversionUtil.erasure(parameter.getType());
-          String type2 = signature[j];
-          if (!Comparing.strEqual(type1.getPresentableText(), type2) && !Comparing.strEqual(type1.getCanonicalText(), type2)) {
-            String shortName = "";
-            PsiClass psiClass = PsiUtil.resolveClassInType(type1);
-            while (psiClass != null) {
-              shortName = psiClass.getName() + (shortName.length() > 0 ? "." + shortName : "");
-              psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
-            }
-            if (!Comparing.strEqual(shortName, type2)) {
-              continue nextMethod;
-            }
-          }
+    final MethodSignature methodSignature;
+    if (signature != null) {
+      final List<PsiType> types = Lists.newArrayListWithCapacity(signature.length);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+      for (String s : signature) {
+        try {
+          types.add(elementFactory.createTypeFromText(s, scope));
         }
-
-        return new MyReference(method) {
-          @NotNull
-          public PsiElement[] getVariants() {
-            final List<PsiMethod> lst = new ArrayList<PsiMethod>();
-            for (PsiMethod method : methods) {
-              if (name.equals(method.getName())) {
-                lst.add(method);
-              }
-            }
-            return lst.toArray(new PsiMethod[lst.size()]);
-          }
-        };
+        catch (IncorrectOperationException e) {
+          types.add(PsiType.NULL);
+        }
       }
+      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(new PsiType[types.size()]),
+                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
     }
+    else {
+      methodSignature = MethodSignatureUtil.createMethodSignature(name, PsiType.EMPTY_ARRAY,
+                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+    }
+
+    final PsiMethod[] methods = getAllMethods(scope, this);
+    for (PsiMethod method : methods) {
+      if (!method.getName().equals(name) ||
+          !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
+      return new MyReference(method) {
+        @NotNull
+        public PsiElement[] getVariants() {
+          final List<PsiMethod> lst = new ArrayList<PsiMethod>();
+          for (PsiMethod method : methods) {
+            if (name.equals(method.getName())) {
+              lst.add(method);
+            }
+          }
+          return lst.toArray(new PsiMethod[lst.size()]);
+        }
+      };
+    }
+
     return null;
   }
 
@@ -157,34 +150,30 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   public int getTextOffset() {
     final PsiElement element = getNameElement();
-
-    if (element != null) {
-      return element.getTextRange().getStartOffset();
-    }
-
-    return getTextRange().getEndOffset();
+    return element != null ? element.getTextRange().getStartOffset() : getTextRange().getEndOffset();
   }
 
+  @Nullable
   public PsiElement getNameElement() {
     final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
-    if (sharp == null) return null;
-    return SourceTreeToPsiMap.treeElementToPsi(sharp).getNextSibling();
+    return sharp != null ? SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling() : null;
   }
 
-
+  @Nullable
   public String[] getSignature() {
-    PsiElement element = getNameElement().getNextSibling();
+    PsiElement element = getNameElement();
+    if (element == null) return null;
 
+    element = element.getNextSibling();
     while (element != null && !(element instanceof PsiDocTagValue)) {
       element = element.getNextSibling();
     }
-
     if (element == null) return null;
 
     List<String> types = new ArrayList<String>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
-        final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm mathod(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
+        final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
         if (typeStrings != null) {
           for (String type : typeStrings) {
             if (type.length() > 0) {
@@ -224,14 +213,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public class MyReference implements PsiJavaReference {
-    private final PsiElement myReferencee;
+    private final PsiElement myReferredElement;
 
-    public MyReference(PsiElement referencee) {
-      myReferencee = referencee;
+    public MyReference(PsiElement referredElement) {
+      myReferredElement = referredElement;
     }
 
     public PsiElement resolve() {
-      return myReferencee;
+      return myReferredElement;
     }
 
     public void processVariants(PsiScopeProcessor processor) {
@@ -244,12 +233,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     @NotNull
     public JavaResolveResult advancedResolve(boolean incompleteCode) {
-      return myReferencee == null ? JavaResolveResult.EMPTY : new CandidateInfo(myReferencee, PsiSubstitutor.EMPTY);
+      return myReferredElement == null ? JavaResolveResult.EMPTY
+                                  : new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY);
     }
 
     @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-      return myReferencee == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{new CandidateInfo(myReferencee, PsiSubstitutor.EMPTY)};
+      return myReferredElement == null ? JavaResolveResult.EMPTY_ARRAY
+                                  : new JavaResolveResult[]{new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY)};
     }
 
     @NotNull
@@ -269,21 +260,26 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     @NotNull
     public String getCanonicalText() {
-      return getNameElement().getText();
+      final PsiElement nameElement = getNameElement();
+      assert nameElement != null;
+      return nameElement.getText();
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      final PsiElement element = getNameElement();
-      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+      final PsiElement nameElement = getNameElement();
+      assert nameElement != null;
+      final ASTNode treeElement = SourceTreeToPsiMap.psiToTreeNotNull(nameElement);
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
-      LeafElement newToken = Factory.createSingleLeafElement(DOC_TAG_VALUE_TOKEN, newElementName, charTableByTree, getManager());
-      ((CompositeElement)treeElement.getTreeParent()).replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(element), newToken);
-      return SourceTreeToPsiMap.treeElementToPsi(newToken);
+      final LeafElement newToken = Factory.createSingleLeafElement(DOC_TAG_VALUE_TOKEN, newElementName, charTableByTree, getManager());
+      ((CompositeElement)treeElement.getTreeParent()).replaceChildInternal(SourceTreeToPsiMap.psiToTreeNotNull(nameElement), newToken);
+      return SourceTreeToPsiMap.treeToPsiNotNull(newToken);
     }
 
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       if (isReferenceTo(element)) return PsiDocMethodOrFieldRef.this;
-      final String name = getNameElement().getText();
+      final PsiElement nameElement = getNameElement();
+      assert nameElement != null;
+      final String name = nameElement.getText();
       final String newName;
 
       final PsiMethod method;
@@ -305,15 +301,16 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         throw new IncorrectOperationException();
       }
 
-
-      if (getFirstChild().getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
-        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) getFirstChild().getFirstChild();
+      final PsiElement child = getFirstChild();
+      if (containingClass != null && child != null && child.getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) child.getFirstChild();
+        assert referenceElement != null;
         referenceElement.bindToElement(containingClass);
       }
       else {
-        if (!PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
-          final PsiReferenceExpression ref =
-            JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createReferenceExpression(containingClass);
+        if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
+          final PsiReferenceExpression ref = elementFactory.createReferenceExpression(containingClass);
           addAfter(ref, null);
         }
       }
@@ -352,10 +349,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     public PsiElement bindToText(PsiClass containingClass, StringBuffer newText) {
-      PsiComment comment =
-        JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createCommentFromText(newText.toString(), null);
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
+      PsiComment comment = elementFactory.createCommentFromText(newText.toString(), null);
       PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
       PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);
+      assert ref != null : newText;
       return replace(ref);
     }
 
@@ -366,20 +364,20 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     public TextRange getRangeInElement() {
       final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
       if (sharp == null) return new TextRange(0, getTextLength());
-      final PsiElement nextSibling = SourceTreeToPsiMap.treeElementToPsi(sharp).getNextSibling();
-      if(nextSibling != null){
+      final PsiElement nextSibling = SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling();
+      if (nextSibling != null) {
         final int startOffset = nextSibling.getTextRange().getStartOffset() - getTextRange().getStartOffset();
         int endOffset = nextSibling.getTextRange().getEndOffset() - getTextRange().getStartOffset();
         final PsiElement nextParSibling = nextSibling.getNextSibling();
-        if(nextParSibling != null && "(".equals(nextParSibling.getText())){
-          endOffset ++;
+        if (nextParSibling != null && "(".equals(nextParSibling.getText())) {
+          endOffset++;
           PsiElement nextElement = nextParSibling.getNextSibling();
-          if(nextElement != null && SourceTreeToPsiMap.psiElementToTree(nextElement).getElementType() == DOC_TAG_VALUE_TOKEN){
+          if (nextElement != null && SourceTreeToPsiMap.psiToTreeNotNull(nextElement).getElementType() == DOC_TAG_VALUE_TOKEN) {
             endOffset += nextElement.getTextLength();
             nextElement = nextElement.getNextSibling();
           }
-          if(nextElement != null && ")".equals(nextElement.getText())){
-            endOffset ++;
+          if (nextElement != null && ")".equals(nextElement.getText())) {
+            endOffset++;
           }
         }
         return new TextRange(startOffset, endOffset);

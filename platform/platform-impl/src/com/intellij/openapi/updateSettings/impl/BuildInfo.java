@@ -20,22 +20,41 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
   private final String myVersion;
   private final String myMessage;
+  private final Date myReleaseDate;
   private final List<PatchInfo> myPatches;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.BuildInfo");
 
   public BuildInfo(Element node) {
     myNumber = BuildNumber.fromString(node.getAttributeValue("number"));
     myVersion = node.getAttributeValue("version");
+
+    Date releaseDate = null;
+    String date = node.getAttributeValue("date");
+    if (date != null) {
+      try {
+        releaseDate = new SimpleDateFormat("dd.MM.yyyy").parse(date);
+      }
+      catch (ParseException e) {
+        LOG.info("Failed to parse build release date " + date);
+      }
+    }
+    myReleaseDate = releaseDate;
 
     myPatches = new ArrayList<PatchInfo>();
     for (Object patchNode : node.getChildren("patch")) {
@@ -62,6 +81,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
     return myMessage;
   }
 
+  public Date getReleaseDate() {
+    return myReleaseDate;
+  }
+
   @Nullable
   public PatchInfo findPatchForCurrentBuild() {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
@@ -69,5 +92,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
       if (each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) return each;
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "BuildInfo(number=" + myNumber + ")";
   }
 }

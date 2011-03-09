@@ -44,17 +44,16 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
@@ -435,14 +434,6 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static PsiType getQualifiedMemberReferenceType(@Nullable PsiType qualifierType, @NotNull final PsiMember member) {
-    final ClassCandidateInfo info = TypeConversionUtil.splitType(qualifierType, member);
-    if (info == null) {
-      return null;
-    }
-
-    final PsiClass element = info.getElement();
-    assert element != null;
-
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
     class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
       public boolean execute(PsiElement element, ResolveState state) {
@@ -468,7 +459,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    element.processDeclarations(new MyProcessor(), ResolveState.initial().put(PsiSubstitutor.KEY, info.getSubstitutor()), null, member);
+    PsiScopesUtil.processTypeDeclarations(qualifierType, member, new MyProcessor());
 
     PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() : ((PsiMethod) member).getReturnType();
     return subst.get().substitute(rawType);
@@ -851,8 +842,9 @@ public class JavaCompletionUtil {
     final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
     final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
-    final boolean addCompletionChar = context.shouldAddCompletionChar();
-    context.setAddCompletionChar(false);
+    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';') {
+      context.setAddCompletionChar(false);
+    }
 
     final boolean needRightParenth = forceClosingParenthesis || !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET || hasTail);
     if (hasTail) {
@@ -872,7 +864,7 @@ public class JavaCompletionUtil {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (smart || needRightParenth && addCompletionChar) {
+    if (smart || needRightParenth) {
       TailType toInsert = tailType;
       LookupItem lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
       if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
@@ -886,7 +878,7 @@ public class JavaCompletionUtil {
       }
       toInsert.processTail(editor, context.getTailOffset());
 
-      if (context.getCompletionChar() == '.') {
+      if (completionChar == '.') {
         AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
       }
     }

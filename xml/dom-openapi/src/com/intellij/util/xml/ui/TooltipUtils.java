@@ -35,7 +35,7 @@ public class TooltipUtils {
   }
   
   public static String getTooltipText(List<DomElementProblemDescriptor> annotations, String[] messages) {
-    return getTooltipText(ArrayUtil.mergeArrays(getMessages(annotations), messages, ArrayUtil.STRING_ARRAY_FACTORY));
+    return getTooltipText(ArrayUtil.mergeArrays(getMessages(annotations), messages));
   }
 
   private static String[] getMessages(final List<DomElementProblemDescriptor> problems) {

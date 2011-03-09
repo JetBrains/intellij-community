@@ -34,7 +34,8 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
                                  int layer,
                                  @NotNull HighlighterTargetArea target,
                                  TextAttributes textAttributes) {
-    super(model, model.getDocument().getLineStartOffset(model.getDocument().getLineNumber(offset)), model.getDocument().getLineEndOffset(model.getDocument().getLineNumber(offset)),layer, target, textAttributes);
+    super(model, model.getDocument().getLineStartOffset(model.getDocument().getLineNumber(offset)), model.getDocument().getLineEndOffset(model.getDocument().getLineNumber(offset)),layer, target, textAttributes,
+          false, false);
     setLine(model.getDocument().getLineNumber(offset));
   }
 

@@ -26,10 +26,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
@@ -55,8 +53,7 @@ public class TypedHandler implements TypedActionHandler {
         return;
       }
 
-      final LookupElement currentItem = lookup.getCurrentItem();
-      final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
+      final CharFilter.Result result = getLookupAction(charTyped, lookup);
       lookup.performGuardedChange(new Runnable() {
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);
@@ -85,6 +82,7 @@ public class TypedHandler implements TypedActionHandler {
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
         LookupElement item = lookup.getCurrentItem();
         if (item != null){
+          inside = false;
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
           lookup.finishLookup(charTyped);
           return;
@@ -99,7 +97,8 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {
+  static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+    final LookupElement currentItem = lookup.getCurrentItem();
     if (currentItem != null && charTyped != ' ') {
       String postfix = lookup.getAdditionalPrefix() + charTyped;
       final PrefixMatcher matcher = currentItem.getPrefixMatcher();

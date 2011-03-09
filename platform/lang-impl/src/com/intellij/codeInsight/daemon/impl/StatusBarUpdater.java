@@ -63,6 +63,10 @@ public class StatusBarUpdater implements Disposable {
       public void daemonFinished() {
         updateLater();
       }
+
+      @Override
+      public void daemonCancelEventOccurred() {
+      }
     });
   }
 

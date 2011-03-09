@@ -100,14 +100,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   private static boolean isDocumentModified(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return false;
-    final FileDocumentManager fdm = FileDocumentManager.getInstance();
-    final Document editorDocument = fdm.getCachedDocument(virtualFile);
-
-    if (editorDocument != null && editorDocument.getModificationStamp() != virtualFile.getModificationStamp()) {
-      return fdm.isDocumentUnsaved(editorDocument);
-    }
-
-    return false;
+    return FileDocumentManager.getInstance().isFileModified(virtualFile);
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
@@ -115,10 +108,10 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
       LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
     }
     FileStatus cachedStatus = myFileStatusManager.getCachedStatus(file);
-    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || file.getModificationStamp() == doc.getModificationStamp()) {
+    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(file)) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs == null) return;
-      if (cachedStatus == FileStatus.MODIFIED && file.getModificationStamp() == doc.getModificationStamp()) {
+      if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(file)) {
         if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
           RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
           if (rollbackEnvironment != null) {
@@ -157,8 +150,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
       return null;
     }
 
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null && document.getModificationStamp() != file.getModificationStamp()) {
+    if (isDocumentModified(file)) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
           return LoadTextUtil.loadText(file).toString();

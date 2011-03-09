@@ -123,7 +123,7 @@ class Foo {
     myFixture.checkResult """import static Foo.abcmethod1
 
 def foo() {
-  abcmethod1<caret>
+  abcmethod1(<caret>)
 }"""
 
   }
@@ -140,7 +140,7 @@ class Foo {
     myFixture.checkResult """import foo.Foo
 
 def foo() {
-  Foo.abcmethod<caret>
+  Foo.abcmethod(<caret>)
 }"""
 
   }

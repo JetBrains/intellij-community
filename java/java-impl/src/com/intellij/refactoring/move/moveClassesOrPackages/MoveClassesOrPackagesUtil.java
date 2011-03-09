@@ -207,6 +207,18 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
+  public static void prepareMoveClass(PsiClass aClass) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.prepareMove(aClass);
+    }
+  }
+
+  public static void finishMoveClass(PsiClass aClass) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.finishMoveClass(aClass);
+    }
+  }
+
   // Does not process non-code usages!
   public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiClass newClass;

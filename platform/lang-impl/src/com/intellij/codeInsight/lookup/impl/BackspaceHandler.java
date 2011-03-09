@@ -37,10 +37,15 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
+    truncatePrefix(dataContext, lookup, myOriginalHandler, lookup.getLookupStart());
+  }
+
+  static void truncatePrefix(final DataContext dataContext, LookupImpl lookup, final EditorActionHandler handler, final int hideOffset) {
+    final Editor editor = lookup.getEditor();
     lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
-        myOriginalHandler.execute(editor, dataContext);
+        handler.execute(editor, dataContext);
       }
     });
 
@@ -49,7 +54,7 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
-    if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
+    if (hideOffset < editor.getCaretModel().getOffset()) {
       if (process != null) {
         process.scheduleRestart();
         return;

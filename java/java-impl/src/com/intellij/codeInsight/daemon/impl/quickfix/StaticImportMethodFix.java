@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -62,8 +63,10 @@ public class StaticImportMethodFix implements IntentionAction {
   @NotNull
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
-    if (candidates.size() == 1) {
-      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME, 0)+"'";
+    if (candidates != null && candidates.size() == 1) {
+      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                                                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                                         PsiFormatUtilBase.SHOW_FQ_NAME, 0)+"'";
     }
     else {
       text += "...";
@@ -243,7 +246,7 @@ public class StaticImportMethodFix implements IntentionAction {
       final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
       @Override
       protected ListCellRenderer getListElementRenderer() {
-        return new MethodCellRenderer(true, PsiFormatUtil.SHOW_NAME){
+        return new MethodCellRenderer(true, PsiFormatUtilBase.SHOW_NAME){
           @Override
           protected DefaultListCellRenderer getRightCellRenderer() {
             final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer();

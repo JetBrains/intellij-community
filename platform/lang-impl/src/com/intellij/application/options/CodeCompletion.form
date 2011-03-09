@@ -133,7 +133,7 @@
                 <properties>
                   <iconTextGap value="4"/>
                   <inheritsPopupMenu value="true"/>
-                  <text value="Select the first suggestion by Enter:"/>
+                  <text value="Preselect the first suggestion:"/>
                 </properties>
               </component>
             </children>

@@ -19,37 +19,22 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionPhase;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.Nullable;
-
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author peter
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
-  private static final Key<AutoPopupState> STATE_KEY = Key.create("AutopopupSTATE_KEY");
   public static volatile boolean ourTestingAutopopup = false;
 
   @Override
@@ -58,15 +43,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
                                 Editor editor,
                                 PsiFile file,
                                 FileType fileType) {
-    final AutoPopupState state = getAutoPopupState(editor);
-    if (state != null && LookupManager.getActiveLookup(editor) == null) {
-      state.changeGuard = true;
-      try {
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(c), true);
-      }
-      finally {
-        state.changeGuard = false;
-      }
+    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+    if (phase instanceof CompletionPhase.EmptyAutoPopup) {
+      ((CompletionPhase.EmptyAutoPopup)phase).handleTyping(c);
       return Result.STOP;
     }
 
@@ -77,26 +56,27 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP) return Result.CONTINUE;
 
-    if (!Character.isLetter(charTyped) && charTyped != '_') {
-      finishAutopopupCompletion(editor, false);
+    if (LookupManager.getActiveLookup(editor) != null) {
       return Result.CONTINUE;
     }
 
-    if (getAutoPopupState(editor) != null || LookupManager.getActiveLookup(editor) != null) {
+    CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
+    if (oldPhase instanceof CompletionPhase.EmptyAutoPopup && ((CompletionPhase.EmptyAutoPopup)oldPhase).editor != editor) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    }
+
+    if (!Character.isLetter(charTyped) && charTyped != '_') {
+      if (CompletionServiceImpl.isPhase(CompletionPhase.EmptyAutoPopup.class)) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      }
       return Result.CONTINUE;
     }
 
     if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.NoCompletion.getClass())) {
-      return Result.CONTINUE;
-    }
-
-
-    if (!CompletionProgressIndicator.showHintAutopopup()) {
-      final CharSequence text = editor.getDocument().getCharsSequence();
-      final int offset = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : editor.getCaretModel().getOffset();
-      if (text.length() > offset && Character.isUnicodeIdentifierPart(text.charAt(offset))) {
-        return Result.CONTINUE;
+      if ("peter".equals(System.getProperty("user.name")) && ApplicationManagerEx.getApplicationEx().isInternal()) {
+        System.out.println(CompletionServiceImpl.getCompletionPhase() + " at " + System.currentTimeMillis());
       }
+      return Result.CONTINUE;
     }
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
@@ -123,132 +103,6 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void invokeAutoPopupCompletion(Project project, final Editor editor) {
     new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invokeCompletion(project, editor, 0, false);
-
-    final AutoPopupState state = new AutoPopupState(project, editor);
-    editor.putUserData(STATE_KEY, state);
-
-    final Lookup lookup = LookupManager.getActiveLookup(editor);
-    if (lookup != null) {
-      lookup.addLookupListener(new LookupAdapter() {
-        @Override
-        public void itemSelected(LookupEvent event) {
-          final AutoPopupState state = getAutoPopupState(editor);
-          if (state != null) {
-            state.stopAutoPopup();
-          }
-        }
-
-        @Override
-        public void lookupCanceled(LookupEvent event) {
-          final AutoPopupState state = getAutoPopupState(editor);
-          if (event.isCanceledExplicitly() && state != null) {
-            state.stopAutoPopup();
-          }
-        }
-      });
-    }
   }
 
-  @Nullable
-  private static AutoPopupState getAutoPopupState(Editor editor) {
-    return editor.getUserData(STATE_KEY);
-  }
-
-  private static void finishAutopopupCompletion(Editor editor, boolean neglectLookup) {
-    final AutoPopupState state = getAutoPopupState(editor);
-    if (state == null || state.changeGuard) {
-      return;
-    }
-
-    if (!neglectLookup && LookupManager.getActiveLookup(editor) != null) { //the events during visible lookup period are handled separately
-      return;
-    }
-
-    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    if (CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.EmptyAutoPopup.class, CompletionPhase.PossiblyDisturbingAutoPopup.class)) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      assert currentCompletion == null;
-    } else {
-      if (currentCompletion != null) {
-        currentCompletion.closeAndFinish(true);
-      }
-      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
-    }
-
-    state.stopAutoPopup();
-  }
-
-
-  private static class AutoPopupState {
-    final Editor editor;
-    final Project project;
-    final MessageBusConnection connection;
-    final EditorMouseAdapter mouseListener;
-    final CaretListener caretListener;
-    final DocumentAdapter documentListener;
-    final PropertyChangeListener lookupListener;
-    boolean changeGuard = false;
-
-    private AutoPopupState(final Project project, final Editor editor) {
-      this.editor = editor;
-      this.project = project;
-      connection = project.getMessageBus().connect();
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-        @Override
-        public void selectionChanged(FileEditorManagerEvent event) {
-          finishAutopopupCompletion(editor, false);
-        }
-      });
-
-      mouseListener = new EditorMouseAdapter() {
-        @Override
-        public void mouseClicked(EditorMouseEvent e) {
-          finishAutopopupCompletion(editor, false);
-        }
-      };
-
-      caretListener = new CaretListener() {
-        @Override
-        public void caretPositionChanged(CaretEvent e) {
-          finishAutopopupCompletion(editor, false);
-        }
-      };
-      editor.getSelectionModel().addSelectionListener(new SelectionListener() {
-        @Override
-        public void selectionChanged(SelectionEvent e) {
-          finishAutopopupCompletion(editor, false);
-        }
-      });
-      documentListener = new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          finishAutopopupCompletion(editor, false);
-        }
-      };
-      lookupListener = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getNewValue() != null) {
-            finishAutopopupCompletion(editor, true);
-          }
-        }
-      };
-
-      editor.addEditorMouseListener(mouseListener);
-      editor.getCaretModel().addCaretListener(caretListener);
-      editor.getDocument().addDocumentListener(documentListener);
-      LookupManager.getInstance(project).addPropertyChangeListener(lookupListener);
-    }
-
-    void stopAutoPopup() {
-      connection.disconnect();
-      editor.removeEditorMouseListener(mouseListener);
-      editor.getCaretModel().removeCaretListener(caretListener);
-      editor.getDocument().removeDocumentListener(documentListener);
-      LookupManager.getInstance(project).removePropertyChangeListener(lookupListener);
-
-      editor.putUserData(STATE_KEY, null);
-    }
-
-  }
 }

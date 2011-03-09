@@ -121,8 +121,7 @@ public class RncCompletionData extends CompletionData {
         }
         if (TOP_LEVEL.accepts(context)) {
           if (!afterPattern(context)) {
-            return ArrayUtil.mergeArrays(DECL_KEYWORDS,
-                    ArrayUtil.mergeArrays(GRAMMAR_CONTENT_KEYWORDS, PATTERN_KEYWORDS, ArrayUtil.STRING_ARRAY_FACTORY), ArrayUtil.STRING_ARRAY_FACTORY);
+            return ArrayUtil.mergeArrays(DECL_KEYWORDS, ArrayUtil.mergeArrays(GRAMMAR_CONTENT_KEYWORDS, PATTERN_KEYWORDS));
           }
         }
         return GRAMMAR_CONTENT_KEYWORDS;

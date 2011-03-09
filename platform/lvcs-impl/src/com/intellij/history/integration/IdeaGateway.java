@@ -169,8 +169,7 @@ public class IdeaGateway {
       Pair<StoredContent, Long> contentAndStamps;
       if (forDeletion) {
         FileDocumentManager m = FileDocumentManager.getInstance();
-        Document d = m.getCachedDocument(file); // should not try to load document
-        if (d != null && !m.isDocumentUnsaved(d)) d = null;
+        Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
         contentAndStamps = acquireAndClearCurrentContent(file, d);
       }
       else {

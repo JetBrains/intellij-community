@@ -53,19 +53,22 @@ public class CommonCodeStyleSettings {
 
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
-    copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
+    PARENT_SETTINGS_INSTALLED =
+      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
     copyFields(fields, from, to, null);
   }
 
-  private static void copyFields(Field[] fields, Object from, Object to, DifferenceFilter diffFilter) {
+  private static boolean copyFields(Field[] fields, Object from, Object to, DifferenceFilter diffFilter) {
+    boolean valuesChanged = false;
     for (Field field : fields) {
       if (isPublic(field) && !isFinal(field)) {
         try {
           if (diffFilter == null || diffFilter.isAccept(field)) {
             copyFieldValue(from, to, field);
+            valuesChanged = true;
           }
         }
         catch (Exception e) {
@@ -73,6 +76,7 @@ public class CommonCodeStyleSettings {
         }
       }
     }
+    return valuesChanged;
   }
 
   private static void copyFieldValue(final Object from, Object to, final Field field)
@@ -704,5 +708,10 @@ public class CommonCodeStyleSettings {
   //-------------------------Enums----------------------------------------------------------
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
   
+  //
+  // The flag telling that original default settings were overwritten with non-default
+  // values from shared code style settings (happens upon the very first initialization).
+  //
+  public boolean PARENT_SETTINGS_INSTALLED  = false;
 
 }

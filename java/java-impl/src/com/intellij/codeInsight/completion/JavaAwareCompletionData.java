@@ -87,13 +87,15 @@ public class JavaAwareCompletionData extends CompletionData{
     ret.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
+        if (context.shouldAddCompletionChar()) {
+          return;
+        }
         TailType type = analyzeItem(item.getObject(), context.getFile().findElementAt(context.getStartOffset()));
         if (type == TailType.NONE) {
           type = tailType;
         }
         //new DefaultInsertHandler().handleInsert(context, item);
         if (type != TailType.NONE) {
-          context.setAddCompletionChar(false);
           type.processTail(context.getEditor(), context.getTailOffset());
         }
       }

@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -33,24 +37,30 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed(true, null);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    actionPerformed(project, true, null);
   }
 
-  public static void actionPerformed(final boolean enableLink, final @Nullable UpdateSettingsConfigurable settingsConfigurable) {
-    try {
-      final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
-      if (newVersion != null) {
-        UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-        UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);
+  public static void actionPerformed(Project project, final boolean enableLink, final @Nullable UpdateSettingsConfigurable  settingsConfigurable) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Checking for updates", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final CheckForUpdateResult result = UpdateChecker.checkForUpdates();
+
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, settingsConfigurable);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
+              UpdateChecker.showConnectionErrorDialog();
+              return;
+            }
+
+            UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+            UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
+          }
+        });
       }
-      else {
-        UpdateChecker.showNoUpdatesDialog(enableLink, updatedPlugins, true);
-      }
-    }
-    catch (ConnectionException e) {
-      Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
-                               IdeBundle.message("title.connection.error"));
-    }
+    });
   }
 }

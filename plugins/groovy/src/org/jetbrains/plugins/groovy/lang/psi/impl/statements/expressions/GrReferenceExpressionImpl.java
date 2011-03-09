@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -67,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -436,8 +436,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
                 "getClass".equals(method.getName())) {
-          if (seemsToBeQualifiedClassName(getQualifierExpression())) {
-            result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(getQualifier().getText(), this));
+          final GrExpression qualifier = getQualifier();
+          if (PsiUtil.seemsToBeQualifiedClassName(qualifier)) {
+            result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(qualifier.getText(), this));
           }
           else {
             result = getTypeForObjectGetClass(facade, method);
@@ -463,7 +464,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else if (resolved == null) {
       GrExpression qualifier = getQualifierExpression();
       if ("class".equals(getReferenceName())) {
-        if (seemsToBeQualifiedClassName(qualifier)) {
+        if (PsiUtil.seemsToBeQualifiedClassName(qualifier)) {
           assert qualifier != null;
           result = createJavaLangClassType(facade, facade.getElementFactory().createTypeFromText(qualifier.getText(), this));
         } else {
@@ -499,15 +500,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     } else {
       return ResolveUtil.getListTypeForSpreadOperator(this, result);
     }
-  }
-
-  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
-    if (qualifier == null) return false;
-    while (qualifier instanceof GrReferenceExpression) {
-      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
-      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
-    }
-    return qualifier == null;
   }
 
   @Nullable
@@ -816,7 +808,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
+    PsiElement target = GroovyTargetElementEvaluator.correctSearchTargets(resolve());
+    if (getManager().areElementsEquivalent(element, target)) {
+      return true;
+    }
+
+    if (element instanceof PsiMethod && target instanceof PsiMethod) {
+      PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
+      if (Arrays.asList(superMethods).contains((PsiMethod)element)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @NotNull

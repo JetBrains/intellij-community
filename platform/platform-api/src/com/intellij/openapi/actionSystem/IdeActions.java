@@ -71,6 +71,9 @@ public interface IdeActions {
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_REPLACE = "EditorChooseLookupItemReplace";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT = "EditorChooseLookupItemCompleteStatement";
 
+  @NonNls String ACTION_LOOKUP_UP = "EditorLookupUp";
+  @NonNls String ACTION_LOOKUP_DOWN = "EditorLookupDown";
+
   @NonNls String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 
   @NonNls String GROUP_MAIN_MENU = "MainMenu";

@@ -512,9 +512,9 @@ public class GrClosureSignatureUtil {
     return generateAllMethodSignaturesByClosureSignature(name, signature, typeParameters, substitutor);
   }
 
-  public static MultiMap<MethodSignature, PsiMethod> findMethodSignatures(PsiMethod[] methods) {
-    List<Pair<MethodSignature, PsiMethod>> signatures = new ArrayList<Pair<MethodSignature, PsiMethod>>();
-    for (PsiMethod method : methods) {
+  public static <Method extends PsiMethod> MultiMap<MethodSignature, Method> findMethodSignatures(Method[] methods) {
+    List<Pair<MethodSignature, Method>> signatures = new ArrayList<Pair<MethodSignature, Method>>();
+    for (Method method : methods) {
       List<MethodSignature> current;
       if (method instanceof GrMethod) {
         current = generateAllSignaturesForMethod((GrMethod)method, PsiSubstitutor.EMPTY);
@@ -523,12 +523,12 @@ public class GrClosureSignatureUtil {
         current = Collections.singletonList(method.getSignature(PsiSubstitutor.EMPTY));
       }
       for (MethodSignature signature : current) {
-        signatures.add(new Pair<MethodSignature, PsiMethod>(signature, method));
+        signatures.add(new Pair<MethodSignature, Method>(signature, method));
       }
     }
 
-    MultiMap<MethodSignature, PsiMethod> map = new MultiMap<MethodSignature, PsiMethod>();
-    for (Pair<MethodSignature, PsiMethod> pair : signatures) {
+    MultiMap<MethodSignature, Method> map = new MultiMap<MethodSignature, Method>();
+    for (Pair<MethodSignature, Method> pair : signatures) {
       map.putValue(pair.first, pair.second);
     }
     return map;

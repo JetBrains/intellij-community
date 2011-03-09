@@ -19,11 +19,21 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.google.common.collect.ImmutableList;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
+import java.util.List;
+
 public class ChannelStatus implements Comparable<ChannelStatus> {
+  @NonNls public static final String RELEASE_CODE = "release";
+
   public static final ChannelStatus EAP = new ChannelStatus(0, "eap", "Early Access Program");
   public static final ChannelStatus MILESTONE = new ChannelStatus(1, "milestone", "Milestone Releases");
   public static final ChannelStatus BETA = new ChannelStatus(2, "beta", "Beta Releases or Public Previews");
-  public static final ChannelStatus RELEASE = new ChannelStatus(3, "release", "New Major Version Releases");
+  public static final ChannelStatus RELEASE = new ChannelStatus(3, RELEASE_CODE, "New Major Version Releases");
+
+  private static final List<ChannelStatus> ALL_TYPES = ImmutableList.of(RELEASE, BETA, MILESTONE, EAP);
 
   private final int myOrder;
   private final String myCode;
@@ -36,12 +46,11 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
   }
 
   public static ChannelStatus fromCode(String code) {
-    if ("eap".equals(code)) return EAP;
-    if ("milestone".equals(code)) return MILESTONE;
-    if ("beta".equals(code)) return BETA;
-    if ("release".equals(code)) return RELEASE;
+    if ("eap".equalsIgnoreCase(code)) return EAP;
+    if ("milestone".equalsIgnoreCase(code)) return MILESTONE;
+    if ("beta".equalsIgnoreCase(code)) return BETA;
 
-    return EAP;
+    return RELEASE;
   }
 
   public int compareTo(ChannelStatus o) {
@@ -53,6 +62,15 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
   }
 
   public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public static List<ChannelStatus> all() {
+    return ALL_TYPES;
+  }
+
+  @Override
+  public String toString() {
     return myDisplayName;
   }
 }

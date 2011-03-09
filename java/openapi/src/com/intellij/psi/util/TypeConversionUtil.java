@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
@@ -1535,25 +1534,4 @@ public class TypeConversionUtil {
     return WRAPPER_TO_PRIMITIVE.get(o.getClass());
   }
 
-  @Nullable
-  public static ClassCandidateInfo splitType(@Nullable PsiType type, @NotNull PsiElement place) {
-    if (type instanceof PsiArrayType) {
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(place);
-      final PsiClass arrayClass = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().getArrayClass(languageLevel);
-      final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
-      if (arrayTypeParameters.length > 0) {
-        return new ClassCandidateInfo(arrayClass, PsiSubstitutor.EMPTY.put(arrayTypeParameters[0], ((PsiArrayType)type).getComponentType()));
-      }
-
-      return new ClassCandidateInfo(arrayClass, PsiSubstitutor.EMPTY);
-    }
-
-    final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
-    final PsiClass clazz = (PsiClass)result.getElement();
-    if (clazz == null) {
-      return null;
-    }
-
-    return new ClassCandidateInfo(clazz, result.getSubstitutor());
-  }
 }

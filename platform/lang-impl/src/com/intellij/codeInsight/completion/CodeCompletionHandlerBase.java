@@ -18,12 +18,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -219,7 +220,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   @NotNull
   private LookupImpl obtainLookup(Editor editor) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (existing != null && existing.isCompletion() && !existing.isHintMode()) {
+    if (existing != null && existing.isCompletion()) {
       existing.markReused();
       if (!autopopup) {
         existing.setFocused(true);
@@ -348,7 +349,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final TextRange range = insertedElement.getTextRange();
     if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
-      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'");
+      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
     return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);
@@ -545,7 +546,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Editor editor = indicator.getEditor();
     final PsiFile file = indicator.getParameters().getOriginalFile();
-    final InsertionContext context = new InsertionContext(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor);
+    final InsertionContext context = new InsertionContext(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor,
+                                                          completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
+                                                          completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final int idEndOffset = indicator.getIdentifierEndOffset();
@@ -563,10 +566,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         final int tailOffset = context.getTailOffset();
         if (tailOffset >= 0) {
-          if (context.shouldAddCompletionChar() &&
-              completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-              completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-            TailType.insertChar(editor, tailOffset, completionChar);
+          if (context.shouldAddCompletionChar()) {
+            editor.getCaretModel().moveToOffset(tailOffset);
+            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, DataManager.getInstance()
+              .getDataContext(editor.getContentComponent()));
           }
         }
         else {

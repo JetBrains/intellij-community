@@ -31,8 +31,4 @@ public class WhitespaceParser extends TokenParser {
     myTokenInfo.updateData(start, position, CustomHighlighterTokenType.WHITESPACE);
     return true;
   }
-
-  public int getSmartUpdateShift() {
-    return 0;
-  }
 }

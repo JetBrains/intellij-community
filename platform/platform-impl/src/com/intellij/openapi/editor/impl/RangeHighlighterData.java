@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
@@ -30,7 +31,6 @@ import java.awt.*;
  */
 abstract class RangeHighlighterData {
   private final MarkupModel myModel;
-  private final int myLayer;
   private final HighlighterTargetArea myTargetArea;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
@@ -46,12 +46,10 @@ abstract class RangeHighlighterData {
   int myLine; // for PersistentRangeHighlighterImpl only
 
   RangeHighlighterData(@NotNull MarkupModel model,
-                       int layer,
                        @NotNull HighlighterTargetArea target,
                        TextAttributes textAttributes) {
     myTextAttributes = textAttributes;
     myTargetArea = target;
-    myLayer = layer;
     myModel = model;
     if (textAttributes != null) {
       myErrorStripeColor = textAttributes.getErrorStripeColor();
@@ -71,10 +69,6 @@ abstract class RangeHighlighterData {
     if (!Comparing.equal(old, textAttributes)) {
       fireChanged();
     }
-  }
-
-  public int getLayer() {
-    return myLayer;
   }
 
   public HighlighterTargetArea getTargetArea() {
@@ -127,6 +121,7 @@ abstract class RangeHighlighterData {
   }
 
   public void setErrorStripeTooltip(Object tooltipObject) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Object old = myErrorStripeTooltip;
     myErrorStripeTooltip = tooltipObject;
     if (!Comparing.equal(old, tooltipObject)) {
@@ -139,6 +134,7 @@ abstract class RangeHighlighterData {
   }
 
   public void setThinErrorStripeMark(boolean value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean old = myErrorStripeMarkIsThin;
     myErrorStripeMarkIsThin = value;
     if (old != value) {
@@ -223,16 +219,10 @@ abstract class RangeHighlighterData {
     return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
   }
 
-  public void registerMe(int start, int end) {
-    ((MarkupModelImpl)myModel).addRangeHighlighter(getRangeHighlighter(), start, end,this);
-  }
-
-  public void unregisterMe() {
-    myModel.removeHighlighter(getRangeHighlighter());
-  }
-
   // returns true if change was detected
   boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
+    assert !inBatchChange;
+    assert !changed;
     inBatchChange = true;
     boolean result;
     try {
@@ -244,5 +234,9 @@ abstract class RangeHighlighterData {
       changed = false;
     }
     return result;
+  }
+
+  public MarkupModel getMarkupModel() {
+    return myModel;
   }
 }

@@ -133,12 +133,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           texts.add(intentionAction.getText());
         }
         Collection<HighlightInfo> infos = quickFix.doHighlighting();
-        fail("Action with text '" + text + "' is not available in test " + testFullPath+"\nAvailable actions: "+texts+"\n"+actions+"\nErrors:"+infos);
+        fail("Action with text '" + text + "' is not available in test " + testFullPath+"\nAvailable actions ("+texts.size()+"): "+texts+"\n"+actions+"\nInfos:"+infos);
       }
     }
     else {
       if (!actionShouldBeAvailable) {
-        fail("Action '" + text + "' is available in test " + testFullPath);
+        fail("Action '" + text + "' is available (but must not) in test " + testFullPath);
       }
       quickFix.invoke(action);
       UIUtil.dispatchAllInvocationEvents();

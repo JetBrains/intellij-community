@@ -4,8 +4,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -99,7 +97,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassRef() throws Exception { doTest(false); }
   public void testPrivateInnerClassRef() throws Exception { doTest(false); }
 
-  public void testJavaUtilCollections() throws Exception {
+  public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
 
     assertNotNull(collectionsClass);

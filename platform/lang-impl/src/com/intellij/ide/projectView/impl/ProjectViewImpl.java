@@ -445,7 +445,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
     String[] subIds = newPane.getSubIds();
-    subIds = ArrayUtil.mergeArrays(new String[]{null}, subIds, ArrayUtil.STRING_ARRAY_FACTORY);
+    subIds = ArrayUtil.mergeArrays(new String[]{null}, subIds);
     for (String subId : subIds) {
       myCombo.insertItemAt(Pair.create(id, subId), index++);
     }

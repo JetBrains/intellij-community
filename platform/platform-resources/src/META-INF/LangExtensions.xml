@@ -493,6 +493,8 @@
   <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownHandler"/>
   <editorActionHandler action="EditorPageUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageUpHandler"/>
   <editorActionHandler action="EditorPageDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageDownHandler"/>
+  <editorActionHandler action="EditorLeft" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$LeftHandler"/>
+  <editorActionHandler action="EditorRight" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$RightHandler"/>
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.lookup.impl.HomeHandler"/>
   <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>

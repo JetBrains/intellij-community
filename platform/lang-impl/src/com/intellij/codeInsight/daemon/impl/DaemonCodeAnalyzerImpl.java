@@ -252,14 +252,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public void cleanupAfterTest(boolean forceDispose) {
+  public void cleanupAfterTest() {
     projectClosed();
-    if (forceDispose) {
-      Disposer.dispose(myStatusBarUpdater);
-      myStatusBarUpdater = null;
-      Disposer.dispose(myDaemonListeners);
-      myDaemonListeners = null;
-    }
+    Disposer.dispose(myStatusBarUpdater);
+    myStatusBarUpdater = null;
+    Disposer.dispose(myDaemonListeners);
+    myDaemonListeners = null;
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -297,9 +295,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void projectClosed() {
     assert myInitialized : "Disposing not initialized component";
     assert !myDisposed : "Double dispose";
-
-    // clear dangling references to PsiFiles/Documents. SCR#10358
-    myFileStatusMap.markAllFilesDirty();
 
     stopProcess(false);
 
@@ -370,7 +365,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateByTimerEnabled;
   }
 
-  public void setImportHintsEnabled(PsiFile file, boolean value) {
+  public void setImportHintsEnabled(@NotNull PsiFile file, boolean value) {
     VirtualFile vFile = file.getVirtualFile();
     if (value) {
       myDisabledHintsFiles.remove(vFile);
@@ -386,7 +381,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myDisabledHintsFiles.clear();
   }
 
-  public void setHighlightingEnabled(PsiFile file, boolean value) {
+  public void setHighlightingEnabled(@NotNull PsiFile file, boolean value) {
     if (value) {
       myDisabledHighlightingFiles.remove(file);
     }
@@ -408,7 +403,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return !fileType.isBinary();
   }
 
-  public boolean isImportHintsEnabled(PsiFile file) {
+  public boolean isImportHintsEnabled(@NotNull PsiFile file) {
     return isAutohintsAvailable(file) && !myDisabledHintsFiles.contains(file.getVirtualFile());
   }
 

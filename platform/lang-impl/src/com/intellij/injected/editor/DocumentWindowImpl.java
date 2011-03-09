@@ -526,10 +526,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
 
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end) {
-    myDelegate.addRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate(), start, end);
-  }
-
   public boolean isInBulkUpdate() {
     return false;
   }

@@ -145,11 +145,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     };
     GrImportStatement[] importStatements = getImportStatements();
-    for (int i = importStatements.length - 1; i >= 0; i--) {
-      if (!importStatements[i].processDeclarations(importProcessor, state, lastParent, place)) {
-        return false;
-      }
-    }
+    if (!processImports(state, lastParent, place, importProcessor, importStatements, false)) return false;
 
     if (processClasses && !processImplicitImports(processor, state, lastParent, place)) {
       return false;
@@ -173,10 +169,27 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
+    if (!processImports(state, lastParent, place, importProcessor, importStatements, true)) return false;
+
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
     }
 
+    return true;
+  }
+
+  private static boolean processImports(ResolveState state,
+                                        PsiElement lastParent,
+                                        PsiElement place,
+                                        PsiScopeProcessor importProcessor,
+                                        GrImportStatement[] importStatements, boolean shouldProcessOnDemand) {
+    for (int i = importStatements.length - 1; i >= 0; i--) {
+      final GrImportStatement imp = importStatements[i];
+      if (shouldProcessOnDemand != imp.isOnDemand()) continue;
+      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) {
+        return false;
+      }
+    }
     return true;
   }
 

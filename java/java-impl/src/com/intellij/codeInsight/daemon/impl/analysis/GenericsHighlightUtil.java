@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -115,11 +116,14 @@ public class GenericsHighlightUtil {
         if (!typeParameterListOwner.hasTypeParameters()) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], "Diamond operator is not applicable for non-parameterized types");
         }
-        inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
-        final String errorMessage = inferenceResult.getErrorMessage();
+        final PsiType expectedType = detectExpectedType(referenceParameterList);
+        if (!(expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
+          inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
+          final String errorMessage = inferenceResult.getErrorMessage();
           if (errorMessage != null) {
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], errorMessage);
+           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], errorMessage);
           }
+        }
       }
     }
 
@@ -173,6 +177,42 @@ public class GenericsHighlightUtil {
     }
 
     return null;
+  }
+
+  private static PsiType detectExpectedType(PsiReferenceParameterList referenceParameterList) {
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class);
+    LOG.assertTrue(newExpression != null);
+    final PsiElement parent = newExpression.getParent();
+    PsiType expectedType = null;
+    if (parent instanceof PsiVariable && newExpression.equals(((PsiVariable)parent).getInitializer())) {
+      expectedType = ((PsiVariable)parent).getType();
+    }
+    else if (parent instanceof PsiAssignmentExpression && newExpression.equals(((PsiAssignmentExpression)parent).getRExpression())) {
+      expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+      if (method != null) {
+        expectedType = method.getReturnType();
+      }
+    }
+    else if (parent instanceof PsiExpressionList) {
+      final PsiElement pParent = parent.getParent();
+      if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
+        final PsiMethod method = ((PsiCallExpression)pParent).resolveMethod();
+        if (method != null) {
+          final PsiExpression[] expressions = ((PsiCallExpression)pParent).getArgumentList().getExpressions();
+          final int idx = ArrayUtil.find(expressions, newExpression);
+          if (idx > -1) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (idx < parameterList.getParametersCount()) {
+              expectedType = parameterList.getParameters()[idx].getType();
+            }
+          }
+        }
+      }
+    }
+    return expectedType;
   }
 
   @Nullable
@@ -701,7 +741,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkForeachLoopParameterType(PsiForeachStatement statement) {
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression expression = statement.getIteratedValue();
-    if (expression == null) return null;
+    if (expression == null || expression.getType() == null) return null;
     final PsiType itemType = getCollectionItemType(expression);
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",

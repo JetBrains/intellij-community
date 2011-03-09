@@ -35,9 +35,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +97,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return offset;
   }
 
+  // NB: Can return invalid highlighters
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -123,16 +122,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = isPersistent
                                      ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
-                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
+                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false, false);
 
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
-      if (isPersistent) {
-        ((PersistentRangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
-      }
-      else {
-        ((RangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
-      }
+      ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
     }
     fireAfterAdded(highlighter);
     return highlighter;
@@ -141,17 +135,20 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean changed = highlighter instanceof PersistentRangeHighlighterImpl
-                      ? ((PersistentRangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction)
-                      : ((RangeHighlighterImpl)highlighter).changeAttributesInBatch(changeAttributesAction);
+    boolean changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
     if (changed) {
       fireAttributesChanged(highlighter);
     }
   }
 
-  void addRangeHighlighter(RangeHighlighterEx marker, int start, int end, RangeHighlighterData data) {
+  IntervalTreeImpl<RangeHighlighterEx>.IntervalNode addRangeHighlighter(RangeHighlighterEx marker,
+                                                                        int start,
+                                                                        int end,
+                                                                        boolean greedyToLeft,
+                                                                        boolean greedyToRight,
+                                                                        int layer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myHighlighterTree.addInterval(marker, start, end, data);
+    return myHighlighterTree.addInterval(marker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @NotNull

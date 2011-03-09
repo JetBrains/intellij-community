@@ -126,7 +126,7 @@ public class Assertion extends Assert {
     compareAll(expected.toArray(), actual);
   }
 
-  public void compareUnordered(Object[] expected, Collection actual) {
+  public static void compareUnordered(Object[] expected, Collection actual) {
     assertEquals(expected.length, actual.size());
     for (Object exp : expected) {
       assertTrue(actual.contains(exp));
@@ -142,11 +142,11 @@ public class Assertion extends Assert {
     //compareAll(expectedList, actualList);
   }
 
-  public void compareUnordered(Collection expected, Collection actual) {
+  public static void compareUnordered(Collection expected, Collection actual) {
     compareUnordered(expected.toArray(), actual);
   }
 
-  public void compareUnordered(Collection expected, Object[] actual) {
+  public static void compareUnordered(Collection expected, Object[] actual) {
     compareUnordered(expected, new ArrayList(Arrays.asList(actual)));
   }
 
@@ -210,7 +210,7 @@ public class Assertion extends Assert {
     count(number, Arrays.asList(objects));
   }
 
-  public void compareUnordered(Object[] expected, Object[] actual) {
+  public static void compareUnordered(Object[] expected, Object[] actual) {
     compareUnordered(expected, new HashSet(Arrays.asList(actual)));
   }
 
@@ -235,7 +235,7 @@ public class Assertion extends Assert {
     compareAll(new int[]{element}, actual);
   }
 
-  public void size(int size, Collection collection) {
+  public static void size(int size, Collection collection) {
     if (collection.size() != size) {
       System.err.println("Expected: " + size + " actual: " + collection.size());
     }
@@ -268,7 +268,7 @@ public class Assertion extends Assert {
     }
   }
 
-  public <T> int countOccurences(Collection<T> collection, T item) {
+  public static <T> int countOccurences(Collection<T> collection, T item) {
     int counter = 0;
     for (T obj : collection) {
       if (Comparing.equal(item, obj)) counter++;
@@ -280,7 +280,7 @@ public class Assertion extends Assert {
     containsAll(collection, Arrays.asList(subArray));
   }
 
-  public void size(int size, Object[] objects) {
+  public static void size(int size, Object[] objects) {
     size(size, Arrays.asList(objects));
   }
 

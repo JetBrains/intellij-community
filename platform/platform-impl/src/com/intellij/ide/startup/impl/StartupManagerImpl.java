@@ -242,11 +242,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     myDumbAwarePostStartupActivities.clear();
     myNotDumbAwarePostStartupActivities.clear();
     myCacheUpdaters.clear();
-
-    myPreStartupActivitiesPassed = false;
-    myStartupActivitiesRunning = false;
-    myStartupActivitiesPassed = false;
-    myPostStartupActivitiesPassed = false;
   }
 
   @TestOnly

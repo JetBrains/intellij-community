@@ -40,7 +40,6 @@ public abstract class FileDocumentManager {
   public abstract Document[] getUnsavedDocuments();
   public abstract boolean isDocumentUnsaved(@NotNull Document document);
   public abstract boolean isFileModified(@NotNull VirtualFile file);
-  public abstract boolean isFileModifiedAndDocumentUnsaved(@NotNull VirtualFile file);
 
   public abstract void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
   public abstract void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);

@@ -1,8 +1,10 @@
-def final 
+def final
 -----
 Groovy script
-  PsiErrorElement:';' or new line expected
-    PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    PsiElement(final)('final')
-  PsiWhiteSpace(' ')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      PsiElement(final)('final')
+    PsiErrorElement:Identifier, string literal or '(' expected
+      <empty list>

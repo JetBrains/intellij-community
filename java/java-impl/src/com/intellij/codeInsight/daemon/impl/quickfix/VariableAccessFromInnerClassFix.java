@@ -70,7 +70,6 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       case COPY_TO_FINAL:
         return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName());
       default:
-        LOG.error("invalid type "+myFixType);
         return "";
     }
     Collection<PsiVariable> vars = getVariablesToFix();

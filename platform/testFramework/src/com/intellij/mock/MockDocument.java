@@ -288,10 +288,6 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end) {
-  }
-
-  @Override
   public boolean isInBulkUpdate() {
     return false;
   }

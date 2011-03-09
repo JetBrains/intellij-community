@@ -54,6 +54,7 @@ import com.siyeh.ig.j2me.*;
 import com.siyeh.ig.javabeans.ClassWithoutConstructorInspection;
 import com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection;
 import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
+import com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection;
 import com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection;
 import com.siyeh.ig.javadoc.UnnecessaryInheritDocInspection;
 import com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection;
@@ -693,6 +694,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public void registerJavadocInspections() {
+        m_inspectionClasses.add(HtmlTagCanBeJavadocTagInspection.class);
         m_inspectionClasses.add(PackageDotHtmlMayBePackageInfoInspection.class);
         m_inspectionClasses.add(UnnecessaryJavaDocLinkInspection.class);
         m_inspectionClasses.add(UnnecessaryInheritDocInspection.class);

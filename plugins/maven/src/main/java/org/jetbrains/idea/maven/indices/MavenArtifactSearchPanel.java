@@ -86,8 +86,10 @@ public class MavenArtifactSearchPanel extends JPanel {
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);
-    myResultList.setCellRenderer(myClassMode ? new MyClassCellRenderer(myResultList)
-                                             : new MyArtifactCellRenderer(myResultList));
+    MyArtifactCellRenderer renderer = myClassMode ? new MyClassCellRenderer(myResultList)
+                                                  : new MyArtifactCellRenderer(myResultList);
+    myResultList.setCellRenderer(renderer);
+    myResultList.setRowHeight(renderer.getPreferredSize().height);
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);

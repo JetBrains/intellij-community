@@ -327,9 +327,12 @@ public class HighlightInfo implements Segment {
     }
     if (text != null) s += " text='" + text + "'";
     if (description != null) s+= ", description='" + description + "'";
-    //if (toolTip != null) s+= ", toolTip='" + toolTip + "'";
     s += " severity=" + severity;
     s += " group=" + group;
+
+    if (quickFixActionRanges != null) {
+      s+= "; quickFixes: "+quickFixActionRanges;
+    }
     return s;
   }
 
@@ -522,7 +525,8 @@ public class HighlightInfo implements Segment {
 
     @NonNls
     public String toString() {
-      return "descriptor: " + getAction().getText();
+      String text = getAction().getText();
+      return "descriptor: " + (text.length()==0 ? getAction().getClass() : text);
     }
 
     public Icon getIcon() {

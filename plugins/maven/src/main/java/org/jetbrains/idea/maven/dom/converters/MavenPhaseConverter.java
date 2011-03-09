@@ -54,7 +54,9 @@ public class MavenPhaseConverter extends MavenConstantListConverter {
                                                            "pre-site",
                                                            "site",
                                                            "post-site",
-                                                           "site-deploy");
+                                                           "site-deploy",
+
+                                                           "none");
 
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;

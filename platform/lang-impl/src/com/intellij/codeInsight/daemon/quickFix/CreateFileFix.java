@@ -108,8 +108,8 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     long current = System.currentTimeMillis();
 
-    if (current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
-      myIsAvailable = myDirectory.getVirtualFile().findChild(myNewFileName) == null;
+    if (ApplicationManager.getApplication().isUnitTestMode() || current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
+      myIsAvailable &= myDirectory.getVirtualFile().findChild(myNewFileName) == null;
       myIsAvailableTimeStamp = current;
     }
 

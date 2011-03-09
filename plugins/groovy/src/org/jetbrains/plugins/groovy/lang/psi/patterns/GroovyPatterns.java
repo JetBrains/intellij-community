@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -58,6 +55,10 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return new GroovyBinaryExpressionPattern();
   }
 
+  public static GroovyAssignmentExpressionPattern groovyAssignmentExpression() {
+    return new GroovyAssignmentExpressionPattern();
+  }
+
   public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression() {
     return groovyLiteralExpression(null);
   }
@@ -67,6 +68,23 @@ public class GroovyPatterns extends PsiJavaPatterns {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GrLiteral
                && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
+      }
+    });
+  }
+
+  public static GroovyElementPattern.Capture<GroovyPsiElement> rightOfAssignment(final ElementPattern<? extends GroovyPsiElement> value,
+                                                                                 final GroovyAssignmentExpressionPattern assignment) {
+    return new GroovyElementPattern.Capture<GroovyPsiElement>(new InitialPatternCondition<GroovyPsiElement>(GroovyPsiElement.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        if (!(o instanceof GroovyPsiElement)) return false;
+
+        PsiElement parent = ((GroovyPsiElement)o).getParent();
+        if (!(parent instanceof GrAssignmentExpression)) return false;
+
+        if (((GrAssignmentExpression)parent).getRValue() != o) return false;
+
+        return assignment.getCondition().accepts(parent, context) && value.getCondition().accepts(o, context);
       }
     });
   }
@@ -91,7 +109,8 @@ public class GroovyPatterns extends PsiJavaPatterns {
           PsiElement nameElement = ((GrArgumentLabel)o).getNameElement();
           if (nameElement instanceof LeafPsiElement) {
             IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
-            if (elementType == GroovyElementTypes.mIDENT || CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
+            if (elementType == GroovyElementTypes.mIDENT ||
+                CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
               return namePattern.accepts(((GrArgumentLabel)o).getName());
             }
           }

@@ -184,7 +184,7 @@ public class ControlFlowBuilder {
   }
 
 
-  public static interface PendingProcessor {
+  public interface PendingProcessor {
     void process(PsiElement pendingScope, Instruction instruction);
   }
 

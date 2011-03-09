@@ -17,11 +17,11 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class Splash extends JDialog {
   private final Icon myImage;
@@ -56,12 +56,14 @@ public class Splash extends JDialog {
       UIUtil.applyRenderingHints(g);
       g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
       g.setColor(textColor);
-      LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
+      LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         final String licensedToMessage = provider.getLicensedToMessage();
-        final String licenseRestrictionsMessage = provider.getLicenseRestrictionsMessage();
+        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
         g.drawString(licensedToMessage, x + 21, y + height - 49);
-        g.drawString(licenseRestrictionsMessage, x + 21, y + height - 33);
+        if (licenseRestrictionsMessages.size() > 0) {
+          g.drawString(licenseRestrictionsMessages.get(0), x + 21, y + height - 33);
+        }
       }
       return true;
     }
