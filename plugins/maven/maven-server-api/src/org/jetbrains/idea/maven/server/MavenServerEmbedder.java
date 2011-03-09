@@ -33,8 +33,8 @@ public interface MavenServerEmbedder extends Remote {
 
   @NotNull
   MavenServerExecutionResult resolveProject(@NotNull File file,
-                                             @NotNull Collection<String> activeProfiles) throws RemoteException,
-                                                                                                MavenServerProcessCanceledException;
+                                            @NotNull Collection<String> activeProfiles) throws RemoteException,
+                                                                                               MavenServerProcessCanceledException;
 
   @NotNull
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
@@ -53,9 +53,9 @@ public interface MavenServerEmbedder extends Remote {
 
   @NotNull
   MavenServerExecutionResult execute(@NotNull File file,
-                                      @NotNull Collection<String> activeProfiles,
-                                      @NotNull List<String> goals) throws RemoteException,
-                                                                          MavenServerProcessCanceledException;
+                                     @NotNull Collection<String> activeProfiles,
+                                     @NotNull List<String> goals) throws RemoteException,
+                                                                         MavenServerProcessCanceledException;
 
   void reset() throws RemoteException;
 

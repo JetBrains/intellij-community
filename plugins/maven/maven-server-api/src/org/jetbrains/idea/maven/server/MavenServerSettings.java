@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Properties;
 
 public class MavenServerSettings implements Serializable, Cloneable {
   public enum UpdatePolicy {
@@ -31,6 +32,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
   @Nullable private File myUserSettingsFile;
   @Nullable private File myGlobalSettingsFile;
   @Nullable private File myLocalRepository;
+  @NotNull private Properties myUserProperties = new Properties();
   private boolean isOffline;
   @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
   @NotNull private UpdatePolicy mySnapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
@@ -41,6 +43,15 @@ public class MavenServerSettings implements Serializable, Cloneable {
 
   public void setLoggingLevel(int loggingLevel) {
     myLoggingLevel = loggingLevel;
+  }
+
+  @NotNull
+  public Properties getUserProperties() {
+    return myUserProperties;
+  }
+
+  public void setUserProperties(@NotNull Properties properties) {
+    myUserProperties = properties;
   }
 
   @Nullable

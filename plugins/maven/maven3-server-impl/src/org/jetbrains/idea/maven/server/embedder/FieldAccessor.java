@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.server.embedder;
 import java.lang.reflect.Field;
 
 public class FieldAccessor<FIELD_TYPE> {
-  private volatile FIELD_TYPE myWagonManagerCache;
+  private volatile FIELD_TYPE myValueCache;
   private final Class myHostClass;
   private final Object myHost;
   private final String myFieldName;
@@ -29,12 +29,12 @@ public class FieldAccessor<FIELD_TYPE> {
     myFieldName = fieldName;
   }
 
-  public FIELD_TYPE getField() {
-    if (myWagonManagerCache == null) {
+  public FIELD_TYPE get() {
+    if (myValueCache == null) {
       Object wagon = getFieldValue(myHostClass, myFieldName, myHost);
-      myWagonManagerCache = (FIELD_TYPE)wagon;
+      myValueCache = (FIELD_TYPE)wagon;
     }
-    return myWagonManagerCache;
+    return myValueCache;
   }
 
   private Object getFieldValue(Class c, String fieldName, Object o) {
@@ -49,5 +49,9 @@ public class FieldAccessor<FIELD_TYPE> {
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static <FIELD_TYPE> FIELD_TYPE get(Class hostClass, Object host, String fieldName) {
+    return new FieldAccessor<FIELD_TYPE>(hostClass, host, fieldName).get();
   }
 }

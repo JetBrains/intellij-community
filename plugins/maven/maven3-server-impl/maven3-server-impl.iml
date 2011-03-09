@@ -14,6 +14,7 @@
     <orderEntry type="module-library">
       <library name="Maven3">
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/maven3/boot/plexus-classworlds-2.4.jar!/" />
           <root url="file://$MODULE_DIR$/lib/maven3/lib" />
         </CLASSES>
         <JAVADOC />
