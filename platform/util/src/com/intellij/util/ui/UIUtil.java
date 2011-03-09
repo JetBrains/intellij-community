@@ -26,13 +26,11 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.WeakListener;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -51,7 +49,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.security.AccessController;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -90,6 +87,20 @@ public class UIUtil {
   private static final String ROOT_PANE = "JRootPane.future";
 
   private UIUtil() {
+  }
+
+  public static void drawLinePickedOut(Graphics graphics, int x, int y, int x1, int y1) {
+    if (x == x1) {
+      int minY = Math.min(y, y1);
+      int maxY = Math.max(y,  y1);
+      graphics.drawLine(x,  minY+1, x1, maxY-1);
+    } else if (y == y1) {
+      int minX = Math.min(x, x1);
+      int maxX = Math.max(x, x1);
+      graphics.drawLine(minX+1, y,  maxX-1, y1);
+    } else {
+      drawLine(graphics, x, y, x1, y1);
+    }
   }
 
   public static boolean isReallyTypedEvent(KeyEvent e) {
@@ -783,6 +794,13 @@ public class UIUtil {
       g.drawLine(startX, 3, endX - 1, 3);
       g.drawLine(startX, height - 3, endX - 1, height - 3);
     }
+  }
+
+  public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
+    g.drawLine(x+1, y, x+w-1, y);
+    g.drawLine(x+w, y+1, x+w, y+h-1);
+    g.drawLine(x+w-1, y+h, x+1, y+h);
+    g.drawLine(x, y+1, x, y+h-1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
