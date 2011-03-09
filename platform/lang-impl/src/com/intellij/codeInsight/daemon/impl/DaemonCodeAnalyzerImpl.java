@@ -163,7 +163,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                                             psiFile.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
     action3.doCollectInformation(progress);
 
-    result.addAll(action3.getHighlights());
+    result.addAll(action3.getInfos());
 
     return result;
   }

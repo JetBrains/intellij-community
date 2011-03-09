@@ -386,13 +386,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }, myFailFastOnAcquireReadAction, indicator)) throw new ProcessCanceledException();
   }
 
-  public Collection<HighlightInfo> getHighlights() {
-    List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
-
-    addHighlightsFromResults(highlights, new DaemonProgressIndicator());
-    return highlights;
-  }
-
   @Nullable
   private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                     @NotNull HighlightInfoType highlightInfoType,
@@ -709,6 +702,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
+  @NotNull
   public List<HighlightInfo> getInfos() {
     return myInfos;
   }

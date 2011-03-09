@@ -23,6 +23,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -123,7 +124,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
         continue;
       }
       final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
-      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
+      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
       tool.initialize(context);
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
