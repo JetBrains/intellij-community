@@ -133,6 +133,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public String getStringToReplace(Editor editor, LiveOccurrence liveOccurrence) {
+    if (liveOccurrence == null) {
+      return null;
+    }
     String foundString = editor.getDocument().getText(liveOccurrence.getPrimaryRange());
     String documentText = editor.getDocument().getText();
     FindModel currentModel = mySearchResults.getFindModel();

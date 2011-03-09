@@ -33,13 +33,6 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 3/9/11
- * Time: 2:50 PM
- * To change this template use File | Settings | File Templates.
- */
 public class MouseGestureManager implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
@@ -56,7 +49,9 @@ public class MouseGestureManager implements ApplicationComponent {
 
     if (SystemInfo.isMacOSSnowLeopard) {
       try {
-        assert !myListeners.containsKey(frame) : "Frame already registered";
+        if (myListeners.containsKey(frame)) {
+          remove(frame);
+        }
 
         Class<?> gestureListenerClass = Class.forName("com.apple.eawt.event.GestureListener");
         Class<?> swipeListenerClass = Class.forName("com.apple.eawt.event.SwipeListener");
@@ -108,11 +103,13 @@ public class MouseGestureManager implements ApplicationComponent {
     if (SystemInfo.isMacOSSnowLeopard) {
       try {
         Object listener = myListeners.get(frame);
-        if (listener != null) {
+        JComponent cmp = frame.getComponent();
+        myListeners.remove(frame);
+        if (listener != null && cmp != null && cmp.isShowing()) {
           Class<?> gestureListenerClass = Class.forName("com.apple.eawt.event.GestureListener");
           Class<?> utilsClass = Class.forName("com.apple.eawt.event.GestureUtilities");
           Method addMethod = utilsClass.getDeclaredMethod("removeGestureListenerFrom", JComponent.class, gestureListenerClass);
-          addMethod.invoke(null, frame.getComponent(), listener);
+          addMethod.invoke(null, cmp, listener);
         }
       }
       catch (Exception e) {

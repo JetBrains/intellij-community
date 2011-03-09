@@ -22,6 +22,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.Callable;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -54,7 +56,21 @@ public abstract class TaskRepository  {
     return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
   }
 
-  public abstract void testConnection() throws Exception;
+  /**
+   * @deprecated
+   * @see #createCancellableConnection()
+   */
+  public void testConnection() throws Exception {}
+
+  /**
+   * Returns an object that can test connection.
+   * {@link com.intellij.openapi.vcs.impl.CancellableRunnable#cancel()} should cancel the process.
+   * @return null if not supported
+   */
+  @Nullable
+  public CancellableConnection createCancellableConnection() {
+    return null;
+  }
 
   /**
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
@@ -134,4 +150,24 @@ public abstract class TaskRepository  {
   public String getTaskComment(Task task) {
     return null;
   }
+
+  public abstract class CancellableConnection implements Callable<Exception> {
+
+    @Nullable
+    @Override
+    public final Exception call() {
+      try {
+        doTest();
+        return null;
+      }
+      catch (Exception e) {
+        return e;
+      }
+    }
+
+    protected abstract void doTest() throws Exception;
+
+    public abstract void cancel();
+  }
+
 }

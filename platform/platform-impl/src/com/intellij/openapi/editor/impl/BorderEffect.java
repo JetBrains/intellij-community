@@ -40,13 +40,13 @@ public class BorderEffect {
       EffectType effectType = attributes1.getEffectType();
       return effectColor != null
              && effectColor.equals(attributes2.getEffectColor())
-             && EffectType.BOXED == effectType &&
+             && (EffectType.BOXED == effectType || EffectType.ROUNDED_BOX == effectType) &&
              effectType == attributes2.getEffectType();
     }
   };
   private static final Condition<TextAttributes> BOX_FILTER = new Condition<TextAttributes>() {
                               public boolean value(TextAttributes attributes) {
-                                return attributes.getEffectColor() != null && attributes.getEffectType() == EffectType.BOXED;
+                                return isBorder(attributes);
                               }
                             };
 
@@ -78,17 +78,18 @@ public class BorderEffect {
   private static boolean isBorder(TextAttributes textAttributes) {
     return textAttributes != null &&
            textAttributes.getEffectColor() != null &&
-           EffectType.BOXED == textAttributes.getEffectType();
+           (EffectType.BOXED == textAttributes.getEffectType() || EffectType.ROUNDED_BOX == textAttributes.getEffectType());
   }
 
   private void paintBorder(RangeHighlighterEx rangeHighlighter) {
     paintBorder(rangeHighlighter.getTextAttributes().getEffectColor(),
                 rangeHighlighter.getAffectedAreaStartOffset(),
-                rangeHighlighter.getAffectedAreaEndOffset());
+                rangeHighlighter.getAffectedAreaEndOffset(),
+                rangeHighlighter.getTextAttributes().getEffectType());
   }
 
-  private void paintBorder(Color color, int startOffset, int endOffset) {
-    paintBorder(myGraphics, myEditor, startOffset, endOffset, color);
+  private void paintBorder(Color color, int startOffset, int endOffset, EffectType effectType) {
+    paintBorder(myGraphics, myEditor, startOffset, endOffset, color, effectType);
   }
 
   private boolean intersectsRange(RangeHighlighterEx rangeHighlighter) {
@@ -106,7 +107,7 @@ public class BorderEffect {
     while (!iterator.atEnd()) {
       iterator.advance();
       paintBorder(myGraphics, myEditor, iterator.getStart(), iterator.getEnd(),
-                  iterator.getTextAttributes().getEffectColor());
+                  iterator.getTextAttributes().getEffectColor(), iterator.getTextAttributes().getEffectType());
     }
   }
 
@@ -116,14 +117,14 @@ public class BorderEffect {
     return myEditor.getDocument().getLineStartOffset(line);
   }
 
-  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, Color color) {
+  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, Color color, EffectType effectType) {
     Color savedColor = g.getColor();
     g.setColor(color);
-    paintBorder(g, editor, startOffset, endOffset);
+    paintBorder(g, editor, startOffset, endOffset, effectType);
     g.setColor(savedColor);
   }
 
-  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset) {
+  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, EffectType effectType) {
     Point startPoint = offsetToXY(editor, startOffset);
     Point endPoint = offsetToXY(editor, endOffset);
     int height = endPoint.y - startPoint.y;
@@ -132,10 +133,14 @@ public class BorderEffect {
     int endX = endPoint.x;
     if (height == 0) {
       int width = endX == startX ? 1 : endX - startX - 1;
-      g.drawRect(startX, startY, width, editor.getLineHeight() - 1);
+      if (effectType == EffectType.ROUNDED_BOX) {
+        UIUtil.drawRectPickedOut((Graphics2D)g, startX, startY, width, editor.getLineHeight() - 1);
+      } else {
+        g.drawRect(startX, startY, width, editor.getLineHeight() - 1);
+      }
       return;
     }
-    BorderGraphics border = new BorderGraphics(g, startX, startY);
+    BorderGraphics border = new BorderGraphics(g, startX, startY, effectType);
     border.horizontalTo(editor.getMaxWidthInRange(startOffset, endOffset) - 1);
     border.verticalRel(height - 1);
     border.horizontalTo(endX);
@@ -181,12 +186,14 @@ public class BorderEffect {
 
     private int myX;
     private int myY;
+    private EffectType myEffectType;
 
-    public BorderGraphics(Graphics graphics, int startX, int stIntY) {
+    public BorderGraphics(Graphics graphics, int startX, int stIntY, EffectType effectType) {
       myGraphics = graphics;
 
       myX = startX;
       myY = stIntY;
+      myEffectType = effectType;
     }
 
     public void horizontalTo(int x) {
@@ -198,7 +205,11 @@ public class BorderEffect {
     }
 
     private void lineTo(int x, int y) {
-      UIUtil.drawLine(myGraphics, myX, myY, x, y);
+      if (myEffectType == EffectType.ROUNDED_BOX) {
+        UIUtil.drawLinePickedOut(myGraphics, myX, myY, x, y);
+      } else {
+        UIUtil.drawLine(myGraphics, myX, myY, x, y);
+      }
       myX = x;
       myY = y;
     }
