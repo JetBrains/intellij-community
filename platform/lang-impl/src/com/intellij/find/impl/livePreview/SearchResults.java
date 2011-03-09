@@ -229,7 +229,7 @@ public class SearchResults {
         if(oldCursorRange != null && !myFindModel.isGlobal()) {
           myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
         } else {
-          LiveOccurrence afterCaret = firstOccurrenceAfterCaret();
+          LiveOccurrence afterCaret = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
           if (afterCaret != null) {
             myCursor = afterCaret;
           } else {
@@ -241,6 +241,17 @@ public class SearchResults {
         myCursor = null;
       }
     }
+  }
+
+  @Nullable
+  private LiveOccurrence firstOccurrenceAtOrAfterCaret() {
+    int offset = getEditor().getCaretModel().getOffset();
+    for (LiveOccurrence occurrence : myOccurrences) {
+      if (offset <= occurrence.getPrimaryRange().getEndOffset() && offset >= occurrence.getPrimaryRange().getStartOffset()) {
+        return occurrence;
+      }
+    }
+    return firstOccurrenceAfterCaret();
   }
 
   private void notifyChanged() {
