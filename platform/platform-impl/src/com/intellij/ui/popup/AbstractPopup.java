@@ -1093,7 +1093,11 @@ public class AbstractPopup implements JBPopup {
       myForcedLocation = screenPoint;
     }
     else {
-      moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
+      Insets insets = myPopupBorder.getBorderInsets(myContent);
+      if (insets == null) {
+        insets = new Insets(0, 0, 0, 0);
+      }
+      moveTo(myContent, new Point(screenPoint.x - insets.left, screenPoint.y - insets.top), myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }
 
