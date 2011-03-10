@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
@@ -66,23 +67,27 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
     for (DomCollectionChildDescription childDescription : list) {
       if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
 
-        if (editor != null) {
+        XmlTag parentTag = parent.getXmlTag();
+        if (editor != null && parentTag != null) {
           int offset = editor.getCaretModel().getOffset();
-          Document document = editor.getDocument();
-          XmlTag parentTag = parent.getXmlTag();
-          XmlTag childTag = parentTag.createChildTag(childDescription.getXmlElementName(), null, null, true);
-          String text = childTag.getText();
-          document.insertString(offset, text);
-          Project project = editor.getProject();
-          assert project != null;
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          documentManager.commitDocument(document);
           PsiFile file = parentTag.getContainingFile();
-          PsiElement element = file.findElementAt(offset + 1);
-          T domElement = DomUtil.findDomElement(element, myChildElementClass);
-          if (domElement != null) return domElement;
-          document.deleteString(offset, offset + text.length());
-          documentManager.commitDocument(document);
+          PsiElement psiElement = file.findElementAt(offset);
+
+          if (psiElement instanceof PsiWhiteSpace) {
+            Document document = editor.getDocument();
+            XmlTag childTag = parentTag.createChildTag(childDescription.getXmlElementName(), null, null, true);
+            String text = childTag.getText();
+            document.insertString(offset, text);
+            Project project = editor.getProject();
+            assert project != null;
+            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+            documentManager.commitDocument(document);
+            PsiElement element = file.findElementAt(offset + 1);
+            T domElement = DomUtil.findDomElement(element, myChildElementClass);
+            if (domElement != null) return domElement;
+            document.deleteString(offset, offset + text.length());
+            documentManager.commitDocument(document);
+          }
         }
 
         int index  = getCollectionIndex(parent, childDescription, editor);
