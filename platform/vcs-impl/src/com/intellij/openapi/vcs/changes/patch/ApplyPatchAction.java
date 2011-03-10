@@ -34,7 +34,6 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,19 +44,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ApplyPatchAction extends DumbAwareAction {
@@ -65,6 +61,15 @@ public class ApplyPatchAction extends DumbAwareAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+
+    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      if (vFile != null && vFile.getFileType() == StdFileTypes.PATCH) {
+        showApplyPatch(project, vFile);
+        return;
+      }
+    }
 
     showApplyPatch(project, null);
   }

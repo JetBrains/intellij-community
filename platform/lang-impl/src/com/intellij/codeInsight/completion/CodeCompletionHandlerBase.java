@@ -64,6 +64,7 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -497,7 +498,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
     final OffsetMap original = initContext.getOffsetMap();
-    for (final OffsetKey key : original.keySet()) {
+    for (final OffsetKey key : new ArrayList<OffsetKey>(original.keySet())) {
       hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy, original.getOffset(key)));
     }
 
@@ -519,7 +520,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
       final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
-      for (final OffsetKey key : hostMap.keySet()) {
+      for (final OffsetKey key : new ArrayList<OffsetKey>(hostMap.keySet())) {
         map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
       }
       context = new CompletionContext(initContext.getProject(), injectedEditor, injected, map);

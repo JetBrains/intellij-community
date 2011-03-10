@@ -33,6 +33,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -70,6 +71,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
   private boolean myCompileInBackground;
+
+  static {
+    IdeaTestCase.initPlatformPrefix();
+  }
 
   @Override
   protected void setUp() throws Exception {

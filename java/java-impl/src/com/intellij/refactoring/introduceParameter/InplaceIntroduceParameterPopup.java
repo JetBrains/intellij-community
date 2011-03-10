@@ -45,6 +45,7 @@ import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
@@ -107,10 +108,16 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     myExprText = myExpr != null ? myExpr.getText() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
-    myWholePanel.setBorder(BorderFactory.createTitledBorder(IntroduceParameterHandler.REFACTORING_NAME));
+    myWholePanel.setBorder(null);
     final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 0), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
+    final TitlePanel titlePanel = new TitlePanel();
+    titlePanel.setBorder(null);
+    titlePanel.setText(IntroduceParameterHandler.REFACTORING_NAME);
+    myWholePanel.add(titlePanel, gc);
+
+    gc.insets = new Insets(5, 5, 5, 0);
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
       gc.gridy++;
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
@@ -395,13 +402,14 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
   private void showBalloon() {
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myWholePanel);
-    balloonBuilder.setFadeoutTime(0);
-    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-    balloonBuilder.setAnimationCycle(0);
-    balloonBuilder.setHideOnClickOutside(false);
-    balloonBuilder.setHideOnKeyOutside(false);
-    balloonBuilder.setHideOnAction(false);
-    balloonBuilder.setCloseButtonEnabled(true);
+    balloonBuilder.setFadeoutTime(0)
+      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
+      .setAnimationCycle(0)
+      .setHideOnClickOutside(false)
+      .setHideOnKeyOutside(false)
+      .setHideOnAction(false)
+      .setCloseButtonEnabled(true);
+
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();

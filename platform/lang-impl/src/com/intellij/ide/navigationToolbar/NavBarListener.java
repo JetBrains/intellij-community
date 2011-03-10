@@ -27,7 +27,6 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,8 +141,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   private void processFocusLost(FocusEvent e) {
-    final ListPopupImpl nodePopup = myPanel.getNodePopup();
-    final boolean nodePopupInactive = nodePopup == null || !nodePopup.isVisible() || !nodePopup.isFocused();
+    final boolean nodePopupInactive = !myPanel.isNodePopupActive();
     boolean childPopupInactive = !JBPopupFactory.getInstance().isChildPopupFocused(myPanel);
     if (nodePopupInactive && childPopupInactive) {
       final Component opposite = e.getOppositeComponent();

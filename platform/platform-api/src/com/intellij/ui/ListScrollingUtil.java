@@ -16,9 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +41,10 @@ public class ListScrollingUtil {
   protected static final String SELECT_LAST_ROW_ACTION_ID = "selectLastRow";
   @NonNls
   protected static final String SELECT_FIRST_ROW_ACTION_ID = "selectFirstRow";
+  @NonNls
+  protected  static final String MOVE_HOME_ID = "MOVE_HOME";
+  @NonNls
+  protected  static final String MOVE_END_ID = "MOVE_END";
 
   public static final int ROW_PADDING = 2;
 
@@ -267,17 +268,18 @@ public class ListScrollingUtil {
         moveHome(list);
       }
     });
-    new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
+    actionMap.put(MOVE_HOME_ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         moveHome(list);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), list);
-    new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
+    });
+    actionMap.put(MOVE_END_ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         moveEnd(list);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), list);
-
+    });
 
     InputMap map = list.getInputMap(JComponent.WHEN_FOCUSED);
     UIUtil.maybeInstall(map, SCROLLUP_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
@@ -286,6 +288,7 @@ public class ListScrollingUtil {
     UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
     UIUtil.maybeInstall(map, SELECT_FIRST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
     UIUtil.maybeInstall(map, SELECT_LAST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
-
+    UIUtil.maybeInstall(map, MOVE_HOME_ID, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
+    UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 }

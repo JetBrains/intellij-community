@@ -1,0 +1,23 @@
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Apache Maven distribution.                    ==
+   =========================================================================
+
+Apache Maven
+Copyright 2001-2011 The Apache Software Foundation
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software (Plexus and Classworlds) developed by
+The Codehaus Foundation (http://www.codehaus.org/).
+
+This product includes software (Aether, Sisu, Spice, Plexus Ciper and Sec Dispatcher) developed by
+Sonatype Inc. (http://www.sonatype.org/).
+
+This product includes software (NekoHTML) developed by
+SourceForge (http://www.sourceforge.net/).
+
+This product includes software (Guice) developed by
+Google Code (http://code.google.com/).

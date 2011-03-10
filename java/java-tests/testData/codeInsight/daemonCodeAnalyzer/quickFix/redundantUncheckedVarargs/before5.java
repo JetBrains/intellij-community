@@ -1,4 +1,4 @@
-// "Remove redundant "unchecked" suppression" "true"
+// "Remove 'unchecked' suppression" "true"
 import java.util.*;
 
 public class Test {
@@ -7,8 +7,8 @@ public class Test {
     return null;
   }
 
-  @SuppressWarnings("unc<caret>hecked")
-  void foo() {
+  @SuppressWarnings("unchecked")
+  void fo<caret>o() {
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }
 }

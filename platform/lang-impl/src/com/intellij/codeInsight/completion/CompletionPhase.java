@@ -216,6 +216,7 @@ public abstract class CompletionPhase implements Disposable {
     private final DocumentAdapter documentListener;
     private final PropertyChangeListener lookupListener;
     private boolean changeGuard = false;
+    private final SelectionListener selectionListener;
 
     public EmptyAutoPopup(CompletionProgressIndicator indicator) {
       super(indicator);
@@ -244,12 +245,12 @@ public abstract class CompletionPhase implements Disposable {
           }
         }
       };
-      editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      selectionListener = new SelectionListener() {
         @Override
         public void selectionChanged(SelectionEvent e) {
           stopAutoPopup();
         }
-      });
+      };
       documentListener = new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
@@ -268,6 +269,7 @@ public abstract class CompletionPhase implements Disposable {
       editor.addEditorMouseListener(mouseListener);
       editor.getCaretModel().addCaretListener(caretListener);
       editor.getDocument().addDocumentListener(documentListener);
+      editor.getSelectionModel().addSelectionListener(selectionListener);
       LookupManager.getInstance(project).addPropertyChangeListener(lookupListener);
     }
 
@@ -275,6 +277,7 @@ public abstract class CompletionPhase implements Disposable {
     public void dispose() {
       editor.removeEditorMouseListener(mouseListener);
       editor.getCaretModel().removeCaretListener(caretListener);
+      editor.getSelectionModel().removeSelectionListener(selectionListener);
       editor.getDocument().removeDocumentListener(documentListener);
       LookupManager.getInstance(project).removePropertyChangeListener(lookupListener);
     }
@@ -291,6 +294,11 @@ public abstract class CompletionPhase implements Disposable {
 
     private static void stopAutoPopup() {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
+    }
+
+    @Override
+    public String toString() {
+      return "EmptyAutoPopup,editor=" + editor;
     }
 
     @Override

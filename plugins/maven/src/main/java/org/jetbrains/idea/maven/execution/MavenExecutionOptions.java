@@ -15,17 +15,17 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import org.jetbrains.idea.maven.facade.MavenFacadeConsole;
-import org.jetbrains.idea.maven.facade.MavenFacadeSettings;
+import org.jetbrains.idea.maven.server.MavenServerConsole;
+import org.jetbrains.idea.maven.server.MavenServerSettings;
 
 public class MavenExecutionOptions {
   public enum LoggingLevel {
-    DEBUG("Debug", MavenFacadeConsole.LEVEL_DEBUG),
-    INFO("Info", MavenFacadeConsole.LEVEL_INFO),
-    WARN("Warn", MavenFacadeConsole.LEVEL_WARN),
-    ERROR("Error", MavenFacadeConsole.LEVEL_ERROR),
-    FATAL("Fatal", MavenFacadeConsole.LEVEL_FATAL),
-    DISABLED("Disabled", MavenFacadeConsole.LEVEL_DISABLED);
+    DEBUG("Debug", MavenServerConsole.LEVEL_DEBUG),
+    INFO("Info", MavenServerConsole.LEVEL_INFO),
+    WARN("Warn", MavenServerConsole.LEVEL_WARN),
+    ERROR("Error", MavenServerConsole.LEVEL_ERROR),
+    FATAL("Fatal", MavenServerConsole.LEVEL_FATAL),
+    DISABLED("Disabled", MavenServerConsole.LEVEL_DISABLED);
 
     private final String myDisplayString;
     private final int myLevel;
@@ -87,17 +87,17 @@ public class MavenExecutionOptions {
   }
 
   public enum SnapshotUpdatePolicy {
-    ALWAYS_UPDATE("Always Update", "--update-snapshots", MavenFacadeSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("Do Not Update", "", MavenFacadeSettings.UpdatePolicy.DO_NOT_UPDATE);
+    ALWAYS_UPDATE("Always Update", "--update-snapshots", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
+    DO_NOT_UPDATE("Do Not Update", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
 
     private final String myDisplayString;
     private final String myCommandLineOption;
-    private final MavenFacadeSettings.UpdatePolicy myFacadePolicy;
+    private final MavenServerSettings.UpdatePolicy myServerPolicy;
 
-    private SnapshotUpdatePolicy(String displayString, String commandLineOption, MavenFacadeSettings.UpdatePolicy policy) {
+    private SnapshotUpdatePolicy(String displayString, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
       myDisplayString = displayString;
       myCommandLineOption = commandLineOption;
-      myFacadePolicy = policy;
+      myServerPolicy = policy;
     }
 
     public String getDisplayString() {
@@ -108,23 +108,23 @@ public class MavenExecutionOptions {
       return myCommandLineOption;
     }
 
-    public MavenFacadeSettings.UpdatePolicy getFacadePolicy() {
-      return myFacadePolicy;
+    public MavenServerSettings.UpdatePolicy getServerPolicy() {
+      return myServerPolicy;
     }
   }
 
   public enum PluginUpdatePolicy {
-    UPDATE("Check For Updates", "--check-plugin-updates", MavenFacadeSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenFacadeSettings.UpdatePolicy.DO_NOT_UPDATE);
+    UPDATE("Check For Updates", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
+    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
 
     private final String myDisplayString;
     private final String myCommandLineOption;
-    private final MavenFacadeSettings.UpdatePolicy myFacadePolicy;
+    private final MavenServerSettings.UpdatePolicy myServerPolicy;
 
-    private PluginUpdatePolicy(String displayString, String commandLineOption, MavenFacadeSettings.UpdatePolicy policy) {
+    private PluginUpdatePolicy(String displayString, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
       myDisplayString = displayString;
       myCommandLineOption = commandLineOption;
-      myFacadePolicy = policy;
+      myServerPolicy = policy;
     }
 
     public String getDisplayString() {
@@ -135,8 +135,8 @@ public class MavenExecutionOptions {
       return myCommandLineOption;
     }
 
-    public MavenFacadeSettings.UpdatePolicy getFacadePolicy() {
-      return myFacadePolicy;
+    public MavenServerSettings.UpdatePolicy getServerPolicy() {
+      return myServerPolicy;
     }
   }
 }

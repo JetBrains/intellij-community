@@ -15,16 +15,11 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.junit3.JUnit3IdeaTestRunner;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import junit.textui.TestRunner;
-
-import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -180,7 +175,8 @@ public class JUnitStarter {
   private static void junitVersionChecks(boolean isJUnit4) throws ClassNotFoundException {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass(isJUnit4);
-    new TestRunner().setPrinter(new JUnit3IdeaTestRunner.MockResultPrinter());
+    //noinspection UnnecessaryFullyQualifiedName
+    new junit.textui.TestRunner().setPrinter(new com.intellij.junit3.JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
   private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, ArrayList listeners, SegmentedOutputStream out,

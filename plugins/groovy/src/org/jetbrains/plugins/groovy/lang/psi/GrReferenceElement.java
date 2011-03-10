@@ -31,9 +31,6 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
   @Nullable
   String getReferenceName();
 
-  @Nullable
-  PsiElement getReferenceNameElement();
-
   PsiElement resolve();
 
   GroovyResolveResult advancedResolve();

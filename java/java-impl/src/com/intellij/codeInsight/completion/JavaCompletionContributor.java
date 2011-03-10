@@ -90,6 +90,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
   static final PsiJavaElementPattern.Capture<PsiElement> IN_CATCH_TYPE =
     psiElement().afterLeaf(psiElement().withText("(").withParent(PsiCatchSection.class));
+  static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
+    or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
+       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
   static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
           PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
@@ -128,7 +131,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ElementClassFilter.VARIABLE;
     }
 
-    if (IN_CATCH_TYPE.accepts(position)) {
+    if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {
       return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 

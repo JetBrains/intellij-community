@@ -105,23 +105,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       @NotNull
       @Override
       public TodoItem[] findTodoItems(@NotNull PsiFile file) {
-        if (! myIncludedFiles.contains(file)) return EMPTY_ITEMS;
-        if (myDirtyFileSet.contains(file.getVirtualFile())) {
-          myMap.remove(file);
-          final Change change = myChangeListManager.getChange(file.getVirtualFile());
-          if (change != null) {
-            final TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), getTodoTreeStructure().getTodoFilter(), true);
-            worker.execute();
-            final List<TodoItem> todoItems = worker.inOneList();
-            if (todoItems != null && ! todoItems.isEmpty()) {
-              for (TodoItem todoItem : todoItems) {
-                myMap.putValue(file, todoItem);
-              }
-            }
-          }
-        }
-        final Collection<TodoItem> todoItems = myMap.get(file);
-        return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[todoItems.size()]);
+        return findPatternedTodoItems(file, getTodoTreeStructure().getTodoFilter());
       }
 
       @NotNull
@@ -148,17 +132,32 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
       @Override
       public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
-        throw new UnsupportedOperationException();
-        // just would not work while implemented like that
-        /*final TodoItem[] todoItems = findTodoItems(file);
-        if (todoItems.length == 0) return 0;
-        int cnt = 0;
-        for (TodoItem todoItem : todoItems) {
-          if (todoItem.getPattern().equals(pattern)) ++ cnt;
-        }
-        return cnt;*/
+        final TodoFilter filter = new TodoFilter();
+        filter.addTodoPattern(pattern);
+        return findPatternedTodoItems(file, filter).length;
       }
     };
+  }
+
+  private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
+    if (! myIncludedFiles.contains(file)) return EMPTY_ITEMS;
+    if (myDirtyFileSet.contains(file.getVirtualFile())) {
+      myMap.remove(file);
+      final Change change = myChangeListManager.getChange(file.getVirtualFile());
+      if (change != null) {
+        final TodoCheckinHandlerWorker
+          worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter, true);
+        worker.execute();
+        final List<TodoItem> todoItems = worker.inOneList();
+        if (todoItems != null && ! todoItems.isEmpty()) {
+          for (TodoItem todoItem : todoItems) {
+            myMap.putValue(file, todoItem);
+          }
+        }
+      }
+    }
+    final Collection<TodoItem> todoItems = myMap.get(file);
+    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[todoItems.size()]);
   }
 
   @Override

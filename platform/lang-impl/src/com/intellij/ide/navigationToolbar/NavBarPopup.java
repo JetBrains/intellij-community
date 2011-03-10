@@ -1,0 +1,228 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.ide.navigationToolbar;
+
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
+import java.awt.event.*;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+public class NavBarPopup extends LightweightHint {
+  private static final String JBLIST_KEY = "OriginalList";
+  private final NavBarPanel myPanel;
+  private int myIndex;
+
+  public NavBarPopup(NavBarPanel panel, Object[] siblings, final int selectedIndex) {
+    super(createPopupContent(panel, siblings));
+    myPanel = panel;
+    myIndex = selectedIndex;
+    setFocusRequestor(getComponent());
+    setForceShowAsPopup(true);
+    ListenerUtil.addMouseListener(getComponent(), new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        if (SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      public void mousePressed(final MouseEvent e) {
+        if (!SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      private void click(final MouseEvent e) {
+        if (!e.isConsumed() && e.isPopupTrigger()) {
+          myPanel.getModel().setSelectedIndex(selectedIndex);
+          IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel, true);
+          myPanel.rightClick(selectedIndex);
+          e.consume();
+        } else {
+          final Object value = getList().getSelectedValue();
+          if (value != null) {
+            myPanel.navigateInsideBar(value);
+          }
+        }
+      }
+    });
+  }
+
+  public void show(final NavBarItem item) {
+    show(item, true);
+  }
+
+  private void show(final NavBarItem item, boolean checkRepaint) {
+    final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
+    final Point p = point.getPoint(myPanel);
+    if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          show(item, false); // end-less loop protection
+        }
+      });
+    } else {
+      show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+      getList().setSelectedIndex(myIndex);
+    }
+  }
+
+  private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
+    final JBList list = new JBList(siblings);
+    list.setDataProvider(new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return panel.getData(dataId);
+      }
+    });
+    list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
+      @NotNull
+      @Override
+      public JComponent fun(Object obj) {
+        return new NavBarItem(panel, obj);
+      }
+    });
+    list.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+    installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
+    installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
+    installEnterAction(list, panel, KeyEvent.VK_ENTER);
+    installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
+    final JComponent component = ListWithFilter.wrap(list, new MyListWrapper(list), new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        return NavBarPresentation.getPresentableText(o, panel.getWindow());
+      }
+    });
+    component.putClientProperty(JBLIST_KEY, list);
+    return component;
+  }
+
+  private static void installEnterAction(final JBList list, final NavBarPanel panel, int keyCode) {
+    final AbstractAction action = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        panel.navigateInsideBar(list.getSelectedValue());
+      }
+    };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  private static void installEscapeAction(final JBList list, final NavBarPanel panel, int keyCode) {
+    final AbstractAction action = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        panel.cancelPopup();
+      }
+    };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  public Object getSelectedValue() {
+    return getList().getSelectedValue();
+  }
+
+  private JBList getList() {
+    return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
+  }
+
+  private static void installMoveAction(JBList list, final NavBarPanel panel, final int direction, final int keyCode) {
+    final AbstractAction action = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        panel.cancelPopup();
+        panel.shiftFocus(direction);
+        panel.restorePopup();
+      }
+    };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  static class MyListWrapper extends JBScrollPane implements DataProvider {
+    private static final int MAX_SIZE = 20;
+    private final JList myList;
+
+    public MyListWrapper(final JList list) {
+      super(list);
+      list.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+            final Point point = e.getPoint();
+            final int index = list.locationToIndex(point);
+            list.setSelectedIndex(index);
+          } else {
+            myIsEngaged = true;
+          }
+        }
+      });
+
+      ListScrollingUtil.installActions(list);
+
+      final int modelSize = list.getModel().getSize();
+      setBorder(BorderFactory.createEmptyBorder());
+      if (modelSize > 0 && modelSize <= MAX_SIZE) {
+        list.setVisibleRowCount(0);
+        getViewport().setPreferredSize(list.getPreferredSize());
+      } else {
+        list.setVisibleRowCount(MAX_SIZE);
+      }
+      myList = list;
+    }
+
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
+        return myList.getSelectedValue();
+      }
+      return null;
+    }
+
+    public void setBorder(Border border) {
+      if (myList != null){
+        myList.setBorder(border);
+      }
+    }
+
+    public void requestFocus() {
+      myList.requestFocus();
+    }
+
+    public synchronized void addMouseListener(MouseListener l) {
+      myList.addMouseListener(l);
+    }
+  }
+}

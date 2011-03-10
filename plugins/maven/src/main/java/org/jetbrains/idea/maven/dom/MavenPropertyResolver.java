@@ -21,9 +21,9 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
-import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -134,7 +134,7 @@ public class MavenPropertyResolver {
   private static String doResolveProperty(String propName, MavenProject project, Properties additionalProperties) {
     String result;
 
-    result = MavenFacadeUtil.collectSystemProperties().getProperty(propName);
+    result = MavenServerUtil.collectSystemProperties().getProperty(propName);
     if (result != null) return result;
 
     if (propName.startsWith("project.") || propName.startsWith("pom.")) {

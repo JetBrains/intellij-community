@@ -40,15 +40,18 @@ public class ImportStatement implements GroovyElementTypes {
       impMarker.rollbackTo();
       return false;
     }
+
+    parseAfterModifiers(builder);
+    impMarker.done(IMPORT_STATEMENT);
+    return true;
+  }
+
+  public static void parseAfterModifiers(PsiBuilder builder) {
     ParserUtils.getToken(builder, kIMPORT, GroovyBundle.message("import.keyword.expected"));
     ParserUtils.getToken(builder, kSTATIC);
     if (!ImportReference.parse(builder)) {
       builder.error(GroovyBundle.message("import.identifier.expected"));
     }
 
-    impMarker.done(IMPORT_STATEMENT);
-
-    return true;
   }
-
 }

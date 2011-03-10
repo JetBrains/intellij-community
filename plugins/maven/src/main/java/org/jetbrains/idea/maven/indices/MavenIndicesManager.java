@@ -35,12 +35,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.facade.MavenFacadeDownloadListener;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
@@ -57,7 +57,7 @@ public class MavenIndicesManager {
   private static final String ELEMENT_DESCRIPTION = "description";
 
   private static final String LOCAL_REPOSITORY_ID = "local";
-  private MavenFacadeDownloadListener myDownloadListener;
+  private MavenServerDownloadListener myDownloadListener;
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -96,14 +96,14 @@ public class MavenIndicesManager {
   private synchronized void ensureInitialized() {
     if (myIndices != null) return;
 
-    myIndexer = MavenFacadeManager.getInstance().createIndexer();
+    myIndexer = MavenServerManager.getInstance().createIndexer();
 
-    myDownloadListener = new MavenFacadeDownloadListener() {
+    myDownloadListener = new MavenServerDownloadListener() {
       public void artifactDownloaded(File file, String relativePath) {
         addArtifact(file, relativePath);
       }
     };
-    MavenFacadeManager.getInstance().addDownloadListener(myDownloadListener);
+    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
 
     myIndices = new MavenIndices(myIndexer, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
@@ -135,7 +135,7 @@ public class MavenIndicesManager {
 
   private synchronized void doShutdown() {
     if (myDownloadListener != null) {
-      MavenFacadeManager.getInstance().removeDownloadListener(myDownloadListener);
+      MavenServerManager.getInstance().removeDownloadListener(myDownloadListener);
       myDownloadListener = null;
     }
 

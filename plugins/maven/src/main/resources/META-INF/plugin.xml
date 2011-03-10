@@ -20,7 +20,7 @@
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
 
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.facade.MavenFacadeManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenRepositoryServicesManager"/>
 

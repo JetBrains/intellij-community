@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatur
 import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableHandler;
 
 /**
@@ -78,6 +79,11 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   @Override
   public RefactoringActionHandler getIntroduceFieldHandler() {
     return new GrIntroduceFieldHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceParameterHandler() {
+    return new GrIntroduceParameterHandler();
   }
 
   @Override

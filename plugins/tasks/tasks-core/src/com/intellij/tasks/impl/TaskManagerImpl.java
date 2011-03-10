@@ -1,10 +1,14 @@
 package com.intellij.tasks.impl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,7 +26,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -39,8 +44,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -369,18 +375,43 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public boolean testConnection(final TaskRepository repository) {
 
-    MyProgressTask task = new MyProgressTask("Test connection") {
+    TestConnectionTask task = new TestConnectionTask("Test connection") {
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Connecting...");
+        indicator.setText("Connecting to " + repository.getUrl() + "...");
         indicator.setFraction(0);
         indicator.setIndeterminate(true);
-        try {
-          myThread = Thread.currentThread();
-          repository.testConnection();
+        myConnection = repository.createCancellableConnection();
+        if (myConnection != null) {
+          Future<Exception> future = ApplicationManager.getApplication().executeOnPooledThread(myConnection);
+          while (true) {
+            try {
+              myException = future.get(100, TimeUnit.MILLISECONDS);
+              return;
+            }
+            catch (TimeoutException ignore) {
+              try {
+                indicator.checkCanceled();
+              }
+              catch (ProcessCanceledException e) {
+                myException = e;
+                myConnection.cancel();
+                return;
+              }
+            }
+            catch (Exception e) {
+              myException = e;
+              return;
+            }
+          }
         }
-        catch (Exception e) {
-          LOG.info(e);
-          myException = e;
+        else {
+          try {
+            repository.testConnection();
+          }
+          catch (Exception e) {
+            LOG.info(e);
+            myException = e;
+          }
         }
       }
     };
@@ -388,7 +419,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     Exception e = task.myException;
     if (e == null) {
       Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
-    } else {
+    }
+    else if (!(e instanceof ProcessCanceledException)) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Error");
     }
     return e == null;
@@ -753,19 +785,21 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public Element servers = new Element("servers");
   }
 
-  private abstract class MyProgressTask extends com.intellij.openapi.progress.Task.Modal {
+  private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {
 
-    protected Thread myThread;
     protected Exception myException;
 
-    public MyProgressTask(String title) {
+    @Nullable
+    protected TaskRepository.CancellableConnection myConnection;
+
+    public TestConnectionTask(String title) {
       super(TaskManagerImpl.this.myProject, title, true);
     }
 
     @Override
     public void onCancel() {
-      if (myThread != null) {
-        myThread.interrupt();
+      if (myConnection != null) {
+        myConnection.cancel();
       }
     }
   }

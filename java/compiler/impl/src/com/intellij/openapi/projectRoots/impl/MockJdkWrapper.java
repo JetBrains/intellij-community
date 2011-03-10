@@ -55,10 +55,12 @@ public final class MockJdkWrapper implements Sdk {
     return StringUtil.trimEnd(homePath, File.separator);
   }
 
+  @NotNull
   public SdkType getSdkType() {
     return myDelegate.getSdkType();
   }
 
+  @NotNull
   public String getName() {
     return myDelegate.getName();
   }
@@ -67,6 +69,7 @@ public final class MockJdkWrapper implements Sdk {
     return myDelegate.getVersionString();
   }
 
+  @NotNull
   public RootProvider getRootProvider() {
     return myDelegate.getRootProvider();
   }
@@ -79,6 +82,7 @@ public final class MockJdkWrapper implements Sdk {
     myDelegate.putUserData(key, value);
   }
 
+  @NotNull
   public Object clone() throws CloneNotSupportedException {
     throw new CloneNotSupportedException();
   }
@@ -87,6 +91,7 @@ public final class MockJdkWrapper implements Sdk {
     return null;
   }
 
+  @NotNull
   public SdkModificator getSdkModificator() {
     return null;
   }

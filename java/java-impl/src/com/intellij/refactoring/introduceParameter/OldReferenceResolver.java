@@ -35,7 +35,7 @@ import java.util.Set;
  *         Date: Apr 29, 2009 2:03:38 PM
  */
 public class OldReferenceResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldRefernceResolver");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");
 
   private final PsiCall myContext;
   private final PsiExpression myExpr;
@@ -46,13 +46,13 @@ public class OldReferenceResolver {
   private final Project myProject;
   private final PsiManager myManager;
   private final int myReplaceFieldsWithGetters;
-  private final PsiExpression myParameterInitializer;
+  private final PsiElement myParameterInitializer;
 
   public OldReferenceResolver(PsiCall context,
                               PsiExpression expr,
                               PsiMethod methodToReplaceIn,
                               int replaceFieldsWithGetters,
-                              PsiExpression parameterInitializer) throws IncorrectOperationException {
+                              PsiElement parameterInitializer) throws IncorrectOperationException {
     myContext = context;
     myExpr = expr;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
@@ -110,7 +110,7 @@ public class OldReferenceResolver {
       final JavaResolveResult adv = oldRef.advancedResolve(false);
       final PsiElement scope = getClassContainingResolve(adv);
       final PsiClass clss = PsiTreeUtil.getParentOfType(oldExpr, PsiClass.class);
-      if (clss != null && scope != null && PsiTreeUtil.isAncestor(clss, scope, false)) {
+      if (clss != null && scope != null ) {
 
         final PsiElement subj = adv.getElement();
 
@@ -118,7 +118,6 @@ public class OldReferenceResolver {
         // Parameters
         if (subj instanceof PsiParameter) {
           PsiParameterList parameterList = myMethodToReplaceIn.getParameterList();
-          PsiParameter[] parameters = parameterList.getParameters();
 
           if (subj.getParent() != parameterList) return;
           int index = parameterList.getParameterIndex((PsiParameter)subj);
@@ -133,7 +132,7 @@ public class OldReferenceResolver {
           }
         }
         // "naked" field and methods  (should become qualified)
-        else if ((subj instanceof PsiField || subj instanceof PsiMethod) && oldRef.getQualifierExpression() == null) {
+        else if ((subj instanceof PsiField || subj instanceof PsiMethod) && oldRef.getQualifierExpression() == null && PsiTreeUtil.isAncestor(clss, scope, false)) {
 
           boolean isStatic = subj instanceof PsiField && ((PsiField)subj).hasModifierProperty(PsiModifier.STATIC) ||
                              subj instanceof PsiMethod && ((PsiMethod)subj).hasModifierProperty(PsiModifier.STATIC);
@@ -151,7 +150,7 @@ public class OldReferenceResolver {
           }
         }
 
-        if (subj instanceof PsiField) {
+        if (subj instanceof PsiField && PsiTreeUtil.isAncestor(clss, scope, false)) {
           // probably replacing field with a getter
           if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
             if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||

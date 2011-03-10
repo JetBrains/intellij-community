@@ -48,11 +48,11 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -546,7 +546,7 @@ public class MavenUtil {
 
   public static String expandProperties(String text) {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
-    Properties props = MavenFacadeUtil.collectSystemProperties();
+    Properties props = MavenServerUtil.collectSystemProperties();
     for (Map.Entry<Object, Object> each : props.entrySet()) {
       Object val = each.getValue();
       text = text.replace("${" + each.getKey() + "}", val instanceof CharSequence ? (CharSequence)val : val.toString());
@@ -561,7 +561,7 @@ public class MavenUtil {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
     if (result == null) {
-      result = doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
+      result = doResolveSuperPomFile(MavenServerManager.collectClassPathAndLibsFolder().second);
     }
     return result;
   }

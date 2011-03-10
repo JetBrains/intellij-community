@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 
 public class MavenEmbeddersManagerTest extends MavenTestCase {
   private MavenEmbeddersManager myManager;

@@ -455,23 +455,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           if (argInfo.isMultiArg) { //arguments for Map and varArg
             if ((i != 0 || !(arguments.size() > 0 && arguments.iterator().next() instanceof GrNamedArgument)) &&
                 (i != parameters.length - 1 || !parameter.isVarargType())) {
-              StringBuilder argText = new StringBuilder();
-              argText.append("[");
-              for (PsiElement argument : arguments) {
-                argText.append(argument.getText()).append(", ");
-                argument.delete();
-              }
-              argText.replace(argText.length() - 2, argText.length(), "]");
-              PsiType type = parameter.createType(changeInfo.getMethod().getParameterList(), argumentList.getManager());
-              if (type instanceof PsiArrayType) {
-                type = substitutor.substitute(type);
-                String typeText = type.getCanonicalText();
-                if (type instanceof PsiEllipsisType) {
-                  typeText = typeText.replace("...", "[]");
-                }
-                argText.append(" as ").append(typeText);
-              }
-              anchor = argumentList.addAfter(factory.createExpressionFromText(argText.toString()), anchor);
+              final PsiType type = parameter.createType(changeInfo.getMethod().getParameterList(), argumentList.getManager());
+              final GrExpression arg = GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, arguments, type, element.getProject());
+              anchor = argumentList.addAfter(arg, anchor);
               PsiUtil.shortenReferences((GroovyPsiElement)anchor);
             }
           }

@@ -19,7 +19,7 @@ import com.intellij.execution.process.ProcessHandler;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.facade.MavenFacadeConsole;
+import org.jetbrains.idea.maven.server.MavenServerConsole;
 
 import java.text.MessageFormat;
 import java.util.Map;
@@ -38,11 +38,11 @@ public abstract class MavenConsole {
   private static final Map<Integer, String> LEVEL_TO_PREFIX = new THashMap<Integer, String>();
 
   static {
-    map("DEBUG", MavenFacadeConsole.LEVEL_DEBUG);
-    map("INFO", MavenFacadeConsole.LEVEL_INFO);
-    map("WARNING", MavenFacadeConsole.LEVEL_WARN);
-    map("ERROR", MavenFacadeConsole.LEVEL_ERROR);
-    map("FATAL_ERROR", MavenFacadeConsole.LEVEL_FATAL);
+    map("DEBUG", MavenServerConsole.LEVEL_DEBUG);
+    map("INFO", MavenServerConsole.LEVEL_INFO);
+    map("WARNING", MavenServerConsole.LEVEL_WARN);
+    map("ERROR", MavenServerConsole.LEVEL_ERROR);
+    map("FATAL_ERROR", MavenServerConsole.LEVEL_FATAL);
   }
 
   private static void map(String prefix, int level) {
@@ -79,7 +79,7 @@ public abstract class MavenConsole {
   public abstract void attachToProcess(ProcessHandler processHandler);
 
   public void printException(Throwable throwable) {
-    systemMessage(MavenFacadeConsole.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);
+    systemMessage(MavenServerConsole.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);
   }
 
   public void systemMessage(int level, String string, Throwable throwable) {
@@ -91,15 +91,15 @@ public abstract class MavenConsole {
 
     OutputType type = OutputType.NORMAL;
     if (throwable != null
-        || level == MavenFacadeConsole.LEVEL_WARN
-        || level == MavenFacadeConsole.LEVEL_ERROR
-        || level == MavenFacadeConsole.LEVEL_FATAL) {
+        || level == MavenServerConsole.LEVEL_WARN
+        || level == MavenServerConsole.LEVEL_ERROR
+        || level == MavenServerConsole.LEVEL_FATAL) {
       type = OutputType.ERROR;
     }
 
     doPrint(composeLine(level, string), type);
 
-    if (level == MavenFacadeConsole.LEVEL_FATAL) {
+    if (level == MavenServerConsole.LEVEL_FATAL) {
       setOutputPaused(false);
     }
 
@@ -107,7 +107,7 @@ public abstract class MavenConsole {
       String message = throwable.getMessage();
       if (message != null) {
         message += LINE_SEPARATOR;
-        doPrint(LINE_SEPARATOR + composeLine(MavenFacadeConsole.LEVEL_ERROR, message), type);
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, message), type);
       }
     }
   }
@@ -171,7 +171,7 @@ public abstract class MavenConsole {
 
   private static int getLevelByPrefix(String prefix) {
     Integer level = PREFIX_TO_LEVEL.get(prefix);
-    return level != null ? level : MavenFacadeConsole.LEVEL_WARN;
+    return level != null ? level : MavenServerConsole.LEVEL_WARN;
   }
 
   private static String composeLine(int level, String message) {

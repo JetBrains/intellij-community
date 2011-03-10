@@ -102,6 +102,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
                                           LookupItem delegate,
                                           final PsiClass psiClass,
                                           final boolean forAnonymous) {
+    if (context.getCompletionChar() == '[') {
+      return false;
+    }
+
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;
@@ -114,7 +118,16 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
 
+    int identifierEnd = context.getTailOffset();
+
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
+
+    if (context.getCompletionChar() == '<') {
+      context.getDocument().insertString(identifierEnd, "<>");
+      context.setAddCompletionChar(false);
+      context.getEditor().getCaretModel().moveToOffset(identifierEnd + 1);
+    }
+
     return hasParams;
   }
 

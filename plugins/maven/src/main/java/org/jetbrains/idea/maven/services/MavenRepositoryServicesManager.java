@@ -31,7 +31,6 @@ import org.jetbrains.idea.maven.services.nexus.NexusRepositoryService;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,7 +109,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   @NotNull
-  public static List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) throws RemoteException {
+  public static List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) {
     List<MavenArtifactInfo> result = new SmartList<MavenArtifactInfo>();
     for (MavenRepositoryService service : getServices()) {
       try {

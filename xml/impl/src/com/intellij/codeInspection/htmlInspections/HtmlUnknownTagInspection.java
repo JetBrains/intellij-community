@@ -194,18 +194,42 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     return myCustomValuesEnabled;
   }
 
+  private static boolean isInRightPlace(@NotNull XmlTag tag, @NotNull XmlElementDescriptor tagDescriptor) {
+    XmlTag parentTag = tag.getParentTag();
+    if (parentTag == null) {
+      return true;
+    }
+    XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
+    if (parentDescriptor == null) {
+      return true;
+    }
+    XmlElementDescriptor[] suitableChildDescriptors = parentDescriptor.getElementsDescriptors(parentTag);
+    for (XmlElementDescriptor descriptor : suitableChildDescriptors) {
+      if (descriptor.getName().equalsIgnoreCase(tagDescriptor.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (XmlHighlightVisitor.skipValidation(tag)) {
       return;
     }
     final XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (tag instanceof HtmlTag && (descriptor instanceof AnyXmlElementDescriptor || descriptor == null)) {
+    if (tag instanceof HtmlTag &&
+        (descriptor == null || descriptor instanceof AnyXmlElementDescriptor || !isInRightPlace(tag, descriptor))) {
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
         final AddCustomTagOrAttributeIntentionAction action =
           new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
-        final String message = XmlErrorMessages.message("unknown.html.tag", name);
+
+        // todo: support "element is not allowed" message for html5
+        // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
+        final String message = descriptor == null || descriptor instanceof AnyXmlElementDescriptor
+                               ? XmlErrorMessages.message("unknown.html.tag", name)
+                               : XmlErrorMessages.message("element.is.not.allowed.here", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
         assert startTagName != null;

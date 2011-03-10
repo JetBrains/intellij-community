@@ -19,14 +19,13 @@ package com.intellij.find.impl.livePreview;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -34,12 +33,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -68,12 +65,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private RangeHighlighter myCursorHighlighter;
   private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
 
-  private static final TextAttributes EXCLUDED_TARGET_ATTRIBUTES = new TextAttributes(Color.BLACK, Color.YELLOW,
-                                                                                      Color.BLACK, EffectType.STRIKEOUT, 0);
+  private static TextAttributes strikout(TextAttributes attributes) {
+    TextAttributes textAttributes = attributes.clone();
+    textAttributes.setEffectColor(Color.BLACK);
+    textAttributes.setEffectType(EffectType.STRIKEOUT);
+    return textAttributes;
+  }
 
   private static final TextAttributes OTHER_TARGETS_ATTRIBUTES = new TextAttributes(Color.BLACK, Color.GREEN, null, null, 0);
-
-  private static final TextAttributes MAIN_TARGET_ATTRIBUTES = new TextAttributes(Color.BLACK, Color.YELLOW, null, null, 0);
 
   private Delegate myDelegate;
 
@@ -137,10 +136,9 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     Editor editor = mySearchResults.getEditor();
     if (cursor != null) {
       ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
-      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, null, null, 0), dummy);
+      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.get(0);
-        myCursorHighlighter.setCustomRenderer(new CursorRenderer());
       }
 
       if (!SearchResults.insideVisibleArea(editor, cursor.getPrimaryRange()) && scroll) {
@@ -207,10 +205,13 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       for (TextRange textRange : o.getSecondaryRanges()) {
         highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES, myHighlighters);
       }
+      TextAttributes attrs = EditorColorsManager.getInstance().
+        getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+
       if (mySearchResults.isExcluded(o)) {
-        highlightRange(o.getPrimaryRange(), EXCLUDED_TARGET_ATTRIBUTES, myHighlighters);
+        highlightRange(o.getPrimaryRange(), strikout(attrs), myHighlighters);
       } else {
-        highlightRange(o.getPrimaryRange(), MAIN_TARGET_ATTRIBUTES, myHighlighters);
+        highlightRange(o.getPrimaryRange(), attrs, myHighlighters);
       }
     }
   }
@@ -262,37 +263,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
   }
 
-
-
-  private static class CursorRenderer implements CustomHighlighterRenderer {
-    @Override
-    public void paint(Editor editor, RangeHighlighter highlighter, Graphics g) {
-      Document document = editor.getDocument();
-      int offset = highlighter.getStartOffset();
-      while (offset < highlighter.getEndOffset()) {
-        int line = document.getLineNumber(offset);
-        int newOffset = document.getLineEndOffset(line);
-        newOffset = Math.min(highlighter.getEndOffset(), newOffset);
-        drawSegment(editor, new TextRange(offset, newOffset), g);
-        offset = newOffset+1;
-      }
-    }
-
-    private static void drawSegment(Editor editor, Segment highlighter, Graphics g) {
-      Graphics2D g2d = (Graphics2D)g;
-      VisualPosition startVp = editor.offsetToVisualPosition(highlighter.getStartOffset());
-      VisualPosition endVp = editor.offsetToVisualPosition(highlighter.getEndOffset());
-      Point start = editor.visualPositionToXY(startVp);
-      Point end = editor.visualPositionToXY(endVp);
-      g2d.setColor(new Color(50, 50, 50));
-      g2d.translate(0, start.y - 4);
-      Color c1 = new Color(220, 200, 130);
-      Color c2 = new Color(220, 170, 30);
-      int endX = start.x != end.x ? end.x : end.x + 2;
-      UIUtil.drawSearchMatch(g2d, start.x - 1, endX + 1, editor.getLineHeight() + 2 * 4, c1, c2);
-      g2d.translate(0, -start.y + 4);
-    }
-  }
 
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;

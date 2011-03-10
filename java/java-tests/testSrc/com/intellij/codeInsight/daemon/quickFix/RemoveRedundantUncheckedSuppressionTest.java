@@ -15,15 +15,87 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.RedundantUncheckedSuppressWarningsInspection;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefFileImpl;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 
 public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantUncheckedSuppressWarningsInspection(),
+    final PossibleHeapPollutionVarargsInspection varargsInspection = new PossibleHeapPollutionVarargsInspection();
+    final UncheckedWarningLocalInspection warningLocalInspection = new UncheckedWarningLocalInspection();
+    final RedundantSuppressInspection inspection = new RedundantSuppressInspection(){
+      @Override
+      protected InspectionTool[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
+        return new InspectionTool[]{
+          new LocalInspectionToolWrapper(varargsInspection),
+          new LocalInspectionToolWrapper(warningLocalInspection)
+        };
+      }
+    };
+
+    return new LocalInspectionTool[] {
+      new LocalInspectionTool() {
+        @Nls
+        @NotNull
+        @Override
+        public String getGroupDisplayName() {
+          return inspection.getGroupDisplayName();
+        }
+
+        @Nls
+        @NotNull
+        @Override
+        public String getDisplayName() {
+          return inspection.getDisplayName();
+        }
+
+        @NotNull
+        @Override
+        public String getShortName() {
+          return inspection.getShortName();
+        }
+
+        @NotNull
+        @Override
+        public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                              boolean isOnTheFly,
+                                              LocalInspectionToolSession session) {
+          return new JavaElementVisitor() {
+            @Override
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            }
+
+            @Override
+            public void visitClass(PsiClass aClass) {
+              checkMember(aClass, inspection, holder);
+            }
+
+            @Override
+            public void visitMethod(PsiMethod method) {
+              checkMember(method, inspection, holder);
+            }
+          };
+        }
+
+        private void checkMember(PsiMember member, RedundantSuppressInspection inspection, ProblemsHolder holder) {
+          final ProblemDescriptor[] problemDescriptors =
+            (ProblemDescriptor[])inspection.checkElement(member, InspectionManager.getInstance(getProject()), getProject());
+          if (problemDescriptors != null) {
+            for (ProblemDescriptor problemDescriptor : problemDescriptors) {
+              holder.registerProblem(problemDescriptor);
+            }
+          }
+        }
+      },
+      varargsInspection,
+      warningLocalInspection
     };
   }
 

@@ -23,8 +23,8 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.List;
@@ -58,7 +58,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertModules("project");
     assertEquals("1", myProjectsTree.getRootProjects().get(0).getName());
 
-    MavenFacadeManager.getInstance().shutdown(true);
+    MavenServerManager.getInstance().shutdown(true);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

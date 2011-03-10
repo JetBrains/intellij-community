@@ -52,7 +52,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
 
   public static enum BrowserFamily {
     EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, IconLoader.getIcon("/xml/browsers/explorer16.png")),
-    SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
+    SAFARI(XmlBundle.message("browsers.safari"), "safari", null, "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
     OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera", IconLoader.getIcon("/xml/browsers/opera16.png")),
     FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", IconLoader.getIcon("/xml/browsers/firefox16.png")) {
       @Override
@@ -60,7 +60,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return new FirefoxSettings();
       }
     },
-    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
+    CHROME(XmlBundle.message("browsers.chrome"), "chrome", "google-chrome", null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
       @Override
       public BrowserSpecificSettings createBrowserSpecificSettings() {
         return new ChromeSettings();

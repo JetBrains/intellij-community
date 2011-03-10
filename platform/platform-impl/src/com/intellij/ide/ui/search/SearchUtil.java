@@ -447,7 +447,7 @@ public class SearchUtil {
                                           final String filter) {
     if (pos < end) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      final String[] words = text.substring(pos, end).split("[\\W&&[^_-]]");
+      final String[] words = text.substring(pos, end).split("[\\W&&[^-]]+");
       for (String word : words) {
         if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase()))) {
           selectedWords.add(word);

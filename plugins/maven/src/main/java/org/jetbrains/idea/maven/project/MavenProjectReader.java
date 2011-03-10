@@ -24,11 +24,11 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenWrapperExecutionResult;
-import org.jetbrains.idea.maven.facade.ProfileApplicationResult;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.ProfileApplicationResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -54,7 +54,7 @@ public class MavenProjectReader {
       doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<VirtualFile>(), locator);
 
     File basedir = getBaseDir(file);
-    MavenModel model = MavenFacadeManager.getInstance().interpolateAndAlignModel(readResult.first.model, basedir);
+    MavenModel model = MavenServerManager.getInstance().interpolateAndAlignModel(readResult.first.model, basedir);
 
     return new MavenProjectReaderResult(model,
                                         Collections.<String, String>emptyMap(),
@@ -354,7 +354,7 @@ public class MavenProjectReader {
                                                  File basedir,
                                                  Collection<String> explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    return MavenFacadeManager.getInstance().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    return MavenServerManager.getInstance().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,
@@ -422,7 +422,7 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      model = MavenFacadeManager.getInstance().assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().assembleInheritance(model, parentModel);
       List<MavenProfile> profiles = model.getProfiles();
       for (MavenProfile each : parentModel.getProfiles()) {
         addProfileIfDoesNotExist(each, profiles);
@@ -440,7 +440,7 @@ public class MavenProjectReader {
                                                  Collection<String> explicitProfiles,
                                                  MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
     try {
-      MavenWrapperExecutionResult result = embedder.resolveProject(file, explicitProfiles);
+      MavenServerExecutionResult result = embedder.resolveProject(file, explicitProfiles);
       if (result.projectData == null) {
         MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
         temp.readingProblems.addAll(result.problems);
@@ -481,7 +481,7 @@ public class MavenProjectReader {
                                                   MavenConsole console) throws MavenProcessCanceledException {
     try {
       List<String> goals = Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase());
-      MavenWrapperExecutionResult result = embedder.execute(file, profiles, goals);
+      MavenServerExecutionResult result = embedder.execute(file, profiles, goals);
       if (result.projectData == null) return null;
 
       return new MavenProjectReaderResult(result.projectData.mavenModel,

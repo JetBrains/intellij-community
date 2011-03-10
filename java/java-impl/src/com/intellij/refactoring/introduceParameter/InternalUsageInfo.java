@@ -31,7 +31,7 @@ import com.intellij.usageView.UsageInfo;
  * Usage of an expression in method
  */
 public class InternalUsageInfo extends UsageInfo {
-  InternalUsageInfo(PsiElement e) {
+  public InternalUsageInfo(PsiElement e) {
     super(e);
   }
 }

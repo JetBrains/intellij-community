@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.AnnotationDefinition;
@@ -41,27 +42,34 @@ public class TypeDefinition implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker tdMarker = builder.mark();
     Modifiers.parse(builder, parser);
+
+    final IElementType tdType = parseAfterModifiers(builder, parser);
+    if (tdType == WRONGWAY) {
+      tdMarker.rollbackTo();
+      return false;
+    }
+
+    tdMarker.done(tdType);
+    return true;
+  }
+
+  public static IElementType parseAfterModifiers(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() == kCLASS && ClassDefinition.parse(builder, parser)) {
-      tdMarker.done(CLASS_DEFINITION);
-      return true;
+      return CLASS_DEFINITION;
     }
 
     if (builder.getTokenType() == kINTERFACE && InterfaceDefinition.parse(builder, parser)) {
-      tdMarker.done(INTERFACE_DEFINITION);
-      return true;
+      return INTERFACE_DEFINITION;
     }
 
     if (builder.getTokenType() == kENUM && EnumDefinition.parse(builder, parser)) {
-      tdMarker.done(ENUM_DEFINITION);
-      return true;
+      return ENUM_DEFINITION;
     }
 
     if (builder.getTokenType() == mAT && AnnotationDefinition.parse(builder, parser)) {
-      tdMarker.done(ANNOTATION_DEFINITION);
-      return true;
+      return ANNOTATION_DEFINITION;
     }
 
-    tdMarker.rollbackTo();
-    return false;
+    return WRONGWAY;
   }
 }

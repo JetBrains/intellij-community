@@ -1047,20 +1047,11 @@ public class CompileDriver {
 
             final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
             if (!isRebuild && (compiledSomethingForThisChunk || hasUnprocessedTraverseRoots)) {
-              final Set<VirtualFile> compiledWithSuccess;
               final Set<VirtualFile> compiledWithErrors = CacheUtils.getFilesCompiledWithErrors(context);
-              if (compiledWithErrors.isEmpty()) {
-                compiledWithSuccess = sink.getCompiledSources();
-              }
-              else {
-                compiledWithSuccess = new HashSet<VirtualFile>();
-                compiledWithSuccess.addAll(sink.getCompiledSources());
-                compiledWithSuccess.removeAll(compiledWithErrors);
-              }
-              filesToRecompile.removeAll(compiledWithSuccess);
+              filesToRecompile.removeAll(sink.getCompiledSources());
               filesToRecompile.addAll(compiledWithErrors);
 
-              dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, dependencyFilter);
+              dependentFiles = CacheUtils.findDependentFiles(context, compiledWithErrors, dependencyFilter);
               if (!processedModules.isEmpty()) {
                 for (Iterator<VirtualFile> it = dependentFiles.iterator(); it.hasNext();) {
                   final VirtualFile next = it.next();

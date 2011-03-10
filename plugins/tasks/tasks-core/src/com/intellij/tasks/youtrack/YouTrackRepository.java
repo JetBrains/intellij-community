@@ -71,14 +71,20 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     return taskList.toArray(new Task[taskList.size()]);
   }
 
-  public void testConnection() throws Exception {
-    getIssues(null, 10, 0);
+  @Override
+  public CancellableConnection createCancellableConnection() {
+    PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
+    return new HttpTestConnection<PostMethod>(method) {
+      @Override
+      protected void doTest(PostMethod method) throws Exception {
+        login(method);
+      }
+    };
   }
 
-  private HttpClient login() throws Exception {
+  private HttpClient login(PostMethod method) throws Exception {
     HttpClient client = getHttpClient();
     client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
-    PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
     configureHttpMethod(method);
     method.addParameter("login", getUsername());
     method.addParameter("password", getPassword());
@@ -111,7 +117,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
 
   private HttpMethod doREST(String request, boolean post) throws Exception {
-    HttpClient client = login();
+    HttpClient client = login(new PostMethod(getUrl() + "/rest/user/login"));
     String uri = getUrl() + request;
     HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     configureHttpMethod(method);

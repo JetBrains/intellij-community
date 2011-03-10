@@ -1,4 +1,4 @@
-// "Remove redundant "unchecked" suppression" "true"
+// "Remove 'unchecked' suppression" "true"
 import java.util.*;
 
 public class Test {
@@ -7,8 +7,8 @@ public class Test {
     return null;
   }
 
-  void foo() {
-    //noinspection unc<caret>hecked
+  void fo<caret>o() {
+    //noinspection unchecked
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }
 }

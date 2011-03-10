@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -288,6 +289,8 @@ public class FrameWrapper implements Disposable, DataProvider {
     private MyJFrame(IdeFrame parent) throws HeadlessException {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+
+      MouseGestureManager.getInstance().add(this);
     }
 
     @Override
@@ -341,6 +344,9 @@ public class FrameWrapper implements Disposable, DataProvider {
     public void dispose() {
       if (myDisposing) return;
       myDisposing = true;
+
+      MouseGestureManager.getInstance().remove(this);
+
       saveFrameState(myDimensionKey, this);
       Disposer.dispose(FrameWrapper.this);
       myDatas.clear();

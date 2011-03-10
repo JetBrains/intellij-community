@@ -249,7 +249,7 @@ public class Endpoint {
         public Repositories(String url)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus", getClass().getClassLoader());
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();

@@ -18,13 +18,11 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +35,6 @@ import java.util.*;
  * Date: Jul 30, 2010
  */
 public class PsiDiamondType extends PsiType {
-  private static final PsiType[] NULL_TYPES = new PsiType[]{NULL};
   private PsiManager myManager;
   private final PsiTypeElement myTypeElement;
   private static final Logger LOG = Logger.getInstance("#" + PsiDiamondType.class.getName());
@@ -232,7 +229,7 @@ public class PsiDiamondType extends PsiType {
     public static final DiamondInferenceResult NULL_RESULT = new DiamondInferenceResult() {
       @Override
       public PsiType[] getTypes() {
-        return NULL_TYPES;
+        return PsiType.EMPTY_ARRAY;
       }
 
       @Override
@@ -257,7 +254,7 @@ public class PsiDiamondType extends PsiType {
 
     public PsiType[] getTypes() {
       if (myErrorMessage != null) {
-        return NULL_TYPES;
+        return PsiType.EMPTY_ARRAY;
       }
       final PsiType[] result = new PsiType[myInferredTypes.size()];
       for (int i = 0, myInferredTypesSize = myInferredTypes.size(); i < myInferredTypesSize; i++) {
@@ -273,6 +270,9 @@ public class PsiDiamondType extends PsiType {
       return result;
     }
 
+    /**
+     * @return all inferred types even if inference failed
+     */
     public List<PsiType> getInferredTypes() {
       return myInferredTypes;
     }

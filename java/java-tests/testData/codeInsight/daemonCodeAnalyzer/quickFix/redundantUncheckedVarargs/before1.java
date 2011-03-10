@@ -1,4 +1,4 @@
-// "Remove redundant "unchecked" suppression" "true"
+// "Remove 'unchecked' suppression" "true"
 import java.util.ArrayList;
 
 public class Test {
@@ -6,8 +6,8 @@ public class Test {
   static <T> void foo(T... t){
   }
 
-  void foo() {
-    //noinspection unc<caret>hecked
+  void fo<caret>o() {
+    //noinspection unchecked
     foo(new ArrayList<String>());
   }
 }

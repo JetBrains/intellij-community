@@ -18,6 +18,7 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,24 +26,30 @@ import org.jetbrains.annotations.Nullable;
  *         Date: Sep 23, 2004
  */
 public interface Sdk extends UserDataHolder {
-
+  @NotNull
   SdkType getSdkType();
 
+  @NotNull
   String getName();
 
   @Nullable
   String getVersionString();
 
+  @Nullable
   String getHomePath();
-
-  RootProvider getRootProvider();
-
-  SdkAdditionalData getSdkAdditionalData();
-
-  SdkModificator getSdkModificator();
 
   @Nullable
   VirtualFile getHomeDirectory();
 
+  @NotNull
+  RootProvider getRootProvider();
+
+  @NotNull
+  SdkModificator getSdkModificator();
+
+  @Nullable
+  SdkAdditionalData getSdkAdditionalData();
+
+  @NotNull
   Object clone() throws CloneNotSupportedException;
 }

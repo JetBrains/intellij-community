@@ -126,11 +126,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByFile(vFile, projectFile);
   }
 
-  protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
+  protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Exception {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, final String _extension) throws Throwable {
+  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, final String _extension) throws Exception {
     final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
     File dir = createTempDirectory();
@@ -139,7 +139,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(Result result) throws Throwable {
+        protected void run(Result result) throws Exception {
           fileTypeManager.associateExtension(fileType, extension);
         }
       }.execute();
