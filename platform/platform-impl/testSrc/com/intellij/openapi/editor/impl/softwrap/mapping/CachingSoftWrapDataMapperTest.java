@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;

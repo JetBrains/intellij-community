@@ -20,7 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
+import com.intellij.openapi.editor.impl.BulkChangesMerger;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -44,7 +45,6 @@ class FormatProcessor {
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
-  private static final BulkChangesMerger ourBulkChangesMerger = new BulkChangesMerger();
 
   private LeafBlockWrapper myCurrentBlock;
 
@@ -298,7 +298,7 @@ class FormatProcessor {
       );
       changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
     }
-    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), document.getTextLength(), changes);
+    CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
     cleanupBlocks(blocksToModify);
     return true;
