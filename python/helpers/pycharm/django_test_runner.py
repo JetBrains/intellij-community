@@ -16,8 +16,10 @@ def get_test_suite_runner():
 
 try:
   from django.test.simple import DjangoTestSuiteRunner
-
+  from inspect import isfunction
   SUITE_RUNNER = get_test_suite_runner()
+  if isfunction(SUITE_RUNNER):
+    SUITE_RUNNER = None
   BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
 
   class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
