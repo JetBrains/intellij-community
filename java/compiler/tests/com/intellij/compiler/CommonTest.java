@@ -13,6 +13,8 @@ public class CommonTest extends CompilerTestCase {
 
   public void testDeleteClass()  throws Exception {doTest();}
   
+  public void testDeleteClass2()  throws Exception {doTest();}
+  
   public void testDeleteClassPackageDoesntMatchRoot()  throws Exception {doTest();}
 
   // TODO: SCR 10823
