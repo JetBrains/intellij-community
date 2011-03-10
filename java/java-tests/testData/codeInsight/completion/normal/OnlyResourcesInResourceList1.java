@@ -1,6 +1,6 @@
 class MyClass {
   void f() {
-    try (<caret>) {
+    try (A<caret>) {
     }
   }
 }

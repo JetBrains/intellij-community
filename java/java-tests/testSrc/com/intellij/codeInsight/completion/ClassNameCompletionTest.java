@@ -221,16 +221,6 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");
   }
 
-  public void testInMultiCatchType1() throws Exception { doJavaTest(); }
-
-  public void testInMultiCatchType2() throws Exception { doJavaTest(); }
-
-  public void testInResourceList1() throws Exception { doJavaTest(); }
-
-  public void testInResourceList2() throws Exception { doJavaTest(); }
-
-  public void testInResourceList3() throws Exception { doJavaTest(); }
-
   private void doJavaTest() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
     configureByFileNoCompletion(path + "/" + getTestName(false) + "-source.java");
