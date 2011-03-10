@@ -98,5 +98,20 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "switch "
   }
 
+  public void testSwitchCaseDot() throws Exception {
+    checkReparse """
+  def foo() {
+    switch(x) {
+      case 2:
+        return <caret>
+      case 3:
+        return false
+      case 4:
+        return false
+    }
+  }
+""", "foo."
+  }
+
 
 }

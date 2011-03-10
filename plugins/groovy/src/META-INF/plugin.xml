@@ -105,6 +105,8 @@
     <constantExpressionEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
     <annotationSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GroovyAnnotationSupport"/>
 
+    <expressionConverter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyExpressionConverter"/>
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
 

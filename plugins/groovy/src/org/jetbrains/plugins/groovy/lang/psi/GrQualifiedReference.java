@@ -27,4 +27,7 @@ public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQ
   Qualifier getQualifier();
 
   void setQualifier(@Nullable Qualifier qualifier);
+
+  @Nullable
+  PsiElement getReferenceNameElement();
 }

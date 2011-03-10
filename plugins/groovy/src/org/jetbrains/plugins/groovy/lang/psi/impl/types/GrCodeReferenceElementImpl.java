@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -86,22 +85,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   public GrCodeReferenceElement getQualifier() {
     return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
-  }
-
-  public void setQualifier(@Nullable GrCodeReferenceElement newQualifier) {
-    final GrCodeReferenceElement qualifier = getQualifier();
-    if (newQualifier == null) {
-      if (qualifier == null) return;
-      getNode().removeRange(getNode().getFirstChildNode(), getReferenceNameElement().getNode());
-    } else {
-      if (qualifier == null) {
-        final ASTNode refNameNode = getReferenceNameElement().getNode();
-        getNode().addChild(newQualifier.getNode(), refNameNode);
-        getNode().addLeaf(GroovyTokenTypes.mDOT, ".", refNameNode);
-      } else {
-        getNode().replaceChild(qualifier.getNode(), newQualifier.getNode());
-      }
-    }
   }
 
   enum ReferenceKind {

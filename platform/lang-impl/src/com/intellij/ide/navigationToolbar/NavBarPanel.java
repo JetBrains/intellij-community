@@ -205,7 +205,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     return false;
   }
 
-  private static Object optimizeTarget(Object target) {
+  static Object optimizeTarget(Object target) {
     if (target instanceof PsiDirectory && ((PsiDirectory)target).getFiles().length == 0) {
       final PsiDirectory[] subDir = ((PsiDirectory)target).getSubdirectories();
       if (subDir.length == 1) {
@@ -487,7 +487,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       || (myNodeHint != null && myNodeHint.isVisible());
   }
 
-  private void navigateInsideBar(final Object object) {
+  void navigateInsideBar(final Object object) {
     myContextObject = null;
 
     myUpdateQueue.cancelAllUpdates();

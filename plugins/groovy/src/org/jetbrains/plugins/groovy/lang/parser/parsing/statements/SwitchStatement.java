@@ -104,6 +104,13 @@ public class SwitchStatement implements GroovyElementTypes {
         parser.parseSwitchCaseList(builder);
       }
       sectionMarker.done(CASE_SECTION);
+
+      if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT && builder.getTokenType() != mRCURLY) {
+        builder.error("case, default or } expected");
+        while (!builder.eof() && builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT && builder.getTokenType() != mRCURLY) {
+          builder.advanceLexer();
+        }
+      }
     }
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
   }

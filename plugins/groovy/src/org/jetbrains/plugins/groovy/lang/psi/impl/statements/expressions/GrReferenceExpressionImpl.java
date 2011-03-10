@@ -129,7 +129,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiField) {
         final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return fieldCandidates;
+        if (containingClass != null && PsiTreeUtil.isContextAncestor(containingClass, this, true)) return fieldCandidates;
       }
       else {
         return fieldCandidates;
@@ -227,7 +227,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         final PsiElement element = candidate.getElement();
         if (element instanceof GrField) {
           final PsiClass containingClass = ((PsiField)element).getContainingClass();
-          if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, this, true)) return propertyCandidates;
+          if (containingClass != null && PsiTreeUtil.isContextAncestor(containingClass, this, true)) return propertyCandidates;
         }
       }
     }
@@ -881,29 +881,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
     return RESOLVER.resolve(this, true);
-  }
-
-  public void setQualifier(GrExpression newQualifier) {
-    final GrExpression oldQualifier = getQualifierExpression();
-    final ASTNode node = getNode();
-    final PsiElement refNameElement = getReferenceNameElement();
-    if (newQualifier == null) {
-      if (oldQualifier != null) {
-        if (refNameElement != null) {
-          node.removeRange(node.getFirstChildNode(), refNameElement.getNode());
-        }
-      }
-    } else {
-      if (oldQualifier != null) {
-        node.replaceChild(oldQualifier.getNode(), newQualifier.getNode());
-      } else {
-        if (refNameElement != null) {
-          node.addChild(newQualifier.getNode(), refNameElement.getNode());
-          node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
-        }
-      }
-    }
-
   }
 
   public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) {

@@ -31,6 +31,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 
+import java.awt.event.InputEvent;
+
 /**
  * @author peter
  */
@@ -53,7 +55,8 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
       case CLASS_NAME: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME);
     }
 
-    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor, 1, e.getInputEvent().getModifiers() != 0);
+    final InputEvent inputEvent = e.getInputEvent();
+    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor, 1, inputEvent != null && inputEvent.getModifiers() != 0);
   }
 
   @Override

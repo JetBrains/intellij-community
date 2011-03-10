@@ -36,7 +36,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
   public PsiType getType() {
     final GrReferenceExpression qualifier = getQualifier();
     if (qualifier == null) {
-      GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GroovyFile.class);
+      GroovyPsiElement context = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, GroovyFile.class);
       if (context instanceof GrTypeDefinition) {
         return createType((PsiClass)context);
       }
@@ -86,7 +86,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
       return qualifier.resolve();
     }
 
-    final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, true, GroovyFile.class);
+    final GrTypeDefinition containingClass = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, true, GroovyFile.class);
     if (containingClass != null) return containingClass;
     final PsiFile containingFile = getContainingFile();
     if (containingFile instanceof GroovyFile) {

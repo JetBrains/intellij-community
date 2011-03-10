@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -28,7 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -81,34 +81,28 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     //if we insert parameter in method usage which is contained in method in which we insert this parameter too, we must insert parameter name instead of its initializer
     PsiMethod method = PsiTreeUtil.getParentOfType(argList, PsiMethod.class);
-    if (method != null && isMethodInUsages(data, method, usages)) {
+    if (method != null && IntroduceParameterUtil.isMethodInUsages(data, method, usages)) {
       argList
         .addAfter(JavaPsiFacade.getElementFactory(data.getProject()).createExpressionFromText(data.getParameterName(), argList), anchor);
     }
     else {
-      ChangeContextUtil.encodeContextInfo(data.getParameterInitializer(), true);
-      PsiExpression newArg = (PsiExpression)argList.addAfter(data.getParameterInitializer(), anchor);
+      PsiElement initializer =
+        ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), StdLanguages.JAVA, data.getProject());
+      assert initializer instanceof PsiExpression;
+      ChangeContextUtil.encodeContextInfo(initializer, true);
+      PsiExpression newArg = (PsiExpression)argList.addAfter(initializer, anchor);
       ChangeContextUtil.decodeContextInfo(newArg, null, null);
-      ChangeContextUtil.clearContextInfo(data.getParameterInitializer());
+      ChangeContextUtil.clearContextInfo(initializer);
+
       // here comes some postprocessing...
-      new OldReferenceResolver(callExpression, newArg, data.getMethodToReplaceIn(), data.getReplaceFieldsWithGetters(),
-                               data.getParameterInitializer()).resolve();
+      new OldReferenceResolver(callExpression, newArg, data.getMethodToReplaceIn(), data.getReplaceFieldsWithGetters(), initializer)
+        .resolve();
     }
 
 
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     LOG.assertTrue(argumentList != null, callExpression.getText());
     removeParametersFromCall(argumentList, data.getParametersToRemove());
-    return false;
-  }
-
-  private static boolean isMethodInUsages(IntroduceParameterData data, PsiMethod method, UsageInfo[] usages) {
-    PsiManager manager = PsiManager.getInstance(data.getProject());
-    for (UsageInfo info : usages) {
-      if (!(info instanceof DefaultConstructorImplicitUsageInfo) &&  manager.areElementsEquivalent(info.getElement(), method)) {
-        return true;
-      }
-    }
     return false;
   }
 

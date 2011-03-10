@@ -78,6 +78,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private PsiType myForcedType;
   private final TIntArrayList myParametersToRemove;
   private final PsiManager myManager;
+  private JavaExpressionWrapper myInitializerWrapper;
 
   /**
    * if expressionToSearch is null, search for localVariable
@@ -114,12 +115,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myManager = PsiManager.getInstance(project);
 
     myParametersToRemove = parametersToRemove;
+
+    myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
+  @NotNull
   public PsiType getForcedType() {
     return myForcedType;
   }
@@ -160,7 +164,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         else if (ref instanceof PsiClass) {
           result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
         }
-        else if (!insideMethodToBeReplaced(ref)) {
+        else if (!IntroduceParameterUtil.insideMethodToBeReplaced(ref, myMethodToReplaceIn)) {
           result.add(new ExternalUsageInfo(ref));
         }
         else {
@@ -256,7 +260,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       final Set<PsiElement> result = collector.myResult;
       if (!result.isEmpty()) {
         for (final UsageInfo usageInfo : usageArray) {
-          if (usageInfo instanceof ExternalUsageInfo && isMethodUsage(usageInfo)) {
+          if (usageInfo instanceof ExternalUsageInfo && IntroduceParameterUtil.isMethodUsage(usageInfo)) {
             final PsiElement place = usageInfo.getElement();
             for (PsiElement element : result) {
               if (element instanceof PsiField && myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) { //check getter access instead
@@ -281,13 +285,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         }
       }
     }
-  }
-
-  private static boolean isMethodUsage(UsageInfo usageInfo) {
-    for (IntroduceParameterMethodUsagesProcessor processor : IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      if (processor.isMethodUsage(usageInfo)) return true;
-    }
-    return false;
   }
 
   public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
@@ -331,20 +328,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
-  private boolean insideMethodToBeReplaced(PsiElement methodUsage) {
-    PsiElement parent = methodUsage.getParent();
-    while(parent != null) {
-      if (parent.equals(myMethodToReplaceIn)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
-    return false;
-  }
-
-  protected void refreshElements(PsiElement[] elements) {
-  }
-
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
@@ -360,29 +343,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         myParameterInitializer = RefactoringUtil.convertInitializerToNormalExpression(myParameterInitializer, initializerType);
       }
 
+      myInitializerWrapper = new JavaExpressionWrapper(myParameterInitializer);
+
       // Changing external occurences (the tricky part)
-      
-      for (UsageInfo usage : usages) {
-        if (!(usage instanceof InternalUsageInfo)) {
-          if (usage instanceof DefaultConstructorImplicitUsageInfo) {
-            addSuperCall(usage, usages);
-          }
-          else if (usage instanceof NoConstructorClassUsageInfo) {
-            addDefaultConstructor(usage, usages);
-          }
-          else {
-            PsiElement element = usage.getElement();
-            if (element instanceof PsiMethod) {
-              if (!myManager.areElementsEquivalent(element, myMethodToReplaceIn)) {
-                changeMethodSignatureAndResolveFieldConflicts(usage, usages);
-              }
-            }
-            else if (!myGenerateDelegate) {
-              changeExternalUsage(usage, usages);
-            }
-          }
-        }
-      }
+
+      IntroduceParameterUtil.processUsages(usages, this);
 
       if (myGenerateDelegate) {
         generateDelegate(myMethodToReplaceIn);
@@ -401,9 +366,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
       LOG.assertTrue(initializerType.isValid());
       final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(myParameterName, myMethodToReplaceIn.getBody());
-      changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToReplaceIn), usages);
+      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToReplaceIn), usages, this);
       if (myMethodToSearchFor != myMethodToReplaceIn) {
-        changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToSearchFor), usages);
+        IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToSearchFor), usages, this);
       }
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 
@@ -469,18 +434,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return (PsiMethod)methodToReplaceIn.getContainingClass().addBefore(delegate, methodToReplaceIn);
   }
 
-  private void addDefaultConstructor(UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    for (IntroduceParameterMethodUsagesProcessor processor : IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      if (!processor.processAddDefaultConstructor(this, usage, usages)) break;
-    }
-  }
-
-  private void addSuperCall(UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    for (IntroduceParameterMethodUsagesProcessor processor : IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      if (!processor.processAddSuperCall(this, usage, usages)) break;
-    }
-  }
-
   static PsiType getInitializerType(PsiType forcedType, PsiExpression parameterInitializer, PsiLocalVariable localVariable) {
     final PsiType initializerType;
     if (forcedType == null) {
@@ -542,20 +495,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     });
   }
 
-  private void changeExternalUsage(UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    for (IntroduceParameterMethodUsagesProcessor processor: IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      if (!processor.processChangeMethodUsage(this, usage, usages)) break;
-    }
-  }
-
   protected String getCommandName() {
     return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myMethodToReplaceIn));
-  }
-
-  private void changeMethodSignatureAndResolveFieldConflicts(UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    for (IntroduceParameterMethodUsagesProcessor processor : IntroduceParameterMethodUsagesProcessor.EP_NAME.getExtensions()) {
-      if (!processor.processChangeMethodSignature(this, usage, usages)) break;
-    }
   }
 
   @Nullable
@@ -584,29 +525,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return myMethodToSearchFor;
   }
 
-  public PsiExpression getParameterInitializer() {
-    return myParameterInitializer;
-  }
-
-  public PsiExpression getExpressionToSearch() {
-    return myExpressionToSearch;
-  }
-
-  public PsiLocalVariable getLocalVariable() {
-    return myLocalVariable;
-  }
-
-  public boolean isRemoveLocalVariable() {
-    return myRemoveLocalVariable;
+  public JavaExpressionWrapper getParameterInitializer() {
+    return myInitializerWrapper;
   }
 
   @NotNull
   public String getParameterName() {
     return myParameterName;
-  }
-
-  public boolean isReplaceAllOccurences() {
-    return myReplaceAllOccurences;
   }
 
   public boolean isDeclareFinal() {
@@ -620,10 +545,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   @NotNull
   public TIntArrayList getParametersToRemove() {
     return myParametersToRemove;
-  }
-
-  public PsiManager getManager() {
-    return myManager;
   }
 
   @NotNull

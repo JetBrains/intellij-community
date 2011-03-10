@@ -15,11 +15,19 @@
  */
 package com.intellij.execution.rmi;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.naming.spi.InitialContextFactory;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Hashtable;
 import java.util.Random;
 
 public class RemoteServer {
@@ -28,6 +36,7 @@ public class RemoteServer {
 
   protected static void start(Remote remote) throws Exception {
     setupRMI();
+    banJNDI();
 
     if (ourRemote != null) throw new AssertionError("Already started");
 
@@ -70,5 +79,24 @@ public class RemoteServer {
     System.setProperty("java.rmi.server.hostname", "localhost");
     // do not use http tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
+  }
+
+  private static void banJNDI() {
+    if (System.getProperty(InitialContext.INITIAL_CONTEXT_FACTORY) == null) {
+      System.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "com.intellij.execution.rmi.RemoteServer$Jndi");
+    }
+  }
+
+  public static class Jndi implements InitialContextFactory, InvocationHandler {
+
+    @Override
+    public Context getInitialContext(final Hashtable<?, ?> environment) throws NamingException {
+      return (Context) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { Context.class}, this );
+    }
+
+    @Override
+    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+      return null;
+    }
   }
 }

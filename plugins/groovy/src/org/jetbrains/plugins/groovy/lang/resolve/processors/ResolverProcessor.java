@@ -70,6 +70,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     }
 
     if (myResolveTargetKinds.contains(getResolveKind(element))) {
+      //hack for resolve of java local vars and parameters
+      //don't check field for name because they can be aliased imported
+      if (element instanceof PsiVariable && !(element instanceof PsiField) &&
+          myName != null && !myName.equals(((PsiVariable)element).getName())) {
+        return true;
+      }
       PsiNamedElement namedElement = (PsiNamedElement)element;
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
