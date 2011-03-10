@@ -119,7 +119,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public boolean isNodePopupActive() {
     return (myNodePopup != null && myNodePopup.isVisible() && myNodePopup.isFocused())
-           || (myNodeHint != null && myNodeHint.isVisible() && myNodeHint.getComponent().hasFocus());
+           || (myNodeHint != null && myNodeHint.isVisible());
   }
 
   public LightweightHint getHint() {
@@ -153,8 +153,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void enter() {
-    final Object o = myModel.getSelectedValue();
-    navigateInsideBar(optimizeTarget(o));
+    navigateInsideBar(myModel.getSelectedValue());
   }
 
   public void moveHome() {
@@ -439,7 +438,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
             return doFinalStep(new Runnable() {
               public void run() {
-                navigateInsideBar(optimizeTarget(selectedValue));
+                navigateInsideBar(selectedValue);
               }
             });
           }
@@ -488,25 +487,26 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   void navigateInsideBar(final Object object) {
+    final Object obj = optimizeTarget(object);
     myContextObject = null;
 
     myUpdateQueue.cancelAllUpdates();
 
-    myUpdateQueue.queueModelUpdateForObject(object);
+    myUpdateQueue.queueModelUpdateForObject(obj);
     myUpdateQueue.queueRebuildUi();
 
     myUpdateQueue.queueAfterAll(new Runnable() {
       public void run() {
-        int index = myModel.indexOf(object);
+        int index = myModel.indexOf(obj);
         if (index >= 0) {
           myModel.setSelectedIndex(index);
         }
 
-        if (myModel.hasChildren(object)) {
+        if (myModel.hasChildren(obj)) {
           restorePopup();
         }
         else {
-          doubleClick(object);
+          doubleClick(obj);
         }
       }
     }, NavBarUpdateQueue.ID.NAVIGATE_INSIDE);
