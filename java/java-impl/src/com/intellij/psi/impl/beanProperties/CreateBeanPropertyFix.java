@@ -204,7 +204,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     final PsiMethod method = elementFactory.createMethodFromText(text, null);
     final PsiMethod psiElement = (PsiMethod)myPsiClass.add(method);
     if (!isInterface && !createField) {
-      CreateFromUsageUtils.setupMethodBody(psiElement);
+      CreateFromUsageUtils.setupMethodBody(psiElement, myPsiClass);
     }
     return psiElement;
   }
