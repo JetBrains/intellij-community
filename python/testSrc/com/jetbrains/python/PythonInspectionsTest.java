@@ -312,4 +312,14 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPySingleQuotedDocstringInspection() {    //PY-1445
     doHighlightingTest(PySingleQuotedDocstringInspection.class);
   }
+
+  public void testPyMissingConstructorInspection() {    //PY-3055
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    doHighlightingTest(PyMissingConstructorInspection.class);
+  }
+
+  public void testPyMissingConstructorInspection30() {    //PY-3055
+    setLanguageLevel(LanguageLevel.PYTHON30);
+    doHighlightingTest(PyMissingConstructorInspection.class);
+  }
 }
