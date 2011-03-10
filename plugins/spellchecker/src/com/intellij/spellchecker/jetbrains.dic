@@ -39,6 +39,7 @@ checksum
 classpath
 clazz
 clob
+cloneable
 closable
 closeable
 cmdline
