@@ -62,29 +62,29 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testExcessParensAfterNew() throws Throwable { doTest(); }
+  public void testExcessParensAfterNew() throws Exception { doTest(); }
 
-  public void testReuseParensAfterNew() throws Throwable { doTest(); }
+  public void testReuseParensAfterNew() throws Exception { doTest(); }
 
-  public void testBracesAfterNew() throws Throwable { doTest(); }
+  public void testBracesAfterNew() throws Exception { doTest(); }
 
-  public void testInPlainTextFile() throws Throwable {
+  public void testInPlainTextFile() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".txt");
     checkResultByFile(BASE_PATH +  getTestName(false) + "_after.txt");
   }
 
-  public void testDoubleStringBuffer() throws Throwable {
+  public void testDoubleStringBuffer() throws Exception {
     createClass("package java.lang; public class StringBuffer {}");
     doTest();
     assertNull(myItems);
   }
 
-  public void testReplaceReferenceExpressionWithTypeElement() throws Throwable {
+  public void testReplaceReferenceExpressionWithTypeElement() throws Exception {
     createClass("package foo.bar; public class ABCDEF {}");
     doTest();
   }
 
-  public void testCamelHumpPrefix() throws Throwable {
+  public void testCamelHumpPrefix() throws Exception {
     String path = BASE_PATH + "/java/";
     configureByFile(path + getTestName(false) + ".java");
     complete();
@@ -174,34 +174,48 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/test13-result.java");
   }
 
-  public void testInMethodCall() throws Throwable {
+  public void testInMethodCall() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
     configureByFile(path + "/methodCall-source.java");
     performAction();
     checkResultByFile(path + "/methodCall-result.java");
   }
 
-  public void testInMethodCallQualifier() throws Throwable {
+  public void testInMethodCallQualifier() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
     configureByFile(path + "/methodCall1-source.java");
     performAction();
     checkResultByFile(path + "/methodCall1-result.java");
   }
 
-  public void testInVariableDeclarationType() throws Throwable {
+  public void testInVariableDeclarationType() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
     configureByFile(path + "/varType-source.java");
     performAction();
     checkResultByFile(path + "/varType-result.java");
   }
 
-  public void testExtraSpace() throws Throwable { doJavaTest(); }
+  public void testExtraSpace() throws Exception { doJavaTest(); }
 
-  public void testAnnotation() throws Throwable { doJavaTest(); }
+  public void testAnnotation() throws Exception { doJavaTest(); }
 
-  public void testInStaticImport() throws Throwable { doJavaTest(); }
+  public void testInStaticImport() throws Exception { doJavaTest(); }
 
-  public void testInCommentWithPackagePrefix() throws Throwable { doJavaTest(); }
+  public void testInCommentWithPackagePrefix() throws Exception { doJavaTest(); }
+
+  public void testQualifyNameOnSecondCompletion() throws Exception {
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Exception {
+        final Module module = ModuleManager.getInstance(getProject()).newModule("second.iml", new JavaModuleType());
+        createClass(module, "package foo.bar; class AxBxCxDxEx {}");
+      }
+    }.execute().throwException();
+
+    configureByFileNoCompletion(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-source.java");
+    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, 2, false);
+    checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");
+  }
 
   private void doJavaTest() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
@@ -228,19 +242,5 @@ public class ClassNameCompletionTest extends CompletionTestCase {
       if(testLookupManager.getActiveLookup() != null)
         testLookupManager.forceSelection(Lookup.NORMAL_SELECT_CHAR, 0);
     }
-  }
-
-  public void testQualifyNameOnSecondCompletion() throws Throwable {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        final Module module = ModuleManager.getInstance(getProject()).newModule("second.iml", new JavaModuleType());
-        createClass(module, "package foo.bar; class AxBxCxDxEx {}");
-      }
-    }.execute().throwException();
-
-    configureByFileNoCompletion(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-source.java");
-    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, 2, false);
-    checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");
   }
 }
