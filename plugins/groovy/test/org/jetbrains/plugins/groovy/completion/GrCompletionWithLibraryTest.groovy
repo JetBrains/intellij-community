@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
+class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
