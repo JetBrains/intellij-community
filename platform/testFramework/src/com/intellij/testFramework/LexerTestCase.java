@@ -93,7 +93,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     String fileName = PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + "." + fileExt;
     String text = "";
     try {
-      text = new String(FileUtil.loadFileText(new File(fileName))).trim();
+      text = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(fileName))).trim());
     }
     catch (IOException e) {
       fail("can't load file " + fileName + ": " + e.getMessage());
