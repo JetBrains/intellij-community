@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
@@ -29,7 +31,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 
 /**
  * @author peter
@@ -594,6 +595,7 @@ public interface Test {
 
     try {
       edt {
+        assert !lookup.calculating
         lookup.hide()
         def file = myFixture.addFileToProject("b.java", "")
         another = EditorFactory.instance.createEditor(file.viewProvider.document, project)
@@ -602,10 +604,13 @@ public interface Test {
       }
       joinAlarm()
       joinCompletion()
-      def l1 = LookupManager.getActiveLookup(another)
+      LookupImpl l1 = LookupManager.getActiveLookup(another)
       if (l1) {
         printThreadDump()
         println l1.items
+        println l1.calculating
+        println myFixture.editor
+        println another
         println CompletionServiceImpl.completionPhase
         assert false : l1.items
       }

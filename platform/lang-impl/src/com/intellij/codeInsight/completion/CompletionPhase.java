@@ -297,6 +297,11 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
+    public String toString() {
+      return "EmptyAutoPopup,editor=" + editor;
+    }
+
+    @Override
     public CompletionProgressIndicator newCompletionStarted() {
       return null;
     }
