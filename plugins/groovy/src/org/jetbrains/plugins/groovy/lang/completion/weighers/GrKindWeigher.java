@@ -23,6 +23,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -52,8 +53,11 @@ public class GrKindWeigher extends CompletionWeigher {
 
     final PsiElement position = location.getCompletionParameters().getPosition();
     if (!(position.getParent() instanceof GrReferenceElement)) {
-      if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
-      return 1;
+      if (position.getContainingFile() instanceof GroovyFileBase) {
+        if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
+        return 1;
+      }
+      return null;
     }
 
     if (!(o instanceof PsiElement)) return null;
