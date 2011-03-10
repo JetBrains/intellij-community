@@ -114,7 +114,7 @@ public class SemServiceImpl extends SemService{
       }
     });
     for (final SemKey each : result.keySet()) {
-      final List<SemKey> inheritors = new ArrayList<SemKey>(result.get(each));
+      final List<SemKey> inheritors = new ArrayList<SemKey>(new HashSet<SemKey>(result.get(each)));
       Collections.sort(inheritors, KEY_COMPARATOR);
       result.put(each, inheritors);
     }

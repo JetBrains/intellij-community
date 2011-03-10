@@ -155,9 +155,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) +
                                       " to choose the first suggestion");
       }
-      myLookup.addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
-                                CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
-                                " will move caret down and up");
+      if (!myEditor.isOneLineMode()) {
+        myLookup.addAdvertisement(CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN) + " and " +
+                                  CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP) +
+                                  " will move caret down and up in the editor");
+      }
     }
 
     ProgressManager.checkCanceled();
