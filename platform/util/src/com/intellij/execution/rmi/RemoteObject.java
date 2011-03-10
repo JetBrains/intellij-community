@@ -104,6 +104,7 @@ public class RemoteObject implements Remote, Unreferenced {
     if (foreignException) {
       final RuntimeException wrapper = new RuntimeException(ex.toString());
       wrapper.setStackTrace(ex.getStackTrace());
+      wrapper.initCause(wrapException(ex.getCause()));
       ex = wrapper;
     }
     return ex;

@@ -1,15 +1,19 @@
-// "Remove redundant "unchecked" suppression" "false"
+// "Remove 'unchecked' suppression" "false"
 import java.util.*;
 
-@SuppressWarnings("unc<caret>hecked")
 public class Test {
   @SafeVarargs
   static <T> List<T> foo(T... t){
     return null;
   }
 
+  static <T> List<T> foo1(T... t){
+    return null;
+  }
+
+  @SuppressWarnings("unchecked")
   void foo() {
-    foo(new ArrayList<String>()).addAll(Arrays.asList(new ArrayList<String>);
+    foo(new ArrayList<String>()).addAll(foo1(new ArrayList<String>);
   }
 }
 

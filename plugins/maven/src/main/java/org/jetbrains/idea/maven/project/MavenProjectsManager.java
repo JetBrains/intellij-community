@@ -41,12 +41,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;

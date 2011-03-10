@@ -24,10 +24,13 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
-class ChangedMethodCallInfo extends InternalUsageInfo {
-  ChangedMethodCallInfo(PsiElement e) {
+/**
+ * recursive call usages inside method
+ */
+public class ChangedMethodCallInfo extends InternalUsageInfo {
+  public ChangedMethodCallInfo(PsiElement e) {
     super(e);
   }
 }

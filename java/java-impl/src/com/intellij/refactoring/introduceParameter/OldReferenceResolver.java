@@ -35,7 +35,7 @@ import java.util.Set;
  *         Date: Apr 29, 2009 2:03:38 PM
  */
 public class OldReferenceResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldRefernceResolver");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");
 
   private final PsiCall myContext;
   private final PsiExpression myExpr;
@@ -46,13 +46,13 @@ public class OldReferenceResolver {
   private final Project myProject;
   private final PsiManager myManager;
   private final int myReplaceFieldsWithGetters;
-  private final PsiExpression myParameterInitializer;
+  private final PsiElement myParameterInitializer;
 
   public OldReferenceResolver(PsiCall context,
                               PsiExpression expr,
                               PsiMethod methodToReplaceIn,
                               int replaceFieldsWithGetters,
-                              PsiExpression parameterInitializer) throws IncorrectOperationException {
+                              PsiElement parameterInitializer) throws IncorrectOperationException {
     myContext = context;
     myExpr = expr;
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;

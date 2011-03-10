@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;

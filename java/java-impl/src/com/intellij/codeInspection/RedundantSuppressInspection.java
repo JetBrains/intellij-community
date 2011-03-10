@@ -93,7 +93,10 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Nullable
   private CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
-    final PsiElement psiElement = refEntity.getElement();
+    return checkElement(refEntity.getElement(), manager, project);
+  }
+
+  public CommonProblemDescriptor[] checkElement(final PsiElement psiElement, InspectionManager manager, Project project) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitModifierList(PsiModifierList list) {
@@ -138,12 +141,8 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
     if (suppressedScopes.values().isEmpty()) return null;
     // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
-    final ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel();
-    InspectionProfileWrapper profile = new InspectionProfileWrapper((InspectionProfile)model);
-    profile.init(manager.getProject());
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();
-
-    InspectionTool[] tools = profile.getInspectionTools(psiElement);
+    InspectionTool[] tools = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (String id : ids) {
         String shortName = id.trim();
@@ -194,7 +193,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
             PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element == null) continue;
             PsiElement annotation = SuppressManager.getInstance().getElementToolSuppressedIn(element, toolId);
-            if (annotation != null && PsiTreeUtil.isAncestor(suppressedScope, annotation, false)) {
+            if (annotation != null && PsiTreeUtil.isAncestor(suppressedScope, annotation, false) || annotation == null && !PsiTreeUtil.isAncestor(suppressedScope, element, false)) {
               hasErrorInsideSuppressedScope = true;
               break;
             }
@@ -238,9 +237,18 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     }
     finally {
       refManager.inspectionReadActionFinished();
-      globalContext.close(true);      
+      globalContext.close(true);
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
+  }
+
+  protected InspectionTool[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
+    final ModifiableModel
+      model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel();
+    InspectionProfileWrapper profile = new InspectionProfileWrapper((InspectionProfile)model);
+    profile.init(manager.getProject());
+
+    return profile.getInspectionTools(psiElement);
   }
 
 

@@ -158,6 +158,8 @@
     <extensionPoint name="annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint name="constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+    <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
@@ -192,7 +194,7 @@
     <errorOptionsProvider instance="com.intellij.profile.codeInspection.ui.JavaErrorOptionsProvider"/>
     <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
-
+    <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
 
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->

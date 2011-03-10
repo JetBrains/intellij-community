@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
@@ -103,7 +104,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (!isPopupActive()) return null;
     final SpeedSearchComparator comparator = getComparator();
     final String recentSearchText = comparator.getRecentSearchText();
-    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) ? comparator.getRecentSearchMatcher() : null;
+    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) && !NameUtil.useMinusculeHumpMatcher ? comparator.getRecentSearchMatcher() : null;
   }
 
   /**
@@ -165,6 +166,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   public static class SpeedSearchComparator {
+    private NameUtil.MinusculeMatcher myMinusculeMatcher;
     private Matcher myRecentSearchMatcher;
     private String myRecentSearchText;
     private boolean myShouldMatchFromTheBeginning;
@@ -181,6 +183,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (myRecentSearchText != null &&
           myRecentSearchText.equals(pattern)
         ) {
+        if (NameUtil.useMinusculeHumpMatcher) {
+          return myMinusculeMatcher.matches(text);
+        }
+
         myRecentSearchMatcher.reset(text);
         return myRecentSearchMatcher.find();
       }
@@ -194,7 +200,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           try {
             boolean allLowercase = pattern.equals(pattern.toLowerCase());
             final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
-            return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
+            myRecentSearchMatcher = recentSearchPattern.matcher(text);
+
+            if (NameUtil.useMinusculeHumpMatcher) {
+              myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern);
+              return myMinusculeMatcher.matches(text);
+            }
+            return myRecentSearchMatcher.find();
           }
           catch (PatternSyntaxException ex) {
             myRecentSearchText = null;

@@ -86,7 +86,12 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiElement getNextSibling(PsiElement element) {
-    PsiElement parent = getElementParent(element);
+    if (element instanceof PsiFile) {
+      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      element = viewProvider.getPsi(viewProvider.getBaseLanguage());
+    }
+    if (element == null) return null;
+    final PsiElement parent = element.getParent();
     if (parent == null) return null;
 
     final PsiElement[] children = parent.getChildren();
@@ -96,22 +101,17 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiElement getPrevSibling(PsiElement element) {
-    PsiElement parent = getElementParent(element);
-    if (parent == null) return null;
-
-    final PsiElement[] children = parent.getChildren();
-    final int index = getChildIndex(children, element);
-    return index > 0 ? children[index - 1] : null;
-  }
-
-  @Nullable
-  private static PsiElement getElementParent(PsiElement element) {
     if (element instanceof PsiFile) {
       final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());
     }
     if (element == null) return null;
-    return element.getParent();
+    final PsiElement parent = element.getParent();
+    if (parent == null) return null;
+
+    final PsiElement[] children = parent.getChildren();
+    final int index = getChildIndex(children, element);
+    return index > 0 ? children[index - 1] : null;
   }
 
   private static int getChildIndex(final PsiElement[] children, final PsiElement child) {

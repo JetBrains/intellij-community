@@ -22,8 +22,8 @@ import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.Map;
@@ -68,13 +68,13 @@ public class MavenEmbeddersManager {
     boolean alwaysOnline = kind == FOR_DOWNLOAD;
 
     if (result == null) {
-      result = MavenFacadeManager.getInstance().createEmbedder(myProject, alwaysOnline);
+      result = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline);
       myPool.put(kind, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + kind + " is already used");
-      return MavenFacadeManager.getInstance().createEmbedder(myProject, alwaysOnline);
+      return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline);
     }
 
     myEmbeddersInUse.add(result);

@@ -116,12 +116,7 @@ public class SuppressFix extends SuppressIntentionAction {
       else {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
-          final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
-          String tagText = "@" +
-                           SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME +
-                           " " +
-                           (valueElement != null ? valueElement.getText() + "," : "") +
-                           getID(container);
+          String tagText = noInspectionTag.getText() + ", " + getID(container);
           noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
         }
         else {

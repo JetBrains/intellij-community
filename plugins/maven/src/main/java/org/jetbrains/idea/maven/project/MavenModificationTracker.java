@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 

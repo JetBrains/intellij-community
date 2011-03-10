@@ -617,6 +617,11 @@ return foo()"""
     checkCompletion("Abcd<caret>", '[', "AbcdClass[<caret>]")
   }
 
+  public void testFinishClassNameWithSquareBracketAfterNew() {
+    myFixture.addClass("class AbcdClass {}; class AbcdeClass {}")
+    checkCompletion("new Abcd<caret>", '[', "new AbcdClass[<caret>]")
+  }
+
   public void testFinishMethodNameWithSquareBracket() {
     myFixture.addClass("""class AbcdClass {
       static int[] foo(int x){}
@@ -632,6 +637,11 @@ return foo()"""
   public void testFinishClassNameWithLt() {
     myFixture.addClass("class AbcdClass {}; class AbcdeClass {}")
     checkCompletion("Abcd<caret>", '<', "AbcdClass<<caret>>")
+  }
+
+  public void testFinishClassNameWithLtAfterNew() {
+    myFixture.addClass("class AbcdClass<T> {}; class AbcdeClass {}")
+    checkCompletion("new Abcd<caret>", '<', "new AbcdClass<<caret>>()")
   }
 
 }

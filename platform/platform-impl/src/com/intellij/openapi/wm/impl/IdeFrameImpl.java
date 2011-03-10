@@ -24,6 +24,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,6 +58,9 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 /**
  * @author Anton Katilin
@@ -99,6 +103,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       setFocusableWindowState(false);
     }
 
+    MouseGestureManager.getInstance().add(this);
   }
 
   @Override
@@ -326,6 +331,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void dispose() {
+    MouseGestureManager.getInstance().remove(this);
+
     if (myRootPane != null) {
       myRootPane = null;
     }

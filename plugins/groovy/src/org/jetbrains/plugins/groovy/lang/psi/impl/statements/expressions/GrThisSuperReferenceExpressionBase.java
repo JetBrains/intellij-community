@@ -11,13 +11,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -36,24 +35,12 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
 
   @Override
   public void setQualifier(@Nullable GrReferenceExpression newQualifier) {
-    final GrExpression oldQualifier = getQualifier();
-    final ASTNode node = getNode();
-    final PsiElement refNameElement = getLastChild();
-    assert refNameElement != null;
-    if (newQualifier == null) {
-      if (oldQualifier != null) {
-        node.removeRange(node.getFirstChildNode(), refNameElement.getNode());
-      }
-    }
-    else {
-      if (oldQualifier != null) {
-        node.replaceChild(oldQualifier.getNode(), newQualifier.getNode());
-      }
-      else {
-        node.addChild(newQualifier.getNode(), refNameElement.getNode());
-        node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
-      }
-    }
+    PsiImplUtil.setQualifier(this, newQualifier);
+  }
+
+  @Override
+  public PsiElement getReferenceNameElement() {
+    return getLastChild();
   }
 
   @Override

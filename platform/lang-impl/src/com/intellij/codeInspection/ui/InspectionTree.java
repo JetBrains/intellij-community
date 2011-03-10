@@ -212,26 +212,22 @@ public class InspectionTree extends Tree {
     }
   }
 
-  public void restoreExpantionAndSelection() {
-    restoreExpantion();
+  public void restoreExpansionAndSelection() {
+    restoreExpansionStatus((InspectionTreeNode)getModel().getRoot());
     if (mySelectionPath != null) {
       mySelectionPath.restore();
     }
   }
 
-  private void restoreExpantion() {
-    restoreExpantionStatus((InspectionTreeNode)getModel().getRoot());
-  }
-
-
-  private void restoreExpantionStatus(InspectionTreeNode node) {
+  private void restoreExpansionStatus(InspectionTreeNode node) {
     if (myExpandedUserObjects.contains(node.getUserObject())) {
+      sortChildren(node);
       TreeNode[] pathToNode = node.getPath();
       expandPath(new TreePath(pathToNode));
       Enumeration children = node.children();
       while (children.hasMoreElements()) {
         InspectionTreeNode childNode = (InspectionTreeNode)children.nextElement();
-        restoreExpantionStatus(childNode);
+        restoreExpansionStatus(childNode);
       }
     }
   }
@@ -298,10 +294,6 @@ public class InspectionTree extends Tree {
     private static boolean appearsBold(Object node) {
       return ((InspectionTreeNode)node).appearsBold();
     }
-  }
-
-  public void sort() {
-    sortChildren(getRoot());
   }
 
   private static void sortChildren(InspectionTreeNode node) {

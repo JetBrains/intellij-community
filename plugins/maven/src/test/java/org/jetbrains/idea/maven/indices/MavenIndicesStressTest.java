@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.facade.MavenFacadeManager;
-import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    final MavenIndexerWrapper indexer = MavenFacadeManager.getInstance().createIndexer();
+    final MavenIndexerWrapper indexer = MavenServerManager.getInstance().createIndexer();
     File indicesDir = new File(myDir, "indices");
 
     final MavenIndices indices = new MavenIndices(indexer, indicesDir, this);
@@ -96,7 +96,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    final MavenIndexerWrapper indexer = MavenFacadeManager.getInstance().createIndexer();
+    final MavenIndexerWrapper indexer = MavenServerManager.getInstance().createIndexer();
     File indicesDir = new File(myDir, "indices");
 
     MavenIndices indices = new MavenIndices(indexer, indicesDir, this);

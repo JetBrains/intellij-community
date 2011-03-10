@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -48,12 +47,10 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -66,8 +63,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
@@ -79,15 +75,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces
  * @author ilyas
  */
 public class GroovyCompletionContributor extends CompletionContributor {
-
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
-
-  private static final String[] MODIFIERS =
-    new String[]{GrModifier.PRIVATE, GrModifier.PUBLIC, GrModifier.PROTECTED, GrModifier.TRANSIENT, GrModifier.ABSTRACT, GrModifier.NATIVE,
-      GrModifier.VOLATILE, GrModifier.STRICTFP, GrModifier.DEF, GrModifier.FINAL, GrModifier.SYNCHRONIZED, GrModifier.STATIC};
-  private static final ElementPattern<PsiElement> TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER = PlatformPatterns
-    .or(psiElement(PsiElement.class).withParent(GrVariable.class).afterLeaf(MODIFIERS),
-        psiElement(PsiElement.class).withParent(GrParameter.class));
 
   private static final String[] THIS_SUPER = {"this", "super"};
   private static final InsertHandler<JavaGlobalMemberLookupElement> STATIC_IMPORT_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
@@ -235,57 +223,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        PsiElement position = parameters.getPosition();
-        final PsiElement reference = position.getParent();
-        if (reference instanceof GrReferenceElement) {
-          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
-            result.addElement(LookupElementBuilder.create("*"));
-          }
-
-          completeReference(parameters, result, (GrReferenceElement)reference);
-        } else if (IN_CATCH_TYPE.accepts(position) || AFTER_AT.accepts(position)) {
-          addAllClasses(parameters, result, new InheritorsHolder(position, result));
-        }
-      }
-    });
-
-
-    extend(CompletionType.BASIC, TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER, new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
-        if (!GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) return;
-
-        ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(position);
-        ResolveUtil.treeWalkUp((GrVariable)position.getParent(), processor, false);
-        for (Object variant : GroovyCompletionUtil.getCompletionVariants(processor.getCandidates())) {
-
-          if (variant instanceof LookupElement) {
-            result.addElement((LookupElement)variant);
-            continue;
-          }
-
-          final String lookupString = variant.toString();
-          if (lookupString == null) continue;
-
-          LookupElementBuilder builder = LookupElementBuilder.create(variant, lookupString);
-          if (variant instanceof Iconable) {
-            builder = builder.setIcon(((Iconable)variant).getIcon(Iconable.ICON_FLAG_VISIBILITY));
-          }
-
-          builder.setInsertHandler(GroovyInsertHandler.INSTANCE);
-          result.addElement(builder);
-        }
-      }
-    });
-
     MapArgumentCompletionProvider.register(this);
 
     // class name stuff
@@ -328,7 +265,66 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }));
       }
     });
+
+    extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        PsiElement position = parameters.getPosition();
+        final PsiElement reference = position.getParent();
+        if (reference instanceof GrReferenceElement) {
+          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
+            result.addElement(LookupElementBuilder.create("*"));
+          }
+
+
+          addKeywords(parameters, result);
+          completeReference(parameters, result, (GrReferenceElement)reference);
+        } else if (IN_CATCH_TYPE.accepts(position) || AFTER_AT.accepts(position)) {
+          addAllClasses(parameters, result, new InheritorsHolder(position, result));
+        } else if (GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) {
+          addDeclarationTypes(result, position);
+        }
+      }
+    });
+
   }
+
+  private static void addDeclarationTypes(CompletionResultSet result, PsiElement position) {
+    ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(position);
+    ResolveUtil.treeWalkUp((GrVariable)position.getParent(), processor, false);
+    for (Object variant : GroovyCompletionUtil.getCompletionVariants(processor.getCandidates())) {
+
+      if (variant instanceof LookupElement) {
+        result.addElement((LookupElement)variant);
+        continue;
+      }
+
+      final String lookupString = variant.toString();
+      if (lookupString == null) continue;
+
+      LookupElementBuilder builder = LookupElementBuilder.create(variant, lookupString);
+      if (variant instanceof Iconable) {
+        builder = builder.setIcon(((Iconable)variant).getIcon(Iconable.ICON_FLAG_VISIBILITY));
+      }
+      result.addElement(builder.setInsertHandler(GroovyInsertHandler.INSTANCE));
+    }
+  }
+
+  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
+    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+    final GroovyCompletionData completionData = new GroovyCompletionData();
+    completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
+    completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
+
+    for (final LookupElement item : lookupSet) {
+      result.addElement(item);
+    }
+  }
+
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {

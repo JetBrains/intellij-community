@@ -30,7 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
@@ -53,31 +56,16 @@ public class GrClosureSignatureUtil {
   public static GrClosureSignature createSignature(GrCall call) {
     if (call instanceof GrMethodCall) {
       final GrExpression invokedExpression = ((GrMethodCall)call).getInvokedExpression();
-      return getSignatureByInvokedExpression(invokedExpression);
+      final PsiType type = invokedExpression.getType();
+      if (type instanceof GrClosureType) return ((GrClosureType)type).getSignature();
     }
 
-    if (call instanceof GrConstructorCall) {
-      final GroovyResolveResult resolveResult = ((GrConstructorCall)call).resolveConstructorGenerics();
-      final PsiElement element = resolveResult.getElement();
-      if (element instanceof PsiMethod) {
-        return createSignature(((PsiMethod)element), resolveResult.getSubstitutor());
-      }
+    final GroovyResolveResult resolveResult = call.advancedResolve();
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod) {
+      return createSignature((PsiMethod)element, resolveResult.getSubstitutor());
     }
-    return null;
-  }
 
-  @Nullable
-  private static GrClosureSignature getSignatureByInvokedExpression(GrExpression invokedExpression) {
-    final PsiType type = invokedExpression.getType();
-    if (type instanceof GrClosureType) return ((GrClosureType)type).getSignature();
-
-    if (invokedExpression instanceof GrReferenceExpression) {
-      final GroovyResolveResult resolveResult = ((GrReferenceExpression)invokedExpression).advancedResolve();
-      final PsiElement element = resolveResult.getElement();
-      if (element instanceof PsiMethod) {
-        return createSignature((PsiMethod)element, resolveResult.getSubstitutor());
-      }
-    }
     return null;
   }
 

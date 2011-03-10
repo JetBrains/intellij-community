@@ -71,6 +71,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     myRootContainer.addProjectRootContainerListener(myRootProvider);
   }
 
+  @NotNull
   public SdkType getSdkType() {
     if (mySdkType == null) {
       mySdkType = ProjectJdkTable.getInstance().getDefaultSdkType();
@@ -78,6 +79,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return mySdkType;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -214,12 +216,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     }
   }
 
+  @NotNull
   public Object clone() {
     ProjectJdkImpl newJdk = new ProjectJdkImpl("", mySdkType);
     copyTo(newJdk);
     return newJdk;
   }
 
+  @NotNull
   public RootProvider getRootProvider() {
     return myRootProvider;
   }
@@ -303,6 +307,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   // SdkModificator implementation
+  @NotNull
   public SdkModificator getSdkModificator() {
     ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
     sdk.myOrigin = this;

@@ -22,8 +22,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
-import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
-  public static final String TERM = MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES;
+  public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();

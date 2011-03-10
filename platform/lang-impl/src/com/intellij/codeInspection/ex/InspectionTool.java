@@ -209,9 +209,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showSructure) {
+  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionNode toolNode = new InspectionNode(this);
-    provider.appendToolNodeContent(toolNode, parentNode, showSructure);
+    provider.appendToolNodeContent(toolNode, parentNode, showStructure);
     return toolNode;
   }
   

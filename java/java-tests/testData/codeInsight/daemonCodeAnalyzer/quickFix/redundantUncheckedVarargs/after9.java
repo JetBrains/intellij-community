@@ -1,4 +1,4 @@
-// "Remove redundant "unchecked" suppression" "true"
+// "Remove 'unchecked' suppression" "true"
 import java.util.*;
 
 @SuppressWarnings({"bla-blah-toolid"})

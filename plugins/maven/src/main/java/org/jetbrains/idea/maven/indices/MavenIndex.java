@@ -23,11 +23,11 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.facade.MavenFacadeIndexerException;
-import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.server.MavenServerIndexerException;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -293,7 +293,7 @@ public class MavenIndex {
     MavenLog.LOG.info("Failed to update Maven indices for: [" + myRepositoryId + "] " + myRepositoryPathOrUrl, e);
   }
 
-  private int createContext(File contextDir, String suffix) throws MavenFacadeIndexerException {
+  private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {
     String indexId = myDir.getName() + "-" + suffix;
     // Nexus cannot update index if the id does not equal to the stored one.
     String repoId = contextDir.exists() ? null : myDir.getName();
@@ -309,7 +309,7 @@ public class MavenIndex {
   }
 
   private void updateContext(int indexId, MavenGeneralSettings settings, MavenProgressIndicator progress)
-    throws MavenFacadeIndexerException, MavenProcessCanceledException {
+    throws MavenServerIndexerException, MavenProcessCanceledException {
     myIndexer.updateIndex(indexId, settings, progress);
   }
 
@@ -334,7 +334,7 @@ public class MavenIndex {
       newData.close(true);
       FileUtil.delete(getDataDir(newDataDirName));
 
-      if (e instanceof MavenFacadeIndexerException) throw new MavenIndexException(e);
+      if (e instanceof MavenServerIndexerException) throw new MavenIndexException(e);
       if (e instanceof IOException) throw new MavenIndexException(e);
       throw new RuntimeException(e);
     }
@@ -356,7 +356,7 @@ public class MavenIndex {
   }
 
   private void doUpdateIndexData(IndexData data,
-                                 MavenProgressIndicator progress) throws IOException, MavenFacadeIndexerException {
+                                 MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
     Set<String> groups = new THashSet<String>();
     Set<String> groupsWithArtifacts = new THashSet<String>();
     Set<String> groupsWithArtifactsWithVersions = new THashSet<String>();
@@ -620,7 +620,7 @@ public class MavenIndex {
         close(true);
         throw new MavenIndexException(e);
       }
-      catch (MavenFacadeIndexerException e) {
+      catch (MavenServerIndexerException e) {
         close(true);
         throw new MavenIndexException(e);
       }
@@ -636,7 +636,7 @@ public class MavenIndex {
       try {
         if (indexId != 0 && releaseIndexContext) myIndexer.releaseIndex(indexId);
       }
-      catch (MavenFacadeIndexerException e) {
+      catch (MavenServerIndexerException e) {
         MavenLog.LOG.info(e);
         if (exceptions[0] == null) exceptions[0] = new MavenIndexException(e);
       }
@@ -670,15 +670,15 @@ public class MavenIndex {
       groupWithArtifactToVersionMap.force();
     }
 
-    public List<MavenId> getAllArtifacts() throws MavenFacadeIndexerException {
+    public List<MavenId> getAllArtifacts() throws MavenServerIndexerException {
       return myIndexer.getAllArtifacts(indexId);
     }
 
-    public MavenId addArtifact(File artifactFile) throws MavenFacadeIndexerException {
+    public MavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
       return myIndexer.addArtifact(indexId, artifactFile);
     }
 
-    public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenFacadeIndexerException {
+    public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenServerIndexerException {
       return myIndexer.search(indexId, query, maxResult);
     }
   }
