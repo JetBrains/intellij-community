@@ -363,7 +363,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     for (String opt : options) {
       if (isStopWord(opt)) continue;
       final String processed = PorterStemmerUtil.stem(opt);
-      assert processed != null;
       if (isStopWord(processed)) continue;
       result.add(opt);
     }
@@ -377,7 +376,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     for (String opt : options) {
       if (isStopWord(opt)) continue;
       opt = PorterStemmerUtil.stem(opt);
-      assert opt != null;
+      if (opt == null) continue;
       result.add(opt);
     }
     return result;
