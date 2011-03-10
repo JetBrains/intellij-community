@@ -90,25 +90,28 @@ public class NavBarPopup extends LightweightHint {
     });
     list.setBorder(IdeBorderFactory.createEmptyBorder(5,5,5,5));
     list.setSelectedIndex(selectedIndex);
-    list.registerKeyboardAction(createMoveAction(panel, -1), KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_FOCUSED);
-    list.registerKeyboardAction(createMoveAction(panel,  1), KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_FOCUSED);
-
-    list.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusLost(FocusEvent e) {
-        panel.cancelPopup();
-      }
-    });
-
+    installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
+    installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
+    installEnterAction(list, panel, KeyEvent.VK_ENTER);
     return list;
+  }
+
+  private static void installEnterAction(final JBList list, final NavBarPanel panel, int keyCode) {
+    final AbstractAction action = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        panel.navigateInsideBar(NavBarPanel.optimizeTarget(list.getSelectedValue()));
+      }
+    };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 
   public Object getSelectedValue() {
     return ((JBList)getComponent()).getSelectedValue();
   }
 
-  private static Action createMoveAction(final NavBarPanel panel, final int direction) {
-    return new AbstractAction() {
+  private static void installMoveAction(JBList list, final NavBarPanel panel, final int direction, final int keyCode) {
+    final AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.cancelPopup();
@@ -116,31 +119,6 @@ public class NavBarPopup extends LightweightHint {
         panel.restorePopup();
       }
     };
-  }
-
-  private static class CancelNavBarPopup extends AbstractAction implements FocusListener {
-    private final NavBarPanel myPanel;
-
-    private CancelNavBarPopup(NavBarPanel panel) {
-      myPanel = panel;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      cancelPopup();
-    }
-
-    @Override
-    public void focusGained(FocusEvent e) {
-    }
-
-    @Override
-    public void focusLost(FocusEvent e) {
-      cancelPopup();
-    }
-
-    private void cancelPopup() {
-      myPanel.cancelPopup();
-    }
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 }
