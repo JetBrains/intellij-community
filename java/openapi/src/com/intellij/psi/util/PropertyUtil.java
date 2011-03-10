@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -152,7 +151,9 @@ public class PropertyUtil {
   private static boolean filterMethods(final PsiMethod method) {
     if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return true;
 
-    final String className = method.getContainingClass().getQualifiedName();
+    PsiClass psiClass = method.getContainingClass();
+    if (psiClass == null) return false;
+    final String className = psiClass.getQualifiedName();
     return className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
