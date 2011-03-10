@@ -19,6 +19,7 @@ import java.io.File;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class ClassNameCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/className/";
+
   protected boolean myOldSetting;
 
   @Override
@@ -27,6 +28,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     setType(CompletionType.CLASS_NAME);
     myOldSetting = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = true;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   @Override
@@ -223,15 +225,15 @@ public class ClassNameCompletionTest extends CompletionTestCase {
 
   public void testInCatchType2() throws Exception { doJavaTest(); }
 
-  public void testInMultiCatchType1() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doJavaTest();
-  }
+  public void testInMultiCatchType1() throws Exception { doJavaTest(); }
 
-  public void testInMultiCatchType2() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doJavaTest();
-  }
+  public void testInMultiCatchType2() throws Exception { doJavaTest(); }
+
+  public void testInResourceList1() throws Exception { doJavaTest(); }
+
+  public void testInResourceList2() throws Exception { doJavaTest(); }
+
+  public void testInResourceList3() throws Exception { doJavaTest(); }
 
   private void doJavaTest() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";

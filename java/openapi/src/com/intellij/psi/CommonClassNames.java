@@ -23,17 +23,21 @@ import org.jetbrains.annotations.NonNls;
 public interface CommonClassNames {
   @NonNls String JAVA_LANG_OBJECT = "java.lang.Object";
   @NonNls String JAVA_LANG_CLASS = "java.lang.Class";
-  @NonNls String JAVA_LANG_STRING = "java.lang.String";
+  @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
+
   @NonNls String JAVA_LANG_THROWABLE = "java.lang.Throwable";
-  @NonNls String JAVA_LANG_ANNOTATION_ANNOTATION = "java.lang.annotation.Annotation";
+  @NonNls String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
-  @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
+  @NonNls String JAVA_LANG_AUTO_CLOSEABLE = "java.lang.AutoCloseable";
+
   @NonNls String JAVA_LANG_ITERABLE = "java.lang.Iterable";
   @NonNls String JAVA_UTIL_ITERATOR = "java.util.Iterator";
 
   @NonNls String JAVA_LANG_DEPRECATED = "java.lang.Deprecated";
+
   @NonNls String JAVA_LANG_ANNOTATION_INHERITED = "java.lang.annotation.Inherited";
+  @NonNls String JAVA_LANG_ANNOTATION_ANNOTATION = "java.lang.annotation.Annotation";
 
   @NonNls String JAVA_LANG_REFLECT_ARRAY = "java.lang.reflect.Array";
 
@@ -46,16 +50,18 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   @NonNls String JAVA_UTIL_DATE = "java.util.Date";
-  @NonNls String JAVA_SQL_DATE = "java.sql.Date";
   @NonNls String JAVA_UTIL_CALENDAR = "java.util.Calendar";
   @NonNls String JAVA_UTIL_DICTIONARY = "java.util.Dictionary";
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 
+  @NonNls String JAVA_SQL_DATE = "java.sql.Date";
+
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   @NonNls String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
 
+  @NonNls String JAVA_LANG_STRING = "java.lang.String";
+  @NonNls String JAVA_LANG_STRING_SHORT = "String";
   @NonNls String JAVA_LANG_NUMBER = "java.lang.Number";
-
   @NonNls String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
   @NonNls String JAVA_LANG_BYTE = "java.lang.Byte";
   @NonNls String JAVA_LANG_SHORT = "java.lang.Short";
@@ -68,13 +74,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   @NonNls String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
-  @NonNls String JAVA_LANG_EXCEPTION = "java.lang.Exception";
-
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   @NonNls String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
   @NonNls String CLASS_FILE_EXTENSION = ".class";
-
-  @NonNls String JAVA_LANG_STRING_SHORT = "String";
 
   @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
 }

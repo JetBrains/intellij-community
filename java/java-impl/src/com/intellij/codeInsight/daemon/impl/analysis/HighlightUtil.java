@@ -1152,10 +1152,8 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkTryResourceIsAutoCloseable(@NotNull final PsiResourceVariable resource) {
     final PsiType type = resource.getType();
-    if (type == null) return null;
-
     final PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
-    final PsiClassType autoCloseable = factory.createTypeByFQClassName("java.lang.AutoCloseable", resource.getResolveScope());
+    final PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
 
     return createIncompatibleTypeHighlightInfo(autoCloseable, type, resource.getTextRange());

@@ -30,10 +30,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.*;
@@ -64,15 +61,16 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
  */
 public class JavaCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
+
   private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
   private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
-  private static final PsiNameValuePairPattern NAME_VALUE_PAIR = psiNameValuePair().withSuperParent(
-          2,
-          psiElement(PsiAnnotation.class));
+
+  private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
+    psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
-  public static final ElementPattern SWITCH_LABEL =
+  private static final ElementPattern SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2,
       psiElement(PsiSwitchStatement.class).with(new PatternCondition<PsiSwitchStatement>("enumExpressionType") {
         @Override
@@ -88,15 +86,20 @@ public class JavaCompletionContributor extends CompletionContributor {
       elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
   private static final PsiJavaElementPattern.Capture<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
+
   static final PsiJavaElementPattern.Capture<PsiElement> IN_CATCH_TYPE =
     psiElement().afterLeaf(psiElement().withText("(").withParent(PsiCatchSection.class));
   static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
     or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
        psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
-  static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
-          PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
+  static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
+    psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
+  static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
+    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
+      withParent(psiElement(PsiTypeElement.class).
+        withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
 
-  @Nullable 
+  @Nullable
   private static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class);
@@ -133,6 +136,10 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {
       return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
+    }
+
+    if (IN_RESOURCE_TYPE.accepts(position)) {
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
     }
 
     if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position)) {
@@ -265,7 +272,6 @@ public class JavaCompletionContributor extends CompletionContributor {
           return;
         }
 
-
         final Object[] variants = reference.getVariants();
         if (variants == null) {
           LOG.error("Reference=" + reference);
@@ -328,7 +334,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     return true;
   }
 
-
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
                                                       CompletionParameters parameters) {
     PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
@@ -348,12 +353,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
-      final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, result.getPrefixMatcher(), parameters);
-
+      final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(
+        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, result.getPrefixMatcher(), parameters);
       for (final LookupElement element : set) {
         result.addElement(element);
       }
-
     }
 
     if (annoClass != null) {
@@ -374,7 +378,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
   }
-
 
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
