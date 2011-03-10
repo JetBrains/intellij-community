@@ -17,10 +17,15 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -34,6 +39,8 @@ public class InlineMethodDialog extends InlineOptionsDialog {
 
   private final PsiMethod myMethod;
 
+  private int myOccurrencesNumber = -1;
+
   public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor,
                             final boolean allowInlineThisOnly) {
     super(project, true, method);
@@ -44,8 +51,19 @@ public class InlineMethodDialog extends InlineOptionsDialog {
     myInvokedOnReference = ref != null;
 
     setTitle(REFACTORING_NAME);
-
+    initOccurrencesNumber(method);
     init();
+  }
+
+  private void initOccurrencesNumber(PsiMethod method) {
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(method.getProject());
+    final boolean isCheapToSearch =
+      searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+    if (isCheapToSearch) {
+      myOccurrencesNumber = ReferencesSearch.search(method).findAll().size();
+    }
   }
 
   protected String getNameLabelText() {
@@ -63,9 +81,10 @@ public class InlineMethodDialog extends InlineOptionsDialog {
   }
 
   protected String getInlineAllText() {
-    return myMethod.isWritable()
-           ? RefactoringBundle.message("all.invocations.and.remove.the.method")
-           : RefactoringBundle.message("all.invocations.in.project");
+    final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
+    return (myMethod.isWritable()
+            ? RefactoringBundle.message("all.invocations.and.remove.the.method")
+            : RefactoringBundle.message("all.invocations.in.project")) + occurrencesString;
   }
 
   protected void doAction() {
