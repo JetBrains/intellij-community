@@ -49,11 +49,15 @@ public class GrKindWeigher extends CompletionWeigher {
     if (o instanceof ResolveResult) {
       o = ((ResolveResult)o).getElement();
     }
-    if (!(o instanceof PsiElement)) return null;
 
     final PsiElement position = location.getCompletionParameters().getPosition();
+    if (!(position.getParent() instanceof GrReferenceElement)) {
+      if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
+      return 1;
+    }
 
-    if (!(position.getParent() instanceof GrReferenceElement)) return null;
+    if (!(o instanceof PsiElement)) return null;
+
     final GrReferenceElement parent = (GrReferenceElement)position.getParent();
 
     if (parent.getQualifier() == null) {
