@@ -70,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler");
@@ -223,7 +224,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             destClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), anchorMember);
           }
           else {
-            field = (PsiField)destClass.add(field);
+            final PsiField forwardReference = checkForwardRefs(initializer);
+            if (forwardReference != null) {
+              field = (PsiField)destClass.addAfter(field, forwardReference);
+            } else {
+              field = (PsiField)destClass.add(field);
+            }
           }
           if (!settings.isIntroduceEnumConstant()) {
             VisibilityUtil.fixVisibility(occurrences, field, settings.getFieldVisibility());
@@ -319,6 +325,25 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+      }
+
+      private PsiField checkForwardRefs(PsiExpression initializer) {
+        final PsiField[] refConstantFields = new PsiField[1];
+        initializer.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement resolve = expression.resolve();
+            if (resolve instanceof PsiField &&
+                ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
+                PsiTreeUtil.isAncestor(myParentClass, resolve, false) && ((PsiField)resolve).hasInitializer()) {
+              if (refConstantFields[0] == null || refConstantFields[0].getTextOffset() < resolve.getTextOffset()) {
+                refConstantFields[0] = (PsiField)resolve;
+              }
+            }
+          }
+        });
+        return refConstantFields[0];
       }
     };
 
