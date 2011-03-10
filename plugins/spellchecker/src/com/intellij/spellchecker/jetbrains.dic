@@ -73,6 +73,8 @@ filename
 fileset
 filesets
 filesystem
+finalizer
+finalizers
 foreach
 formatter
 freelist

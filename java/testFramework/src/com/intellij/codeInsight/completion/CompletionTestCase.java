@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -51,7 +52,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
     new CodeCompletionHandlerBase(myType).invokeCompletion(myProject, myEditor, time, false);
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
+    myItems = lookup == null ? null : lookup.getItems().toArray(new LookupElement[lookup.getItems().size()]);
     myPrefix = lookup == null ? "" : lookup.getItems().get(0).getPrefixMatcher().getPrefix();
   }
 
@@ -61,6 +62,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
 
   protected void selectItem(LookupElement item, char ch) {
     final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
+    assert lookup != null;
     lookup.setCurrentItem(item);
     lookup.finishLookup(ch);
   }
@@ -69,19 +71,18 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
     selectItem(item, (char)0);
   }
 
-  protected void testByCount(int finalCount, String... values) {
+  protected void doTestByCount(int finalCount, String... values) {
     int index = 0;
     if (myItems == null) {
       assertEquals(0, finalCount);
       return;
     }
-    for (int i = 0; i < myItems.length; i++) {
-      final LookupElement myItem = myItems[i];
-      for (int j = 0; j < values.length; j++) {
-        if (values[j] == null) {
+    for (final LookupElement myItem : myItems) {
+      for (String value : values) {
+        if (value == null) {
           assertFalse("Unacceptable value reached", true);
         }
-        if (values[j].equals(myItem.getLookupString())) {
+        if (value.equals(myItem.getLookupString())) {
           index++;
           break;
         }
@@ -90,6 +91,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
     assertEquals(Arrays.toString(myItems), finalCount, index);
   }
 
+  @Nullable
   protected LookupImpl getActiveLookup() {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
   }

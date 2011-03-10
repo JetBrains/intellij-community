@@ -1749,6 +1749,10 @@ public class UIUtil {
     }
   }
 
+  public static boolean isSelectionButtonDown(MouseEvent e) {
+    return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
+  }
+
   public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
     if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
       // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:

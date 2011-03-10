@@ -192,7 +192,7 @@ public class PopupChooserBuilder {
     (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
+        if (UIUtil.isActionClick(e) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           closePopup(true, e, true);
         }
       }
@@ -385,10 +385,6 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  private static boolean isSelectionButtonDown(MouseEvent e) {
-    return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
-  }
-
   public PopupChooserBuilder setSettingButton(Component abutton) {
     mySettingsButtons = abutton;
     return this;
@@ -409,7 +405,7 @@ public class PopupChooserBuilder {
         list.addMouseMotionListener(new MouseMotionAdapter() {
           boolean myIsEngaged = false;
           public void mouseMoved(MouseEvent e) {
-            if (myIsEngaged && !isSelectionButtonDown(e)) {
+            if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
               Point point = e.getPoint();
               int index = list.locationToIndex(point);
               list.setSelectedIndex(index);

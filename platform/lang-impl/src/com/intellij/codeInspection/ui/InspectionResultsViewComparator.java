@@ -127,14 +127,10 @@ public class InspectionResultsViewComparator implements Comparator {
   }
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
-    if (entity1 != null && entity2 != null) {
-      final int nameComparison = entity1.getName().compareToIgnoreCase(entity2.getName());
-      if (nameComparison != 0) {
-        return nameComparison;
-      }
-    }
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
       return PsiUtilBase.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+    } else if (entity1 != null && entity2 != null) {
+      return entity1.getName().compareToIgnoreCase(entity2.getName());
     }
     return 0;
   }

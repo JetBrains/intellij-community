@@ -275,7 +275,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   }
 
   public String getPresentation() {
-    return myName;
+    return myName != null ? myName : myValue;
   }
 
   public String getValue() {
@@ -363,7 +363,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   }
 
   public String getTypeHint() {
-    return myValue.charAt(0) == '#' ? myValue : null;
+    return myName != null && myValue.charAt(0) == '#' ? myValue : null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -380,7 +380,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   }
 
   public int getPriority() {
-    return Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
+    return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
   }
 
   public static String getHexCodeForColorName(String colorName) {

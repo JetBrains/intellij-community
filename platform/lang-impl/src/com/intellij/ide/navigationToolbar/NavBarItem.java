@@ -15,16 +15,11 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +27,7 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-class NavBarItem extends SimpleColoredComponent implements DataProvider{
+class NavBarItem extends SimpleColoredComponent {
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -91,10 +86,11 @@ class NavBarItem extends SimpleColoredComponent implements DataProvider{
 
     setIcon(myIcon);
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    boolean focused = isPopupElement ? myPanel.isNodePopupActive() : focusOwner == myPanel;
+    final boolean focused = isPopupElement || (focusOwner == myPanel && !myPanel.isNodePopupShowing());
 
     final NavBarModel model = myPanel.getModel();
-    boolean selected = isPopupElement ? myPanel.isSelectedInPopup(myObject) : model.getSelectedIndex() == myIndex;
+    final boolean selected = isPopupElement ? myPanel.isSelectedInPopup(myObject)
+                                            : model.getSelectedIndex() == myIndex;
 
     setPaintFocusBorder(!focused && selected && !isPopupElement);
     setFocusBorderAroundIcon(false);
@@ -135,22 +131,5 @@ class NavBarItem extends SimpleColoredComponent implements DataProvider{
         return openIcon.getIconHeight();
       }
     };
-  }
-
-  @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
-      return myPanel.getProject();
-    }
-
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-      return myObject instanceof PsiElement ? myObject : null;
-    }
-
-    if (LangDataKeys.PSI_FILE.is(dataId)) {
-      return myObject instanceof PsiElement ? ((PsiElement)myObject).getContainingFile() : null;
-    }
-
-    return null;
   }
 }

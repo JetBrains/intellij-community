@@ -16,35 +16,39 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class NavBarPopup extends LightweightHint {
+  private static final String JBLIST_KEY = "OriginalList";
   private final NavBarPanel myPanel;
+  private int myIndex;
 
   public NavBarPopup(NavBarPanel panel, Object[] siblings, final int selectedIndex) {
-    super(createPopupContent(panel, siblings, selectedIndex));
+    super(createPopupContent(panel, siblings));
     myPanel = panel;
+    myIndex = selectedIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     ListenerUtil.addMouseListener(getComponent(), new MouseAdapter() {
@@ -66,6 +70,11 @@ public class NavBarPopup extends LightweightHint {
           IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel, true);
           myPanel.rightClick(selectedIndex);
           e.consume();
+        } else {
+          final Object value = getList().getSelectedValue();
+          if (value != null) {
+            myPanel.navigateInsideBar(value);
+          }
         }
       }
     });
@@ -87,10 +96,11 @@ public class NavBarPopup extends LightweightHint {
       });
     } else {
       show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+      getList().setSelectedIndex(myIndex);
     }
   }
 
-  private static JBList createPopupContent(final NavBarPanel panel, Object[] siblings, int selectedIndex) {
+  private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
     final JBList list = new JBList(siblings);
     list.setDataProvider(new DataProvider() {
       @Override
@@ -105,26 +115,47 @@ public class NavBarPopup extends LightweightHint {
         return new NavBarItem(panel, obj);
       }
     });
-    list.setBorder(IdeBorderFactory.createEmptyBorder(5,5,5,5));
-    list.setSelectedIndex(selectedIndex);
+    list.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
     installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
     installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
-    return list;
+    installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
+    final JComponent component = ListWithFilter.wrap(list, new MyListWrapper(list), new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        return NavBarPresentation.getPresentableText(o, panel.getWindow());
+      }
+    });
+    component.putClientProperty(JBLIST_KEY, list);
+    return component;
   }
 
   private static void installEnterAction(final JBList list, final NavBarPanel panel, int keyCode) {
     final AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        panel.navigateInsideBar(NavBarPanel.optimizeTarget(list.getSelectedValue()));
+        panel.navigateInsideBar(list.getSelectedValue());
+      }
+    };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  private static void installEscapeAction(final JBList list, final NavBarPanel panel, int keyCode) {
+    final AbstractAction action = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        panel.cancelPopup();
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 
   public Object getSelectedValue() {
-    return ((JBList)getComponent()).getSelectedValue();
+    return getList().getSelectedValue();
+  }
+
+  private JBList getList() {
+    return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
   }
 
   private static void installMoveAction(JBList list, final NavBarPanel panel, final int direction, final int keyCode) {
@@ -137,5 +168,61 @@ public class NavBarPopup extends LightweightHint {
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
+  }
+
+  static class MyListWrapper extends JBScrollPane implements DataProvider {
+    private static final int MAX_SIZE = 20;
+    private final JList myList;
+
+    public MyListWrapper(final JList list) {
+      super(list);
+      list.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
+        public void mouseMoved(MouseEvent e) {
+          if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+            final Point point = e.getPoint();
+            final int index = list.locationToIndex(point);
+            list.setSelectedIndex(index);
+          } else {
+            myIsEngaged = true;
+          }
+        }
+      });
+
+      ListScrollingUtil.installActions(list);
+
+      final int modelSize = list.getModel().getSize();
+      setBorder(BorderFactory.createEmptyBorder());
+      if (modelSize > 0 && modelSize <= MAX_SIZE) {
+        list.setVisibleRowCount(0);
+        getViewport().setPreferredSize(list.getPreferredSize());
+      } else {
+        list.setVisibleRowCount(MAX_SIZE);
+      }
+      myList = list;
+    }
+
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
+        return myList.getSelectedValue();
+      }
+      return null;
+    }
+
+    public void setBorder(Border border) {
+      if (myList != null){
+        myList.setBorder(border);
+      }
+    }
+
+    public void requestFocus() {
+      myList.requestFocus();
+    }
+
+    public synchronized void addMouseListener(MouseListener l) {
+      myList.addMouseListener(l);
+    }
   }
 }

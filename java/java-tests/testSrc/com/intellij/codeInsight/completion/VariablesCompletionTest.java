@@ -121,7 +121,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
     configureByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
     complete();
     checkResultByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
-    testByCount(2, "creAnInt", "createStylesheetCombobox");
+    doTestByCount(2, "creAnInt", "createStylesheetCombobox");
   }
 
   public void testArrayMethodName() throws Throwable {
