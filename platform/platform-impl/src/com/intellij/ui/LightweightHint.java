@@ -121,8 +121,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
     LOG.assertTrue(myParentComponent.isShowing());
     myEscListener = new MyEscListener();
-    myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                       JComponent.WHEN_IN_FOCUSED_WINDOW);
+    myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
 
     myComponent.validate();
