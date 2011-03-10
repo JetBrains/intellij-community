@@ -2,7 +2,7 @@
   String name();
 }
 
-@Column(<caret>)
+@Column<caret>
 @interface Annotation {
 
 }

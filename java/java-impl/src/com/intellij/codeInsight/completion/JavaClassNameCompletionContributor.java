@@ -67,7 +67,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         });
       }
     });
-
   }
 
   public static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, @NotNull final Consumer<LookupElement> consumer) {
@@ -76,10 +75,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     final ElementFilter filter =
       or(JavaSmartCompletionContributor.AFTER_THROW_NEW,
          JavaCompletionContributor.INSIDE_METHOD_THROWS_CLAUSE,
-         JavaCompletionContributor.IN_CATCH_TYPE).accepts(insertedElement) ? new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE) :
-      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
-      TrueFilter.INSTANCE;
-
+         JavaCompletionContributor.IN_CATCH_TYPE,
+         JavaCompletionContributor.IN_MULTI_CATCH_TYPE).accepts(insertedElement)
+      ? new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)
+      : IN_TYPE_PARAMETER.accepts(insertedElement)
+        ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class))
+        : TrueFilter.INSTANCE;
 
     final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
     if (AFTER_NEW.accepts(insertedElement)) {
