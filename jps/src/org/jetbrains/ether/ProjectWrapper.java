@@ -894,7 +894,7 @@ public class ProjectWrapper {
             return;
         }
 
-        System.out.println("Rebuilding modules:");
+        System.out.println("Making modules:");
 
         for (Module m : modules)
             System.out.println("  " + m.getName());
@@ -968,8 +968,9 @@ public class ProjectWrapper {
         public void build(final Collection<Module> modules, final boolean tests, final boolean force) {
 
             boolean incremental = !force;
+            final List<ModuleChunk> chunks = myProject.getChunks(tests);
 
-            for (ModuleChunk c : myProject.getChunks(tests)) {
+            for (ModuleChunk c : chunks) {
                 final Set<Module> chunkModules = c.getElements();
 
                 if (!DefaultGroovyMethods.intersect(modules, chunkModules).isEmpty()) {
@@ -1131,7 +1132,7 @@ public class ProjectWrapper {
 
         }
         catch (Exception e) {
-
+            e.printStackTrace();
         }
 
         builder.buildStop();

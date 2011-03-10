@@ -69,11 +69,11 @@ public class Mappings {
                 final ClassRepr.Diff diff = (ClassRepr.Diff) changed.snd;
 
                 if (diff.base() != Difference.NONE || !diff.interfaces().unchanged() || !diff.nestedClasses().unchanged()) {
-                    affectedUsages.add(it.createUsage ());
+                    affectedUsages.add(it.createUsage());
                 }
 
                 for (MethodRepr m : diff.methods().removed()) {
-                    affectedUsages.add(m.createUsage (it.name));
+                    affectedUsages.add(m.createUsage(it.name));
                 }
 
                 for (Pair<MethodRepr, Difference> m : diff.methods().changed()) {
@@ -81,7 +81,7 @@ public class Mappings {
                 }
 
                 for (FieldRepr f : diff.fields().removed()) {
-                    affectedUsages.add(f.createUsage (it.name));
+                    affectedUsages.add(f.createUsage(it.name));
                 }
 
                 for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
@@ -101,18 +101,20 @@ public class Mappings {
             }
 
             for (ClassRepr c : classDiff.removed()) {
-                affectedUsages.add (c.createUsage());
+                affectedUsages.add(c.createUsage());
             }
 
-            dependants.removeAll(compiledFiles);
+            if (dependants != null) {
+                dependants.removeAll(compiledFiles);
 
-            for (StringCache.S depFile : dependants) {
-                final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage> (sourceFileToUsages.foxyGet(depFile));
+                for (StringCache.S depFile : dependants) {
+                    final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>(sourceFileToUsages.foxyGet(depFile));
 
-                usages.retainAll(affectedUsages);
+                    usages.retainAll(affectedUsages);
 
-                if (! usages.isEmpty()) {
-                    affectedFiles.add(depFile);
+                    if (!usages.isEmpty()) {
+                        affectedFiles.add(depFile);
+                    }
                 }
             }
         }

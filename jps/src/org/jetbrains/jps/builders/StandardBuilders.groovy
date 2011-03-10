@@ -145,7 +145,7 @@ class GroovycBuilder implements ModuleBuilder {
     }
 
     // unfortunately we have to disable fork here because of a bug in Groovyc task: it creates too long command line if classpath is large
-    ant.groovyc(destdir: destDir, verbose: true /*, fork: "true"*/) {
+    ant.groovyc(destdir: destDir /*, fork: "true"*/) {
       state.sourceRoots.each {
         src(path: it)
       }

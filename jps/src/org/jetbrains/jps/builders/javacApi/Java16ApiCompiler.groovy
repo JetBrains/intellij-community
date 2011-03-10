@@ -51,7 +51,11 @@ class Java16ApiCompiler {
     List<File> filesToCompile = []
 
     if (state.sourceFiles.size() > 0) {
-      filesToCompile = state.sourceFiles
+      for (File src : state.sourceFiles) {
+        if (src.name.endsWith(".java")) {
+          filesToCompile << src
+        }
+      }
     }
     else {
       Set<File> excluded = state.excludes.collect { new File(it.toString()) }
