@@ -6,10 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
@@ -84,6 +81,31 @@ public class CopyClassTest extends CodeInsightTestCase {
 
     final VirtualFile targetVDir = rootDir.findChild("p2");
     CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
+
+    String rootAfter = root + "/after";
+    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
+    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+  }
+
+  public void testPackageHierarchy() throws Exception {
+    doPackageCopy();
+  }
+
+  public void testPackageOneLevelHierarchy() throws Exception {
+    doPackageCopy();
+  }
+
+  private void doPackageCopy() throws Exception {
+    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/multifile/" + getTestName(true);
+    String rootBefore = root + "/before";
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
+
+    final VirtualFile targetVDir = rootDir.findChild("p2");
+    final PsiDirectory sourceP1Dir = myPsiManager.findDirectory(rootDir.findChild("p1"));
+    final PsiDirectory targetP2Dir = myPsiManager.findDirectory(targetVDir);
+    new CopyClassesHandler().doCopy(new PsiElement[]{sourceP1Dir}, targetP2Dir);
 
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
