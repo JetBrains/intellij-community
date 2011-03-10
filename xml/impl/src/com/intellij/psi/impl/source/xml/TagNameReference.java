@@ -208,7 +208,7 @@ public class TagNameReference implements PsiReference {
     List<LookupElement> elements = new ArrayList<LookupElement>(variants.length);
     for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
       String qname = variants[i];
-      if (!prefix.isEmpty() && qname.startsWith(prefix)) {
+      if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
         qname = qname.substring(prefix.length() + 1);
       }
       LookupElementBuilder lookupElement = LookupElementBuilder.create(qname);
