@@ -15,9 +15,7 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.util.ArrayUtil;
-
-public class XPath2TypeTest extends TestBase {
+public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
   public void testQNameToQName() throws Throwable {
     doXPathHighlighting();
@@ -89,11 +87,6 @@ public class XPath2TypeTest extends TestBase {
 
   public void testInvalidPath() throws Throwable {
     doXPathHighlighting();
-  }
-
-  private void doXPathHighlighting(String... moreFiles) throws Throwable {
-    final String name = getTestFileName();
-    myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath2"));
   }
 
   @Override

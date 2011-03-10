@@ -45,7 +45,7 @@ public final class XPath2ElementTypes {
 
   public static final TokenSet EXPRESSIONS = TokenSet.orSet(
           XPathElementTypes.EXPRESSIONS,
-          TokenSet.create(XPathElementTypes.NODE_TYPE, CONTEXT_ITEM, FOR, RANGE_EXPRESSION, QUANTIFIED, INSTANCE_OF, TREAT_AS, CASTABLE_AS, CAST_AS)
+          TokenSet.create(XPathElementTypes.NODE_TYPE, SEQUENCE, CONTEXT_ITEM, IF, FOR, RANGE_EXPRESSION, QUANTIFIED, INSTANCE_OF, TREAT_AS, CASTABLE_AS, CAST_AS)
   );
 
   private XPath2ElementTypes() {
