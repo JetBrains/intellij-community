@@ -16,6 +16,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HintHint;
@@ -30,7 +31,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -68,9 +72,22 @@ public class NavBarPopup extends LightweightHint {
   }
 
   public void show(final NavBarItem item) {
+    show(item, true);
+  }
+
+  private void show(final NavBarItem item, boolean checkRepaint) {
     final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
-    show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+    if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          show(item, false); // end-less loop protection
+        }
+      });
+    } else {
+      show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
+    }
   }
 
   private static JBList createPopupContent(final NavBarPanel panel, Object[] siblings, int selectedIndex) {
