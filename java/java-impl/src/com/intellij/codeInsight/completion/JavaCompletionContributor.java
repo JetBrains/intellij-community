@@ -82,17 +82,20 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       })));
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
-    psiElement().afterLeaf(psiElement().withElementType(
-      elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
-  private static final PsiJavaElementPattern.Capture<PsiElement> IMPORT_REFERENCE =
+    psiElement().afterLeaf(psiElement().withElementType(elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL,
+                                                                            JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
+  private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
 
-  static final PsiJavaElementPattern.Capture<PsiElement> IN_CATCH_TYPE =
-    psiElement().afterLeaf(psiElement().withText("(").withParent(PsiCatchSection.class));
+  static final ElementPattern<PsiElement> IN_CATCH_TYPE =
+    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
+      withParent(psiElement(PsiTypeElement.class).
+        withParent(or(psiElement(PsiCatchSection.class),
+                      psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
   static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
     or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
        psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
-  static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
+  static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
   static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).

@@ -236,18 +236,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(2, myItems.length);
   }
 
-   public void testMethodCallBeforeAnotherStatementWithParen() throws Exception {
-     configureByFile("MethodLookup2.java");
-     checkResultByFile("MethodLookup2_After.java");
+  public void testMethodCallBeforeAnotherStatementWithParen() throws Exception {
+    configureByFile("MethodLookup2.java");
+    checkResultByFile("MethodLookup2_After.java");
   }
 
-   public void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
-     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-     boolean oldvalue = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
-     settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-     configureByFile("MethodLookup2.java");
-     checkResultByFile("MethodLookup2_After2.java");
-     settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = oldvalue;
+  public void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    boolean oldvalue = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
+    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    configureByFile("MethodLookup2.java");
+    checkResultByFile("MethodLookup2_After2.java");
+    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = oldvalue;
   }
 
   public void testSwitchEnumLabel() throws Exception {
@@ -266,19 +266,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testMethodInAnnotation3() throws Exception {
-
     configureByFile("Annotation3.java");
     checkResultByFile("Annotation3_after.java");
   }
 
   public void testMethodInAnnotation5() throws Exception {
-
     configureByFile("Annotation5.java");
     checkResultByFile("Annotation5_after.java");
   }
 
   public void testMethodInAnnotation7() throws Exception {
-
     configureByFile("Annotation7.java");
     selectItem(myItems[0]);
     checkResultByFile("Annotation7_after.java");
@@ -824,7 +821,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
-  public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
+
+  public void testOnlyExceptionsInCatch1() throws Exception { doTest() }
+  public void testOnlyExceptionsInCatch2() throws Exception { doTest() }
+  public void testOnlyExceptionsInCatch3() throws Exception { doTest() }
+  public void testOnlyExceptionsInCatch4() throws Exception { doTest() }
 
   public void testCommaAfterVariable() throws Throwable { doTest(',') }
 
@@ -958,5 +959,4 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type '*\n'
     myFixture.checkResult "import java.lang.*<caret>"
   }
-
 }
