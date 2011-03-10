@@ -390,14 +390,14 @@ public class DependencyCache {
   /**
    * @return qualified names of the classes that should be additionally recompiled
    */
-  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> successfullyCompiled)
+  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> compiledWithErrors)
     throws CacheCorruptedException {
 
-    markDependencies(context, project, successfullyCompiled);
+    markDependencies(context, project, compiledWithErrors);
     return new Pair<int[], Set<VirtualFile>>(myMarkedInfos.toArray(), Collections.unmodifiableSet(myMarkedFiles));
   }
 
-  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> successfullyCompiled) throws CacheCorruptedException {
+  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> compiledWithErrors) throws CacheCorruptedException {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("====================Marking dependent files=====================");
@@ -441,7 +441,7 @@ public class DependencyCache {
             final boolean markAsRemovedSource = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
               public Boolean compute() {
                 VirtualFile sourceFile = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName);
-                return sourceFile == null || successfullyCompiled.contains(sourceFile) ? Boolean.TRUE : Boolean.FALSE;
+                return sourceFile == null || !compiledWithErrors.contains(sourceFile) ? Boolean.TRUE : Boolean.FALSE;
               }
             }).booleanValue();
             if (markAsRemovedSource) {

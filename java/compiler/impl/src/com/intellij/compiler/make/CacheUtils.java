@@ -130,7 +130,7 @@ public class CacheUtils {
 
   public static Collection<VirtualFile> findDependentFiles(
     final CompileContextEx context, 
-    final Set<VirtualFile> succesfullyCompiledJavaFiles, 
+    final Set<VirtualFile> compiledWithErrors, 
     final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter) throws CacheCorruptedException {
     
     if (!CompilerConfiguration.MAKE_ENABLED) {
@@ -141,7 +141,7 @@ public class CacheUtils {
     final DependencyCache dependencyCache = context.getDependencyCache();
 
     final Pair<int[], Set<VirtualFile>> deps =
-        dependencyCache.findDependentClasses(context, context.getProject(), succesfullyCompiledJavaFiles);
+        dependencyCache.findDependentClasses(context, context.getProject(), compiledWithErrors);
     final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null? filter.fun(deps) : deps;
 
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
