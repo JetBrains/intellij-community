@@ -15,13 +15,13 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface IntroduceParameterData {
   @NotNull
@@ -32,27 +32,35 @@ public interface IntroduceParameterData {
   @NotNull
   PsiMethod getMethodToSearchFor();
 
-  PsiExpression getParameterInitializer();
-
-  PsiExpression getExpressionToSearch();
-
-  PsiLocalVariable getLocalVariable();
-
-  boolean isRemoveLocalVariable();
+  ExpressionWrapper getParameterInitializer();
 
   @NotNull
   String getParameterName();
 
-  boolean isReplaceAllOccurences();
-
+  /**
+   * @see com.intellij.refactoring.IntroduceParameterRefactoring
+   */
   int getReplaceFieldsWithGetters();
 
   boolean isDeclareFinal();
 
   boolean isGenerateDelegate();
 
+  @NotNull
   PsiType getForcedType();
 
   @NotNull
   TIntArrayList getParametersToRemove();
+
+  interface ExpressionWrapper<RealExpression extends PsiElement> {
+    @NotNull
+    String getText();
+
+    @Nullable
+    PsiType getType();
+
+    @NotNull
+    RealExpression getExpression();
+
+  }
 }

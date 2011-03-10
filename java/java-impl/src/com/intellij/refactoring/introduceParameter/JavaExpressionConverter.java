@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 07.05.2002
- * Time: 11:26:45
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.UsageInfo;
 
 /**
- * Usage of an expression in method
+ * @author Maxim.Medvedev
  */
-public class InternalUsageInfo extends UsageInfo {
-  public InternalUsageInfo(PsiElement e) {
-    super(e);
+public class JavaExpressionConverter extends ExpressionConverter {
+  @Override
+  protected PsiElement convert(PsiElement expression, Project project) {
+    return JavaPsiFacade.getElementFactory(project).createExpressionFromText(expression.getText(), expression);
   }
 }

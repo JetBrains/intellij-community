@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 import java.util.*;
 
@@ -469,7 +470,7 @@ public abstract class GroovyRefactoringUtil {
 /*    if (declareFinal) {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/
-    ((GrCodeBlock)anchorStatement.getParent()).addStatementBefore(decl, anchorStatement);
+    ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, anchorStatement);
 
     return id;
   }
