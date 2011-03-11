@@ -63,7 +63,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
   @NonNls public static final String TAG_SHORT_NAME = "HtmlUnknownTag";
 
   public HtmlUnknownTagInspection() {
-    this("nobr,noembed,comment,noscript");
+    this("nobr,noembed,comment,noscript,embed,script");
   }
 
   protected HtmlUnknownTagInspection(@NonNls @NotNull final String defaultValues) {
