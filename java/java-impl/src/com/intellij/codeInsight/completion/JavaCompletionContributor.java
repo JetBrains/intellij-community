@@ -330,7 +330,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    if (NameUtil.useMinusculeHumpMatcher) return true;
+    if (NameUtil.isUseMinusculeHumpMatcher()) return true;
 
     final String s = result.getPrefixMatcher().getPrefix();
     if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;

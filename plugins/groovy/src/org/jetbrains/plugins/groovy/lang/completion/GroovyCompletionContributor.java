@@ -454,7 +454,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       });
 
       final String s = result.getPrefixMatcher().getPrefix();
-      if (NameUtil.useMinusculeHumpMatcher || !StringUtil.isEmpty(s) && Character.isUpperCase(s.charAt(0))) {
+      if (NameUtil.isUseMinusculeHumpMatcher() || !StringUtil.isEmpty(s) && Character.isUpperCase(s.charAt(0))) {
         addAllClasses(parameters, result, inheritors);
       }
     }
