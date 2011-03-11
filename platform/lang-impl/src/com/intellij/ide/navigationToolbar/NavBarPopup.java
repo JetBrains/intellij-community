@@ -16,24 +16,19 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -120,7 +115,7 @@ public class NavBarPopup extends LightweightHint {
     installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
-    final JComponent component = ListWithFilter.wrap(list, new MyListWrapper(list), new Function<Object, String>() {
+    final JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), new Function<Object, String>() {
       @Override
       public String fun(Object o) {
         return NavBarPresentation.getPresentableText(o, panel.getWindow());
@@ -168,61 +163,5 @@ public class NavBarPopup extends LightweightHint {
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
-  }
-
-  static class MyListWrapper extends JBScrollPane implements DataProvider {
-    private static final int MAX_SIZE = 20;
-    private final JList myList;
-
-    public MyListWrapper(final JList list) {
-      super(list);
-      list.addMouseMotionListener(new MouseMotionAdapter() {
-        boolean myIsEngaged = false;
-        public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
-            final Point point = e.getPoint();
-            final int index = list.locationToIndex(point);
-            list.setSelectedIndex(index);
-          } else {
-            myIsEngaged = true;
-          }
-        }
-      });
-
-      ListScrollingUtil.installActions(list);
-
-      final int modelSize = list.getModel().getSize();
-      setBorder(BorderFactory.createEmptyBorder());
-      if (modelSize > 0 && modelSize <= MAX_SIZE) {
-        list.setVisibleRowCount(0);
-        getViewport().setPreferredSize(list.getPreferredSize());
-      } else {
-        list.setVisibleRowCount(MAX_SIZE);
-      }
-      myList = list;
-    }
-
-
-    @Nullable
-    public Object getData(@NonNls String dataId) {
-      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
-      }
-      return null;
-    }
-
-    public void setBorder(Border border) {
-      if (myList != null){
-        myList.setBorder(border);
-      }
-    }
-
-    public void requestFocus() {
-      myList.requestFocus();
-    }
-
-    public synchronized void addMouseListener(MouseListener l) {
-      myList.addMouseListener(l);
-    }
   }
 }
