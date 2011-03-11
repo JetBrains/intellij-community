@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -55,6 +56,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
       ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
         .getConfigurationTemplate(getConfigurationFactory())
         .getConfiguration()).getConfigurationModule().getModule();
+    location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
     final PsiMethod testMethod = JUnitUtil.getTestMethod(element);

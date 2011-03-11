@@ -225,10 +225,12 @@ public class PositionHighlighter {
         }
 
         if (breakpoint instanceof BreakpointWithHighlighter) {
-          breakpoint.reload();
-          final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
-          if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {
-            eventsOutOfLine.add(eventDescriptor);
+          if (((BreakpointWithHighlighter)breakpoint).isVisible()) {
+            breakpoint.reload();
+            final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
+            if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {
+              eventsOutOfLine.add(eventDescriptor);
+            }
           }
         }
         else {

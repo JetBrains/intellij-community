@@ -23,6 +23,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -60,7 +61,8 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
         || tokenType == GroovyTokenTypes.mRPAREN
         || tokenType == GroovyTokenTypes.mRBRACK
         || tokenType == GroovyTokenTypes.mRCURLY
-        || tokenType == GroovyTokenTypes.mGSTRING_BEGIN;
+        || tokenType == GroovyTokenTypes.mGSTRING_BEGIN
+        || tokenType.getLanguage() != GroovyFileType.GROOVY_LANGUAGE;
   }
 
   public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
