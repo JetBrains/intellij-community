@@ -164,7 +164,9 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
     String descriptionTemplate = description.getDescriptionTemplate();
     //noinspection HardCodedStringLiteral
-    String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
+    final String reference = "#ref";
+    final boolean containsReference = descriptionTemplate.contains(reference);
+    String res = descriptionTemplate.replaceAll(reference, anchor.toString());
     final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuffer lineAnchor = new StringBuffer();
     if (expression != null && lineNumber > 0) {
@@ -187,7 +189,11 @@ public class DescriptorComposer extends HTMLComposerImpl {
       //noinspection HardCodedStringLiteral
       lineAnchor.append("</a>");
       //noinspection HardCodedStringLiteral
-      res = res.replaceAll("#loc", lineAnchor.toString());
+      final String location = "#loc";
+      if (!containsReference && !res.contains(location)) {
+        res += " (" + location + ")";
+      }
+      res = res.replaceAll(location, lineAnchor.toString());
     }
     buf.append(res);
     buf.append(BR).append(BR);
