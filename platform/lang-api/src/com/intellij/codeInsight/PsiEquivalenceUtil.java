@@ -44,6 +44,14 @@ public class PsiEquivalenceUtil {
                                               @NotNull PsiElement element2,
                                               @Nullable Comparator<PsiElement> resolvedElementsComparator,
                                               boolean areCommentsSignificant) {
+    return areElementsEquivalent(element1, element2, resolvedElementsComparator, null, areCommentsSignificant);
+  }
+
+  public static boolean areElementsEquivalent(@NotNull PsiElement element1,
+                                              @NotNull PsiElement element2,
+                                              @Nullable Comparator<PsiElement> resolvedElementsComparator,
+                                              @Nullable Comparator<PsiElement> leafElementsComparator,
+                                              boolean areCommentsSignificant) {
     if(element1 == element2) return true;
     ASTNode node1 = element1.getNode();
     ASTNode node2 = element2.getNode();
@@ -57,11 +65,12 @@ public class PsiEquivalenceUtil {
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator, areCommentsSignificant)) return false;
+      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator, leafElementsComparator, areCommentsSignificant)) return false;
     }
 
     if (children1.length == 0) {
       if (!element1.textMatches(element2)) return false;
+      if (leafElementsComparator != null && leafElementsComparator.compare(element1, element2) != 0) return false;
     }
 
     PsiReference ref1 = element1.getReference();

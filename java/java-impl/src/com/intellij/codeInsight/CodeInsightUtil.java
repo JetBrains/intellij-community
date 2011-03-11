@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -225,7 +226,17 @@ public class CodeInsightUtil {
         }
         return 1;
       }
-    }, false);
+    }, new Comparator<PsiElement>() {
+        @Override
+        public int compare(PsiElement o1, PsiElement o2) {
+          if (o1 instanceof PsiDiamondTypeElementImpl && o2 instanceof PsiDiamondTypeElementImpl) {
+            final PsiDiamondType.DiamondInferenceResult thisInferenceResult = new PsiDiamondType(o1.getManager(), (PsiTypeElement)o1).resolveInferredTypes();
+            final PsiDiamondType.DiamondInferenceResult otherInferenceResult = new PsiDiamondType(o2.getManager(), (PsiTypeElement)o2).resolveInferredTypes();
+            return thisInferenceResult.equals(otherInferenceResult) ? 0 : 1;
+          }
+          return 0;
+        }
+      }, false);
   }
 
   public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
