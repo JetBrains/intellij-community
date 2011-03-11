@@ -100,7 +100,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         }
       }
       children[i] = new PyStructureViewElement(element, vis);
-      if (element instanceof PyClass) {
+      if (element instanceof PyClass && element.isValid()) {
         PyClass the_exception = PyBuiltinCache.getInstance(element).getClass("Exception");
         final PyClass cls = (PyClass)element;
         for (PyClass anc : cls.iterateAncestorClasses()) {
