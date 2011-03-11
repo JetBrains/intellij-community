@@ -34,6 +34,7 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
   @NotNull
   ConfigurationType getType();
 
+  @Nullable
   JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider);
 
   @Nullable
