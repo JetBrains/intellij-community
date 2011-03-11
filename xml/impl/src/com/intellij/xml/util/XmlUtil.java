@@ -17,6 +17,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerImpl;
@@ -34,10 +35,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -569,6 +567,20 @@ public class XmlUtil {
     else {
       CodeStyleManager.getInstance(tag.getProject()).reformatRange(tag, tag.getTextRange().getStartOffset(), child.getTextRange().getEndOffset());
     }
+  }
+
+  @Nullable
+  public static XmlElementDescriptor getDescriptorFromContext(@NotNull XmlTag tag) {
+    PsiElement parent = tag.getParent();
+    if (parent instanceof XmlTag) {
+      XmlTag parentTag = (XmlTag)parent;
+      final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
+
+      if (parentDescriptor != null) {
+        return XmlExtension.getExtension(tag.getContainingFile()).getElementDescriptor(tag, parentTag, parentDescriptor);
+      }
+    }
+    return null;
   }
 
   private static class XmlElementProcessor {

@@ -249,22 +249,17 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
 
-    XmlElementDescriptor elementDescriptor = null;
+    XmlElementDescriptor elementDescriptor;
 
     final PsiElement parent = tag.getParent();
     if (parent instanceof XmlTag) {
       XmlTag parentTag = (XmlTag)parent;
+
+      elementDescriptor = XmlUtil.getDescriptorFromContext(tag);
+
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
-      if (parentDescriptor != null) {
-        elementDescriptor = XmlExtension.getExtension(tag.getContainingFile()).getElementDescriptor(tag, parentTag, parentDescriptor);
-      }
-
-      if (parentDescriptor != null &&
-          elementDescriptor == null &&
-          !skipValidation(parentTag) &&
-          !XmlUtil.tagFromTemplateFramework(tag)
-      ) {
+      if (parentDescriptor != null && elementDescriptor == null && shouldBeValidated(tag)) {
         if (tag instanceof HtmlTag) {
           //XmlEntitiesInspection inspection = getInspectionProfile(tag, HtmlStyleLocalInspection.SHORT_NAME);
           //if (inspection != null /*&& isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_TAG), name)*/) {
@@ -764,5 +759,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     return unquotedValue;
+  }
+
+  public static boolean shouldBeValidated(@NotNull XmlTag tag) {
+    PsiElement parent = tag.getParent();
+    if (parent instanceof XmlTag) {
+      return !skipValidation(parent) && !XmlUtil.tagFromTemplateFramework(tag);
+    }
+    return true;
   }
 }
