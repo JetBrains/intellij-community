@@ -54,6 +54,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private JRadioButton myReplaceAllFieldsRadioButton;
   private JCheckBox myRemoveLocalVariableCheckBox;
   private JPanel myGetterPanel;
+  private JLabel myTypeLabel;
+  private JLabel myNameLabel;
   private GrIntroduceParameterContext myContext;
   TObjectIntHashMap<JCheckBox> toRemoveCBs;
 
@@ -144,6 +146,9 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       c.nextLine();
       myCheckBoxContainer.add(((JCheckBox)o), c);
     }
+
+    myNameLabel.setLabelFor(myNameSuggestionsField);
+    myTypeLabel.setLabelFor(myTypeComboBox);
     return myContentPane;
   }
 
@@ -157,6 +162,11 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
     if (myReplaceAllFieldsRadioButton.isSelected()) return REPLACE_FIELDS_WITH_GETTERS_ALL;
     throw new GrIntroduceRefactoringError("no check box selected");
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myNameSuggestionsField;
   }
 
   private TIntArrayList getParametersToRemove() {

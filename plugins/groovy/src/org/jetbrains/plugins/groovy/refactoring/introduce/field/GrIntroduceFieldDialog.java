@@ -74,7 +74,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private JCheckBox myDeclareFinalCheckBox;
   private JCheckBox myReplaceAllOccurencesCheckBox;
   private GrTypeComboBox myTypeComboBox;
-  private JLabel myFieldLabel;
+  private JLabel myNameLabel;
+  private JLabel myTypeLabel;
   private final boolean myIsStatic;
   private boolean isInvokedInAlwaysInvokedConstructor;
   private boolean hasLHSUsages;
@@ -95,10 +96,10 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     GrTypeDefinition clazz = (GrTypeDefinition)context.scope;
     myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.place, clazz);
     if (myIsStatic) {
-      myFieldLabel.setText("Static Field of Type:");
+      myTypeLabel.setText("Static Field of Type:");
     }
     else {
-      myFieldLabel.setText("Field of Type:");
+      myTypeLabel.setText("Field of Type:");
     }
 
     initVisibility();
@@ -242,6 +243,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   protected JComponent createCenterPanel() {
+    myNameLabel.setLabelFor(myNameSuggestionsField);
+    myTypeLabel.setLabelFor(myTypeComboBox);
     return myContentPane;
   }
 
