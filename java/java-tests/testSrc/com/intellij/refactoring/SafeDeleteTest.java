@@ -2,8 +2,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,6 +24,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   @Override
+  protected String getTestRoot() {
+    return "/refactoring/safeDelete/";
+  }
+
+  @Override
   protected boolean clearModelBeforeConfiguring() {
     return true;
   }
@@ -36,6 +43,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       assertTrue(message, message.startsWith("constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
     }
   }
+
   public void testImplicitCtrCall2() throws Exception {
     try {
       doTest("Super");
@@ -121,6 +129,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testLastResourceVariable() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       @Override
@@ -131,20 +144,26 @@ public class SafeDeleteTest extends MultiFileTestCase {
     });
   }
 
-  private void performAction(String qClassName) throws Exception {
-    PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
-    assertNotNull("Class " + qClassName + " not found", aClass);
-
-    String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();
-    myRootBefore = configureByFiles(new File(root), aClass.getContainingFile().getVirtualFile());
-    final PsiElement psiElement = TargetElementUtilBase
-      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
-
-    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
+  private void doSingleFileTest() throws Exception {
+    configureByFile(getTestRoot() + getTestName(false) + ".java");
+    performAction();
+    checkResultByFile(getTestRoot() + getTestName(false) + "_after.java");
   }
 
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/safeDelete/";
+  private void performAction(final String qClassName) throws Exception {
+    final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
+    assertNotNull("Class " + qClassName + " not found", aClass);
+
+    final String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();
+    myRootBefore = configureByFiles(new File(root), aClass.getContainingFile().getVirtualFile());
+
+    performAction();
+  }
+
+  private void performAction() {
+    final PsiElement psiElement = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull("No element found in text:\n" + getFile().getText(), psiElement);
+    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
   }
 }
