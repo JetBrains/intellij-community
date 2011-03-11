@@ -73,6 +73,18 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     @Override
     protected Boolean compute(PsiElement parent, Object p) {
       OuterLanguageElement element = PsiTreeUtil.getChildOfType(parent, OuterLanguageElement.class);
+
+      if (element == null) {
+        // JspOuterLanguageElement is located under XmlText
+        for (PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof XmlText) {
+            element = PsiTreeUtil.getChildOfType(child, OuterLanguageElement.class);
+            if (element != null) {
+              break;
+            }
+          }
+        }
+      }
       if (element == null) return false;
       PsiFile containingFile = parent.getContainingFile();
       return containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
