@@ -52,7 +52,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
-    if (parent instanceof PsiNewExpression && !(ref.getParent() instanceof PsiTypeElement)) {
+    final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+    if (parent instanceof PsiNewExpression && !(ref.getParent() instanceof PsiTypeElement) && (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
       registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
     }
