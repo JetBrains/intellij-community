@@ -113,7 +113,7 @@ public class MouseGestureManager implements ApplicationComponent {
         }
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.debug(e);
       }
     }
 
