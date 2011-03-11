@@ -894,4 +894,8 @@ public final class PsiUtil extends PsiUtilBase {
            element.getParent() instanceof PsiTryStatement &&
            ((PsiTryStatement)element.getParent()).getTryBlock() == element;
   }
+
+  public static boolean isJavaToken(@Nullable final PsiElement element, final IElementType type) {
+    return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == type;
+  }
 }
