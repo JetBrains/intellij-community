@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -339,6 +341,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     }
 
     final Ref<Boolean> ref = new Ref<Boolean>(Boolean.TRUE);
+    final GrExpression finalExpression = expression;
     expression.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression refExpr) {
@@ -346,6 +349,10 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
         final PsiElement resolved = refExpr.resolve();
         if (!(resolved instanceof GrVariable)) return;
         if (resolved instanceof GrField && scope.getManager().areElementsEquivalent(scope, ((GrField)resolved).getContainingClass())) {
+          return;
+        }
+        if (resolved instanceof PsiParameter &&
+            PsiTreeUtil.isAncestor(finalExpression, ((PsiParameter)resolved).getDeclarationScope(), false)) {
           return;
         }
         ref.set(Boolean.FALSE);
