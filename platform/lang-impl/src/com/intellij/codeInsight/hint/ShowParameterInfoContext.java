@@ -125,14 +125,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true);
+    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.ABOVE);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false, hintHint);
+        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
         new ParameterInfoController(project,
                                     editor,
                                     elementStart,
@@ -163,7 +163,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                                    int line,
                                                    int col,
                                                    LightweightHint hint,
-                                                   boolean awtTooltip) {
+                                                   boolean awtTooltip, short preferredPosition) {
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
@@ -197,6 +197,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
     }
     else {
+      if (preferredPosition != HintManager.DEFAULT) {
+        if (preferredPosition == HintManager.ABOVE) {
+          if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+        } else if (preferredPosition == HintManager.UNDER) {
+          if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
+        }
+      }
+
       if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
       if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
     }
@@ -217,7 +225,11 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     }
 
     @NotNull
-    public Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset, final boolean awtTooltip) {
+    public Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                                   final PsiElement list,
+                                                   int offset,
+                                                   final boolean awtTooltip,
+                                                   short preferredPosition) {
       final TextRange textRange = list.getTextRange();
       offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
       if (previousOffset == offset) return new Pair<Point, Short>(previousBestPoint, previousBestPosition);
@@ -228,7 +240,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint, awtTooltip);
+        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint, awtTooltip, preferredPosition);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);

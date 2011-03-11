@@ -36,6 +36,7 @@ public abstract class HintManager {
   public static final short LEFT = 3;
   public static final short RIGHT = 4;
   public static final short RIGHT_UNDER = 5;
+  public static final short DEFAULT = 6;
 
   // Constants for 'flags' parameters
   public static final int HIDE_BY_ESCAPE = 0x01;
@@ -50,6 +51,7 @@ public abstract class HintManager {
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout);
 
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, short position);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text);
 

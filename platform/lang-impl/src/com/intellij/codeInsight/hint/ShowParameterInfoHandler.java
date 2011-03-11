@@ -103,7 +103,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true);
+    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!editor.getComponent().isShowing()) return;
@@ -126,7 +126,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   interface BestLocationPointProvider {
     @NotNull
-    Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset, final boolean awtTooltip);
+    Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                            final PsiElement list,
+                                            int offset,
+                                            final boolean awtTooltip,
+                                            short preferredPosition);
   }
 
 }
