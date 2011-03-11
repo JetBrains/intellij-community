@@ -112,9 +112,10 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private static Set<String> getAllLookupStrings(LookupElement element) {
+    boolean empty = element.getPrefixMatcher().getPrefix().isEmpty();
     HashSet<String> result = new HashSet<String>();
     for (String s : element.getAllLookupStrings()) {
-      result.add(StringUtil.toLowerCase(s));
+      result.add(empty ? s : StringUtil.toLowerCase(s));
     }
     return result;
   }
