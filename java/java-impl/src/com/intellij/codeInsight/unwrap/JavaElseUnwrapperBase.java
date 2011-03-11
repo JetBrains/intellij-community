@@ -18,6 +18,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Set;
@@ -28,7 +29,7 @@ public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return (isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
+    return (PsiUtil.isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }
 
   private boolean isElseKeyword(PsiElement e) {

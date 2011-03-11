@@ -890,9 +890,13 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean isTryBlock(final PsiElement element) {
-    return element instanceof PsiCodeBlock &&
-           element.getParent() instanceof PsiTryStatement &&
-           ((PsiTryStatement)element.getParent()).getTryBlock() == element;
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiTryStatement && element == ((PsiTryStatement)parent).getTryBlock();
+  }
+
+  public static boolean isElseBlock(final PsiElement element) {
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiIfStatement && element == ((PsiIfStatement)parent).getElseBranch();
   }
 
   public static boolean isJavaToken(@Nullable final PsiElement element, final IElementType type) {

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
@@ -52,7 +53,7 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     context.deleteExactly(from);
   }
 
-  private PsiElement findElementToExtractFrom(PsiElement el) {
+  private static PsiElement findElementToExtractFrom(PsiElement el) {
     if (el.getParent() instanceof PsiNewExpression) el = el.getParent();
     el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
     el = findTopmostParentOfType(el, PsiAssignmentExpression.class);
@@ -63,5 +64,14 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     }
 
     return el;
+  }
+
+  private static PsiElement findTopmostParentOfType(PsiElement el, Class<? extends PsiElement> clazz) {
+    while (true) {
+      @SuppressWarnings({"unchecked"})
+      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
+      if (temp == null || temp instanceof PsiFile) return el;
+      el = temp;
+    }
   }
 }
