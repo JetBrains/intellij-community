@@ -562,7 +562,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
 
       processor.performAction(e, action, actionEvent);
-
+      actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       return true;
     }
 
