@@ -79,6 +79,10 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
   @Override
   public ProcessingItem[] process(final CompileContext context, ProcessingItem[] items) {
+    if (!AndroidCompileUtil.isFullBuild(context)) {
+      return ProcessingItem.EMPTY_ARRAY;
+    }
+
     context.getProgressIndicator().setText("Packaging Android resources...");
     final List<ProcessingItem> result = new ArrayList<ProcessingItem>();
     for (ProcessingItem processingItem : items) {
