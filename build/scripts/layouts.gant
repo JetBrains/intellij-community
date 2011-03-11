@@ -125,15 +125,9 @@ def layoutFull(String home, String targetDirectory) {
       }
     }
 
+    layoutCommunityPlugins(home)
+
     dir("plugins") {
-      def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "devkit", "eclipse", "hg4idea", "github"]
-
-      simplePlugins.each {
-        layoutPlugin it
-      }
-
-      layoutPlugin("ant", "ant", "antIntegration")
-      layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
       dir("IntelliLang") {
         dir("lib") {
           jar("IntelliLang.jar") {
@@ -144,157 +138,6 @@ def layoutFull(String home, String targetDirectory) {
           }
         }
       }
-
-      layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
-      layoutPlugin("ToString", "generate-tostring", "toString")
-
-      layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core")
-
-      layoutPlugin("RelaxNG-Support", "relaxng") {
-        fileset(dir: "$home/plugins/relaxng/lib", includes: "**/*.jar")
-      }
-
-      layoutPlugin("maven") {
-        jar("maven-server-api.jar") {
-          module("maven-server-api")
-        }
-        jar("maven2-server-impl.jar") {
-          module("maven2-server-impl")
-        }
-        fileset(dir: "$home/plugins/maven/lib")
-        fileset(dir: "$home/plugins/maven/maven-server-api/lib")
-        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
-      }
-
-
-      layoutPlugin("git4idea") {
-        fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
-      }
-
-      layoutPlugin("github")
-
-      layoutPlugin("svn4idea") {
-        fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
-      }
-
-
-      dir("junit") {
-        dir("lib") {
-          jar("junit-rt.jar") {
-            module("junit_rt")
-          }
-          jar("idea-junit.jar") {
-            noResources("junit")
-          }
-          resources("junit")
-        }
-      }
-
-
-      dir("cvsIntegration") {
-        dir("lib") {
-          jar("cvs_util.jar") {noResources("cvs-core")}
-          jar("cvsIntegration.jar") {noResources("cvs-plugin")}
-          jar("javacvs-src.jar") {noResources("javacvs-src")}
-          jar("smartcvs-src.jar") {noResources("smartcvs-src")}
-
-          resources(["cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src"])
-
-          fileset(dir: "${home}/plugins/cvs/lib")
-        }
-      }
-
-
-      dir("android") {
-        dir("lib") {
-          jar("android.jar") {
-            noResources("android")
-          }
-          resources("android")
-          fileset(dir: "${home}/plugins/android/lib") {
-            include(name: "**/*.jar")
-            exclude(name: "**/ddmlib_1.jar")
-          }
-        }
-      }
-
-
-      dir("uiDesigner") {
-        dir("lib") {
-          jar("uiDesigner.jar") {
-            noResources("ui-designer")
-          }
-          resources("ui-designer")
-        }
-      }
-
-      dir("testng") {
-        dir("lib") {
-          jar("testng.jar") {
-            noResources("testng")
-            noResources("testng_rt")
-          }
-
-          resources("testng")
-
-          fileset(dir: "$home/plugins/testng/lib") {
-            include(name: "testng-jdk15.jar")
-          }
-        }
-
-        dir("lib-jdk14") {
-          fileset(dir: "$home/plugins/testng/lib") {
-            include(name: "testng-jdk14.jar")
-          }
-        }
-      }
-
-
-      dir("xpath") {
-        dir("lib") {
-          jar("xpath.jar") {noResources("xpath")}
-          resources("xpath")
-
-          dir("rt") {
-            jar("xslt-rt.jar") {module("xslt-rt")}
-          }
-        }
-      }
-
-      dir("Groovy") {
-        dir("lib") {
-          jar("Groovy.jar") {
-            module("jetgroovy") {
-              exclude(name: "standardDsls/**")
-            }
-          }
-
-          jar("groovy_rt.jar") {module("groovy-rt")}
-          dir("standardDsls") {
-            fileset(dir: "$home/plugins/groovy/resources/standardDsls")
-          }
-          dir("agent") {
-            fileset(dir: "${home}/plugins/groovy/hotswap") {
-              include(name: "gragent.jar")
-            }
-          }
-
-
-          fileset(dir: "$home/plugins/groovy/resources/conf")
-        }
-      }
-
-      dir("tasks") {
-        dir("lib") {
-          jar("tasks-api.jar") { module("tasks-api") }
-          jar("tasks-core.jar") { module("tasks-core") }
-          jar("jira-connector.jar") { module("jira-connector") }
-          jar("tasks-java.jar") { module("tasks-java") }
-          fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
-            include(name: "**/*.jar")
-          }
-        }
-      }
     }
   }
 
@@ -302,6 +145,136 @@ def layoutFull(String home, String targetDirectory) {
 
   //reorder(targetDirectory)
 }
+
+public def layoutCommunityPlugins(String home) {
+  dir("plugins") {
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "devkit", "eclipse", "hg4idea", "github"]
+
+    simplePlugins.each {
+      layoutPlugin it
+    }
+
+    layoutPlugin("ant", "ant", "antIntegration")
+    layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
+    layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
+    layoutPlugin("ToString", "generate-tostring", "toString")
+    layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core")
+    layoutPlugin("uiDesigner", "ui-designer", "uiDesigner")
+
+    layoutPlugin("RelaxNG-Support", "relaxng") {
+      fileset(dir: "$home/plugins/relaxng/lib", includes: "**/*.jar")
+    }
+
+    layoutPlugin("maven") {
+      jar("maven-server-api.jar") {
+        module("maven-server-api")
+      }
+      jar("maven2-server-impl.jar") {
+        module("maven2-server-impl")
+      }
+      fileset(dir: "$home/plugins/maven/lib")
+      fileset(dir: "$home/plugins/maven/maven-server-api/lib")
+      fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
+    }
+
+    layoutPlugin("git4idea") {
+      fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
+    }
+
+    layoutPlugin("svn4idea") {
+      fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
+    }
+
+    layoutPlugin("junit", "junit", "idea-junit") {
+      jar("junit-rt.jar") {
+        module("junit_rt")
+      }
+    }
+
+    pluginDir("cvsIntegration") {
+      dir("lib") {
+        jar("cvs_util.jar") {noResources("cvs-core")}
+        jar("cvsIntegration.jar") {noResources("cvs-plugin")}
+        jar("javacvs-src.jar") {noResources("javacvs-src")}
+        jar("smartcvs-src.jar") {noResources("smartcvs-src")}
+
+        resources(["cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src"])
+
+        fileset(dir: "${home}/plugins/cvs/lib")
+      }
+    }
+
+    pluginDir("testng") {
+      dir("lib") {
+        jar("testng.jar") {
+          noResources("testng")
+          noResources("testng_rt")
+        }
+
+        resources("testng")
+
+        fileset(dir: "$home/plugins/testng/lib") {
+          include(name: "testng-jdk15.jar")
+        }
+      }
+
+      dir("lib-jdk14") {
+        fileset(dir: "$home/plugins/testng/lib") {
+          include(name: "testng-jdk14.jar")
+        }
+      }
+    }
+
+    layoutPlugin("xpath") {
+      dir("rt") {
+        jar("xslt-rt.jar") {module("xslt-rt")}
+      }
+    }
+
+    pluginDir("Groovy") {
+      dir("lib") {
+        jar("Groovy.jar") {
+          module("jetgroovy") {
+            exclude(name: "standardDsls/**")
+          }
+        }
+
+        jar("groovy_rt.jar") {module("groovy-rt")}
+        dir("standardDsls") {
+          fileset(dir: "$home/plugins/groovy/resources/standardDsls")
+        }
+        dir("agent") {
+          fileset(dir: "${home}/plugins/groovy/hotswap") {
+            include(name: "gragent.jar")
+          }
+        }
+
+
+        fileset(dir: "$home/plugins/groovy/resources/conf")
+      }
+    }
+
+    pluginDir("tasks") {
+      dir("lib") {
+        jar("tasks-api.jar") { module("tasks-api") }
+        jar("tasks-core.jar") { module("tasks-core") }
+        jar("jira-connector.jar") { module("jira-connector") }
+        jar("tasks-java.jar") { moduleOptional("tasks-java") }
+        fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
+          include(name: "**/*.jar")
+        }
+      }
+    }
+
+    layoutPlugin("android") {
+      fileset(dir: "${home}/plugins/android/lib") {
+        include(name: "**/*.jar")
+        exclude(name: "**/ddmlib_1.jar")
+      }
+    }
+  }
+}
+
 
 def layoutPlugin(String moduleName) {
   layoutPlugin(moduleName, moduleName, {})
@@ -324,6 +297,10 @@ def layoutPlugin(String pluginName, String moduleName, String jarName) {
 }
 
 def layoutPlugin(String pluginName, String moduleName, String jarName, Closure custom) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(moduleName) && !pluginFilter.contains(pluginName)) return
+  }
+
   dir(pluginName) {
     dir("lib") {
       jar("${jarName}.jar") {
@@ -333,6 +310,16 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
       resources(moduleName)
       custom()
     }
+  }
+}
+
+def pluginDir(String dirName, Closure initializer) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(dirName)) return
+  }
+
+  dir(dirName) {
+    initializer()
   }
 }
 
@@ -358,6 +345,22 @@ private def noResources(String moduleName) {
   module(moduleName) {
     patternset(refid: "resources.excluded")
   }
+}
+
+def moduleOptional(String name) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(name)) return
+  }
+
+  module(name)
+}
+
+def moduleOptional(String name, Closure init) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(name)) return
+  }
+
+  module(name, init)
 }
 
 def reorder(String home, String targetDirectory) {

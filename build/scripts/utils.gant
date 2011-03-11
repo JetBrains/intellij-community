@@ -18,6 +18,13 @@ binding.setVariable("guessJdk", {
   return javaHome
 })
 
+binding.setVariable("includeFile", {String filepath ->
+  Script s = groovyShell.parse(new File(filepath))
+  s.setBinding(binding)
+  s
+})
+
+
 binding.setVariable("isMac", {
   return System.getProperty("os.name").toLowerCase().startsWith("mac")
 })
