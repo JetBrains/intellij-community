@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,11 +119,13 @@ public class GitTask {
 
       @Override
       public void onSuccess() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override public void run() {
+        final Runnable successRunnable = new Runnable() {
+          @Override
+          public void run() {
             if (!myHandler.errors().isEmpty()) { // TODO: handle errors smarter: an error may be not a complete failure.
               myResult.set(GitTaskResult.GIT_ERROR);
-            } else {
+            }
+            else {
               myResult.set(GitTaskResult.OK);
             }
             resultHandler.run(myResult.get());
@@ -130,20 +133,23 @@ public class GitTask {
               LOCK.notifyAll();
             }
           }
-        });
+        };
+        executeInProperThread(successRunnable);
       }
 
       @Override
       public void onCancel() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override public void run() {
+        final Runnable cancelRunnable = new Runnable() {
+          @Override
+          public void run() {
             myResult.set(GitTaskResult.CANCELLED);
             resultHandler.run(GitTaskResult.CANCELLED);
             synchronized (LOCK) {
               LOCK.notifyAll();
             }
           }
-        });
+        };
+        executeInProperThread(cancelRunnable);
       }
     };
 
@@ -156,6 +162,15 @@ public class GitTask {
       } catch (InterruptedException e) {
         LOG.error(e);
       }
+    }
+  }
+
+  // executes on a pooled thread or on AWT thread depending on the setting.
+  private void executeInProperThread(Runnable runnable) {
+    if (myExecuteResultInAwt) {
+      UIUtil.invokeAndWaitIfNeeded(runnable);
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
   }
 
