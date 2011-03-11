@@ -373,8 +373,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
       protected XmlAttributeDescriptor compute() {
-        final PsiElement parentElement = getParent();
-        final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
+        XmlTag parent = getParent();
+        final XmlElementDescriptor descr = parent.getDescriptor();
         if (descr != null) {
           return descr.getAttributeDescriptor(XmlAttributeImpl.this);
         }

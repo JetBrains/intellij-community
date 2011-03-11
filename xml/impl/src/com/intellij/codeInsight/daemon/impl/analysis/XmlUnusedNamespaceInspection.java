@@ -190,7 +190,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
   }
 
   private static String getNamespaceFromReference(PsiReference reference) {
-    return reference.getRangeInElement().shiftRight(-1).substring(((XmlAttributeValue)reference.getElement()).getValue());
+    return reference.getRangeInElement().substring(reference.getElement().getText());
   }
 
   @NotNull
