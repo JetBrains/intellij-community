@@ -882,7 +882,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected PsiElement addToMethodCallLocation(PsiStatement statement) throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
-      PsiElement containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
+      PsiElement containingStatement = myElements[0] instanceof PsiComment ? myElements[0] : PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
       if (containingStatement == null) {
         containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiComment.class, false);
       }

@@ -479,6 +479,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFoldInWhile() throws Exception {
+    doTest();
+  }
+
+  public void testComplexTypeParams() throws Exception {
+    doTest();
+  }
+
+  public void testExtractWithLeadingComment() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {
