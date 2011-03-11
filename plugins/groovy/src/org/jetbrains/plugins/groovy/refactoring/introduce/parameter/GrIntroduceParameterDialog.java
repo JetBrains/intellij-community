@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.inline.InlineParameterHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.ui.GridBag;
@@ -84,6 +85,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     initReplaceFieldsWithGetters(settings);
 
     myDeclareFinalCheckBox.setSelected(hasFinalModifier());
+
+    setTitle(InlineParameterHandler.REFACTORING_NAME);
     init();
   }
 

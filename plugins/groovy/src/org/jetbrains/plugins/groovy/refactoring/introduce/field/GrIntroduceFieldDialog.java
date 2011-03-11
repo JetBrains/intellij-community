@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.IncorrectOperationException;
@@ -165,6 +166,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       allOccurrencesInOneMethod(myContext.occurrences, clazz) && isAlwaysInvokedConstructor(containingMethod, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
+    setTitle(IntroduceFieldHandler.REFACTORING_NAME);
     init();
     checkErrors();
   }
