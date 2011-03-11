@@ -26,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @date: 04.04.2007
  */
 public interface GrAnnotation extends GrCondition, PsiAnnotation, GrAnnotationMemberValue {
+
+  GrAnnotation[] EMPTY_ARRAY = new GrAnnotation[0];
+
   GrCodeReferenceElement getClassReference();
 
   @NotNull
