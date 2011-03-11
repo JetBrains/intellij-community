@@ -111,7 +111,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     if (ref.isNull()) throw new RuntimeException("Unable to acquire remote proxy for: " + getName(target));
     final Info info = ref.get();
-    if (info.handler == null) throw new RuntimeException(info.name);
+    if (info.handler == null) throw new ExecutionException(info.name);
     return acquire(info);
   }
 
@@ -151,17 +151,19 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         return true;
       }
     };
+    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ProcessHandler processHandler;
     try {
-      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       final RunProfileState state = getRunProfileState(target, configuration, executor);
       final ExecutionResult result = state.execute(executor, runner);
-      final ProcessHandler processHandler = result.getProcessHandler();
-      processHandler.addProcessListener(getProcessListener(key));
-      processHandler.startNotify();
+      processHandler = result.getProcessHandler();
     }
-    catch (ExecutionException e) {
+    catch (Exception e) {
       handleProcessTerminated(key, e.getMessage());
+      return;
     }
+    processHandler.addProcessListener(getProcessListener(key));
+    processHandler.startNotify();
   }
 
   protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor)
