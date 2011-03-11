@@ -247,7 +247,13 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   private static void replaceOccurence(GrField field, PsiElement occurence) {
-    final PsiElement replaced = occurence.replace(createRefExpression(field, occurence));
+    final GrReferenceExpression newExpr = createRefExpression(field, occurence);
+    final PsiElement replaced;
+    if (occurence instanceof GrExpression) {
+      replaced = ((GrExpression)occurence).replaceWithExpression(newExpr, false);
+    } else {
+      replaced = occurence.replace(newExpr);
+    }
     if (replaced instanceof GrQualifiedReference) {
       if (!PsiUtil.shortenReference((GrQualifiedReference)replaced)) {
         final PsiElement qualifier = ((GrQualifiedReference)replaced).getQualifier();

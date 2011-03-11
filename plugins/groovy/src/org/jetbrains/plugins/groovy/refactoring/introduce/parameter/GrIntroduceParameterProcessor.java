@@ -310,12 +310,14 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       }
       else if (usage instanceof InternalUsageInfo) {
         PsiElement element = usage.getElement();
-        if (element instanceof GrExpression) {
-          element = PsiUtil.skipParentheses(element, true);
-        }
-
+        if (element == null) continue;
         GrExpression newExpr = factory.createExpressionFromText(mySettings.getName());
-        element.replace(newExpr);
+        if (element instanceof GrExpression) {
+          ((GrExpression)element).replaceWithExpression(newExpr, true);
+        }
+        else {
+          element.replace(newExpr);
+        }
       }
     }
 

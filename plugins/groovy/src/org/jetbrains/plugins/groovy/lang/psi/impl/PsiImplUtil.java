@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -103,12 +104,27 @@ public class PsiImplUtil {
       if (result != null) return result;
     }
 
-    ASTNode oldNode = oldExpr.getNode();
-    ASTNode newNode = newExpr.copy().getNode();
-    assert newNode != null && parentNode != null;
-    parentNode.replaceChild(oldNode, newNode);
-
-    return ((GrExpression)newNode.getPsi());
+    //if replace closure argument with expression
+    //we should add the expression in arg list
+    if (oldExpr instanceof GrClosableBlock &&
+        !(newExpr instanceof GrClosableBlock) &&
+        oldParent instanceof GrCall &&
+        ArrayUtil.contains(oldExpr, ((GrCall)oldParent).getClosureArguments())) {
+      final GrClosableBlock[] closureArguments = ((GrCall)oldParent).getClosureArguments();
+      final int i = ArrayUtil.find(closureArguments, oldExpr);
+      GrArgumentList argList = ((GrCall)oldParent).getArgumentList();
+      if (argList.getText().length() == 0) argList = (GrArgumentList)argList.replace(factory.createArgumentList());
+      for (int j = 0; j < i; j++) {
+        argList.add(closureArguments[j]);
+        closureArguments[j].delete();
+      }
+      final GrExpression result = (GrExpression)argList.add(newExpr);
+      oldExpr.delete();
+      return result;
+    }
+    else {
+      return (GrExpression)oldExpr.replace(newExpr);
+    }
   }
 
   /**
