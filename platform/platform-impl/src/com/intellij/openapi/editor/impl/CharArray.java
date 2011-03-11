@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
@@ -41,7 +42,15 @@ abstract class CharArray implements CharSequenceBackedByArray {
    */
   private static final int MAX_DEFERRED_CHANGES_NUMBER = 10000;
 
-  private final TextChangesStorage myDeferredChangesStorage = new TextChangesStorage();
+  @NotNull
+  private TextChangesStorage myDeferredChangesStorage;
+  
+  private int myStart;
+  /**
+   * This class implements {@link #subSequence(int, int)} by creating object of the same class that partially shares the same
+   * data as the object on which the method is called. So, this field may define interested end offset (if it's non-negative).
+   */
+  private int myEnd = -1;
   
   private int myCount = 0;
   private CharSequence myOriginalSequence;
@@ -53,8 +62,23 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   // max chars to hold, bufferSize == 0 means unbounded
   CharArray(int bufferSize) {
+    this(bufferSize, new TextChangesStorage(), null, -1, -1);
+  }
+
+  private CharArray(int bufferSize, @NotNull TextChangesStorage deferredChangesStorage, @Nullable char[] data, int start, int end) {
     myBufferSize = bufferSize;
-    myOriginalSequence = "";
+    myDeferredChangesStorage = deferredChangesStorage;
+    if (data == null) {
+      myOriginalSequence = "";
+    }
+    else {
+      myArray = data;
+      myCount = end - start;
+    }
+    if (start >= 0 && end >= 0) {
+      myStart = start;
+      myEnd = end;
+    }
   }
 
   public void setBufferSize(int bufferSize) {
@@ -73,7 +97,14 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myArray = null;
     myCount = chars.length();
     myStringRef = null;
-    myDeferredChangesStorage.clear();
+    if (isSubSequence()) {
+      myDeferredChangesStorage = new TextChangesStorage();
+      myStart = 0;
+      myEnd = -1;
+    }
+    else {
+      myDeferredChangesStorage.clear();
+    }
     trimToSize(subj);
   }
 
@@ -81,6 +112,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
                       int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp,
                       boolean wholeTextReplaced) {
     final DocumentEvent event = beforeChangedUpdate(subj, startOffset, toDelete, newString, wholeTextReplaced);
+    startOffset += myStart;
+    endOffset += myStart;
     doReplace(startOffset, endOffset, newString);
     afterChangedUpdate(event, newModificationStamp);
   }
@@ -108,6 +141,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   public void remove(DocumentImpl subj, int startIndex, int endIndex, CharSequence toDelete) {
     DocumentEvent event = beforeChangedUpdate(subj, startIndex, toDelete, null, false);
+    startIndex += myStart;
+    endIndex += myStart;
     doRemove(startIndex, endIndex);
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
   }
@@ -131,6 +166,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   public void insert(DocumentImpl subj, CharSequence s, int startIndex) {
     DocumentEvent event = beforeChangedUpdate(subj, startIndex, null, s, false);
+    startIndex += myStart;
     doInsert(s, startIndex);
 
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
@@ -190,26 +226,10 @@ abstract class CharArray implements CharSequenceBackedByArray {
         str = myOriginalSequence.toString();
       }
       else if (!hasDeferredChanges()) {
-        str = new String(myArray, 0, myCount);
+        str = new String(myArray, myStart, myCount);
       }
       else {
-        StringBuilder buffer = new StringBuilder();
-        int start = 0;
-        int count = myCount + myDeferredShift;
-        for (TextChange change : myDeferredChangesStorage.getChanges()) {
-          final int length = change.getStart() - start;
-          if (length > 0) {
-            buffer.append(myArray, start, length);
-            count -= length;
-          }
-          if (change.getText().length() > 0) {
-            buffer.append(change.getText());
-            count -= change.getText().length();
-          }
-          start = change.getEnd();
-        }
-        buffer.append(myArray, start, count);
-        str = buffer.toString();
+        str = substring(0, length()).toString();
       }
       myStringRef = new SoftReference<String>(str);
     }
@@ -224,6 +244,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (i < 0 || i >= length()) {
       throw new IndexOutOfBoundsException("Wrong offset: " + i + "; count:" + length());
     }
+    i += myStart;
     if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     if (hasDeferredChanges()) {
       return myDeferredChangesStorage.charAt(myArray, i);
@@ -234,15 +255,37 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public CharSequence subSequence(int start, int end) {
-    //TODO den avoid flushing changes here
     if (start == 0 && end == length()) return this;
     if (myOriginalSequence != null) {
       return myOriginalSequence.subSequence(start, end);
     }
-    flushDeferredChanged();
-    return new CharArrayCharSequence(myArray, start, end);
+    if (hasDeferredChanges()) {
+      return new CharArray(myBufferSize, myDeferredChangesStorage, myArray, myStart + start, myStart + end) {
+        @Override
+        protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
+                                                    int offset,
+                                                    CharSequence oldString,
+                                                    CharSequence newString,
+                                                    boolean wholeTextReplaced) {
+          return new DocumentEventImpl(subj, offset, oldString, newString, LocalTimeCounter.currentTime(), wholeTextReplaced);
+        }
+
+        @Override
+        protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+        }
+      };
+    }
+    else {
+      // We don't use the same approach as with 'defer changes' mode because the former is the new experimental one and this one
+      // is rather mature, hence, we just minimizes the risks that something is wrong within the new approach.
+      return new CharArrayCharSequence(myArray, start, end);
+    }
   }
 
+  private boolean isSubSequence() {
+    return myEnd >= 0;
+  }
+  
   public char[] getChars() {
     if (myOriginalSequence != null) {
       if (myArray == null) {
@@ -259,7 +302,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
       CharArrayUtil.getChars(myOriginalSequence,dst, dstOffset);
     }
     else {
-      System.arraycopy(myArray, 0, dst, dstOffset, length());
+      System.arraycopy(myArray, myStart, dst, dstOffset, length());
     }
   }
 
@@ -268,7 +311,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (myOriginalSequence != null) {
       return myOriginalSequence.subSequence(start, end);
     }
-    return myDeferredChangesStorage.substring(myArray, start, end);
+    return myDeferredChangesStorage.substring(myArray, start + myStart, end + myStart);
   }
 
   private static char[] relocateArray(char[] array, int index) {
@@ -292,7 +335,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (myBufferSize != 0 && length() > myBufferSize) {
       flushDeferredChanged();
       // make a copy
-      remove(subj,0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
+      remove(subj, 0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
     }
   }
 

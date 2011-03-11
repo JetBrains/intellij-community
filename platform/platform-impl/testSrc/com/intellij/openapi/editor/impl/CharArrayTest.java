@@ -19,7 +19,9 @@ import static org.junit.Assert.*;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.api.Invocation;
@@ -146,7 +148,41 @@ public class CharArrayTest {
             + "interval [%d; %d) but got '%s'", expected, expected.substring(start, end), start, end, myArray.substring(start, end)
           ));
         }
-        assertEquals(expected.substring(start, end), myArray.substring(start, end).toString());
+      }
+    }
+
+    // Test subSequence().
+    checkSubSequence(expected, myArray, new Stack<Pair<Integer, Integer>>());
+  }
+  
+  private void checkSubSequence(@NotNull String expected, @NotNull CharSequence actual,
+                                       @NotNull Stack<Pair<Integer, Integer>> history)
+  {
+    assertEquals(expected.length(), actual.length());
+    for (int i = 0; i < expected.length(); i++) {
+      char expectedChar = expected.charAt(i);
+      char actualChar = actual.charAt(i);
+      if (expectedChar != actualChar) {
+        fail(String.format(
+          "Detected incorrect charAt() processing for result of subSequence() with deferred changes. Original text: '%s', "
+          + "actual subSequence text: '%s', index: %d, expected symbol: '%c', actual symbol: '%c', subSequence history: %s",
+          myArray.toString(), expected, i, expectedChar, actualChar, history
+        ));
+      }
+    }
+    if (!expected.equals(actual.toString())) {
+      fail(String.format(
+        "Detected incorrect toString() processing for result of subSequence() with deferred changes. Original text: '%s', "
+        + "expected subSequence text: '%s', actual subSequence text: '%s', subSequence history: %s",
+        myArray.toString(), expected, actual.toString(), history
+      ));
+    }
+    assertEquals(expected, actual.toString());
+    for (int start = 0; start < expected.length(); start++) {
+      for (int end = start; end < expected.length(); end++) {
+        history.push(new Pair<Integer, Integer>(start, end));
+        checkSubSequence(expected.substring(start, end), actual.subSequence(start, end), history);
+        history.pop();
       }
     }
   }

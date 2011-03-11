@@ -358,7 +358,7 @@ public class TextChangesStorage {
     int startChangeIndex = getChangeIndex(start);
     int endChangeIndex = getChangeIndex(end);
     
-    boolean substringAffectedByChanges = startChangeIndex < 0 && endChangeIndex < 0 && startChangeIndex == endChangeIndex;
+    boolean substringAffectedByChanges = startChangeIndex >= 0 || endChangeIndex >= 0 || startChangeIndex != endChangeIndex;
     int clientShift = 0;
     int originalStart = 0;
     if (startChangeIndex < 0) {
@@ -374,7 +374,7 @@ public class TextChangesStorage {
       clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart();
     }
     
-    if (substringAffectedByChanges) {
+    if (!substringAffectedByChanges) {
       return new String(originalData, start - clientShift, end - start);
     }
     
@@ -409,6 +409,10 @@ public class TextChangesStorage {
         }
       }
       originalStart = changeEntry.change.getEnd();
+    }
+    
+    if (outputOffset < data.length) {
+      System.arraycopy(originalData, originalStart, data, outputOffset, data.length - outputOffset);
     }
     return new String(data);
   }
