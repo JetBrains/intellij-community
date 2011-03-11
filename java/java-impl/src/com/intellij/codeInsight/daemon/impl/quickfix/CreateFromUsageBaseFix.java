@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
@@ -34,6 +35,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -42,9 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -336,5 +336,34 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static void setupGenericParameters(PsiClass targetClass, PsiJavaCodeReferenceElement ref) {
+    int numParams = ref.getTypeParameters().length;
+    if (numParams == 0) return;
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
+    final Set<String> typeParamNames = new HashSet<String>();
+    for (PsiType type : ref.getTypeParameters()) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass instanceof PsiTypeParameter) {
+        typeParamNames.add(psiClass.getName());
+      }
+    }
+    int idx = 0;
+    for (PsiType type : ref.getTypeParameters()) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass instanceof PsiTypeParameter) {
+        targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(psiClass.getName(), null));
+      } else {
+        while (true) {
+          final String paramName = idx > 0 ? "T" + idx : "T";
+          if (!typeParamNames.contains(paramName)) {
+            targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(paramName, null));
+            break;
+          }
+          idx++;
+        }
+      }
+    }
   }
 }

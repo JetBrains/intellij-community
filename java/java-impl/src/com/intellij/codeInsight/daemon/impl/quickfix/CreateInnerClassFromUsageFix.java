@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
+
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +30,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -146,6 +149,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       LOG.assertTrue(extendsList != null);
       extendsList.add(superClass);
     }
+    CreateClassFromNewFix.setupGenericParameters(created, ref);
 
     created = (PsiClass)aClass.add(created);
     ref.bindToElement(created);
