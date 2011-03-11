@@ -1,0 +1,1 @@
+a = <warning descr="Unresolved reference 'true'"><caret>true</warning>

@@ -235,6 +235,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
   }
 
+  public void testUnresolvedRefTrueFalse() {                      //PY-3051
+    doInspectionTest("UnresolvedRefTrueFalse.py", PyUnresolvedReferencesInspection.class,
+                     PyBundle.message("QFIX.unresolved.reference.replace.$0", "True"), true, true);
+  }
+
   public void testUnnecessaryBackslashInArgumentList() {
     String[] testFiles = new String[]{"UnnecessaryBackslashInArguments.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);

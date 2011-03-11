@@ -300,6 +300,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         if (! marked_qualified) {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+          if (ref_text.equals("true") || ref_text.equals("false"))
+            actions.add(new UnresolvedRefTrueFalseQuickFix(ref_element));
 
           // look in other imported modules for this whole name
           if (ref_is_importable) {
