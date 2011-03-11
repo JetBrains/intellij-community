@@ -94,7 +94,7 @@ public class RemoteObject implements Remote, Unreferenced {
     boolean foreignException = false;
     Throwable each = ex;
     while (each != null) {
-      if (!each.getClass().getName().startsWith("java") && !isKnownException(each)) {
+      if (!each.getClass().getName().startsWith("java.") && !isKnownException(each)) {
         foreignException = true;
         break;
       }
