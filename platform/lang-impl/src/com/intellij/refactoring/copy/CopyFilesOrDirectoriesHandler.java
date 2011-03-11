@@ -245,7 +245,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       String name = newName == null ? file.getName() : newName;
       final PsiFile existing = targetDirectory.findFile(name);
       if (existing!=null) {
-        final int selection = choice == null || choice[0] == -1 ? Messages.showDialog(
+        int selection = choice == null || choice[0] == -1 ? Messages.showDialog(
                 String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath()),
                 "Copy",
                 choice == null ? new String[]{"Overwrite", "Skip"}
@@ -253,6 +253,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
                                              : choice[0];
         if (choice != null && selection > 1) {
           choice[0] = selection % 2;
+          selection = choice[0];
         }
         if (selection == 0 && file != existing) {
           existing.delete();
