@@ -547,7 +547,8 @@ public class GrClassImplUtil {
     builder.addModifier(PsiModifier.PUBLIC);
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
     for (PsiParameter originalParameter : originalParameters) {
-      builder.addParameter(originalParameter.getName(), substitutor.substitute(originalParameter.getType()));
+      PsiType type = substitutor.substitute(originalParameter.getType());
+      builder.addParameter(originalParameter.getName(), type == null ? PsiType.getJavaLangObject(clazz.getManager(), clazz.getResolveScope()) : type);
     }
     builder.setBaseIcon(GroovyIcons.METHOD);
     return builder;
