@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 
@@ -40,7 +41,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public void addElement(LookupElement element) {
-    final Set<String> strings = element.getAllLookupStrings();
+    final Set<String> strings = getAllLookupStrings(element);
     for (String string : strings) {
       if (string.length() == 0) continue;
 
@@ -85,7 +86,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       for (LookupElement element : list) {
         if (processed.add(element)) {
           final List<String> prefixes = new SmartList<String>();
-          for (String string : element.getAllLookupStrings()) {
+          for (String string : getAllLookupStrings(element)) {
             prefixes.addAll(myPrefixes.get(string));
           }
           Collections.sort(prefixes);
@@ -106,6 +107,14 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
       }
       result.add(group);
+    }
+    return result;
+  }
+
+  private static Set<String> getAllLookupStrings(LookupElement element) {
+    HashSet<String> result = new HashSet<String>();
+    for (String s : element.getAllLookupStrings()) {
+      result.add(StringUtil.toLowerCase(s));
     }
     return result;
   }
