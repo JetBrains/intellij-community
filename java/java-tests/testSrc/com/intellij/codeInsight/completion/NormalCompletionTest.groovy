@@ -858,6 +858,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("myField1", "myField2");
   }
 
+  public void testAfterCommonPrefix() throws Throwable {
+    configure()
+    type 'eq'
+    assertStringItems("equals", "equalsIgnoreCase");
+    complete()
+    assertStringItems("equals", "equalsIgnoreCase");
+    type '('
+    checkResult()
+  }
+
   public void testClassNameInsideIdentifierInIf() throws Throwable {
     configure()
     type '\n'

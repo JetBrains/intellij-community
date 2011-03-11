@@ -43,8 +43,8 @@ import java.util.EventObject;
 public abstract class CompletionPhase implements Disposable {
   public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int handleRepeatedInvocation(int time) {
+      return time;
     }
   };
 
@@ -58,8 +58,7 @@ public abstract class CompletionPhase implements Disposable {
   public void dispose() {
   }
 
-  @Nullable
-  public abstract CompletionProgressIndicator newCompletionStarted();
+  public abstract int handleRepeatedInvocation(int time);
 
   public static class AutoPopupAlarm extends CompletionPhase {
     public AutoPopupAlarm() {
@@ -67,8 +66,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int handleRepeatedInvocation(int time) {
+      return time;
     }
   }
   public static class Synchronous extends CompletionPhase {
@@ -77,7 +76,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
+    public int handleRepeatedInvocation(int time) {
       throw new UnsupportedOperationException("Not implemented");
     }
   }
@@ -96,9 +95,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      indicator.closeAndFinish(false);
-      return indicator;
+    public int handleRepeatedInvocation(int time) {
+      return indicator.restorePrefix(null);
     }
   }
   public static class ItemsCalculated extends CompletionPhase {
@@ -110,9 +108,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      indicator.closeAndFinish(false);
-      return indicator;
+    public int handleRepeatedInvocation(int time) {
+      return indicator.restorePrefix(null);
     }
   }
   public static class Restarted extends CompletionPhase {
@@ -121,13 +118,12 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      indicator.closeAndFinish(false);
-      return indicator;
+    public int handleRepeatedInvocation(int time) {
+      return indicator.restorePrefix(null);
     }
   }
 
-  public static class ZombiePhase extends CompletionPhase {
+  public static abstract class ZombiePhase extends CompletionPhase {
 
     protected ZombiePhase(@Nullable final LightweightHint hint, final CompletionProgressIndicator indicator) {
       super(indicator);
@@ -179,10 +175,6 @@ public abstract class CompletionPhase implements Disposable {
       });
     }
 
-    @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return indicator;
-    }
   }
 
   public static class InsertedSingleItem extends ZombiePhase {
@@ -192,21 +184,23 @@ public abstract class CompletionPhase implements Disposable {
       super(null, indicator);
       this.restorePrefix = restorePrefix;
     }
+
+    @Override
+    public int handleRepeatedInvocation(int time) {
+      return indicator.restorePrefix(restorePrefix);
+    }
+
   }
   public static class NoSuggestionsHint extends ZombiePhase {
     public NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
       super(hint, indicator);
     }
-  }
-  public static class PossiblyDisturbingAutoPopup extends CompletionPhase {
-    public PossiblyDisturbingAutoPopup(CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int handleRepeatedInvocation(int time) {
+      return indicator.restorePrefix(null);
     }
+
   }
   public static class EmptyAutoPopup extends CompletionPhase {
     public final Editor editor;
@@ -302,8 +296,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int handleRepeatedInvocation(int time) {
+      return time;
     }
   }
 
