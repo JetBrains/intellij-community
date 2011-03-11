@@ -274,10 +274,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result;
   }
 
-  @Nullable
   private static PyClassRef classRefFromQName(NameDefiner parent, PyQualifiedName qualifiedName) {
     if (qualifiedName == null) {
-      return null;
+      return new PyClassRef((String) null);
     }
     NameDefiner currentParent = parent;
     for (String component : qualifiedName.getComponents()) {
