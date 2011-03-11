@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -213,12 +214,14 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
   }
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (XmlHighlightVisitor.skipValidation(tag)) {
+    PsiElement parentTag = tag.getParentTag() ;
+    if (parentTag != null && XmlHighlightVisitor.skipValidation(parentTag)) {
       return;
     }
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     if (tag instanceof HtmlTag &&
-        (descriptor == null || descriptor instanceof AnyXmlElementDescriptor || !isInRightPlace(tag, descriptor))) {
+        (descriptor == null || descriptor instanceof AnyXmlElementDescriptor ||
+         (descriptor instanceof HtmlElementDescriptorImpl && !isInRightPlace(tag, descriptor)))) {
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
