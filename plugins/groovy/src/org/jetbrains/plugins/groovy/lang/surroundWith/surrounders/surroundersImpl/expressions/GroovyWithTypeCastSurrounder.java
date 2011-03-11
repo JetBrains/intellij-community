@@ -29,13 +29,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("((Type)a)");
-    parenthesized = (GrParenthesizedExpression) expression.replaceWithExpression(parenthesized, false);
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
     replaceToOldExpression(typeCast.getOperand(), expression);
     GrTypeElement typeElement = typeCast.getCastTypeElement();
     int endOffset = typeElement.getTextRange().getStartOffset();
+    parenthesized = (GrParenthesizedExpression) expression.replaceWithExpression(parenthesized, false);
 
-    typeCast.getNode().removeChild(typeElement.getNode());
+    final GrTypeCastExpression newTypeCast = (GrTypeCastExpression)parenthesized.getOperand();
+    final GrTypeElement newTypeElement = newTypeCast.getCastTypeElement();
+    newTypeElement.delete();
     return new TextRange(endOffset, endOffset);
   }
 

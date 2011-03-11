@@ -289,4 +289,8 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   public void testIncorrectArgumentList() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, true);
   }
+
+  public void testClosure() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+  }
 }

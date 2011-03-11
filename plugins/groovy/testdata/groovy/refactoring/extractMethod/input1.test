@@ -15,7 +15,7 @@ class S {
                 Closure sin = {x -> Math.sin(x)}
 
 
-                <caret>testMethod(sin)
+            <caret>testMethod(sin)
 
         }
 
