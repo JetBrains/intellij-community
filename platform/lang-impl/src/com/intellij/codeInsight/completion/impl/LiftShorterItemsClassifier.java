@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 
@@ -112,12 +111,13 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private static Set<String> getAllLookupStrings(LookupElement element) {
-    boolean empty = element.getPrefixMatcher().getPrefix().isEmpty();
+    return element.getAllLookupStrings();
+    /*boolean empty = element.getPrefixMatcher().getPrefix().isEmpty();
     HashSet<String> result = new HashSet<String>();
     for (String s : element.getAllLookupStrings()) {
       result.add(empty ? s : StringUtil.toLowerCase(s));
     }
-    return result;
+    return result;*/
   }
 
   @Override
