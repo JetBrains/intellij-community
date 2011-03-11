@@ -16,9 +16,7 @@
 
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -91,15 +89,14 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   public JComponent createComponent() {
     myAction = new ChooseFileEncodingAction(null) {
       public void update(final AnActionEvent e) {
-        super.update(e);
+        getTemplatePresentation().setEnabled(true);
         getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ? SYSTEM_DEFAULT :
                                           mySelectedCharsetForPropertiesFiles.displayName());
       }
 
       protected void chosen(final VirtualFile virtualFile, final Charset charset) {
         mySelectedCharsetForPropertiesFiles = charset == NO_ENCODING ? null : charset;
-        update(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", myAction.getTemplatePresentation(),
-                                          ActionManager.getInstance(), 0));
+        update((AnActionEvent)null);
       }
     };
     myPropertiesFilesEncodingCombo.removeAll();
@@ -157,8 +154,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myAutodetectUTFEncodedFilesCheckBox.setSelected(encodingManager.isUseUTFGuessing(null));
     myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles(null));
     mySelectedCharsetForPropertiesFiles = encodingManager.getDefaultCharsetForPropertiesFiles(null);
-    myAction.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", myAction.getTemplatePresentation(),
-                                      ActionManager.getInstance(), 0));
+    myAction.update((AnActionEvent)null);
 
     final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
     encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
