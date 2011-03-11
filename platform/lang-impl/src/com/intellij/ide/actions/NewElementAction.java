@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"MethodMayBeStatic"})
-public class NewElementAction extends AnAction  implements DumbAware {
+public class NewElementAction extends AnAction  implements DumbAware, PopupAction {
   public void actionPerformed(final AnActionEvent event) {
     showPopup(event.getDataContext());
   }

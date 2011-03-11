@@ -44,7 +44,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class ShowImplementationsAction extends AnAction {
+public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
