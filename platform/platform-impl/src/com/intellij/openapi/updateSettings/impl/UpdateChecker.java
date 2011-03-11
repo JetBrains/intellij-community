@@ -214,7 +214,7 @@ public final class UpdateChecker {
       }
 
       final String finalPluginUrl = pluginUrl;
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      Runnable updatePluginRunnable = new Runnable() {
         public void run() {
           try {
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -230,7 +230,13 @@ public final class UpdateChecker {
             LOG.info(e);
           }
         }
-      }, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
+      }
+      else {
+        updatePluginRunnable.run();
+      }
     }
     return success;
   }
