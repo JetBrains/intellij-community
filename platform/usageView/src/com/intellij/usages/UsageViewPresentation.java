@@ -43,6 +43,7 @@ public class UsageViewPresentation {
 
   private List<Action> myNotFoundActions;
   private boolean myDetachedMode; // no UI will be shown
+  private String myDynamicCodeUsagesString;
 
   public String getTabText() {
     return myTabText;
@@ -164,6 +165,14 @@ public class UsageViewPresentation {
 
   public void setDetachedMode(boolean detachedMode) {
     myDetachedMode = detachedMode;
+  }
+
+  public void setDynamicUsagesString(String dynamicCodeUsagesString) {
+    myDynamicCodeUsagesString = dynamicCodeUsagesString;
+  }
+
+  public String getDynamicCodeUsagesString() {
+    return myDynamicCodeUsagesString;
   }
 }
 

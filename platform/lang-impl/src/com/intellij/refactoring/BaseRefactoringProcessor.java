@@ -48,6 +48,7 @@ import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -286,27 +287,39 @@ public abstract class BaseRefactoringProcessor {
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
     int codeUsageCount = 0;
     int nonCodeUsageCount = 0;
+    int dynamicUsagesCount = 0;
     Set<PsiFile> codeFiles = new HashSet<PsiFile>();
     Set<PsiFile> nonCodeFiles = new HashSet<PsiFile>();
+    Set<PsiFile> dynamicUsagesCodeFiles = new HashSet<PsiFile>();
 
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {
         final PsiElementUsage elementUsage = (PsiElementUsage)usage;
+        final PsiFile containingFile = elementUsage.getElement().getContainingFile();
         if (elementUsage.isNonCodeUsage()) {
           nonCodeUsageCount++;
-          nonCodeFiles.add(elementUsage.getElement().getContainingFile());
+          nonCodeFiles.add(containingFile);
         }
         else {
           codeUsageCount++;
-          codeFiles.add(elementUsage.getElement().getContainingFile());
+          codeFiles.add(containingFile);
+        }
+        if (usage instanceof UsageInfo2UsageAdapter) {
+          final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+          if (usageInfo instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usageInfo).isDynamicUsage()) {
+            dynamicUsagesCount++;
+            dynamicUsagesCodeFiles.add(containingFile);
+          }
         }
       }
     }
     codeFiles.remove(null);
     nonCodeFiles.remove(null);
+    dynamicUsagesCodeFiles.remove(null);
 
     presentation.setCodeUsagesString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
     presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
+    presentation.setDynamicUsagesString("Dynamic " + StringUtil.decapitalize(descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())));
     return presentation;
   }
 

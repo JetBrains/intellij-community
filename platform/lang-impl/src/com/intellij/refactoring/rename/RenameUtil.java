@@ -71,9 +71,10 @@ public class RenameUtil {
         continue;
       }
       PsiElement referenceElement = ref.getElement();
+      final boolean isDynamic = ref.resolve() == null;
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
-                                         ref.resolve() == null));
+                                         isDynamic, isDynamic));
     }
 
     processor.findCollisions(element, newName, allRenames, result);

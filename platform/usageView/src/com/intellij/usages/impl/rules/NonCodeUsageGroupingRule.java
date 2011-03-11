@@ -15,10 +15,13 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
@@ -85,9 +88,49 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     }
   }
 
+  private static class DynamicUsageGroup implements UsageGroup {
+    public static final UsageGroup INSTANCE = new DynamicUsageGroup();
+
+    @NotNull
+    public String getText(UsageView view) {
+      return view == null ? "Dynamic usages" : view.getPresentation().getDynamicCodeUsagesString();
+    }
+
+    public void update() {
+    }
+
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "DynamicUsages";
+    }
+    public Icon getIcon(boolean isOpen) { return null; }
+    public FileStatus getFileStatus() { return null; }
+    public boolean isValid() { return true; }
+    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
+    public void navigate(boolean requestFocus) { }
+    public boolean canNavigate() { return false; }
+
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+  }
+
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof PsiElementUsage) {
-      return ((PsiElementUsage)usage).isNonCodeUsage() ? NonCodeUsageGroup.INSTANCE : CodeUsageGroup.INSTANCE;
+      if (((PsiElementUsage)usage).isNonCodeUsage()) {
+        if (usage instanceof UsageInfo2UsageAdapter) {
+          if (((UsageInfo2UsageAdapter)usage).getUsageInfo() instanceof MoveRenameUsageInfo) {
+            final MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)((UsageInfo2UsageAdapter)usage).getUsageInfo();
+            if (usageInfo.isDynamicUsage()) {
+              return DynamicUsageGroup.INSTANCE;
+            }
+          }
+        }
+        return NonCodeUsageGroup.INSTANCE;
+      }
+      else {
+        return CodeUsageGroup.INSTANCE;
+      }
     }
     return null;
   }
