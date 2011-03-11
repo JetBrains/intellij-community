@@ -142,32 +142,34 @@ public class GitUpdateProcess {
       // update each root
       boolean incomplete = false;
       boolean success = true;
-      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
-        VirtualFile root = entry.getKey();
-        GitUpdater updater = entry.getValue();
-        try {
+      VirtualFile currentlyUpdatedRoot = null;
+      try {
+        for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
+          currentlyUpdatedRoot = entry.getKey();
+          GitUpdater updater = entry.getValue();
           GitUpdateResult res = updater.update();
-          LOG.info("updating root " + root + " finished: " + res);
+          LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
           if (res == GitUpdateResult.INCOMPLETE) {
             incomplete = true;
           }
           success &= res.isSuccess();
-        } catch (VcsException e) {
-          LOG.info("Error updating changes for root " + root, e);
-          notifyImportantError(myProject, "Error updating " + root.getName(),
-                               "Updating " + root.getName() + " failed with an error: " + e.getLocalizedMessage());
-        } finally {
-          try {
-            if (!incomplete) {
-              mySaver.restoreLocalChanges();
-            } else {
-              mySaver.notifyLocalChangesAreNotRestored();
-            }
-          } catch (VcsException e) {
-            LOG.info("Couldn't restore local changes after update", e);
-            notifyImportantError(myProject, "Couldn't restore local changes after update",
-                                 "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
+        }
+      } catch (VcsException e) {
+        String rootName = (currentlyUpdatedRoot == null) ? "" : currentlyUpdatedRoot.getName();
+        LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
+        notifyImportantError(myProject, "Error updating " + rootName,
+                             "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
+      } finally {
+        try {
+          if (!incomplete) {
+            mySaver.restoreLocalChanges();
+          } else {
+            mySaver.notifyLocalChangesAreNotRestored();
           }
+        } catch (VcsException e) {
+          LOG.info("Couldn't restore local changes after update", e);
+          notifyImportantError(myProject, "Couldn't restore local changes after update",
+                               "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
         }
       }
       return success;
