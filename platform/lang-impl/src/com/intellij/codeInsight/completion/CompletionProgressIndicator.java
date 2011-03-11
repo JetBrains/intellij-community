@@ -526,19 +526,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return aBoolean.booleanValue();
   }
 
-  public int restorePrefix(final Runnable customRestore) {
-    new WriteCommandAction(getProject(), getCompletionCommandName()) {
+  public void restorePrefix(@NotNull final Runnable customRestore) {
+    new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
         setMergeCommand();
 
-        if (customRestore != null) {
-          customRestore.run();
-        }
-        getLookup().restorePrefix();
+        customRestore.run();
       }
     }.execute();
-    return Math.max(getParameters().getInvocationCount() + 1, 2);
+  }
+
+  public int nextInvocationCount(int invocation, boolean reused) {
+    return reused ? Math.max(getParameters().getInvocationCount() + 1, 2) : invocation;
   }
 
   public Editor getEditor() {

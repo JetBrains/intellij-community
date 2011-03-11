@@ -623,4 +623,12 @@ public interface Test {
 
   }
 
+  public void testExplicitCompletionOnEmptyAutopopup() {
+    myFixture.configureByText("a.java", "<caret>")
+    type 'cccccc'
+    myFixture.completeBasic()
+    joinCompletion()
+    assert !lookup
+  }
+
 }

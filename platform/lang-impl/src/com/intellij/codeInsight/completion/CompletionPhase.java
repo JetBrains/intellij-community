@@ -43,7 +43,7 @@ import java.util.EventObject;
 public abstract class CompletionPhase implements Disposable {
   public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
     @Override
-    public int handleRepeatedInvocation(int time) {
+    public int newCompletionStarted(int time, boolean repeated) {
       return time;
     }
   };
@@ -58,7 +58,11 @@ public abstract class CompletionPhase implements Disposable {
   public void dispose() {
   }
 
-  public abstract int handleRepeatedInvocation(int time);
+  public abstract int newCompletionStarted(int time, boolean repeated);
+
+  public boolean fillInCommonPrefix() {
+    return false;
+  }
 
   public static class AutoPopupAlarm extends CompletionPhase {
     public AutoPopupAlarm() {
@@ -66,7 +70,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
       return time;
     }
   }
@@ -76,7 +81,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
+    public int newCompletionStarted(int time, boolean repeated) {
       throw new UnsupportedOperationException("Not implemented");
     }
   }
@@ -95,8 +100,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
-      return indicator.restorePrefix(null);
+    public int newCompletionStarted(int time, boolean repeated) {
+      indicator.closeAndFinish(false);
+      return indicator.nextInvocationCount(time, repeated);
     }
   }
   public static class ItemsCalculated extends CompletionPhase {
@@ -108,8 +114,20 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
-      return indicator.restorePrefix(null);
+    public int newCompletionStarted(int time, boolean repeated) {
+      indicator.closeAndFinish(false);
+      indicator.restorePrefix(new Runnable() {
+        @Override
+        public void run() {
+          indicator.getLookup().restorePrefix();
+        }
+      });
+      return indicator.nextInvocationCount(time, repeated);
+    }
+
+    @Override
+    public boolean fillInCommonPrefix() {
+      return indicator.fillInCommonPrefix(true);
     }
   }
   public static class Restarted extends CompletionPhase {
@@ -118,8 +136,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
-      return indicator.restorePrefix(null);
+    public int newCompletionStarted(int time, boolean repeated) {
+      indicator.closeAndFinish(false);
+      return indicator.nextInvocationCount(time, repeated);
     }
   }
 
@@ -186,8 +205,10 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
-      return indicator.restorePrefix(restorePrefix);
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      indicator.restorePrefix(restorePrefix);
+      return indicator.nextInvocationCount(time, repeated);
     }
 
   }
@@ -197,8 +218,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
-      return indicator.restorePrefix(null);
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      return indicator.nextInvocationCount(time, repeated);
     }
 
   }
@@ -296,7 +318,8 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public int handleRepeatedInvocation(int time) {
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
       return time;
     }
   }

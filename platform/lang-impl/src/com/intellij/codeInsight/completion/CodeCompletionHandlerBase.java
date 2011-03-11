@@ -119,19 +119,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    CompletionProgressIndicator oldIndicator = phase.indicator;
-    if (oldIndicator != null) {
-      boolean repeated = oldIndicator.isRepeatedInvocation(myCompletionType, editor);
-      if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase instanceof CompletionPhase.ItemsCalculated && oldIndicator.fillInCommonPrefix(true)) {
-        return;
-      }
-      oldIndicator.closeAndFinish(false);
-
-      if (repeated) {
-        time = phase.handleRepeatedInvocation(time);
-      }
+    boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(myCompletionType, editor);
+    if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
+      return;
     }
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+
+    time = phase.newCompletionStarted(time, repeated);
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
 
     if (time > 1) {
       if (myCompletionType == CompletionType.CLASS_NAME) {
