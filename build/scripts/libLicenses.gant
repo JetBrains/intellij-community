@@ -1,18 +1,20 @@
 import org.jetbrains.jps.*
 
 class LibraryLicense {
-  String name, libraryName, url, version
+  String name, url, version
+  List<String> libraryNames
   String license, licenseUrl
   String attachedTo
 }
 
 List<LibraryLicense> licensesList = []
-List<String> jetbrainsLibraries = ["tcServiceMessages"]
+List<String> jetbrainsLibraries = []
 Map<String, String> predefinedLicenseUrls = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
 
 binding.setVariable("libraryLicense", {Map args ->
-  if (args.libraryName == null) {
-    args.libraryName = args.name;
+  if (args.libraryNames == null) {
+    args.libraryNames = [args.libraryName?:args.name]
+    args.remove("libraryName")
   }
   if (args.licenseUrl == null) {
     args.licenseUrl = predefinedLicenseUrls[args.license]
@@ -48,7 +50,7 @@ binding.setVariable("checkLibLicenses", {
     }
   }
 
-  def libWithLicenses = licensesList.collect {it.libraryName} as Set
+  def libWithLicenses = licensesList.collectAll {it.libraryNames}.flatten() as Set
   libWithLicenses.addAll(jetbrainsLibraries)
 
   List<String> withoutLicenses = []
@@ -80,23 +82,39 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
       if (item instanceof Library) {
-        usedLibraries[getLibraryName(item)] = module
+        usedLibraries[getLibraryName(item)] = module.name
       }
     }
   }
 
-  def licenses = licensesList.findAll {usedLibraries.containsKey(it.libraryName) || usedModulesNames.contains(it.attachedTo)}
+  Map<LibraryLicense, String> licenses = [:]
+  licensesList.each {LibraryLicense lib ->
+    if (usedModulesNames.contains(lib.attachedTo)) {
+      licenses[lib] = lib.attachedTo
+    }
+    else {
+      lib.libraryNames.each {
+        String module = usedLibraries[it]
+        if (module != null) {
+          licenses[lib] = module
+        }
+      }
+    }
+  }
+
   project.info("Used libraries:")
   List<String> lines = []
-  licenses.each {LibraryLicense lib ->
+  licenses.entrySet().each {
+    LibraryLicense lib = it.key
+    String moduleName = it.value
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
-    project.info(" $lib.libraryName (in module ${usedLibraries[lib.libraryName]})")
+    project.info(" $lib.name (in module $moduleName)")
     lines << "|$name| $lib.version|$license|".toString()
   }
   //project.info("Unused libraries:")
-  //licensesList.findAll {!usedLibraries.containsKey(it.libraryName)}.each {LibraryLicense lib ->
-  //  project.info(" $lib.libraryName")
+  //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
+  //  project.info(" $lib.name")
   //}
 
   lines.sort(String.CASE_INSENSITIVE_ORDER)
@@ -128,7 +146,7 @@ libraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1"
 libraryLicense(name: "Apache Commons Net", libraryName: "commons-net", version: "2.0", license: "Apache 2.0", url: "http://commons.apache.org/net/")
 libraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.4", license: "Apache 2.0", url: "http://commons.apache.org/lang/", licenseUrl: "http://commons.apache.org/lang/license.html")
 libraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0", url: "http://commons.apache.org/logging/")
-libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.3.0.jar", version: "2.3.0", license: "Apache 2.0", url: "http://lucene.apache.org/java")
+libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", license: "Apache 2.0", url: "http://lucene.apache.org/java")
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
@@ -151,6 +169,7 @@ libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: 
 libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.8", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
+libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1.2.jar"], version: "3.0.3", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "Microba", libraryName: "microba", version: "0.4.2", license: "BSD", url: "http://microba.sourceforge.net/", licenseUrl: "http://microba.sourceforge.net/license.txt")
 libraryLicense(name: "NanoXML", version: "2.2.3", license: "zlib/libpng", url: "http://nanoxml.cyberelf.be/", licenseUrl: "http://devkix.com/nanoxml.php")
 libraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", version: "3.3", license: "CPL 1.0", url: "http://www.eclipse.org/jdt/core/index.php")
@@ -160,6 +179,7 @@ libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", vers
 libraryLicense(name: "Quaqua L&F", attachedTo: "platform-impl", version: "6.2", license: "BSD", url: "http://www.randelshofer.ch/quaqua/", licenseUrl: "http://www.randelshofer.ch/quaqua/license.html")
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")
 libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
+libraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-3.0.4.jar", version: "3.0.4", license: "Eclipse Public License", url: "http://nexus.sonatype.org/", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html")
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "SVN version, 1.1 branch as of 1 Oct 2007", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
 libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
@@ -174,3 +194,4 @@ libraryLicense(name: "XStream", version: "1.2.1", license: "BSD", url: "http://x
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "7.0.2", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
+jetbrainsLibrary("tcServiceMessages")

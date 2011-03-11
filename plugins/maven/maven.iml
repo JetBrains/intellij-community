@@ -46,17 +46,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="JAXB">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jaxb-api-2.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jaxb-impl-2.1.10.jar!/" />
         </CLASSES>
         <JAVADOC />
