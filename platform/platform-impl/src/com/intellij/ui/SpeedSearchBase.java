@@ -104,7 +104,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (!isPopupActive()) return null;
     final SpeedSearchComparator comparator = getComparator();
     final String recentSearchText = comparator.getRecentSearchText();
-    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) && !NameUtil.useMinusculeHumpMatcher ? comparator.getRecentSearchMatcher() : null;
+    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) && !NameUtil.isUseMinusculeHumpMatcher() ? comparator.getRecentSearchMatcher() : null;
   }
 
   /**
@@ -183,7 +183,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (myRecentSearchText != null &&
           myRecentSearchText.equals(pattern)
         ) {
-        if (NameUtil.useMinusculeHumpMatcher) {
+        if (NameUtil.isUseMinusculeHumpMatcher()) {
           return myMinusculeMatcher.matches(text);
         }
 
@@ -202,7 +202,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
             final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
             myRecentSearchMatcher = recentSearchPattern.matcher(text);
 
-            if (NameUtil.useMinusculeHumpMatcher) {
+            if (NameUtil.isUseMinusculeHumpMatcher()) {
               myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern);
               return myMinusculeMatcher.matches(text);
             }

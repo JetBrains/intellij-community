@@ -488,7 +488,7 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> Collection<T> addAll(@NotNull Collection<T> collection, @NotNull T... elements) {
+  public static <T, A extends T, C extends Collection<T>> C addAll(@NotNull C collection, @NotNull A... elements) {
     //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
       collection.add(element);
@@ -842,6 +842,11 @@ public class ContainerUtil {
     return result.toArray(emptyArray);
   }
 
+  @NotNull
+  public static <T> Set<T> set(T ... items) {
+    return addAll(new HashSet<T>(), items);
+  }
+  
   public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
     if (element != null) {
       result.add(element);

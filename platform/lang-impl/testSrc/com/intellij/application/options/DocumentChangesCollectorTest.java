@@ -2,8 +2,8 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JUnit4Mockery;

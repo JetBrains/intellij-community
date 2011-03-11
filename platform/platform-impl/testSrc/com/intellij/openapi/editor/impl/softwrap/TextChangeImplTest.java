@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.junit.Test;
 

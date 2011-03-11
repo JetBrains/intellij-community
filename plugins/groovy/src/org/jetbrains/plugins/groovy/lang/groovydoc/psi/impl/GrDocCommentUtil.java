@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 
 /**
  * @author Maxim.Medvedev
@@ -51,7 +53,13 @@ public abstract class GrDocCommentUtil {
 
   @Nullable
   public static GrDocComment findDocComment(GrDocCommentOwner owner) {
-    PsiElement element = owner.getPrevSibling();
+    PsiElement element;
+    if (owner instanceof GrVariable && owner.getParent() instanceof GrVariableDeclaration) {
+      element = owner.getParent().getPrevSibling();
+    }
+    else {
+      element = owner.getPrevSibling();
+    }
     while (true) {
       if (element == null) return null;
       final ASTNode node = element.getNode();

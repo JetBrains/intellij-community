@@ -140,7 +140,14 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   private static void replaceOccurence(GrField field, PsiElement occurence, boolean escalateVisibility) {
-    final PsiElement replaced = occurence.replace(createRefExpression(field, occurence));
+    final PsiElement replaced;
+    final GrReferenceExpression newExpr = createRefExpression(field, occurence);
+    if (occurence instanceof GrExpression) {
+      replaced = ((GrExpression)occurence).replaceWithExpression(newExpr, false);
+    }
+    else {
+      replaced = occurence.replace(newExpr);
+    }
     if (escalateVisibility) {
       PsiUtil.escalateVisibility(field, replaced);
     }

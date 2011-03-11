@@ -29,12 +29,6 @@ setProperty("paths", new Paths(out))
 
 def paths = new Paths(out)
 
-def includeFile(String filepath) {
-  Script s = groovyShell.parse(new File(filepath))
-  s.setBinding(binding)
-  s
-}
-
 target(compile: "Compile project") {
   loadProject()
 

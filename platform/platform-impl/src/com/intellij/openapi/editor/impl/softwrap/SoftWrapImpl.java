@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**

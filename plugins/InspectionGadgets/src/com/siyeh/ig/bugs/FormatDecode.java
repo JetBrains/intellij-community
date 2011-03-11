@@ -17,8 +17,12 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +47,27 @@ class FormatDecode{
     private static final Validator INT_VALIDATOR = new IntValidator();
 
     private static final Validator FLOAT_VALIDATOR = new FloatValidator();
+
+    /**
+     * Holds information about validator replacement rules, i.e. allows to answer if validator of particular type may be
+     * safely replaced by validator of another particular type.
+     * <p/>
+     * For example, validator of type {@link AllValidator#type() 'all'} may be safely replaced by validator of any other
+     * type, e.g. {@link DateValidator#type() Date/Time} or {@link CharValidator#type() 'char validator'} may be replaced
+     * by {@link IntValidator#type() 'int validator'} because {@link Formatter java formatter} knows how to
+     * {@link Formatter.FormatSpecifier#printCharacter(Object) print character from integer} etc.
+     * <p/>
+     * Generally, current collection holds set of mappings where the key is type of validator that may be safely replaced
+     * by validator of type that is contained at <code>'values'</code> collection.
+     */
+    private static final Map<String, Set<String>> REPLACEABLE_VALIDATOR_TYPES = new HashMap<String, Set<String>>();
+    static {
+        REPLACEABLE_VALIDATOR_TYPES.put(
+            ALL_VALIDATOR.type(),
+            ContainerUtil.set(DATE_VALIDATOR.type(), CHAR_VALIDATOR.type(), INT_VALIDATOR.type(), FLOAT_VALIDATOR.type())
+        );
+        REPLACEABLE_VALIDATOR_TYPES.put(CHAR_VALIDATOR.type(), ContainerUtil.set(INT_VALIDATOR.type()));
+    }
 
     public static Validator[] decode(String formatString, int argumentCount){
         final ArrayList<Validator> parameters = new ArrayList<Validator>();
@@ -108,11 +133,13 @@ class FormatDecode{
                               int argumentCount){
         if(pos < parameters.size()){
             final Validator old = parameters.get(pos);
+            Set<String> replaceableTypes = REPLACEABLE_VALIDATOR_TYPES.get(old.type());
+            if (replaceableTypes != null && replaceableTypes.contains(val.type())) {
+                parameters.set(pos, val);
+            }
             // it's OK to overwrite ALL with something more specific
             // it's OK to ignore overwrite of something else with ALL or itself
-            if (old == ALL_VALIDATOR) {
-                parameters.set(pos, val);
-            } else if (val != ALL_VALIDATOR && val != old) {
+            else if (val != ALL_VALIDATOR && val != old) {
                 throw new DuplicateFormatFlagsException(
                         "requires both " + old.type() + " and " + val.type());
             }

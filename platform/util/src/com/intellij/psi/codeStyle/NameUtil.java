@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -39,7 +40,6 @@ public class NameUtil {
     }
   };
   private static final int MAX_LENGTH = 40;
-  public static final boolean useMinusculeHumpMatcher = "true".equals(System.getProperty("minuscule.humps.matching"));
 
   private NameUtil() {}
 
@@ -390,12 +390,13 @@ public class NameUtil {
     return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false));
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp) {
-    if (useMinusculeHumpMatcher) {
-      return new MinusculeMatcher(pattern);
-    }
+  public static boolean isUseMinusculeHumpMatcher() {
+    return Registry.is("minuscule.humps.matching");
+  }
 
-    return new OptimizedMatcher(pattern, regexp);
+  private static Matcher buildMatcher(final String pattern, String regexp) {
+    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern)
+                                       : new OptimizedMatcher(pattern, regexp);
   }
 
   private static class OptimizedMatcher implements Matcher {

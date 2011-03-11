@@ -719,12 +719,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final void setInBulkUpdate(boolean value) {
+    myDoingBulkUpdate = value;
+    myText.setDeferredChangeMode(value);
     if (value) {
-      myDoingBulkUpdate = true;
       getPublisher().updateStarted(this);
     }
     else {
-      myDoingBulkUpdate = false;
       getPublisher().updateFinished(this);
       normalizeRangeMarkers();
     }

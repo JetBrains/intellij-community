@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.softwrap;
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.util.text.StringUtil;

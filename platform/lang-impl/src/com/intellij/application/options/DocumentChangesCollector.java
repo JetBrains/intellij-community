@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -190,7 +190,7 @@ public class DocumentChangesCollector implements DocumentListener {
   }
 
   private void mergeChangesIfNecessary(DocumentEvent event) {
-    // There is a possible case that we had more than scattered change (e.g. (3; 5) and (8; 10)) and current document change affects
+    // There is a possible case that we had more than one scattered change (e.g. (3; 5) and (8; 10)) and current document change affects
     // both of them (e.g. remove all symbols from offset (4; 9)). We have two changes then: (3; 4) and (4; 5) and want to merge them
     // into a single one.
     if (myChanges.size() < 2) {

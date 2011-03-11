@@ -176,6 +176,11 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    return addBefore(element, null);
+  }
+
+  @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     if (element instanceof GrNamedArgument || element instanceof GrExpression) {
       if (anchor == null) anchor = getLastChild();

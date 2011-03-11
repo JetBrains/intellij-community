@@ -21,6 +21,7 @@ public class MalformedFormatString {
         String warn = String.format("%s %s", 1); // this is invalid according to the inspector (correct)
         String invalid = String.format("%s %s" + local, 1); // this is valid according to the inspector (INCORRECT!)
         String interesting = String.format("%s %s" + "hmm", 1); // this is invalid according to the inspector (correct)
+        String intAsChar = String.format("symbol '%1$c' (numeric value %1$d)", 60); // integer->char conversion is ok (correct)
     }
 
     public void outOfMemory() {

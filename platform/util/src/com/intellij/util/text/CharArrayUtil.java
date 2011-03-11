@@ -31,39 +31,68 @@ public class CharArrayUtil {
   private CharArrayUtil() {
   }
 
+  /**
+   * Copies all symbols from the given char sequence to the given array
+   * 
+   * @param src         source data holder
+   * @param dst         output data buffer
+   * @param dstOffset   start offset to use within the given output data buffer
+   */
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
     getChars(src, dst, dstOffset, src.length());
   }
 
+  /**
+   * Copies necessary number of symbols from the given char sequence start to the given array.
+   *
+   * @param src         source data holder
+   * @param dst         output data buffer
+   * @param dstOffset   start offset to use within the given output data buffer
+   * @param len         number of source data symbols to copy to the given buffer
+   */
   public static void getChars(CharSequence src, char[] dst, int dstOffset, int len) {
+    getChars(src, dst, 0, dstOffset, len);
+  }
+  
+  /**
+   * Copies necessary number of symbols from the given char sequence to the given array.
+   * 
+   * @param src         source data holder
+   * @param dst         output data buffer
+   * @param srcOffset   source text offset
+   * @param dstOffset   start offset to use within the given output data buffer
+   * @param len         number of source data symbols to copy to the given buffer
+   */
+  public static void getChars(CharSequence src, char[] dst, int srcOffset, int dstOffset, int len) {
     if (len >= GET_CHARS_THRESHOLD) {
       if (src instanceof String) {
-        ((String)src).getChars(0, len, dst, dstOffset);
+        ((String)src).getChars(srcOffset, len, dst, dstOffset);
         return;
       }
       else if (src instanceof CharBuffer) {
         final CharBuffer buffer = (CharBuffer)src;
         final int i = buffer.position();
+        buffer.position(i + srcOffset);
         buffer.get(dst, dstOffset, len);
         buffer.position(i);
         return;
       }
       else if (src instanceof CharSequenceBackedByArray) {
-        ((CharSequenceBackedByArray)src.subSequence(0, len)).getChars(dst, dstOffset);
+        ((CharSequenceBackedByArray)src.subSequence(srcOffset, len)).getChars(dst, dstOffset);
         return;
       }
       else if (src instanceof StringBuffer) {
-        ((StringBuffer)src).getChars(0, len, dst, dstOffset);
+        ((StringBuffer)src).getChars(srcOffset, len, dst, dstOffset);
         return;
       }
       else if (src instanceof StringBuilder) {
-        ((StringBuilder)src).getChars(0, len, dst, dstOffset);
+        ((StringBuilder)src).getChars(srcOffset, len, dst, dstOffset);
         return;
       }
     }
 
-    for (int i = 0; i < len; i++) {
-      dst[i + dstOffset] = src.charAt(i);
+    for (int i = 0, j = srcOffset, max = srcOffset + len; j < max && i < dst.length; i++, j++) {
+      dst[i + dstOffset] = src.charAt(j);
     }
   }
 
