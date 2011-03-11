@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -49,7 +50,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author ven
  */
 public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrCodeBlock, GrControlFlowOwner {
-  private volatile CachedValue<Instruction[]> myControlFlow = null;
+  private static final Key<CachedValue<Instruction[]>> CONTROL_FLOW = Key.create("Control flow");
 
   protected GrBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -75,7 +76,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    myControlFlow = null;
+    putUserData(CONTROL_FLOW, null);
   }
 
   @Override
@@ -96,14 +97,15 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   public Instruction[] getControlFlow() {
-    CachedValue<Instruction[]> controlFlow = myControlFlow;
+    CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
     if (controlFlow == null) {
-      myControlFlow = controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {
+      controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {
         @Override
         public Result<Instruction[]> compute() {
           return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this), getContainingFile());
         }
       }, false);
+      putUserData(CONTROL_FLOW, controlFlow);
     }
 
     return controlFlow.getValue();
