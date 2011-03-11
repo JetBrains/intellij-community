@@ -18,6 +18,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -25,6 +26,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,10 +92,17 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
 
   private static class DynamicUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
+    @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? "Dynamic usages" : view.getPresentation().getDynamicCodeUsagesString();
+      if (view == null) {
+        return DYNAMIC_CAPTION;
+      }
+      else {
+        final String dynamicCodeUsagesString = view.getPresentation().getDynamicCodeUsagesString();
+        return dynamicCodeUsagesString == null ? DYNAMIC_CAPTION : dynamicCodeUsagesString;
+      }
     }
 
     public void update() {
@@ -117,15 +126,13 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
 
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof PsiElementUsage) {
-      if (((PsiElementUsage)usage).isNonCodeUsage()) {
-        if (usage instanceof UsageInfo2UsageAdapter) {
-          if (((UsageInfo2UsageAdapter)usage).getUsageInfo() instanceof MoveRenameUsageInfo) {
-            final MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)((UsageInfo2UsageAdapter)usage).getUsageInfo();
-            if (usageInfo.isDynamicUsage()) {
-              return DynamicUsageGroup.INSTANCE;
-            }
-          }
+      if (usage instanceof UsageInfo2UsageAdapter) {
+        final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+        if (usageInfo.isDynamicUsage()) {
+          return DynamicUsageGroup.INSTANCE;
         }
+      }
+      if (((PsiElementUsage)usage).isNonCodeUsage()) {
         return NonCodeUsageGroup.INSTANCE;
       }
       else {

@@ -29,7 +29,6 @@ public class MoveRenameUsageInfo extends UsageInfo{
 
   private PsiReference myReference;
   private RangeMarker myReferenceRangeMarker = null;
-  private boolean myDynamicUsage;
 
   public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
     this(reference.getElement(), reference, referencedElement);
@@ -43,12 +42,6 @@ public class MoveRenameUsageInfo extends UsageInfo{
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
     super(element, startOffset, endOffset, nonCodeUsage);
-    init(element, reference, referencedElement);
-  }
-
-  public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage, boolean isDynamicUsage){
-    super(element, startOffset, endOffset, nonCodeUsage);
-    myDynamicUsage = isDynamicUsage;
     init(element, reference, referencedElement);
   }
 
@@ -68,6 +61,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
       int elementStart = reference.getElement().getTextRange().getStartOffset();
       myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
                                                           elementStart + reference.getRangeInElement().getEndOffset());
+      myDynamicUsage = reference.resolve() == null;
     }
   }
 
@@ -98,9 +92,5 @@ public class MoveRenameUsageInfo extends UsageInfo{
     final TextRange rangeInElement = reference.getRangeInElement();
     if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) return null;
     return reference;
-  }
-
-  public boolean isDynamicUsage() {
-    return myDynamicUsage;
   }
 }
