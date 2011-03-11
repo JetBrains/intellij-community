@@ -52,15 +52,14 @@ public class GrKindWeigher extends CompletionWeigher {
     }
 
     final PsiElement position = location.getCompletionParameters().getPosition();
-    if (!(position.getParent() instanceof GrReferenceElement)) {
-      if (position.getContainingFile() instanceof GroovyFileBase) {
-        if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
-        return 1;
-      }
+    if (!(position.getContainingFile() instanceof GroovyFileBase)) {
       return null;
     }
 
-    if (!(o instanceof PsiElement)) return null;
+    if (!(position.getParent() instanceof GrReferenceElement)) {
+      if (o instanceof PsiClass || o instanceof PsiPackage) return 0;
+      return 1;
+    }
 
     final GrReferenceElement parent = (GrReferenceElement)position.getParent();
 
@@ -70,6 +69,7 @@ public class GrKindWeigher extends CompletionWeigher {
       if (o instanceof PsiPackage) return NotQualifiedKind.aPackage;
       if (isLightElement(o)) return NotQualifiedKind.anImplicitGroovyMethod;
       if (o instanceof PsiMember) return NotQualifiedKind.aMember;
+      if (o instanceof String) return NotQualifiedKind.aString;
     }
     else {
       if (o instanceof PsiClass) return QualifiedKind.aClass;
@@ -87,6 +87,7 @@ public class GrKindWeigher extends CompletionWeigher {
         }
         return QualifiedKind.aMember;
       }
+      if (o instanceof String) return QualifiedKind.aString;
     }
     return null;
   }
@@ -96,10 +97,10 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   static enum NotQualifiedKind {
-    aPackage, aClass, anImplicitGroovyMethod, aMember, aLocal
+    aPackage, aClass, anImplicitGroovyMethod, aMember, aLocal, aString
   }
 
   static enum QualifiedKind {
-    aPackage, aClass, aTrashMethod, anImplicitGroovyMethod, aMember, anEnumConstant
+    aPackage, aClass, aTrashMethod, anImplicitGroovyMethod, aMember, anEnumConstant, aString
   }
 }

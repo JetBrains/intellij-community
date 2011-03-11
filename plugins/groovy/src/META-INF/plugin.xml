@@ -231,6 +231,8 @@
 
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.lang.psi.GroovyDeclarationSearcher"/>
 
+    <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTypeDeclarationProvider" order="first"/>
+
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
@@ -260,7 +262,6 @@
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
-    <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
     <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
 

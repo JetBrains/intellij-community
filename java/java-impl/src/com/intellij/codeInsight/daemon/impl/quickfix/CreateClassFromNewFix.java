@@ -67,7 +67,6 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       classReference.bindToElement(aClass);
     }
     setupInheritance(newExpression, aClass);
-    setupGenericParameters(newExpression, aClass);
 
     PsiExpressionList argList = newExpression.getArgumentList();
     Project project = aClass.getProject();
@@ -130,17 +129,6 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
     return supConstructor;
-  }
-
-  private static void setupGenericParameters(PsiNewExpression expr, PsiClass targetClass) throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement ref = getReferenceElement(expr);
-    int numParams = ref.getTypeParameters().length;
-    if (numParams == 0) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    targetClass.getTypeParameterList().add(factory.createTypeParameterFromText("T", null));
-    for (int i = 2; i <= numParams; i++) {
-      targetClass.getTypeParameterList().add(factory.createTypeParameterFromText("T" + (i-1), null));
-    }
   }
 
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
@@ -227,7 +215,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return QuickFixBundle.message("create.class.from.new.text", varName);
   }
 
-  private static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
+  protected static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
     return expression.getClassOrAnonymousClassReference();
   }
 

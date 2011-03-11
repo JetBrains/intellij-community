@@ -283,6 +283,7 @@ public class CreateFromUsageUtils {
                 PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
                                   classKind == CLASS ? elementFactory.createClass(name) :
                                   elementFactory.createEnum(name);
+                CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
                 result = (PsiClass)manager.getCodeStyleManager().reformat(result);
                 return (PsiClass) psiClass.add(result);
               }
@@ -399,7 +400,9 @@ public class CreateFromUsageUtils {
                 targetClass.getExtendsList() : targetClass.getImplementsList();
               list.add(superClassReference);
             }
-
+            if (contextElement instanceof PsiJavaCodeReferenceElement) {
+              CreateFromUsageBaseFix.setupGenericParameters(targetClass, (PsiJavaCodeReferenceElement)contextElement);
+            }
             return targetClass;
           }
           catch (IncorrectOperationException e) {

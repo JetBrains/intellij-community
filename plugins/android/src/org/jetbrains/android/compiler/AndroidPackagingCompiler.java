@@ -166,6 +166,10 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
   }
 
   public ProcessingItem[] process(final CompileContext context, ProcessingItem[] items) {
+    if (!AndroidCompileUtil.isFullBuild(context)) {
+      return ProcessingItem.EMPTY_ARRAY;
+    }
+
     context.getProgressIndicator().setText("Building Android package...");
     final List<ProcessingItem> result = new ArrayList<ProcessingItem>();
     for (ProcessingItem processingItem : items) {

@@ -106,8 +106,11 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myTypeCombo.setEnabled(mySpecifyType.isSelected());
     updateVisibilityPanel();
     updateOkStatus();
+  }
 
-    myNameComboBox.requestFocus();
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myNameComboBox;
   }
 
   @Override

@@ -62,6 +62,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("C2");
   }
 
+  public void testTopParameterInHierarchy() throws Exception {
+    myDoCompare = false;
+    doTest("I");
+  }
+
   public void testExtendsList() throws Exception {
     myDoCompare = false;
     doTest("B");

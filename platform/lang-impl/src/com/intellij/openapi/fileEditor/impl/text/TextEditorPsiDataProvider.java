@@ -117,18 +117,29 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   private static Language getLanguageAtCurrentPositionInEditor(final Editor editor, final PsiFile psiFile) {
-    int mostProbablyCorrectLanguageOffset = getOffset(editor);
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
+                                            caretOffset == selectionModel.getSelectionEnd()
+                                            ? selectionModel.getSelectionStart()
+                                            : caretOffset;
+    if (selectionModel.hasSelection()) {
+      return getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset, selectionModel.getSelectionEnd());
+    }
 
     return PsiUtilBase.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
-  private static int getOffset(Editor editor) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    int caretOffset = editor.getCaretModel().getOffset();
-    return caretOffset == selectionModel.getSelectionStart() ||
-                                            caretOffset == selectionModel.getSelectionEnd()
-                                            ? selectionModel.getSelectionStart()
-                                            : caretOffset;
+  private static Language getLanguageAtOffset(PsiFile psiFile, int mostProbablyCorrectLanguageOffset, int end) {
+    final PsiElement elt = psiFile.findElementAt(mostProbablyCorrectLanguageOffset);
+    if (elt == null) return psiFile.getLanguage();
+    if (elt instanceof PsiWhiteSpace) {
+      final int incremented = elt.getTextRange().getEndOffset() + 1;
+      if (incremented <= end) {
+        return getLanguageAtOffset(psiFile, incremented, end);
+      }
+    }
+    return PsiUtilBase.findLanguageFromElement(elt);
   }
 
   @Nullable

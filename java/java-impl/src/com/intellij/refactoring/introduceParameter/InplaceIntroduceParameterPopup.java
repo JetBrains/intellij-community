@@ -284,13 +284,16 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
                                           getReplaceFieldsWithGetters(), myMustBeFinal || myFinal, isGenerateDelegate(),
                                           myParameterTypePointer.getType(),
                                           parametersToRemove);
+        final boolean [] conflictsFound = new boolean[] {true};
         processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
           @Override
           public void run() {
+            conflictsFound[0] = false;
           }
         });
         processor.run();
         normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+        success = !conflictsFound[0];
       }
       super.moveOffsetAfter(success);
     }

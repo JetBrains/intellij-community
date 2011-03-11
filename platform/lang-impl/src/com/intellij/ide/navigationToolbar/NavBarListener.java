@@ -16,6 +16,8 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -44,7 +46,7 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class NavBarListener extends WolfTheProblemSolver.ProblemListener
-  implements ActionListener, FocusListener, FileStatusListener,
+  implements ActionListener, FocusListener, FileStatusListener, AnActionListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
@@ -61,6 +63,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     FileStatusManager.getInstance(project).addFileStatusListener(listener);
     PsiManager.getInstance(project).addPsiTreeChangeListener(listener);
     WolfTheProblemSolver.getInstance(project).addProblemListener(listener);
+    ActionManager.getInstance().addAnActionListener(listener);
 
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
@@ -77,6 +80,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       FileStatusManager.getInstance(project).removeFileStatusListener(listener);
       PsiManager.getInstance(project).removePsiTreeChangeListener(listener);
       WolfTheProblemSolver.getInstance(project).removeProblemListener(listener);
+      ActionManager.getInstance().removeAnActionListener(listener);
       final MessageBusConnection connection = (MessageBusConnection)panel.getClientProperty(BUS);
       panel.putClientProperty(BUS, null);
       if (connection != null) {
@@ -232,8 +236,24 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       }
     }
   }
+  @Override
+  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    if (!(action instanceof PopupAction)) {
+      if (myPanel.isInFloatingMode()) {
+        myPanel.hideHint();
+      } else {
+        myPanel.cancelPopup();
+      }
+    }
+  }
 
   //---- Ignored
+  @Override
+  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
+
+  @Override
+  public void beforeEditorTyping(char c, DataContext dataContext) {}
+
   @Override
   public void beforeRootsChange(ModuleRootEvent event) {}
 

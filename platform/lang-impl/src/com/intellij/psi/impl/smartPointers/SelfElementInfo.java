@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,7 +37,6 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SelfElementInfo");
   protected final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private int mySyncStartOffset;
@@ -52,9 +50,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   public SelfElementInfo(@NotNull Project project, @NotNull TextRange anchor, @NotNull Class anchorClass, @NotNull PsiFile containingFile) {
     myVirtualFile = containingFile.getVirtualFile();
     myType = anchorClass;
-    TextRange range = anchor;//.getTextRange();
-    LOG.assertTrue(range != null, anchor);
-    range = getPersistentAnchorRange(range, containingFile);
+    TextRange range = getPersistentAnchorRange(anchor, containingFile);
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -145,7 +141,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       if (marker.isValid()) {
         mySyncStartOffset = marker.getStartOffset();
         mySyncEndOffset = marker.getEndOffset();
-        assert mySyncEndOffset <= marker.getDocument().getTextLength();
+        assert mySyncEndOffset <= marker.getDocument().getTextLength() : "mySyncEndOffset: "+mySyncEndOffset+"; docLength: "+marker.getDocument().getTextLength()+"; marker: "+marker +"; "+marker.getClass();
       }
       else {
         mySyncMarkerIsValid = false;
@@ -204,14 +200,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   private void setMarker(RangeMarker marker) {
     myMarkerRef = marker == null ? null : new SoftReference<RangeMarker>(marker);
-  }
-
-  @Nullable
-  public static PsiFile restoreFile(PsiFile file,@NotNull Project project) {
-    if (file == null) return null;
-    if (file.isValid()) return file;
-    VirtualFile virtualFile = file.getVirtualFile();
-    return restoreFileFromVirtual(virtualFile, project);
   }
 
   @Nullable

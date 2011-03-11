@@ -440,11 +440,15 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
   private static void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
     if (parm instanceof GrParameter) {
-      buffer.append(GroovyPresentationUtil.getParameterPresentation((GrParameter) parm, substitutor));
+      GrParameter grParam = (GrParameter)parm;
+      buffer.append(GroovyPresentationUtil.getParameterPresentation(grParam, substitutor));
 
-      final GrExpression initializer = ((GrParameter) parm).getDefaultInitializer();
+      final GrExpression initializer = grParam.getDefaultInitializer();
       if (initializer != null) {
         buffer.append(" = ").append(initializer.getText());
+      }
+      else if (grParam.isOptional()) {
+        buffer.append(" = null");
       }
     } else {
       PsiType t = parm.getType();

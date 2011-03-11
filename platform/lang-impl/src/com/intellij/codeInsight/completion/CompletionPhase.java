@@ -43,8 +43,8 @@ import java.util.EventObject;
 public abstract class CompletionPhase implements Disposable {
   public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int newCompletionStarted(int time, boolean repeated) {
+      return time;
     }
   };
 
@@ -58,8 +58,11 @@ public abstract class CompletionPhase implements Disposable {
   public void dispose() {
   }
 
-  @Nullable
-  public abstract CompletionProgressIndicator newCompletionStarted();
+  public abstract int newCompletionStarted(int time, boolean repeated);
+
+  public boolean fillInCommonPrefix() {
+    return false;
+  }
 
   public static class AutoPopupAlarm extends CompletionPhase {
     public AutoPopupAlarm() {
@@ -67,8 +70,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      return time;
     }
   }
   public static class Synchronous extends CompletionPhase {
@@ -77,7 +81,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
+    public int newCompletionStarted(int time, boolean repeated) {
       throw new UnsupportedOperationException("Not implemented");
     }
   }
@@ -96,9 +100,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
+    public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      return indicator;
+      return indicator.nextInvocationCount(time, repeated);
     }
   }
   public static class ItemsCalculated extends CompletionPhase {
@@ -110,9 +114,20 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
+    public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      return indicator;
+      indicator.restorePrefix(new Runnable() {
+        @Override
+        public void run() {
+          indicator.getLookup().restorePrefix();
+        }
+      });
+      return indicator.nextInvocationCount(time, repeated);
+    }
+
+    @Override
+    public boolean fillInCommonPrefix() {
+      return indicator.fillInCommonPrefix(true);
     }
   }
   public static class Restarted extends CompletionPhase {
@@ -121,13 +136,13 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
+    public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      return indicator;
+      return indicator.nextInvocationCount(time, repeated);
     }
   }
 
-  public static class ZombiePhase extends CompletionPhase {
+  public static abstract class ZombiePhase extends CompletionPhase {
 
     protected ZombiePhase(@Nullable final LightweightHint hint, final CompletionProgressIndicator indicator) {
       super(indicator);
@@ -179,10 +194,6 @@ public abstract class CompletionPhase implements Disposable {
       });
     }
 
-    @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return indicator;
-    }
   }
 
   public static class InsertedSingleItem extends ZombiePhase {
@@ -192,21 +203,26 @@ public abstract class CompletionPhase implements Disposable {
       super(null, indicator);
       this.restorePrefix = restorePrefix;
     }
+
+    @Override
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      indicator.restorePrefix(restorePrefix);
+      return indicator.nextInvocationCount(time, repeated);
+    }
+
   }
   public static class NoSuggestionsHint extends ZombiePhase {
     public NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
       super(hint, indicator);
     }
-  }
-  public static class PossiblyDisturbingAutoPopup extends CompletionPhase {
-    public PossiblyDisturbingAutoPopup(CompletionProgressIndicator indicator) {
-      super(indicator);
-    }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      return indicator.nextInvocationCount(time, repeated);
     }
+
   }
   public static class EmptyAutoPopup extends CompletionPhase {
     public final Editor editor;
@@ -302,8 +318,9 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     @Override
-    public CompletionProgressIndicator newCompletionStarted() {
-      return null;
+    public int newCompletionStarted(int time, boolean repeated) {
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      return time;
     }
   }
 

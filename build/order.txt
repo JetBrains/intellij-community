@@ -11451,7 +11451,7 @@ com/intellij/codeInsight/folding/impl/actions/CollapseBlockAction.class:/lib/ide
 com/intellij/codeInsight/folding/impl/actions/ExpandJavadocsAction.class:/lib/idea.jar
 com/intellij/codeInsight/folding/impl/actions/CollapseJavadocsAction.class:/lib/idea.jar
 com/intellij/codeInsight/generation/actions/GenerateAction.class:/lib/idea.jar
-com/intellij/ide/navigationToolbar/PopupToolbarAction.class:/lib/idea.jar
+com/intellij/ide/navigationToolbar/ShowNavBarAction.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/actions/GotoDeclarationAction.class:/lib/idea.jar
 com/intellij/ide/util/PsiElementListCellRenderer.class:/lib/idea.jar
 com/intellij/ide/util/DefaultPsiElementCellRenderer.class:/lib/idea.jar

@@ -111,7 +111,11 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       final Set<PsiParameter> parametersToDelete = new HashSet<PsiParameter>();
       parametersToDelete.add((PsiParameter) element);
       final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
-      for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      final List<PsiMethod> superMethods = new ArrayList<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
+      if (superMethods.isEmpty()) {
+        superMethods.add(method);
+      }
+      for (PsiMethod superMethod : superMethods) {
         parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
         OverridingMethodsSearch.search(superMethod).forEach(new Processor<PsiMethod>() {
           public boolean process(PsiMethod overrider) {
