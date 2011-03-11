@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,10 +38,14 @@ import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.notification.NotificationType.WARNING;
 
 /**
  * @author Kirill Likhodedov
@@ -126,27 +131,50 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     final GitTask task = new GitTask(myProject, handler, "git stash pop");
     task.setExecuteResultInAwt(false);
+    final AtomicBoolean failure = new AtomicBoolean();
     task.executeInBackground(true, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
       }
 
       @Override protected void onCancel() {
         Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, "Unstash cancelled",
-                                                  "You may view the stashed changes <a href='saver'>here</a>", NotificationType.WARNING,
+                                                  "You may view the stashed changes <a href='saver'>here</a>", WARNING,
                                                   new ShowSavedChangesNotificationListener()), myProject);
       }
 
       @Override protected void onFailure() {
-        if (conflict.get()) {
-          new GitMergeConflictResolver(myProject, true, "Uncommitted changes that were stashed before update have conflicts with updated files.",
-                                       "Can't update", "").merge(Collections.singleton(root));
-        } else {
-          LOG.info("unstash failed " + handler.errors());
-          GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
-        }
+        failure.set(true);
       }
     });
 
+    if (failure.get()) {
+      if (conflict.get()) {
+        boolean conflictsResolved = new UnstashConflictResolver().merge(Collections.singleton(root));
+        if (conflictsResolved) {
+          LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
+          dropStash(root);
+        }
+      } else {
+        LOG.info("unstash failed " + handler.errors());
+        GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
+      }
+    }
+  }
+
+  // drops stash (after completing conflicting merge during unstashing), shows a warning in case of error
+  private void dropStash(VirtualFile root) {
+    final GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.STASH);
+    handler.setNoSSH(true);
+    handler.addParameters("drop");
+    String output = null;
+    try {
+      output = handler.run();
+    } catch (VcsException e) {
+      LOG.info("dropStash " + output, e);
+      GitUIUtil.notifyMessage(myProject, "Couldn't drop stash",
+                              "Couldn't drop stash after resolving conflicts.<br/>Please drop stash manually.",
+                              WARNING, false, handler.errors());
+    }
   }
 
   // Sort changes from myChangesLists by their git roots.
@@ -181,4 +209,35 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
+  private class UnstashConflictResolver extends GitMergeConflictResolver {
+    public UnstashConflictResolver() {
+      super(GitStashChangesSaver.this.myProject, true,
+            "Uncommitted changes that were stashed before update have conflicts with updated files.", "Local changes were not restored",
+            "");
+    }
+
+    @Override
+    protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were restored with conflicts",
+                                                "Before update your uncommitted changes were saved to <a href='saver'>" +
+                                                getSaverName() +
+                                                "</a><br/>" +
+                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
+                                                NotificationType.WARNING, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              if (event.getDescription().equals("saver")) {
+                // we don't use #showSavedChanges to specify unmerged root first
+                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), roots.iterator().next(),
+                                                   new HashSet<VirtualFile>());
+              } else if (event.getDescription().equals("resolve")) {
+                new UnstashConflictResolver().justMerge(roots);
+              }
+            }
+          }
+      }));
+    }
+  }
 }
