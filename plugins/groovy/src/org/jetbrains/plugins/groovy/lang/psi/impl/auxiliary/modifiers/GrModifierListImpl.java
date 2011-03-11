@@ -143,12 +143,12 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     return findChildByType(TokenSets.VISIBILITY_MODIFIERS) != null;
   }
 
-  public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
-    final PsiElement parent = getParent();
+  public static boolean checkModifierProperty(@NotNull GrModifierList modifierList, @NotNull String modifier) {
+    final PsiElement parent = modifierList.getParent();
     if (parent instanceof GrVariableDeclaration &&
         parent.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement pParent = parent.getParent().getParent();
-      if (!hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+      if (!modifierList.hasExplicitVisibilityModifiers()) { //properties are backed by private fields
         if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
           if (modifier.equals(GrModifier.PRIVATE)) return true;
           if (modifier.equals(GrModifier.PROTECTED)) return false;
@@ -161,20 +161,20 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
         if (modifier.equals(GrModifier.FINAL)) return true;
       }
       if (pParent instanceof GrTypeDefinition) {
-        PsiModifierList modifierList = ((GrTypeDefinition)pParent).getModifierList();
-        if (modifierList != null && modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null) {
+        PsiModifierList pModifierList = ((GrTypeDefinition)pParent).getModifierList();
+        if (pModifierList != null && pModifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null) {
           if (modifier.equals(GrModifier.FINAL)) return true;
         }
       }
     }
 
-    if (hasExplicitModifier(modifier)) {
+    if (modifierList.hasExplicitModifier(modifier)) {
       return true;
     }
 
     if (modifier.equals(GrModifier.PUBLIC)) {
       //groovy type definitions and methods are public by default
-      return !hasExplicitModifier(GrModifier.PRIVATE) && !hasExplicitModifier(GrModifier.PROTECTED);
+      return !modifierList.hasExplicitModifier(GrModifier.PRIVATE) && !modifierList.hasExplicitModifier(GrModifier.PROTECTED);
     }
 
     if (parent instanceof GrTypeDefinition) {
@@ -188,6 +188,10 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return false;
+  }
+
+  public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
+    return checkModifierProperty(this, modifier);
   }
 
   public boolean hasExplicitModifier(@NotNull @NonNls String name) {

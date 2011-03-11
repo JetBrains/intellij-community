@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -27,6 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
  * @date: 18.03.2007
  */
 public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
+
+  String[] MODIFIERS_PUBLIC_STATIC = {PsiModifier.PUBLIC, PsiModifier.STATIC};
+
   @NotNull
   PsiElement[] getModifiers();
 

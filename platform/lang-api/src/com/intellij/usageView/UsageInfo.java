@@ -37,6 +37,7 @@ public class UsageInfo {
   private final int endOffset; // in navigation element
 
   public final boolean isNonCodeUsage;
+  protected boolean myDynamicUsage = false;
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
     LOG.assertTrue(element.isValid(), element);
@@ -80,6 +81,7 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiReference reference) {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
+    myDynamicUsage = reference.resolve() == null;
   }
 
   public UsageInfo(@NotNull PsiQualifiedReference reference) {
@@ -205,5 +207,9 @@ public class UsageInfo {
 
   public void dispose() {
     ((Disposable)mySmartPointer).dispose();
+  }
+
+  public boolean isDynamicUsage() {
+    return myDynamicUsage;
   }
 }

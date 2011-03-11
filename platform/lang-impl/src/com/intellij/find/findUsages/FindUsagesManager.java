@@ -389,8 +389,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           });
           PsiManager.getInstance(project).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
             public boolean processInReadAction(final PsiReference ref) {
-              TextRange rangeInElement = ref.getRangeInElement();
-              return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+              return usageInfoProcessor.process(new UsageInfo(ref));
             }
           });
         }

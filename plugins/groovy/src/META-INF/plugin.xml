@@ -260,7 +260,6 @@
 
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
-    <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
     <compilerSettingsFactory implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerSettingsFactory"/>
 
