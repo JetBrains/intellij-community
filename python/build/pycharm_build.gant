@@ -58,12 +58,6 @@ private List<String> platformApiModules() {
   return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi", "dom-openapi", "webide-api"]
 }
 
-def includeFile(String filepath) {
-  Script s = groovyShell.parse(new File(filepath))
-  s.setBinding(binding)
-  s
-}
-
 class Paths {
   final sandbox
   final distAll
