@@ -179,9 +179,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
   }
 
-
-
-
   public Project getProject() {
     return myProject;
   }
@@ -224,7 +221,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void selectTail() {
-    myUpdateQueue.queueModelUpdateFromFocus();
+    //myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
 
     myUpdateQueue.queueSelect(new Runnable() {
