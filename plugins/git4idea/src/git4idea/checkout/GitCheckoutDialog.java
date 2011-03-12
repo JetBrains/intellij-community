@@ -47,70 +47,21 @@ import java.util.List;
  * Checkout dialog. It also allows checking out a new branch.
  */
 public class GitCheckoutDialog extends DialogWrapper {
-  /**
-   * The root panel
-   */
   private JPanel myPanel;
-  /**
-   * Git root field
-   */
   private JComboBox myGitRoot;
-  /**
-   * Branch/tag to check out
-   */
   private JComboBox myBranchToCkeckout;
-  /**
-   * Current branch
-   */
   private JLabel myCurrentBranch;
-  /**
-   * Checkbox that specifies whether tags are included into drop down
-   */
-  private JCheckBox myIncludeTagsCheckBox;
-  /**
-   * The name of new branch
-   */
+  private JCheckBox myIncludeTagsCheckBox; // Checkbox that specifies whether tags are included into drop down
   private JTextField myNewBranchName;
-  /**
-   * The delete branch before checkout flag
-   */
-  private JCheckBox myOverrideCheckBox;
-  /**
-   * The create reference log checkbox
-   */
+  private JCheckBox myOverrideCheckBox; // The delete branch before checkout flag
   private JCheckBox myCreateRefLogCheckBox;
-  /**
-   * The track branch checkbox
-   */
   private JCheckBox myTrackBranchCheckBox;
-  /**
-   * The validator for branch to checkout
-   */
   private final GitReferenceValidator myBranchToCkeckoutValidator;
-  /**
-   * The validate button
-   */
   private JButton myValidateButton;
-  /**
-   * The context project
-   */
   private final Project myProject;
-  /**
-   * The Git setting for the project
-   */
   @Nullable private final GitVcsSettings mySettings;
-  /**
-   * Existing branches for the currently selected root
-   */
   private final HashSet<String> existingBranches = new HashSet<String>();
 
-  /**
-   * A constructor
-   *
-   * @param project     the context project
-   * @param roots       the git roots for the project
-   * @param defaultRoot the default root
-   */
   public GitCheckoutDialog(@NotNull Project project, @NotNull List<VirtualFile> roots, @Nullable VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("checkout.branch"));
@@ -130,6 +81,11 @@ public class GitCheckoutDialog extends DialogWrapper {
     setupNewBranchName();
     init();
     checkOkButton();
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myBranchToCkeckout;
   }
 
   /**
