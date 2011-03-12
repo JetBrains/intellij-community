@@ -259,22 +259,22 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     final PsiElement parent = element.getParent();
-    final PyExpression expression = parent instanceof PyAssignmentStatement ?
+    final PyExpression initializer = parent instanceof PyAssignmentStatement ?
                                     ((PyAssignmentStatement)parent).getAssignedValue() :
                                     (PyExpression)element;
 
     final List<PsiElement> occurrences;
-    if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
-      occurrences = getOccurrences(expression);
+    if (initializer.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
+      occurrences = getOccurrences(element, initializer);
     }
     else {
       occurrences = Collections.emptyList();
     }
-    Collection<String> possibleNames = getSuggestedNames(expression);
+    Collection<String> possibleNames = getSuggestedNames(initializer);
     replaceAll &= occurrences.size() > 0;
 
     if (name == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor, isTestClass);
+      PyIntroduceDialog dialog = new PyIntroduceDialog(project, initializer, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor, isTestClass);
       dialog.show();
       if (!dialog.isOK()) {
         return;
@@ -285,12 +285,12 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     initInConstructor = initInConstructor != null ? initInConstructor : InitPlace.SAME_METHOD;
 
-    String assignmentText = name + " = " + expression.getText().replace("\n", " ");
-    PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
+    String assignmentText = name + " = " + initializer.getText().replace("\n", " ");
+    PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(initializer, PyStatement.class);
     PyAssignmentStatement declaration = createDeclaration(project, assignmentText, anchor);
 
     assert name != null;
-    declaration = performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
+    declaration = performReplace(project, element, declaration, initializer, occurrences, name, replaceAll, initInConstructor);
     declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
     editor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
     editor.getSelectionModel().removeSelection();
@@ -307,7 +307,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return true;
   }
 
-  private static List<PsiElement> getOccurrences(@NotNull final PyExpression expression) {
+  protected List<PsiElement> getOccurrences(PsiElement element, @NotNull final PyExpression expression) {
     PsiElement context = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
     if (context == null) {
       context = PsiTreeUtil.getParentOfType(expression, PyClass.class);
@@ -319,6 +319,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private PyAssignmentStatement performReplace(@NotNull final Project project,
+                                               final PsiElement element,
                                                @NotNull final PyAssignmentStatement declaration,
                                                @NotNull final PsiElement expression,
                                                @NotNull final List<PsiElement> occurrences,
@@ -345,6 +346,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         else {
           replaceExpression(newExpression, project, expression);
         }
+
+        postRefactoring(element);
       }
     }.execute().getResultObject();
   }
@@ -359,4 +362,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                                @NotNull final List<PsiElement> occurrences,
                                                final boolean replaceAll,
                                                final InitPlace initInConstructor);
+
+  protected void postRefactoring(PsiElement element) {
+  }
 }
