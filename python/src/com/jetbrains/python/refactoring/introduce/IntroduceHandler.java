@@ -315,7 +315,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     if (context == null) {
       context = expression.getContainingFile();
     }
-    return PyRefactoringUtil.getOccurences(expression, context);
+    return PyRefactoringUtil.getOccurrences(expression, context);
   }
 
   private PyAssignmentStatement performReplace(@NotNull final Project project,
