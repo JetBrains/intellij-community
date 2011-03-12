@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -91,6 +92,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
+  private RelativePoint myLocationCache;
+
 
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
@@ -691,12 +694,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         };
         myHint.setForceShowAsPopup(true);
         myHint.setFocusRequestor(NavBarPanel.this);
-        registerKeyboardAction(new AbstractAction() {
-          public void actionPerformed(ActionEvent e) {
-            hideHint();
-          }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW);
         final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
         if (editor == null) {
           myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
           getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
@@ -711,15 +710,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
               }
             }
           });
-        }
-        else {
+        } else {
           myHintContainer = editor.getContentComponent();
           getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
             @Override
             public void run(RelativePoint rp) {
               Point p = rp.getPointOn(myHintContainer).getPoint();
-              HintManagerImpl.getInstanceImpl()
-                .showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true, new HintHint(editor, p));
+              final HintHint hintInfo = new HintHint(editor, p);
+              HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true, hintInfo);
             }
           });
         }
@@ -730,27 +728,37 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {
     final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
-    if (myHintContainer != null) {
-      final Point p = AbstractPopup.getCenterOf(myHintContainer, this);
-      p.y -= myHintContainer.getVisibleRect().height / 4;
-
-      result.setDone(RelativePoint.fromScreen(p));
-    }
-    else {
-      if (myContextComponent != null) {
-        result.setDone(JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent)));
-      }
-      else {
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
-          @Override
-          public void run(DataContext dataContext) {
-            myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-            result
-              .setDone(JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent)));
-          }
-        });
+    if (myLocationCache == null) {
+      if (myHintContainer != null) {
+        final Point p = AbstractPopup.getCenterOf(myHintContainer, this);
+        p.y -= myHintContainer.getVisibleRect().height / 4;
+        myLocationCache = RelativePoint.fromScreen(p);
+      } else {
+        if (myContextComponent != null) {
+          myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
+        } else {
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+            @Override
+            public void run(DataContext dataContext) {
+              myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+              myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
+            }
+          });
+        }
       }
     }
+    final Component c = myLocationCache.getComponent();
+    if (!(c instanceof JComponent && c.isShowing())) {
+      //Yes. It happens sometimes.
+      // 1. Empty frame. call nav bar, select some package and open it in Project View
+      // 2. Call nav bar, then Esc
+      // 3. Hide all tool windows (Ctrl+Shift+F12), so we've got empty frame again
+      // 4. Call nav bar. NPE. ta da
+      final JComponent ideFrame = WindowManager.getInstance().getIdeFrame(getProject()).getComponent();
+      final JRootPane rootPane = UIUtil.getRootPane(ideFrame);
+      myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(rootPane);
+    }
+    result.setDone(myLocationCache);
     return result;
   }
 }
