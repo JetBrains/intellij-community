@@ -58,6 +58,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    setLanguageLevel(null);
     myFixture.tearDown();
     myFixture = null;
     super.tearDown();
