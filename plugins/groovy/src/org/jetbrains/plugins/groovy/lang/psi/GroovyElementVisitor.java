@@ -86,11 +86,15 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
-    visitStatement(breakStatement);
+    visitFlowInterruptStatement(breakStatement);
   }
 
   public void visitContinueStatement(GrContinueStatement continueStatement) {
-    visitStatement(continueStatement);
+    visitFlowInterruptStatement(continueStatement);
+  }
+
+  public void visitFlowInterruptStatement(GrFlowInterruptingStatement statement) {
+    visitStatement(statement);
   }
 
   public void visitReturnStatement(GrReturnStatement returnStatement) {
