@@ -33,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -416,12 +413,45 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private static class DunderAllBuilder extends PyRecursiveElementVisitor {
     private List<String> myResult = null;
     private boolean myDynamic = false;
+    private boolean myFoundDunderAll = false;
+
+    // hashlib builds __all__ by concatenating multiple lists of strings, and we want to understand this
+    private Map<String, List<String>> myDunderLike = new HashMap<String, List<String>>();
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       if (PyNames.ALL.equals(node.getName())) {
-        myResult = PyUtil.getStringListFromTargetExpression(node);
+        myFoundDunderAll = true;
+        PyExpression value = node.findAssignedValue();
+        if (value instanceof PyBinaryExpression) {
+          PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+          if (binaryExpression.isOperator("+")) {
+            List<String> lhs = getStringListFromValue(binaryExpression.getLeftExpression());
+            List<String> rhs = getStringListFromValue(binaryExpression.getRightExpression());
+            if (lhs != null && rhs != null) {
+              myResult = new ArrayList<String>(lhs);
+              myResult.addAll(rhs);
+            }
+          }
+        }
+        else {
+          myResult = PyUtil.getStringListFromTargetExpression(node);
+        }
       }
+      if (!myFoundDunderAll) {
+        List<String> names = PyUtil.getStringListFromTargetExpression(node);
+        if (names != null) {
+          myDunderLike.put(node.getName(), names);
+        }
+      }
+    }
+
+    @Nullable
+    private List<String> getStringListFromValue(PyExpression expression) {
+      if (expression instanceof PyReferenceExpression && ((PyReferenceExpression)expression).getQualifier() == null) {
+        return myDunderLike.get(((PyReferenceExpression)expression).getReferencedName());
+      }
+      return PyUtil.strListValue(expression);
     }
 
     @Override
