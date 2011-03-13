@@ -202,9 +202,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     // Search in ClosureMissingMethodContributor
-    if (!isQualified() && getParent() instanceof GrMethodCall) {
+    if (!isQualified() && getContext() instanceof GrMethodCall) {
       boolean resolve = false;
-      for (PsiElement e = this.getParent(); !resolve && e != null; e = e.getParent()) {
+      for (PsiElement e = this.getContext(); !resolve && e != null; e = e.getContext()) {
         if (e instanceof GrClosableBlock) {
           ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, (GrClosableBlock)e);
           for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {

@@ -295,7 +295,7 @@ public class ResolveUtil {
 
     if (labelName == null) {
       do {
-        element = element.getParent();
+        element = element.getContext();
         if (element == null || element instanceof GrClosableBlock || element instanceof GrMember || element instanceof GroovyFile) {
           return new Pair<GrStatement, GrLabeledStatement>(null, null);
         }
@@ -307,7 +307,7 @@ public class ResolveUtil {
     GrStatement statement = null;
     do {
       PsiElement last = element;
-      element = element.getParent();
+      element = element.getContext();
       if (element == null || element instanceof GrMember || element instanceof GroovyFile) break;
       if (element instanceof GrStatement && !(element instanceof GrClosableBlock)) {
         statement = (GrStatement)element;
