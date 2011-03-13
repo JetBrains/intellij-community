@@ -147,8 +147,12 @@ public class PyResolveUtil {
       if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
       // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
       if (is_outside_param_list && refersFromMethodToClass(capFunction, seeker)) continue;
-      // names defined in a comprehension element are only visible inside it
-      if (seeker instanceof PyComprehensionElement && !PsiTreeUtil.isAncestor(seeker, elt, false)) continue;
+      // names defined in a comprehension element are only visible inside it or the list comp expressions directly above it
+      if (seeker instanceof PyComprehensionElement &&
+          !(seeker.getParent() instanceof PyComprehensionElement) &&
+          !PsiTreeUtil.isAncestor(seeker, elt, false)) {
+        continue;
+      }
       // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {

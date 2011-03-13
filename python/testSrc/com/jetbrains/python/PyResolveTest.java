@@ -405,4 +405,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testResolveInGenerator() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
+
+  public void testNestedListComp() {  // PY-3068
+    assertResolvesTo(PyTargetExpression.class, "yy");
+  }
 }
