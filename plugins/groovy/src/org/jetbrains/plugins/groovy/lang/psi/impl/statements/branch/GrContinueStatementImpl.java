@@ -49,4 +49,9 @@ public class GrContinueStatementImpl extends GrFlowInterruptingStatementImpl imp
   public GrLabeledStatement resolveLabel() {
     return  ResolveUtil.resolveLabeledStatement(getLabelName(), this, false);
   }
+
+  @Override
+  public String getStatementText() {
+    return "continue";
+  }
 }

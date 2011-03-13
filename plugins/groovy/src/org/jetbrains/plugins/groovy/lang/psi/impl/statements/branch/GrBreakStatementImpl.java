@@ -49,4 +49,9 @@ public class GrBreakStatementImpl extends GrFlowInterruptingStatementImpl implem
   public GrLabeledStatement resolveLabel() {
     return ResolveUtil.resolveLabeledStatement(getLabelName(), this, true);
   }
+
+  @Override
+  public String getStatementText() {
+    return "break";
+  }
 }
