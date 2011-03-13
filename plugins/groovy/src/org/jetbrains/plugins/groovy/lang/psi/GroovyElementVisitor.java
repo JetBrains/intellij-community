@@ -178,11 +178,15 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitThisExpression(GrThisReferenceExpression thisExpression) {
-    visitExpression(thisExpression);
+    visitThisSuperReferenceExpression(thisExpression);
   }
 
   public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
-    visitExpression(superExpression);
+    visitThisSuperReferenceExpression(superExpression);
+  }
+
+  public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitCastExpression(GrTypeCastExpression typeCastExpression) {
