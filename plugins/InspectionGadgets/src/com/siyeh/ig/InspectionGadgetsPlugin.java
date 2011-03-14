@@ -626,12 +626,15 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerLanguageLevelMigrationInspections() {
-        m_inspectionClasses.add(CollectionsFieldAccessReplaceableByMethodCallInspection .class);
-        m_inspectionClasses.add(ForCanBeForeachInspection.class);
+        m_inspectionClasses.add(CollectionsFieldAccessReplaceableByMethodCallInspection.class);
         m_inspectionClasses.add(EnumerationCanBeIterationInspection.class);
+        m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
         m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
+        m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
+        m_inspectionClasses.add(TryFinallyCanBeTryWithResourcesInspection.class);
+        m_inspectionClasses.add(TryWithIdenticalCatchesInspection.class);
         m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
         m_inspectionClasses.add(UnnecessaryUnboxingInspection.class);
         m_inspectionClasses.add(WhileCanBeForeachInspection.class);
@@ -836,7 +839,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ThrowFromFinallyBlockInspection.class);
         m_inspectionClasses.add(TooBroadCatchInspection.class);
         m_inspectionClasses.add(TooBroadThrowsInspection.class);
-        m_inspectionClasses.add(TryWithIdenticalCatchesInspection.class);
         m_inspectionClasses.add(UncheckedExceptionClassInspection.class);
         m_inspectionClasses.add(UnusedCatchParameterInspection.class);
     }
@@ -1015,7 +1017,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SetReplaceableByEnumSetInspection.class);
         m_inspectionClasses.add(SizeReplaceableByIsEmptyInspection.class);
         m_inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);
-        m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
         m_inspectionClasses.add(StringBufferReplaceableByStringInspection.class);
         m_inspectionClasses.add(StringBufferToStringInConcatenationInspection.class);
         m_inspectionClasses.add(StringConcatenationInLoopsInspection.class);
