@@ -1293,6 +1293,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   @Override
   public RelativePoint getShowingPoint() {
-    return new RelativePoint(myLayeredPane, myTargetPoint);
+    Point p = myPosition.getShiftedPoint(myTargetPoint, myCalloutshift * -1);
+    return new RelativePoint(myLayeredPane, p);
   }
 }
