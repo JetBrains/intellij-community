@@ -19,20 +19,24 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import sun.util.LocaleServiceProviderPool;
 
 /**
  * User: anna
  * Date: 1/28/11
  */
 public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspectionTool {
+  public static final Logger LOG = Logger.getInstance("#" + PossibleHeapPollutionVarargsInspection.class.getName());
   @Nls
   @NotNull
   @Override
@@ -70,11 +74,21 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
     return new HeapPollutionVisitor() {
       @Override
       protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
-        holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc",
-                               //todo check if can be final or static
-                               method.hasModifierProperty(PsiModifier.FINAL) ||
-                               method.hasModifierProperty(PsiModifier.STATIC) ||
-                               method.isConstructor() ? new AnnotateAsSafeVarargsQuickFix() : null);
+        final LocalQuickFix quickFix;
+        if (method.hasModifierProperty(PsiModifier.FINAL) ||
+            method.hasModifierProperty(PsiModifier.STATIC) ||
+            method.isConstructor()) {
+          quickFix = new AnnotateAsSafeVarargsQuickFix();
+        }
+        else {
+          final PsiClass containingClass = method.getContainingClass();
+          LOG.assertTrue(containingClass != null);
+          boolean canBeFinal = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                               !containingClass.isInterface() &&
+                               OverridingMethodsSearch.search(method).findFirst() == null;
+          quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
+        }
+        holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
       }
     };
   }
@@ -97,6 +111,30 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
+        new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+      }
+    }
+  }
+
+  private static class MakeFinalAndAnnotateQuickFix implements LocalQuickFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Make final and annotate as @SafeVarargs";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement instanceof PsiIdentifier) {
+        final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
+        psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
         new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
       }
     }
