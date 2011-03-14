@@ -273,4 +273,20 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testAlignResourceList() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    getSettings().ALIGN_MULTILINE_RESOURCES = true;
+    doMethodTest("try (MyResource r1 = null;\n" +
+                 "MyResource r2 = null) { }",
+                 "try (MyResource r1 = null;\n" +
+                 "     MyResource r2 = null) { }");
+
+    getSettings().ALIGN_MULTILINE_RESOURCES = false;
+    doMethodTest("try (MyResource r1 = null;\n" +
+                 "MyResource r2 = null) { }",
+                 "try (MyResource r1 = null;\n" +
+                 "        MyResource r2 = null) { }");
+  }
 }

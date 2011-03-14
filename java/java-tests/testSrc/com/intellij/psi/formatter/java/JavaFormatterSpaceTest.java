@@ -337,7 +337,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_BEFORE_SEMICOLON = false;
     getSettings().SPACE_AFTER_SEMICOLON = true;
     doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
-                 "try (R r1 = null; R r2 = null; ) { }");
+                 "try (R r1 = null; R r2 = null;) { }");
 
     getSettings().SPACE_BEFORE_SEMICOLON = true;
     getSettings().SPACE_AFTER_SEMICOLON = false;

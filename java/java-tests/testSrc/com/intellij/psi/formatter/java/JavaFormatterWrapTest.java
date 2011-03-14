@@ -266,4 +266,21 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "@NotNull Comparable<String>"
     );
   }
+
+  public void testResourceListWrap() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().RIGHT_MARGIN = 40;
+    getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
+                 "try (MyResource r1 = null;\n" +
+                 "     MyResource r2 = null) { }");
+
+    getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
+    getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
+    doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
+                 "try (\n" +
+                 "        MyResource r1 = null;\n" +
+                 "        MyResource r2 = null\n" +
+                 ") { }");
+  }
 }

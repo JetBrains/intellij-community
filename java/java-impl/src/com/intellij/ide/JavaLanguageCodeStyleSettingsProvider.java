@@ -225,7 +225,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    default:\n" +
     "      doDefault();\n" +
     "    }\n" +
-    "    try {\n" +
+    "    try (MyResource r1 = getResource(); MyResource r2 = null) {\n" +
     "      doSomething();\n" +
     "    } catch (Exception e) {\n" +
     "      processException(e);\n" +
