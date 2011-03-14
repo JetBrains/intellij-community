@@ -17,8 +17,15 @@ package com.intellij.ide;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,6 +56,15 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     consumer.showAllStandardOptions();
+  }
+
+  @Override
+  public PsiFile createFileFromText(final Project project, final String text) {
+    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
+      "sample.java", StdFileTypes.JAVA, text, LocalTimeCounter.currentTime(), true, false
+    );
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+    return file;
   }
 
   private static final String GENERAL_CODE_SAMPLE =
