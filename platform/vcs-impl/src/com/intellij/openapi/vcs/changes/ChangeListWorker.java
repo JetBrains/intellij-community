@@ -244,15 +244,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
     final String path = ChangesUtil.getFilePath(change).getPath();
-    LOG.info("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+    LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
       if (list.isDefault()) {
-        LOG.info("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         continue;
       }
       if (((LocalChangeListImpl) list).processChange(change)) {
-        LOG.info("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         myIdx.changeAdded(change, vcsKey);
         return;
       }
