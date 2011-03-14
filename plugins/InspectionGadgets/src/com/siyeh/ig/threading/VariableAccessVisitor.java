@@ -19,8 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.containers.HashMap;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -91,9 +91,9 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor{
             return;
         }
         final PsiMethod method = (PsiMethod)methodExpression.resolve();
-        PsiField field = MethodUtils.getFieldOfGetter(method);
+        PsiField field = PropertyUtils.getFieldOfGetter(method);
         if(field == null){
-            field = MethodUtils.getFieldOfSetter(method);
+            field = PropertyUtils.getFieldOfSetter(method);
         }
         if(field == null){
             return;
