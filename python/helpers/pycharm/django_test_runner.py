@@ -19,6 +19,9 @@ try:
   from inspect import isfunction
   SUITE_RUNNER = get_test_suite_runner()
   if isfunction(SUITE_RUNNER):
+    import sys
+    sys.stderr.write("WARNING: TEST_RUNNER variable is ignored. PyCharm test runner supports "
+            "only class-like TEST_RUNNER valiables. Use Tools->run manage.py tasks.\n")
     SUITE_RUNNER = None
   BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
 
