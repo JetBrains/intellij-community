@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,12 +330,7 @@ public class VcsUtil {
   public static void showErrorMessage(final Project project, final String message, final String title)
   {
     Runnable task = new Runnable() {  public void run() {  Messages.showErrorDialog( project, message, title );  } };
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      task.run();
-    } else {
-      application.invokeLater(task, ModalityState.NON_MODAL, project.getDisposed());
-    }
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 
   /**

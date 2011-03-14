@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -41,6 +40,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,15 +69,18 @@ public abstract class DiffActionExecutor {
       final byte[] a = mySelectedFile.contentsToByteArray();
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (Arrays.equals(a, content)) {
-            Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
-          } else {
-            Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            if (Arrays.equals(a, content)) {
+              Messages
+                .showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
+            }
+            else {
+              Messages
+                .showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
+            }
           }
-        }
-      }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL, myProject);
       return null;
     }
 

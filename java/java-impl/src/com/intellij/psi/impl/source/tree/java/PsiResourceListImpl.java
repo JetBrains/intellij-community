@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -61,6 +62,15 @@ public class PsiResourceListImpl extends CompositePsiElement implements PsiResou
                                      final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
     return PsiImplUtil.processDeclarationsInResourceList(this, processor, state, lastParent);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull final ASTNode child) {
+    if (child.getPsi() instanceof PsiResourceVariable && getResourceVariablesCount() == 1) {
+      getTreeParent().deleteChildInternal(this);
+    }
+
+    super.deleteChildInternal(child);
   }
 
   @Override

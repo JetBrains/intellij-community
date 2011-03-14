@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -116,11 +116,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         if (vf != null) {
           vf.refresh(true, true, new Runnable() {
             public void run() {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
+              WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
                 public void run() {
                   notifyListener();
                 }
-              });
+              }, null, project);
             }
           });
         }

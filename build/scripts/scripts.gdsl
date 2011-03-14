@@ -1,7 +1,7 @@
 def ctx = context(scope: scriptScope(), filetypes : ["gant"])
 
 contributor ([ctx], {
-  method name:"loadProject", type:"void", params:[]
+  method name:"loadProject", type:"void", params:[:]
   method name:"isDefined", type:"boolean", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String", defaultValue:"String"]

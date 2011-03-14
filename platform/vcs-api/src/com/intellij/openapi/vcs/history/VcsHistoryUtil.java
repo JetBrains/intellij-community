@@ -82,8 +82,8 @@ public class VcsHistoryUtil {
     byte[] content = revision.getContent();
     if (content == null) {
       revision.loadContent();
+      content = revision.getContent();
     }
-    content = revision.getContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
   }

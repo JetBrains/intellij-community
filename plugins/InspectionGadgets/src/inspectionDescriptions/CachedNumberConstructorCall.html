@@ -6,11 +6,12 @@ This inspection reports any attempt to instantiate a new <b>Long</b>,
 <b>integer</b>, <b>short</b> or
 <b>byte</b>
 argument. It may be more efficient to use the static method <b>valueOf()</b>
-here (introduced in JDK 5.0), which will cache objects for values between -128 and
+here (introduced in Java 5), which will cache objects for values between -128 and
 127 inclusive. This inspection ignores calls to number constructors using a
 <b>String</b> argument.
 <p>
-For safety, this inspection is disabled unless the project uses JDK 5.0.
+This inspection only reports if the project or module is configured to use a
+language level of 5.0 or higher.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

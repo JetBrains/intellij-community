@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.WaitForProgressToShow;
 
 import java.awt.*;
 
@@ -37,11 +36,6 @@ public abstract class AbstractCalledLater implements Runnable {
   }
 
   public void callMe() {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      run();
-    } else {
-      application.invokeLater(this, myState, myProject.getDisposed());
-    }
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(this, myState, myProject);
   }
 }

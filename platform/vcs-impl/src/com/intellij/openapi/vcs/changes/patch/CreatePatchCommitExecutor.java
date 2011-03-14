@@ -17,14 +17,11 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
-import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -34,6 +31,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.util.WaitForProgressToShow;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -141,12 +139,12 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         }
       }
       if (binaryCount == changes.size()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
             Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.all.binary"),
                                      VcsBundle.message("create.patch.commit.action.title"));
           }
-        });
+        }, null, myProject);
         return;
       }
       try {
@@ -158,31 +156,31 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
         PatchWriter.writePatches(myProject, fileName, patches);
         if (binaryCount == 0) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
                                        VcsBundle.message("create.patch.commit.action.title"));
             }
-          });
+          }, null, myProject);
         }
         else {
           final int binaryCount1 = binaryCount;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
                                                                     binaryCount1),
                                        VcsBundle.message("create.patch.commit.action.title"));
             }
-          });
+          }, null, myProject);
         }
       }
       catch (final Exception ex) {
         LOG.info(ex);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
           }
-        });
+        }, null, myProject);
       }
     }
 

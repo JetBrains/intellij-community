@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.util.Consumer;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +68,11 @@ public class Continuation {
 
   private void pingRunnerInCorrectThread() {
     if (! ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myGeneralRunner.ping();
-        }
-      });
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            myGeneralRunner.ping();
+          }
+        }, null, myGeneralRunner.getProject());
     } else {
       myGeneralRunner.ping();
     }
@@ -125,6 +126,10 @@ public class Continuation {
       myProject = project;
       myCancellable = cancellable;
       myQueue = Collections.synchronizedList(new LinkedList<TaskDescriptor>());
+    }
+
+    public Project getProject() {
+      return myProject;
     }
 
     @CalledInAny

@@ -15,10 +15,12 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public interface PsiVariableEx extends PsiVariable{
+public interface PsiVariableEx extends PsiVariable {
+  @Nullable
   Object computeConstantValue(Set<PsiVariable> visitedVars);
 }

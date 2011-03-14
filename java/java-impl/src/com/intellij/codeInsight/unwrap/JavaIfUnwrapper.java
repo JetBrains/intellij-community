@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaIfUnwrapper extends JavaUnwrapper {
@@ -27,7 +28,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return e instanceof PsiIfStatement && !isElseBlock(e);
+    return e instanceof PsiIfStatement && !PsiUtil.isElseBlock(e);
   }
 
   @Override

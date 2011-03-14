@@ -71,13 +71,6 @@ public class InlineVariableFix extends InspectionGadgetsFix {
             replacedElements.add(replacedElement);
         }
         HighlightUtils.highlightElements(replacedElements);
-        PsiElement elementToRemove = variable;
-        if (variable instanceof PsiResourceVariable) {
-            final PsiElement parent = variable.getParent();
-            if (parent instanceof PsiResourceList && ((PsiResourceList)parent).getResourceVariablesCount() == 1) {
-                elementToRemove = parent;
-            }
-        }
-        elementToRemove.delete();
+        variable.delete();
     }
 }

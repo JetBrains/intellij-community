@@ -24,7 +24,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,6 +42,7 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,12 +174,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           });
         }
         catch (final VcsException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          LOG.info(e);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
-              LOG.info(e);
               Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
             }
-          });
+          }, null, myProject);
         } finally {
           myInLoad = false;
           myBrowser.setLoading(false);

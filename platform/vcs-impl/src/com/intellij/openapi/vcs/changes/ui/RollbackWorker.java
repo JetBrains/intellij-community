@@ -23,12 +23,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -194,11 +194,7 @@ public class RollbackWorker {
 
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
-      ApplicationManager.getApplication().invokeLater(forAwtThread, new Condition() {
-        public boolean value(Object o) {
-          return project.isDisposed() || (! project.isOpen());
-        }
-      });
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {
