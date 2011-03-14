@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> extends UserDataHolderBase implements XBreakpoint<P> {
+  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
   protected final S myState;
@@ -157,7 +159,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public S getState() {
-    Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState()) : null;
+    Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS) : null;
     myState.setPropertiesElement(propertiesElement);
     return myState;
   }
