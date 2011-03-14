@@ -36,18 +36,15 @@ public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction
     PyCallExpression expression =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
     
-    if (expression != null) {
-      String name = expression.getCallee().getText();
-      if ("dict".equals(name)) {
-        PyType type = expression.getType(TypeEvalContext.fast());
-        if (type != null) {
-          if (type.isBuiltin()) {
-            PyExpression[] argumentList = expression.getArgumentList().getArguments();
-            for (PyExpression argument : argumentList) {
-              if (!(argument instanceof PyKeywordArgument)) return false;
-            }
-            return true;
+    if (expression != null && expression.isCalleeText("dict")) {
+      PyType type = expression.getType(TypeEvalContext.fast());
+      if (type != null) {
+        if (type.isBuiltin()) {
+          PyExpression[] argumentList = expression.getArguments();
+          for (PyExpression argument : argumentList) {
+            if (!(argument instanceof PyKeywordArgument)) return false;
           }
+          return true;
         }
       }
     }
@@ -64,7 +61,7 @@ public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction
   }
 
   private static void replaceDictConstructor(PyCallExpression expression, PyElementGenerator elementGenerator) {
-    PyExpression[] argumentList = expression.getArgumentList().getArguments();
+    PyExpression[] argumentList = expression.getArguments();
     StringBuilder stringBuilder = new StringBuilder();
 
     int size = argumentList.length;

@@ -27,25 +27,25 @@ import java.util.*;
  */
 public class PyRefactoringUtil {
   @NotNull
-  public static List<PsiElement> getOccurences(@NotNull final PsiElement pattern, @Nullable final PsiElement context) {
+  public static List<PsiElement> getOccurrences(@NotNull final PsiElement pattern, @Nullable final PsiElement context) {
     if (context == null) {
       return Collections.emptyList();
     }
-    final List<PsiElement> occurences = new ArrayList<PsiElement>();
+    final List<PsiElement> occurrences = new ArrayList<PsiElement>();
     final PyElementVisitor visitor = new PyElementVisitor() {
       public void visitElement(@NotNull final PsiElement element) {
         if (element instanceof PyParameter) {
           return;
         }
         if (PsiEquivalenceUtil.areElementsEquivalent(element, pattern)) {
-          occurences.add(element);
+          occurrences.add(element);
           return;
         }
         element.acceptChildren(this);
       }
     };
     context.acceptChildren(visitor);
-    return occurences;
+    return occurrences;
   }
 
   @Nullable

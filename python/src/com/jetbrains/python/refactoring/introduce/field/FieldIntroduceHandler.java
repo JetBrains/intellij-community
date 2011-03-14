@@ -8,6 +8,9 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -22,6 +25,8 @@ import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -113,6 +118,23 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   @Override
+  protected List<PsiElement> getOccurrences(PsiElement element, @NotNull PyExpression expression) {
+    if (isAssignedLocalVariable(element)) {
+      PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+      Collection<PsiReference> references = ReferencesSearch.search(element, new LocalSearchScope(function)).findAll();
+      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+      for (PsiReference reference : references) {
+        PsiElement refElement = reference.getElement();
+        if (refElement != element) {
+          result.add(refElement);
+        }
+      }
+      return result;
+    }
+    return super.getOccurrences(element, expression);
+  }
+
+  @Override
   protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
@@ -125,6 +147,24 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     String selfName = PyUtil.getFirstParameterName(container);
     final LanguageLevel langLevel = LanguageLevel.forElement(anchor);
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, selfName + "." + assignmentText);
+  }
+
+  @Override
+  protected void postRefactoring(PsiElement element) {
+    if (isAssignedLocalVariable(element)) {
+      element.getParent().delete();
+    }
+  }
+
+  private static boolean isAssignedLocalVariable(PsiElement element) {
+    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement &&
+        PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
+      PyAssignmentStatement stmt = (PyAssignmentStatement) element.getParent();
+      if (stmt.getTargets().length == 1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

@@ -77,6 +77,7 @@ def find_binaries(paths):
   paths = sortedNoCase(paths)
   for path in paths:
     for root, dirs, files in os.walk(path):
+      if root.endswith('__pycache__'): continue
       cutpoint = path.rfind(SEP)
       if cutpoint > 0:
         preprefix = path[(cutpoint + len(SEP)):] + '.'

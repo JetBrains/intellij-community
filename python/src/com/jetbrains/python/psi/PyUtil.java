@@ -675,7 +675,11 @@ public class PyUtil {
 
   @Nullable
   public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
-    PyExpression value = attr.findAssignedValue();
+    return strListValue(attr.findAssignedValue());
+  }
+
+  @Nullable
+  public static List<String> strListValue(PyExpression value) {
     while (value instanceof PyParenthesizedExpression) {
       value = ((PyParenthesizedExpression) value).getContainedExpression();
     }

@@ -9,15 +9,15 @@ import com.jetbrains.python.refactoring.introduce.field.FieldIntroduceHandler;
  */
 public class PyIntroduceFieldTest extends PyLightFixtureTestCase {
   public void testMetaClass() {  // PY-1580
-    doTest();
+    doTest(IntroduceHandler.InitPlace.SAME_METHOD);
   }
 
   public void testInConstructor() {  // PY-1983
     doTest(IntroduceHandler.InitPlace.CONSTRUCTOR);
   }
 
-  private void doTest() {
-    doTest(IntroduceHandler.InitPlace.SAME_METHOD);
+  public void testVariableToField() {
+    doTest(IntroduceHandler.InitPlace.CONSTRUCTOR);
   }
 
   private void doTest(IntroduceHandler.InitPlace initPlace) {

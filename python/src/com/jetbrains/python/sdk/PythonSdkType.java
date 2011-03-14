@@ -533,7 +533,10 @@ public class PythonSdkType extends SdkType {
 
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
     assert skeletonsVFile != null;
-    skeletonsVFile.refresh(true, true);
+    if (indicator != null) {
+      indicator.setText("Reloading generated skeletons...");
+    }
+    skeletonsVFile.refresh(false, true);
   }
 
   private static String getSkeletonsPath(String bin_path) {

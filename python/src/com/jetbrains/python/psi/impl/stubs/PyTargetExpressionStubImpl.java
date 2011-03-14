@@ -56,4 +56,9 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "PyTargetExpressionStub(name=" + myName + ")";
+  }
 }

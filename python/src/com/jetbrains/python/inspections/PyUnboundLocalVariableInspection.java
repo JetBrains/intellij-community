@@ -65,6 +65,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final String name = node.getReferencedName();
+        if (name == null) {
+          return;
+        }
         final Scope scope = ControlFlowCache.getScope(owner);
         // Ignore globals and if scope even doesn't contain such a declaration
         if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
