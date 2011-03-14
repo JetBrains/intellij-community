@@ -361,6 +361,7 @@ public final class LoadTextUtil {
     return convertBytes(bytes, charset, offset).getFirst();
   }
 
+  // do not need to think about BOM here. it is processed outside
   @NotNull
   private static Pair<CharSequence, String> convertBytes(@NotNull byte[] bytes, Charset charset, final int startOffset) {
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, startOffset, bytes.length - startOffset);

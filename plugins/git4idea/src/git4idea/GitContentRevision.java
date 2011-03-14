@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitFileUtils;
@@ -73,7 +74,7 @@ public class GitContentRevision implements ContentRevision {
     if (myCharset == null) {
       myCharset = myFile.getCharset(myProject);
     }
-    return result == null ? null : new String(result, myCharset);
+    return result == null ? null : CharsetToolkit.bytesToString(result, myCharset);
   }
 
   @NotNull

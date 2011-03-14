@@ -19,12 +19,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 
@@ -64,15 +64,13 @@ public class BinaryContent extends DiffContent {
       String text = null;
       try {
         if (myCharset == null) {
-          text = new String(myBytes);
+          text = CharsetToolkit.bytesToString(myBytes);
         }
         else {
-          text = new String(myBytes, myCharset.name());
+          text = CharsetToolkit.bytesToString(myBytes, myCharset);
         }
       }
       catch (IllegalCharsetNameException e) {
-      }
-      catch (UnsupportedEncodingException e) {
       }
 
       //  Still NULL? only if not supported or an exception was thrown.

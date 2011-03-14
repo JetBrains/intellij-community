@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
@@ -70,8 +71,8 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             myVcs.createWCClient().doGetFileContents(ioFile, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
             contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false).toString();
           } else {
-            revision.loadContent();
-            contents = LoadTextUtil.getTextByBinaryPresentation(revision.getContent(), file, false).toString();
+            final byte[] bytes = VcsHistoryUtil.loadRevisionContent(revision);
+            contents = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false).toString();
           }
 
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents);

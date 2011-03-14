@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -51,7 +52,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -330,7 +330,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {
-    return StringUtil.convertLineSeparators(file.getCharset().decode(ByteBuffer.wrap(content)).toString());
+    return StringUtil.convertLineSeparators(CharsetToolkit.bytesToString(content, file.getCharset()));
   }
 
   public List<VirtualFile> getProcessedFiles() {
