@@ -207,14 +207,17 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
 
     XmlElementDescriptor descriptorFromContext = XmlUtil.getDescriptorFromContext(tag);
 
+    PsiElement parent = tag.getParent();
+    XmlElementDescriptor parentDescriptor = parent instanceof XmlTag ? ((XmlTag)parent).getDescriptor() : null;
+
     XmlElementDescriptor ownDescriptor = isAbstractDescriptor(descriptorFromContext)
                                          ? tag.getDescriptor()
                                          : descriptorFromContext;
 
     if (isAbstractDescriptor(ownDescriptor) ||
-        (ownDescriptor instanceof HtmlElementDescriptorImpl &&
-         isAbstractDescriptor(descriptorFromContext) &&
-         tag.getParent() instanceof XmlTag)) {
+        (parentDescriptor instanceof HtmlElementDescriptorImpl &&
+         ownDescriptor instanceof HtmlElementDescriptorImpl &&
+         isAbstractDescriptor(descriptorFromContext))) {
 
       final String name = tag.getName();
 
