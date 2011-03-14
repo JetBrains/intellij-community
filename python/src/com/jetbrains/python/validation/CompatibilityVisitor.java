@@ -3,6 +3,7 @@ package com.jetbrains.python.validation;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
@@ -103,6 +104,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyImportStatement(PyImportStatement node) {
     super.visitPyImportStatement(node);
+    PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
+    if (ifParent != null)
+      return;
     PyImportElement[] importElements = node.getImportElements();
     int len = 0;
     String moduleName = "";

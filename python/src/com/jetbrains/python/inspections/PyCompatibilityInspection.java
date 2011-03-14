@@ -163,6 +163,9 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyImportStatement(PyImportStatement node) {
       super.visitPyImportStatement(node);
+      PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
+      if (ifParent != null)
+        return;
       PyImportElement[] importElements = node.getImportElements();
       int len = 0;
       String moduleName = "";
