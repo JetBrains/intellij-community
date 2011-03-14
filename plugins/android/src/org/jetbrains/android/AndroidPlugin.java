@@ -20,8 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +45,6 @@ public class AndroidPlugin implements ApplicationComponent {
   }
 
   public void disposeComponent() {
-    try {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidSdk.terminateDdmlib();
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      LOG.info(e);
-    }
+    AndroidSdk.terminateDdmlib();
   }
 }

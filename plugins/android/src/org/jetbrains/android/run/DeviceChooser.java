@@ -19,13 +19,8 @@ package org.jetbrains.android.run;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.internal.avd.AvdManager;
-import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.BooleanCellRenderer;
@@ -136,18 +131,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
     if (bridge == null) return;
 
-    IDevice[] devices;
-    try {
-      devices = AdbManager.compute(new Computable<IDevice[]>() {
-        public IDevice[] compute() {
-          return bridge.getDevices();
-        }
-      }, true);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(myPanel, e.getMessage());
-      return;
-    }
+    IDevice[] devices = bridge.getDevices();
     int[] selectedRows = myDeviceTable.getSelectedRows();
     myDeviceTable.setModel(new MyDeviceTableModel(devices));
     if (selectedRows.length == 0 && devices.length > 0) {
@@ -181,16 +165,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
   @Override
   protected void dispose() {
     super.dispose();
-    try {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.removeDeviceChangeListener(DeviceChooser.this);
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(myFacet.getModule().getProject(), e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    AndroidDebugBridge.removeDeviceChangeListener(this);
   }
 
   @Override
@@ -214,18 +189,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
         if (bridge == null) {
           return EMPTY_DEVICE_ARRAY;
         }
-        IDevice[] devices;
-        try {
-          devices = AdbManager.compute(new Computable<IDevice[]>() {
-            public IDevice[] compute() {
-              return bridge.getDevices();
-            }
-          }, true);
-        }
-        catch (AdbNotRespondingException e) {
-          Messages.showErrorDialog(myFacet.getModule().getProject(), e.getMessage(), CommonBundle.getErrorTitle());
-          return EMPTY_DEVICE_ARRAY;
-        }
+        IDevice[] devices = bridge.getDevices();
         for (IDevice device : devices) {
           if (device.getSerialNumber().equals(serial.toString())) {
             result.add(device);

@@ -18,7 +18,6 @@ package org.jetbrains.android.logcat;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
-import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogFilterModel;
 import com.intellij.facet.ProjectFacetManager;
@@ -27,12 +26,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -167,16 +162,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
       }
     });
-    try {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.addDeviceChangeListener(myDeviceChangeListener);
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(e.getMessage(), CommonBundle.getErrorTitle());
-    }
+
+    AndroidDebugBridge.addDeviceChangeListener(myDeviceChangeListener);
+
     updateDevices();
     updateLogConsole();
   }
@@ -228,18 +216,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     if (platform != null) {
       final AndroidDebugBridge debugBridge = platform.getSdk().getDebugBridge(myProject);
       if (debugBridge != null) {
-        IDevice[] devices;
-        try {
-          devices = AdbManager.compute(new Computable<IDevice[]>() {
-            public IDevice[] compute() {
-              return debugBridge.getDevices();
-            }
-          }, true);
-        }
-        catch (AdbNotRespondingException e) {
-          Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
-          return;
-        }
+        IDevice[] devices = debugBridge.getDevices();
         Object temp = myDeviceCombo.getSelectedItem();
         myDeviceCombo.setModel(new DefaultComboBoxModel(devices));
         if (devices.length > 0 && temp == null) {
@@ -258,16 +235,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   public void dispose() {
-    try {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.removeDeviceChangeListener(myDeviceChangeListener);
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    AndroidDebugBridge.removeDeviceChangeListener(myDeviceChangeListener);
   }
 
   private class MyRestartAction extends AnAction {

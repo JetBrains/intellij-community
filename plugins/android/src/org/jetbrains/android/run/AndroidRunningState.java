@@ -43,12 +43,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
@@ -148,16 +145,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        try {
-          start();
-        }
-        catch (AdbNotRespondingException e) {
-          LOG.info(e);
-          myProcessHandler.notifyTextAvailable(e.getMessage() + '\n', STDERR);
-          if (!myProcessHandler.isProcessTerminated() && myProcessHandler.isStartNotified()) {
-            myProcessHandler.destroyProcess();
-          }
-        }
+        start();
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
@@ -265,16 +253,12 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private IDevice chooseDeviceAutomaticaly() throws AdbNotRespondingException {
+  private IDevice chooseDeviceAutomaticaly() {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
     if (bridge == null) {
       return null;
     }
-    IDevice[] devices = AdbManager.compute(new Computable<IDevice[]>() {
-      public IDevice[] compute() {
-        return bridge.getDevices();
-      }
-    }, true);
+    IDevice[] devices = bridge.getDevices();
     boolean exactlyCompatible = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
@@ -334,36 +318,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
   }
 
-  private void start() throws AdbNotRespondingException {
+  private void start() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
       chooseOrLaunchDevice();
     }
     if (myDebugMode) {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.addClientChangeListener(AndroidRunningState.this);
-        }
-      }, false);
+      AndroidDebugBridge.addClientChangeListener(this);
     }
     final AndroidDebugBridge.IDeviceChangeListener[] deviceListener = {null};
     getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        try {
-          AdbManager.run(new Runnable() {
-            public void run() {
-              if (myDebugMode) {
-                AndroidDebugBridge.removeClientChangeListener(AndroidRunningState.this);
-              }
-              if (deviceListener[0] != null) {
-                AndroidDebugBridge.removeDeviceChangeListener(deviceListener[0]);
-              }
-            }
-          }, false);
+        if (myDebugMode) {
+          AndroidDebugBridge.removeClientChangeListener(AndroidRunningState.this);
         }
-        catch (AdbNotRespondingException e) {
-          LOG.info(e);
+        if (deviceListener[0] != null) {
+          AndroidDebugBridge.removeDeviceChangeListener(deviceListener[0]);
         }
         myStopped = true;
         synchronized (myLock) {
@@ -374,7 +345,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     deviceListener[0] = prepareAndStartAppWhenDeviceIsOnline();
   }
 
-  private void chooseOrLaunchDevice() throws AdbNotRespondingException {
+  private void chooseOrLaunchDevice() {
     IDevice targetDevice = chooseDeviceAutomaticaly();
     if (targetDevice != null) {
       myTargetDevices = new IDevice[] {targetDevice};
@@ -463,7 +434,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() throws AdbNotRespondingException {
+  private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() {
     if (myTargetDevices.length > 0) {
       for (IDevice targetDevice : myTargetDevices) {
         if (targetDevice.isOnline()) {
@@ -512,11 +483,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         });
       }
     };
-    AdbManager.run(new Runnable() {
-      public void run() {
-        AndroidDebugBridge.addDeviceChangeListener(deviceListener);
-      }
-    }, false);
+    AndroidDebugBridge.addDeviceChangeListener(deviceListener);
     return deviceListener;
   }
 
