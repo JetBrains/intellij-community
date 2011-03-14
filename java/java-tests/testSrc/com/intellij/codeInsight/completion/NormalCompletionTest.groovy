@@ -914,6 +914,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewClassAngleBracket() throws Exception { doTest('<') }
   public void testNewClassSquareBracket() throws Exception { doTest('[') }
 
+  public void testMethodColon() throws Exception { doTest(':') }
+  public void testVariableColon() throws Exception { doTest(':') }
+
   public void testNoMethodsInParameterType() {
     configure()
     assertOrderedEquals myFixture.lookupElementStrings, "final", "float"
