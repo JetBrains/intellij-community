@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -108,7 +107,8 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
                                String title,
                                String groupName, Object... options) {
     if (isFirstUpdate) {
-      myCustomOptions.putValue(groupName, Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, title));
+      myCustomOptions.putValue(groupName,
+                               Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, title));
     }
     enableOption(fieldName);
   }
@@ -355,7 +355,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     try {
       Field field = customClass.getField(fieldName);
 
-      myKeys.add(new CustomBooleanOptionKey(groupName, getRenamedTitle(fieldName, title), customClass, field));
+      myKeys.add(new CustomBooleanOptionKey<T>(groupName, getRenamedTitle(fieldName, title), customClass, field));
     }
     catch (NoSuchFieldException e) {
       LOG.error(e);
@@ -365,24 +365,18 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
-  }
-
-  protected class MyTreeCellRenderer implements TreeCellRenderer {
-    private final MyLabelPanel myLabel;
+  private static class MyTreeCellRenderer implements TreeCellRenderer {
+    private final JLabel myLabel;
     private final JCheckBox myCheckBox;
 
     public MyTreeCellRenderer() {
-      myLabel = new MyLabelPanel();
+      myLabel = new JLabel();
       myCheckBox = new JCheckBox();
       myCheckBox.setMargin(new Insets(0, 0, 0, 0));
     }
 
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
-
       if (value instanceof MyToggleTreeNode) {
         MyToggleTreeNode treeNode = (MyToggleTreeNode)value;
         JToggleButton button = myCheckBox;
@@ -402,10 +396,8 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
         return button;
       }
       else {
-        Font font = tree.getFont();
-        Font boldFont = new Font(font.getName(), Font.BOLD, font.getSize());
-        myLabel.setFont(boldFont);
         myLabel.setText(value.toString());
+        myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
 
         if (isSelected) {
           myLabel.setForeground(UIUtil.getTreeSelectionForeground());
@@ -420,51 +412,6 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
         return myLabel;
       }
-    }
-  }
-
-  private static class MyLabelPanel extends JPanel {
-    private String myText = "";
-    private final boolean hasFocus = false;
-
-    public MyLabelPanel() {
-    }
-
-    public void setText(String text) {
-      myText = text;
-      if (myText == null) {
-        myText = "";
-      }
-    }
-
-    protected void paintComponent(Graphics g) {
-      g.setFont(getMyFont());
-      FontMetrics fontMetrics = getFontMetrics(getMyFont());
-      int h = fontMetrics.getHeight();
-      int w = fontMetrics.charsWidth(myText.toCharArray(), 0, myText.length());
-      g.setColor(getBackground());
-      g.fillRect(0, 1, w + 2, h);
-      if (hasFocus) {
-        g.setColor(UIUtil.getTreeTextBackground());
-        g.drawRect(0, 1, w + 2, h);
-      }
-      g.setColor(getForeground());
-      g.drawString(myText, 2, h - fontMetrics.getDescent() + 1);
-    }
-
-    private Font getMyFont() {
-      Font font = UIUtil.getTreeFont();
-      return new Font(font.getName(), Font.BOLD, font.getSize());
-    }
-
-    public Dimension getPreferredSize() {
-      FontMetrics fontMetrics = getFontMetrics(getMyFont());
-      if (fontMetrics == null) {
-        return new Dimension(0, 0);
-      }
-      int h = fontMetrics.getHeight();
-      int w = fontMetrics.charsWidth(myText.toCharArray(), 0, myText.length());
-      return new Dimension(w + 4, h + 2);
     }
   }
 
