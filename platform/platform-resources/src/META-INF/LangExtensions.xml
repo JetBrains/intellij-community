@@ -277,6 +277,11 @@
 
   <applicationConfigurable instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
+  <projectFileExclusionProvider implementation="com.intellij.openapi.file.exclude.ProjectFileExclusionProvider"/>
+
+  <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
+                  serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"/>
+
   <!-- Live Templates -->
   <applicationConfigurable instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
 

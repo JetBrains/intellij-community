@@ -129,6 +129,10 @@ public class FileBasedIndex implements ApplicationComponent {
     myChangedFilesCollector.invalidateIndices(file, true);
   }
 
+  public void requestReindexExcluded(final VirtualFile file) {
+    myChangedFilesCollector.invalidateIndices(file, false);
+  }
+
   public interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }

@@ -399,6 +399,7 @@
 
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="$Delete"/>
+      <action id="ExcludeFromProject" class="com.intellij.openapi.file.exclude.ui.ExcludeFromProjectAction"/>
     </group>
 
     <group id="ProjectViewPopupMenuRunGroup">
@@ -813,5 +814,6 @@
       <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
   </actions>
 </component>

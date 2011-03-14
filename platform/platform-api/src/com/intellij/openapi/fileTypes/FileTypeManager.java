@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +115,22 @@ public abstract class FileTypeManager{
 
   public abstract boolean isFileIgnored(@NonNls @NotNull String name);
 
+  /**
+   * @param file The file to be checked.
+   * @return true if the file is ignored, false otherwise.
+   * @deprecated A preferred method is {@link FileTypeManager#isFileIgnored(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)}
+   */
   public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
+
+  /**
+   * Checkes if the file is to be ignored within a given project.
+   * @param project The project containing the file to check.
+   * @param file    The file to to be checked.
+   * @return true if the file is ignored, false otherwise.
+   */
+  public boolean isFileIgnored(@Nullable Project project, @NotNull VirtualFile file) {
+    return isFileIgnored(file);
+  }
 
   /**
    * Returns the list of extensions associated with the specified file type.
