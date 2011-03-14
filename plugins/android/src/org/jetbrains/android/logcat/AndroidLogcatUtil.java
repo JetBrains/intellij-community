@@ -16,8 +16,7 @@
 
 package org.jetbrains.android.logcat;
 
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.Log;
+import com.android.ddmlib.*;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,7 +79,8 @@ public class AndroidLogcatUtil {
     return null;
   }
 
-  private static void startLogging(IDevice device, AndroidOutputReceiver receiver) throws IOException {
+  private static void startLogging(IDevice device, AndroidOutputReceiver receiver)
+    throws IOException, ShellCommandUnresponsiveException, AdbCommandRejectedException, TimeoutException {
     AndroidUtils.executeCommand(device, "logcat -v long", receiver, true);
   }
 
@@ -88,7 +88,8 @@ public class AndroidLogcatUtil {
     try {
       AndroidUtils.executeCommand(device, "logcat -c", new LoggingReceiver(LOG), false);
     }
-    catch (final IOException e) {
+    catch (final Exception e) {
+      LOG.info(e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(project, e.getMessage(), AndroidBundle.message("android.logcat.error.dialog.title"));
@@ -146,7 +147,7 @@ public class AndroidLogcatUtil {
             try {
               startLogging(device, receiver);
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
               LOG.info(e);
               console.writeToConsole(e.getMessage() + '\n', ProcessOutputTypes.STDERR);
             }
