@@ -412,6 +412,13 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_WITHIN_FOR_PARENTHESES = false;
 
   /**
+   * "try( Resource r = r() )"
+   * or
+   * "catch(Resource r = r())"
+   */
+  public boolean SPACE_WITHIN_TRY_PARENTHESES = false;
+
+  /**
    * "catch( Exception e )"
    * or
    * "catch(Exception e)"
@@ -496,6 +503,13 @@ public class CommonCodeStyleSettings {
    * "for(...)"
    */
   public boolean SPACE_BEFORE_FOR_PARENTHESES = true;
+
+  /**
+   * "try (...)"
+   * or
+   * "try(...)"
+   */
+  public boolean SPACE_BEFORE_TRY_PARENTHESES = true;
 
   /**
    * "catch (...)"

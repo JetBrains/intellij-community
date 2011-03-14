@@ -614,10 +614,17 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return;
     }
 
-    if (myRole2 == ChildRole.TRY_BLOCK || myRole2 == ChildRole.FINALLY_BLOCK) {
-      boolean useSpaceBeforeLBrace = myRole2 == ChildRole.TRY_BLOCK ? mySettings.SPACE_BEFORE_TRY_LBRACE
-                                                                    : mySettings.SPACE_BEFORE_FINALLY_LBRACE;
-      myResult = getSpaceBeforeLBrace(useSpaceBeforeLBrace, mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+    if (myRole2 == ChildRole.TRY_BLOCK) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE,
+                                      mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+    }
+    else if (myRole2 == ChildRole.FINALLY_BLOCK) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE,
+                                      mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+    }
+    else if (myType2 == JavaElementType.RESOURCE_LIST) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_PARENTHESES,
+                                      mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
     }
   }
 
@@ -1211,6 +1218,20 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   }
 
+  @Override
+  public void visitResourceList(final PsiResourceList resourceList) {
+    if (myType1 == JavaTokenType.LPARENTH || myType2 == JavaTokenType.RPARENTH) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_TRY_PARENTHESES);
+    }
+
+    if (myType1 == JavaTokenType.SEMICOLON) {
+      createSpaceInCode(mySettings.SPACE_AFTER_SEMICOLON);
+    }
+    if (myType2 == JavaTokenType.SEMICOLON) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_SEMICOLON);
+    }
+  }
+
   @Override public void visitReferenceParameterList(PsiReferenceParameterList list) {
     if (myRole1 == ChildRole.LT_IN_TYPE_LIST && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
       createSpaceInCode(false);
@@ -1227,8 +1248,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
       createSpaceInCode(false);
     }
-
-
   }
 
   @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {

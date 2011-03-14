@@ -164,7 +164,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +
     "    do {\n" +
-    "      try {\n" +
+    "      try (MyResource r1 = getResource(); MyResource r2 = null) {\n" +
     "        if (0 < x && x < 10) {\n" +
     "          while (x != y) {\n" +
     "            x = f(x * 3 + 5);\n" +

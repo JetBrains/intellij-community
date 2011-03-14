@@ -25,6 +25,11 @@ import com.intellij.pom.java.LanguageLevel;
  * @since Apr 29, 2010 5:50:34 PM
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+  }
 
   public void testSpacingBetweenTypeParameters() throws Exception {
     // Implied by IDEADEV-3666
@@ -279,7 +284,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testEmptyIterationAtFor() throws Exception {
     // Inspired by IDEA-58293
-    
+
     getSettings().SPACE_AFTER_SEMICOLON = true;
     getSettings().SPACE_WITHIN_FOR_PARENTHESES = false;
     
@@ -290,7 +295,6 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacesInDisjunctiveType() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().CATCH_ON_NEW_LINE = false;
 
@@ -301,5 +305,63 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_AROUND_BITWISE_OPERATORS = false;
     doMethodTest("try { } catch (E1 | E2 e) { }",
                  "try { } catch (E1|E2 e) { }");
+  }
+
+  public void testSpacesBeforeResourceList() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    getSettings().SPACE_BEFORE_TRY_PARENTHESES = true;
+    getSettings().SPACE_BEFORE_TRY_LBRACE = true;
+    doMethodTest("try(AutoCloseable r = null){ }",
+                 "try (AutoCloseable r = null) { }");
+
+    getSettings().SPACE_BEFORE_TRY_PARENTHESES = false;
+    getSettings().SPACE_BEFORE_TRY_LBRACE = false;
+    doMethodTest("try (AutoCloseable r = null) { }",
+                 "try(AutoCloseable r = null){ }");
+  }
+
+  public void testSpacesWithinResourceList() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    getSettings().SPACE_WITHIN_TRY_PARENTHESES = false;
+    doMethodTest("try (  R r = null  ) { }",
+                 "try (R r = null) { }");
+    getSettings().SPACE_AFTER_SEMICOLON = false;
+    doMethodTest("try (  R r1 = null    ; R r2 = null; ) { }",
+                 "try (R r1 = null;R r2 = null;) { }");
+
+    getSettings().SPACE_WITHIN_TRY_PARENTHESES = true;
+    doMethodTest("try (R r = null) { }",
+                 "try ( R r = null ) { }");
+    getSettings().SPACE_AFTER_SEMICOLON = true;
+    doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
+                 "try ( R r1 = null; R r2 = null; ) { }");
+  }
+
+  public void testSpacesBetweenResources() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    getSettings().SPACE_BEFORE_SEMICOLON = false;
+    getSettings().SPACE_AFTER_SEMICOLON = true;
+    doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
+                 "try (R r1 = null; R r2 = null; ) { }");
+
+    getSettings().SPACE_BEFORE_SEMICOLON = true;
+    getSettings().SPACE_AFTER_SEMICOLON = false;
+    doMethodTest("try (R r1 = null;   R r2 = null;) { }",
+                 "try (R r1 = null ;R r2 = null ;) { }");
+  }
+
+  public void testSpacesInResourceAssignment() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
+    doMethodTest("try (R r=null) { }",
+                 "try (R r = null) { }");
+
+    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
+    doMethodTest("try (R r =  null) { }",
+                 "try (R r=null) { }");
   }
 }
