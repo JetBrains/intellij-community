@@ -21,15 +21,20 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +42,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
+import java.awt.datatransfer.StringSelection;
 
-public abstract class TestTreeView extends Tree implements DataProvider {
+public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   private TestFrameworkRunningModel myModel;
 
   protected abstract TreeCellRenderer getRenderer(TestConsoleProperties properties);
@@ -75,11 +81,30 @@ public abstract class TestTreeView extends Tree implements DataProvider {
   }
 
   public Object getData(final String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return this;
+    }
     final TreePath selectionPath = getSelectionPath();
     if (selectionPath == null) return null;
     final AbstractTestProxy testProxy = getSelectedTest(selectionPath);
     if (testProxy == null) return null;
     return TestsUIUtil.getData(testProxy, dataId, myModel);
+  }
+
+  @Override
+  public void performCopy(DataContext dataContext) {
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    CopyPasteManager.getInstance().setContents(new StringSelection(CopyReferenceAction.elementToFqn(element)));
+  }
+
+  @Override
+  public boolean isCopyEnabled(DataContext dataContext) {
+    return LangDataKeys.PSI_ELEMENT.getData(dataContext) != null;
+  }
+
+  @Override
+  public boolean isCopyVisible(DataContext dataContext) {
+    return true;
   }
 
   protected void installHandlers() {
