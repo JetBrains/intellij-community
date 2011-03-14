@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.JavadocFormatterUtilHlper;
+import com.intellij.psi.formatter.JavadocFormatterUtilHelper;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
 
   static {
-    FormatterUtil.addHelper(new JavadocFormatterUtilHlper());
+    FormatterUtil.addHelper(new JavadocFormatterUtilHelper());
   }
 
   public JavadocManagerImpl(Project project) {
