@@ -23,13 +23,13 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,11 +79,12 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
 
     public void execute(Collection<Change> changes, String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action"));
+            Messages
+              .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action"));
           }
-        });
+        }, null, myProject);
         return;
       }
       try {
@@ -102,11 +103,11 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
       }
       catch (final Exception ex) {
         LOG.info(ex);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL, myProject);
       }
     }
 

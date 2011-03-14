@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -510,7 +511,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final boolean updateSuccess = (! someSessionWasCancelled) && (myGroupedExceptions.isEmpty());
 
       if (! someSessionWasCancelled) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) {
               ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
@@ -554,7 +555,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               }
             }
           }
-        });
+        }, null, myProject);
       } else if (continueChain) {
         // since error
         showContextInterruptedError();

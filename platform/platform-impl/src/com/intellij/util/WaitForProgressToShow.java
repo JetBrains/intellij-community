@@ -15,12 +15,55 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class WaitForProgressToShow {
   private WaitForProgressToShow() {
+  }
+
+  public static void runOrInvokeAndWaitAboveProgress(final Runnable command) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      command.run();
+    } else {
+      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) {
+        execute(pi);
+        application.invokeAndWait(command, pi.getModalityState());
+      } else {
+        application.invokeAndWait(command, ModalityState.defaultModalityState());
+      }
+    }
+  }
+
+  public static void runOrInvokeLaterAboveProgress(final Runnable command, @Nullable final ModalityState modalityState, @NotNull final Project project) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      command.run();
+    } else {
+      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) {
+        execute(pi);
+        application.invokeLater(command, pi.getModalityState(), new Condition() {
+          @Override
+          public boolean value(Object o) {
+            return (! project.isOpen()) || project.isDisposed();
+          }
+        });
+      } else {
+        final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
+        application.invokeLater(command, notNullModalityState, project.getDisposed());
+      }
+    }
   }
 
   public static void execute(ProgressIndicator pi) {

@@ -206,6 +206,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                                                                                   searchInComments, searchForTextOccurences,
                                                                                   myMoveCallback);
     if (processor.verifyValidPackageName()) {
+      processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+        @Override
+        public void run() {
+        }
+      });
+
       processor.run();
     }
   }

@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="smartcvs-src" />
     <orderEntry type="library" name="microba" level="project" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>
 

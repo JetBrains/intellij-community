@@ -42,4 +42,40 @@ public class EmptyAction extends AnAction {
     action.getTemplatePresentation().setText(emptyAction.getTemplatePresentation().getText());
     action.registerCustomShortcutSet(emptyAction.getShortcutSet(), component);
   }
+
+  public static AnAction wrap(final AnAction action) {
+    return action instanceof ActionGroup ? new ActionGroup() {
+      {
+        setPopup(((ActionGroup)action).isPopup());
+        copyFrom(action);
+        setShortcutSet(new CustomShortcutSet());
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        action.update(e);
+      }
+
+      @NotNull
+      @Override
+      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+        return ((ActionGroup)action).getChildren(e);
+      }
+    } : new AnAction() {
+      {
+        copyFrom(action);
+        setShortcutSet(new CustomShortcutSet());
+      }
+
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        action.actionPerformed(e);
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        action.update(e);
+      }
+    };
+  }
 }

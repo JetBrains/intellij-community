@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -118,19 +117,11 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
                                          @NotNull final Ref<Boolean> wasOk) {
     assert ! ApplicationManager.getApplication().isUnitTestMode();
     final String[] newMode = new String[] {mode};
-    try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        public void run() {
-          wasOk.set(displayUpgradeDialog(project, path, display13format, newMode));
-        }
-      });
-    }
-    catch (InterruptedException e) {
-      //
-    }
-    catch (InvocationTargetException e) {
-      //
-    }
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
+      public void run() {
+        wasOk.set(displayUpgradeDialog(project, path, display13format, newMode));
+      }
+    });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnMapDialog.WC_CONVERTED).run();
     return newMode[0];
   }

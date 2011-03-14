@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +37,11 @@ class FictiveBackgroundable extends Task.Backgroundable {
 
   public void run(@NotNull final ProgressIndicator indicator) {
     myWaiter.run(indicator);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myWaiter.onSuccess();
-      }
-    }, myState == null ? ModalityState.NON_MODAL : myState);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+        public void run() {
+          myWaiter.onSuccess();
+        }
+      }, myState == null ? ModalityState.NON_MODAL : myState, myProject);
   }
 
   public void done() {

@@ -3,9 +3,10 @@
 This inspection reports any variables declared as <b>java.lang.StringBuffer</b> which may be
 more efficiently declared as <b>java.lang.StringBuilder</b>.
 <b>java.lang.StringBuilder</b> is a non-thread-safe replacement for
-<b>java.lang.StringBuffer</b>, added in JDK 5.0.
+<b>java.lang.StringBuffer</b>, available in Java 5 and newer.
 <p>
-For safety, this inspection is disabled unless the project uses JDK 5.0.
+This inspection only reports if the project or module is configured to use a
+language level of 5.0 or higher.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

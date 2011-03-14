@@ -17,7 +17,6 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -60,11 +59,6 @@ public abstract class JavaUnwrapper implements Unwrapper {
 
   protected abstract void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException;
 
-  protected boolean isElseBlock(PsiElement e) {
-    PsiElement p = e.getParent();
-    return p instanceof PsiIfStatement && e == ((PsiIfStatement)p).getElseBranch();
-  }
-
   protected static class Context {
     private final List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
     private final boolean myIsEffective;
@@ -96,8 +90,6 @@ public abstract class JavaUnwrapper implements Unwrapper {
     }
 
     private void extract(PsiElement first, PsiElement last, PsiElement from) throws IncorrectOperationException {
-      if (first == null) return;
-
       // trim leading empty spaces
       while (first != last && first instanceof PsiWhiteSpace) {
         first = first.getNextSibling();
@@ -109,7 +101,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
       }
 
       // nothing to extract
-      if (first == last && last instanceof PsiWhiteSpace) return;
+      if (first == null || last == null || first == last && last instanceof PsiWhiteSpace) return;
 
       PsiElement toExtract = first;
       if (myIsEffective) {
@@ -117,8 +109,10 @@ public abstract class JavaUnwrapper implements Unwrapper {
       }
 
       do {
-        addElementToExtract(toExtract);
-        toExtract = toExtract.getNextSibling();
+        if (toExtract != null) {
+          addElementToExtract(toExtract);
+          toExtract = toExtract.getNextSibling();
+        }
         first = first.getNextSibling();
       }
       while (first != null && first.getPrevSibling() != last);
@@ -145,19 +139,11 @@ public abstract class JavaUnwrapper implements Unwrapper {
       addElementToExtract(toExtract);
     }
 
-    private PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
+    private static PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
       // We cannot call el.copy() for 'else' since it sets context to parent 'if'.
       // This causes copy to be invalidated after parent 'if' is removed by setElseBranch method.
       PsiElementFactory factory = JavaPsiFacade.getInstance(e.getProject()).getElementFactory();
       return factory.createStatementFromText(e.getText(), null);
-    }
-  }
-
-  protected PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
-    while (true) {
-      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
-      if (temp == null || temp instanceof PsiFile) return el;
-      el = temp;
     }
   }
 }

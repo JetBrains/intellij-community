@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -43,7 +43,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.NotNullFunction;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -360,9 +360,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
-      AbstractVcsHelper.getInstance(myProject).showFileHistory(
-              new SvnHistoryProvider(myVCS, node.getURL(), SVNRevision.HEAD, isDirectory),
-              VcsUtil.getFilePath(node.getURL().toString()), myVCS, node.getURL().toString());
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(new SvnHistoryProvider(myVCS),
+              VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(node.getURL().toString(), isDirectory),
+              myVCS, node.getURL().toString());
       node.reload(false);
     }
   }
@@ -584,11 +584,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
                 // ignore
               }
               catch (final SVNException e1) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
                   public void run() {
                     Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
                   }
-                });
+                }, null, myProject);
               }
             }
           };

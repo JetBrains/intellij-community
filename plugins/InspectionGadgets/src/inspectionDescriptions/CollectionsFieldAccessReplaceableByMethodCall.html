@@ -5,9 +5,10 @@ fields <b>EMPTY_LIST</b>, <b>EMPTY_MAP</b>
 or <b>EMPTY_SET</b>. Those expressions can be replaced by method
 calls to <b>emptyList()</b>,
 <b>emptyMap()</b> and <b>emptySet()</b>.
-Such method calls prevent javac "unchecked" warnings because any type parameters can be inferred.
+Such method calls prevent "unchecked" warnings by the compiler because the type parameters can be inferred.
 <p>
-For safety, this inspection is disabled unless the project uses <b>JDK 5.0</b>.
+This inspection only reports if the project or module is configured to use a
+language level of 5.0 or higher.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

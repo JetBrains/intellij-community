@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,13 +52,13 @@ public class PsiResourceVariableImpl extends PsiLocalVariableImpl implements Psi
   @Override
   public void delete() throws IncorrectOperationException {
     final PsiElement next = PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace.class, PsiComment.class);
-    if (next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.SEMICOLON) {
+    if (PsiUtil.isJavaToken(next, JavaTokenType.SEMICOLON)) {
       getParent().deleteChildRange(this, next);
       return;
     }
 
     final PsiElement prev = PsiTreeUtil.skipSiblingsBackward(this, PsiWhiteSpace.class, PsiComment.class);
-    if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.SEMICOLON) {
+    if (PsiUtil.isJavaToken(prev, JavaTokenType.SEMICOLON)) {
       getParent().deleteChildRange(prev, this);
       return;
     }

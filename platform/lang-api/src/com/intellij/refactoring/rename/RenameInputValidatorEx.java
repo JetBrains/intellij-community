@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl;
+package com.intellij.refactoring.rename;
 
-import com.intellij.psi.PsiVariable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
-public interface PsiVariableEx extends PsiVariable {
+/**
+ * User: anna
+ * Date: 3/14/11
+ */
+public interface RenameInputValidatorEx extends RenameInputValidator {
   @Nullable
-  Object computeConstantValue(Set<PsiVariable> visitedVars);
+  String getErrorMessage(String newName, Project project);
 }

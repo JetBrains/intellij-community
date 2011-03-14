@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.HashMap;
 
 import java.io.IOException;
@@ -90,13 +91,13 @@ public class CachedRevisionsContents {
                 vcsFileRevision.loadContent();
               }
               catch (final VcsException e) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
                   public void run() {
                     Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.because.of.error",
                                                                vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()),
                                              VcsBundle.message("message.title.load.version"));
                   }
-                });
+                }, null, myProject);
               }
               catch (ProcessCanceledException ex) {
                 return;

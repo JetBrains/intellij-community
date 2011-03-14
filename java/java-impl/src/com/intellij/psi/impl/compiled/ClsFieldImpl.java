@@ -154,7 +154,8 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     PsiExpression initializer = getInitializer();
     if (initializer == null) return null;
 
-    final String qName = getContainingClass().getQualifiedName();
+    final PsiClass containingClass = getContainingClass();
+    final String qName = containingClass != null ? containingClass.getQualifiedName() : null;
     if ("java.lang.Float".equals(qName)) {
       @NonNls final String name = getName();
       if ("POSITIVE_INFINITY".equals(name)) return new Float(Float.POSITIVE_INFINITY);

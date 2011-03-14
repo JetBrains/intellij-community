@@ -36,6 +36,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -195,33 +196,29 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     return myCustomValuesEnabled;
   }
 
-  private static boolean isInRightPlace(@NotNull XmlTag tag, @NotNull XmlElementDescriptor tagDescriptor) {
-    XmlTag parentTag = tag.getParentTag();
-    if (parentTag == null) {
-      return true;
-    }
-    XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
-    if (parentDescriptor == null) {
-      return true;
-    }
-    XmlElementDescriptor[] suitableChildDescriptors = parentDescriptor.getElementsDescriptors(parentTag);
-    for (XmlElementDescriptor descriptor : suitableChildDescriptors) {
-      if (descriptor.getName().equalsIgnoreCase(tagDescriptor.getName())) {
-        return true;
-      }
-    }
-    return false;
+  private static boolean isAbstractDescriptor(XmlElementDescriptor descriptor) {
+    return descriptor == null || descriptor instanceof AnyXmlElementDescriptor;
   }
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    PsiElement parentTag = tag.getParentTag() ;
-    if (parentTag != null && XmlHighlightVisitor.skipValidation(parentTag)) {
+    if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
     }
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (tag instanceof HtmlTag &&
-        (descriptor == null || descriptor instanceof AnyXmlElementDescriptor ||
-         (descriptor instanceof HtmlElementDescriptorImpl && !isInRightPlace(tag, descriptor)))) {
+
+    XmlElementDescriptor descriptorFromContext = XmlUtil.getDescriptorFromContext(tag);
+
+    PsiElement parent = tag.getParent();
+    XmlElementDescriptor parentDescriptor = parent instanceof XmlTag ? ((XmlTag)parent).getDescriptor() : null;
+
+    XmlElementDescriptor ownDescriptor = isAbstractDescriptor(descriptorFromContext)
+                                         ? tag.getDescriptor()
+                                         : descriptorFromContext;
+
+    if (isAbstractDescriptor(ownDescriptor) ||
+        (parentDescriptor instanceof HtmlElementDescriptorImpl &&
+         ownDescriptor instanceof HtmlElementDescriptorImpl &&
+         isAbstractDescriptor(descriptorFromContext))) {
+
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
@@ -230,7 +227,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
-        final String message = descriptor == null || descriptor instanceof AnyXmlElementDescriptor
+        final String message = isAbstractDescriptor(ownDescriptor)
                                ? XmlErrorMessages.message("unknown.html.tag", name)
                                : XmlErrorMessages.message("element.is.not.allowed.here", name);
 

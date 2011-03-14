@@ -56,7 +56,7 @@ import java.util.*;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private static final int VERSION = 8;
+  private static final int VERSION = 9;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -492,9 +492,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore(".hg");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 8) {
       addIgnore("*.lib");
       addIgnore("*~");
+    }
+
+    if (savedVersion < VERSION) {
+      addIgnore("__pycache__");
     }
   }
 

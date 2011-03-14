@@ -45,6 +45,7 @@ import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
@@ -435,6 +436,26 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     // Move files with correction of references.
 
     try {
+      final Map<PsiClass, Boolean> allClasses = new HashMap<PsiClass, Boolean>();
+      for (PsiElement element : myElementsToMove) {
+        if (element instanceof PsiClass) {
+          final PsiClass psiClass = (PsiClass)element;
+          if (allClasses.containsKey(psiClass)) {
+            continue;
+          }
+          final PsiClass[] classes = ((PsiClassOwner)element.getContainingFile()).getClasses();
+          boolean all = true;
+          for (PsiClass aClass : classes) {
+            if (ArrayUtil.find(myElementsToMove, aClass) == -1) {
+              all = false;
+              break;
+            }
+          }
+          for (PsiClass aClass : classes) {
+            allClasses.put(aClass, all);
+          }
+        }
+      }
       Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
@@ -447,8 +468,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           element = newElement;
         }
         else if (element instanceof PsiClass) {
-          MoveClassesOrPackagesUtil.prepareMoveClass((PsiClass)element);
-          final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass((PsiClass)element, myMoveDestination.getTargetDirectory(element.getContainingFile()));
+          final PsiClass psiClass = (PsiClass)element;
+          MoveClassesOrPackagesUtil.prepareMoveClass(psiClass);
+          final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
         } else {

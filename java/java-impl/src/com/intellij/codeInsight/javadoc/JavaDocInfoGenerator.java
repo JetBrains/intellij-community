@@ -1308,7 +1308,7 @@ public class JavaDocInfoGenerator {
       if (valueElement != null) {
         for (Iterator<PsiClassType> iterator = declaredThrows.iterator(); iterator.hasNext();) {
           PsiClassType classType = iterator.next();
-          if (Comparing.strEqual(valueElement.getText(), classType.getClassName())) {
+          if (Comparing.strEqual(valueElement.getText(), classType.getClassName()) || Comparing.strEqual(valueElement.getText(), classType.getCanonicalText())) {
             iterator.remove();
             break;
           }

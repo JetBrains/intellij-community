@@ -303,12 +303,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return dlg.isOK() ? dlg.getSelectedFiles() : null;
   }
 
-  protected void reportError(Exception exception) {
-    LOG.info(exception);
-    Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"),
-                               Messages.getErrorIcon());
-  }
-
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
     showErrorsImpl(abstractVcsExceptions.isEmpty(), new Getter<VcsException>() {
       public VcsException get() {

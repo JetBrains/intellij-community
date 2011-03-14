@@ -19,7 +19,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.FileContent;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -254,24 +254,24 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
         reportNotFound(baseUrl);
       }
       else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showMessageDialog(myProject, ex.getMessage(),
-                                       SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-          }
-        });
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+            public void run() {
+              Messages.showMessageDialog(myProject, ex.getMessage(),
+                                         SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+            }
+          }, null, myProject);
         LOG.info(ex);
       }
     }
 
     private void reportNotFound(final String baseUrl) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(myProject,
-                                     SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), baseUrl),
-                                     SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-        }
-      });
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(myProject,
+                                       SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), baseUrl),
+                                       SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+          }
+        }, null, myProject);
     }
   }
 }

@@ -1,13 +1,15 @@
 <html>
 <body>
 This inspection reports <b>for</b> loops which iterate
-over collections or arrays, and can be replaced with the JDK 5.0 "for each" iteration syntax.
+over collections or arrays, and can be replaced with the "for each" iteration syntax, available
+in Java 5 and newer.
 <p>
 The setting <b>Report java.util.List indexed loops</b> is responsible for finding loops involving <b>list.get(index)</b> calls.
 These loops generally can be replaced with the <b>foreach</b> loops, unless they modify underlying list in the process, e.g. by calling <b>list.remove(index)</b>.
 If latter is the case, <b>foreach</b> form of loop may throw <b>ConcurrentModificationException</b>.
 <p>
-For safety, this inspection is disabled unless the project uses <b>JDK 5.0</b>.
+This inspection only reports if the project or module is configured to use a
+language level of 5.0 or higher.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

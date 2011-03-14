@@ -208,8 +208,9 @@ public class CvsUtil {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
-            Messages.showErrorDialog(CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
-                                     CvsBundle.message("message.error.invalid.entries.title"));
+            Messages
+              .showErrorDialog(CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+                               CvsBundle.message("message.error.invalid.entries.title"));
           }
         });
       }

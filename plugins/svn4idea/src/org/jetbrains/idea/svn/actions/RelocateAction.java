@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RelocateDialog;
@@ -75,11 +75,11 @@ public class RelocateAction extends BasicAction {
           VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
         }
         catch (final SVNException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(project, "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy");
             }
-          });
+          }, null, project);
         }
       }
     }, "Relocating Working Copy", false, project);
