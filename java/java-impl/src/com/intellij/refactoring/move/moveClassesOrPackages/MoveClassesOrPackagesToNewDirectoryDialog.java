@@ -211,6 +211,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
         public void run() {
         }
       });
+
       processor.run();
     }
   }
