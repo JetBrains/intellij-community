@@ -1054,9 +1054,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
+    if (myChangeGuard) {
+      LOG.error("Disposing under a change guard");
+    }
+
     if (myDisposed) {
       LOG.error(disposeTrace);
-    } else {
+    }
+    else {
       myHidden = true;
 
       try {
