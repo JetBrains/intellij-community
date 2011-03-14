@@ -22,6 +22,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,23 @@ public class RenameInputValidatorRegistry {
         return new Condition<String>() {
           public boolean value(final String s) {
             return validator.isInputValid(s, element, context);
+          }
+        };
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Function<String, String> getInputErrorValidator(final PsiElement element) {
+    for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
+      if (!(validator instanceof RenameInputValidatorEx)) continue;
+      final ProcessingContext context = new ProcessingContext();
+      if (validator.getPattern().accepts(element, context)) {
+        return new Function<String, String>() {
+          @Override
+          public String fun(String newName) {
+            return ((RenameInputValidatorEx)validator).getErrorMessage(newName, element.getProject());
           }
         };
       }

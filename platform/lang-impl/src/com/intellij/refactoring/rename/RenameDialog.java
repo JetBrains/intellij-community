@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,6 +37,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,6 +283,10 @@ public class RenameDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     if (!areButtonsValid()) {
       throw new ConfigurationException("\'" + getNewName() + "\' is invalid identifier");
+    }
+    final Function<String, String> inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(myPsiElement);
+    if (inputValidator != null) {
+      setErrorText(inputValidator.fun(getNewName()));
     }
   }
 
