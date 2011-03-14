@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
@@ -25,11 +22,6 @@ import com.intellij.pom.java.LanguageLevel;
  * @since Apr 29, 2010 5:50:34 PM
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
 
   public void testSpacingBetweenTypeParameters() throws Exception {
     // Implied by IDEADEV-3666
