@@ -217,4 +217,15 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
   }
 
+  public void testPreferSamePackageOverImported() {
+    myFixture.addClass("package bar; public class Bar1 {}");
+    myFixture.addClass("package bar; public class Bar2 {}");
+    myFixture.addClass("package bar; public class Bar3 {}");
+    myFixture.addClass("package bar; public class Bar4 {}");
+    myFixture.addClass("class Bar9 {}");
+    myFixture.addClass("package doo; public class Bar0 {}");
+
+    checkPreferredItems(0, "Bar9", "Bar1", "Bar2", "Bar3", "Bar4");
+  }
+
 }
