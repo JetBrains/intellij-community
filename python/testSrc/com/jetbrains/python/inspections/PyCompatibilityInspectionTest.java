@@ -24,6 +24,7 @@ public class PyCompatibilityInspectionTest extends PyLightFixtureTestCase {
   }
 
   public void testExceptBlock() {
+    setLanguageLevel(LanguageLevel.PYTHON27);
     doTest();
   }
 
@@ -68,6 +69,7 @@ public class PyCompatibilityInspectionTest extends PyLightFixtureTestCase {
   }
 
   public void testWithStatement() {
+    setLanguageLevel(LanguageLevel.PYTHON27);
     doTest();
   }
 
