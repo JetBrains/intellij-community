@@ -66,11 +66,11 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     checkIfDisposed();
 
-    LOG.info("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
+    LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
       " change: " + ChangesUtil.getFilePath(change).getPath());
     final String fileName = ChangesUtil.getFilePath(change).getName();
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
-      LOG.info("[processChangeInList-1] file type ignored");
+      LOG.debug("[processChangeInList-1] file type ignored");
       return;
     }
 
@@ -78,14 +78,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
       public void run() {
         if (ChangeListManagerImpl.isUnder(change, myScope)) {
           if (changeList != null) {
-            LOG.info("[processChangeInList-1] to add change to cl");
+            LOG.debug("[processChangeInList-1] to add change to cl");
             myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
           } else {
-            LOG.info("[processChangeInList-1] to add to corresponding list");
+            LOG.debug("[processChangeInList-1] to add to corresponding list");
             myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
           }
         } else {
-          LOG.info("[processChangeInList-1] not under scope");
+          LOG.debug("[processChangeInList-1] not under scope");
         }
       }
     });
