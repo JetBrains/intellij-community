@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -44,6 +43,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -584,11 +584,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
                 // ignore
               }
               catch (final SVNException e1) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
                   public void run() {
                     Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
                   }
-                });
+                }, null, myProject);
               }
             }
           };

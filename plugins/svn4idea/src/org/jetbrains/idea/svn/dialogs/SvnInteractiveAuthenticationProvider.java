@@ -15,12 +15,8 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -169,18 +165,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     }
 
     if (command != null) {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread()) {
-        command.run();
-      } else {
-        final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-        if (pi != null) {
-          WaitForProgressToShow.execute(pi);
-          application.invokeAndWait(command, pi.getModalityState());
-        } else {
-          application.invokeAndWait(command, ModalityState.defaultModalityState());
-        }
-      }
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
       log("3 authentication result: " + result[0]);
     }
 

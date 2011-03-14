@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -99,7 +100,7 @@ class AddHandler {
           addRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(addRunnable);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(addRunnable, null, myProject);
         }
       }
     }

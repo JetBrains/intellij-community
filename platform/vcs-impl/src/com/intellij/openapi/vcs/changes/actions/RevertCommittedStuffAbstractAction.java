@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
@@ -38,6 +37,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,12 +84,12 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
           patches.addAll(IdeaTextPatchBuilder.buildPatch(project, changesList, baseDir.getPresentableUrl(), true));
         }
         catch (final VcsException ex) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             @Override
             public void run() {
               Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
             }
-          });
+          }, null, myProject);
           indicator.cancel();
         }
       }

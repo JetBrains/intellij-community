@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -365,15 +366,11 @@ public class PatchApplier<BinaryType extends FilePatch> {
         }
       }
     };
-    if (application.isDispatchThread()) {
-      messageShower.run();
-    } else {
-      application.invokeLater(new Runnable() {
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
         public void run() {
           messageShower.run();
         }
-      });
-    }
+      }, null, project);
   }
 
   private class FilesMover implements Runnable {

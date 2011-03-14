@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,12 +98,12 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       updatedRoots.addAll(roots);
     }
     if (updatedRoots.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
         public void run() {
           Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
                                    SvnBundle.message("messate.text.update.error"));
         }
-      });
+      }, null, myVcs.getProject());
       return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
     }
 

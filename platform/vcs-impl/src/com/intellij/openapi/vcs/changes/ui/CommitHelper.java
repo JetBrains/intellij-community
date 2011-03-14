@@ -20,7 +20,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,6 +37,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,14 +175,14 @@ public class CommitHelper {
     } finally {
       commitCompleted(processor.getVcsExceptions(), processor);
       processor.customRefresh();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
         public void run() {
           final Runnable runnable = processor.postRefresh();
           if (runnable != null) {
             runnable.run();
           }
         }
-      });
+      }, null, myProject);
     }
   }
 
@@ -450,24 +450,26 @@ public class CommitHelper {
         indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
       }
     } else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final String message;
-          if (errorsSize > 0 && warningsSize > 0) {
-            message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
-          } else if (errorsSize > 0) {
-            message = VcsBundle.message("message.text.commit.failed.with.errors");
-          } else {
-            message = VcsBundle.message("message.text.commit.finished.with.warnings");
-          }
-          //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
-          Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            final String message;
+            if (errorsSize > 0 && warningsSize > 0) {
+              message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
+            }
+            else if (errorsSize > 0) {
+              message = VcsBundle.message("message.text.commit.failed.with.errors");
+            }
+            else {
+              message = VcsBundle.message("message.text.commit.finished.with.warnings");
+            }
+            //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
+            Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
 
-          if (errorsSize > 0) {
-            processor.afterFailedCheckIn();
+            if (errorsSize > 0) {
+              processor.afterFailedCheckIn();
+            }
           }
-        }
-      }, ModalityState.NON_MODAL);
+        }, null, myProject);
     }
   }
 
