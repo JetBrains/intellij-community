@@ -17,8 +17,8 @@ package com.intellij.cvsSupport2.javacvsImpl.io;
 
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.LineReader;
@@ -26,7 +26,6 @@ import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
@@ -62,7 +61,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
               target.write(bytes);
             }
             else {
-              target.write(charSet.encode(CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(bytes))).array());
+              target.write(charSet.encode(CharsetToolkit.bytesToString(bytes, CharsetToolkit.UTF8_CHARSET)).array());
             }
             if (each.hasNext()) {
               if (charSet == null)

@@ -648,13 +648,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return showMergeDialog(files, provider);
   }
 
-  private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
+  private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException, VcsException {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
       return new DocumentContent(FileDocumentManager.getInstance().getDocument(vFile), vFile.getFileType());
     }
     else {
-      return new SimpleContent(new String(version.getContent()), FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
+      return new SimpleContent(VcsHistoryUtil.loadRevisionContentGuessEncoding(version, vFile, null),
+                               FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
     }
   }
 

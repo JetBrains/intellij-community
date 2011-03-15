@@ -147,7 +147,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       }
     }
 
-    if (profiles != null) {
+    if (profiles != null || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME)) {
       DefaultJDOMExternalizer.writeExternal(this, element);
       final Element version = new Element("version");
       version.setAttribute("value", VERSION);

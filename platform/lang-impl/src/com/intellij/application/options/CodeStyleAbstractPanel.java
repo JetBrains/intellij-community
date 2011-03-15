@@ -88,14 +88,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private boolean myShowsPreviewHighlighters;
   private boolean mySkipPreviewHighlighting;
 
-  private synchronized void setSomethingChanged(final boolean b) {
-    mySomethingChanged = b;
-  }
-
-  private synchronized boolean isSomethingChanged() {
-    return mySomethingChanged;
-  }
-
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
@@ -108,6 +100,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     });
 
     updatePreview();
+  }
+
+  private synchronized void setSomethingChanged(final boolean b) {
+    mySomethingChanged = b;
+  }
+
+  private synchronized boolean isSomethingChanged() {
+    return mySomethingChanged;
   }
 
   public void setModel(final CodeStyleSchemesModel model) {

@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -290,8 +291,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     public static boolean checkSideEffects(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     if (element instanceof PsiMethodCallExpression) {
-      sideEffects.add(element);
-      return true;
+      final PsiMethod psiMethod = ((PsiMethodCallExpression)element).resolveMethod();
+      if (psiMethod == null || !PropertyUtils.isSimpleGetter(psiMethod) && !PropertyUtils.isSimpleSetter(psiMethod)) {
+        sideEffects.add(element);
+        return true;
+      }
     }
     if (element instanceof PsiNewExpression) {
       PsiNewExpression newExpression = (PsiNewExpression)element;

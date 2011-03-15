@@ -20,11 +20,14 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+
+import java.nio.charset.Charset;
 
 public class DiffContentRevision implements ContentRevision {
   private String myPath;
@@ -54,7 +57,9 @@ public class DiffContentRevision implements ContentRevision {
       } catch (SVNException e) {
         throw new VcsException(e);
       }
-      myContents = new String(bos.getInternalBuffer(), 0, bos.size());
+      final byte[] bytes = bos.toByteArray();
+      final Charset charset = myFilePath.getCharset();
+      myContents = charset == null ? CharsetToolkit.bytesToString(bytes) : CharsetToolkit.bytesToString(bytes, charset);
     }
     return myContents;
   }

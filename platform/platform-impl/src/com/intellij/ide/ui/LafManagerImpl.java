@@ -491,6 +491,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UIDefaults lookAndFeelDefaults=UIManager.getLookAndFeelDefaults();
     initInputMapDefaults(lookAndFeelDefaults);
     initActionMapDefaults(lookAndFeelDefaults);
+    UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     patchFileChooserStrings(lookAndFeelDefaults);
     if (shouldPatchLAFFonts()) {
       storeOriginalFontDefaults(lookAndFeelDefaults);

@@ -36,7 +36,6 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -135,7 +134,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
     PsiKeyword.INT, PsiKeyword.FLOAT,
-    PsiKeyword.VOID, PsiKeyword.CHAR, PsiKeyword.BYTE
+    PsiKeyword.CHAR, PsiKeyword.BYTE
   };
 
   final static ElementFilter CLASS_BODY = new OrFilter(
@@ -323,14 +322,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   }
 
   private void initVariantsInMethodScope() {
-    {
-// parameters list completion
-      final CompletionVariant variant = new CompletionVariant(INSIDE_PARAMETER_LIST);
-      variant.includeScopeClass(PsiParameterList.class, true);
-      addPrimitiveTypes(variant);
-      registerVariant(variant);
-    }
-
 // Completion for classes in method throws section
 // position
     {
@@ -453,24 +444,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-// Class field completion
-
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(
-        new AndFilter(
-            new TextFilter("."),
-            new LeftNeighbour(
-                new OrFilter(
-                    new ReferenceOnFilter(ElementClassFilter.CLASS),
-                    new TextFilter(PRIMITIVE_TYPES),
-                    new TextFilter("]"))))));
-      variant.includeScopeClass(PsiAnnotationParameterList.class);
-      variant.includeScopeClass(PsiVariable.class);
-      variant.excludeScopeClass(PsiJavaCodeReferenceCodeFragment.class);
-      variant.addCompletion(PsiKeyword.CLASS, TailType.NONE);
-      registerVariant(variant);
-    }
-
-    {
 // break completion
       final CompletionVariant variant = new CompletionVariant(new AndFilter(END_OF_BLOCK, new OrFilter(
         new ScopeFilter(new ClassFilter(PsiSwitchStatement.class)),
@@ -529,12 +502,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   }
 
   private static void addPrimitiveTypes(CompletionVariant variant, TailType tailType){
-    variant.addCompletion(new String[]{
-      PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
-      PsiKeyword.DOUBLE, PsiKeyword.LONG,
-      PsiKeyword.INT, PsiKeyword.FLOAT,
-      PsiKeyword.CHAR, PsiKeyword.BYTE
-    }, tailType);
+    variant.addCompletion(PRIMITIVE_TYPES, tailType);
   }
 
   private static void addKeywords(CompletionVariant variant){
@@ -566,30 +534,30 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     if (SUPER_OR_THIS_PATTERN.accepts(position)) {
-      if (AFTER_DOT.accepts(position) && !isInsideQualifierClass(position)) return;
+      if (!AFTER_DOT.accepts(position) || isInsideQualifierClass(position)) {
+        result.addElement(createKeyword(position, PsiKeyword.THIS));
 
-      result.addElement(createKeyword(position, PsiKeyword.THIS));
+        final LookupItem superItem = (LookupItem)createKeyword(position, PsiKeyword.SUPER);
+        if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
+          final PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false, PsiClass.class);
+          assert method != null;
+          final boolean hasParams = superConstructorHasParameters(method);
+          superItem.setInsertHandler(new ParenthesesInsertHandler<LookupElement>() {
+            @Override
+            protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
+              return hasParams;
+            }
 
-      final LookupItem superItem = (LookupItem)createKeyword(position, PsiKeyword.SUPER);
-      if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false, PsiClass.class);
-        assert method != null;
-        final boolean hasParams = superConstructorHasParameters(method);
-        superItem.setInsertHandler(new ParenthesesInsertHandler<LookupElement>() {
-          @Override
-          protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
-            return hasParams;
-          }
+            @Override
+            public void handleInsert(InsertionContext context, LookupElement item) {
+              super.handleInsert(context, item);
+              TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
+            }
+          });
+        }
 
-          @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
-            super.handleInsert(context, item);
-            TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
-          }
-        });
+        result.addElement(superItem);
       }
-
-      result.addElement(superItem);
     }
 
     final ElementPattern<PsiElement> exprKeywords = and(
@@ -610,13 +578,18 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
 
-    if (START_FOR.accepts(position)) {
+    if (START_FOR.accepts(position) || INSIDE_PARAMETER_LIST.accepts(position) && !AFTER_DOT.accepts(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
-        if (!PsiKeyword.VOID.equals(primitiveType)) {
-          result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
-        }
-        //result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
+        result.addElement(TailTypeDecorator.withTail(createKeyword(position, primitiveType), TailType.SPACE));
       }
+    }
+
+    if (psiElement().afterLeaf(psiElement().withText(".").inside(PsiExpression.class).afterLeaf(or(
+      psiElement().withParent(psiElement().referencing(psiClass())),
+      psiElement().withText(string().oneOf("]", PsiKeyword.VOID)),
+      psiElement().withText(string().oneOf(PRIMITIVE_TYPES))
+    ))).accepts(position)) {
+      result.addElement(createKeyword(position, PsiKeyword.CLASS));
     }
 
     final ProcessingContext context = new ProcessingContext();

@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 
 public class CvsContentRevision implements ContentRevision {
   protected final RevisionOrDate myRevision;
@@ -70,7 +71,8 @@ public class CvsContentRevision implements ContentRevision {
     if (myContent == null) {
       byte[] content = loadContent();
       if (content != null) {
-        myContent = CharsetToolkit.bytesToString(content);
+        final Charset charset = myLocalFile.getCharset();
+        myContent = charset == null ? CharsetToolkit.bytesToString(content) : CharsetToolkit.bytesToString(content, charset);
       }
     }
     return myContent;

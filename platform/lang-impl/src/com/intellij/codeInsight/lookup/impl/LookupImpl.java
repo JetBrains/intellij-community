@@ -666,7 +666,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void performGuardedChange(Runnable change) {
-    LOG.assertTrue(!myDisposed, "disposed before");
+    LOG.assertTrue(!myDisposed, disposeTrace);
     assert !myChangeGuard;
     myChangeGuard = true;
     try {
@@ -675,7 +675,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     finally {
       myChangeGuard = false;
     }
-    LOG.assertTrue(!myDisposed, "disposed after");
+    LOG.assertTrue(!myDisposed, disposeTrace);
   }
 
   public boolean isShown() {
@@ -1054,9 +1054,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
+    if (myChangeGuard) {
+      LOG.error("Disposing under a change guard");
+    }
+
     if (myDisposed) {
       LOG.error(disposeTrace);
-    } else {
+    }
+    else {
       myHidden = true;
 
       try {

@@ -838,11 +838,11 @@ public class JavaCompletionUtil {
     final char completionChar = context.getCompletionChar();
     final PsiFile file = context.getFile();
 
-    final TailType tailType = completionChar == '(' ? TailType.NONE : LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
+    final TailType tailType = completionChar == '(' ? TailType.NONE : completionChar == ':' ? TailType.COND_EXPR_COLON : LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
     final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
     final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
-    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';') {
+    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':') {
       context.setAddCompletionChar(false);
     }
 

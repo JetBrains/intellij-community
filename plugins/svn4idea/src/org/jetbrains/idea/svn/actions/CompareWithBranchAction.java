@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -213,9 +213,8 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
       if (success.isNull()) {
         return;
       }
-      ByteBuffer contents = ByteBuffer.wrap(baos.toByteArray());
       SimpleDiffRequest req = new SimpleDiffRequest(myProject, SvnBundle.message("compare.with.branch.diff.title"));
-      req.setContents(new SimpleContent(myVirtualFile.getCharset().decode(contents).toString()),
+      req.setContents(new SimpleContent(CharsetToolkit.bytesToString(baos.toByteArray(), myVirtualFile.getCharset())),
                       new FileContent(myProject, myVirtualFile));
       req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
       DiffManager.getInstance().getDiffTool().show(req);

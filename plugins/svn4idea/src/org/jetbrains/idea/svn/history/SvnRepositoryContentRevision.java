@@ -71,7 +71,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   public String getContent() throws VcsException {
     if (myContent == null) {
       final ByteArrayOutputStream buffer = loadContent();
-      myContent = CharsetToolkit.bytesToString(buffer.toByteArray());
+      myContent = CharsetToolkit.bytesToString(buffer.toByteArray(), myFilePath.getCharset());
     }
     return myContent;
   }

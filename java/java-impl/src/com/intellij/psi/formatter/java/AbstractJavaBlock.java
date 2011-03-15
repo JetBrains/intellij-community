@@ -350,6 +350,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (nodeType == JavaElementType.PARAMETER_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null);
     }
+    else if (nodeType == JavaElementType.RESOURCE_LIST) {
+      return createAlignment(mySettings.ALIGN_MULTILINE_RESOURCES, null);
+    }
     else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
       Alignment defaultAlignment = null;
       if (shouldInheritAlignment()) {
@@ -375,7 +378,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
       return base == null ? createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null) : createAlignment(base, mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
     }
-
     else {
       return null;
     }
@@ -476,7 +478,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
-
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
         final Wrap wrap;
         Wrap reservedWrap = getReservedWrap(JavaElementType.MODIFIER_LIST);
@@ -491,6 +492,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS);
+      }
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
+        final Wrap reservedWrap = getReservedWrap(JavaElementType.MODIFIER_LIST);
+        final Wrap wrap = reservedWrap != null
+                          ? Wrap.createChildWrap(reservedWrap, getWrapType(mySettings.RESOURCE_LIST_WRAP), false)
+                          : Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
+        child = processParenthesisBlock(result, child, WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                        mySettings.ALIGN_MULTILINE_RESOURCES);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.ANNOTATION_PARAMETER_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);

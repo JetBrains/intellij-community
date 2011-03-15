@@ -498,8 +498,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       if (value instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)value;
         myLabel.setText(node.getText());
-        myLabel.setFont(
-          myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
+        myLabel.setFont(myLabel.getFont().deriveFont(node.getKey().groupName == null ? Font.BOLD : Font.PLAIN));
         myLabel.setEnabled(node.isEnabled());
       }
       else {
@@ -508,9 +507,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         myLabel.setEnabled(true);
       }
 
-      Color foreground = selected
-                         ? UIUtil.getTableSelectionForeground()
-                         : UIUtil.getTableForeground();
+      Color foreground = selected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
       myLabel.setForeground(foreground);
 
       return myLabel;

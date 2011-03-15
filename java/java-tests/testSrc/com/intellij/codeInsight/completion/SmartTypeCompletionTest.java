@@ -691,6 +691,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDoubleTrueInOverloadedMethodCall() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
+  public void testMethodColon() throws Exception { doFirstItemTest(':'); }
+  public void testVariableColon() throws Exception { doFirstItemTest(':'); }
+
+  private void doFirstItemTest(char c) throws Exception {
+    configureByTestName();
+    select(c);
+    checkResultByTestName();
+  }
+
   public void testOneElementArray() throws Throwable { doTest(); }
 
   public void testCastToArray() throws Throwable { doTest(); }
@@ -706,9 +715,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testAutoCastWhenAlreadyCasted() throws Throwable { doTest(); }
 
   public void testCommaDoublePenetration() throws Throwable {
-    configureByTestName();
-    select(',');
-    checkResultByTestName();
+    doFirstItemTest(',');
   }
 
   public void testSuperMethodArguments() throws Throwable {
@@ -867,9 +874,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testTabMethodCall() throws Exception {
-    configureByTestName();
-    select(Lookup.REPLACE_SELECT_CHAR);
-    checkResultByTestName();
+    doFirstItemTest(Lookup.REPLACE_SELECT_CHAR);
   }
 
   public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
@@ -1013,9 +1018,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testTabAfterNew() throws Exception {
-    configureByTestName();
-    select('\t');
-    checkResultByTestName();
+    doFirstItemTest('\t');
   }
 
   private void doTest(boolean performAction, boolean selectItem) throws Exception {

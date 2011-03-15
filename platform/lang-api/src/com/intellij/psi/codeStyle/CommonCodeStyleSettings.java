@@ -296,6 +296,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_CHAINED_METHODS = false;
   public boolean ALIGN_MULTILINE_PARAMETERS = true;
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+  public boolean ALIGN_MULTILINE_RESOURCES = true;
   public boolean ALIGN_MULTILINE_FOR = true;
   public boolean INDENT_WHEN_CASES = true;
 
@@ -412,6 +413,13 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_WITHIN_FOR_PARENTHESES = false;
 
   /**
+   * "try( Resource r = r() )"
+   * or
+   * "catch(Resource r = r())"
+   */
+  public boolean SPACE_WITHIN_TRY_PARENTHESES = false;
+
+  /**
    * "catch( Exception e )"
    * or
    * "catch(Exception e)"
@@ -496,6 +504,13 @@ public class CommonCodeStyleSettings {
    * "for(...)"
    */
   public boolean SPACE_BEFORE_FOR_PARENTHESES = true;
+
+  /**
+   * "try (...)"
+   * or
+   * "try(...)"
+   */
+  public boolean SPACE_BEFORE_TRY_PARENTHESES = true;
 
   /**
    * "catch (...)"
@@ -636,6 +651,10 @@ public class CommonCodeStyleSettings {
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
   public boolean METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+
+  public int RESOURCE_LIST_WRAP = DO_NOT_WRAP;
+  public boolean RESOURCE_LIST_LPAREN_ON_NEXT_LINE = false;
+  public boolean RESOURCE_LIST_RPAREN_ON_NEXT_LINE = false;
 
   public int EXTENDS_LIST_WRAP = DO_NOT_WRAP;
   public int THROWS_LIST_WRAP = DO_NOT_WRAP;
