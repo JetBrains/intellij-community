@@ -210,7 +210,7 @@ idea.fatal.error.notification=enabled
 """
 
 #-----------------------------------------------------------------------
-# Change to 'eanbled' if you need to receive instant visual notifications about
+# Change to 'enabled' if you need to receive instant visual notifications about
 # fatal errors that happen to an IDE or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=disabled
