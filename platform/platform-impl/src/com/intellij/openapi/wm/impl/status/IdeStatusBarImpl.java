@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -36,6 +37,8 @@ import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +82,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     StatusBarWidget widget;
     String anchor;
 
-    static WidgetBean create(@NotNull final StatusBarWidget widget, @NotNull final Position position, @NotNull final JComponent component, @NotNull String anchor) {
+    static WidgetBean create(@NotNull final StatusBarWidget widget,
+                             @NotNull final Position position,
+                             @NotNull final JComponent component,
+                             @NotNull String anchor) {
       final WidgetBean bean = new WidgetBean();
       bean.widget = widget;
       bean.position = position;
@@ -157,6 +163,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     if (master == null) {
       Disposer.register(Disposer.get("ui"), this);
     }
+
+    addWidget(new ToolWindowsWidget(), Position.LEFT);
   }
 
 
@@ -288,11 +296,13 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         if (parts.size() < 2 || !myWidgetMap.keySet().contains(parts.get(1))) {
           wid = "Notifications";
           before = true;
-        } else {
+        }
+        else {
           wid = parts.get(1);
           before = "before".equalsIgnoreCase(parts.get(0));
         }
-      } else {
+      }
+      else {
         wid = "Notifications";
         before = true;
       }
@@ -368,7 +378,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         if (myInfoAndProgressPanel != null) {
-          Pair<String,String> pair = myInfoAndProgressPanel.setText(s, requestor);
+          Pair<String, String> pair = myInfoAndProgressPanel.setText(s, requestor);
           myInfo = pair.first;
           myRequestor = pair.second;
         }
@@ -425,9 +435,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
-                                      @NotNull String htmlBody,
-                                      @Nullable Icon icon,
-                                      @Nullable HyperlinkListener listener) {
+                                                @NotNull String htmlBody,
+                                                @Nullable Icon icon,
+                                                @Nullable HyperlinkListener listener) {
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
   }
 
@@ -435,7 +445,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     new NotificationPopup(this, content, backgroundColor);
   }
 
-  private void installWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final JComponent c, String anchor) {
+  private void installWidget(@NotNull final StatusBarWidget widget,
+                             @NotNull final Position pos,
+                             @NotNull final JComponent c,
+                             String anchor) {
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
     widget.install(this);
     Disposer.register(this, widget);
@@ -518,7 +531,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
         myRightPanel.remove(bean.component);
         updateBorder(i);
-      } else {
+      }
+      else {
         myCenterPanel.remove(bean.component);
       }
 
@@ -617,7 +631,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       if (getText() != null) {
         final Rectangle r = getBounds();
         final Insets insets = getInsets();
-        ARROWS_ICON.paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+        ARROWS_ICON
+          .paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
       }
     }
 
@@ -721,7 +736,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         final int iconHeight = myIcon.getIconHeight();
 
         myIcon.paintIcon(this, g, insets.left + (bounds.width - insets.left - insets.right - iconWidth) / 2,
-                       insets.top + (bounds.height - insets.top - insets.bottom - iconHeight) / 2);
+                         insets.top + (bounds.height - insets.top - insets.bottom - iconHeight) / 2);
       }
     }
 
@@ -739,6 +754,80 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public IdeFrame getFrame() {
     return myFrame;
+  }
+
+  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget.Multiframe {
+
+    private StatusBar myStatusBar;
+
+    private ToolWindowsWidget() {
+      new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+        @Override
+        protected void execute(MouseEvent e) {
+          performAction();
+        }
+      }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    }
+
+    private void performAction() {
+      if (isActive()) {
+        UISettings.getInstance().HIDE_TOOL_STRIPES = !UISettings.getInstance().HIDE_TOOL_STRIPES;
+        UISettings.getInstance().fireUISettingsChanged();
+      }
+      updateIcon();
+    }
+
+    private void updateIcon() {
+      if (isActive()) {
+        setVisible(true);
+        setIcon(UISettings.getInstance().HIDE_TOOL_STRIPES
+                ? IconLoader.getIcon("/general/slideOut.png")
+                : IconLoader.getIcon("/general/slideIn.png"));
+        revalidate();
+        repaint();
+        setToolTipText("Click to show/hide tool windows side bars");
+      }
+      else {
+        setVisible(false);
+        setToolTipText(null);
+      }
+    }
+
+    private boolean isActive() {
+      return myStatusBar != null || myStatusBar.getFrame() != null || myStatusBar.getFrame().getProject() != null;
+    }
+
+    @Override
+    public StatusBarWidget copy() {
+      return new ToolWindowsWidget();
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public String ID() {
+      return "ToolWindows Widget";
+    }
+
+    @Override
+    public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+      return null;
+    }
+
+    @Override
+    public void install(@NotNull StatusBar statusBar) {
+      myStatusBar = statusBar;
+      updateIcon();
+    }
+
+    @Override
+    public void dispose() {
+      myStatusBar = null;
+    }
   }
 }
 
