@@ -43,14 +43,18 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-    final int w1 = o1.getWeight();
-    final int w2 = o2.getWeight();
+    final int w1 = getWeight(o1);
+    final int w2 = getWeight(o2);
     if (myCompareToString && w1 == w2) {
       return compareToString(o1, o2);
     }
 
     int weights = compareWeights(w1, w2);
     return weights != 0 ? weights : o1.getIndex() - o2.getIndex();
+  }
+
+  protected int getWeight(final NodeDescriptor o1) {
+    return o1.getWeight();
   }
 
   protected int compareWeights(final int w1, final int w2) {

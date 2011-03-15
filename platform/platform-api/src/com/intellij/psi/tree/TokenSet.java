@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.tree;
 
+import com.intellij.openapi.diagnostic.LogUtil;
+
 import java.util.Arrays;
 
 /**
@@ -59,7 +61,9 @@ public class TokenSet {
     TokenSet set = new TokenSet();
     for (IElementType type : types) {
       if (type != null) {
-        set.mySet[type.getIndex()] = true;
+        final short index = type.getIndex();
+        assert index >= 0 : "Unregistered elements are not allowed here: " + LogUtil.objectAndClass(type);
+        set.mySet[index] = true;
       }
     }
     return set;
@@ -68,7 +72,7 @@ public class TokenSet {
   /**
    * Returns a token set containing the union of the specified token sets.
    *
-   * @param sets the token sets to unio.
+   * @param sets the token sets to unite.
    * @return the new token set.
    */
 

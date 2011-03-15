@@ -42,6 +42,7 @@ public interface CodeStyleSettingsCustomizable {
   String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
   String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
   String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
+  String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
   String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
   String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
   String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");

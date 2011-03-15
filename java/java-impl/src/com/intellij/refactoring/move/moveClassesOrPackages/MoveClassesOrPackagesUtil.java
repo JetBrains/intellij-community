@@ -221,10 +221,17 @@ public class MoveClassesOrPackagesUtil {
 
   // Does not process non-code usages!
   public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination) throws IncorrectOperationException {
+    return doMoveClass(aClass, moveDestination, true);
+  }
+
+  // Does not process non-code usages!
+  public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination, boolean moveAllClassesInFile) throws IncorrectOperationException {
     PsiClass newClass;
-    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
-      newClass = handler.doMoveClass(aClass, moveDestination);
-      if (newClass != null) return newClass;
+    if (!moveAllClassesInFile) {
+      for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+        newClass = handler.doMoveClass(aClass, moveDestination);
+        if (newClass != null) return newClass;
+      }
     }
 
     PsiFile file = aClass.getContainingFile();

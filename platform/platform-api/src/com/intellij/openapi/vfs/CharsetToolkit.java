@@ -198,7 +198,12 @@ public class CharsetToolkit {
 
   @NotNull
   public static String bytesToString(@NotNull byte[] bytes) {
-    Charset charset = new CharsetToolkit(bytes, EncodingManager.getInstance().getDefaultCharset()).guessEncoding(bytes.length);
+    return bytesToString(bytes, EncodingManager.getInstance().getDefaultCharset());
+  }
+
+  @NotNull
+  public static String bytesToString(@NotNull byte[] bytes, @NotNull final Charset defaultCharset) {
+    Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
     return charBuffer.toString();

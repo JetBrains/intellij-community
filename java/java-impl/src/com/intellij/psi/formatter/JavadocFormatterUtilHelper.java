@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 
-public class JavadocFormatterUtilHlper implements FormatterUtilHelper {
+/**
+ * @author max
+ */
+public class JavadocFormatterUtilHelper implements FormatterUtilHelper {
   public boolean addWhitespace(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
     return false;
   }

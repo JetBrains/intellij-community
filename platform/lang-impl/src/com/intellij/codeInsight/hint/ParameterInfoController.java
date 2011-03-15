@@ -250,8 +250,8 @@ public class ParameterInfoController {
     Point p = hintManager.getHintPosition(myHint, myEditor, constraint);
     Dimension hintSize = myHint.getComponent().getPreferredSize();
     JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
-    p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
-    p.x = Math.max(p.x, 0);
+    //p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
+    //p.x = Math.max(p.x, 0);
     myHint.updateBounds(p.x, p.y);
   }
 
@@ -283,7 +283,7 @@ public class ParameterInfoController {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
         myComponent.update();
-        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true);
+        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true, HintManager.ABOVE);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }

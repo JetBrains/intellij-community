@@ -44,6 +44,10 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
     }
+    else if (completionChar == ':') {
+      context.setAddCompletionChar(false);
+      TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
+    }
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }

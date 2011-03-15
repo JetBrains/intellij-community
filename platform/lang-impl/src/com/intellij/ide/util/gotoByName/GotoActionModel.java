@@ -80,12 +80,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    return propertiesComponent.isTrueValue("GoToAction.allIncluded");
+    return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
+           propertiesComponent.isTrueValue("GoToAction.allIncluded");
   }
 
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
+    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
+      propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
+    }
   }
 
   public ListCellRenderer getListCellRenderer() {

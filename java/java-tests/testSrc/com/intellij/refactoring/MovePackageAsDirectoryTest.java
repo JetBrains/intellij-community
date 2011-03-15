@@ -8,10 +8,14 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
+import junit.framework.Assert;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +41,21 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
   }
 
   public void testMultipleClassesInOneFile() throws Exception {
-    doTest(createAction("pack1", "target"));
+    final boolean [] fileWasDeleted = new boolean[]{false};
+    final VirtualFileAdapter fileAdapter = new VirtualFileAdapter() {
+      @Override
+      public void fileDeleted(VirtualFileEvent event) {
+        fileWasDeleted[0] = !event.getFile().isDirectory();
+      }
+    };
+    VirtualFileManager.getInstance().addVirtualFileListener(fileAdapter);
+    try {
+      doTest(createAction("pack1", "target"));
+    }
+    finally {
+      VirtualFileManager.getInstance().removeVirtualFileListener(fileAdapter);
+    }
+    Assert.assertFalse("Deleted instead of moved", fileWasDeleted[0]);
   }
 
 

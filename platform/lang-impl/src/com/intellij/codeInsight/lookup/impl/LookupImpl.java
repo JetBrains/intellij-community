@@ -308,8 +308,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myAdditionalPrefix;
   }
 
-  public void appendPrefix(char c) {
+  void appendPrefix(char c) {
     checkReused();
+    LOG.assertTrue(!myDisposed);
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
@@ -321,7 +322,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
   }
 
-  public boolean truncatePrefix(boolean preserveSelection) {
+  boolean truncatePrefix(boolean preserveSelection) {
     final int len = myAdditionalPrefix.length();
     if (len == 0) return false;
 
@@ -665,6 +666,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void performGuardedChange(Runnable change) {
+    LOG.assertTrue(!myDisposed, disposeTrace);
     assert !myChangeGuard;
     myChangeGuard = true;
     try {
@@ -673,6 +675,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     finally {
       myChangeGuard = false;
     }
+    LOG.assertTrue(!myDisposed, disposeTrace);
   }
 
   public boolean isShown() {
@@ -1051,9 +1054,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
+    if (myChangeGuard) {
+      LOG.error("Disposing under a change guard");
+    }
+
     if (myDisposed) {
       LOG.error(disposeTrace);
-    } else {
+    }
+    else {
       myHidden = true;
 
       try {

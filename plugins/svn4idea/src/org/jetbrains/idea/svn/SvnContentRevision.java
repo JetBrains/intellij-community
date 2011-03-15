@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ class SvnContentRevision implements ContentRevision {
       try {
         final byte[] byteContent = getUpToDateBinaryContent();
         if (byteContent != null) {
-          content = new String(byteContent, myFile.getCharset().name());
+          content = CharsetToolkit.bytesToString(byteContent, myFile.getCharset());
           myContent = new SoftReference<String>(content);
         }
       }

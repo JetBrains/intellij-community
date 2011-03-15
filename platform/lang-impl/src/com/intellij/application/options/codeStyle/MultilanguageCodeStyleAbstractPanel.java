@@ -16,9 +16,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -112,6 +109,12 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     String sample = LanguageCodeStyleSettingsProvider.getCodeSample(myLanguage, getSettingsType());
     if (sample == null) return "";
     return sample;
+  }
+
+  @Override
+  protected PsiFile createFileFromText(final Project project, final String text) {
+    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(myLanguage, project, text);
+    return file != null ? file : super.createFileFromText(project, text);
   }
 
   @Override

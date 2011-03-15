@@ -421,7 +421,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         if (!info.hint.isSelectingHint()) continue;
         IdeTooltip tooltip = info.hint.getCurrentIdeTooltip();
         if (tooltip != null) {
-          Point p = SwingUtilities.convertPoint(tooltip.getComponent(), tooltip.getPoint(), lp);
+          Point p = tooltip.getShowingPoint().getPoint(lp);
           if (info.hint != hint) {
             switch (constraint) {
               case ABOVE:
@@ -614,10 +614,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
+    showErrorHint(editor, text, ABOVE);
+  }
+
+  public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
-    Point p = getHintPosition(hint, editor, ABOVE);
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
+    Point p = getHintPosition(hint, editor, position);
+    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
   }
 
   public void showInformationHint(@NotNull Editor editor, @NotNull String text) {

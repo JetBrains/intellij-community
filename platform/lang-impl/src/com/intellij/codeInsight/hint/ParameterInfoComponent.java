@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.EnumSet;
 
@@ -37,7 +36,7 @@ class ParameterInfoComponent extends JPanel{
 
   private PsiElement myParameterOwner;
   private Object myHighlighted;
-  private final @NotNull ParameterInfoHandler myHandler;
+  @NotNull private final ParameterInfoHandler myHandler;
 
   private final OneElementComponent[] myPanels;
 
@@ -177,7 +176,7 @@ class ParameterInfoComponent extends JPanel{
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }
 
-    public void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
+    private void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
       removeAll();
 
       String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');

@@ -166,7 +166,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   @Nullable
-  private static String elementToFqn(final PsiElement element) {
+  public static String elementToFqn(final PsiElement element) {
     for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
       String result = provider.getQualifiedName(element);
       if (result != null) return result;
