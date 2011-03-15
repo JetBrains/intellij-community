@@ -25,13 +25,10 @@ import com.android.sdklib.SdkManager;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.actions.AndroidEnableDdmsAction;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,20 +171,8 @@ public abstract class AndroidSdk {
 
   @Nullable
   public AndroidDebugBridge getDebugBridge(Project project) {
-    AndroidDebugBridge bridge;
-    try {
-      bridge = AdbManager.compute(new Computable<AndroidDebugBridge>() {
-        public AndroidDebugBridge compute() {
-          initializeDdmlib();
-          return AndroidDebugBridge.getBridge();
-        }
-      }, false);
-    }
-    catch (AdbNotRespondingException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    return bridge;
+    initializeDdmlib();
+    return AndroidDebugBridge.getBridge();
   }
 
   @Nullable

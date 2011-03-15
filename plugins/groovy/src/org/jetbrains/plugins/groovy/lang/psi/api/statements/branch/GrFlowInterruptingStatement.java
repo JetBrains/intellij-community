@@ -36,4 +36,6 @@ public interface GrFlowInterruptingStatement extends GrStatement {
 
   @Nullable
   GrLabeledStatement resolveLabel();
+
+  String getStatementText();
 }

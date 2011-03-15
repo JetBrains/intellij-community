@@ -86,11 +86,15 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
-    visitStatement(breakStatement);
+    visitFlowInterruptStatement(breakStatement);
   }
 
   public void visitContinueStatement(GrContinueStatement continueStatement) {
-    visitStatement(continueStatement);
+    visitFlowInterruptStatement(continueStatement);
+  }
+
+  public void visitFlowInterruptStatement(GrFlowInterruptingStatement statement) {
+    visitStatement(statement);
   }
 
   public void visitReturnStatement(GrReturnStatement returnStatement) {
@@ -174,11 +178,15 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitThisExpression(GrThisReferenceExpression thisExpression) {
-    visitExpression(thisExpression);
+    visitThisSuperReferenceExpression(thisExpression);
   }
 
   public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
-    visitExpression(superExpression);
+    visitThisSuperReferenceExpression(superExpression);
+  }
+
+  public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitCastExpression(GrTypeCastExpression typeCastExpression) {

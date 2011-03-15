@@ -16,7 +16,10 @@
 
 package org.jetbrains.android.run.testing;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.ShellCommandUnresponsiveException;
+import com.android.ddmlib.TimeoutException;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.ExecutionBundle;
@@ -29,6 +32,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -58,6 +62,8 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.testing.AndroidTestRunConfiguration");
+
   public static final int TEST_ALL_IN_MODULE = 0;
   public static final int TEST_ALL_IN_PACKAGE = 1;
   public static final int TEST_CLASS = 2;
@@ -195,7 +201,8 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
       this.myInstrumentationTestRunner = instrumentationTestRunner;
     }
 
-    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException {
+    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
+      throws IOException, AdbCommandRejectedException, TimeoutException {
       state.getProcessHandler().notifyTextAvailable("Running tests", ProcessOutputTypes.STDOUT);
       RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(state.getPackageName(), myInstrumentationTestRunner, device);
       switch (TESTING_TYPE) {
@@ -210,7 +217,13 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
           break;
       }
       runner.setDebug(state.isDebugMode());
-      runner.run(new AndroidTestListener(state));
+      try {
+        runner.run(new AndroidTestListener(state));
+      }
+      catch (ShellCommandUnresponsiveException e) {
+        LOG.info(e);
+        state.getProcessHandler().notifyTextAvailable("Error: time out", ProcessOutputTypes.STDERR);
+      }
       return true;
     }
   }

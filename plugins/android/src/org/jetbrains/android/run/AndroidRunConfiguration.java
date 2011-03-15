@@ -15,8 +15,7 @@
  */
 package org.jetbrains.android.run;
 
-import com.android.ddmlib.ClientData;
-import com.android.ddmlib.IDevice;
+import com.android.ddmlib.*;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -196,7 +195,8 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       return super.isReadyForDebugging(data, processHandler);
     }
 
-    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException {
+    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
+      throws IOException, AdbCommandRejectedException, TimeoutException {
       if (myActivityName == null) return true;
       final String activityPath = state.getPackageName() + '/' + myActivityName;
       ProcessHandler processHandler = state.getProcessHandler();
@@ -207,8 +207,15 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       while (true) {
         if (state.isStopped()) return false;
         String command = "am start " + (debug ? "-D " : "") + "-n \"" + activityPath + "\"";
-        state.executeDeviceCommandAndWriteToConsole(device, command, receiver);
-        if (receiver.getErrorType() != 2) {
+        boolean deviceNotResponding = false;
+        try {
+          state.executeDeviceCommandAndWriteToConsole(device, command, receiver);
+        }
+        catch (ShellCommandUnresponsiveException e) {
+          LOG.info(e);
+          deviceNotResponding = true;
+        }
+        if (!deviceNotResponding && receiver.getErrorType() != 2) {
           break;
         }
         processHandler.notifyTextAvailable("Device is not ready. Waiting for " + AndroidRunningState.WAITING_TIME + " sec.\n", STDOUT);

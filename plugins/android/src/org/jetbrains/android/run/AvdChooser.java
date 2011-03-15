@@ -25,9 +25,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.util.AndroidBundle;
@@ -156,14 +153,10 @@ public class AvdChooser extends DialogWrapper {
     }
   }
 
-  private boolean isAvdBusy(@NotNull AvdManager.AvdInfo avd) throws AdbNotRespondingException {
+  private boolean isAvdBusy(@NotNull AvdManager.AvdInfo avd) {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
     if (bridge == null) return false;
-    IDevice[] devices = AdbManager.compute(new Computable<IDevice[]>() {
-      public IDevice[] compute() {
-        return bridge.getDevices();
-      }
-    }, true);
+    IDevice[] devices = bridge.getDevices();
     for (IDevice device : devices) {
       String avdName = device.getAvdName();
       if (avdName != null && avdName.equals(avd.getName())) {
@@ -176,17 +169,12 @@ public class AvdChooser extends DialogWrapper {
   private void removeSelectedAvd() {
     AvdManager.AvdInfo selectedAvd = getSelectedAvd();
     if (selectedAvd != null) {
-      try {
-        if (isAvdBusy(selectedAvd)) {
-          Messages.showErrorDialog(myPanel, AndroidBundle.message("cant.remove.avd.error"));
-        }
-        else {
-          myAvdManager.deleteAvd(selectedAvd, AndroidUtils.getSdkLog(myPanel));
-          updateTable();
-        }
+      if (isAvdBusy(selectedAvd)) {
+        Messages.showErrorDialog(myPanel, AndroidBundle.message("cant.remove.avd.error"));
       }
-      catch (AdbNotRespondingException e) {
-        Messages.showErrorDialog(myPanel, e.getMessage());
+      else {
+        myAvdManager.deleteAvd(selectedAvd, AndroidUtils.getSdkLog(myPanel));
+        updateTable();
       }
     }
   }

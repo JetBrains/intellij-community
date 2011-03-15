@@ -43,12 +43,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
-import org.jetbrains.android.ddms.AdbManager;
-import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
@@ -148,16 +145,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        try {
-          start();
-        }
-        catch (AdbNotRespondingException e) {
-          LOG.info(e);
-          myProcessHandler.notifyTextAvailable(e.getMessage() + '\n', STDERR);
-          if (!myProcessHandler.isProcessTerminated() && myProcessHandler.isStartNotified()) {
-            myProcessHandler.destroyProcess();
-          }
-        }
+        start();
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
@@ -265,16 +253,12 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private IDevice chooseDeviceAutomaticaly() throws AdbNotRespondingException {
+  private IDevice chooseDeviceAutomaticaly() {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
     if (bridge == null) {
       return null;
     }
-    IDevice[] devices = AdbManager.compute(new Computable<IDevice[]>() {
-      public IDevice[] compute() {
-        return bridge.getDevices();
-      }
-    }, true);
+    IDevice[] devices = bridge.getDevices();
     boolean exactlyCompatible = false;
     IDevice targetDevice = null;
     for (IDevice device : devices) {
@@ -334,36 +318,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
   }
 
-  private void start() throws AdbNotRespondingException {
+  private void start() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
       chooseOrLaunchDevice();
     }
     if (myDebugMode) {
-      AdbManager.run(new Runnable() {
-        public void run() {
-          AndroidDebugBridge.addClientChangeListener(AndroidRunningState.this);
-        }
-      }, false);
+      AndroidDebugBridge.addClientChangeListener(this);
     }
     final AndroidDebugBridge.IDeviceChangeListener[] deviceListener = {null};
     getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        try {
-          AdbManager.run(new Runnable() {
-            public void run() {
-              if (myDebugMode) {
-                AndroidDebugBridge.removeClientChangeListener(AndroidRunningState.this);
-              }
-              if (deviceListener[0] != null) {
-                AndroidDebugBridge.removeDeviceChangeListener(deviceListener[0]);
-              }
-            }
-          }, false);
+        if (myDebugMode) {
+          AndroidDebugBridge.removeClientChangeListener(AndroidRunningState.this);
         }
-        catch (AdbNotRespondingException e) {
-          LOG.info(e);
+        if (deviceListener[0] != null) {
+          AndroidDebugBridge.removeDeviceChangeListener(deviceListener[0]);
         }
         myStopped = true;
         synchronized (myLock) {
@@ -374,7 +345,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     deviceListener[0] = prepareAndStartAppWhenDeviceIsOnline();
   }
 
-  private void chooseOrLaunchDevice() throws AdbNotRespondingException {
+  private void chooseOrLaunchDevice() {
     IDevice targetDevice = chooseDeviceAutomaticaly();
     if (targetDevice != null) {
       myTargetDevices = new IDevice[] {targetDevice};
@@ -463,7 +434,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() throws AdbNotRespondingException {
+  private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() {
     if (myTargetDevices.length > 0) {
       for (IDevice targetDevice : myTargetDevices) {
         if (targetDevice.isOnline()) {
@@ -512,11 +483,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         });
       }
     };
-    AdbManager.run(new Runnable() {
-      public void run() {
-        AndroidDebugBridge.addDeviceChangeListener(deviceListener);
-      }
-    }, false);
+    AndroidDebugBridge.addDeviceChangeListener(deviceListener);
     return deviceListener;
   }
 
@@ -591,7 +558,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return true;
   }
 
-  private boolean uploadAndInstallDependentModules(@NotNull IDevice device) throws IOException {
+  private boolean uploadAndInstallDependentModules(@NotNull IDevice device)
+    throws IOException, AdbCommandRejectedException, TimeoutException {
     for (AndroidFacet depFacet : myAdditionalFacet2PackageName.keySet()) {
       String packageName = myAdditionalFacet2PackageName.get(depFacet);
       if (!uploadAndInstall(device, packageName, depFacet)) {
@@ -601,7 +569,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return true;
   }
 
-  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, AndroidFacet facet) throws IOException {
+  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, AndroidFacet facet)
+    throws IOException, AdbCommandRejectedException, TimeoutException {
     String remotePath = "/data/local/tmp/" + packageName;
     String localPath = facet.getApkPath();
     if (localPath == null) {
@@ -639,60 +608,37 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private boolean uploadApp(IDevice device, String remotePath, String localPath) throws IOException {
     if (myStopped) return false;
     message("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath, STDOUT);
-    SyncService service = device.getSyncService();
-    if (service == null) {
-      message("Can't upload file: device is not available.", STDERR);
-      return false;
+    String exceptionMessage = null;
+    String errorMessage = null;
+    try {
+      SyncService service = device.getSyncService();
+      if (service == null) {
+        message("Can't upload file: device is not available.", STDERR);
+        return false;
+      }
+      service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
     }
-    SyncService.SyncResult result = service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
-    int code = result.getCode();
-    String errorMessage;
-    switch (code) {
-      case SyncService.RESULT_OK:
-        return true;
-      case SyncService.RESULT_CANCELED:
-        errorMessage = "Command canceled";
-        break;
-      case SyncService.RESULT_CONNECTION_ERROR:
-        errorMessage = "Connection error";
-        break;
-      case SyncService.RESULT_CONNECTION_TIMEOUT:
-        errorMessage = "Connection timeout";
-        break;
-      case SyncService.RESULT_FILE_READ_ERROR:
-        errorMessage = "Cannot read the file";
-        break;
-      case SyncService.RESULT_FILE_WRITE_ERROR:
-        errorMessage = "Cannot write the file";
-        break;
-      case SyncService.RESULT_LOCAL_IS_DIRECTORY:
-        errorMessage = "Local is directory";
-        break;
-      case SyncService.RESULT_NO_DIR_TARGET:
-        errorMessage = "Target directory not found";
-        break;
-      case SyncService.RESULT_NO_LOCAL_FILE:
-        errorMessage = "Local file not found";
-        break;
-      case SyncService.RESULT_NO_REMOTE_OBJECT:
-        errorMessage = "No remote object";
-        break;
-      case SyncService.RESULT_REMOTE_IS_FILE:
-        errorMessage = "Remote is a file";
-        break;
-      case SyncService.RESULT_REMOTE_PATH_ENCODING:
-        errorMessage = "Incorrect remote path encoding";
-        break;
-      case SyncService.RESULT_REMOTE_PATH_LENGTH:
-        errorMessage = "Incorrect remote path length";
-        break;
-      case SyncService.RESULT_TARGET_IS_FILE:
-        errorMessage = "Target is a file";
-        break;
-      default:
-        errorMessage = "Can't upload file";
+    catch (SyncException e) {
+      exceptionMessage = e.getMessage();
+      errorMessage = e.getErrorCode().getMessage();
     }
-    message(errorMessage + (result.getMessage() != null ? "\n" + result.getMessage() : ""), STDERR);
+    catch (TimeoutException e) {
+      exceptionMessage = e.getMessage();
+      errorMessage = "Connection timeout";
+    }
+    catch (AdbCommandRejectedException e) {
+      exceptionMessage = e.getMessage();
+      errorMessage = "ADB refused the command";
+    }
+    if (errorMessage == null) {
+      return true;
+    }
+    if (errorMessage.equals(exceptionMessage) || exceptionMessage == null) {
+      message(errorMessage, STDERR);
+    }
+    else {
+      message(errorMessage + '\n' + exceptionMessage, STDERR);
+    }
     return false;
   }
 
@@ -709,7 +655,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return receiver.errorType == NO_ERROR && receiver.failureMessage == null;
   }
 
-  private boolean installApp(IDevice device, String remotePath, @NotNull String packageName) throws IOException {
+  private boolean installApp(IDevice device, String remotePath, @NotNull String packageName)
+    throws IOException, AdbCommandRejectedException, TimeoutException {
     message("Installing " + packageName, STDOUT);
     MyReceiver receiver = new MyReceiver();
     while (true) {
