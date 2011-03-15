@@ -48,8 +48,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset,
-                     PsiElement highlightedElement) {
+  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -80,7 +79,9 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         for(ParameterInfoHandler handler:handlers) {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
-            if (items != null && items.length > 0) showLookupEditorHint(items, editor, project,handler);
+            if (items != null && items.length > 0) {
+              showLookupEditorHint(items, editor, project, handler);
+            }
             return;
           }
         }
@@ -88,10 +89,10 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       return;
     }
 
-    for(ParameterInfoHandler handler:handlers) {
+    for (ParameterInfoHandler<Object, ?> handler : handlers) {
       Object element = handler.findElementForParameterInfo(context);
       if (element != null) {
-        handler.showParameterInfo(element,context);
+        handler.showParameterInfo(element, context);
       }
     }
   }
@@ -103,12 +104,12 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true);
+    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!editor.getComponent().isShowing()) return;
         hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                   HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManagerImpl.UPDATE_BY_SCROLLING,
+                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
                                    0, false, pos.getSecond());
       }
     });
@@ -126,7 +127,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   interface BestLocationPointProvider {
     @NotNull
-    Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset, final boolean awtTooltip);
+    Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                            final PsiElement list,
+                                            int offset,
+                                            final boolean awtTooltip,
+                                            short preferredPosition);
   }
 
 }

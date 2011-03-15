@@ -18,6 +18,8 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,10 +69,21 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
+   * Allows to customize PSI file creation for a language settings preview panel.
+   *
+   * @param project current project
+   * @param text    code sample to demonstrate formatting settings (see {@link #getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType)}
+   * @return a PSI file instance with given text, or null for use
+   */
+  @Nullable
+  public PsiFile createFileFromText(final Project project, final String text) {
+    return null;
+  }
+
+  /**
    * Creates an instance of <code>CommonCodeStyleSettings</code> and sets initial default values for those
    * settings which differ from the original.
    *
-   * @param settings Main settings containing the common code style settings.
    * @return Created instance of <code>CommonCodeStyleSettings</code> or null if associated language doesn't
    *         use its own language-specific common settings (the settings are shared with other languages).
    */
@@ -81,30 +94,22 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
-    ArrayList<Language> langs = new ArrayList<Language>();
+    final ArrayList<Language> languages = new ArrayList<Language>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      langs.add(provider.getLanguage());
+      languages.add(provider.getLanguage());
     }
-    return langs.toArray(new Language[langs.size()]);
+    return languages.toArray(new Language[languages.size()]);
   }
 
   @Nullable
   public static String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(lang)) {
-        return provider.getCodeSample(settingsType);
-      }
-    }
-    return null;
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getCodeSample(settingsType) : null;
   }
 
   public static int getRightMargin(Language lang, @NotNull SettingsType settingsType) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(lang)) {
-        return provider.getRightMargin(settingsType);
-      }
-    }
-    return -1;
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getRightMargin(settingsType) : -1;
   }
 
   @Nullable
@@ -121,32 +126,35 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   @Nullable
   public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(lang)) {
-        return provider.getDefaultCommonSettings();
-      }
-    }
-    return null;
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getDefaultCommonSettings() : null;
   }
   
   @Nullable
   public static String getFileExt(Language lang) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(lang)) {
-        return provider.getFileExt();
-      }
-    }
-    return null;
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getFileExt() : null;
   }
   
   @Nullable
   public static String getLanguageName(Language lang) {
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getLanguageName() : null;
+  }
+
+  @Nullable
+  public static PsiFile createFileFromText(final Language language, final Project project, final String text) {
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(language);
+    return provider != null ? provider.createFileFromText(project, text) : null;
+  }
+
+  @Nullable
+  public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguage().equals(lang)) {
-        return provider.getLanguageName();
+      if (provider.getLanguage().equals(language)) {
+        return provider;
       }
     }
     return null;
-  }   
-
+  }
 }

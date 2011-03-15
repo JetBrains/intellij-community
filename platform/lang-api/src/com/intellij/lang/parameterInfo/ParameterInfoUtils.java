@@ -35,7 +35,8 @@ import java.util.Set;
 public class ParameterInfoUtils {
   public static final String DEFAULT_PARAMETER_CLOSE_CHARS = ",){}";
 
-  public static @Nullable <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
+  @Nullable
+  public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 

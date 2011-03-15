@@ -24,7 +24,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -728,6 +727,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     result.add(new CreatePatchFromChangesAction() {
       public void update(final AnActionEvent e) {
         e.getPresentation().setVisible(true);
+        if (myFilePath.isNonLocal()) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         // in order to do not load changes only for action update
         final int selectionSize = getSelection().size();
         e.getPresentation().setEnabled((selectionSize > 0) && (selectionSize < 3));
@@ -933,7 +936,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.info(e);
+        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                   VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
         return;
       }
       catch (VcsException e) {
@@ -1167,9 +1172,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         }
       }
 
-      final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0]);
+      final ContentRevision startRevision = new LoadedContentRevision(myFilePath, revisions[0], myVcs.getProject());
       final ContentRevision endRevision = (revisions.length == 1) ? new CurrentContentRevision(myFilePath) :
-                                          new LoadedContentRevision(myFilePath, revisions[revisions.length - 1]);
+                                          new LoadedContentRevision(myFilePath, revisions[revisions.length - 1], myVcs.getProject());
 
       return new Change[]{new Change(startRevision, endRevision)};
     }
@@ -1179,21 +1184,21 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private static class LoadedContentRevision implements ContentRevision {
     private final FilePath myFile;
     private final VcsFileRevision myRevision;
+    private final Project myProject;
 
-    private LoadedContentRevision(final FilePath file, final VcsFileRevision revision) {
+    private LoadedContentRevision(final FilePath file, final VcsFileRevision revision, final Project project) {
       myFile = file;
       myRevision = revision;
+      myProject = project;
     }
 
     public String getContent() throws VcsException {
-      final byte[] bytes;
       try {
-        bytes = VcsHistoryUtil.loadRevisionContent(myRevision);
+        return VcsHistoryUtil.loadRevisionContentGuessEncoding(myRevision, myFile.getVirtualFile(), myProject);
       }
       catch (IOException e) {
         throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
       }
-      return LoadTextUtil.getTextByBinaryPresentation(bytes, myFile.getVirtualFile(), false).toString();
     }
 
     @NotNull

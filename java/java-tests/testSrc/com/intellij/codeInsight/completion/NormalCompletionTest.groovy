@@ -836,6 +836,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testVariableSquareBracket() throws Throwable { doTest('[') }
   public void testMethodSquareBracket() throws Throwable { doTest('[') }
 
+  public void testMethodParameterTypeDot() throws Throwable { doAntiTest() }
+
   public void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;
       public class Bar {
@@ -913,6 +915,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewClassAngleBracket() throws Exception { doTest('<') }
   public void testNewClassSquareBracket() throws Exception { doTest('[') }
+
+  public void testMethodColon() throws Exception { doTest(':') }
+  public void testVariableColon() throws Exception { doTest(':') }
 
   public void testNoMethodsInParameterType() {
     configure()

@@ -429,7 +429,7 @@ public class FocusTrackback {
   public static List<JBPopup> getChildPopups(@NotNull final Component component) {
     List<JBPopup> result = new ArrayList<JBPopup>();
 
-    final Window window = SwingUtilities.windowForComponent(component);
+    final Window window = component instanceof Window ? (Window)component: SwingUtilities.windowForComponent(component);
     if (window == null) return result;
 
     final List<FocusTrackback> stack = getCleanStackForRoot(findUtlimateParent(window));

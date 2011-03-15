@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -86,6 +91,31 @@ public class VcsHistoryUtil {
     }
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
+  }
+
+  public static String loadRevisionContentGuessEncoding(final VcsFileRevision revision, @Nullable final VirtualFile file,
+                                                        @Nullable final Project project) throws VcsException, IOException {
+    final byte[] bytes = loadRevisionContent(revision);
+    if (file != null) {
+      return new String(bytes, file.getCharset());
+    }
+    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
+    if (e == null) {
+      e = EncodingManager.getInstance();
+    }
+
+    return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
+  }
+
+  public static String loadRevisionContentGuessEncoding(final VcsFileRevision revision, @Nullable final Project project) throws VcsException, IOException {
+    final byte[] bytes = loadRevisionContent(revision);
+
+    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
+    if (e == null) {
+      e = EncodingManager.getInstance();
+    }
+
+    return CharsetToolkit.bytesToString(bytes, e.getDefaultCharset());
   }
 
   private static DiffContent createContent(Project project, byte[] content1, VcsFileRevision revision, Document doc, Charset charset, FileType fileType) {

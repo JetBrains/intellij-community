@@ -70,6 +70,10 @@ public class IdeTooltip extends ComparableObject.Impl {
     return myPoint;
   }
 
+  public RelativePoint getShowingPoint() {
+    return myUi != null ? myUi.getShowingPoint() : new RelativePoint(getComponent(), getPoint());
+  }
+
   public Balloon.Position getPreferredPosition() {
     return myPreferredPosition;
   }
@@ -223,6 +227,8 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public interface Ui {
     boolean isInside(RelativePoint target);
+
+    RelativePoint getShowingPoint();
   }
 }
 

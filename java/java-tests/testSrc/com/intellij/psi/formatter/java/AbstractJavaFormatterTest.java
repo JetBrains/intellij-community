@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -72,6 +74,12 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public TextRange myTextRange;
   public TextRange myLineRange;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+  }
 
   public static CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(getProject());

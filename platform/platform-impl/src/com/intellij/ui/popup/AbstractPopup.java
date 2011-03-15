@@ -624,6 +624,12 @@ public class AbstractPopup implements JBPopup {
     }
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
+    Insets insets = myPopupBorder.getBorderInsets(myContent);
+    if (insets != null) {
+      targetBounds.x += insets.left;
+      targetBounds.y += insets.top;
+    }
+
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
       ScreenUtil.moveRectangleToFitTheScreen(targetBounds);

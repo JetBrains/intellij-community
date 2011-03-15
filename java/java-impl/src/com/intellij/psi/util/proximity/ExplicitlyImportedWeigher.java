@@ -23,6 +23,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -32,20 +33,46 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     PLACE_PACKAGE = NullableLazyKey.create("placePackage", new NullableFunction<ProximityLocation, PsiPackage>() {
     @Override
     public PsiPackage fun(ProximityLocation location) {
-      return PsiTreeUtil.getContextOfType(location.getPosition(), PsiPackage.class, false);
+      PsiElement position = location.getPosition();
+      if (position == null) return null;
+
+      return getContextPackage(position);
     }
   });
 
-  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  @Nullable
+  private static PsiPackage getContextPackage(PsiElement position) {
+    PsiFile file = position.getContainingFile();
+    if (file == null) return null;
+
+    PsiFile originalFile = file.getOriginalFile();
+    while (true) {
+      PsiElement context = originalFile.getContext();
+      if (context == null) {
+        PsiDirectory parent = originalFile.getParent();
+        if (parent != null) {
+          return JavaDirectoryService.getInstance().getPackage(parent);
+        }
+        return null;
+      }
+
+      PsiFile containingFile = context.getContainingFile();
+      if (containingFile == null) return null;
+
+      originalFile = containingFile.getOriginalFile();
+    }
+  }
+
+  public Integer weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     final PsiElement position = location.getPosition();
     if (position == null){
-      return null;
+      return 0;
     }
 
     final PsiFile elementFile = element.getContainingFile();
     final PsiFile positionFile = position.getContainingFile();
     if (positionFile != null && elementFile != null && positionFile.getOriginalFile().equals(elementFile.getOriginalFile())) {
-      return true;
+      return 3;
     }
 
     if (element instanceof PsiClass) {
@@ -59,7 +86,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
               final boolean onDemand = importStatement.isOnDemand();
               final String imported = importStatement.getQualifiedName();
               if (onDemand && qname.startsWith(imported + ".") || !onDemand && qname.equals(imported)) {
-                return true;
+                return 1;
               }
             }
           }
@@ -69,14 +96,13 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     }
     if (element instanceof PsiMember) {
       final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
-      if (placePackage == null) {
-        return false;
+      if (placePackage != null) {
+        Module elementModule = ModuleUtil.findModuleForPsiElement(element);
+        if (location.getPositionModule() == elementModule && placePackage.equals(getContextPackage(element))) {
+          return 2;
+        }
       }
-
-      Module elementModule = ModuleUtil.findModuleForPsiElement(element);
-      return location.getPositionModule() == elementModule &&
-             placePackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false));
     }
-    return false;
+    return 0;
   }
 }

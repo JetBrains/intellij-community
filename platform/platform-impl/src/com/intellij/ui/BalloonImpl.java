@@ -1290,4 +1290,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   public boolean isDisposed() {
     return myDisposed;
   }
+
+  @Override
+  public RelativePoint getShowingPoint() {
+    return new RelativePoint(myLayeredPane, myTargetPoint);
+  }
 }

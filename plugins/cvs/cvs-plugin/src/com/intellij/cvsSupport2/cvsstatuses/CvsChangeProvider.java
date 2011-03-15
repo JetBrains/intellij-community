@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
@@ -58,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.*;
 
@@ -553,12 +553,9 @@ public class CvsChangeProvider implements ChangeProvider {
       if (myContent == null) {
         try {
           byte[] fileBytes = getUpToDateBinaryContent();
-          myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
+          myContent = fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
         }
         catch (CannotFindCvsRootException e) {
-          myContent = null;
-        }
-        catch (UnsupportedEncodingException e) {
           myContent = null;
         }
       }
