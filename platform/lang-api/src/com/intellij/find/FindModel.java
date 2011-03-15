@@ -155,7 +155,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param s the string to find.
    */
   public void setStringToFind(@NotNull String s) {
-    LOG.assertTrue(s.length() > 0);
     boolean changed = !StringUtil.equals(s, myStringToFind);
     myStringToFind = s;
     myPattern = NO_PATTERN;
@@ -293,6 +292,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = val != isCaseSensitive;
     isCaseSensitive = val;
     if (changed) {
+      myPattern = NO_PATTERN;
       notifyObservers();
     }
   }

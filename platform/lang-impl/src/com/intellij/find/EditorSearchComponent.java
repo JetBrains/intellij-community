@@ -22,6 +22,7 @@ package com.intellij.find;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.RegexpFieldController;
 import com.intellij.find.impl.livePreview.LiveOccurrence;
 import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
@@ -29,52 +30,60 @@ import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.SelectionEvent;
-import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorComboBox;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
-                                                             FindModel.FindModelObserver {
+                                                             RegexpFieldController.EditorDocumentListener,
+                                                             LivePreviewControllerBase.ReplaceListener {
   private static final int MATCHES_LIMIT = 10000;
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
+  private RegexpFieldController mySearchRegexpFieldController;
+  private RegexpFieldController myReplaceRegexpFieldController;
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
   private final Editor myEditor;
   private DefaultActionGroup myActionsGroup;
 
-  public JTextField getSearchField() {
+  private Map<EditorComboBox, DocumentAdapter> myDocumentListeners = new HashMap<EditorComboBox,DocumentAdapter>();
+
+  public EditorComboBox getSearchField() {
     return mySearchField;
   }
 
-  public JTextField getReplaceField() {
+  public EditorComboBox getReplaceField() {
     return myReplaceField;
   }
 
-  private final JTextField mySearchField;
-  private JTextField myReplaceField;
+  private final EditorComboBox mySearchField;
+  private EditorComboBox myReplaceField;
   private final Color myDefaultBackground;
 
   private JButton myReplaceButton;
@@ -88,16 +97,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
   private final JComponent myToolbarComponent;
-  private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
+  private DocumentAdapter myDocumentListener;
   private final JCheckBox myCbRegexp;
 
-  private final MyLivePreviewController myLivePreviewController;
-  private final LivePreview myLivePreview;
+  private MyLivePreviewController myLivePreviewController;
+  private LivePreview myLivePreview;
 
 
   private boolean myListeningSelection = false;
   private SearchResults mySearchResults;
-  private Balloon myOptionsBalloon;
 
   private final FindModel myFindModel;
   private JCheckBox myCbMatchCase;
@@ -105,6 +113,45 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   public JComponent getToolbarComponent() {
     return myToolbarComponent;
+  }
+
+  @Override
+  public void documentWillBeReplaced(RegexpFieldController controller) {
+    DocumentListener listener = myDocumentListeners.get(controller.getTextField());
+    if (listener != null) {
+      controller.getTextField().removeDocumentListener(listener);
+    }
+  }
+
+  @Override
+  public void documentWasReplaced(RegexpFieldController controller) {
+    DocumentListener listener = myDocumentListeners.get(controller.getTextField());
+    if (listener != null) {
+      controller.getTextField().addDocumentListener(listener);
+    }
+  }
+
+  @Override
+  public void replacePerformed(LiveOccurrence occurrence, String replacement, Editor editor) {  }
+
+  @Override
+  public void replaceAllPerformed(Editor e) {  }
+
+  @Override
+  public void replaceDenied() {
+    updateReplaceButton();
+  }
+
+  @Override
+  public void replaceAllowed() {
+    updateReplaceButton();
+  }
+
+  private void updateReplaceButton() {
+    if (myReplaceButton != null) {
+      myReplaceButton.setEnabled(mySearchResults != null && mySearchResults.getCursor() != null &&
+                                 !myLivePreviewController.isReplaceDenied());
+    }
   }
 
   private static FindModel createDefaultFindModel(Project p, Editor e) {
@@ -116,6 +163,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         findModel.setStringToFind(selectedText);
       }
     }
+    findModel.setPromptOnReplace(false);
     return findModel;
   }
 
@@ -166,7 +214,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   @Override
-  public void cursorMoved() {
+  public void cursorMoved(boolean toChangeSelection) {
     updateExcludeStatus();
   }
 
@@ -183,29 +231,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myProject = project;
     myEditor = editor;
 
-    mySearchResults = new SearchResults(myEditor);
-    myLivePreview = new LivePreview(mySearchResults);
-
-    myLivePreviewController = new MyLivePreviewController();
-
-    mySearchResults.addListener(this);
-    setMatchesLimit(MATCHES_LIMIT);
-
-
     final JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
+    mySearchField = createTextField(leadPanel);
 
-    mySearchField = createTextField();
 
-    leadPanel.add(mySearchField);
     mySearchField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
 
-    myDefaultBackground = mySearchField.getBackground();
+    myDefaultBackground = new JTextField().getBackground();
 
     myActionsGroup = new DefaultActionGroup("search bar", false);
-    myActionsGroup.add(new ShowHistoryAction(mySearchField, this));
-    myActionsGroup.add(new PrevOccurrenceAction(this));
-    myActionsGroup.add(new NextOccurrenceAction(this));
+    myActionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
+    myActionsGroup.add(new NextOccurrenceAction(this, mySearchField));
     myActionsGroup.add(new FindAllAction(this));
 
     myActionsGroup.addAction(new ToggleWholeWordsOnlyAction(this)).setAsSecondary(true);
@@ -232,17 +269,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myFindModel.addObserver(new FindModel.FindModelObserver() {
       @Override
       public void findModelChanged(FindModel findModel) {
-        syncFindModels(FindManager.getInstance(myProject).getFindInFileModel(), myFindModel);
         String stringToFind = myFindModel.getStringToFind();
         if (!wholeWordsApplicable(stringToFind)) {
           myFindModel.setWholeWordsOnly(false);
         }
         updateUIWithFindModel();
         updateResults(true);
+        syncFindModels(FindManager.getInstance(myProject).getFindInFileModel(), myFindModel);
       }
     });
-
-    FindManager.getInstance(myProject).getFindInFileModel().addObserver(this);
 
     updateUIWithFindModel();
 
@@ -256,15 +291,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myCbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final boolean b = myCbMatchCase.isSelected();
-        FindManager.getInstance(myProject).getFindInFileModel().setCaseSensitive(b);
         FindSettings.getInstance().setLocalCaseSensitive(b);
+        myFindModel.setCaseSensitive(b);
       }
     });
 
     myCbRegexp.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final boolean b = myCbRegexp.isSelected();
-        FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
+        myFindModel.setRegularExpressions(b);
       }
     });
 
@@ -302,20 +337,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
-    configureTextField(mySearchField);
-    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        setMatchesLimit(MATCHES_LIMIT);
-        String text = mySearchField.getText();
-        if (!StringUtil.isEmpty(text)) {
-          myFindModel.setStringToFind(text);
-          updateResults(true);
-        } else {
-          nothingToSearchFor();
-        }
-      }
-    });
-
     setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -342,11 +363,26 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     new SwitchToFind(this);
     new SwitchToReplace(this);
+    mySearchRegexpFieldController = new RegexpFieldController(mySearchField, myFindModel, this);
   }
 
-  @Override
-  public void findModelChanged(FindModel findModel) {
-    syncFindModels(myFindModel, findModel);
+  private void setupSearchFieldListener() {
+    DocumentAdapter searchFieldListener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        setMatchesLimit(MATCHES_LIMIT);
+        String text = mySearchField.getText();
+        myFindModel.setStringToFind(text);
+        if (!StringUtil.isEmpty(text)) {
+          updateResults(true);
+        }
+        else {
+          nothingToSearchFor();
+        }
+      }
+    };
+    mySearchField.addDocumentListener(searchFieldListener);
+    myDocumentListeners.put(mySearchField, searchFieldListener);
   }
 
   public boolean isRegexp() {
@@ -404,6 +440,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
   }
 
+  private void updateHistory(EditorComboBox textField) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
+    FindSettings settings = FindSettings.getInstance();
+    String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
+    if (textField.getEditor().getEditorComponent() != null) {
+      textField.setHistory(recents);
+    }
+  }
+
   private boolean wholeWordsApplicable(String stringToFind) {
     return !stringToFind.startsWith(" ") &&
            !stringToFind.startsWith("\t") &&
@@ -421,34 +466,37 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void setMatchesLimit(int value) {
-    mySearchResults.setMatchesLimit(value);
+    if (mySearchResults != null) {
+      mySearchResults.setMatchesLimit(value);
+    }
   }
 
   private void configureReplacementPane() {
     myReplacementPane = createLeadPane();
-    myReplaceField = createTextField();
+    myReplaceField = createTextField(myReplacementPane);
     configureTextField(myReplaceField);
-    myReplaceField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+
+    DocumentAdapter replaceFieldListener = new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent event) {
         setMatchesLimit(MATCHES_LIMIT);
         myFindModel.setStringToReplace(myReplaceField.getText());
       }
-    });
-    myReplaceField.registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent actionEvent) {
-        myLivePreviewController.performReplace();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    };
+
+    myReplaceField.addDocumentListener(replaceFieldListener);
+    myDocumentListeners.put(myReplaceField, replaceFieldListener);
+
+    new ReplaceOnEnterAction(this, myReplaceField);
+
     myReplaceField.setText(myFindModel.getStringToReplace());
-    myReplacementPane.add(myReplaceField);
     add(myReplacementPane, BorderLayout.SOUTH);
 
     myReplaceButton = new JButton("Replace");
     myReplaceButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
-        myLivePreviewController.performReplace();
+        replaceCurrent();
       }
     });
     myReplaceButton.setMnemonic('p');
@@ -483,20 +531,22 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setSmallerFont(myReplaceField);
     myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     new VariantsCompletionAction(this, myReplaceField);
+    new NextOccurrenceAction(this, myReplaceField);
+    new PrevOccurrenceAction(this, myReplaceField);
+    myReplaceRegexpFieldController = new RegexpFieldController(myReplaceField, myFindModel, this);
+  }
+
+  public void replaceCurrent() {
+    myLivePreviewController.performReplace();
   }
 
   private void updateExcludeStatus() {
-    if (myExcludeButton != null) {
+    if (myExcludeButton != null && mySearchResults != null) {
       LiveOccurrence cursor = mySearchResults.getCursor();
       myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "Exclude" : "Include");
       myReplaceAllButton.setEnabled(mySearchResults.hasMatches());
-      if (cursor != null) {
-        myExcludeButton.setEnabled(true);
-        myReplaceButton.setEnabled(true);
-      } else {
-        myExcludeButton.setEnabled(false);
-        myReplaceButton.setEnabled(false);
-      }
+      myExcludeButton.setEnabled(cursor != null);
+      updateReplaceButton();
     }
   }
 
@@ -513,12 +563,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myListeningSelection = b;
   }
 
-  private NonOpaquePanel createLeadPane() {
+  private JPanel createLeadPane() {
     return new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
   }
 
-  private JTextField createTextField() {
-    return new JTextField() {
+  private EditorComboBox createTextField(JPanel leadPanel) {
+    EditorComboBox editorComboBox = new EditorComboBox("", myProject, PlainTextFileType.INSTANCE) {
       protected void paintBorder(final Graphics g) {
         super.paintBorder(g);
 
@@ -529,11 +579,17 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         }
       }
     };
+    JPanel searchFieldPane = new JPanel(new BorderLayout());
+    setSmallerFontAndOpaque(searchFieldPane);
+    Dimension dimension = new Dimension(200, 25);
+    searchFieldPane.add(editorComboBox, BorderLayout.CENTER);
+    searchFieldPane.setMinimumSize(dimension);
+    searchFieldPane.setPreferredSize(dimension);
+    leadPanel.add(searchFieldPane);
+    return editorComboBox;
   }
 
-  private void configureTextField(final JTextField searchField) {
-    searchField.setColumns(25);
-
+  private void configureTextField(final EditorComboBox searchField) {
     searchField.addFocusListener(new FocusListener() {
       public void focusGained(final FocusEvent e) {
         searchField.repaint();
@@ -543,23 +599,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         searchField.repaint();
       }
     });
-
-
-
-    searchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        close();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
-
-    searchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (StringUtil.isEmpty(searchField.getText())) {
-          showHistory(false, searchField);
-        }
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
-
+    new CloseOnESCAction(this, searchField);
+    updateHistory(searchField);
   }
 
   public void setInitialText(final String initialText) {
@@ -571,7 +612,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     else {
       setTextInField(text);
     }
-    mySearchField.selectAll();
+    Component editorComponent = mySearchField.getEditor().getEditorComponent();
+    if (editorComponent  instanceof EditorTextField) {
+      ((EditorTextField)editorComponent).selectAll();
+    }
   }
 
   private void requestFocus(Component c) {
@@ -589,7 +633,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     addTextToRecents(mySearchField);
   }
 
-  private void addTextToRecents(JTextField textField) {
+  private void addTextToRecents(EditorComboBox textField) {
     final String text = textField.getText();
     if (text.length() > 0) {
       if (textField == mySearchField) {
@@ -597,6 +641,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       } else {
         FindSettings.getInstance().addStringToReplace(text);
       }
+      //updateHistory(textField);  //todo[zajac]: update combobox model
     }
   }
 
@@ -606,7 +651,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void moveCursor(SearchResults.Direction direction) {
-    myLivePreviewController.moveCursor(direction, true);
+    myLivePreviewController.moveCursor(direction);
   }
 
   private static void setSmallerFontAndOpaque(final JComponent component) {
@@ -625,13 +670,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     requestFocus(mySearchField);
   }
 
-  private void close() {
+  public void close() {
     if (myEditor.getSelectionModel().hasSelection()) {
       myEditor.getCaretModel().moveToOffset(myEditor.getSelectionModel().getSelectionStart());
       myEditor.getSelectionModel().removeSelection();
     }
     IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
-    FindManager.getInstance(myProject).getFindInFileModel().removeObserver(this);
     mySearchResults.dispose();
     myLivePreview.cleanUp();
     myEditor.setHeaderComponent(null);
@@ -641,18 +685,32 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   @Override
   public void addNotify() {
     super.addNotify();
+    configureTextField(mySearchField);
 
-    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
-      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+    myDocumentListener = new DocumentAdapter() {
+      public void documentChanged(final DocumentEvent e) {
         updateResults(false);
       }
     };
 
     myEditor.getDocument().addDocumentListener(myDocumentListener);
+    setupSearchFieldListener();
 
-    if (myLivePreview != null) {
-      myLivePreviewController.updateInBackground(mySearchResults.getFindModel(), false);
+    mySearchResults = new SearchResults(myEditor);
+    setMatchesLimit(MATCHES_LIMIT);
+
+    myLivePreview = new LivePreview(mySearchResults);
+
+    myLivePreviewController = new MyLivePreviewController();
+    myLivePreviewController.setReplaceListener(this);
+    mySearchResults.addListener(this);
+
+    mySearchRegexpFieldController.updateRegexpState();
+    if (myReplaceRegexpFieldController != null) {
+      myReplaceRegexpFieldController.updateRegexpState();
     }
+    
+    myLivePreviewController.updateInBackground(myFindModel, false);
   }
 
   public void removeNotify() {
@@ -677,7 +735,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
     else {
 
-      setRegularBackground();
       if (myFindModel.isRegularExpressions()) {
         try {
           Pattern.compile(text);
@@ -687,6 +744,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
           myMatchInfoLabel.setText("Incorrect regular expression");
           boldMatchInfo();
           myClickToHighlightLabel.setVisible(false);
+          mySearchResults.clear();
           return;
         }
       }
@@ -707,7 +765,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   private void nothingToSearchFor() {
     updateUIWithEmptyResults();
-    mySearchResults.clear();
+    if (mySearchResults != null) {
+      mySearchResults.clear();
+    }
   }
 
   private void updateUIWithEmptyResults() {
@@ -721,11 +781,17 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void setRegularBackground() {
-    mySearchField.setBackground(myDefaultBackground);
+    Component editorComponent = mySearchField.getEditor().getEditorComponent();
+    if (editorComponent != null) {
+      editorComponent.setBackground(myDefaultBackground);
+    }
   }
 
   private void setNotFoundBackground() {
-    mySearchField.setBackground(LightColors.RED);
+    Component editorComponent = mySearchField.getEditor().getEditorComponent();
+    if (editorComponent != null) {
+      editorComponent.setBackground(LightColors.RED);
+    }
   }
 
   public String getTextInField() {
@@ -734,22 +800,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   public void setTextInField(final String text) {
     mySearchField.setText(text);
-    if (!StringUtil.isEmpty(text)) {
-      myFindModel.setStringToFind(text);
-    }
+    myFindModel.setStringToFind(text);
   }
 
   public boolean hasMatches() {
     return myLivePreview != null && myLivePreview.hasMatches();
-  }
-
-  public void showHistory(final boolean byClickingToolbarButton, JTextField textField) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-    FindSettings settings = FindSettings.getInstance();
-    String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
-    Utils.showCompletionPopup(byClickingToolbarButton ? myToolbarComponent : null, new JBList(ArrayUtil.reverseArray(recents)),
-                              "Recent Searches",
-                              textField);
   }
 
   @Override
