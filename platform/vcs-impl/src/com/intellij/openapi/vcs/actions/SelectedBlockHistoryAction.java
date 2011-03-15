@@ -78,7 +78,8 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
       final CachedRevisionsContents cachedRevisionsContents = new CachedRevisionsContents(project, file);
-      new VcsHistoryProviderBackgroundableProxy(project, provider).createSessionFor(new FilePathImpl(file),
+      new VcsHistoryProviderBackgroundableProxy(project, provider, activeVcs.getDiffProvider()).
+        createSessionFor(activeVcs.getKeyInstanceMethod(), new FilePathImpl(file),
         new Consumer<VcsHistorySession>() {
           public void consume(VcsHistorySession session) {
             if (session == null) return;

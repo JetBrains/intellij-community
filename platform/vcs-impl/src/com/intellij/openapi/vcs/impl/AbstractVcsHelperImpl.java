@@ -190,8 +190,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     public void reportException(VcsException exception) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), VcsBundle.message("message.title.could.not.load.file.history") + ": " +
-                                                                   exception.getMessage(), MessageType.ERROR);
+      VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(),
+                                                           VcsBundle.message("message.title.could.not.load.file.history") + ": " +
+                                                           exception.getMessage(), MessageType.ERROR);
     }
 
     public void finished() {
@@ -206,6 +207,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         }
       });
     }
+
+    @Override
+    public void forceRefresh() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (mySession == null) {
+            // nothing to be done, exit
+            return;
+          }
+          ensureHistoryPanelCreated().scheduleRefresh();
+        }
+      });
+    }
   }
 
   private static class MyRefresher implements Runnable {
@@ -213,6 +227,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private final VcsHistoryProvider myVcsHistoryProvider;
     private final FilePath myPath;
     private final AbstractVcs myVcs;
+    private boolean myCanUseCache;
 
     private MyRefresher(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
                                                  final String repositoryPath, final AbstractVcs vcs) {
@@ -220,11 +235,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myPath = path;
       myVcs = vcs;
       mySessionPartner = new MyVcsAppendableHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs, this);
+      myCanUseCache = true;
     }
 
     public void run() {
-      final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(myVcs.getProject(), myVcsHistoryProvider);
-      proxy.executeAppendableSession(myPath, mySessionPartner, null, false);
+      final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
+        myVcs.getProject(), myVcsHistoryProvider, myVcs.getDiffProvider());
+      proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache);
+      myCanUseCache = false;
     }
   }
 

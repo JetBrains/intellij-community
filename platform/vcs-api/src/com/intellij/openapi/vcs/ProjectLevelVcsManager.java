@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -253,4 +254,6 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VcsEventsListenerManager getVcsEventsListenerManager();
   protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
+
+  public abstract VcsHistoryCache getVcsHistoryCache();
 }
