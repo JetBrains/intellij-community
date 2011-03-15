@@ -95,15 +95,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
-    showMethodInfo(
-      getProject(),
-      getEditor(),
-      element,
-      getHighlightedElement(),
-      itemsToShow,
-      offset,
-      handler
-    );
+    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler);
   }
 
   private static void showParameterHint(final PsiElement element, final Editor editor, final Object[] descriptors,
@@ -132,14 +124,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
-        new ParameterInfoController(project,
-                                    editor,
-                                    elementStart,
-                                    hint,
-                                    handler,
-                                    provider
-                                    );
+        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+        new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
       }
     });
   }
@@ -173,13 +159,13 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     Point p2;
     boolean isLookupShown = LookupManager.getInstance(project).getActiveLookup() != null;
     if (isLookupShown) {
-      p1 = hintManager.getHintPosition(hint, editor, HintManagerImpl.UNDER);
-      p2 = hintManager.getHintPosition(hint, editor, HintManagerImpl.ABOVE);
+      p1 = hintManager.getHintPosition(hint, editor, HintManager.UNDER);
+      p2 = hintManager.getHintPosition(hint, editor, HintManager.ABOVE);
     }
     else {
       LogicalPosition pos = new LogicalPosition(line, col);
-      p1 = hintManager.getHintPosition(hint, editor, pos, HintManagerImpl.UNDER);
-      p2 = hintManager.getHintPosition(hint, editor, pos, HintManagerImpl.ABOVE);
+      p1 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.UNDER);
+      p2 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE);
     }
 
     if (!awtTooltip) {
@@ -193,25 +179,26 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     boolean p2Ok = p2.y >= 0;
 
     if (isLookupShown) {
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
     }
     else {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
-          if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+          if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
         } else if (preferredPosition == HintManager.UNDER) {
-          if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
+          if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
         }
       }
 
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
     }
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
-    return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManagerImpl.UNDER) : new Pair<Point, Short>(p1, HintManagerImpl.ABOVE);
+    return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<Point, Short>(p1,
+                                                                                                                            HintManager.ABOVE);
   }
 
   static class MyBestLocationPointProvider implements ShowParameterInfoHandler.BestLocationPointProvider {
@@ -243,13 +230,13 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint, awtTooltip, preferredPosition);
       }
       else {
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);
+        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
         Dimension hintSize = hint.getComponent().getPreferredSize();
         JComponent editorComponent = myEditor.getComponent();
         JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
         p.x = Math.max(p.x, 0);
-        position = new Pair<Point, Short>(p, HintManagerImpl.ABOVE);
+        position = new Pair<Point, Short>(p, HintManager.ABOVE);
       }
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();

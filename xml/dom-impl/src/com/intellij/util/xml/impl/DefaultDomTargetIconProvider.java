@@ -28,6 +28,7 @@ import javax.swing.*;
  */
 public class DefaultDomTargetIconProvider extends DomIconProvider implements DumbAware {
   public Icon getIcon(@NotNull DomElement element, int flags) {
-    return ElementPresentationManager.getIconOld(element);
+    Icon icon = element.getPresentation().getIcon();
+    return icon == null ? ElementPresentationManager.getIconOld(element) : icon;
   }
 }
