@@ -62,6 +62,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
+  private RegexpFieldController mySearchRegexpFieldController;
+  private RegexpFieldController myReplaceRegexpFieldController;
 
   public Editor getEditor() {
     return myEditor;
@@ -335,8 +337,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
-    new RegexpFieldController(mySearchField, myFindModel, this);
-
     setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -363,6 +363,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     new SwitchToFind(this);
     new SwitchToReplace(this);
+    mySearchRegexpFieldController = new RegexpFieldController(mySearchField, myFindModel, this);
   }
 
   private void setupSearchFieldListener() {
@@ -529,10 +530,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     
     setSmallerFont(myReplaceField);
     myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    new RegexpFieldController(myReplaceField, myFindModel, this);
     new VariantsCompletionAction(this, myReplaceField);
     new NextOccurrenceAction(this, myReplaceField);
     new PrevOccurrenceAction(this, myReplaceField);
+    myReplaceRegexpFieldController = new RegexpFieldController(myReplaceField, myFindModel, this);
   }
 
   public void replaceCurrent() {
@@ -704,6 +705,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myLivePreviewController.setReplaceListener(this);
     mySearchResults.addListener(this);
 
+    mySearchRegexpFieldController.updateRegexpState();
+    if (myReplaceRegexpFieldController != null) {
+      myReplaceRegexpFieldController.updateRegexpState();
+    }
+    
     myLivePreviewController.updateInBackground(myFindModel, false);
   }
 

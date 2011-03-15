@@ -49,7 +49,7 @@ public class RegexpFieldController implements FindModel.FindModelObserver {
     updateRegexpState();
   }
 
-  private void updateRegexpState() {
+  public void updateRegexpState() {
     boolean regularExpressions = myFindModel.isRegularExpressions();
     Project project = myTextField.getProject();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTextField.getDocument());
@@ -65,20 +65,19 @@ public class RegexpFieldController implements FindModel.FindModelObserver {
 
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(s, fileType, myTextField.getText(), -1, true);
 
-    if (myListener != null) {
-      myListener.documentWillBeReplaced(this);
-    }
-
     Component editorComponent = myTextField.getEditor().getEditorComponent();
     if (editorComponent instanceof  EditorTextField) {
+      if (myListener != null) {
+        myListener.documentWillBeReplaced(this);
+      }
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       myTextField.setDocument(document);
       ((EditorTextField)editorComponent).setNewDocumentAndFileType(fileType, document);
+      if (myListener != null) {
+        myListener.documentWasReplaced(this);
+      }
     }
 
-    if (myListener != null) {
-      myListener.documentWasReplaced(this);
-    }
   }
 
   @Override
