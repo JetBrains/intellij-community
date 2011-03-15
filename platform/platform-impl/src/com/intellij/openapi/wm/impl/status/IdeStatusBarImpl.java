@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -48,6 +49,8 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -756,8 +759,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myFrame;
   }
 
-  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget.Multiframe {
+  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget.Multiframe, Disposable,
+                                                                   UISettingsListener, PropertyChangeListener {
 
+    private static final Icon OUT = IconLoader.getIcon("/general/slideOut.png");
+    private static final Icon IN = IconLoader.getIcon("/general/slideIn.png");
     private StatusBar myStatusBar;
 
     private ToolWindowsWidget() {
@@ -767,6 +773,21 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
           performAction();
         }
       }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+
+      UISettings.getInstance().addUISettingsListener(this, this);
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", this);
+      setToolTipText("Click to show/hide tool windows side bars");
+    }
+
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      updateIcon();
+    }
+
+    @Override
+    public void uiSettingsChanged(UISettings source) {
+      updateIcon();
     }
 
     private void performAction() {
@@ -774,27 +795,35 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         UISettings.getInstance().HIDE_TOOL_STRIPES = !UISettings.getInstance().HIDE_TOOL_STRIPES;
         UISettings.getInstance().fireUISettingsChanged();
       }
-      updateIcon();
     }
 
     private void updateIcon() {
       if (isActive()) {
-        setVisible(true);
-        setIcon(UISettings.getInstance().HIDE_TOOL_STRIPES
-                ? IconLoader.getIcon("/general/slideOut.png")
-                : IconLoader.getIcon("/general/slideIn.png"));
-        revalidate();
-        repaint();
-        setToolTipText("Click to show/hide tool windows side bars");
+        boolean changes = false;
+
+        if (!isVisible()) {
+          setVisible(true);
+          changes = true;
+        }
+
+        Icon icon = UISettings.getInstance().HIDE_TOOL_STRIPES ? OUT : IN;
+        if (icon != getIcon()) {
+          setIcon(icon);
+          changes = true;
+        }
+
+        if (changes) {
+          revalidate();
+          repaint();
+        }
       }
       else {
         setVisible(false);
-        setToolTipText(null);
       }
     }
 
     private boolean isActive() {
-      return myStatusBar != null || myStatusBar.getFrame() != null || myStatusBar.getFrame().getProject() != null;
+      return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null;
     }
 
     @Override
@@ -826,6 +855,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     @Override
     public void dispose() {
+      Disposer.dispose(this);
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
       myStatusBar = null;
     }
   }
