@@ -292,6 +292,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = val != isCaseSensitive;
     isCaseSensitive = val;
     if (changed) {
+      myPattern = NO_PATTERN;
       notifyObservers();
     }
   }
