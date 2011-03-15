@@ -164,4 +164,8 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testConvertTripleQuotedString() { //PY-2697
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
+
+  public void testTransformConditionalExpression() { //PY-3094
+    doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
+  }
 }

@@ -189,6 +189,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyTransformConditionalExpressionIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
@@ -432,6 +437,7 @@
     <annotator language="Locale" implementationClass="com.jetbrains.django.localization.validation.LocaleAnnotatingVisitor"/>
     <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
     <problemFileHighlightFilter implementation="com.jetbrains.django.localization.LocaleProblemFileHighlightFilter"/>
+    <!--<fileEditorProvider implementation="com.jetbrains.django.localization.editor.LocaleFileEditorProvider"/>-->
   </extensions>
 
   <extensionPoints>
