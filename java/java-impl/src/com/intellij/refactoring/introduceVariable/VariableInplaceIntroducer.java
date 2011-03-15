@@ -19,10 +19,13 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -31,8 +34,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -43,8 +50,15 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.TitlePanel;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,12 +71,14 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final PsiVariable myElementToRename;
   private final Editor myEditor;
   private final TypeExpression myExpression;
-  private final boolean myCantChangeFinalModifier;
   private final Project myProject;
   private final SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
   private final RangeMarker myExprMarker;
   private final List<RangeMarker> myOccurrenceMarkers;
   private final PsiType myDefaultType;
+
+  protected JCheckBox myCanBeFinal;
+  private Balloon myBalloon;
 
   public VariableInplaceIntroducer(final Project project,
                                    final TypeExpression expression,
@@ -77,7 +93,6 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myEditor = editor;
     myElementToRename = elementToRename;
     myExpression = expression;
-    myCantChangeFinalModifier = cantChangeFinalModifier;
 
     myExprMarker = exprMarker;
     myOccurrenceMarkers = occurrenceMarkers;
@@ -89,19 +104,42 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
-    setAdvertisementText(getAdvertisementText(declarationStatement, myDefaultType,
-                                              hasTypeSuggestion, !cantChangeFinalModifier));
+    setAdvertisementText(getAdvertisementText(declarationStatement, myDefaultType, hasTypeSuggestion));
+    if (!cantChangeFinalModifier) {
+      myCanBeFinal = new NonFocusableCheckBox("Declare final");
+      myCanBeFinal.setSelected(createFinals());
+      myCanBeFinal.setMnemonic('f');
+      myCanBeFinal.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          new WriteCommandAction(project){
+            @Override
+            protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+              final PsiModifierList modifierList = getVariable().getModifierList();
+              LOG.assertTrue(modifierList != null);
+              final Document document = myEditor.getDocument();
+              final int textOffset = modifierList.getTextOffset();
+              if (myCanBeFinal.isSelected()) {
+                if (StringUtil.isEmptyOrSpaces(document.getText(new TextRange(textOffset - 1, textOffset)))) {
+                  document.insertString(textOffset - 1, "final");
+                } else {
+                  document.insertString(textOffset, "final ");
+                }
+              }
+              else {
+                document.deleteString(textOffset, textOffset + modifierList.getTextLength());
+              }
+            }
+          }.execute();
+        }
+      });
+    }
   }
 
   @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     final PsiTypeElement typeElement = myElementToRename.getTypeElement();
-    builder.replaceElement(typeElement, "Variable_Type",
-                           createExpression(myExpression, typeElement.getText(), !myCantChangeFinalModifier), true,
-                           true);
-    if (!myCantChangeFinalModifier) {
-      builder.replaceElement(myElementToRename.getModifierList(), "_FINAL_", new FinalExpression(), false, true);
-    }
+    builder.replaceElement(typeElement, "Variable_Type", createExpression(myExpression, typeElement.getText()), true, true);
   }
 
   @Override
@@ -140,6 +178,12 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   @Override
   protected TextRange preserveSelectedRange(SelectionModel selectionModel) {
     return null;
+  }
+
+  @Override
+  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
+    showBalloon();
+    return super.performInplaceRename(processTextOccurrences, nameSuggestions);
   }
 
   @Override
@@ -185,9 +229,33 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     }
   }
 
+  @Override
+  public void finish() {
+    super.finish();
+    if (myBalloon != null) myBalloon.hide();
+  }
+
   protected void saveSettings(PsiVariable psiVariable) {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
     TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType);
+  }
+
+
+  @Nullable
+  protected JComponent getComponent() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(null);
+
+    final TitlePanel titlePanel = new TitlePanel();
+    titlePanel.setBorder(null);
+    titlePanel.setText(IntroduceVariableBase.REFACTORING_NAME);
+    panel.add(titlePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+
+    panel.add(myCanBeFinal, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
+
+    panel.add(Box.createVerticalBox(), new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+
+    return panel;
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
@@ -236,8 +304,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   @Nullable
   private static String getAdvertisementText(final PsiDeclarationStatement declaration,
                                              final PsiType type,
-                                             final boolean hasTypeSuggestion,
-                                             final boolean canAdjustFinal) {
+                                             final boolean hasTypeSuggestion) {
     final VariablesProcessor processor = ReassignVariableUtil.findVariablesOfType(declaration, type);
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     if (processor.size() > 0) {
@@ -252,21 +319,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         return "Press " + shortcuts[0] + " to change type";
       }
     }
-    return adjustFinalText(canAdjustFinal);
-  }
-
-  @Nullable
-  private static String adjustFinalText(final boolean canBeFinalAdjusted) {
-    if (canBeFinalAdjusted) {
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("PreviousTemplateVariable");
-      if (shortcuts.length > 0) {
-        return "Press " + shortcuts[0] + " to adjust final modifier";
-      }
-    }
     return null;
   }
 
-  private static Expression createExpression(final TypeExpression expression, final String defaultType, final boolean canBeFinalAdjusted) {
+  private static Expression createExpression(final TypeExpression expression, final String defaultType) {
     return new Expression() {
       @Override
       public Result calculateResult(ExpressionContext context) {
@@ -285,34 +341,13 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
       @Override
       public String getAdvertisingText() {
-        return adjustFinalText(canBeFinalAdjusted);
+        return null;
       }
     };
   }
 
   protected boolean createFinals() {
     return IntroduceVariableBase.createFinals(myProject);
-  }
-
-  private class FinalExpression extends Expression {
-
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      return new TextResult(createFinals() ? PsiKeyword.FINAL : "");
-    }
-
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return calculateResult(context);
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      LookupElement[] lookupElements = new LookupElement[2];
-      lookupElements[0] = LookupElementBuilder.create("");
-      lookupElements[1] = LookupElementBuilder.create(PsiModifier.FINAL + " ");
-      return lookupElements;
-    }
   }
 
   public static void adjustLine(final PsiVariable psiVariable, final Document document) {
@@ -326,5 +361,25 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
       }
     });
+  }
+
+
+  private void showBalloon() {
+    final JComponent component = getComponent();
+    if (component == null) return;
+    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
+    balloonBuilder.setFadeoutTime(0)
+      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
+      .setAnimationCycle(0)
+      .setHideOnClickOutside(false)
+      .setHideOnKeyOutside(false)
+      .setHideOnAction(false)
+      .setCloseButtonEnabled(true);
+
+    final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+    final Point screenPoint = target.getScreenPoint();
+    myBalloon = balloonBuilder.createBalloon();
+    myBalloon
+      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
   }
 }

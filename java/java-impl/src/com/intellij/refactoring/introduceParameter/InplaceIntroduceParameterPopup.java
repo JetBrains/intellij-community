@@ -151,7 +151,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         if (parameter != null) {
           myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
           myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
-          showBalloon();
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
           nameSuggestions.add(parameter.getName());
           nameSuggestions.addAll(Arrays.asList(names));
@@ -193,6 +192,19 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
             myEditor, parameter, myMustBeFinal,
             myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, getOccurrenceMarkers());
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
+    }
+
+    @Override
+    protected JComponent getComponent() {
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myWholePanel, BorderLayout.CENTER);
+
+      final JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      wrapper.add(myCanBeFinal, BorderLayout.NORTH);
+      panel.add(wrapper, BorderLayout.SOUTH);
+
+      return panel;
     }
 
     @Override
@@ -314,7 +326,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     @Override
     public void finish() {
       super.finish();
-      myBalloon.hide();
       final PsiParameter psiParameter = (PsiParameter)getVariable();
       LOG.assertTrue(psiParameter != null);
       myFinal = psiParameter.hasModifierProperty(PsiModifier.FINAL);
@@ -403,20 +414,4 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     });
   }
 
-  private void showBalloon() {
-    final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(myWholePanel);
-    balloonBuilder.setFadeoutTime(0)
-      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
-      .setAnimationCycle(0)
-      .setHideOnClickOutside(false)
-      .setHideOnKeyOutside(false)
-      .setHideOnAction(false)
-      .setCloseButtonEnabled(true);
-
-    final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
-    final Point screenPoint = target.getScreenPoint();
-    myBalloon = balloonBuilder.createBalloon();
-    myBalloon
-      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
-  }
 }
