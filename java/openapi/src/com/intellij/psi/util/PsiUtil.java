@@ -423,8 +423,10 @@ public final class PsiUtil extends PsiUtilBase {
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
+
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpression[] argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
+    final PsiType[] types = ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE);
+    return getApplicabilityLevel(method, substitutorForMethod, types, getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {

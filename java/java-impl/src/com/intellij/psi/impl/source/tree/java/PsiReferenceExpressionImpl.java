@@ -49,12 +49,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -277,20 +273,18 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return element.getText();
   }
 
-  @NonNls private static final String LENGTH = "length";
+  private final Function<PsiReferenceExpressionImpl, PsiType> ourTypeEvaluator = new TypeEvaluator();
 
-  private final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
-
-  private static class TypeEvaluator implements Function<PsiReferenceExpressionImpl, PsiType> {
+  private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
     public PsiType fun(final PsiReferenceExpressionImpl expr) {
       JavaResolveResult result = expr.advancedResolve(false);
       PsiElement resolve = result.getElement();
       if (resolve == null) {
         ASTNode refName = expr.findChildByRole(ChildRole.REFERENCE_NAME);
-        if (refName != null && refName.getText().equals(LENGTH)) {
+        if (refName != null && "length".equals(refName.getText())) {
           ASTNode qualifier = expr.findChildByRole(ChildRole.QUALIFIER);
           if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
-            PsiType type = ((PsiExpression)SourceTreeToPsiMap.treeElementToPsi(qualifier)).getType();
+            PsiType type = SourceTreeToPsiMap.<PsiExpression>treeToPsiNotNull(qualifier).getType();
             if (type instanceof PsiArrayType) {
               return PsiType.INT;
             }
@@ -300,30 +294,32 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       PsiTypeParameterListOwner owner = null;
-      PsiType ret;
+      PsiType ret = null;
       if (resolve instanceof PsiVariable) {
         PsiType type = ((PsiVariable)resolve).getType();
         ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
-        if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) owner = ((PsiField)resolve).getContainingClass();
+        if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+          owner = ((PsiField)resolve).getContainingClass();
+        }
       }
       else if (resolve instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)resolve;
         ret = method.getReturnType();
         owner = method;
       }
-      else {
-        return null;
-      }
       if (ret == null) return null;
+
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expr);
       if (ret instanceof PsiClassType) {
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
 
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
-        if (owner != null && PsiUtil.isRawSubstitutor(owner, result.getSubstitutor())) return TypeConversionUtil.erasure(ret);
-        PsiType substitutedType = result.getSubstitutor().substitute(ret);
-        return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
+        final PsiSubstitutor substitutor = result.getSubstitutor();
+        if (owner == null || !PsiUtil.isRawSubstitutor(owner, substitutor)) {
+          PsiType substitutedType = substitutor.substitute(ret);
+          return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
+        }
       }
 
       return TypeConversionUtil.erasure(ret);
