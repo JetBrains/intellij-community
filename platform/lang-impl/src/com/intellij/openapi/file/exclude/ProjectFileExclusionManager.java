@@ -32,6 +32,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -52,18 +53,35 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
   }
 
   public void addExclusion(VirtualFile file) {
+    if (file.isDirectory()) return;
     myExcludedFiles.put(file.getPath(), file);
     FileBasedIndex.getInstance().requestReindexExcluded(file);
+    fireRootsChange(myProject);
+  }
+
+  public void removeExclusion(VirtualFile file) {
+    if (myExcludedFiles.containsValue(file)) {
+      myExcludedFiles.remove(file.getPath());
+      FileBasedIndex.getInstance().requestReindex(file);
+      fireRootsChange(myProject);
+    }
+  }
+
+  private static void fireRootsChange(final Project project) {
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
       @Override
       public void run() {
-        ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
       }
     });
   }
 
   public boolean isExcluded(VirtualFile file) {
     return myExcludedFiles.containsKey(file.getPath());
+  }
+
+  public Collection<VirtualFile> getExcludedFiles() {
+    return myExcludedFiles.values();
   }
 
   @Override

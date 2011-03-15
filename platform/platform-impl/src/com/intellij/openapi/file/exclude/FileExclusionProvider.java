@@ -40,6 +40,7 @@ public abstract class FileExclusionProvider {
   }
 
   public static boolean isExcluded(final @Nullable Project project, final VirtualFile file) {
+    if (file.isDirectory()) return false;
     for (FileExclusionProvider exclusionProvider : Extensions.getExtensions(EP_NAME)) {
       if (exclusionProvider.isFileExcluded(file)) return true;
     }
