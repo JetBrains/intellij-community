@@ -236,6 +236,13 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return element;
   }
 
+  @Override
+  public GrExpression getExpression() {
+    final PsiElement nameElement = getNameElement();
+    if (nameElement instanceof GrParenthesizedExpression) return ((GrParenthesizedExpression)nameElement).getOperand();
+    return null;
+  }
+
   @Nullable
   public PsiType getExpectedArgumentType() {
     final PsiElement resolved = resolve();

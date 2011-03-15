@@ -278,7 +278,6 @@
   <applicationConfigurable instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
   <!-- File Exclusions -->
-  <projectFileExclusionProvider implementation="com.intellij.openapi.file.exclude.ProjectFileExclusionProvider"/>
 
   <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
                   serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"/>

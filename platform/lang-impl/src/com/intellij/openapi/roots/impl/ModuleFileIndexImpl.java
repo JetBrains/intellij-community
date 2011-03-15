@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -36,6 +37,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
+  private final ProjectFileExclusionManager myExclusionManager;
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
     myModule = module;
@@ -43,6 +45,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     myFileTypeManager = FileTypeManager.getInstance();
 
     myContentFilter = new ContentFilter();
+    myExclusionManager = ProjectFileExclusionManager.getInstance(module.getProject());
   }
 
   public boolean iterateContent(@NotNull ContentIterator iterator) {
@@ -153,6 +156,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         return info != null && myModule.equals(info.module);
       }
       else {
+        if(myExclusionManager.isExcluded(file)) return false;
         return !myFileTypeManager.isFileIgnored(file);
       }
     }

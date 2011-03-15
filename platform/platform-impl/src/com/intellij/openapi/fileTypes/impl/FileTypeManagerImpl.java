@@ -25,14 +25,12 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.file.exclude.FileExclusionProvider;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -377,17 +375,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public boolean isFileIgnored(@NotNull String name) {
-    return myIgnoredPatterns.isIgnored(name) || FileExclusionProvider.isExcluded(name);
-  }
-
-  @Override
-  public boolean isFileIgnored(@Nullable Project project, @NonNls @NotNull VirtualFile file) {
-    return isFileIgnored(file.getName()) || FileExclusionProvider.isExcluded(project, file);
+    return myIgnoredPatterns.isIgnored(name);
   }
 
   @Override
   public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
-    return isFileIgnored(file.getName()) || FileExclusionProvider.isExcluded(null, file);
+    return isFileIgnored(file.getName());
   }
 
   @SuppressWarnings({"deprecation"})

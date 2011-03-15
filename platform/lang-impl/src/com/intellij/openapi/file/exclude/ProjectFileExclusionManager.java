@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -115,8 +115,8 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
     }
   }
 
-  @Nullable
-  public static ProjectFileExclusionManager getInstance(Project project) {
+  public static ProjectFileExclusionManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectFileExclusionManager.class);
   }
+
 }

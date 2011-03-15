@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Arrays;
@@ -103,7 +103,7 @@ public class GeneratorTest extends LightGroovyTestCase {
     final String testName = StringUtil.trimEnd(relTestPath, ".test");
     PsiFile psiFile = TestUtils.createPseudoPhysicalFile(getProject(), testName + ".groovy", data.get(0));
     final Map<String,String> map =
-      new GroovyToJavaGenerator(getProject(), null, Arrays.asList(psiFile.getViewProvider().getVirtualFile()))
+      new GroovyToJavaGenerator(getProject(), Arrays.asList(psiFile.getViewProvider().getVirtualFile()), false)
         .generateStubs((GroovyFile)psiFile);
 
      for (String stubText : map.values()) {

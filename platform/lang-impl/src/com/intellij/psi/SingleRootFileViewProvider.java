@@ -22,6 +22,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
@@ -63,6 +64,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
   private final Language myBaseLanguage;
+  private final ProjectFileExclusionManager myExclusionManager;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -81,6 +83,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof DummyFileSystem);
+    myExclusionManager = ProjectFileExclusionManager.getInstance(manager.getProject());
   }
 
   @NotNull
@@ -234,6 +237,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   protected boolean isIgnored() {
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
+    if (myExclusionManager.isExcluded(file)) return true;
     return FileTypeManager.getInstance().isFileIgnored(file);
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -34,6 +35,12 @@ public interface GrArgumentLabel extends GroovyPsiElement, PsiReference {
 
   @NotNull
   PsiElement getNameElement();
+
+  @Nullable
+  /**
+   * returns expression which is put into parentheses.
+   */
+  GrExpression getExpression();
 
   @Nullable
   String getName();

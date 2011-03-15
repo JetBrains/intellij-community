@@ -99,11 +99,14 @@ public class PositionManagerImpl implements PositionManager {
           waitRequestor.set(new ClassPrepareRequestor() {
             public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
               final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-              if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
-                requestor.processClassPrepare(debuggerProcess, referenceType);
+              final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+              if (positionClasses.isEmpty()) {
+                // fallback
+                if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
+                  requestor.processClassPrepare(debuggerProcess, referenceType);
+                }
               }
               else {
-                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
                 if (positionClasses.contains(referenceType)) {
                   requestor.processClassPrepare(debuggerProcess, referenceType);
                 }
@@ -267,15 +270,17 @@ public class PositionManagerImpl implements PositionManager {
       
       final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
       
-      for (ReferenceType nested : nestedTypes) {
-        final ReferenceType found = findNested(nested, classToFind, classPosition);
-        if (found != null) {
-          return found;
-        }
-      }
-
       try {
         final int lineNumber = classPosition.getLine() + 1;
+
+        for (ReferenceType nested : nestedTypes) {
+          final ReferenceType found = findNested(nested, classToFind, classPosition);
+          if (found != null) {
+            // check if enclosing class also has executable code at the same line, and if yes, prefer enclosing class 
+            return fromClass.locationsOfLine(lineNumber).isEmpty()? found : fromClass;
+          }
+        }
+
         if (fromClass.locationsOfLine(lineNumber).size() > 0) {
           return fromClass;
         }

@@ -26,6 +26,7 @@ public class PlatformUtils {
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
+  public static final String FLEX_PREFIX = "Flex";
 
   private PlatformUtils() {
   }
@@ -64,5 +65,9 @@ public class PlatformUtils {
 
   public static boolean isWebStorm() {
     return WEB_PREFIX.equals(getPlatformPrefix());
+  }
+
+  public static boolean isFlexIde() {
+    return FLEX_PREFIX.equals(getPlatformPrefix());
   }
 }

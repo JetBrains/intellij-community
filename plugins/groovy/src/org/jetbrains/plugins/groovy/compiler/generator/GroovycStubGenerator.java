@@ -16,8 +16,10 @@
 
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompileContext;
@@ -25,38 +27,44 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class GroovycStubGenerator extends GroovyCompilerBase {
+  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
 
   public static final String GROOVY_STUBS = "groovyStubs";
 
@@ -103,8 +111,11 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   }
 
   @Override
-  protected void compileFiles(CompileContext compileContext, Module module,
-                              final List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
+  protected void compileFiles(CompileContext compileContext,
+                              Module module,
+                              final List<VirtualFile> toCompile,
+                              OutputSink sink,
+                              boolean tests) {
     final File outDir = getStubOutput(module, tests);
     outDir.mkdirs();
 
@@ -116,16 +127,17 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
     if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
       runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
-    } else {
+    }
+    else {
       ProgressIndicator indicator = compileContext.getProgressIndicator();
       indicator.pushState();
 
       try {
-        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
+        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, toCompile, false);
         for (int i = 0; i < toCompile.size(); i++) {
           indicator.setFraction((double)i / toCompile.size());
 
-          final Collection<VirtualFile> stubFiles = generator.generateItems(toCompile.get(i), tempOutput);
+          final Collection<VirtualFile> stubFiles = generateItems(generator, toCompile.get(i), tempOutput, compileContext, myProject);
           ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
         }
       }
@@ -188,4 +200,40 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     return true;
   }
 
+  public static Collection<VirtualFile> generateItems(final GroovyToJavaGenerator generator,
+                                                      final VirtualFile item,
+                                                      final VirtualFile outputRootDirectory,
+                                                      CompileContext context,
+                                                      final Project project) {
+    ProgressIndicator indicator = context.getProgressIndicator();
+    indicator.setText("Generating stubs for " + item.getName() + "...");
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Generating stubs for " + item.getName() + "...");
+    }
+
+    final Map<String, String> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, String>>() {
+      public Map<String, String> compute() {
+        return generator.generateStubs((GroovyFile)PsiManager.getInstance(project).findFile(item));
+      }
+    });
+    return writeStubs(outputRootDirectory, output, item);
+  }
+
+  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output, VirtualFile src) {
+    final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
+    for (String relativePath : output.keySet()) {
+      final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
+      FileUtil.createIfDoesntExist(stubFile);
+      try {
+        FileUtil.writeToFile(stubFile, output.get(relativePath).getBytes(src.getCharset()));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      CompilerUtil.refreshIOFile(stubFile);
+      ContainerUtil.addIfNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stubFile), stubs);
+    }
+    return stubs;
+  }
 }

@@ -44,9 +44,6 @@
                   area="IDEA_PROJECT"/>
   <extensionPoint name="customFileTypeFactory" interface="com.intellij.openapi.fileTypes.ex.CustomFileTypeFactory"/>
   <extensionPoint name="fileTypeRegistrator" interface="com.intellij.ide.highlighter.FileTypeRegistrator"/>
-  <extensionPoint name="fileExclusionProvider" interface="com.intellij.openapi.file.exclude.FileExclusionProvider"/>
-  <extensionPoint name="projectFileExclusionProvider" interface="com.intellij.openapi.file.exclude.FileExclusionProvider"
-                  area="IDEA_PROJECT"/>
 
   <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"/>
   <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"

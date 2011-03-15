@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.compiler.generator;
+package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -62,8 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -72,7 +65,7 @@ import java.util.*;
  */
 public class GroovyToJavaGenerator {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator");
 
   static {
     typesToInitialValues.put("boolean", "false");
@@ -97,30 +90,15 @@ public class GroovyToJavaGenerator {
       PsiModifier.NATIVE,
   };
 
-  private final CompileContext myContext;
   private final List<VirtualFile> myAllToCompile;
   private final Project myProject;
 
-  public GroovyToJavaGenerator(Project project, CompileContext context, List<VirtualFile> allToCompile) {
+  private final boolean fullConversion;
+
+  public GroovyToJavaGenerator(Project project, List<VirtualFile> allToCompile, boolean fullConversion) {
     myProject = project;
-    myContext = context;
     myAllToCompile = allToCompile;
-  }
-
-  public Collection<VirtualFile> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
-    ProgressIndicator indicator = myContext.getProgressIndicator();
-    indicator.setText("Generating stubs for " + item.getName() + "...");
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Generating stubs for " + item.getName() + "...");
-    }
-
-    final Map<String, String> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, String>>() {
-      public Map<String, String> compute() {
-        return generateStubs((GroovyFile)PsiManager.getInstance(myProject).findFile(item));
-      }
-    });
-    return writeStubs(outputRootDirectory, output, item);
+    this.fullConversion = fullConversion;
   }
 
   public Map<String, String> generateStubs(GroovyFile file) {
@@ -155,23 +133,6 @@ public class GroovyToJavaGenerator {
       generateClassStub(GrClassSubstitutor.getSubstitutedClass(typeDefinition), packageDefinition, output);
     }
     return output;
-  }
-
-  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output, VirtualFile src) {
-    final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
-    for (String relativePath : output.keySet()) {
-      final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
-      FileUtil.createIfDoesntExist(stubFile);
-      try {
-        FileUtil.writeToFile(stubFile, output.get(relativePath).getBytes(src.getCharset()));
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      CompilerUtil.refreshIOFile(stubFile);
-      ContainerUtil.addIfNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stubFile), stubs);
-    }
-    return stubs;
   }
 
   private static String getPackageDirectory(@Nullable GrPackageDefinition packageDefinition) {
@@ -596,7 +557,7 @@ public class GroovyToJavaGenerator {
       return method.getText();
     }
 
-    final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), null, Collections.<VirtualFile>emptyList());
+    final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), Collections.<VirtualFile>emptyList(), false);
     final StringBuffer buffer = new StringBuffer();
     if (method instanceof GrConstructor) {
       generator.writeConstructor(buffer, (GrConstructor)method, false, false);
