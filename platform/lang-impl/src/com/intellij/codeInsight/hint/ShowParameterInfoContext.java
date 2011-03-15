@@ -124,14 +124,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false, hintHint);
-        new ParameterInfoController(project,
-                                    editor,
-                                    elementStart,
-                                    hint,
-                                    handler,
-                                    provider
-                                    );
+        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+        new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
       }
     });
   }
@@ -191,14 +185,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     else {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
-          if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+          if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
         } else if (preferredPosition == HintManager.UNDER) {
-          if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
+          if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
         }
       }
 
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
     }
 
     int underSpace = layeredPane.getHeight() - p1.y;
