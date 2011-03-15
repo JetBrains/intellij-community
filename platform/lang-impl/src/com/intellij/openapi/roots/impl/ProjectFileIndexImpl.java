@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -41,6 +42,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
+  private final ProjectFileExclusionManager myFileExclusionManager;
 
   public ProjectFileIndexImpl(Project project, DirectoryIndex directoryIndex, FileTypeManager fileTypeManager) {
     myProject = project;
@@ -48,6 +50,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     myDirectoryIndex = directoryIndex;
     myFileTypeManager = fileTypeManager;
     myContentFilter = new ContentFilter();
+    myFileExclusionManager = ProjectFileExclusionManager.getInstance(project);
   }
 
   public boolean iterateContent(@NotNull ContentIterator iterator) {
@@ -88,6 +91,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean isIgnored(@NotNull VirtualFile file) {
     if (myFileTypeManager.isFileIgnored(file)) return true;
+    if (myFileExclusionManager.isExcluded(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
@@ -242,6 +246,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
         return info != null && info.module != null;
       }
       else {
+        if (myFileExclusionManager.isExcluded(file)) return false;
         return !myFileTypeManager.isFileIgnored(file);
       }
     }
