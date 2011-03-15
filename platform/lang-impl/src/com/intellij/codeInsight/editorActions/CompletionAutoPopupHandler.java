@@ -73,9 +73,6 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.NoCompletion.getClass())) {
-      if ("peter".equals(System.getProperty("user.name")) && ApplicationManagerEx.getApplicationEx().isInternal()) {
-        System.out.println(CompletionServiceImpl.getCompletionPhase() + " at " + System.currentTimeMillis());
-      }
       return Result.CONTINUE;
     }
 
