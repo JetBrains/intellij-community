@@ -30,6 +30,7 @@
           <root url="jar://$MODULE_DIR$/lib/sdklib.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/androidprefs.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jarutils.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/common.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -37,6 +38,7 @@
           <root url="jar://$MODULE_DIR$/lib/src/sdklib_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/androidprefs_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/jarutils.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>
