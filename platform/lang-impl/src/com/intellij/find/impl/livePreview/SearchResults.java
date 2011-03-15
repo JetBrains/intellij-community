@@ -238,6 +238,9 @@ public class SearchResults {
         myCursor = null;
       }
     }
+    if (myCursor == null && hasMatches()) {
+      setNotFoundState(true);
+    }
   }
 
   @Nullable
