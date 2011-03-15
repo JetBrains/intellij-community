@@ -5,6 +5,8 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -15,6 +17,8 @@ import java.util.ArrayList;
 
 public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.livePreview.LivePreviewControllerBase");
+
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
@@ -22,17 +26,15 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
   private final Alarm myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
   private SearchResults mySearchResults;
   private LivePreview myLivePreview;
-
-  private boolean myToChangeSelection = true;
+  private boolean myReplaceDenied = false;
 
   private void updateSelection() {
     Editor editor = mySearchResults.getEditor();
     SelectionModel selection = editor.getSelectionModel();
     FindModel findModel = mySearchResults.getFindModel();
-    if (myToChangeSelection && findModel != null && findModel.isGlobal()) {
+    if (findModel != null && findModel.isGlobal()) {
       LiveOccurrence cursor = mySearchResults.getCursor();
       if (cursor != null) {
         TextRange range = cursor.getPrimaryRange();
@@ -56,25 +58,25 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
       }
-      myToChangeSelection = false;
     }
   }
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
-    updateSelection();
+    setReplaceDenied(false);
   }
 
   @Override
   public void editorChanged(SearchResults sr, Editor oldEditor) {}
 
   @Override
-  public void cursorMoved() {
-    updateSelection();
+  public void cursorMoved(boolean toChangeSelection) {
+    if (toChangeSelection) {
+      updateSelection();
+    }
   }
 
-  public void moveCursor(SearchResults.Direction direction, boolean toChangeSelection) {
-    myToChangeSelection = toChangeSelection;
+  public void moveCursor(SearchResults.Direction direction) {
     if (direction == SearchResults.Direction.UP) {
       mySearchResults.prevOccurrence();
     } else {
@@ -82,9 +84,31 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     }
   }
 
+  public synchronized boolean isReplaceDenied() {
+    return myReplaceDenied;
+  }
+
+  @SuppressWarnings({"SynchronizeOnThis"})
+  public void setReplaceDenied(final boolean replaceDenied) {
+      boolean changed = replaceDenied != myReplaceDenied;
+      synchronized (LivePreviewControllerBase.this) {
+        myReplaceDenied = replaceDenied;
+      }
+      if (changed && myReplaceListener != null) {
+        if (replaceDenied) {
+          myReplaceListener.replaceDenied();
+        }
+        else {
+          myReplaceListener.replaceAllowed();
+        }
+      }
+  }
+
   public interface ReplaceListener {
     void replacePerformed(LiveOccurrence occurrence, final String replacement, final Editor editor);
     void replaceAllPerformed(Editor e);
+    void replaceDenied();
+    void replaceAllowed();
   }
 
   private ReplaceListener myReplaceListener;
@@ -112,22 +136,31 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     myUserActivityDelay = userActivityDelay;
   }
 
-  public void updateInBackground(final FindModel findModel, boolean allowedToChangedEditorSelection) {
+  public void updateInBackground(final FindModel findModel, final boolean allowedToChangedEditorSelection) {
     myLivePreviewAlarm.cancelAllRequests();
     if (findModel == null) return;
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     Runnable request = new Runnable() {
       @Override
       public void run() {
-        mySearchResults.updateThreadSafe(findModel);
+        Runnable denyReplace = new Runnable() {
+          @Override
+          public void run() {
+            setReplaceDenied(true);
+          }
+        };
+        if (unitTestMode) {
+          denyReplace.run();
+        } else {
+          ApplicationManager.getApplication().invokeAndWait(denyReplace, ModalityState.NON_MODAL);
+        }
+        mySearchResults.updateThreadSafe(findModel, allowedToChangedEditorSelection);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (unitTestMode) {
       request.run();
     } else {
       myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
-    }
-    if (allowedToChangedEditorSelection) {
-      myToChangeSelection = true;
     }
   }
 
@@ -162,7 +195,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Nullable
   @Override
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
-    myToChangeSelection = true;
+    LOG.assertTrue(!myReplaceDenied, "Replace denied");
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;
@@ -177,7 +210,8 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (myReplaceListener != null) {
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }
-    mySearchResults.updateThreadSafe(findModel);
+    setReplaceDenied(true);
+    mySearchResults.updateThreadSafe(findModel, true);
     return result;
   }
 
@@ -187,6 +221,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       FindUtil.replace(e.getProject(), e,
                        mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),
                        mySearchResults.getFindModel(), this);
+      if (myReplaceListener != null) {
+        myReplaceListener.replaceAllPerformed(e);
+      }
     }
   }
 

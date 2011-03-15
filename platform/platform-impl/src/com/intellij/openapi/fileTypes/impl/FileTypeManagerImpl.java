@@ -242,7 +242,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   public FileType getStdFileType(@NotNull @NonNls String name) {
     StandardFileType stdFileType = ourStandardFileTypes.get(name);
-    return stdFileType != null ? stdFileType.fileType : new PlainTextFileType();
+    return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
   @NotNull

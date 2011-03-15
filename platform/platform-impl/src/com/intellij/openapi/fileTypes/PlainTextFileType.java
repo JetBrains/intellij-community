@@ -24,7 +24,7 @@ public class PlainTextFileType extends LanguageFileType {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
 
-  public PlainTextFileType() {
+  private PlainTextFileType() {
     super(PlainTextLanguage.INSTANCE);
   }
 

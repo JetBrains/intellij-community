@@ -30,6 +30,6 @@ public class GitFileTypeFactory extends FileTypeFactory {
    * {@inheritDoc}
    */
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(new PlainTextFileType(), new ExactFileNameMatcher(".gitignore"), new ExactFileNameMatcher(".gitmodules"));
+    consumer.consume(PlainTextFileType.INSTANCE, new ExactFileNameMatcher(".gitignore"), new ExactFileNameMatcher(".gitmodules"));
   }
 }

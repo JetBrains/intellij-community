@@ -3,6 +3,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.EditorComboBox;
 
 import javax.swing.*;
 
@@ -14,10 +15,13 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Utils {
+  private Utils() {
+  }
+
   public static void showCompletionPopup(JComponent toolbarComponent,
                                           final JList list,
                                           String title,
-                                          final JTextField textField) {
+                                          final EditorComboBox textField) {
 
     final Runnable callback = new Runnable() {
       public void run() {
