@@ -23,6 +23,9 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -35,7 +38,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * @author peter
@@ -46,6 +49,15 @@ public class CompletionServiceImpl extends CompletionService{
   private CompletionProgressIndicator myCurrentCompletion;
   private static CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
+
+  public CompletionServiceImpl() {
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        setCompletionPhase(CompletionPhase.NoCompletion);
+      }
+    });
+  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
