@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -128,7 +127,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
     bindToGithub(project, root, gitDetected, settings.getLogin(), name);
     Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
-                                              NotificationType.INFORMATION), NotificationDisplayType.BALLOON_ONLY, null);
+                                              NotificationType.INFORMATION));
   }
 
   private void bindToGithub(final Project project, final VirtualFile root, final boolean gitDetected, final String login, final String name) {
