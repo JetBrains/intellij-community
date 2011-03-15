@@ -46,8 +46,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
-      if (node.getContainedExpression() instanceof PyReferenceExpression
-              || node.getContainedExpression() instanceof PyNumericLiteralExpression) {
+      PyExpression expression = node.getContainedExpression();
+      if (expression instanceof PyReferenceExpression
+              || expression instanceof PyNumericLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();
           if (parent instanceof PyBinaryExpression) {
@@ -59,7 +60,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyReturnStatement && node.getContainedExpression() instanceof PyTupleExpression && myIgnoreTupleInReturn) {
+      else if (node.getParent() instanceof PyReturnStatement && expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
         return;
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
@@ -68,10 +69,18 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
         }
       }
-
+      else if (expression instanceof PyBinaryExpression) {
+        if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD ||
+            ((PyBinaryExpression)expression).getOperator() == PyTokenTypes.OR_KEYWORD) {
+          if (((PyBinaryExpression)expression).getLeftExpression() instanceof PyParenthesizedExpression &&
+            ((PyBinaryExpression)expression).getRightExpression() instanceof PyParenthesizedExpression) {
+            registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+          }
+        }
+      }
     }
   }
-  
+
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);

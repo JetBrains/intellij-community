@@ -174,6 +174,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
 
   }
 
+  public void testRedundantParenthesesBoolean() {  // PY-3095
+    doInspectionTest("RedundantParenthesesBoolean.py", PyRedundantParenthesesInspection.class,
+                          PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
   public void testAugmentAssignment() {  // PY-1415
     doInspectionTest("AugmentAssignment.py", PyAugmentAssignmentInspection.class,
                           PyBundle.message("QFIX.augment.assignment"), true, true);

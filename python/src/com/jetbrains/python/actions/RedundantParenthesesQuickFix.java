@@ -3,14 +3,12 @@ package com.jetbrains.python.actions;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User: catherine
@@ -18,10 +16,6 @@ import java.util.List;
  * QuickFix to remove redundant parentheses from if/while/except statement
  */
 public class RedundantParenthesesQuickFix implements LocalQuickFix {
-
-  public RedundantParenthesesQuickFix() {
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.redundant.parentheses");
@@ -34,12 +28,29 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (element != null && element.isWritable()) {
+    PsiElement binaryExpression = ((PyParenthesizedExpression)element).getContainedExpression();
+    if (binaryExpression instanceof PyBinaryExpression)
+      replaceBinaryExpression((PyBinaryExpression)binaryExpression);
+    else {
       while (element instanceof PyParenthesizedExpression) {
         PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
         if (expression != null) {
           element = element.replace(expression);
         }
+      }
+    }
+  }
+
+  private static void replaceBinaryExpression(PyBinaryExpression element) {
+    PyExpression left = element.getLeftExpression();
+    PyExpression right = element.getRightExpression();
+    if (left instanceof PyParenthesizedExpression &&
+        right instanceof PyParenthesizedExpression) {
+      PyExpression leftContained = ((PyParenthesizedExpression)left).getContainedExpression();
+      PyExpression rightContained = ((PyParenthesizedExpression)right).getContainedExpression();
+      if (leftContained != null && rightContained != null) {
+        left.replace(leftContained);
+        right.replace(rightContained);
       }
     }
   }
