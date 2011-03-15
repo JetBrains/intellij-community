@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
@@ -87,12 +84,29 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
     if (nestedTypes == null) {
       final List<ReferenceType> list = refType.nestedTypes();
-      nestedTypes = new ArrayList<ReferenceType>(list.size());
-      final ClassLoaderReference outerLoader = refType.classLoader();
-      for (ReferenceType type : list) {
-        if (outerLoader == null? type.classLoader() == null : outerLoader.equals(type.classLoader())) {
-          nestedTypes.add(type);
+      final int size = list.size();
+      if (size > 0) {
+        final Set<ReferenceType> candidates = new HashSet<ReferenceType>();
+        final ClassLoaderReference outerLoader = refType.classLoader();
+        for (ReferenceType nested : list) {
+          if (outerLoader == null? nested.classLoader() == null : outerLoader.equals(nested.classLoader())) {
+            candidates.add(nested);
+          }
         }
+
+        if (!candidates.isEmpty()) {
+          // keep only direct nested types
+          final Set<ReferenceType> nested2 = new HashSet<ReferenceType>();
+          for (final ReferenceType candidate : candidates) {
+            nested2.addAll(nestedTypes(candidate));
+          }
+          candidates.removeAll(nested2);
+        }
+        
+        nestedTypes = candidates.isEmpty()? Collections.<ReferenceType>emptyList() : new ArrayList<ReferenceType>(candidates);
+      }
+      else {
+        nestedTypes = Collections.emptyList();
       }
       myNestedClassesCache.put(refType, nestedTypes);
     }
