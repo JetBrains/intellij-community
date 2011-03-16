@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 public class LivePreview extends DocumentAdapter implements ReplacementView.Delegate, SearchResults.SearchResultsListener {
 
@@ -135,7 +136,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     Editor editor = mySearchResults.getEditor();
     if (cursor != null) {
       ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
-      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0));
+      highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.get(0);
       }
@@ -202,20 +203,20 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     if (mySearchResults.getEditor() == null) return;
     for (LiveOccurrence o : mySearchResults.getOccurrences()) {
       for (TextRange textRange : o.getSecondaryRanges()) {
-        highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES);
+        highlightRange(textRange, OTHER_TARGETS_ATTRIBUTES, myHighlighters);
       }
       final TextRange range = o.getPrimaryRange();
 
       TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       
       if (mySearchResults.isExcluded(o)) {
-        highlightRange(range, strikout(attrs));
+        highlightRange(range, strikout(attrs), myHighlighters);
       } else {
         final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
         if (!range.intersects(new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()))) {
-          highlightRange(range, attrs);
-        } else if (!o.equals(mySearchResults.getCursor())) {
-          highlightRange(range, dotted(attrs));
+          highlightRange(range, attrs, myHighlighters);
+        } else {
+          highlightRange(range, dotted(attrs), myHighlighters);
         }
       }
     }
@@ -263,14 +264,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
   }
 
-  private void highlightRange(TextRange textRange, TextAttributes attributes) {
+  private void highlightRange(TextRange textRange, TextAttributes attributes, Collection<RangeHighlighter> highlighters) {
     Project project = mySearchResults.getProject();
     if (!project.isDisposed()) {
       HighlightManager highlightManager = HighlightManager.getInstance(project);
       if (highlightManager != null) {
         highlightManager.addRangeHighlight(mySearchResults.getEditor(),
                                            textRange.getStartOffset(), textRange.getEndOffset(),
-                                           attributes, false, myHighlighters);
+                                           attributes, false, highlighters);
       }
     }
   }
