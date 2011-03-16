@@ -39,7 +39,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     private final ConsoleView myConsole;
     private final JComponent myConsoleComponent;
 
-    public HighlightingOutputConsole(Project project, FileType fileType) {
+    public HighlightingOutputConsole(Project project, @Nullable FileType fileType) {
         super(new BorderLayout());
 
         myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
@@ -50,8 +50,10 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         final EditorEx editorEx = getEditor();
         assert editorEx != null;
 
-        final EditorHighlighter highlighter = ((LanguageFileType)fileType).getEditorHighlighter(project, null, editorEx.getColorsScheme());
-        editorEx.setHighlighter(highlighter);
+        if (fileType != null) {
+          final EditorHighlighter highlighter = ((LanguageFileType)fileType).getEditorHighlighter(project, null, editorEx.getColorsScheme());
+          editorEx.setHighlighter(highlighter);
+        }
     }
 
     @Nullable
