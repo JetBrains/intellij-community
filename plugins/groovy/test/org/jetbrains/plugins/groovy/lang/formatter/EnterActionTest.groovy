@@ -139,7 +139,59 @@ switch(x) {
     <caret>
 }"""
   }
-  
+
+  public void testCaseBeforeReturn() {
+    doTest """
+switch(x) {
+  case 0: <caret>
+    return x
+}""", """
+switch(x) {
+  case 0:
+    <caret>
+    return x
+}"""
+  }
+
+  public void testCaseAfterBreak() {
+    doTest """
+switch(x) {
+  case 0:
+    break<caret>
+}""", """
+switch(x) {
+  case 0:
+    break
+  <caret>
+}"""
+  }
+
+  public void testCaseAfterCall() {
+    doTest """
+switch(x) {
+  case 0:
+    foo()<caret>
+}""", """
+switch(x) {
+  case 0:
+    foo()
+    <caret>
+}"""
+  }
+
+  public void testCaseAfterReturn() {
+    doTest """
+switch(x) {
+  case 0:
+    return 2<caret>
+}""", """
+switch(x) {
+  case 0:
+    return 2
+  <caret>
+}"""
+  }
+
   public void testAlmostBeforeClosingClosureBrace() throws Throwable {
     doTest  """
 def c = { a ->
