@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -146,6 +147,7 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR, "multiply");
     ourOperationsToOperatorNames.put(mDEC, "previous");
     ourOperationsToOperatorNames.put(mINC, "next");
+    ourOperationsToOperatorNames.put(kAS, "asType");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -490,5 +492,23 @@ public class TypesUtil {
 
   public static PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull PsiElement context) {
     return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context.getResolveScope());
+  }
+
+  @Nullable
+  public static PsiType createJavaLangClassType(@Nullable PsiType type,
+                                         Project project,
+                                         GlobalSearchScope resolveScope) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiType result = null;
+    PsiClass javaLangClass = facade.findClass(JAVA_LANG_CLASS, resolveScope);
+    if (javaLangClass != null) {
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], type);
+      }
+      result = facade.getElementFactory().createType(javaLangClass, substitutor);
+    }
+    return result;
   }
 }
