@@ -16,10 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.formatter;
 
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.List;
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ilyas
@@ -85,58 +84,67 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testString5() throws Throwable { doTest(); }
   public void testString6() throws Throwable { doTest(); }
 
-  public void testAfterClosureArrow() throws Throwable {
-    myFixture.configureByText "a.groovy", """
-def c = { a -><caret> }
-"""
+  def doTest(String before, String after) {
+    myFixture.configureByText("a.groovy", before)
     doEnter()
-    myFixture.checkResult """
+    myFixture.checkResult(after, true)
+  }
+
+  public void testAfterClosureArrow() throws Throwable {
+    doTest """
+def c = { a -><caret> }
+""", """
 def c = { a ->
   <caret>
 }
 """
   }
   public void testAfterClosureArrowWithBody() throws Throwable {
-    myFixture.configureByText "a.groovy", """
+    doTest """
 def c = { a -><caret> zzz }
-"""
-    doEnter()
-    myFixture.checkResult """
+""", """
 def c = { a ->
 <caret>  zzz }
 """
   }
   public void testAfterClosureArrowWithBody2() throws Throwable {
-    myFixture.configureByText "a.groovy", """
+    doTest """
 def c = { a -> <caret>zzz }
-"""
-    doEnter()
-    myFixture.checkResult """
+""", """
 def c = { a ->
   <caret>zzz }
-""", true
+"""
   }
 
   public void testBeforeClosingClosureBrace() throws Throwable {
-    myFixture.configureByText "a.groovy", """
+    doTest """
 def c = { a ->
   zzz <caret>}
-"""
-    doEnter()
-    myFixture.checkResult """
+""", """
 def c = { a ->
   zzz 
 <caret>}
 """
   }
+
+  public void testAfterCase() {
+    doTest """
+switch(x) {
+  case 0: return x
+  case 1:<caret>
+}""", """
+switch(x) {
+  case 0: return x
+  case 1:
+    <caret>
+}"""
+  }
   
   public void testAlmostBeforeClosingClosureBrace() throws Throwable {
-    myFixture.configureByText "a.groovy", """
+    doTest  """
 def c = { a ->
   zzz<caret> }
-"""
-    doEnter()
-    myFixture.checkResult """
+""", """
 def c = { a ->
   zzz
 <caret>}
