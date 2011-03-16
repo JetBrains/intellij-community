@@ -44,6 +44,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -64,6 +66,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final Project myProject;
   private RegexpFieldController mySearchRegexpFieldController;
   private RegexpFieldController myReplaceRegexpFieldController;
+  private boolean mySearchFieldConfigured = false;
 
   public Editor getEditor() {
     return myEditor;
@@ -234,7 +237,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     final JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
     mySearchField = createTextField(leadPanel);
-
+    updateHistory(mySearchField);
 
     mySearchField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
 
@@ -445,7 +448,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     FindSettings settings = FindSettings.getInstance();
     String[] recents = textField == mySearchField ?  settings.getRecentFindStrings() : settings.getRecentReplaceStrings();
     if (textField.getEditor().getEditorComponent() != null) {
-      textField.setHistory(recents);
+      textField.setHistory(ArrayUtil.reverseArray(recents));
     }
   }
 
@@ -475,7 +478,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myReplacementPane = createLeadPane();
     myReplaceField = createTextField(myReplacementPane);
     configureTextField(myReplaceField);
-
+    updateHistory(myReplaceField);
     DocumentAdapter replaceFieldListener = new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent event) {
@@ -568,7 +571,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private EditorComboBox createTextField(JPanel leadPanel) {
-    EditorComboBox editorComboBox = new EditorComboBox("", myProject, PlainTextFileType.INSTANCE) {
+    final EditorComboBox editorComboBox = new EditorComboBox("", myProject, PlainTextFileType.INSTANCE) {
       protected void paintBorder(final Graphics g) {
         super.paintBorder(g);
 
@@ -586,21 +589,22 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     searchFieldPane.setMinimumSize(dimension);
     searchFieldPane.setPreferredSize(dimension);
     leadPanel.add(searchFieldPane);
+
+    editorComboBox.addFocusListener(new FocusListener() {
+      public void focusGained(final FocusEvent e) {
+        editorComboBox.repaint();
+      }
+
+      public void focusLost(final FocusEvent e) {
+        editorComboBox.repaint();
+      }
+    });
+    new CloseOnESCAction(this, editorComboBox);
     return editorComboBox;
   }
 
   private void configureTextField(final EditorComboBox searchField) {
-    searchField.addFocusListener(new FocusListener() {
-      public void focusGained(final FocusEvent e) {
-        searchField.repaint();
-      }
-
-      public void focusLost(final FocusEvent e) {
-        searchField.repaint();
-      }
-    });
-    new CloseOnESCAction(this, searchField);
-    updateHistory(searchField);
+    //updateHistory(searchField);
   }
 
   public void setInitialText(final String initialText) {
@@ -679,14 +683,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     mySearchResults.dispose();
     myLivePreview.cleanUp();
     myEditor.setHeaderComponent(null);
-    addTextToRecents(mySearchField);
   }
 
   @Override
   public void addNotify() {
     super.addNotify();
-    configureTextField(mySearchField);
-
+    updateHistory(mySearchField);
+    if (myReplaceField != null) {
+      updateHistory(myReplaceField);
+    }
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
         updateResults(false);
@@ -724,6 +729,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myLivePreview.cleanUp();
     if (myListeningSelection) {
       myEditor.getSelectionModel().removeSelectionListener(this);
+    }
+    addTextToRecents(mySearchField);
+    if (myReplaceField != null) {
+      addTextToRecents(myReplaceField);
     }
   }
 
