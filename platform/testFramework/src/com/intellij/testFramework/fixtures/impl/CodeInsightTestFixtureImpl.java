@@ -503,7 +503,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    new WriteCommandAction(myProjectFixture.getProject()) {
+    new WriteCommandAction(getProject()) {
       @Override
       protected void run(final Result result) throws Exception {
         ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(), getEditor(), action, action.getText());
@@ -604,12 +604,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                             final String newName,
                             final boolean searchInComments,
                             final boolean searchTextOccurrences) {
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+    new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
         if (substitution == null) return;
-        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
+        new RenameProcessor(getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
       }
     }.execute().throwException();
   }
@@ -739,7 +739,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) {
     assertInitialized();
-    final Project project = myProjectFixture.getProject();
+    final Project project = getProject();
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Exception {
@@ -779,7 +779,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public Collection<GutterIconRenderer> findAllGutters(final String filePath) {
     assertInitialized();
-    final Project project = myProjectFixture.getProject();
+    final Project project = getProject();
     final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
     configureByFilesInner(filePath);
 
@@ -944,7 +944,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void checkResultByFile(final String expectedFile, final boolean ignoreTrailingWhitespaces) {
     assertInitialized();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+    new WriteCommandAction.Simple(getProject()) {
 
       @Override
       protected void run() throws Exception {
@@ -957,7 +957,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreTrailingWhitespaces) {
     assertInitialized();
 
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+    new WriteCommandAction.Simple(getProject()) {
 
       @Override
       protected void run() throws Exception {
@@ -1333,7 +1333,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @NotNull
   public List<HighlightInfo> doHighlighting() {
-    final Project project = myProjectFixture.getProject();
+    final Project project = getProject();
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {
@@ -1538,7 +1538,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                            final SelectionAndCaretMarkupLoader loader,
                            String actualText) {
     assertInitialized();
-    Project project = myProjectFixture.getProject();
+    Project project = getProject();
 
     project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (stripTrailingSpaces) {

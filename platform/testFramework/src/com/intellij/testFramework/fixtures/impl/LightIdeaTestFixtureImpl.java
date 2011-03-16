@@ -53,6 +53,16 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     storeSettings();
   }
 
+  @Override
+  public void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    checkForSettingsDamage();
+    LightPlatformTestCase.doTearDown(getProject(), LightPlatformTestCase.getApplication(), true);
+    super.tearDown();
+    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+  }
+
+
   private class MyDataProvider implements DataProvider {
     @Override
     @Nullable
@@ -67,16 +77,6 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
         return null;
       }
     }
-  }
-
-
-  @Override
-  public void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    checkForSettingsDamage();
-    LightPlatformTestCase.doTearDown(getProject(), LightPlatformTestCase.getApplication(), true);
-    super.tearDown();
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
   @Override
