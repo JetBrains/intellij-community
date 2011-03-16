@@ -33,30 +33,28 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 class IntroduceFieldDialog extends DialogWrapper {
 
+
+  static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  static boolean ourLastCbFinalState = false;
 
   private final Project myProject;
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
   private final PsiLocalVariable myLocalVariable;
-  private final boolean myIsCurrentMethodConstructor;
   private final boolean myIsInvokedOnDeclaration;
   private final boolean myWillBeDeclaredStatic;
   private final TypeSelectorManager myTypeSelectorManager;
 
   private NameSuggestionsField myNameField;
 
+  private IntroduceFieldCentralPanel myCentralPanel;
 
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
-  private final InitializerPlaceChooser myInitializerPlaceChooser;
-  private JavaVisibilityPanel myVisibilityPanel;
-  private IntroduceFieldPanel myIntroduceFieldPanel;
 
   public IntroduceFieldDialog(Project project,
                               PsiClass parentClass,
@@ -69,10 +67,11 @@ class IntroduceFieldDialog extends DialogWrapper {
     myProject = project;
     myParentClass = parentClass;
     myInitializerExpression = initializerExpression;
-    myInitializerPlaceChooser = new InitializerPlaceChooser(parentClass, initializerExpression, allowInitInMethod, allowInitInMethodIfAll);
-    myIntroduceFieldPanel = new IntroduceFieldPanel(isInvokedOnDeclaration, occurrencesCount, localVariable);
+    myCentralPanel =
+      new IntroduceFieldCentralPanel(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration,
+                                     willBeDeclaredStatic, occurrencesCount, allowInitInMethod, allowInitInMethodIfAll,
+                                     typeSelectorManager);
     myLocalVariable = localVariable;
-    myIsCurrentMethodConstructor = isCurrentMethodConstructor;
     myIsInvokedOnDeclaration = isInvokedOnDeclaration;
     myWillBeDeclaredStatic = willBeDeclaredStatic;
 
@@ -81,16 +80,8 @@ class IntroduceFieldDialog extends DialogWrapper {
     setTitle(REFACTORING_NAME);
     init();
 
-    initializeControls(initializerExpression);
+    myCentralPanel.initializeControls(initializerExpression);
     updateButtons();
-  }
-
-  private void initializeControls(PsiExpression initializerExpression) {
-    myInitializerPlaceChooser.initializeControls(initializerExpression);
-    myIntroduceFieldPanel.initializeControls(initializerExpression);
-
-    String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    myVisibilityPanel.setVisibility(ourLastVisibility);
   }
 
   public String getEnteredName() {
@@ -99,26 +90,26 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
 
-    return myInitializerPlaceChooser.getInitializerPlace();
+    return myCentralPanel.getInitializerPlace();
   }
 
   @Modifier
   public String getFieldVisibility() {
-    return myVisibilityPanel.getVisibility();
+    return myCentralPanel.getFieldVisibility();
   }
 
   public boolean isReplaceAllOccurrences() {
-    return myIntroduceFieldPanel.isReplaceAllOccurrences();
+    return myCentralPanel.isReplaceAllOccurrences();
 
   }
 
   public boolean isDeleteVariable() {
-    return myIntroduceFieldPanel.isDeleteVariable();
+    return myCentralPanel.isDeleteVariable();
 
   }
 
   public boolean isDeclareFinal() {
-    return myIntroduceFieldPanel.isDeclareFinal();
+    return myCentralPanel.isDeclareFinal();
   }
 
   public PsiType getFieldType() {
@@ -179,7 +170,8 @@ class IntroduceFieldDialog extends DialogWrapper {
     });
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
-    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, createGenerator());
+    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
+                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration));
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -196,66 +188,27 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gbConstraints = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
-
-    final JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BorderLayout());
-
-    JPanel groupPanel = new JPanel(new GridLayout(1, 2));
-
-    final JComponent initializerPlacePanel = myInitializerPlaceChooser.createInitializerPlacePanel();
-    myInitializerPlaceChooser.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        myIntroduceFieldPanel.updateTypeSelector(myTypeSelectorManager);
-        myIntroduceFieldPanel.updateCbFinal(myInitializerPlaceChooser.allowFinal(myWillBeDeclaredStatic, myIsCurrentMethodConstructor));
-      }
-    });
-    groupPanel.add(initializerPlacePanel);
-
-    myVisibilityPanel = new JavaVisibilityPanel(false, false);
-    groupPanel.add(myVisibilityPanel);
-
-    mainPanel.add(groupPanel, BorderLayout.CENTER);
-
-    final ItemListener itemListener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (myIntroduceFieldPanel.hasOccurrences()) {
-          myInitializerPlaceChooser.updateInitializerPlace(myIntroduceFieldPanel.isReplaceAllOccurrences());
-        }
-        myIntroduceFieldPanel.updateTypeSelector(myTypeSelectorManager);
-        myNameField.requestFocusInWindow();
-      }
-    };
-    panel.add(mainPanel, gbConstraints);
-    myIntroduceFieldPanel.appendFinalCb(panel, gbConstraints, itemListener);
-    myIntroduceFieldPanel.appendOccurrencesCb(panel, gbConstraints, itemListener);
-    myIntroduceFieldPanel.appendDeleteVariableDeclarationCb(panel, gbConstraints);
-
-    myIntroduceFieldPanel.updateTypeSelector(myTypeSelectorManager);
-    return panel;
+    return myCentralPanel.createCenterPanel();
   }
 
-
-  private NameSuggestionsGenerator createGenerator() {
+  static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
+                                                  final PsiLocalVariable localVariable,
+                                                  final PsiExpression initializerExpression,
+                                                  final boolean isInvokedOnDeclaration) {
     return new NameSuggestionsGenerator() {
-      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(localVariable != null ? localVariable.getProject()
+                                                                                                                     : initializerExpression.getProject());
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-        VariableKind variableKind = myWillBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
+        VariableKind variableKind = willBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
 
         String propertyName = null;
-        if (myIsInvokedOnDeclaration) {
-          propertyName = myCodeStyleManager.variableNameToPropertyName(myLocalVariable.getName(),
-                                                                       VariableKind.LOCAL_VARIABLE
-          );
+        if (isInvokedOnDeclaration) {
+          propertyName = myCodeStyleManager.variableNameToPropertyName(localVariable.getName(), VariableKind.LOCAL_VARIABLE);
         }
-        final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, myInitializerExpression, type);
+        final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, initializerExpression, type);
         final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
-                return new SuggestedNameInfo.Delegate(strings, nameInfo);
+        return new SuggestedNameInfo.Delegate(strings, nameInfo);
       }
-
     };
   }
 
@@ -293,8 +246,8 @@ class IntroduceFieldDialog extends DialogWrapper {
       }
     }
 
-    IntroduceFieldPanel.ourLastCbFinalState = myIntroduceFieldPanel.isFinal();
-    InitializerPlaceChooser.ourLastInitializerPlace = myInitializerPlaceChooser.getInitializerPlace();
+    ourLastCbFinalState = myCentralPanel.isDeclareFinal();
+    ourLastInitializerPlace = myCentralPanel.getInitializerPlace();
     JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
 
     myNameSuggestionsManager.nameSelected();

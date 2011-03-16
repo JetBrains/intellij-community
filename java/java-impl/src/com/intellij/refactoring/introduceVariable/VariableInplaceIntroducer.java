@@ -109,30 +109,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
       myCanBeFinal = new NonFocusableCheckBox("Declare final");
       myCanBeFinal.setSelected(createFinals());
       myCanBeFinal.setMnemonic('f');
-      myCanBeFinal.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(project){
-            @Override
-            protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-              final PsiModifierList modifierList = getVariable().getModifierList();
-              LOG.assertTrue(modifierList != null);
-              final Document document = myEditor.getDocument();
-              final int textOffset = modifierList.getTextOffset();
-              if (myCanBeFinal.isSelected()) {
-                if (StringUtil.isEmptyOrSpaces(document.getText(new TextRange(textOffset - 1, textOffset)))) {
-                  document.insertString(textOffset - 1, "final");
-                } else {
-                  document.insertString(textOffset, "final ");
-                }
-              }
-              else {
-                document.deleteString(textOffset, textOffset + modifierList.getTextLength());
-              }
-            }
-          }.execute();
-        }
-      });
+      myCanBeFinal.addActionListener(new FinalListener(project));
     }
   }
 
@@ -184,6 +161,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
     showBalloon();
     return super.performInplaceRename(processTextOccurrences, nameSuggestions);
+  }
+
+  public RangeMarker getExprMarker() {
+    return myExprMarker;
   }
 
   @Override
@@ -381,5 +362,42 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myBalloon = balloonBuilder.createBalloon();
     myBalloon
       .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
+  }
+
+  public class FinalListener implements ActionListener {
+    private final Project myProject;
+
+    public FinalListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      perform(myCanBeFinal.isSelected());
+    }
+
+    public void perform(final boolean generateFinal) {
+      new WriteCommandAction(myProject){
+        @Override
+        protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+          final PsiVariable variable = getVariable();
+          LOG.assertTrue(variable != null);
+          final PsiModifierList modifierList = variable.getModifierList();
+          LOG.assertTrue(modifierList != null);
+          final int textOffset = modifierList.getTextOffset();
+
+          final Document document = myEditor.getDocument();
+          if (generateFinal) {
+            final PsiTypeElement typeElement = variable.getTypeElement();
+            final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
+            document.insertString(typeOffset, PsiModifier.FINAL + " ");
+          }
+          else {
+            final int idx = modifierList.getText().indexOf(PsiModifier.FINAL);
+            document.deleteString(textOffset + idx, textOffset + idx + PsiModifier.FINAL.length() + 1);
+          }
+        }
+      }.execute();
+    }
   }
 }
