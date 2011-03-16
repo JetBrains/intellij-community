@@ -100,7 +100,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public final void invokeCompletion(final Project project, final Editor editor, int time, boolean hasModifiers) {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    assert psiFile != null;
+    assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
@@ -190,7 +190,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       int offset = editor.getCaretModel().getOffset();
 
-      assert offset > 0;
+      assert offset > 0 : "offset=" + offset;
       PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset - 1);
       if (elementAt == null) {
         elementAt = psiFile.findElementAt(offset - 1);
