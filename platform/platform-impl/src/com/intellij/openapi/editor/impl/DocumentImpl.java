@@ -735,9 +735,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     final WeakReference<EditorHighlighter> editorHighlighterWeakReference = getUserData(ourSomeEditorSyntaxHighlighter);
     final EditorHighlighter someEditorHighlighter = editorHighlighterWeakReference != null ? editorHighlighterWeakReference.get():null;
 
-    if (someEditorHighlighter instanceof LexerEditorHighlighter) {
+    if (someEditorHighlighter instanceof LexerEditorHighlighter &&
+        ((LexerEditorHighlighter)someEditorHighlighter).isValid()
+       ) {
       return someEditorHighlighter;
     }
+    putUserData(ourSomeEditorSyntaxHighlighter, null);
     return null;
   }
 

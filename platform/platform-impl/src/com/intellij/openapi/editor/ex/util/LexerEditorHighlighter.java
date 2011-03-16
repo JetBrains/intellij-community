@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +121,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private int packData(IElementType tokenType, int state) {
     final short idx = tokenType.getIndex();
     return state == myInitialState ? idx : -idx;
+  }
+
+  public boolean isValid() {
+    Project project = myEditor.getProject();
+    return project != null && !project.isDisposed();
   }
 
   private static boolean isInitialState(int data) {
