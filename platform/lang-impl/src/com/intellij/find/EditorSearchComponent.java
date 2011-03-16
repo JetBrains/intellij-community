@@ -234,6 +234,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myProject = project;
     myEditor = editor;
 
+    mySearchResults = new SearchResults(myEditor);
+
     final JPanel leadPanel = createLeadPane();
     add(leadPanel, BorderLayout.WEST);
     mySearchField = createTextField(leadPanel);
@@ -701,7 +703,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myEditor.getDocument().addDocumentListener(myDocumentListener);
     setupSearchFieldListener();
 
-    mySearchResults = new SearchResults(myEditor);
     setMatchesLimit(MATCHES_LIMIT);
 
     myLivePreview = new LivePreview(mySearchResults);
