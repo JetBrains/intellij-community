@@ -29,8 +29,10 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -51,6 +53,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -83,7 +86,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     IN_SETUP_METHOD
   }
 
+  private boolean myIsConstant;
   private PsiClass myParentClass;
+
+  protected BaseExpressionToFieldHandler(boolean isConstant) {
+    myIsConstant = isConstant;
+  }
 
   protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
@@ -95,24 +103,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       LOG.debug("expression:" + selectedExpr);
     }
 
-    myParentClass = getParentClass(selectedExpr);
-    if (myParentClass == null) {
-      if (JspPsiUtil.isInJspFile(file)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
-                                            getRefactoringName(), getHelpID());
-        return false;
-      }
-      else {
-        LOG.assertTrue(false);
-        return false;
-      }
-    }
-
-    if (!validClass(myParentClass, editor)) {
-      return false;
-    }
-
-    PsiType tempType = getTypeByExpression(selectedExpr);
+    final PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
@@ -125,11 +116,55 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
+    myParentClass = getParentClass(selectedExpr);
+    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    PsiClass aClass = myParentClass;
+    while (aClass != null) {
+      classes.add(aClass);
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    }
+    if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
+    }
+    else {
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+                                        "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
+                                        new PsiElementProcessor<PsiClass>() {
+                                          @Override
+                                          public boolean execute(PsiClass aClass) {
+                                            myParentClass = aClass;
+                                            convertExpressionToField(selectedExpr, editor, file, project, tempType);
+                                            return false;
+                                          }
+                                        }).showInBestPositionFor(editor);
+    }
+    return true;
+  }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
+  private boolean convertExpressionToField(PsiExpression selectedExpr,
+                                           Editor editor,
+                                           PsiFile file,
+                                           final Project project,
+                                           PsiType tempType) {
+    if (myParentClass == null) {
+      if (JspPsiUtil.isInJspFile(file)) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
+                                            getRefactoringName(), getHelpID());
+        return true;
+      }
+      else {
+        LOG.assertTrue(false);
+        return true;
+      }
+    }
 
-    final PsiClass parentClass = myParentClass;
-    final OccurenceManager occurenceManager = createOccurenceManager(selectedExpr, parentClass);
+    if (!validClass(myParentClass, editor)) {
+      return true;
+    }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return true;
+
+    final OccurenceManager occurenceManager = createOccurenceManager(selectedExpr, myParentClass);
     final PsiExpression[] occurrences = occurenceManager.getOccurences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
 
@@ -140,13 +175,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
     if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
-        IntroduceVariableBase.checkAnchorBeforeThisOrSuper(project, editor, tempAnchorElement, getRefactoringName(), getHelpID())) return false;
+        IntroduceVariableBase.checkAnchorBeforeThisOrSuper(project, editor, tempAnchorElement, getRefactoringName(), getHelpID()))
+      return true;
 
     final Settings settings =
       showRefactoringDialog(project, editor, myParentClass, selectedExpr, tempType,
                             occurrences, tempAnchorElement, anchorStatementIfAll);
 
-    if (settings == null) return false;
+    if (settings == null) return true;
 
     if (settings.getForcedType() != null) {
       tempType = settings.getForcedType();
@@ -172,8 +208,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         runnable.run();
       }
     }.execute();
-
-    return true;
+    return false;
   }
 
   public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic) {
@@ -251,7 +286,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (element == null) element = initializerExpression.getParent();
     PsiElement parent = element;
     while (parent != null) {
-      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass && myIsConstant)) {
         return (PsiClass)parent;
       }
       parent = parent.getParent();

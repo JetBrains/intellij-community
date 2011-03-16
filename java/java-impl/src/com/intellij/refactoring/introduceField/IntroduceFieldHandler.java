@@ -36,6 +36,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
   private static final MyOccurenceFilter MY_OCCURENCE_FILTER = new MyOccurenceFilter();
 
+  public IntroduceFieldHandler() {
+    super(false);
+  }
+
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }

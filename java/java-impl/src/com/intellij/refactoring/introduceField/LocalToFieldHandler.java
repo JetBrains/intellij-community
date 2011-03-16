@@ -17,6 +17,8 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,16 +27,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
@@ -54,14 +62,12 @@ public abstract class LocalToFieldHandler {
   protected abstract BaseExpressionToFieldHandler.Settings showRefactoringDialog(PsiClass aClass, PsiLocalVariable local, PsiExpression[] occurences, boolean isStatic);
 
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
-    PsiClass aClass;
     boolean tempIsStatic = myIsConstant;
     PsiElement parent = local.getParent();
-
-    while (true) {
-      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
-        aClass = (PsiClass)parent;
-        break;
+    List<PsiClass> classes = new ArrayList<PsiClass>();
+    while (parent != null && parent.getContainingFile() != null) {
+      if (parent instanceof PsiClass && !(myIsConstant && parent instanceof PsiAnonymousClass)) {
+        classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && JspPsiUtil.isInJspFile(parent)) {
         String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
@@ -74,15 +80,31 @@ public abstract class LocalToFieldHandler {
       parent = parent.getParent();
     }
 
-    final boolean isStatic = tempIsStatic;
+    if (classes.isEmpty()) return false;
+    if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      if (convertLocalToField(local, classes.get(0), editor, tempIsStatic)) return false;
+    } else {
+      final boolean isStatic = tempIsStatic;
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
+        @Override
+        public boolean execute(PsiClass aClass) {
+          convertLocalToField(local, aClass, editor, isStatic);
+          return false;
+        }
+      }).showInBestPositionFor(editor);
+    }
 
+    return true;
+  }
+
+  private boolean convertLocalToField(PsiLocalVariable local, PsiClass aClass, Editor editor, boolean isStatic) {
     final PsiExpression[] occurences = CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(local), local);
     if (editor != null) {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
     final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
-    if (settings == null) return false;
+    if (settings == null) return true;
     //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
@@ -100,7 +122,7 @@ public abstract class LocalToFieldHandler {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
     }, REFACTORING_NAME, null);
-    return true;
+    return false;
   }
 
   private static PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {
