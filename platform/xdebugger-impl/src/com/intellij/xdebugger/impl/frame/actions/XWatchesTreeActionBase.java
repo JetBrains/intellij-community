@@ -49,6 +49,16 @@ public abstract class XWatchesTreeActionBase extends AnAction {
     e.getPresentation().setEnabled(enabled);
   }
 
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    final XDebuggerTree tree = XDebuggerTree.getTree(e);
+    if (tree != null) {
+      perform(e, tree);
+    }
+  }
+
+  protected abstract void perform(AnActionEvent e, XDebuggerTree tree);
+
   protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
     return true;
   }

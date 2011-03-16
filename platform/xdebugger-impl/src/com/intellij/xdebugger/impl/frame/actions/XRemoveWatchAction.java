@@ -32,11 +32,8 @@ public class XRemoveWatchAction extends XWatchesTreeActionBase {
     return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
   }
 
-
-  public void actionPerformed(final AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
-    if (tree == null) return;
-
+  @Override
+  protected void perform(AnActionEvent e, XDebuggerTree tree) {
     List<? extends XDebuggerTreeNode> nodes = getSelectedNodes(tree, XDebuggerTreeNode.class);
     XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
     tab.getWatchesView().removeWatches(nodes);

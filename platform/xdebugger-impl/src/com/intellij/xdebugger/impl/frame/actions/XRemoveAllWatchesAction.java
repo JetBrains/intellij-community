@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,23 @@
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class XNewWatchAction extends XWatchesTreeActionBase {
+public class XRemoveAllWatchesAction extends XWatchesTreeActionBase {
+  @Override
+  protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
+    return tree.getRoot().getChildCount() > 0;
+  }
+
   @Override
   protected void perform(AnActionEvent e, XDebuggerTree tree) {
-    XDebuggerTreeNode root = tree.getRoot();
-    if (root instanceof WatchesRootNode) {
-      final WatchesRootNode watchesRoot = (WatchesRootNode)root;
-      watchesRoot.addNewWatch();
-    }
+    XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
+    tab.getWatchesView().removeAllWatches();
   }
 }

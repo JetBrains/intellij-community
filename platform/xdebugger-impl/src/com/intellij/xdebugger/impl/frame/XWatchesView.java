@@ -154,6 +154,11 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     updateSessionData();
   }
 
+  public void removeAllWatches() {
+    myRootNode.removeAllChildren();
+    updateSessionData();
+  }
+
   private void updateSessionData() {
     List<String> watchExpressions = new ArrayList<String>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();

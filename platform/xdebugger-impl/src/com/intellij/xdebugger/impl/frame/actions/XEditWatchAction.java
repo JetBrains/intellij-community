@@ -34,10 +34,8 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
     super.update(e);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
-    if (tree == null) return;
-
+  @Override
+  protected void perform(AnActionEvent e, XDebuggerTree tree) {
     List<? extends WatchNode> watchNodes = getSelectedNodes(tree, WatchNode.class);
     if (watchNodes.size() != 1) return;
 
