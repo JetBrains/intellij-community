@@ -34,8 +34,4 @@ public class XNewWatchAction extends XWatchesTreeActionBase {
       watchesRoot.addNewWatch();
     }
   }
-
-  protected boolean isEnabled(final AnActionEvent e) {
-    return XDebuggerTree.getTree(e) != null;
-  }
 }

@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,10 +28,8 @@ import java.util.List;
  * @author nik
  */
 public class XRemoveWatchAction extends XWatchesTreeActionBase {
-
-  protected boolean isEnabled(final AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
-    return tree != null && !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
+  protected boolean isEnabled(final AnActionEvent e, @NotNull XDebuggerTree tree) {
+    return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
   }
 
 

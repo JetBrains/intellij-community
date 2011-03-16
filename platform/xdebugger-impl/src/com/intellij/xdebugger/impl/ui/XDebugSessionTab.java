@@ -40,7 +40,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -115,17 +114,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return framesContent;
   }
 
-  public XDebugSessionData saveData() {
-    final List<String> watchExpressions = myWatchesView.getWatchExpressions();
-    return new XDebugSessionData(ArrayUtil.toStringArray(watchExpressions));
-  }
-
   public ExecutionConsole getConsole() {
     return myConsole;
-  }
-
-  public String getSessionName() {
-    return mySessionName;
   }
 
   public void rebuildViews() {
@@ -144,7 +134,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final XDebugProcess debugProcess = session.getDebugProcess();
     ProcessHandler processHandler = debugProcess.getProcessHandler();
     myConsole = consoleView;
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), getSessionName());
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), mySessionName);
 
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
@@ -153,7 +143,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
     attachNotificationTo(consoleContent);
 
-    session.getDebugProcess().registerAdditionalContent(myUi);
+    debugProcess.registerAdditionalContent(myUi);
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
     myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
 
@@ -209,7 +199,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final XDebugProcess debugProcess = session.getDebugProcess();
     ProcessHandler processHandler = debugProcess.getProcessHandler();
     myConsole = consoleView;
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), getSessionName());
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), mySessionName);
 
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);

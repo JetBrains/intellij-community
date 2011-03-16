@@ -31,6 +31,10 @@ public class XDebugSessionData {
     this(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
+  public void setWatchExpressions(String[] watchExpressions) {
+    myWatchExpressions = watchExpressions;
+  }
+
   public String[] getWatchExpressions() {
     return myWatchExpressions;
   }
