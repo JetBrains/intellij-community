@@ -74,7 +74,9 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
                                   String name,
                                   @NotNull AndroidFacetConfiguration configuration,
                                   @Nullable Facet underlyingFacet) {
-    setupPlatform(module, configuration);
+    if (configuration.PLATFORM_NAME == null || configuration.PLATFORM_NAME.length() == 0) {
+      setupPlatform(module, configuration);
+    }
 
     return new AndroidFacet(module, name, configuration);
   }
