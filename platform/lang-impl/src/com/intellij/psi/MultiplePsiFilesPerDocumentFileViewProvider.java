@@ -76,6 +76,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     if (file == null) {
       if (isPhysical()) {
         VirtualFile virtualFile = getVirtualFile();
+        if (isIgnored()) return null;
         VirtualFile parent = virtualFile.getParent();
         if (parent != null) {
           getManager().findDirectory(parent);
