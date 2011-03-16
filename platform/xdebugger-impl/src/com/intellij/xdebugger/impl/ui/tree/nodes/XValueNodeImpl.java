@@ -136,7 +136,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-
+  @Nullable
+  public XFullValueEvaluator getFullValueEvaluator() {
+    return myFullValueEvaluator;
+  }
 
   @Override
   public XDebuggerTreeNodeHyperlink getLink() {
