@@ -18,7 +18,10 @@ package org.jetbrains.android.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
@@ -355,5 +358,10 @@ public class AndroidCompileUtil {
       }
     }
     return result.toArray(new String[result.size()]);
+  }
+
+  public static boolean isFullBuild(@NotNull CompileContext context) {
+    RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
+    return !(runConfiguration instanceof JUnitConfiguration);
   }
 }
