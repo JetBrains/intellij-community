@@ -53,19 +53,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MainWatchPanel extends WatchPanel implements DataProvider {
-  private final KeyStroke myRemoveWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-  private final KeyStroke myNewWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
-  private final KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
 
   public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project,stateManager);
     final WatchDebuggerTree watchTree = getWatchTree();
 
     final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
-    removeWatchesAction.registerCustomShortcutSet(new CustomShortcutSet(myRemoveWatchAccelerator), watchTree);
+    removeWatchesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, watchTree);
 
     final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
-    newWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myNewWatchAccelerator), watchTree);
+    newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, watchTree);
 
     final MouseAdapter mouseListener = new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -82,7 +79,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     ListenerUtil.addMouseListener(watchTree, mouseListener);
 
     final AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
-    editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myEditWatchAccelerator), watchTree);
+    editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
     registerDisposable(new Disposable() {
       public void dispose() {
         ListenerUtil.removeMouseListener(watchTree, mouseListener);
