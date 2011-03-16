@@ -177,6 +177,13 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     mySourceFolders.remove(sourceFolder);
   }
 
+  @Override
+  public void clearSourceFolders() {
+    assert !isDisposed();
+    getRootModel().assertWritable();
+    mySourceFolders.clear();
+  }
+
   public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     assert !isDisposed();
     assertCanAddFolder(file);
@@ -202,6 +209,13 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     assert !isDisposed();
     assertCanRemoveFrom(excludeFolder, myExcludeFolders);
     myExcludeFolders.remove(excludeFolder);
+  }
+
+  @Override
+  public void clearExcludeFolders() {
+    assert !isDisposed();
+    getRootModel().assertWritable();
+    myExcludeFolders.clear();
   }
 
   private ExcludeFolder addExcludeFolder(ExcludeFolder f) {

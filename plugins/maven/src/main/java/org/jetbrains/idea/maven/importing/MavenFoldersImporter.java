@@ -80,6 +80,9 @@ public class MavenFoldersImporter {
 
   private void config(boolean updateTargetFoldersOnly) {
     if (!updateTargetFoldersOnly) {
+      if (!myImportingSettings.isKeepSourceFolders()) {
+        myModel.clearSourceFolders();
+      }
       configSourceFolders();
       configOutputFolders();
     }
@@ -90,9 +93,7 @@ public class MavenFoldersImporter {
     List<String> sourceFolders = new ArrayList<String>();
     List<String> testFolders = new ArrayList<String>();
 
-    sourceFolders.addAll(myMavenProject.getSources());
-    testFolders.addAll(myMavenProject.getTestSources());
-
+    // resources go first
     for (MavenResource each : myMavenProject.getResources()) {
       sourceFolders.add(each.getDirectory());
     }
@@ -100,6 +101,11 @@ public class MavenFoldersImporter {
       testFolders.add(each.getDirectory());
     }
 
+    // then sources
+    sourceFolders.addAll(myMavenProject.getSources());
+    testFolders.addAll(myMavenProject.getTestSources());
+
+    // and additional sources
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectSourceFolders(myMavenProject, sourceFolders);
       each.collectTestFolders(myMavenProject, testFolders);

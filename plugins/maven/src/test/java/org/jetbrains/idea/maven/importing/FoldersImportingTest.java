@@ -105,6 +105,69 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertExcludes("project", "target", "userExcludedFolder");
   }
 
+  public void testClearParentAndSubFoldersOfNewlyImportedFolders() throws Exception {
+    createProjectSubDirs("src/main/java", "src/main/resources");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project", "src/main/java", "src/main/resources");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>src</sourceDirectory>" +
+                  "</build>");
+
+    assertSources("project", "src");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project", "src/main/java", "src/main/resources");
+  }
+
+  public void testSourceFoldersOnReimport() throws Exception {
+    createProjectSubDirs("src1", "src2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>src1</sourceDirectory>" +
+                  "</build>");
+
+    assertSources("project", "src1");
+
+    getMavenImporterSettings().setKeepSourceFolders(false);
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>src2</sourceDirectory>" +
+                  "</build>");
+
+    assertSources("project", "src2");
+
+    getMavenImporterSettings().setKeepSourceFolders(true);
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>src1</sourceDirectory>" +
+                  "</build>");
+
+    assertSources("project", "src1", "src2");
+
+  }
+
   public void testCustomSourceFolders() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2");
