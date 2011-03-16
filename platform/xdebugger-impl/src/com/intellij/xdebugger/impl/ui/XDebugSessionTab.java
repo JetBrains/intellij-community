@@ -134,14 +134,72 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
+  public XWatchesView getWatchesView() {
+    return myWatchesView;
+  }
+
   public RunContentDescriptor attachToSession(final @NotNull XDebugSession session, final @Nullable ProgramRunner runner,
                                               final @Nullable ExecutionEnvironment env,
                                               final @NotNull XDebugSessionData sessionData, ConsoleView consoleView) {
-    return initUI(session, sessionData, env, runner, consoleView);
-  }
+    final XDebugProcess debugProcess = session.getDebugProcess();
+    ProcessHandler processHandler = debugProcess.getProcessHandler();
+    myConsole = consoleView;
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), getSessionName());
 
-  public XWatchesView getWatchesView() {
-    return myWatchesView;
+    myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
+    myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
+    myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
+    final Content consoleContent = createConsoleContent();
+    myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
+    attachNotificationTo(consoleContent);
+
+    session.getDebugProcess().registerAdditionalContent(myUi);
+    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+    myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myRunContentDescriptor;
+    }
+
+    DefaultActionGroup leftToolbar = new DefaultActionGroup();
+    final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    if (runner != null && env != null) {
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
+                                                     myRunContentDescriptor, env);
+      leftToolbar.add(restartAction);
+      restartAction.registerShortcut(myUi.getComponent());
+    }
+
+    leftToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+
+    //group.addSeparator();
+    //addAction(group, DebuggerActions.EXPORT_THREADS);
+    leftToolbar.addSeparator();
+
+    leftToolbar.add(myUi.getOptions().getLayoutActions());
+
+    leftToolbar.addSeparator();
+
+    leftToolbar.add(PinToolwindowTabAction.getPinAction());
+    leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
+    leftToolbar.add(new ContextHelpAction(executor.getHelpId()));
+
+    DefaultActionGroup topToolbar = new DefaultActionGroup();
+    topToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+
+    session.getDebugProcess().registerAdditionalActions(leftToolbar, topToolbar);
+    myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
+
+    if (env != null) {
+      final RunProfile runConfiguration = env.getRunProfile();
+      registerFileMatcher(runConfiguration);
+      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler());
+    }
+
+    rebuildViews();
+
+    return myRunContentDescriptor;
   }
 
   private RunContentDescriptor initUI(final @NotNull XDebugSession session, final @NotNull XDebugSessionData sessionData,
