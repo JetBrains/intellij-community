@@ -5,10 +5,12 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -78,6 +80,11 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from function");
     final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
     configuration.setMethodName(pyFunction.getName());
+
+    RunConfiguration conf = findConfiguration(location, pyFunction, 1);
+    if (conf instanceof AbstractPythonTestRunConfiguration) {
+      configuration.setEnvs(((AbstractPythonTestRunConfiguration)conf).getEnvs());
+    }
     if (containingClass != null) {
       configuration.setClassName(containingClass.getName());
       configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_METHOD);
@@ -99,6 +106,10 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
     final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
 
+    RunConfiguration conf = findConfiguration(location, pyClass, 2);
+    if (conf instanceof AbstractPythonTestRunConfiguration) {
+      configuration.setEnvs(((AbstractPythonTestRunConfiguration)conf).getEnvs());
+    }
     configuration.setTestType(
       AbstractPythonTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
@@ -173,6 +184,10 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from file");
     final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
 
+    RunConfiguration conf = findConfiguration(location, pyFile, 3);
+    if (conf instanceof AbstractPythonTestRunConfiguration) {
+      configuration.setEnvs(((AbstractPythonTestRunConfiguration)conf).getEnvs());
+    }
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT);
     if (!setupConfigurationScript(configuration, pyFile)) return null;
 
@@ -214,6 +229,55 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
       for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
         if (configuration.compareSettings((AbstractPythonTestRunConfiguration)existingConfiguration.getConfiguration())) {
           return existingConfiguration;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private RunConfiguration findConfiguration(Location location, PyElement element, int level) {
+    final RunManager runManager = RunManager.getInstance(element.getProject());
+    final RunnerAndConfigurationSettings[] existingConfigurations = runManager.getConfigurationSettings(getConfigurationType());
+
+    RunnerAndConfigurationSettings settings;
+    RunConfiguration configuration;
+    if (level == 1) {                     // target is function
+      PyClass cl = ((PyFunction)element).getContainingClass();
+      if (cl != null)
+        settings = createConfigurationFromClass(location, cl);
+      else
+        settings = createConfigurationFromClass(location, element);
+      configuration = checkSettings(settings, existingConfigurations);
+      if (configuration != null)
+        return configuration;
+    }
+    if (level == 1 || level == 2) {       // target is function or class
+      settings = createConfigurationFromFile(location, element);
+      configuration = checkSettings(settings, existingConfigurations);
+      if (configuration != null)
+        return configuration;
+    }
+    PsiElement e = location.getPsiElement();
+    PsiDirectory dir = e.getContainingFile().getContainingDirectory();
+    if (dir != null) {                  // target is function or class or file
+      PsiLocation<PsiDirectory> l = new PsiLocation<PsiDirectory>(e.getProject(), dir);
+      settings = createConfigurationFromFolder(l);
+      configuration = checkSettings(settings, existingConfigurations);
+      if (configuration != null)
+        return configuration;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static RunConfiguration checkSettings(RunnerAndConfigurationSettings settings,
+                                  RunnerAndConfigurationSettings[] existingConfigurations) {
+    if (settings != null) {
+      final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
+      for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
+        if (configuration.compareSettings((AbstractPythonTestRunConfiguration)existingConfiguration.getConfiguration())) {
+          return existingConfiguration.getConfiguration();
         }
       }
     }
