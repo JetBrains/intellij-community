@@ -389,6 +389,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       return myFile;
     } else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return myList.getSelectedObject();
+    } else if (VcsDataKeys.VCS.is(dataId)) {
+      return myActiveVcs.getKeyInstanceMethod();
     }
     return null;
   }

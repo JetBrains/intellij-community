@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.IllegalStateProxy;
@@ -38,7 +38,9 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -508,21 +510,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * Returns all files for a revision where
-   *
-   * @param revision revision
-   * @param file one of files from revision
-   * @return committed change list from where you can get all committed files
-   * @throws VcsException if VCS does not support such operation
-   *
-   * @since 9.0.2
-   */
-  @Nullable
-  public CommittedChangeList getRevisionChanges(final VcsFileRevision revision, final VirtualFile file) throws VcsException {
-    throw new RevisionChangesNotSupportedException();
-  }
-
-  /**
    * will be useful for Clear Case
    */
   @CalledInAwt
@@ -546,6 +533,23 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public boolean reportsIgnoredDirectories() {
     return true;
+  }
+
+  @Nullable
+  public CommittedChangeList loadRevisions(final VirtualFile vf, final VcsRevisionNumber number) {
+    final CommittedChangeList[] list = new CommittedChangeList[1];
+    final ThrowableRunnable<VcsException> runnable = new ThrowableRunnable<VcsException>() {
+      @Override
+      public void run() throws VcsException {
+        final Pair<CommittedChangeList, FilePath> pair =
+          getCommittedChangesProvider().getOneList(vf, number);
+        if (pair != null) {
+          list[0] = pair.getFirst();
+        }
+      }
+    };
+    final boolean succeded = VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents");
+    return succeded ? list[0] : null;
   }
 }
 

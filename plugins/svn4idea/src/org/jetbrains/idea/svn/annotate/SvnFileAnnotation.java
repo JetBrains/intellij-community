@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
 import java.util.*;
@@ -305,7 +304,7 @@ public class SvnFileAnnotation implements FileAnnotation {
       if (lineNum >= 0 && lineNum < myInfos.size()) {
         SvnFileRevision svnRevision = myRevisionMap.get(getRevision(lineNum));
         if (svnRevision != null) {
-          ShowAllSubmittedFilesAction.showSubmittedFiles(myVcs.getProject(), svnRevision, myFile);        
+          ShowAllAffectedGenericAction.showSubmittedFiles(myVcs.getProject(), svnRevision.getRevisionNumber(), myFile, myVcs.getKeyInstanceMethod());
         }
       }
     }
@@ -369,71 +368,6 @@ public class SvnFileAnnotation implements FileAnnotation {
       if (line >= size()) return -1;
       final LineInfo lineInfo = myMappedLineInfo.get(line);
       return lineInfo == null ? -1 : lineInfo.getRevision();
-    }
-
-    public boolean mergeSourceAvailable(int lineNumber) {
-      return myMergeSourceInfos.containsKey(lineNumber);
-    }
-  }
-  // todo end
-
-  private static class MyInfos {
-    private boolean myShowMergeSource;
-    private final List<LineInfo> myLineInfos;
-    private final Map<Integer, LineInfo> myMergeSourceInfos;
-
-    private MyInfos() {
-      myLineInfos = new ArrayList<LineInfo>();
-      myMergeSourceInfos = new HashMap<Integer, LineInfo>();
-    }
-
-    boolean isShowMergeSource() {
-      return myShowMergeSource;
-    }
-
-    void setShowMergeSource(boolean showMergeSource) {
-      myShowMergeSource = showMergeSource;
-    }
-
-    int size() {
-      return myLineInfos.size();
-    }
-
-    void appendNumberedLineInfo(final int lineNumber, final Date date, final long revision, final String author,
-                               @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
-      if (myLineInfos.size() <= lineNumber) {
-        //myLineInfos.add();
-      }
-    }
-
-    void appendLineInfo(final Date date, final long revision, final String author) {
-      myLineInfos.add(new LineInfo(date, revision, author));
-    }
-
-    void appendLineInfo(final Date date, final long revision, final String author,
-                               @NotNull final Date mergeDate, final long mergeRevision, @NotNull final String mergeAuthor) {
-      myLineInfos.add(new LineInfo(date, revision, author));
-      final int idx = myLineInfos.size() - 1;
-      myMergeSourceInfos.put(idx, new LineInfo(mergeDate, mergeRevision, mergeAuthor));
-    }
-
-    LineInfo get(final int idx) {
-      if (myShowMergeSource) {
-        final LineInfo lineInfo = myMergeSourceInfos.get(idx);
-        if (lineInfo != null) {
-          return lineInfo;
-        }
-      }
-      return myLineInfos.get(idx);
-    }
-
-    AnnotationSource getAnnotationSource(final int line) {
-      return myShowMergeSource ? AnnotationSource.getInstance(myMergeSourceInfos.containsKey(line)) : AnnotationSource.LOCAL;
-    }
-
-    public long originalRevision(final int line) {
-      if (line >= myLineInfos.size()) return -1;
-      return myLineInfos.get(line).getRevision();
     }
 
     public boolean mergeSourceAvailable(int lineNumber) {
