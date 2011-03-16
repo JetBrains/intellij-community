@@ -6,6 +6,7 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.PyImportOptimizer;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,11 @@ public class OptimizeImportsQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) {  // stale PSI
+      return;
+    }
+    final PsiFile file = element.getContainingFile();
     ImportOptimizer optimizer = new PyImportOptimizer();
     final Runnable runnable = optimizer.processFile(file);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
