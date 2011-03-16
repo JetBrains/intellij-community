@@ -39,6 +39,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -134,8 +135,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   @Override
   public MyHistorySession createFromCachedData(Boolean aBoolean,
-                                               List<VcsFileRevision> revisions,
-                                               FilePath filePath,
+                                               @NotNull List<VcsFileRevision> revisions,
+                                               @NotNull FilePath filePath,
                                                VcsRevisionNumber currentRevision) {
     return new MyHistorySession(revisions, filePath, aBoolean, currentRevision);
   }

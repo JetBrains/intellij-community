@@ -41,11 +41,11 @@ public class VcsHistoryCache {
     myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(20, 20);
   }
 
-  public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath, final VcsKey vcsKey, final T session,
-                  @NotNull final VcsCacheableHistorySessionFactory<C,T> factory) {
+  public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
+      @Nullable final FilePath correctedPath, final VcsKey vcsKey, final T session, @NotNull final VcsCacheableHistorySessionFactory<C,T> factory) {
     synchronized (myLock) {
       myHistoryCache.put(new BaseKey(filePath, vcsKey),
-                         new CachedHistory(filePath, session.getRevisionList(), session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session)));
+                         new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(), session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session)));
     }
   }
 
