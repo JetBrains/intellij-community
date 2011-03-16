@@ -255,16 +255,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       CommandProcessor.getInstance().executeCommand(context.project, new Runnable() {
       public void run() {
-        final GrVariable created = ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
+        ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
           public GrVariable compute() {
             return runRefactoring(context, settings);
           }
         });
-
-        if (editor != null && created != null) {
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-          editor.getCaretModel().moveToOffset(created.getNameIdentifierGroovy().getTextOffset());
-        }
       }
     }, getRefactoringName(), null);
 
