@@ -162,7 +162,7 @@
       </grid>
       <component id="6d280" class="javax.swing.JCheckBox" binding="myKeepSourceFoldersCheckBox">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Keep source and test &amp;folders on reimport"/>
