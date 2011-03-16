@@ -1,4 +1,4 @@
-import static org.jetbrains.jps.idea.IdeaProjectLoader.*
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
@@ -31,7 +31,12 @@ target('default': 'The default target') {
     jvmarg (value: "-Didea.platform.prefix=Idea")
     jvmarg (value: "-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")
 
-    commonJvmArgs().each { jvmarg(value: it) }
+    System.getProperties().entrySet().each {
+      if (it.key.startsWith("pass.")) {
+        def trimmed = it.key.substring("pass.".length());
+        jvmarg(value: "-D${trimmed}=${it.value}");
+      };
+    }
 
     if (isDefined("jvm_args")) {
       jvm_args.each { jvmarg(value: it) }

@@ -54,6 +54,15 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    if (reference != null) {
+      final PsiElement refElement = reference.getElement();
+      if (refElement != null && !isEnabledForLanguage(refElement.getLanguage())) {
+        String message = RefactoringBundle
+          .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
+        return;
+      }
+    }
     boolean allowInlineThisOnly = false;
     if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
       if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {

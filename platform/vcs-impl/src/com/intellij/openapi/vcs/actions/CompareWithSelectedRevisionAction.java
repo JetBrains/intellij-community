@@ -118,7 +118,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     final VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
 
-    new VcsHistoryProviderBackgroundableProxy(project, vcsHistoryProvider).createSessionFor(new FilePathImpl(file),
+    new VcsHistoryProviderBackgroundableProxy(project, vcsHistoryProvider, vcs.getDiffProvider()).
+      createSessionFor(vcs.getKeyInstanceMethod(), new FilePathImpl(file),
         new Consumer<VcsHistorySession>() {
           public void consume(VcsHistorySession session) {
             if (session == null) return;

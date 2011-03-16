@@ -86,6 +86,8 @@ public class MoveFilesOrDirectoriesUtil {
     final PsiDirectory targetDirectory = resolveToDirectory(project, targetElement[0]);
     if (targetElement[0] != null && targetDirectory == null) return;
 
+    final PsiElement[] newElements = adjustElements != null ? adjustElements.fun(elements) : elements;
+
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
@@ -96,7 +98,6 @@ public class MoveFilesOrDirectoriesUtil {
             final PsiDirectory targetDirectory = moveDialog != null ? moveDialog.getTargetDirectory() : initialTargetDirectory;
 
             LOG.assertTrue(targetDirectory != null);
-            PsiElement[] newElements = adjustElements != null ? adjustElements.fun(elements) : elements;
             targetElement[0] = targetDirectory;
 
             PsiManager manager = PsiManager.getInstance(project);
@@ -127,7 +128,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
     else {
       final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
-      moveDialog.setData(elements, initialTargetDirectory, "refactoring.moveFile");
+      moveDialog.setData(newElements, initialTargetDirectory, "refactoring.moveFile");
       moveDialog.show();
     }
   }

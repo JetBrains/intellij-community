@@ -54,6 +54,10 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     return myRevisions;
   }
 
+  public void appendRevision(final VcsFileRevision revision) {
+    myRevisions.add(revision);
+  }
+
   /**
    * This method should return actual value for current revision (it can be changed after submit for example)
    * @return current file revision, null if file does not exist anymore
@@ -76,10 +80,6 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     final VcsRevisionNumber newNumber = calcCurrentRevisionNumber();
     setCachedRevision(newNumber);
     return !Comparing.equal(oldValue, newNumber);
-  }
-
-  public boolean allowAsyncRefresh() {
-    return false;
   }
 
   public boolean isContentAvailable(VcsFileRevision revision) {

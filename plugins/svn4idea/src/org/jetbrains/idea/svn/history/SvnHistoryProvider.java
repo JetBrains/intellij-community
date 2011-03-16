@@ -39,6 +39,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -61,7 +62,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class SvnHistoryProvider implements VcsHistoryProvider {
+public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistoryProvider.MyHistorySession> {
   private final SvnVcs myVcs;
 
   public SvnHistoryProvider(SvnVcs vcs) {
@@ -122,12 +123,31 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return new VcsDependentHistoryComponents(columns, listener, addComp);
   }
 
-  private class MyHistorySession extends VcsAbstractHistorySession {
+  @Override
+  public FilePath getUsedFilePath(MyHistorySession session) {
+    return session.getCommittedPath();
+  }
+
+  @Override
+  public Boolean getAddinionallyCachedData(MyHistorySession session) {
+    return session.isSupports15();
+  }
+
+  @Override
+  public MyHistorySession createFromCachedData(Boolean aBoolean,
+                                               @NotNull List<VcsFileRevision> revisions,
+                                               @NotNull FilePath filePath,
+                                               VcsRevisionNumber currentRevision) {
+    return new MyHistorySession(revisions, filePath, aBoolean, currentRevision);
+  }
+
+  class MyHistorySession extends VcsAbstractHistorySession {
     private final FilePath myCommittedPath;
     private final boolean mySupports15;
 
-    private MyHistorySession(final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15) {
-      super(revisions);
+    private MyHistorySession(final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15,
+                             @Nullable final VcsRevisionNumber currentRevision) {
+      super(revisions, currentRevision);
       myCommittedPath = committedPath;
       mySupports15 = supports15;
       shouldBeRefreshed();
@@ -160,7 +180,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
     @Override
     public VcsHistorySession copy() {
-      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15);
+      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber());
     }
   }
 
@@ -170,7 +190,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     final Ref<Boolean> supports15Ref = new Ref<Boolean>();
     final List<VcsFileRevision> revisions = new ArrayList<VcsFileRevision>();
     getRevisionsList(committedPath, supports15Ref, new CollectConsumer<VcsFileRevision>(revisions));
-    return new MyHistorySession(revisions, committedPath, Boolean.TRUE.equals(supports15Ref.get()));
+    return new MyHistorySession(revisions, committedPath, Boolean.TRUE.equals(supports15Ref.get()), null);
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
@@ -178,7 +198,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     final Ref<Boolean> supports15Ref = new Ref<Boolean>();
 
     final MyHistorySession historySession =
-      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(supports15Ref.get()));
+      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(supports15Ref.get()), null);
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
 

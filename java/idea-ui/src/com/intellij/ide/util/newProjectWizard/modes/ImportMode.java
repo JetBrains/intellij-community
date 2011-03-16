@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ImportChooserStep;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,8 @@ import javax.swing.*;
 import java.util.Arrays;
 
 public class ImportMode extends WizardMode {
+  private ProjectImportBuilder myBuilder;
+
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName());
@@ -60,14 +63,25 @@ public class ImportMode extends WizardMode {
   protected StepSequence createSteps(final WizardContext context, final ModulesProvider modulesProvider) {
     final StepSequence stepSequence = new StepSequence(null);
     final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
-    stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));
-    for (ProjectImportProvider provider : providers) {
-      final ModuleWizardStep[] steps = provider.createSteps(context);
-      final StepSequence sequence = new StepSequence(stepSequence);
+    if (providers.length == 1) {
+      myBuilder = providers[0].getBuilder();
+      myBuilder.setUpdate(context.getProject() != null);
+
+      final ModuleWizardStep[] steps = providers[0].createSteps(context);
       for (ModuleWizardStep step : steps) {
-        sequence.addCommonStep(step);
+        stepSequence.addCommonStep(step);
       }
-      stepSequence.addSpecificSteps(provider.getId(), sequence);
+    }
+    else {
+      stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));
+      for (ProjectImportProvider provider : providers) {
+        final ModuleWizardStep[] steps = provider.createSteps(context);
+        final StepSequence sequence = new StepSequence(stepSequence);
+        for (ModuleWizardStep step : steps) {
+          sequence.addCommonStep(step);
+        }
+        stepSequence.addSpecificSteps(provider.getId(), sequence);
+      }
     }
     return stepSequence;
   }
@@ -78,7 +92,7 @@ public class ImportMode extends WizardMode {
 
   @Nullable
   public ProjectBuilder getModuleBuilder() {
-    return null;
+    return myBuilder;
   }
 
   @Nullable

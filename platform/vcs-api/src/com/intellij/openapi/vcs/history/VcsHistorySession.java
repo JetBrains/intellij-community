@@ -24,7 +24,7 @@ public interface VcsHistorySession {
   VcsRevisionNumber getCurrentRevisionNumber();
   boolean isCurrentRevision(VcsRevisionNumber rev);
   boolean shouldBeRefreshed();
-  boolean allowAsyncRefresh();
+
   boolean isContentAvailable(VcsFileRevision revision);
   @Nullable
   HistoryAsTreeProvider getHistoryAsTreeProvider();

@@ -92,10 +92,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object)}
+   */
   public synchronized void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
     addSubtreeToUpdate(new TreeUpdatePass(rootNode).setUpdateStamp(-1));
   }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object)}
+   */
   public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (myReleaseRequested) return;
 
@@ -280,19 +286,20 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     return new ActionCallback.Done();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   */
   public boolean addSubtreeToUpdateByElement(Object element) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("addSubtreeToUpdateByElement:" + element);
-    }
+    return addSubtreeToUpdateByElement(element, false);
+  }
 
+  /**
+   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
+   */
+  public boolean addSubtreeToUpdateByElement(Object element, boolean forceResort) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    if (node != null) {
-      addSubtreeToUpdate(node);
-      return true;
-    }
-    else {
-      return false;
-    }
+    myTreeBuilder.queueUpdateFrom(element, forceResort);
+    return node != null;
   }
 
   public void cancelAllRequests() {

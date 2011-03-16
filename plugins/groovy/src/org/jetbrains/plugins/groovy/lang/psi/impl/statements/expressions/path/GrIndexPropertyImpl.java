@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -57,6 +58,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return result;
   }
 
+  @Nullable
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }
@@ -65,55 +67,71 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrExpression selected = getSelectedExpression();
     PsiType thisType = selected.getType();
 
-    if (thisType != null) {
-      GrArgumentList argList = getArgumentList();
-      if (argList != null) {
-        GrExpression[] arguments = argList.getExpressionArguments();
-        PsiType[] argTypes = new PsiType[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-          PsiType argType = arguments[i].getType();
-          if (argType == null) argType = TypesUtil.getJavaLangObject(argList);
-          argTypes[i] = argType;
-        }
+    if (thisType == null) return null;
 
-        if (thisType instanceof PsiArrayType &&
-            argTypes.length == 1 &&
-            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
-          return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
-        }
-        else if (thisType instanceof GrTupleType &&
-            argTypes.length == 1 &&
-            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
-          PsiType[] types = ((GrTupleType)thisType).getParameters();
-          return types.length == 1 ? types[0] : null;
-        }
+    GrArgumentList argList = getArgumentList();
+    if (argList == null) return null;
 
-        PsiType overloadedOperatorType = null;
-        GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, argTypes);
-        if (candidates.length != 1) {
-          candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, new PsiType[]{
-            new GrTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), getResolveScope())});
-        }
-        if (candidates.length == 1) {
-          final PsiElement element = candidates[0].getElement();
-          if (element instanceof PsiMethod) {
-            overloadedOperatorType = candidates[0].getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
-          }
-        }
+    PsiType[] argTypes = getArgumentTypes(argList);
 
-        PsiType componentType = null;
-        if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP) && argTypes.length == 1) {
-          componentType = TypesUtil
-            .boxPrimitiveType(substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true), getManager(), getResolveScope());
-        }
+    if (isSimpleArrayAccess(thisType, argTypes)) {
+      return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
+    }
 
-        if (overloadedOperatorType != null &&
-            (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, getManager(), getResolveScope()))) {
-          return TypesUtil.boxPrimitiveType(overloadedOperatorType, getManager(), getResolveScope());
-        }
-        return componentType;
+    if (isSimpleTupleAccess(thisType, argTypes)) {
+      PsiType[] types = ((GrTupleType)thisType).getParameters();
+      return types.length == 1 ? types[0] : null;
+    }
+
+    PsiType overloadedOperatorType = null;
+    GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, argTypes);
+    if (candidates.length != 1) {
+      final GrTupleType tupleType = new GrTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), getResolveScope());
+      candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, tupleType);
+    }
+    if (candidates.length == 1) {
+      final PsiElement element = candidates[0].getElement();
+      if (element instanceof PsiMethod) {
+        overloadedOperatorType = candidates[0].getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
       }
     }
-    return null;
+
+    PsiType componentType = extractMapValueType(thisType, argTypes);
+
+    if (overloadedOperatorType != null &&
+        (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, getManager(), getResolveScope()))) {
+      return TypesUtil.boxPrimitiveType(overloadedOperatorType, getManager(), getResolveScope());
+    }
+    return componentType;
+  }
+
+  @Nullable
+  private PsiType extractMapValueType(PsiType thisType, PsiType[] argTypes) {
+    if (argTypes.length != 1 || !InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) return null;
+    final PsiType substituted = substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+    return TypesUtil.boxPrimitiveType(substituted, getManager(), getResolveScope());
+  }
+
+  private boolean isSimpleTupleAccess(PsiType thisType, PsiType[] argTypes) {
+    return thisType instanceof GrTupleType &&
+           argTypes.length == 1 &&
+           TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope());
+  }
+
+  private boolean isSimpleArrayAccess(PsiType thisType, PsiType[] argTypes) {
+    return thisType instanceof PsiArrayType &&
+           argTypes.length == 1 &&
+           TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope());
+  }
+
+  private static PsiType[] getArgumentTypes(GrArgumentList argList) {
+    GrExpression[] arguments = argList.getExpressionArguments();
+    PsiType[] argTypes = new PsiType[arguments.length];
+    for (int i = 0; i < arguments.length; i++) {
+      PsiType argType = arguments[i].getType();
+      if (argType == null) argType = TypesUtil.getJavaLangObject(argList);
+      argTypes[i] = argType;
+    }
+    return argTypes;
   }
 }

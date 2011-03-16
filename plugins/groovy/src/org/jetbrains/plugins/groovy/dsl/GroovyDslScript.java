@@ -15,6 +15,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
@@ -55,12 +56,18 @@ public class GroovyDslScript {
     final FactorTree cache = myMaps.getValue();
     CustomMembersHolder holder = cache.retrieve(place, placeFile, qname);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
-    if (holder == null) {
-      holder = addGdslMembers(descriptor, qname, psiType);
-      cache.cache(descriptor, holder);
-    }
+    try {
+      if (holder == null) {
+        holder = addGdslMembers(descriptor, qname, psiType);
+        cache.cache(descriptor, holder);
+      }
 
-    return holder.processMembers(descriptor, processor, state);
+      return holder.processMembers(descriptor, processor, state);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error("Error while processing dsl script '" + file.getUrl()+ "'", e);
+      return false;
+    }
   }
 
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {

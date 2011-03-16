@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProvider {
+public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession> {
   /**
    * logger instance
    */
@@ -86,6 +86,24 @@ public class GitHistoryProvider implements VcsHistoryProvider {
     return null;
   }
 
+  @Override
+  public FilePath getUsedFilePath(VcsAbstractHistorySession session) {
+    return null;
+  }
+
+  @Override
+  public Boolean getAddinionallyCachedData(VcsAbstractHistorySession session) {
+    return null;
+  }
+
+  @Override
+  public VcsAbstractHistorySession createFromCachedData(Boolean aBoolean,
+                                                        @NotNull List<VcsFileRevision> revisions,
+                                                        @NotNull FilePath filePath,
+                                                        VcsRevisionNumber currentRevision) {
+    return createSession(filePath, revisions, currentRevision);
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -97,11 +115,12 @@ public class GitHistoryProvider implements VcsHistoryProvider {
     } catch (VcsException e) {
       GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
     }
-    return createSession(filePath, revisions);
+    return createSession(filePath, revisions, null);
   }
 
-  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions) {
-    return new VcsAbstractHistorySession(revisions) {
+  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions,
+                                                  @Nullable final VcsRevisionNumber number) {
+    return new VcsAbstractHistorySession(revisions, number) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
@@ -122,13 +141,13 @@ public class GitHistoryProvider implements VcsHistoryProvider {
 
       @Override
       public VcsHistorySession copy() {
-        return createSession(filePath, getRevisionList());
+        return createSession(filePath, getRevisionList(), getCurrentRevisionNumber());
       }
     };
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList());
+    final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
     GitHistoryUtils.history(myProject, path, null, new Consumer<GitFileRevision>() {

@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.projectlevelman.*;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
@@ -104,6 +105,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
   private VcsEventsListenerManagerImpl myVcsEventListenerManager;
 
+  private final VcsHistoryCache myVcsHistoryCache;
+  private MessageBusConnection myConnect;
+  private VcsListener myVcsListener;
+
   public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus) {
     myProject = project;
     myMessageBus = messageBus;
@@ -120,6 +125,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (! myProject.isDefault()) {
       myVcsEventListenerManager = new VcsEventsListenerManagerImpl();
     }
+
+    myVcsHistoryCache = new VcsHistoryCache();
+    myConnect = myMessageBus.connect();
+    myVcsListener = new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        myVcsHistoryCache.clear();
+      }
+    };
+    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
   }
 
   public void initComponent() {
@@ -164,6 +179,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     myMappings.disposeMe();
+    myConnect.disconnect();
     myContentManager = null;
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -733,5 +749,9 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       }
     }
     return result;
+  }
+
+  public VcsHistoryCache getVcsHistoryCache() {
+    return myVcsHistoryCache;
   }
 }

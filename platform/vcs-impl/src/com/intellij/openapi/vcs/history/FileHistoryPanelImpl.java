@@ -166,6 +166,15 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
   };
 
+  public void scheduleRefresh() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        refreshImpl();
+      }
+    });
+  }
+
   private static class AuthorCellRenderer extends DefaultTableCellRenderer {
     private String myTooltipText;
 
