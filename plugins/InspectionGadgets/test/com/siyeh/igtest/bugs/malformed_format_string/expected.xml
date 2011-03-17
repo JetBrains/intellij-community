@@ -58,7 +58,7 @@
 
   <problem>
     <file>MalformedFormatString.java</file>
-    <line>27</line>
+    <line>28</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Malformed format string</problem_class>
     <description>Too few arguments for format string &quot;%2147483640$s&quot; #loc</description>
   </problem>
