@@ -98,7 +98,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : ArrayUtil.toStringArray(noInspectionRoots);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : ArrayUtil.toStringArray(noHighlightingRoots);
 
-    status.errorCount = new int[severityRegistrar.getSeveritiesCount()];
+    status.errorCount = new int[severityRegistrar.getSeverityMaxIndex()];
     status.rootsNumber = roots.length;
     fillDaemonCodeAnalyzerErrorsStatus(status, fillErrorsCount, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
@@ -120,7 +120,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   protected void fillDaemonCodeAnalyzerErrorsStatus(final DaemonCodeAnalyzerStatus status,
                                                     final boolean fillErrorsCount,
                                                     final SeverityRegistrar severityRegistrar) {
-    final int count = severityRegistrar.getSeveritiesCount() - 1;
+    final int count = severityRegistrar.getSeverityMaxIndex() - 1;
     final HighlightSeverity maxPossibleSeverity = severityRegistrar.getSeverityByIndex(count);
     final HighlightSeverity[] maxFoundSeverity = {null};
 
