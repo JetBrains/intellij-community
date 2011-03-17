@@ -40,6 +40,7 @@ public class PydevLanguageConsoleView extends LanguageConsoleViewImpl implements
   public void executeCode(@NotNull String code) {
     getPydevLanguageConsole().addTextToCurrentEditor(PyConsoleIndentUtil.normalize(code));
     myExecuteActionHandler.runExecuteAction(getPydevLanguageConsole());
+    myExecuteActionHandler.finishExecution();
   }
 
   public void flushUIUpdates() {
