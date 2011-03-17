@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.make;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
@@ -44,13 +45,15 @@ public class SourceFileFinder {
   private final Project myProject;
   private final CompileContext myCompileContext;
   private Map<VirtualFile, String> myProjectSourceRoots = null;
+  private final CompilerConfiguration myCompilerConfiguration;
 
   public SourceFileFinder(Project project, CompileContext compileContext) {
     myProject = project;
     myCompileContext = compileContext;
+    myCompilerConfiguration = CompilerConfiguration.getInstance(project);
   }
 
-  public VirtualFile findSourceFile(String qualifiedName, final String srcName) {
+  public VirtualFile findSourceFile(String qualifiedName, final String srcName, boolean checkIfExcludedFromMake) {
     // optimization
     final int dollar = qualifiedName.indexOf('$');
     final String outerQName = (dollar >= 0)? qualifiedName.substring(0, dollar) : qualifiedName;
@@ -58,7 +61,10 @@ public class SourceFileFinder {
     for (PsiClass aClass : classes) {
       final PsiFile file = aClass.getContainingFile();
       if (srcName.equals(file.getName())) {
-        return file.getVirtualFile();
+        final VirtualFile vFile = file.getVirtualFile();
+        if (vFile != null && (!checkIfExcludedFromMake || !myCompilerConfiguration.isExcludedFromCompilation(vFile))) {
+          return vFile;
+        }
       }
     }
 
@@ -85,7 +91,7 @@ public class SourceFileFinder {
         path = virtualFile.getPath() + relativePath;
       }
       VirtualFile file = fs.findFileByPath(path);
-      if (file != null) {
+      if (file != null && (!checkIfExcludedFromMake || !myCompilerConfiguration.isExcludedFromCompilation(virtualFile))) {
         return file;
       }
     }
