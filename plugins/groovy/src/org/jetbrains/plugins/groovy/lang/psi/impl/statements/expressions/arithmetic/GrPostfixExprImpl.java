@@ -17,11 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 
 /**
  * @author ilyas
@@ -34,10 +32,6 @@ public class GrPostfixExprImpl extends GrUnaryExpressionImpl implements GrPostfi
 
   public String toString() {
     return "Postfix expression";
-  }
-
-  public PsiType getType() {
-    return TypesUtil.getTypeForIncOrDecExpression(this);
   }
 
   public void accept(GroovyElementVisitor visitor) {

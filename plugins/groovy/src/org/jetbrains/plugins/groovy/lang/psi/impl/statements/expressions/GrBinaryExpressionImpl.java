@@ -54,11 +54,16 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @Nullable
   public IElementType getOperationTokenType() {
-    final PsiElement child = findChildByType(TokenSets.BINARY_OP_SET);
+    final PsiElement child = getOperationToken();
     if (child == null) return null;
     final ASTNode node = child.getNode();
     assert node != null;
     return node.getElementType();
+  }
+
+  public PsiElement getOperationToken() {
+    final PsiElement child = findChildByType(TokenSets.BINARY_OP_SET);
+    return child;
   }
 
   public void accept(GroovyElementVisitor visitor) {

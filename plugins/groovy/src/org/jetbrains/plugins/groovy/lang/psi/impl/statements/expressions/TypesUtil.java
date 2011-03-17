@@ -345,17 +345,17 @@ public class TypesUtil {
   @Nullable
   public static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
     final GrExpression op = expr.getOperand();
-    if (op != null) {
-      final PsiType opType = op.getType();
-      if (opType != null) {
-        final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY);
-        if (overloaded != null) {
-          return overloaded;
-        }
-        if (isNumericType(opType)) {
-          return opType;
-        }
-      }
+    if (op == null) return null;
+
+    final PsiType opType = op.getType();
+    if (opType == null) return null;
+
+    final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY);
+    if (overloaded != null) {
+      return overloaded;
+    }
+    if (isNumericType(opType)) {
+      return opType;
     }
 
     return null;
