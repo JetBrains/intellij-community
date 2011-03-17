@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
@@ -34,9 +33,6 @@ public class GrPowerExpressionImpl extends GrBinaryExpressionImpl {
     return "Power expression";
   }
 
-  public PsiType getType() {
-    //cannot know the type statically without the knowledge of actual value
-    return getTypeByFQName("java.lang.Number");
-  }
+
 }
 

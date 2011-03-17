@@ -49,14 +49,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -65,6 +60,8 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_SHIFT_SIGN;
 
 /**
  *
@@ -175,16 +172,17 @@ public class PsiImplUtil {
   }
 
   private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
+    final IElementType opToken = binaryExpression.getOperationTokenType();
     if (binaryExpression instanceof GrMultiplicativeExpressionImpl) {
-      return binaryExpression.getOperationTokenType() != mSTAR;
+      return opToken != mSTAR;
     }
     if (binaryExpression instanceof GrAdditiveExpressionImpl) {
-      return binaryExpression.getOperationTokenType() == mMINUS;
+      return opToken == mMINUS;
     }
-    return binaryExpression instanceof GrEqualityExpressionImpl
-        || binaryExpression instanceof GrRegexExpressionImpl
-        || binaryExpression instanceof GrShiftExpressionImpl
-        || binaryExpression instanceof GrPowerExpressionImpl;
+    return RELATIONS.contains(opToken) || opToken == mCOMPARE_TO
+           || opToken == mREGEX_FIND || opToken == mREGEX_MATCH
+           || opToken == COMPOSITE_SHIFT_SIGN
+           || opToken==mSTAR;
   }
 
   @Nullable
@@ -258,25 +256,33 @@ public class PsiImplUtil {
     int priority = 0;
     //if (expr instanceof GrNewExpression) priority = 1;
     if (expr instanceof GrPostfixExpression) priority = 5;
-    if (expr instanceof GrUnaryExpression ||
+    else if (expr instanceof GrUnaryExpression ||
         expr instanceof GrTypeCastExpression) priority = 6;
-    if (expr instanceof GrPowerExpressionImpl) priority = 7;
-    if (expr instanceof GrMultiplicativeExpressionImpl) priority = 8;
-    if (expr instanceof GrAdditiveExpressionImpl) priority = 9;
-    if (expr instanceof GrShiftExpressionImpl) priority = 10;
-    if (expr instanceof GrRangeExpressionImpl) priority = 11;
-    if (expr instanceof GrRelationalExpression) priority = 12;
-    if (expr instanceof GrEqualityExpressionImpl) priority = 13;
-    if (expr instanceof GrRegexExpressionImpl) priority = 14;
-    if (expr instanceof GrAndExpressionImpl) priority = 15;
-    if (expr instanceof GrExclusiveOrExpressionImpl) priority = 16;
-    if (expr instanceof GrInclusiveOrExpressionImpl) priority = 17;
-    if (expr instanceof GrLogicalAndExpressionImpl) priority = 18;
-    if (expr instanceof GrLogicalOrExpressionImpl) priority = 19;
-    if (expr instanceof GrConditionalExpression) priority = 20;
-    if (expr instanceof GrSafeCastExpression) priority = 21;
-    if (expr instanceof GrAssignmentExpression) priority = 22;
-    if (expr instanceof GrApplicationStatement) priority = 23;
+
+    else if (expr instanceof GrRangeExpressionImpl) priority = 11;
+
+    else if (expr instanceof GrBinaryExpression) {
+      final IElementType opToken = ((GrBinaryExpression)expr).getOperationTokenType();
+      LOG.assertTrue(opToken != null, expr.getText());
+
+      if (opToken == mSTAR_STAR) priority = 7;
+      else if (opToken == mSTAR || opToken == mDIV) priority = 8;
+      else if (opToken == mPLUS || opToken == mMINUS) priority = 9;
+      else if (opToken == COMPOSITE_SHIFT_SIGN) priority = 10;
+      else if (RELATIONS.contains(opToken)) priority = 12;
+      else if (opToken == mEQUAL || opToken == mNOT_EQUAL || opToken == mCOMPARE_TO) priority = 13;
+      else if (opToken == mREGEX_FIND || opToken == mREGEX_MATCH) priority = 14;
+      else if (opToken == mBAND) priority = 15;
+      else if (opToken == mBXOR) priority = 16;
+      else if (opToken == mBOR) priority = 17;
+      else if (opToken == mLAND) priority = 18;
+      else if (opToken == mLOR) priority = 19;
+    }
+    else if (expr instanceof GrConditionalExpression) priority = 20;
+    else if (expr instanceof GrSafeCastExpression) priority = 21;
+    else if (expr instanceof GrAssignmentExpression) priority = 22;
+    else if (expr instanceof GrApplicationStatement) priority = 23;
+
     return -priority;
   }
 

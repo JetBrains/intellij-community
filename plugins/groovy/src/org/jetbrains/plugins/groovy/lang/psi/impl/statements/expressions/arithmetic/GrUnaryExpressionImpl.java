@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -39,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -56,8 +54,13 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
       if (opType == null) return null;
 
       IElementType opToken = unary.getOperationTokenType();
-      if (opToken == GroovyTokenTypes.mINC || opToken == GroovyTokenTypes.mDEC) {
-        return TypesUtil.getTypeForIncOrDecExpression(unary);
+
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.multiResolve(false));
+      final PsiElement resolved = resolveResult.getElement();
+      if (resolved instanceof PsiMethod) {
+        final PsiType smartReturnType = PsiUtil.getSmartReturnType((PsiMethod)resolved);
+        final PsiType substituted = resolveResult.getSubstitutor().substitute(smartReturnType);
+        return TypesUtil.boxPrimitiveType(substituted, unary.getManager(), unary.getResolveScope());
       }
 
       if (opToken == GroovyTokenTypes.mBNOT && opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {

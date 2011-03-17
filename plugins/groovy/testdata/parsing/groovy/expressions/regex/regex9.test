@@ -2,7 +2,7 @@
 i = 5
 -----
 Groovy script
-  RegexMatchExpression
+  Logical expression
     Literal
       PsiElement(string)(''bugaga'')
     PsiWhiteSpace(' ')

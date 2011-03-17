@@ -3,7 +3,7 @@ c?f:2
 -----
 Groovy script
   Conditional expression
-    Logical OR expression
+    Logical expression
       Reference expression
         PsiElement(identifier)('a')
       PsiElement(||)('||')

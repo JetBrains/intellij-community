@@ -17,15 +17,33 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
 public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
+
+  private final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Nullable
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl binary) {
+      PsiType lopType = getLeftOperand().getType();
+      if (lopType == null) return null;
+      if (lopType.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
+          lopType.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
+          lopType.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
+          lopType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
+        return getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER);
+      }
+      return null;
+    }
+  };
 
   public GrShiftExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -35,17 +53,8 @@ public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
     return "Shift expression";
   }
 
-  public PsiType getType() {
-    GrExpression lop = getLeftOperand();
-    if (lop == null) return null;
-    PsiType lopType = lop.getType();
-    if (lopType == null) return null;
-    if (lopType.equalsToText("java.lang.Byte") ||
-        lopType.equalsToText("java.lang.Character") ||
-        lopType.equalsToText("java.lang.Short")) {
-      return getTypeByFQName("java.lang.Integer");
-    }
-
-    return lopType;
+  @Override
+  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
+    return TYPE_CALCULATOR;
   }
 }

@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
@@ -36,8 +35,9 @@ public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrR
     super(node);
   }
 
-  public PsiType getType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
+  @Override
+  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
+    return TYPES_CALCULATOR;
   }
 
   public String toString() {
@@ -49,9 +49,9 @@ public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrR
     visitor.visitRangeExpression(this);
   }
 
-  private static final Function<GrRangeExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrRangeExpressionImpl, PsiType>() {
+  private static final Function<GrBinaryExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
     @Override
-    public PsiType fun(GrRangeExpressionImpl range) {
+    public PsiType fun(GrBinaryExpressionImpl range) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(range.getProject());
 
       final GrExpression right = range.getRightOperand();

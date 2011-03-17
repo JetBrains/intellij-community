@@ -17,23 +17,30 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrRegexFindExpressionImpl extends GrRegexExpressionImpl {
+public class GrRegexFindExpressionImpl extends GrBinaryExpressionImpl {
   private static final String MATCHER_FQ_NAME = "java.util.regex.Matcher";
+  private Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl binary) {
+      return binary.getTypeByFQName(MATCHER_FQ_NAME);
+    }
+  };
 
   public GrRegexFindExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public PsiType getType() {
-    return getTypeByFQName(MATCHER_FQ_NAME);
+  @Override
+  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
+    return TYPE_CALCULATOR;
   }
 
   public String toString() {

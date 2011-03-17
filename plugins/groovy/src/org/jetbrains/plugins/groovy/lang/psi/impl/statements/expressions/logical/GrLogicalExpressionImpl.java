@@ -15,20 +15,35 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * author ven
  */
 public class GrLogicalExpressionImpl extends GrBinaryExpressionImpl {
+  private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl binary) {
+      return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_BOOLEAN);
+    }
+  };
+
   public GrLogicalExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public PsiType getType() {
-    return getTypeByFQName("java.lang.Boolean");
+  @Override
+  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
+    return TYPE_CALCULATOR;
+  }
+
+  @Override
+  public String toString() {
+    return "Logical expression";
   }
 }
