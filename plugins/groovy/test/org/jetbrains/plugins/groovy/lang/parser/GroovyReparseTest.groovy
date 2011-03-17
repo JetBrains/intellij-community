@@ -110,5 +110,17 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 """, "foo."
   }
 
+  public void testOpeningParenthesisAtBlockStart() {
+    checkReparse """
+def foo() {
+  <caret>String home
+  simplePlugins.each {
+    layoutPlugin it
+  }
+
+}
+}""", "("
+  }
+
 
 }
