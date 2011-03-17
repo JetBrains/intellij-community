@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -1073,6 +1074,10 @@ public class PsiUtil {
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
+  }
+
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, TokenSet tokenSet) {
+    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
   public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {
