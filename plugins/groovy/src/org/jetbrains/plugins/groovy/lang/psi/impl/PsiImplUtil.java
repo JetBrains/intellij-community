@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -47,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
@@ -56,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,8 +79,6 @@ public class PsiImplUtil {
   public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
-
-    ASTNode parentNode = oldParent.getNode();
 
     if (newExpr instanceof GrApplicationStatement && !(oldExpr instanceof GrApplicationStatement)) {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
@@ -439,4 +440,21 @@ public class PsiImplUtil {
     }
   }
 
+  public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope) {
+    return exprType instanceof PsiArrayType &&
+           argTypes.length == 1 &&
+           TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope);
+  }
+
+  public static GroovyResolveResult getIndexPropertyMethodCandidate(PsiType thisType,
+                                                                    PsiType[] argTypes,
+                                                                    GroovyPsiElement place) {
+    GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", place, argTypes);
+    if (candidates.length != 1) {
+      final GrTupleType tupleType = new GrTupleType(argTypes, JavaPsiFacade.getInstance(place.getProject()), place.getResolveScope());
+      candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", place, tupleType);
+    }
+    if (candidates.length == 1) return candidates[0];
+    return GroovyResolveResult.EMPTY_RESULT;
+  }
 }
