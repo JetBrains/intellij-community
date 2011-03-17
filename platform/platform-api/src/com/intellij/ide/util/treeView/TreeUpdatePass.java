@@ -35,6 +35,8 @@ public class TreeUpdatePass {
 
   private long myAllocation;
 
+  private boolean myUpdateChildren = true;
+
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
     myBefore = before;
@@ -44,6 +46,15 @@ public class TreeUpdatePass {
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node) {
     this(node, null, null);
+  }
+
+  public TreeUpdatePass setUpdateChildren(boolean updateChildren) {
+    myUpdateChildren = updateChildren;
+    return this;
+  }
+
+  public boolean isUpdateChildren() {
+    return myUpdateChildren;
   }
 
   public DefaultMutableTreeNode getNode() {

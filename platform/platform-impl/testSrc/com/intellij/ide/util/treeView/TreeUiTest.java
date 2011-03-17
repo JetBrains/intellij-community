@@ -1488,7 +1488,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xunit\n");
 
-    assertUpdates("");
+    assertUpdates("openapi: update");
   }
 
   public void testToggleIsAlwaysLeaf() throws Exception {
@@ -1937,6 +1937,35 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
 
+  public void testUpdateAlwaysLeaf() throws Exception {
+    myStructure.addLeaf(new NodeElement("openapi"));
+
+    buildStructure(myRoot);
+    buildNode(new NodeElement("intellij"), false);
+    expand(getPath("intellij"));
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -intellij\n" +
+               "   openapi\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    myElementUpdate.clear();
+
+    invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().queueUpdateFrom(new NodeElement("openapi"), false);
+      }
+    });
+    waitBuilderToCome();
+
+    assertUpdates("openapi: update");
+  }
+
   private void assertMove(Runnable updateRoutine) throws Exception {
     buildStructure(myRoot);
 
@@ -2140,6 +2169,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class BgLoadingSyncUpdate extends TreeUiTest {
     public BgLoadingSyncUpdate() {
       super(false, true);
+    }
+
+    @Override
+    public void testClear() throws Exception {
+      super.testClear();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
