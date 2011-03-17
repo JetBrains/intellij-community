@@ -107,6 +107,10 @@ public class LookupManagerImpl extends LookupManager {
                            @NotNull LookupElement[] items,
                            final String prefix,
                            @NotNull final LookupArranger arranger) {
+    for (LookupElement item : items) {
+      assert item != null;
+    }
+
     final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
     lookup.show();
     return lookup;
