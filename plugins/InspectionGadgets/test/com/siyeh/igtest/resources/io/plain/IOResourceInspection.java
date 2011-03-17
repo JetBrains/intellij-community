@@ -106,4 +106,10 @@ public class IOResourceInspection {
         FileInputStream stream = new FileInputStream("xxxx");
         return stream;
     }
+
+    public FileInputsStream automaticResouceManagement() throws IOException {
+        try (FileInputStream in = new FileInputStream("in")) {
+            in.read();
+        }
+    }
 }

@@ -155,7 +155,8 @@ public class IOResourceInspection extends ResourceInspection {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
+            if (parent instanceof PsiReturnStatement ||
+                parent instanceof PsiResourceVariable) {
                 return;
             } else if (parent instanceof PsiExpressionList) {
                 PsiElement grandParent = parent.getParent();
