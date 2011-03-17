@@ -391,4 +391,22 @@ public class IntroduceFieldCentralPanel {
   public void addFinalListener(ItemListener itemListener) {
     myCbFinal.addItemListener(itemListener);
   }
+
+  public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
+    if (myCbReplaceAll != null) {
+      myCbReplaceAll.setSelected(replaceAllOccurrences);
+    }
+  }
+
+  public void setCreateFinal(boolean createFinal) {
+    myCbFinal.setSelected(createFinal);
+  }
+
+  public void setInitializeInFieldDeclaration() {
+    myRbInFieldDeclaration.setSelected(true);
+  }
+
+  public void setVisibility(String visibility) {
+    myVisibilityPanel.setVisibility(visibility);
+  }
 }
