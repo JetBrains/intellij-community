@@ -19,6 +19,7 @@ package org.jetbrains.android.sdk;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.*;
@@ -155,7 +156,7 @@ public class AndroidSdkUtils {
     ProjectJdkTable table = ProjectJdkTable.getInstance();
     String sdkName = SdkConfigurationUtil.createUniqueSdkName(AndroidSdkType.SDK_NAME, Arrays.asList(table.getAllJdks()));
 
-    Sdk sdk = table.createSdk(sdkName, SdkType.findInstance(AndroidSdkType.class));
+    final Sdk sdk = table.createSdk(sdkName, SdkType.findInstance(AndroidSdkType.class));
 
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkPath);
@@ -163,6 +164,12 @@ public class AndroidSdkUtils {
 
     setUpSdk(sdk, null, table.getAllJdks(), target, addRoots);
 
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ProjectJdkTable.getInstance().addJdk(sdk);
+      }
+    });
     return sdk;
   }
 
