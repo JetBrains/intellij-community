@@ -79,6 +79,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private final TIntArrayList myParametersToRemove;
   private final PsiManager myManager;
   private JavaExpressionWrapper myInitializerWrapper;
+  private boolean myHasConflicts;
 
   /**
    * if expressionToSearch is null, search for localVariable
@@ -199,6 +200,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return occurenceManager.getOccurences();
   }
 
+  public boolean hasConflicts() {
+    return myHasConflicts;
+  }
+
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiElement> myResult = new HashSet<PsiElement>();
 
@@ -250,6 +255,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       processor.findConflicts(this, refUsages.get(), conflicts);
     }
 
+    myHasConflicts = !conflicts.isEmpty();
     return showConflicts(conflicts, usagesIn);
   }
 
