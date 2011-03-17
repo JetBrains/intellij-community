@@ -154,7 +154,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   IdeStatusBarImpl(IdeStatusBarImpl master) {
-    setLayout(new BorderLayout());
+    setLayout(new BorderLayout(2, 0));
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel(master == null);
@@ -861,4 +861,3 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 }
-
