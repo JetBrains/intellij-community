@@ -38,6 +38,8 @@ public class ChromeSettingsConfigurable implements Configurable {
   private JPanel myMainPanel;
   private JCheckBox myUseCustomProfileCheckBox;
   private TextFieldWithBrowseButton myUserDataDirField;
+  private JCheckBox myEnableRemoteDebugCheckBox;
+  private JTextField myPortField;
   private final String myDefaultUserDirPath;
 
   public ChromeSettingsConfigurable(@NotNull ChromeSettings settings) {
@@ -51,6 +53,12 @@ public class ChromeSettingsConfigurable implements Configurable {
       }
     });
     myDefaultUserDirPath = getDefaultUserDataPath();
+    myEnableRemoteDebugCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myPortField.setEnabled(myEnableRemoteDebugCheckBox.isSelected());
+      }
+    });
   }
 
   @Override
@@ -60,9 +68,12 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    if (myUseCustomProfileCheckBox.isSelected() != mySettings.isUseCustomProfile()) {
+    if (myEnableRemoteDebugCheckBox.isSelected() != mySettings.isEnableRemoteDebug()
+        || !myPortField.getText().equals(String.valueOf(mySettings.getRemoteShellPort()))
+        || myUseCustomProfileCheckBox.isSelected() != mySettings.isUseCustomProfile()) {
       return true;
     }
+
     String configuredPath = getConfiguredUserDataDirPath();
     String storedPath = mySettings.getUserDataDirectoryPath();
     if (myDefaultUserDirPath.equals(configuredPath) && storedPath == null) return false;
@@ -76,12 +87,23 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   @Override
   public void apply() throws ConfigurationException {
+    try {
+      mySettings.setRemoteShellPort(Integer.parseInt(myPortField.getText()));
+    }
+    catch (NumberFormatException ignored) {
+      throw new ConfigurationException("Port is not integer!");
+    }
     mySettings.setUseCustomProfile(myUseCustomProfileCheckBox.isSelected());
     mySettings.setUserDataDirectoryPath(getConfiguredUserDataDirPath());
+    mySettings.setEnableRemoteDebug(myEnableRemoteDebugCheckBox.isSelected());
   }
 
   @Override
   public void reset() {
+    myEnableRemoteDebugCheckBox.setSelected(mySettings.isEnableRemoteDebug());
+    myPortField.setText(String.valueOf(mySettings.getRemoteShellPort()));
+    myPortField.setEnabled(mySettings.isEnableRemoteDebug());
+
     myUseCustomProfileCheckBox.setSelected(mySettings.isUseCustomProfile());
     myUserDataDirField.setEnabled(mySettings.isUseCustomProfile());
     String path = mySettings.getUserDataDirectoryPath();
