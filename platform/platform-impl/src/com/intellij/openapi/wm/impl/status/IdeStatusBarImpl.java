@@ -762,8 +762,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget.Multiframe, Disposable,
                                                                    UISettingsListener, PropertyChangeListener {
 
-    private static final Icon OUT = IconLoader.getIcon("/general/slideOut.png");
-    private static final Icon IN = IconLoader.getIcon("/general/slideIn.png");
+    private static final Icon OUT = IconLoader.getIcon("/general/slideOut2.png");
+    private static final Icon IN = IconLoader.getIcon("/general/slideIn2.png");
     private StatusBar myStatusBar;
 
     private ToolWindowsWidget() {
