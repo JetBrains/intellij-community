@@ -38,7 +38,7 @@ public class PydevLanguageConsoleView extends LanguageConsoleViewImpl implements
 
   @Override
   public void executeCode(@NotNull String code) {
-    getPydevLanguageConsole().addTextToCurrentEditor(code);
+    getPydevLanguageConsole().addTextToCurrentEditor(PyConsoleIndentUtil.normalize(code));
     myExecuteActionHandler.runExecuteAction(getPydevLanguageConsole());
   }
 
