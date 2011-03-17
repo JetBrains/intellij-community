@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -35,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Iterator;
@@ -51,6 +50,8 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
 
 /**
  * @author ven
@@ -63,44 +64,22 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression, PsiType lType) {
+  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
+    PsiType lType = binaryExpression.getLeftOperand().getType();
     final GrExpression rop = binaryExpression.getRightOperand();
     PsiType rType = rop == null ? null : rop.getType();
     if (lType == null || rType == null) return null;
-    final PsiType result =
-      getLeastUpperBoundForNumericType(lType, rType);
-    if (result != null) return result;
-
-    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
+    return getLeastUpperBoundForNumericType(lType, rType);
   }
 
   @Nullable
   private static PsiType getLeastUpperBoundForNumericType(@NotNull PsiType lType, @NotNull PsiType rType) {
     String lCanonical = lType.getCanonicalText();
     String rCanonical = rType.getCanonicalText();
+    if (JAVA_LANG_FLOAT.equals(lCanonical)) lCanonical = JAVA_LANG_DOUBLE;
+    if (JAVA_LANG_FLOAT.equals(rCanonical)) rCanonical = JAVA_LANG_DOUBLE;
     if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
       return TYPE_TO_RANK.get(lCanonical) > TYPE_TO_RANK.get(rCanonical) ? lType : rType;
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiType getOverloadedOperatorType(PsiType thisType,
-                                                  IElementType tokenType,
-                                                  GroovyPsiElement place,
-                                                  PsiType[] argumentTypes) {
-    return getOverloadedOperatorType(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
-  }
-
-  @Nullable
-  public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName, GroovyPsiElement place, PsiType[] argumentTypes) {
-    final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, operatorName, place, argumentTypes);
-    if (candidates.length == 1) {
-      final PsiElement element = candidates[0].getElement();
-      if (element instanceof PsiMethod) {
-        return boxPrimitiveType(candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element)),
-                                place.getManager(), place.getResolveScope());
-      }
     }
     return null;
   }
@@ -115,8 +94,6 @@ public class TypesUtil {
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
   private static final String NULL = "null";
-  private static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
-  private static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
 
   static {
     ourPrimitiveTypesToClassNames.put(mSTRING_LITERAL, JAVA_LANG_STRING);
@@ -146,6 +123,7 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR, "multiply");
     ourOperationsToOperatorNames.put(mDEC, "previous");
     ourOperationsToOperatorNames.put(mINC, "next");
+    ourOperationsToOperatorNames.put(kAS, "asType");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -340,25 +318,6 @@ public class TypesUtil {
     return result;
   }
 
-  @Nullable
-  public static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
-    final GrExpression op = expr.getOperand();
-    if (op != null) {
-      final PsiType opType = op.getType();
-      if (opType != null) {
-        final PsiType overloaded = getOverloadedOperatorType(opType, expr.getOperationTokenType(), expr, PsiType.EMPTY_ARRAY);
-        if (overloaded != null) {
-          return overloaded;
-        }
-        if (isNumericType(opType)) {
-          return opType;
-        }
-      }
-    }
-
-    return null;
-  }
-
   public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
     return createTypeByFQClassName(fqName, context);
   }
@@ -490,5 +449,23 @@ public class TypesUtil {
 
   public static PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull PsiElement context) {
     return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context.getResolveScope());
+  }
+
+  @Nullable
+  public static PsiType createJavaLangClassType(@Nullable PsiType type,
+                                         Project project,
+                                         GlobalSearchScope resolveScope) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiType result = null;
+    PsiClass javaLangClass = facade.findClass(JAVA_LANG_CLASS, resolveScope);
+    if (javaLangClass != null) {
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], type);
+      }
+      result = facade.getElementFactory().createType(javaLangClass, substitutor);
+    }
+    return result;
   }
 }

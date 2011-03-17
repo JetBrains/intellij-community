@@ -90,7 +90,7 @@ public class VcsHistoryProviderBackgroundableProxy {
                                        @Nullable VcsBackgroundableActions actionKey, boolean canUseCache) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session =
-        myVcsHistoryCache.get(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>) myDelegate);
+        myVcsHistoryCache.getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
       if (session != null) {
         partner.reportCreatedEmptySession(session);
         partner.finished();
@@ -117,7 +117,7 @@ public class VcsHistoryProviderBackgroundableProxy {
           final FilePath correctedPath =
             ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(session);
           myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(),
-                                (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate);
+                                (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate, true);
         }
       });
     } else {
@@ -134,7 +134,7 @@ public class VcsHistoryProviderBackgroundableProxy {
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final VcsHistorySession cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey);
+          final VcsHistorySession cachedSession = myCachesHistory ? getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey) : null;
           if (cachedSession != null) {
             cachedPartner.reportCreatedEmptySession((VcsAbstractHistorySession)cachedSession);
           } else {
@@ -240,7 +240,7 @@ public class VcsHistoryProviderBackgroundableProxy {
           ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(
             (VcsAbstractHistorySession)session);
         myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)((VcsAbstractHistorySession) session).copy(),
-                              (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate);
+                              (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate, true);
       }
       if (myConsumer != null) {
         myConsumer.consume(session);
@@ -256,7 +256,7 @@ public class VcsHistoryProviderBackgroundableProxy {
       pi.setText2("Checking last revision");
     }
     final VcsAbstractHistorySession cached = myVcsHistoryCache
-      .get(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
+      .getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
     if (cached == null) return null;
     final FilePath correctedFilePath =
       ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);

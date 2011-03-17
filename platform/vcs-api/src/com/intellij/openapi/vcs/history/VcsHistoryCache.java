@@ -38,20 +38,38 @@ public class VcsHistoryCache {
 
   public VcsHistoryCache() {
     myLock = new Object();
-    myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(20, 20);
+    myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(10, 10);
   }
 
   public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
-      @Nullable final FilePath correctedPath, final VcsKey vcsKey, final T session, @NotNull final VcsCacheableHistorySessionFactory<C,T> factory) {
+                                                                                @Nullable final FilePath correctedPath,
+                                                                                final VcsKey vcsKey,
+                                                                                final T session,
+                                                                                @NotNull final VcsCacheableHistorySessionFactory<C, T> factory,
+                                                                                boolean isFull) {
     synchronized (myLock) {
       myHistoryCache.put(new BaseKey(filePath, vcsKey),
-                         new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(), session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session)));
+                         new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
+                                           session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
     }
   }
 
   @Nullable
-  public <C extends Serializable, T extends VcsAbstractHistorySession> T get(final FilePath filePath, final VcsKey vcsKey,
-                                                                     @NotNull final VcsCacheableHistorySessionFactory<C,T> factory) {
+  public <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(final FilePath filePath, final VcsKey vcsKey,
+                                                                                 @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
+    synchronized (myLock) {
+      final CachedHistory cachedHistory = myHistoryCache.get(new BaseKey(filePath, vcsKey));
+      if (cachedHistory == null || ! cachedHistory.isIsFull()) {
+        return null;
+      }
+      return factory.createFromCachedData((C) cachedHistory.getCustomData(), cachedHistory.getRevisions(), cachedHistory.getPath(),
+                                          cachedHistory.getCurrentRevision());
+    }
+  }
+
+  @Nullable
+  public <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(final FilePath filePath, final VcsKey vcsKey,
+                                                                                         @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
     synchronized (myLock) {
       final CachedHistory cachedHistory = myHistoryCache.get(new BaseKey(filePath, vcsKey));
       if (cachedHistory == null) {
@@ -117,12 +135,18 @@ public class VcsHistoryCache {
     private final List<VcsFileRevision> myRevisions;
     private final VcsRevisionNumber myCurrentRevision;
     private final Object myCustomData;
+    private final boolean myIsFull;
 
-    public CachedHistory(FilePath path, List<VcsFileRevision> revisions, VcsRevisionNumber currentRevision, Object customData) {
+    public CachedHistory(FilePath path,
+                         List<VcsFileRevision> revisions,
+                         VcsRevisionNumber currentRevision,
+                         Object customData,
+                         boolean isFull) {
       myPath = path;
       myRevisions = revisions;
       myCurrentRevision = currentRevision;
       myCustomData = customData;
+      myIsFull = isFull;
     }
 
     public FilePath getPath() {
@@ -139,6 +163,10 @@ public class VcsHistoryCache {
 
     public Object getCustomData() {
       return myCustomData;
+    }
+
+    public boolean isIsFull() {
+      return myIsFull;
     }
   }
 }

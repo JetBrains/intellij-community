@@ -39,6 +39,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
+  private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
@@ -91,6 +92,14 @@ public class MavenImportingSettings implements Cloneable {
     fireCreateModuleForAggregatorsChanged();
   }
 
+  public boolean isKeepSourceFolders() {
+    return keepSourceFolders;
+  }
+
+  public void setKeepSourceFolders(boolean keepSourceFolders) {
+    this.keepSourceFolders = keepSourceFolders;
+  }
+
   public boolean isUseMavenOutput() {
     return useMavenOutput;
   }
@@ -136,6 +145,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
+    if (keepSourceFolders != that.keepSourceFolders) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (updateFoldersOnImportPhase != null
@@ -154,6 +164,7 @@ public class MavenImportingSettings implements Cloneable {
     result = 31 * result + (importAutomatically ? 1 : 0);
     result = 31 * result + (createModulesForAggregators ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
+    result = 31 * result + (keepSourceFolders ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
     result = 31 * result + (downloadSourcesAutomatically ? 1 : 0);

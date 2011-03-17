@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
@@ -32,20 +32,12 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
  */
 public class RelationalExpression implements GroovyElementTypes {
 
-  private static final TokenSet RELATIONS = TokenSet.create(
-          mLT,
-          mGT,
-          mLE,
-          mGE,
-          kIN
-  );
-
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     if (ShiftExpression.parse(builder, parser)) {
-      if (ParserUtils.getToken(builder, RELATIONS) || getCompositeSign(builder)) {
+      if (ParserUtils.getToken(builder, TokenSets.RELATIONS) || getCompositeSign(builder)) {
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder, parser);
         marker.done(RELATIONAL_EXPRESSION);

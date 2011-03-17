@@ -35,7 +35,14 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -121,15 +128,33 @@ public class GroovyBlock implements Block, GroovyElementTypes {
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return getAttributesByParent();
-  }
-
-  private ChildAttributes getAttributesByParent() {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
     if (psiParent instanceof GroovyFileBase) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
+    if (psiParent instanceof GrSwitchStatement) {
+      List<Block> subBlocks = getSubBlocks();
+      if (newChildIndex > 0) {
+        Block block = subBlocks.get(newChildIndex - 1);
+        if (block instanceof GroovyBlock) {
+          PsiElement anchorPsi = ((GroovyBlock)block).getNode().getPsi();
+          if (anchorPsi instanceof GrCaseSection) {
+            for (GrStatement statement : ((GrCaseSection)anchorPsi).getStatements()) {
+              if (statement instanceof GrBreakStatement ||
+                  statement instanceof GrContinueStatement ||
+                  statement instanceof GrReturnStatement ||
+                  statement instanceof GrThrowStatement) {
+                return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(anchorPsi), null);
+              }
+            }
+            int indentSize = mySettings.getAdditionalIndentOptions(anchorPsi.getContainingFile().getFileType()).INDENT_SIZE;
+            return new ChildAttributes(Indent.getSpaceIndent(mySettings.INDENT_CASE_FROM_SWITCH ? 2 * indentSize : indentSize), null);
+          }
+        }
+      }
+    }
+
     if (BLOCK_SET.contains(astNode.getElementType()) ||
         SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);

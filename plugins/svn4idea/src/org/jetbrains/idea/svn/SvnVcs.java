@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -60,7 +59,6 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
@@ -68,7 +66,10 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
-import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
+import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -1051,11 +1052,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean isVcsBackgroundOperationsAllowed(VirtualFile root) {
     return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root));
-  }
-
-  @Override
-  public CommittedChangeList getRevisionChanges(VcsFileRevision revision, VirtualFile file) throws VcsException {
-    return ShowAllSubmittedFilesAction.loadRevisions(getProject(), (SvnFileRevision)revision, file, false);
   }
 
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {

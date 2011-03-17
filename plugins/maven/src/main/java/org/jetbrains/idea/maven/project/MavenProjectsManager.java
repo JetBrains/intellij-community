@@ -169,6 +169,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
     synchronized (isInitialized) {
       if (isInitialized.getAndSet(true)) return;
 
+      if (isNew) {
+        getImportingSettings().setKeepSourceFolders(false);
+      }
+
       initProjectsTree(!isNew);
 
       initWorkers();

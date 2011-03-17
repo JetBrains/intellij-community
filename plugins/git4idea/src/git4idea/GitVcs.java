@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -51,7 +50,6 @@ import git4idea.annotate.GitAnnotationProvider;
 import git4idea.branch.GitBranchWidget;
 import git4idea.branch.GitBranches;
 import git4idea.changes.GitChangeProvider;
-import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -561,13 +559,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
-  }
-
-  @Override
-  public CommittedChangeList getRevisionChanges(final VcsFileRevision revision, final VirtualFile file) throws VcsException {
-    final Project project = getProject();
-    final VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-    return GitChangeUtils.getRevisionChanges(project, vcsRoot, revision.getRevisionNumber().asString(), false);
   }
 
   public boolean isActivated() {

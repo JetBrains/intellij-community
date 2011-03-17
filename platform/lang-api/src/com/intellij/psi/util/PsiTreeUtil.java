@@ -200,13 +200,15 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element, @NotNull final Class<T> aClass) {
-    return findChildOfType(element, aClass, true);
+    //noinspection unchecked
+    return findChildOfAnyType(element, true, aClass);
   }
 
   @Nullable
   public static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element,
                                                          @NotNull final Class<T> aClass,
                                                          final boolean strict) {
+    //noinspection unchecked
     return findChildOfAnyType(element, strict, aClass);
   }
 
@@ -215,6 +217,15 @@ public class PsiTreeUtil {
     return findChildOfAnyType(element, true, classes);
   }
 
+  /**
+   * Recursive (depth first) search for first element of any of given {@code classes}.
+   *
+   * @param element a PSI element to start search from.
+   * @param strict  if false the {@code element} is also included in the search.
+   * @param classes element types to search for.
+   * @param <T>     type to cast found element to.
+   * @return first found element, or null if nothing found.
+   */
   @Nullable
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element,
                                                             final boolean strict,
@@ -235,6 +246,14 @@ public class PsiTreeUtil {
     return (T)processor.getFoundElement();
   }
 
+  /**
+   * Non-recursive search for element of type T amongst given {@code element} children.
+   *
+   * @param element a PSI element to start search from.
+   * @param aClass  element type to search for.
+   * @param <T>     element type to search for.
+   * @return first found element, or null if nothing found.
+   */
   @Nullable
   public static <T extends PsiElement> T getChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
@@ -284,8 +303,10 @@ public class PsiTreeUtil {
   }
 
   private static boolean instanceOf(final PsiElement child, final Class<?>... classes) {
-    for (final Class<?> each : classes) {
-      if (each.isInstance(child)) return true;
+    if (classes != null) {
+      for (final Class<?> each : classes) {
+        if (each.isInstance(child)) return true;
+      }
     }
     return false;
   }

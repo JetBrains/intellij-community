@@ -100,12 +100,20 @@ public class MavenRootModelAdapter {
     return myRootModel.getModule();
   }
 
+  public void clearSourceFolders() {
+    for (ContentEntry each : myRootModel.getContentEntries()) {
+      each.clearSourceFolders();
+    }
+  }
+
   public void addSourceFolder(String path, boolean testSource) {
     if (!exists(path)) return;
 
     Url url = toUrl(path);
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
+    unregisterAll(path, true, true
+    );
     unregisterAll(path, false, true);
     e.addSourceFolder(url.getUrl(), testSource);
   }

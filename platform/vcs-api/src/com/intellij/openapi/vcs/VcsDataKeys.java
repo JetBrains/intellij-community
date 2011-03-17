@@ -34,6 +34,7 @@ import java.util.List;
 public interface VcsDataKeys {
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
   DataKey<File> IO_FILE = DataKey.create("IO_FILE");
+  DataKey<VcsKey> VCS = DataKey.create("VCS");
   DataKey<VcsFileRevision> VCS_FILE_REVISION = DataKey.create("VCS_FILE_REVISION");
   DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create("VCS_FILE_REVISIONS");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");

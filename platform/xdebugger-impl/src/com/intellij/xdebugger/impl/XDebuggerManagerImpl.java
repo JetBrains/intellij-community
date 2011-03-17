@@ -62,7 +62,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
-  private final Map<ProcessHandler, XDebugSessionData> mySessionData;
+  private final Map<RunContentDescriptor, XDebugSessionData> mySessionData;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private XDebugSessionImpl myActiveSession;
@@ -70,7 +70,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
-    mySessionData = new LinkedHashMap<ProcessHandler, XDebugSessionData>();
+    mySessionData = new HashMap<RunContentDescriptor, XDebugSessionData>();
     mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
     messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
@@ -99,6 +99,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
       @Override
       public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          mySessionData.remove(descriptor);
           XDebugSessionImpl session = mySessions.remove(descriptor.getProcessHandler());
           if (session != null) {
             Disposer.dispose(session.getSessionTab());
@@ -172,7 +173,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
                                      final XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
 
-    XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.remove(contentToReuse.getProcessHandler()) : null;
+    XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.get(contentToReuse) : null;
     if (oldSessionData == null) {
       oldSessionData = new XDebugSessionData();
     }
@@ -184,10 +185,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public void removeSession(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
-    mySessions.remove(session);
+    mySessions.remove(session.getDebugProcess().getProcessHandler());
     if (sessionTab != null) {
-      XDebugSessionData data = sessionTab.saveData();
-      mySessionData.put(session.getDebugProcess().getProcessHandler(), data);
+      mySessionData.put(sessionTab.getRunContentDescriptor(), session.getSessionData());
     }
     if (myActiveSession == session) {
       myActiveSession = null;

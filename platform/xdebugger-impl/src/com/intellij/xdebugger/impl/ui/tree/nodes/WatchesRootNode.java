@@ -139,6 +139,12 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     fireNodeChildrenChanged();
   }
 
+  public void removeAllChildren() {
+    myChildren.clear();
+    myLoadedChildren = null;
+    fireNodeChildrenChanged();
+  }
+
   public void addNewWatch() {
     editWatch(null);
   }

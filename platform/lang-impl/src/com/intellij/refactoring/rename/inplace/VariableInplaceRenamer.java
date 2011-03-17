@@ -144,12 +144,7 @@ public class VariableInplaceRenamer {
 
     ourRenamersStack.push(this);
 
-    PsiElement scope = null;
-    final SearchScope searchScope = myElementToRename.getManager().getSearchHelper().getUseScope(myElementToRename);
-    if (searchScope instanceof LocalSearchScope) {
-      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-      scope = PsiTreeUtil.findCommonParent(elements);
-    }
+    PsiElement scope = checkLocalScope();
 
     if (scope == null) {
       return false; // Should have valid local search scope for inplace rename
@@ -171,6 +166,17 @@ public class VariableInplaceRenamer {
 
     myEditor.putUserData(INPLACE_RENAMER, this);
     return true;
+  }
+
+  @Nullable
+  protected PsiElement checkLocalScope() {
+    final SearchScope searchScope = myElementToRename.getManager().getSearchHelper().getUseScope(myElementToRename);
+    if (searchScope instanceof LocalSearchScope) {
+      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      return PsiTreeUtil.findCommonParent(elements);
+    }
+
+    return null;
   }
 
   protected boolean appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages) {

@@ -80,6 +80,9 @@ public class MavenFoldersImporter {
 
   private void config(boolean updateTargetFoldersOnly) {
     if (!updateTargetFoldersOnly) {
+      if (!myImportingSettings.isKeepSourceFolders()) {
+        myModel.clearSourceFolders();
+      }
       configSourceFolders();
       configOutputFolders();
     }
@@ -90,9 +93,7 @@ public class MavenFoldersImporter {
     List<String> sourceFolders = new ArrayList<String>();
     List<String> testFolders = new ArrayList<String>();
 
-    sourceFolders.addAll(myMavenProject.getSources());
-    testFolders.addAll(myMavenProject.getTestSources());
-
+    // resources go first
     for (MavenResource each : myMavenProject.getResources()) {
       sourceFolders.add(each.getDirectory());
     }
@@ -100,16 +101,23 @@ public class MavenFoldersImporter {
       testFolders.add(each.getDirectory());
     }
 
+    // then plugin-provided sources (can override resources )
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectSourceFolders(myMavenProject, sourceFolders);
       each.collectTestFolders(myMavenProject, testFolders);
     }
 
-    for (String each : sourceFolders) {
-      myModel.addSourceFolder(each, false);
-    }
+    // and sources (can override resources and plugin-defined sources)
+    sourceFolders.addAll(myMavenProject.getSources());
+    testFolders.addAll(myMavenProject.getTestSources());
+
+    // first add test folders
     for (String each : testFolders) {
       myModel.addSourceFolder(each, true);
+    }
+    // when source folders (can override test folders)
+    for (String each : sourceFolders) {
+      myModel.addSourceFolder(each, false);
     }
   }
 

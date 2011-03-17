@@ -157,7 +157,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
 
           if (descriptor != null) {
-            ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
+            ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
               processHandler.startNotify();

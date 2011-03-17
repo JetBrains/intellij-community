@@ -18,6 +18,7 @@ package com.intellij.internal.statistic.persistence;
 
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -40,7 +41,7 @@ import java.util.Set;
   storages = {
     @Storage(
       id = "usages",
-      file = "$APP_CONFIG$/usages.statistics.xml"
+      file = "$APP_CONFIG$/usage.statistics.xml"
     )}
 )
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
@@ -65,6 +66,9 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public UsageStatisticsPersistenceComponent() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      isShowNotification = false;
+    }
   }
 
   public void loadState(final Element element) {
@@ -93,7 +97,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) ? true : Boolean.parseBoolean(isShowNotificationValue));
 
-    setPeriod(parsePeriod(element.getAttributeValue(SHOW_NOTIFICATION_ATTR)));
+    setPeriod(parsePeriod(element.getAttributeValue(PERIOD_ATTR)));
   }
 
   public Element getState() {

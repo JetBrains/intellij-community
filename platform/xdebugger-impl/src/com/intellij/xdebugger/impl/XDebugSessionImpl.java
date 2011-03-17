@@ -226,6 +226,10 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.sessionInitialized();
   }
 
+  public XDebugSessionData getSessionData() {
+    return mySessionData;
+  }
+
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
     Set<XBreakpoint<?>> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
     Set<XBreakpointType<?, ?>> breakpointTypes = new HashSet<XBreakpointType<?, ?>>();

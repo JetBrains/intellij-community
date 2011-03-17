@@ -2,8 +2,8 @@
 a==5
 -----
 Groovy script
-  Equality expression
-    Equality expression
+  Relational expression
+    Relational expression
       Literal
         PsiElement(Integer)('27')
       PsiElement(<=>)('<=>')

@@ -176,9 +176,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myKeymapListener.stopListen();
       myKeymapListener = null;
     }
-    else {
-      LOG.error("already disposed");
-    }
     if (myBuilder != null) {
       Disposer.dispose(myBuilder);
     }

@@ -27,7 +27,7 @@ Groovy script
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
-        Equality expression
+        Relational expression
           Literal
             PsiElement(Integer)('1')
           PsiWhiteSpace(' ')
@@ -45,7 +45,7 @@ Groovy script
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
-        Equality expression
+        Relational expression
           Literal
             PsiElement(Integer)('2')
           PsiWhiteSpace(' ')
@@ -63,7 +63,7 @@ Groovy script
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
-        Equality expression
+        Relational expression
           Literal
             PsiElement(string)(''x1'')
           PsiWhiteSpace(' ')

@@ -1,7 +1,7 @@
 'bugaga' ==~ /abc \${do "def ${a+b}} fgh$st ${frg./sdf/(5)} /
 -----
 Groovy script
-  RegexMatchExpression
+  Logical expression
     Literal
       PsiElement(string)(''bugaga'')
     PsiWhiteSpace(' ')

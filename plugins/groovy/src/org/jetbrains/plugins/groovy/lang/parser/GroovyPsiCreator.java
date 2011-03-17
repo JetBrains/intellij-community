@@ -40,22 +40,17 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClau
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrBitwiseExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringInjectionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexFindExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexMatchExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrBuiltinTypeClassExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
@@ -203,14 +198,17 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
     if (elem.equals(ELVIS_EXPRESSION)) return new GrElvisExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExpressionImpl(node);
-    if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExpressionImpl(node);
-    if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExpressionImpl(node);
-    if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExpressionImpl(node);
-    if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrInclusiveOrExpressionImpl(node);
-    if (elem.equals(AND_EXPRESSION)) return new GrAndExpressionImpl(node);
-    if (elem.equals(REGEX_MATCH_EXPRESSION)) return new GrRegexMatchExpressionImpl(node);
+
+    if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalExpressionImpl(node);
+    if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalExpressionImpl(node);
+
+    if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrBitwiseExpressionImpl(node);
+    if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrBitwiseExpressionImpl(node);
+    if (elem.equals(AND_EXPRESSION)) return new GrBitwiseExpressionImpl(node);
+
+    if (elem.equals(REGEX_MATCH_EXPRESSION)) return new GrLogicalExpressionImpl(node);
     if (elem.equals(REGEX_FIND_EXPRESSION)) return new GrRegexFindExpressionImpl(node);
-    if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExpressionImpl(node);
+    if (elem.equals(EQUALITY_EXPRESSION)) return new GrRelationalExpressionImpl(node);
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExpressionImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExpressionImpl(node);
     if (elem.equals(RANGE_EXPRESSION)) return new GrRangeExpressionImpl(node);

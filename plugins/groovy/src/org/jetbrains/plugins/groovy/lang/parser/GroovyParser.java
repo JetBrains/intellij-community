@@ -201,66 +201,22 @@ public class GroovyParser implements PsiParser {
     }
   }
 
-  /**
-   * Parses list of statements after case label(s)
-   *
-   * @param builder
-   */
   public void parseSwitchCaseList(PsiBuilder builder) {
-
-    if (GroovyTokenTypes.kCASE.equals(builder.getTokenType()) ||
-        GroovyTokenTypes.kDEFAULT.equals(builder.getTokenType()) ||
-        GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) {
-      return;
-    }
-
     if (!parseStatement(builder, false) && !parseExtendedStatement(builder)) {
       builder.error(GroovyBundle.message("wrong.statement"));
       return;
     }
 
-    while (parseExtendedStatement(builder)) {
-      if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-    }
-    if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-      Separators.parse(builder);
-    }
-
-    if (GroovyTokenTypes.kCASE.equals(builder.getTokenType()) ||
-        GroovyTokenTypes.kDEFAULT.equals(builder.getTokenType()) ||
-        GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) {
-      return;
-    }
-    boolean result = parseStatement(builder, false);
-    while (result && (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) ||
-           parseExtendedStatement(builder)) {
-
-      if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-      while (parseExtendedStatement(builder)) {
-        if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-          Separators.parse(builder);
-        }
-      }
-      if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-        Separators.parse(builder);
-      }
-
-      if (GroovyTokenTypes.kCASE.equals(builder.getTokenType()) ||
-          GroovyTokenTypes.kDEFAULT.equals(builder.getTokenType()) ||
-          GroovyTokenTypes.mRCURLY.equals(builder.getTokenType())) {
+    while (true) {
+      while (ParserUtils.getToken(builder, mSEMI)) {}
+      PsiBuilder.Marker beforeSeparators = builder.mark();
+      ParserUtils.getToken(builder, mNLS);
+      if (builder.getTokenType() == kCASE || builder.getTokenType() == kDEFAULT || !parseStatement(builder, false) && !parseExtendedStatement(builder)) {
+        beforeSeparators.rollbackTo();
         break;
       }
-
-      result = parseStatement(builder, false);
-      if (!isExtendedSeparator(builder.getTokenType())) {
-        cleanAfterError(builder, false);
-      }
+      beforeSeparators.drop();
     }
-    Separators.parse(builder);
   }
 
   //gsp directives, scriptlets and such

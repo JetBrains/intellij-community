@@ -17,19 +17,68 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
 public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements GrBinaryExpression {
+
+  private static final ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl> RESOLVER =
+    new ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl>() {
+      @Override
+      public GroovyResolveResult[] resolve(GrBinaryExpressionImpl binary, boolean incompleteCode) {
+        final IElementType opType = binary.getOperationTokenType();
+        if (opType == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+        final PsiType lType = binary.getLeftOperand().getType();
+        if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+        final GrExpression rightOperand = binary.getRightOperand();
+        PsiType rType = rightOperand == null ? null : rightOperand.getType();
+        return TypesUtil.getOverloadedOperatorCandidates(lType, opType, binary, new PsiType[]{rType});
+      }
+    };
+
+  private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Nullable
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl binary) {
+      final Function<GrBinaryExpressionImpl, PsiType> typeCalculator = binary.getTypeCalculator();
+      if (typeCalculator != null) {
+        final PsiType result = typeCalculator.fun(binary);
+        if (result != null) return result;
+      }
+
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(binary.multiResolve(false));
+      final PsiElement resolved = resolveResult.getElement();
+      if (resolved instanceof PsiMethod) {
+        final PsiType returnType = PsiUtil.getSmartReturnType((PsiMethod)resolved);
+        final PsiType substituted = resolveResult.getSubstitutor().substitute(returnType);
+        return TypesUtil.boxPrimitiveType(substituted, binary.getManager(), binary.getResolveScope());
+      }
+      return null;
+    }
+  };
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -54,14 +103,94 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @Nullable
   public IElementType getOperationTokenType() {
-    final PsiElement child = findChildByType(TokenSets.BINARY_OP_SET);
+    final PsiElement child = getOperationToken();
     if (child == null) return null;
     final ASTNode node = child.getNode();
     assert node != null;
     return node.getElementType();
   }
 
+  @Nullable
+  public PsiElement getOperationToken() {
+    return findChildByType(TokenSets.BINARY_OP_SET);
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitBinaryExpression(this);
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    return (GroovyResolveResult[])getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incompleteCode);
+  }
+
+  @Override
+  public PsiType getType() {
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
+  }
+
+  @Nullable
+  protected Function<GrBinaryExpressionImpl,PsiType> getTypeCalculator() {
+    return null;
+  }
+
+  @Override
+  public PsiElement getElement() {
+    return this;
+  }
+
+  @Override
+  public TextRange getRangeInElement() {
+    final PsiElement token = getOperationToken();
+    assert token != null;
+    final int offset = token.getStartOffsetInParent();
+    return new TextRange(offset, offset + token.getTextLength());
+  }
+
+  @Override
+  public PsiElement resolve() {
+    return PsiImplUtil.extractUniqueElement(multiResolve(false));
+  }
+
+  @NotNull
+  @Override
+  public String getCanonicalText() {
+    return getText();
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    throw new IncorrectOperationException("binary expression cannot be renamed");
+  }
+
+  @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new IncorrectOperationException("binary expression cannot be bound to anything");
+  }
+
+  @Override
+  public boolean isReferenceTo(PsiElement element) {
+    return getManager().areElementsEquivalent(resolve(), element);
+  }
+
+  @NotNull
+  @Override
+  public Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    final PsiElement token = getOperationToken();
+    if (token != null) {
+      return this;
+    }
+    return null;
   }
 }

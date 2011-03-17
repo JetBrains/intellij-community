@@ -178,7 +178,9 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void dragExit(DropTargetEvent dte) {
     try {
-      myComponentTree.setDropTargetComponent(null);
+      if (myComponentTree != null) {
+        myComponentTree.setDropTargetComponent(null);
+      }
       myUseDragDelta = false;
       if (myDraggedComponentList != null) {
         cancelDrag();
@@ -196,7 +198,9 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void drop(final DropTargetDropEvent dtde) {
     try {
-      myComponentTree.setDropTargetComponent(null);
+      if (myComponentTree != null) {
+        myComponentTree.setDropTargetComponent(null);
+      }
 
 
       final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());

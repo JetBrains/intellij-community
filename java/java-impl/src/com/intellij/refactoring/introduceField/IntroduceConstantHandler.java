@@ -44,6 +44,10 @@ import java.util.ArrayList;
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
 
+  public IntroduceConstantHandler() {
+    super(true);
+  }
+
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
   }

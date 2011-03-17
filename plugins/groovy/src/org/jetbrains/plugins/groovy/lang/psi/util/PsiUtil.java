@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -196,67 +197,59 @@ public class PsiUtil {
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrCall) {
-      List<PsiType> result = new ArrayList<PsiType>();
       GrCall call = (GrCall)parent;
-
       GrNamedArgument[] namedArgs = call.getNamedArguments();
-      if (namedArgs.length > 0) {
-        result.add(createMapType(place.getResolveScope()));
-      }
-
       GrExpression[] expressions = call.getExpressionArguments();
-      for (GrExpression expression : expressions) {
-        PsiType type = expression.getType();
-        if (type == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(call));
-        } else {
-          result.add(type);
-        }
-        if (stopAt == expression) {
-          return result.toArray(new PsiType[result.size()]);
-        }
-      }
-
       GrClosableBlock[] closures = call.getClosureArguments();
-      for (GrClosableBlock closure : closures) {
-        PsiType closureType = closure.getType();
-        if (closureType != null) {
-          result.add(closureType);
-        }
-        if (stopAt == closure) {
-          break;
-        }
-      }
 
-      return result.toArray(new PsiType[result.size()]);
-
+      return getArgumentTypes(namedArgs, expressions, closures, nullAsBottom, stopAt);
     }
     else if (parent instanceof GrAnonymousClassDefinition) {
       final GrArgumentList argList = ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
-      List<PsiType> result = new ArrayList<PsiType>();
-
-      GrNamedArgument[] namedArgs = argList.getNamedArguments();
-      if (namedArgs.length > 0) {
-        result.add(createMapType(place.getResolveScope()));
-      }
-
-      GrExpression[] expressions = argList.getExpressionArguments();
-      for (GrExpression expression : expressions) {
-        PsiType type = expression.getType();
-        if (type == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
-        } else {
-          result.add(type);
-        }
-        if (stopAt == expression) {
-          break;
-        }
-      }
-
-      return result.toArray(new PsiType[result.size()]);
+      return getArgumentTypes(argList, nullAsBottom, stopAt);
     }
 
     return null;
+  }
+
+  public static PsiType[] getArgumentTypes(GrArgumentList argList, boolean nullAsBottom, @Nullable GrExpression stopAt) {
+    return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom,
+                            stopAt);
+  }
+
+  private static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
+                                            GrExpression[] expressions,
+                                            GrClosableBlock[] closures,
+                                            boolean nullAsBottom, GrExpression stopAt) {
+    List<PsiType> result = new ArrayList<PsiType>();
+
+    if (namedArgs.length > 0) {
+      result.add(createMapType(namedArgs[0].getResolveScope()));
+    }
+
+    for (GrExpression expression : expressions) {
+      PsiType type = expression.getType();
+      if (type == null) {
+        result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(expression));
+      } else {
+        result.add(type);
+      }
+      if (stopAt == expression) {
+        return result.toArray(new PsiType[result.size()]);
+      }
+    }
+
+    for (GrClosableBlock closure : closures) {
+      PsiType closureType = closure.getType();
+      if (closureType != null) {
+        result.add(closureType);
+      }
+      if (stopAt == closure) {
+        break;
+      }
+    }
+
+    return result.toArray(new PsiType[result.size()]);
   }
 
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope) {
@@ -1073,6 +1066,10 @@ public class PsiUtil {
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
+  }
+
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, TokenSet tokenSet) {
+    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
   public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {

@@ -69,7 +69,7 @@ public class NativeFileIconProvider implements FileIconProvider {
         }
         Icon icon;
         try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
-          assert !ApplicationManager.getApplication().isReadAccessAllowed();
+          assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
           icon = SwingComponentHolder.ourFileChooser.getIcon(f);
         }
         catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174

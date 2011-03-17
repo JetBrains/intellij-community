@@ -30,11 +30,8 @@ public class StatisticsNotificationManager {
 
   private static String getText() {
     return
-      "<html>Please click <a href='allow'>Agree</a> if you want to help make "+ ApplicationNamesInfo.getInstance().getFullProductName() +
-      " better or <a href='decline'>Don't agree</a> otherwise." +
-      "<br/>" +
-      "You can customize settings on <a href='settings'>IDE Settings -> Usage Statistics</a> pane" +
-      "</html>";
+      "<html>Please click <a href='allow'>I agree</a> if you want to help make "+ ApplicationNamesInfo.getInstance().getFullProductName() +
+      " better or <a href='decline'>I don't agree</a> otherwise. <a href='settings'>more...</a></html>";
   }
 
   private static String getTitle() {

@@ -14,33 +14,21 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrEqualityExpressionImpl extends GrBinaryExpressionImpl {
-
-  public GrEqualityExpressionImpl(@NotNull ASTNode node) {
+public class GrBitwiseExpressionImpl extends GrBinaryExpressionImpl {
+  public GrBitwiseExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Equality expression";
-  }
-
-  public PsiType getType() {
-    if (GroovyTokenTypes.mCOMPARE_TO.equals(getOperationTokenType())) {
-      return getTypeByFQName("java.lang.Integer");
-    }
-    return getTypeByFQName("java.lang.Boolean");
+    return "Bitwise expression";
   }
 }

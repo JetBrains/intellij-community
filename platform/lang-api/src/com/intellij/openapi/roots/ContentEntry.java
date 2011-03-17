@@ -111,6 +111,8 @@ public interface ContentEntry extends Synthetic {
    */
   void removeSourceFolder(@NotNull SourceFolder sourceFolder);
 
+  void clearSourceFolders();
+
   /**
    * Adds an exclude root under the content root.
    *
@@ -133,4 +135,6 @@ public interface ContentEntry extends Synthetic {
    * @param excludeFolder the exclude root to remove (must belong to this content root).
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
+
+  void clearExcludeFolders();
 }
