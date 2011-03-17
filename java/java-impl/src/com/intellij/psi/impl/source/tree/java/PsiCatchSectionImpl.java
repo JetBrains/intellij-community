@@ -15,24 +15,35 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.*;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatchSection, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
+
+  private CachedValue<List<PsiType>> myTypesCache = null;
 
   public PsiCatchSectionImpl() {
     super(CATCH_SECTION);
@@ -50,6 +61,85 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     PsiParameter parameter = getParameter();
     if (parameter == null) return null;
     return parameter.getType();
+  }
+
+  @NotNull
+  public List<PsiType> getPreciseCatchTypes() {
+    final PsiParameter parameter = getParameter();
+    if (parameter == null) return Collections.emptyList();
+
+    return getTypesCache().getValue();
+  }
+
+  private synchronized CachedValue<List<PsiType>> getTypesCache() {
+    if (myTypesCache == null) {
+      final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
+      myTypesCache = cacheManager.createCachedValue(new CachedValueProvider<List<PsiType>>() {
+          @Override public Result<List<PsiType>> compute() {
+            final List<PsiType> types = computePreciseCatchTypes(getParameter());
+            return Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+        }, false);
+    }
+    return myTypesCache;
+  }
+
+  private List<PsiType> computePreciseCatchTypes(final PsiParameter parameter) {
+    final PsiType declaredType = parameter.getType();
+
+    // When the thrown expression is a ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
+    final LanguageLevel level = PsiUtil.getLanguageLevel(parameter);
+    if (level.isAtLeast(LanguageLevel.JDK_1_7)) {
+      if (isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+        final PsiCodeBlock tryBlock = getTryStatement().getTryBlock();
+        if (tryBlock != null) {
+          // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
+          final List<PsiClassType> thrownTypes = ExceptionUtil.getThrownExceptions(tryBlock);
+          // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
+          //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
+          final PsiParameter[] parameters = getTryStatement().getCatchBlockParameters();
+          final List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
+            @Override public PsiType fun(final PsiClassType thrownType) {
+              for (int i = 0; i < parameters.length && parameters[i] != parameter && thrownTypes.size() > 0; i++) {
+                final PsiType catchType = parameters[i].getType();
+                if (catchType.isAssignableFrom(thrownType)) return null;
+              }
+              return thrownType;
+            }
+          });
+          // ... and T is assignable to Ej ...
+          boolean passed = true;
+          for (PsiType type : uncaughtTypes) {
+            if (!declaredType.isAssignableFrom(type)) {
+              passed = false;
+              break;
+            }
+          }
+          // ... the throw statement throws precisely the set of exception types T.
+          if (passed) return uncaughtTypes;
+        }
+      }
+    }
+
+    return Arrays.asList(declaredType);
+  }
+
+  // do not use control flow here to avoid dead loop
+  private static boolean isCatchParameterEffectivelyFinal(final PsiParameter parameter, final PsiCodeBlock catchBlock) {
+    final boolean[] result = {true};
+    if (catchBlock != null) {
+      catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+          final PsiExpression left = expression.getLExpression();
+          if (left instanceof PsiReferenceExpression && parameter.equals(((PsiReferenceExpression)left).resolve())) {
+            result[0] = false;
+            stopWalking();
+          }
+        }
+      });
+    }
+    return result[0];
   }
 
   @NotNull

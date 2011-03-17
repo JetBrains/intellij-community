@@ -18,6 +18,8 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Represents a single <code>catch</code> section of a Java <code>try ... catch</code> statement.
  *
@@ -52,6 +54,16 @@ public interface PsiCatchSection extends PsiElement {
    */
   @Nullable
   PsiType getCatchType();
+
+  /**
+   * For language level 7 or higher returns the list of possible types for its parameter re-throw
+   * (as defined in Project Coin/JSR 334 section "Multi-catch and more precise rethrow").
+   * Otherwise, returns parameter's declared type.
+   *
+   * @return the types, or empty list if the section is incomplete.
+   */
+  @NotNull
+  List<PsiType> getPreciseCatchTypes();
 
   /**
    * Returns the <code>try</code> statement to which the catch section is attached.
