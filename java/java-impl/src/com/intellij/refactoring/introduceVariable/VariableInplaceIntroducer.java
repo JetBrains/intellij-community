@@ -378,6 +378,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     }
 
     public void perform(final boolean generateFinal) {
+      perform(generateFinal, PsiModifier.FINAL);
+    }
+
+    public void perform(final boolean generateFinal, final String modifier) {
       new WriteCommandAction(myProject){
         @Override
         protected void run(com.intellij.openapi.application.Result result) throws Throwable {
@@ -391,11 +395,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           if (generateFinal) {
             final PsiTypeElement typeElement = variable.getTypeElement();
             final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
-            document.insertString(typeOffset, PsiModifier.FINAL + " ");
+            document.insertString(typeOffset, modifier + " ");
           }
           else {
-            final int idx = modifierList.getText().indexOf(PsiModifier.FINAL);
-            document.deleteString(textOffset + idx, textOffset + idx + PsiModifier.FINAL.length() + 1);
+            final int idx = modifierList.getText().indexOf(modifier);
+            document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
           }
         }
       }.execute();

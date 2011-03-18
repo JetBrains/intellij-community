@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -28,7 +29,7 @@ import java.util.Collection;
  */
 public class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(final PsiElement element) {
-    return element instanceof PsiClass;
+    return element instanceof PsiClass && !(element instanceof PsiAnonymousClass);
   }
 
   public String getOptionName() {
