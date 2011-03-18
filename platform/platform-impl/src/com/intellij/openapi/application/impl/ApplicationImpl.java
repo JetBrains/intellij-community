@@ -106,8 +106,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile int myExitCode = 0;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"}) private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger(
-    System.getProperty("dump.threads.on.long.write.action.waiting"), 0);
+  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
+  private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
