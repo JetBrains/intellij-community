@@ -64,7 +64,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   /**
    * Fake parent suite for all tests and suites
    */
-  private final SMTestProxy myTestsRootNode;
+  private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private SMTRunnerTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
 
@@ -108,7 +108,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
-    myTestsRootNode = new SMTestProxy("[root]", true, null);
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy();
 
     // Fire selection changed and move focus on SHIFT+ENTER
     //TODO[romeo] improve
@@ -199,7 +199,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
    * @return
    * @param testsRoot
    */
-  public void onTestingStarted(@NotNull SMTestProxy testsRoot) {
+  public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
 
     // Status line
@@ -213,14 +213,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
                                     + DateFormatUtil.formatTime(myStartTime)
                                     + " ...\n");
 
-    updateStatusLabel();
+    updateStatusLabel(false);
 
     // TODO : show info - "Loading..." msg
 
     fireOnTestingStarted();
   }
 
-  public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
+  public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
 
     if (myTestsTotal == 0) {
@@ -228,15 +228,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       myStatusLine.setFraction(1);
     }
 
-    updateStatusLabel();
-
-    if (myTestsRootNode.getChildren().size() == 0) {
-      // no tests found
-      myStatusLine.setStatusColor(ColorProgressBar.RED);
-
-      // TODO - show correct info if tree is empty
-      // (e.g no tests found or all tests passed, etc.)
-    }
+    updateStatusLabel(true);
 
     myAnimator.stopMovie();
     myTreeBuilder.updateFromRoot();
@@ -312,7 +304,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     //Do nothing
   }
 
-  public SMTestProxy getTestsRootNode() {
+  public SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }
 
@@ -473,19 +465,27 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     }, ModalityState.NON_MODAL);
   }
 
-  private void updateStatusLabel() {
+  private void updateStatusLabel(final boolean testingFinished) {
     if (myTestsFailuresCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    final boolean finished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
-    if (finished && myTestsTotal == 0) {
-      // => empty suite
-      myStatusLine.setStatusColor(Color.LIGHT_GRAY);
+
+    if (testingFinished) {
+      if (myTestsTotal == 0) {
+        myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
+                                    ? Color.LIGHT_GRAY
+                                    : ColorProgressBar.RED );
+      }
+      // else color will be according failed/passed tests
     }
+
+    // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
+    // initializing will be "launchedAndFinished"
+    final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
                                                                        myTestsFailuresCount, myMentionedCategories,
-                                                                       finished));
+                                                                       launchedAndFinished));
   }
 
   /**
@@ -533,7 +533,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     //This is for better support groups of TestSuites
     //Each group notifies about it's size
     myTestsTotal += count;
-    updateStatusLabel();
+    updateStatusLabel(false);
   }
 
   private void updateCountersAndProgressOnTestStarted(final boolean isCustomMessage) {
@@ -559,14 +559,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
       // if at least one test was launcher than just set progress in the middle to show user that tests are running
       myStatusLine.setFraction(myTestsCurrentCount > 1 ? 0.5 : 0); // > 1 because count already ++
     }
-    updateStatusLabel();
+    updateStatusLabel(false);
   }
 
   private void updateCountersAndProgressOnTestFailed(final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;
 
     myTestsFailuresCount++;
-    updateStatusLabel();
+    updateStatusLabel(false);
   }
 
   private boolean isModeConsistent(boolean isCustomMessage) {

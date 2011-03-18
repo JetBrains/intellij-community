@@ -466,7 +466,7 @@ public class SMTestProxy extends AbstractTestProxy {
    * Determines site state after it has been finished
    * @return New state
    */
-  private AbstractState determineSuiteStateOnFinished() {
+  protected AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
     if (isLeaf() || isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
@@ -558,6 +558,30 @@ public class SMTestProxy extends AbstractTestProxy {
     final SMTestProxy containerSuite = getParent();
     if (containerSuite != null) {
       containerSuite.invalidateCachedDurationForContainerSuites();
+    }
+  }
+
+  public static class SMRootTestProxy extends SMTestProxy {
+    private boolean myTestsReporterAttached; // false by default
+
+    public SMRootTestProxy() {
+      super("[root]", true, null);
+    }
+
+    public void setTestsReporterAttached() {
+      myTestsReporterAttached = true;
+    }
+
+    public boolean isTestsReporterAttached() {
+      return myTestsReporterAttached;
+    }
+
+    @Override
+    protected AbstractState determineSuiteStateOnFinished() {
+      if (isLeaf() && !isTestsReporterAttached()) {
+        return SuiteFinishedState.TESTS_REPORTER_NOT_ATTACHED;
+      }
+      return super.determineSuiteStateOnFinished();
     }
   }
 }
