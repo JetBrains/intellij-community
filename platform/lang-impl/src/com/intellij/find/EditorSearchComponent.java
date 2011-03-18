@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -369,6 +368,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     new SwitchToFind(this);
     new SwitchToReplace(this);
     mySearchRegexpFieldController = new RegexpFieldController(mySearchField, myFindModel, this);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      initLivePreview();
+    }
   }
 
   private void setupSearchFieldListener() {
@@ -694,6 +697,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     if (myReplaceField != null) {
       updateHistory(myReplaceField);
     }
+    initLivePreview();
+  }
+
+  private void initLivePreview() {
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
         updateResults(false);
@@ -715,7 +722,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     if (myReplaceRegexpFieldController != null) {
       myReplaceRegexpFieldController.updateRegexpState();
     }
-    
+
     myLivePreviewController.updateInBackground(myFindModel, false);
   }
 
