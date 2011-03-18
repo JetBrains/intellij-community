@@ -291,13 +291,11 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             if (elements.length != 1) {
                 return false;
             }
-            if (!(elements[0] instanceof PsiLocalVariable)) {
+            final PsiElement element = elements[0];
+            if (!(element instanceof PsiVariable)) {
                 return false;
             }
-            final PsiLocalVariable variable = (PsiLocalVariable)elements[0];
-            if (!variable.equals(iterator)) {
-                return false;
-            }
+            final PsiVariable variable = (PsiVariable) element;
             final PsiExpression initializer = variable.getInitializer();
             return isIteratorNext(initializer, iterator, contentType);
         }
@@ -430,7 +428,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             final PsiVariable variable = (PsiVariable)declaredElement;
             final PsiType variableType = variable.getType();
             final PsiType iteratorType =
-                    TypeUtils.getType(CommonClassNames.JAVA_UTIL_ITERATOR, whileStatement);
+                    TypeUtils.getType(CommonClassNames.JAVA_UTIL_ITERATOR,
+                            whileStatement);
             if (iteratorType == null) {
                 return false;
             }
