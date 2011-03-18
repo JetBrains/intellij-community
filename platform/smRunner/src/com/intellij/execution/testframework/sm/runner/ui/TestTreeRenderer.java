@@ -49,12 +49,12 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       final SMTRunnerNodeDescriptor desc = (SMTRunnerNodeDescriptor)userObj;
       final SMTestProxy testProxy = desc.getElement();
 
-      if (node == tree.getModel().getRoot()) {
+      if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
         //Root node
-        if (node.isLeaf()) {
-          TestsPresentationUtil.formatRootNodeWithoutChildren(testProxy, this);
+        if (testProxy.isLeaf()) {
+          TestsPresentationUtil.formatRootNodeWithoutChildren((SMTestProxy.SMRootTestProxy)testProxy, this);
         } else {
-          TestsPresentationUtil.formatRootNodeWithChildren(testProxy, this);
+          TestsPresentationUtil.formatRootNodeWithChildren((SMTestProxy.SMRootTestProxy)testProxy, this);
         }
       } else {
         TestsPresentationUtil.formatTestProxy(testProxy, this);

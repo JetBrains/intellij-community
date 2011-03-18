@@ -19,7 +19,9 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   private final List<VcsFileRevision> myRevisions;
@@ -92,5 +94,13 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     final VcsAbstractHistorySession copy = (VcsAbstractHistorySession)copy();
     copy.setCachedRevision(myCachedRevisionNumber);
     return copy;
+  }
+
+  public Map<VcsRevisionNumber, VcsFileRevision> getHistoryAsMap() {
+    final Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    for (VcsFileRevision revision : myRevisions) {
+      map.put(revision.getRevisionNumber(), revision);
+    }
+    return map;
   }
 }

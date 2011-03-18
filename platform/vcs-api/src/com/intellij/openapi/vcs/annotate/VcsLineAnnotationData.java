@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.android;
+package com.intellij.openapi.vcs.annotate;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.ProximityLocation;
-import com.intellij.psi.util.proximity.ProximityWeigher;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Eugene.Kudelevsky
+ * @author irengrig
+ *         Date: 3/10/11
+ *         Time: 4:09 PM
+ * Common for all vcs annotation presentation
  */
-public class AndroidProximityWeigher extends ProximityWeigher {
-  @Override
-  public Comparable weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
-    return AndroidCompletionWeighter.doWeigh(element, location.getProject());
-  }
+public interface VcsLineAnnotationData {
+  int getNumLines();
+  @Nullable
+  VcsRevisionNumber getRevision(final int lineNumber);
+  void put(final int lineNumber, final VcsRevisionNumber revisionNumber);
 }

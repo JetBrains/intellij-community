@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -57,6 +58,12 @@ public class HtmlUnknownTargetInspection extends HtmlLocalInspectionTool {
         PsiReference[] refs = valueElement.getReferences();
         for (PsiReference ref : refs) {
           if (ref instanceof EmptyResolveMessageProvider && XmlHighlightVisitor.hasBadResolve(ref, false)) {
+
+            PsiElement element = ref.getElement();
+            if (element != null && element.getTextLength() == 0) {
+              continue;
+            }
+
             String messagePattern = ((EmptyResolveMessageProvider)ref).getUnresolvedMessagePattern();
             String description;
             try {

@@ -68,8 +68,15 @@ public class SvnDiffProvider implements DiffProvider {
   }
 
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
-    final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
     FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(selectedFile);
+    final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
+
+    if (! SVNRevision.HEAD.equals(svnRevision)) {
+      if (getCurrentRevision(selectedFile).equals(selectedFile)) {
+        return SvnContentRevision.create(myVcs, filePath, svnRevision);
+      }
+    }
+    // not clear why we need it, with remote check..
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);

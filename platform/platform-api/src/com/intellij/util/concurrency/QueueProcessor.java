@@ -19,16 +19,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
@@ -99,7 +96,12 @@ public class QueueProcessor<T> {
     return new PairConsumer<T, Runnable>() {
       @Override
       public void consume(T item, Runnable runnable) {
-        processor.consume(item);
+        try {
+          processor.consume(item);
+        }
+        catch (Throwable e) {
+          LOG.warn(e);
+        }
         runnable.run();
       }
     };
