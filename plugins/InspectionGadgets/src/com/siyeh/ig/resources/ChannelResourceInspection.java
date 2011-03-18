@@ -77,7 +77,8 @@ public class ChannelResourceInspection extends ResourceInspection {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
+            if (parent instanceof PsiReturnStatement ||
+                    parent instanceof PsiResourceVariable) {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);
