@@ -122,5 +122,21 @@ def foo() {
 }""", "("
   }
 
+  public void testNoVariableName() {
+    checkReparse """
+def foo() {
+    switch (w) {
+      case 2:
+        def x<caret> = xxx
+        if () {
+        }
+        return 2
+
+    }
+    return state
+  }
+""", "\b"
+  }
+
 
 }
