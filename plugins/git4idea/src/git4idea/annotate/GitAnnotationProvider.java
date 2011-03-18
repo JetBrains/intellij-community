@@ -19,11 +19,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -40,13 +43,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Git annotation provider implementation.
  * <p/>
  * Based on the JetBrains SVNAnnotationProvider.
  */
-public class GitAnnotationProvider implements AnnotationProvider {
+public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   /**
    * the context project
    */
@@ -203,6 +207,45 @@ public class GitAnnotationProvider implements AnnotationProvider {
     }
     annotation.addLogEntries(revisions);
     return annotation;
+  }
+
+  @Override
+  public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
+    final GitFileAnnotation gitFileAnnotation = (GitFileAnnotation) fileAnnotation;
+    final int size = gitFileAnnotation.getNumLines();
+    final VcsUsualLineAnnotationData basicData = new VcsUsualLineAnnotationData(size);
+    for (int i = 0; i < size; i++) {
+      basicData.put(i,  gitFileAnnotation.getLineRevisionNumber(i));
+    }
+    return new VcsAnnotation(new FilePathImpl(gitFileAnnotation.getFile()), basicData, null);
+  }
+
+  @Override
+  public FileAnnotation restore(VcsAnnotation vcsAnnotation,
+                                VcsAbstractHistorySession session,
+                                String annotatedContent,
+                                boolean forCurrentRevision) {
+    final GitFileAnnotation gitFileAnnotation =
+      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), forCurrentRevision);
+    gitFileAnnotation.addLogEntries(session.getRevisionList());
+    final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
+    final int size = basicAnnotation.getNumLines();
+    final Map<VcsRevisionNumber,VcsFileRevision> historyAsMap = session.getHistoryAsMap();
+    final List<String> lines = StringUtil.split(StringUtil.convertLineSeparators(annotatedContent), "\n", true, false);
+    for (int i = 0; i < size; i++) {
+      final VcsRevisionNumber revision = basicAnnotation.getRevision(i);
+      final VcsFileRevision vcsFileRevision = historyAsMap.get(revision);
+      if (vcsFileRevision == null) {
+        return null;
+      }
+      try {
+        gitFileAnnotation.appendLineInfo(vcsFileRevision.getRevisionDate(), (GitRevisionNumber) revision, vcsFileRevision.getAuthor(), lines.get(i), i + 1);
+      }
+      catch (VcsException e) {
+        return null;
+      }
+    }
+    return gitFileAnnotation;
   }
 
   /**

@@ -348,6 +348,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
     balloonBuilder.setFadeoutTime(0)
       .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)

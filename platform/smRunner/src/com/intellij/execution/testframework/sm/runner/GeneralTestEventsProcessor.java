@@ -74,4 +74,5 @@ public interface GeneralTestEventsProcessor extends Disposable {
                                      final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
+  void onTestsReporterAttached();
 }

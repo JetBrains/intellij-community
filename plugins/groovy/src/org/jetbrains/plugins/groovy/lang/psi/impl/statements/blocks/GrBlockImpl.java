@@ -97,6 +97,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   public Instruction[] getControlFlow() {
+    assert isValid();
     CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
     if (controlFlow == null) {
       controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {

@@ -464,6 +464,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
+    return getTestName(name, lowercaseFirstLetter);
+  }
+
+  public static String getTestName(String name, boolean lowercaseFirstLetter) {
     if (name == null) {
       return "";
     }
@@ -471,10 +475,10 @@ public abstract class UsefulTestCase extends TestCase {
     if (StringUtil.isEmpty(name)) {
       return "";
     }
-    return getTestName(name, lowercaseFirstLetter);
+    return lowercaseFirstLetter(name, lowercaseFirstLetter);
   }
 
-  public static String getTestName(String name, boolean lowercaseFirstLetter) {
+  public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
     if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }

@@ -682,7 +682,7 @@ public class AbstractTreeUi {
           expand(getRootNode(), true);
         }
         if (!willUpdate) {
-          updateNodeChildren(getRootNode(), pass, null, false, false, false, true);
+          updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
         }
         if (getRootNode().getChildCount() == 0) {
           myTreeModel.nodeChanged(getRootNode());
@@ -1005,7 +1005,7 @@ public class AbstractTreeUi {
       forceUpdate = false;
     }
 
-    updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false);
+    updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false, pass.isUpdateChildren());
   }
 
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
@@ -1057,7 +1057,7 @@ public class AbstractTreeUi {
                                   final boolean forcedNow,
                                   final boolean toSmartExpand,
                                   final boolean forceUpdate,
-                                  final boolean descriptorIsUpToDate) {
+                                  final boolean descriptorIsUpToDate, final boolean updateChildren) {
 
     removeFromCancelled(node);
 
@@ -1109,7 +1109,7 @@ public class AbstractTreeUi {
                   descriptorWasUpdated = true;
                 }
 
-                if (processAlwaysLeaf(node)) return;
+                if (processAlwaysLeaf(node) || !updateChildren) return;
 
                 Pair<Boolean, LoadedChildren> unbuilt = processUnbuilt(node, descriptor, pass, wasExpanded, null);
 
@@ -1123,23 +1123,23 @@ public class AbstractTreeUi {
           final boolean childForceUpdate = isChildNodeForceUpdate(node, forceUpdate, wasExpanded);
 
           if (!forcedNow && isToBuildInBackground(descriptor)) {
-            if (processAlwaysLeaf(node)) return;
-
+            boolean alwaysLeaf = processAlwaysLeaf(node);
             queueBackgroundUpdate(
-              new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorWasUpdated), node);
+              new UpdateInfo(descriptor, pass, canSmartExpand(node, toSmartExpand), wasExpanded, childForceUpdate, descriptorWasUpdated,
+                             !alwaysLeaf && updateChildren), node);
             return;
           }
           else {
             if (!descriptorWasUpdated) {
               update(descriptor, false).doWhenDone(new Runnable() {
                 public void run() {
-                  if (processAlwaysLeaf(node)) return;
+                  if (processAlwaysLeaf(node) || !updateChildren) return;
                   updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
                 }
               });
             }
             else {
-              if (processAlwaysLeaf(node)) return;
+              if (processAlwaysLeaf(node) || !updateChildren) return;
 
               updateNodeChildrenNow(node, pass, preloaded.get(), toSmartExpand, wasExpanded, wasLeaf, childForceUpdate);
             }
@@ -1513,7 +1513,7 @@ public class AbstractTreeUi {
                                    boolean forceUpdate) {
     for (TreeNode aNodesToInsert : nodesToInsert) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)aNodesToInsert;
-      updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true);
+      updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true);
     }
   }
 
@@ -2522,6 +2522,8 @@ public class AbstractTreeUi {
           update(updateInfo.getDescriptor(), true);
         }
 
+        if (!updateInfo.isUpdateChildren()) return;
+
         Object element = getElementFromDescriptor(updateInfo.getDescriptor());
         if (element == null) {
           removeFromLoadedInBackground(oldElementFromDescriptor);
@@ -2584,7 +2586,7 @@ public class AbstractTreeUi {
         }
 
         updateNodeChildren(node, updateInfo.getPass(), children.get(), true, updateInfo.isCanSmartExpand(), updateInfo.isForceUpdate(),
-                           true);
+                           true, true);
 
 
         if (isRerunNeeded(updateInfo.getPass())) {
@@ -2914,7 +2916,7 @@ public class AbstractTreeUi {
             }
             else {
               elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
-              updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true);
+              updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true);
             }
 
             if (parentNode.equals(getRootNode())) {
@@ -3485,20 +3487,31 @@ public class AbstractTreeUi {
       removeFromUnbuilt(root);
       removeLoading(root, true);
 
-      if (runAfterUpdate != null) {
-        getReady(this).doWhenDone(runAfterUpdate);
-      }
+      execute(new Runnable() {
+        @Override
+        public void run() {
+          getUpdater().addSubtreeToUpdate(new TreeUpdatePass(root, null, new ActiveRunnable() {
+            @Override
+            public ActionCallback run() {
+              if (runAfterUpdate != null) {
+                runAfterUpdate.run();
+              }
+              return new ActionCallback.Done();
+            }
+          }).setUpdateChildren(false));
+        }
+      });
       return false;
+    } else {
+      execute(new Runnable() {
+        public void run() {
+          getUpdater().runAfterUpdate(runAfterUpdate);
+          getUpdater().addSubtreeToUpdate(root);
+        }
+      });
+
+      return true;
     }
-
-    execute(new Runnable() {
-      public void run() {
-        getUpdater().runAfterUpdate(runAfterUpdate);
-        getUpdater().addSubtreeToUpdate(root);
-      }
-    });
-
-    return true;
   }
 
   public boolean wasRootNodeInitialized() {
@@ -4657,19 +4670,22 @@ public class AbstractTreeUi {
     boolean myWasExpanded;
     boolean myForceUpdate;
     boolean myDescriptorIsUpToDate;
+    boolean myUpdateChildren;
 
     public UpdateInfo(NodeDescriptor descriptor,
                       TreeUpdatePass pass,
                       boolean canSmartExpand,
                       boolean wasExpanded,
                       boolean forceUpdate,
-                      boolean descriptorIsUpToDate) {
+                      boolean descriptorIsUpToDate,
+                      boolean updateChildren) {
       myDescriptor = descriptor;
       myPass = pass;
       myCanSmartExpand = canSmartExpand;
       myWasExpanded = wasExpanded;
       myForceUpdate = forceUpdate;
       myDescriptorIsUpToDate = descriptorIsUpToDate;
+      myUpdateChildren = updateChildren;
     }
 
     synchronized NodeDescriptor getDescriptor() {
@@ -4703,6 +4719,10 @@ public class AbstractTreeUi {
       myWasExpanded = updateInfo.myWasExpanded;
       myForceUpdate = updateInfo.myForceUpdate;
       myDescriptorIsUpToDate = updateInfo.myDescriptorIsUpToDate;
+    }
+
+    public synchronized  boolean isUpdateChildren() {
+      return myUpdateChildren;
     }
 
     public String toString() {

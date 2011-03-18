@@ -24,11 +24,8 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false);
 
-    myFixture.configureByText("a.txt", psiBefore);
-    myFixture.checkResultByFile(getTestName(false) + "_before.txt");
-
-    myFixture.configureByText("a.txt", psiAfter);
-    myFixture.checkResultByFile(getTestName(false) + "_after.txt");
+    myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim());
+    myFixture.checkResultByFile(getTestName(false) + ".txt");
   }
 
   public void testCodeBlockReparse() throws IOException {
@@ -111,6 +108,34 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
     }
   }
 """, "foo."
+  }
+
+  public void testOpeningParenthesisAtBlockStart() {
+    checkReparse """
+def foo() {
+  <caret>String home
+  simplePlugins.each {
+    layoutPlugin it
+  }
+
+}
+}""", "("
+  }
+
+  public void testNoVariableName() {
+    checkReparse """
+def foo() {
+    switch (w) {
+      case 2:
+        def x<caret> = xxx
+        if () {
+        }
+        return 2
+
+    }
+    return state
+  }
+""", "\b"
   }
 
 

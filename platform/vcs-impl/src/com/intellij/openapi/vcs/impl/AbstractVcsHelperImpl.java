@@ -166,7 +166,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
         final VcsHistorySession copy = mySession.copyWithCachedRevision();
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                      myAnnotationProvider, contentManager, myRefresher);
+                                                      contentManager, myRefresher);
       }
       return myFileHistoryPanel;
     }

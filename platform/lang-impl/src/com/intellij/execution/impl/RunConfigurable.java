@@ -693,6 +693,7 @@ class RunConfigurable extends BaseConfigurable {
     if (myRunDialog != null) myRunDialog.clickDefaultButton();
   }
 
+  @Nullable
   private DefaultMutableTreeNode getSelectedConfigurationTypeNode() {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent();
     final Object userObject = node.getUserObject();
@@ -700,7 +701,11 @@ class RunConfigurable extends BaseConfigurable {
       return node;
     }
     else {
-      return (DefaultMutableTreeNode)node.getParent();
+      final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+      if (parent != null && parent.getUserObject() instanceof ConfigurationType) {
+        return parent;
+      }
+      return null;
     }
   }
 

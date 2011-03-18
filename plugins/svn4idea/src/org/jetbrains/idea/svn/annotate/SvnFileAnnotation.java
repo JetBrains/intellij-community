@@ -23,11 +23,9 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnEntriesListener;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -113,6 +111,8 @@ public class SvnFileAnnotation implements FileAnnotation {
   };
   private final SvnConfiguration myConfiguration;
   private boolean myShowMergeSources;
+  // null if full annotation
+  private SvnRevisionNumber myFirstRevisionNumber;
 
   public void setRevision(final long revision, final SvnFileRevision svnRevision) {
     myRevisionMap.put(revision, svnRevision);
@@ -122,22 +122,16 @@ public class SvnFileAnnotation implements FileAnnotation {
     myRevisionMap.clear();
   }
 
-  private SvnFileRevision getRevision(final long revision) {
-    SvnFileRevision result = myRevisionMap.get(revision);
-    if (result != null) return result;
+  public SvnFileRevision getRevision(final long revision) {
+    return myRevisionMap.get(revision);
+  }
 
-    return null;  
-    /*          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), false, false, 0,
-                       new ISVNLogEntryHandler() {
-                         public void handleLogEntry(SVNLogEntry logEntry) {
-                           if (progress != null) {
-                             progress.checkCanceled();
-                             progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-                           }
-                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, ""));
-                         }
-                       });
-*/
+  public void setFirstRevision(SVNRevision svnRevision) {
+    myFirstRevisionNumber = new SvnRevisionNumber(svnRevision);
+  }
+
+  public SvnRevisionNumber getFirstRevisionNumber() {
+    return myFirstRevisionNumber;
   }
 
   static class LineInfo {
@@ -258,6 +252,14 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   public boolean revisionsNotEmpty() {
     return ! myRevisionMap.isEmpty();
+  }
+
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
+  public int getNumLines() {
+    return myInfos.size();
   }
 
   @Nullable

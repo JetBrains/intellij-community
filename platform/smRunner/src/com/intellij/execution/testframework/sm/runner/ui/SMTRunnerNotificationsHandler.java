@@ -40,11 +40,11 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
     myConsoleProperties = consoleProperties;
   }
 
-  public void onTestingStarted(@NotNull SMTestProxy testsRoot) {
+  public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     //myFirstDefectWasFound = false;
   }
 
-  public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
+  public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     final String msg;
     final MessageType type;
 
@@ -74,7 +74,9 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
       case COMPLETE_INDEX:
         if (testsRoot.getChildren().size() == 0) {
           msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
-                                      : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
+                                      : testsRoot.isTestsReporterAttached()
+                                         ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")
+                                         : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached");
           type = MessageType.ERROR;
           break;
         } else if (testsRoot.isEmptySuite()) {

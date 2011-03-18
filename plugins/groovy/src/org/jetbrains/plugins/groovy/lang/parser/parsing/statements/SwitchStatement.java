@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class SwitchStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseSwitch(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kSWITCH);
 
@@ -80,14 +81,9 @@ public class SwitchStatement implements GroovyElementTypes {
 
       if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT) {
         builder.error("case, default or } expected");
-        while (true) {
-          builder.advanceLexer();
-          if (builder.eof() || ParserUtils.getToken(builder, mRCURLY)) {
-            return;
-          }
-          if (builder.getTokenType() == kCASE || builder.getTokenType() == kDEFAULT) {
-            break;
-          }
+        ParserUtils.skipCountingBraces(builder, TokenSet.create(kCASE, kDEFAULT, mRCURLY));
+        if (builder.eof() || ParserUtils.getToken(builder, mRCURLY)) {
+          return;
         }
       }
 

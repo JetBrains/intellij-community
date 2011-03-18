@@ -18,6 +18,7 @@ package com.intellij.lang.xml;
 import com.intellij.codeInsight.unwrap.Unwrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +38,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   }
 
   public String getDescription(PsiElement e) {
-    return XmlBundle.message("unwrap.enclosing.tag.name.action.name");
+    return XmlBundle.message("unwrap.enclosing.tag.name.action.name", ((XmlTag)e).getName());
   }
 
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {

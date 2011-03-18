@@ -15,8 +15,10 @@
  */
 package com.intellij.lang.xml;
 
+import com.intellij.codeInsight.unwrap.LanguageUnwrappers;
 import com.intellij.codeInsight.unwrap.UnwrapDescriptor;
 import com.intellij.codeInsight.unwrap.Unwrapper;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -24,26 +26,38 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.SmartList;
 
 import java.util.Collections;
 import java.util.List;
 
 public class XmlUnwrapDescriptor implements UnwrapDescriptor {
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
-    PsiElement e = findElement(editor, file);
-    if (e == null) return Collections.emptyList();
+    List<Pair<PsiElement, Unwrapper>> result = new SmartList<Pair<PsiElement, Unwrapper>>();
 
-    return Collections.singletonList(new Pair<PsiElement, Unwrapper>(e, new XmlEnclosingTagUnwrapper()));
-  }
-
-  private PsiElement findElement(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement e = file.findElementAt(offset);
-    return PsiTreeUtil.getParentOfType(e, XmlTag.class);
+    PsiElement e1 = file.findElementAt(offset);
+    if (e1 != null) {
+      Language language = e1.getParent().getLanguage();
+      if (language != file.getLanguage()) {
+        UnwrapDescriptor unwrapDescriptor = LanguageUnwrappers.INSTANCE.forLanguage(language);
+        if (unwrapDescriptor != null && !(unwrapDescriptor instanceof XmlUnwrapDescriptor)) {
+          result.addAll(unwrapDescriptor.collectUnwrappers(project, editor, file));
+        }
+      }
+    }
+
+    PsiElement tag = PsiTreeUtil.getParentOfType(e1, XmlTag.class);
+    while (tag != null) {
+      result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
+      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);
+    }
+
+    return result;
   }
 
   public boolean showOptionsDialog() {
-    return false;
+    return true;
   }
 
   public boolean shouldTryToRestoreCaretPosition() {

@@ -249,6 +249,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnTestFrameworkAttached() {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onTestsReporterAttached();
+    }
+  }
+
   private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
     assertNotNull(testName);
     assertNotNull(text);
@@ -325,6 +332,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
 
     @NonNls private static final String MESSAGE = "message";
+    @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
@@ -469,8 +477,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
             fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
           }
         }
-      }  else {
-        //Do nothing
+      } else if (TEST_REPORTER_ATTACHED.equals(name)) {
+        fireOnTestFrameworkAttached();
+      } else {
+        GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name , myTestFrameworkName);
       }
     }
 
