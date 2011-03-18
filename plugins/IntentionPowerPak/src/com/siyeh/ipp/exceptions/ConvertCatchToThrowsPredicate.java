@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class ConvertCatchtoThrowsPredicate implements PsiElementPredicate {
+class ConvertCatchToThrowsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiKeyword)) {

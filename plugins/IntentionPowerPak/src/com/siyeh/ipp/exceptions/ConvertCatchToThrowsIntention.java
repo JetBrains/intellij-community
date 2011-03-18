@@ -30,7 +30,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
     @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new ConvertCatchtoThrowsPredicate();
+        return new ConvertCatchToThrowsPredicate();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
         }
         final PsiTryStatement tryStatement = catchSection.getTryStatement();
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-        if (catchSections.length > 1) {
+        if (catchSections.length > 1 || tryStatement.getResourceList() != null) {
             catchSection.delete();
         } else {
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
