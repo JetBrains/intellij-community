@@ -75,7 +75,8 @@ class TeamcityTestResult(TestResult):
           error_value = error_value[-1][-1]
           error_value = error_value.split('assert')[-1].strip()
 
-        if error_value.startswith("'") or error_value.startswith('"'):
+        if (error_value.startswith("'") or error_value.startswith('"')) and \
+                            (error_value.endswith("'") or error_value.endswith('"')):
             # let's unescape strings to show sexy multiline diff in PyCharm.
             # By default all caret return chars are escaped by testing framework
             first = self._unescape(self.find_first(error_value))
