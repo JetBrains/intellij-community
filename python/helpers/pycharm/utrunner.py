@@ -151,5 +151,6 @@ if __name__ == "__main__":
 
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")
+  TeamcityServiceMessages(sys.stdout).testMatrixEntered()
   TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
   TeamcityTestRunner().run(all)

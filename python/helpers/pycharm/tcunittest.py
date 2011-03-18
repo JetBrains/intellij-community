@@ -17,6 +17,7 @@ class TeamcityTestResult(TestResult):
 
         self.output = stream
         self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
+        self.messages.testMatrixEntered()
         self.current_suite = None
 
     def find_first(self, val):

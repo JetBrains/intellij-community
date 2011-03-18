@@ -340,5 +340,6 @@ if __name__ == "__main__":
             raise NameError('Module "%s" has no class "%s"' % (module, a[1]))
 
   debug("/ Loaded " + str(runner.countTests()) + " tests")
+  TeamcityServiceMessages(sys.stdout).testMatrixEntered()
   TeamcityServiceMessages(sys.stdout).testCount(runner.countTests())
   runner.start()

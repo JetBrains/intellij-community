@@ -23,6 +23,7 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
         self.config = config
         self.output = stream
         self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
+        self.messages.testMatrixEntered()
         self.current_suite = None
         TextTestResult.__init__(self, stream, descriptions, verbosity, config, errorClasses)
         TeamcityTestResult.__init__(self, stream)

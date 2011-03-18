@@ -2,6 +2,7 @@ from pycharm.tcmessages import TeamcityServiceMessages
 import os
 
 messages = TeamcityServiceMessages(prepend_linebreak=True)
+messages.testMatrixEntered()
 try:
   import pytest
   PYVERSION = [int(x) for x in pytest.__version__.split(".")]

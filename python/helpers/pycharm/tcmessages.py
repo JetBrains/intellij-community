@@ -54,3 +54,6 @@ class TeamcityServiceMessages:
 
     def testCount(self, count):
         self.message('testCount', count=count)
+
+    def testMatrixEntered(self):
+        self.message('enteredTheMatrix')
