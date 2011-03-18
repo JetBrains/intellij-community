@@ -281,7 +281,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
       public boolean process(final AnActionEvent e, final String s) {
         new WriteCommandAction(languageConsole.getProject(), languageConsole.getFile()) {
           protected void run(final Result result) throws Throwable {
-            languageConsole.getEditorDocument().setText(s == null ? "" : s);
+            String text = s == null ? "" : s;
+            languageConsole.getEditorDocument().setText(text);
+            languageConsole.getConsoleEditor().getCaretModel().moveToOffset(text.length());
           }
         }.execute();
         return true;
