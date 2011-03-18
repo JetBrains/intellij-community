@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -50,7 +49,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  private final GitUpdateProcess myUpdateProcess;
   private final ChangeListManager myChangeListManager;
 
   public GitMergeUpdater(Project project,
@@ -58,8 +56,7 @@ public class GitMergeUpdater extends GitUpdater {
                          GitUpdateProcess gitUpdateProcess,
                          ProgressIndicator progressIndicator,
                          UpdatedFiles updatedFiles) {
-    super(project, root, progressIndicator, updatedFiles);
-    myUpdateProcess = gitUpdateProcess;
+    super(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -133,11 +130,6 @@ public class GitMergeUpdater extends GitUpdater {
 
   @Override
   public boolean isSaveNeeded() {
-    boolean fetchSuccess = fetch();
-    if (!fetchSuccess) {
-      return true; // fail safe: fetch failed, will save the root.
-    }
-
     // git log --name-status master..origin/master
     GitBranchPair gitBranchPair = myUpdateProcess.getTrackedBranches().get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
@@ -155,55 +147,6 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("failed to get remotely changed files for " + currentBranch + ".." + remoteBranch, e);
       return true; // fail safe
     }
-  }
-
-  /**
-   * Fetches the tracked remote for current branch.
-   * @return true if fetch was successful, false in the case of error.
-   * @param remote
-   */
-  private boolean fetch() {
-    final GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.FETCH);
-
-    final GitTask fetchTask = new GitTask(myProject, h, "Fetching changes...");
-    fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicBoolean success = new AtomicBoolean();
-    fetchTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
-        success.set(true);
-      }
-
-      @Override protected void onCancel() {
-        LOG.info("Cancelled fetch.");
-      }
-
-      @Override protected void onFailure() {
-        LOG.info("Error fetching: " + h.errors());
-      }
-    });
-    return success.get();
-  }
-
-  // git log --name-status master..origin/master
-  private @NotNull Collection<String> getRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
-    toPull.addParameters("--name-only", "--pretty=format:");
-    toPull.addParameters(currentBranch + ".." + remoteBranch);
-    toPull.setNoSSH(true);
-    toPull.setStdoutSuppressed(true);
-    toPull.setStderrSuppressed(true);
-    final String output = toPull.run();
-
-    final Collection<String> remoteChanges = new HashSet<String>();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
-      final String relative = s.line();
-      if (StringUtil.isEmptyOrSpaces(relative)) {
-        continue;
-      }
-      final String path = myRoot.getPath() + "/" + GitUtil.unescapePath(relative);
-      remoteChanges.add(path);
-    }
-    return remoteChanges;
   }
 
   private void cancel() {

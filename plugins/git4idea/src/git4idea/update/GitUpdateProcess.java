@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,6 +35,7 @@ import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -97,6 +99,10 @@ public class GitUpdateProcess {
   public boolean update(boolean forceRebase) {
     LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
 
+    if (!fetchAndNotify()) {
+      return false;
+    }
+
     final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
     final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
     myProjectManager.blockReloadingProjectOnExternalChanges();
@@ -123,7 +129,9 @@ public class GitUpdateProcess {
         final GitUpdater updater = forceRebase
                                    ? new GitRebaseUpdater(myProject, root, this, myProgressIndicator, myUpdatedFiles)
                                    : GitUpdater.getUpdater(myProject, this, root, myProgressIndicator, myUpdatedFiles);
-        updaters.put(root, updater);
+        if (updater.isUpdateNeeded()) {
+          updaters.put(root, updater);
+        }
         LOG.info("update| root=" + root + " ,updater=" + updater);
       }
 
@@ -184,6 +192,19 @@ public class GitUpdateProcess {
       myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
     }
     return false;
+  }
+
+  // fetch all roots. If an error happens, return false and notify about errors.
+  private boolean fetchAndNotify() {
+    GitFetcher fetcher = new GitFetcher(myProject);
+    for (VirtualFile root : myRoots) {
+      fetcher.fetch(root);
+    }
+    if (!fetcher.isSuccess()) {
+      GitUIUtil.notifyMessage(myProject, "Update failed", "Couldn't fetch", NotificationType.ERROR, true, fetcher.getErrors());
+      return false;
+    }
+    return true;
   }
 
   public Map<VirtualFile, GitBranchPair> getTrackedBranches() {

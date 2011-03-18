@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.rebase.GitRebaseProblemDetector;
@@ -45,7 +46,7 @@ public class GitRebaseUpdater extends GitUpdater {
                           GitUpdateProcess gitUpdateProcess,
                           ProgressIndicator progressIndicator,
                           UpdatedFiles updatedFiles) {
-    super(project, root, progressIndicator, updatedFiles);
+    super(project, root, gitUpdateProcess, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject);
   }
 
@@ -55,11 +56,15 @@ public class GitRebaseUpdater extends GitUpdater {
 
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    final GitLineHandler pullHandler = makePullHandler(myRoot);
-    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-    pullHandler.addLineListener(rebaseConflictDetector);
+    GitBranchPair gitBranchPair = myUpdateProcess.getTrackedBranches().get(myRoot);
+    String remoteBranch = gitBranchPair.getTracked().getName();
 
-    GitTask pullTask = new GitTask(myProject, pullHandler, "git pull");
+    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);
+    rebaseHandler.addParameters(remoteBranch);
+    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
+    rebaseHandler.addLineListener(rebaseConflictDetector);
+
+    GitTask pullTask = new GitTask(myProject, rebaseHandler, "git rebase");
     pullTask.setExecuteResultInAwt(false);
     pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
@@ -80,7 +85,7 @@ public class GitRebaseUpdater extends GitUpdater {
     });
 
     if (failure.get()) {
-      updateResult.set(handleRebaseFailure(rebaseConflictDetector, pullHandler));
+      updateResult.set(handleRebaseFailure(rebaseConflictDetector, rebaseHandler));
     }
     return updateResult.get();
   }
@@ -121,14 +126,6 @@ public class GitRebaseUpdater extends GitUpdater {
     myRebaser.abortRebase(myRoot);
     myProgressIndicator.setText2("Refreshing files for the root " + myRoot.getPath());
     myRoot.refresh(false, true);
-  }
-
-  protected GitLineHandler makePullHandler(VirtualFile root) {
-    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.PULL);
-    h.addParameters("--rebase");
-    h.addParameters("--no-stat");
-    h.addParameters("-v");
-    return h;
   }
 
   /**
