@@ -18,17 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static com.intellij.psi.util.PsiUtil.substituteTypeParameter;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
@@ -57,6 +59,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return result;
   }
 
+  @Nullable
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }
@@ -65,55 +68,41 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrExpression selected = getSelectedExpression();
     PsiType thisType = selected.getType();
 
-    if (thisType != null) {
-      GrArgumentList argList = getArgumentList();
-      if (argList != null) {
-        GrExpression[] arguments = argList.getExpressionArguments();
-        PsiType[] argTypes = new PsiType[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-          PsiType argType = arguments[i].getType();
-          if (argType == null) argType = TypesUtil.getJavaLangObject(argList);
-          argTypes[i] = argType;
-        }
+    if (thisType == null) return null;
 
-        if (thisType instanceof PsiArrayType &&
-            argTypes.length == 1 &&
-            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
-          return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), getManager(), getResolveScope());
-        }
-        else if (thisType instanceof GrTupleType &&
-            argTypes.length == 1 &&
-            TypesUtil.isAssignable(PsiType.INT, argTypes[0], getManager(), getResolveScope())) {
-          PsiType[] types = ((GrTupleType)thisType).getParameters();
-          return types.length == 1 ? types[0] : null;
-        }
+    GrArgumentList argList = getArgumentList();
+    if (argList == null) return null;
 
-        PsiType overloadedOperatorType = null;
-        GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, argTypes);
-        if (candidates.length != 1) {
-          candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, new PsiType[]{
-            new GrTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), getResolveScope())});
-        }
-        if (candidates.length == 1) {
-          final PsiElement element = candidates[0].getElement();
-          if (element instanceof PsiMethod) {
-            overloadedOperatorType = candidates[0].getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
-          }
-        }
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList, false, null);
 
-        PsiType componentType = null;
-        if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP) && argTypes.length == 1) {
-          componentType = TypesUtil
-            .boxPrimitiveType(substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true), getManager(), getResolveScope());
-        }
+    final PsiManager manager = getManager();
+    final GlobalSearchScope resolveScope = getResolveScope();
 
-        if (overloadedOperatorType != null &&
-            (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, getManager(), getResolveScope()))) {
-          return TypesUtil.boxPrimitiveType(overloadedOperatorType, getManager(), getResolveScope());
-        }
-        return componentType;
-      }
+    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
+      return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);
     }
-    return null;
+
+    PsiType overloadedOperatorType = null;
+    GroovyResolveResult candidate = PsiImplUtil.getIndexPropertyMethodCandidate(thisType, argTypes, this);
+
+    final PsiElement element = candidate.getElement();
+    if (element instanceof PsiMethod) {
+      overloadedOperatorType = candidate.getSubstitutor().substitute(getSmartReturnType((PsiMethod)element));
+    }
+
+    PsiType componentType = extractMapValueType(thisType, argTypes);
+
+    if (overloadedOperatorType != null &&
+        (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, manager, resolveScope))) {
+      return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
+    }
+    return componentType;
+  }
+
+  @Nullable
+  private PsiType extractMapValueType(PsiType thisType, PsiType[] argTypes) {
+    if (argTypes.length != 1 || !InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) return null;
+    final PsiType substituted = substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+    return TypesUtil.boxPrimitiveType(substituted, getManager(), getResolveScope());
   }
 }

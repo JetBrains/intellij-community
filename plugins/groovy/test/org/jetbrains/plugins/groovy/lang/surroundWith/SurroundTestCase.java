@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -23,7 +22,6 @@ public abstract class SurroundTestCase extends LightGroovyTestCase {
       public void run() {
         SurroundWithHandler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile(), surrounder);
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-        PsiUtil.reformatCode(myFixture.getFile());
       }
     });
 

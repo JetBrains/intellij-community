@@ -644,4 +644,8 @@ class Zoo {
   public void testAvoidResolveLockInClosure() {
     assertNotNull resolve("A.groovy")
   }
+
+  public void resoleAsType() {
+    assertInstanceOf resolve("A.groovy"), GrMethod
+  }
 }

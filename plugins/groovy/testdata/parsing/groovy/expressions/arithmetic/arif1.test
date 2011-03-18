@@ -1,8 +1,8 @@
 a || b || c + d + v **d ** b
 -----
 Groovy script
-  Logical OR expression
-    Logical OR expression
+  Logical expression
+    Logical expression
       Reference expression
         PsiElement(identifier)('a')
       PsiWhiteSpace(' ')

@@ -473,6 +473,10 @@ public class TemplateState implements Disposable {
         itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ', lookupItems);
       }
       else {
+        for (LookupElement lookupItem : lookupItems) {
+          assert lookupItem != null : expressionNode;
+        }
+
         runLookup(currentSegmentNumber, lookupItems, expressionNode.getAdvertisingText(), psiFile);
       }
     }

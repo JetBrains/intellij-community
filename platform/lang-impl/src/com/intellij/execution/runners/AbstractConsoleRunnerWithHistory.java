@@ -389,7 +389,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       final EditorEx editor = myLanguageConsole.getConsoleEditor();
       final Lookup lookup = LookupManager.getActiveLookup(editor);
       e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() &&
-                                     (lookup == null || !lookup.isCompletion()));
+                                     (lookup == null || !(lookup.isCompletion() && lookup.isFocused())));
     }
   }
 

@@ -635,7 +635,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static GrExpression generateArgFromMultiArg(PsiSubstitutor substitutor,
-                                                     List<PsiElement> arguments,
+                                                     List<? extends PsiElement> arguments,
                                                      PsiType type,
                                                      final Project project) {
     StringBuilder argText = new StringBuilder();

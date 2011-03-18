@@ -16,6 +16,8 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -33,6 +35,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
   private static final MyOccurenceFilter MY_OCCURENCE_FILTER = new MyOccurenceFilter();
+  private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
+
+  public IntroduceFieldHandler() {
+    super(false);
+  }
 
   protected String getRefactoringName() {
     return REFACTORING_NAME;
@@ -96,12 +103,22 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
+
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+      myInplaceIntroduceFieldPopup =
+        new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, createOccurenceManager(expr, parentClass));
+      myInplaceIntroduceFieldPopup.startTemplate();
+      return null;
+    }
+
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
       currentMethodConstructor,
       localVariable != null, declareStatic, occurencesNumber,
       allowInitInMethod, allowInitInMethodIfAll,
-      new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences)
+      typeSelectorManager
     );
     dialog.show();
 
@@ -122,6 +139,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                         dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                         localVariable,
                         dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+  }
+
+  public InplaceIntroduceFieldPopup getInplaceIntroduceFieldPopup() {
+    return myInplaceIntroduceFieldPopup;
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {

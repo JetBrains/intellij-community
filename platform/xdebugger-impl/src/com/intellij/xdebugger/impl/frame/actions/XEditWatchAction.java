@@ -18,8 +18,8 @@ package com.intellij.xdebugger.impl.frame.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 
 import java.util.List;
 
@@ -34,14 +34,8 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
     super.update(e);
   }
 
-  protected boolean isEnabled(final AnActionEvent e) {
-    return true;
-  }
-
-  public void actionPerformed(final AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
-    if (tree == null) return;
-
+  @Override
+  protected void perform(AnActionEvent e, XDebuggerTree tree) {
     List<? extends WatchNode> watchNodes = getSelectedNodes(tree, WatchNode.class);
     if (watchNodes.size() != 1) return;
 

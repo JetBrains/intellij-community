@@ -122,6 +122,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     mySystemResourceManager = null;
   }
 
+  // can be invoked only from dispatch thread!
   @Nullable
   public AndroidDebugBridge getDebugBridge() {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();

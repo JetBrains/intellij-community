@@ -20,8 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * Utility classdef, that contains various useful methods for
@@ -188,5 +187,27 @@ public abstract class ParserUtils {
   public static void advance(PsiBuilder builder) {
     advance(builder, 1);
   }
+
+  public static boolean skipCountingBraces(PsiBuilder builder, TokenSet until) {
+    int braceLevel = 0;
+    while (true) {
+      if (builder.eof()) {
+        return false;
+      }
+      final IElementType type = builder.getTokenType();
+      if (braceLevel == 0 && until.contains(type)) {
+        return true;
+      }
+
+      if (GroovyTokenTypes.mLCURLY == type) {
+        braceLevel++;
+      }
+      else if (GroovyTokenTypes.mRCURLY == type) {
+        braceLevel--;
+      }
+      builder.advanceLexer();
+    }
+  }
+
 
 }

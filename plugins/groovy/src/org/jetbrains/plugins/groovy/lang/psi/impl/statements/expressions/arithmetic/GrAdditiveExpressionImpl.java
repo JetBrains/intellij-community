@@ -20,7 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
@@ -32,28 +34,36 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  */
 public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
 
+  private static final Function<GrBinaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Nullable
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl binary) {
+      final PsiType lType = binary.getLeftOperand().getType();
+      final PsiType numeric = TypesUtil.getNumericResultType(binary);
+      if (numeric != null) return numeric;
+
+      IElementType tokenType = binary.getOperationTokenType();
+      if (tokenType == GroovyTokenTypes.mPLUS) {
+        if (isStringType(lType)) {
+          return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+        }
+        final GrExpression rop = binary.getRightOperand();
+        if (rop != null && isStringType(rop.getType())) {
+          return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
+        }
+      }
+
+      return null;
+    }
+  };
+
   public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public PsiType getType() {
-    final GrExpression lop = getLeftOperand();
-    final PsiType lType = lop.getType();
-    final PsiType numeric = TypesUtil.getNumericResultType(this, lType);
-    if (numeric != null) return numeric;
-
-    IElementType tokenType = getOperationTokenType();
-    if (tokenType == GroovyTokenTypes.mPLUS) {
-      if (isStringType(lType)) {
-        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-      }
-      final GrExpression rop = getRightOperand();
-      if (rop != null && isStringType(rop.getType())) {
-        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-      }
-    }
-
-    return null;
+  @Override
+  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
+    return TYPE_CALCULATOR;
   }
 
   private static boolean isStringType(PsiType type) {

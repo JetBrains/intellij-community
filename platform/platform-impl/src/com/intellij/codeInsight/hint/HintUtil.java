@@ -17,11 +17,11 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ public class HintUtil {
     HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
 
     HintLabel label = new HintLabel();
-    label.setText(text, hintHint);
+    label.setText(JDOMUtil.escapeText(text, false, false), hintHint);
     label.setIcon(INFORMATION_ICON);
 
     if (!hintHint.isAwtTooltip()) {

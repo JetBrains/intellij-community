@@ -25,7 +25,7 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import org.jdom.Element;
 
 /**
- * Implementations of this interface contain settings of a specific facet. Do not store
+ * Implementations of this interface contain settings of a specific facet.
  *
  * <p>
  * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of {@link com.intellij.openapi.util.JDOMExternalizable}

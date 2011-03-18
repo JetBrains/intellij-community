@@ -1,9 +1,6 @@
 package com.intellij.tasks.impl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,6 +73,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return o.getId();
     }
   };
+  private static final String TASKS_NOTIFICATION_GROUP = "Task Group";
 
   private final Project myProject;
 
@@ -680,7 +678,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       catch (Exception e) {
         myBadRepositories.add(repository);
         LOG.warn(e);
-        Notifications.Bus.notify(new Notification("Tasks", "Cannot connect to " + repository.getUrl(),
+        Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
+        Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
                                                   "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
                                                   new NotificationListener() {
                                                     public void hyperlinkUpdate(@NotNull Notification notification,

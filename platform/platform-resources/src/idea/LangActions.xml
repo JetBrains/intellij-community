@@ -666,6 +666,7 @@
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="/debugger/newWatch.png"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="/actions/delete.png"/>
+      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="/debugger/muteBreakpoints.png"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
@@ -710,6 +711,7 @@
     <group id="XDebugger.Watches.Tree.Popup">
       <reference ref="XDebugger.NewWatch"/>
       <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.RemoveAllWatches"/>
       <reference ref="XDebugger.EditWatch"/>
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>

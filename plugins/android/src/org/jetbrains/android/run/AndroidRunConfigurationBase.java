@@ -192,6 +192,16 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
     Project project = env.getProject();
 
+    AndroidFacetConfiguration configuration = facet.getConfiguration();
+    AndroidPlatform platform = configuration.getAndroidPlatform();
+    if (platform == null) {
+      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
+      ModulesConfigurator.showFacetSettingsDialog(facet, null);
+      return null;
+    }
+
+    if (platform.getSdk().getDebugBridge(getProject()) == null) return null;
+
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
     if (debug) {
       if (!activateDdmsIfNeccessary(facet)) {
@@ -204,47 +214,37 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       }
     }
 
-    AndroidFacetConfiguration configuration = facet.getConfiguration();
-    AndroidPlatform platform = configuration.getAndroidPlatform();
-    if (platform == null) {
-      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-      ModulesConfigurator.showFacetSettingsDialog(facet, null);
-      return null;
-    }
-    else {
-      String aPackage = getPackageName(facet);
-      if (aPackage == null) return null;
+    String aPackage = getPackageName(facet);
+    if (aPackage == null) return null;
 
-      Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
-      if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
+    Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
+    if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
-      if (platform.getSdk().getDebugBridge(project) == null) return null;
-      IDevice[] targetDevices = new IDevice[0];
-      if (CHOOSE_DEVICE_MANUALLY) {
-        IDevice[] devices = chooseDevicesManually(facet);
-        if (devices.length > 0) {
-          if (debug && containsRealDevice(devices)) {
-            if (!checkDebuggableOption(facet)) {
-              return null;
-            }
+    IDevice[] targetDevices = new IDevice[0];
+    if (CHOOSE_DEVICE_MANUALLY) {
+      IDevice[] devices = chooseDevicesManually(facet);
+      if (devices.length > 0) {
+        if (debug && containsRealDevice(devices)) {
+          if (!checkDebuggableOption(facet)) {
+            return null;
           }
-          targetDevices = devices;
-          PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(targetDevices));
         }
-        if (targetDevices.length == 0) return null;
+        targetDevices = devices;
+        PropertiesComponent.getInstance(getProject()).setValue(ANDROID_TARGET_DEVICES_PROPERTY, toString(targetDevices));
       }
-      AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
-      if (applicationLauncher != null) {
-        return new AndroidRunningState(env, facet, targetDevices, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
-                                       computeCommandLine(), aPackage, applicationLauncher, depModule2PackageName) {
+      if (targetDevices.length == 0) return null;
+    }
+    AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
+    if (applicationLauncher != null) {
+      return new AndroidRunningState(env, facet, targetDevices, PREFERRED_AVD.length() > 0 ? PREFERRED_AVD : null,
+                                     computeCommandLine(), aPackage, applicationLauncher, depModule2PackageName) {
 
-          @NotNull
-          @Override
-          protected ConsoleView attachConsole() throws ExecutionException {
-            return AndroidRunConfigurationBase.this.attachConsole(this, executor);
-          }
-        };
-      }
+        @NotNull
+        @Override
+        protected ConsoleView attachConsole() throws ExecutionException {
+          return AndroidRunConfigurationBase.this.attachConsole(this, executor);
+        }
+      };
     }
     return null;
   }
@@ -296,16 +296,22 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return true;
   }
 
-  static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
+  // can be invoked only from dispatch thread!
+  private static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
     AndroidDebugBridge bridge = facet.getDebugBridge();
     if (bridge != null) {
-      IDevice[] devices = bridge.getDevices();
-      if (devices.length > 0) {
-        Client[] clients = devices[0].getClients();
-        if (clients.length > 0) {
-          ClientData clientData = clients[0].getClientData();
-          return clientData == null || clientData.getVmIdentifier() == null;
-        }
+      return isDdmsCorrupted(bridge);
+    }
+    return false;
+  }
+
+  static boolean isDdmsCorrupted(@NotNull AndroidDebugBridge bridge) {
+    IDevice[] devices = bridge.getDevices();
+    if (devices.length > 0) {
+      Client[] clients = devices[0].getClients();
+      if (clients.length > 0) {
+        ClientData clientData = clients[0].getClientData();
+        return clientData == null || clientData.getVmIdentifier() == null;
       }
     }
     return false;

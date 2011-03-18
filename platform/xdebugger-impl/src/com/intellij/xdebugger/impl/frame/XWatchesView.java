@@ -20,7 +20,9 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -53,20 +55,19 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
   private final WatchesRootNode myRootNode;
+  private final XDebugSessionData mySessionData;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
+    mySessionData = sessionData;
     myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
 
     ActionManager actionManager = ActionManager.getInstance();
 
-    CustomShortcutSet insertShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
     XDebuggerTree tree = myTreePanel.getTree();
-    actionManager.getAction(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(insertShortcut, tree);
-
-    CustomShortcutSet deleteShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-    actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(deleteShortcut, tree);
+    actionManager.getAction(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(CommonShortcuts.INSERT, tree);
+    actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
 
     CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
@@ -86,6 +87,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
       evaluator = stackFrame.getEvaluator();
     }
     myRootNode.addWatchExpression(evaluator, expression, index);
+    updateSessionData();
   }
 
   protected void rebuildView(final SessionEvent event) {
@@ -147,9 +149,15 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
       WatchNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
       TreeUtil.selectNode(myTreePanel.getTree(), node);
     }
+    updateSessionData();
   }
 
-  public List<String> getWatchExpressions() {
+  public void removeAllWatches() {
+    myRootNode.removeAllChildren();
+    updateSessionData();
+  }
+
+  private void updateSessionData() {
     List<String> watchExpressions = new ArrayList<String>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();
     if (children != null) {
@@ -157,7 +165,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
         watchExpressions.add(child.getExpression());
       }
     }
-    return watchExpressions;
+    mySessionData.setWatchExpressions(ArrayUtil.toStringArray(watchExpressions));
   }
 
   public boolean update(final DnDEvent aEvent) {

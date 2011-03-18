@@ -16,12 +16,19 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiPolyVariantReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
  */
-public interface GrSafeCastExpression extends GrExpression {
+public interface GrSafeCastExpression extends GrExpression, PsiPolyVariantReference {
   GrTypeElement getCastTypeElement();
   GrExpression getOperand();
+
+  @NotNull
+  @Override
+  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
 }

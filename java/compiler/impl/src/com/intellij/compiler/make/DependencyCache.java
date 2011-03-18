@@ -440,7 +440,7 @@ public class DependencyCache {
             final String sourceFileName = getCache().getSourceFileName(qName);
             final boolean markAsRemovedSource = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
               public Boolean compute() {
-                VirtualFile sourceFile = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName);
+                VirtualFile sourceFile = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName, false);
                 return sourceFile == null || !compiledWithErrors.contains(sourceFile) ? Boolean.TRUE : Boolean.FALSE;
               }
             }).booleanValue();

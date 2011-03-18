@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
@@ -39,12 +40,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -134,8 +135,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   @Override
   public MyHistorySession createFromCachedData(Boolean aBoolean,
-                                               List<VcsFileRevision> revisions,
-                                               FilePath filePath,
+                                               @NotNull List<VcsFileRevision> revisions,
+                                               @NotNull FilePath filePath,
                                                VcsRevisionNumber currentRevision) {
     return new MyHistorySession(revisions, filePath, aBoolean, currentRevision);
   }
@@ -331,7 +332,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public AnAction[] getAdditionalActions(final Runnable refresher) {
-    return new AnAction[]{new ShowAllSubmittedFilesAction(), new MergeSourceDetailsAction()};
+    return new AnAction[]{new ShowAllAffectedGenericAction(), new MergeSourceDetailsAction()};
   }
 
   public boolean isDateOmittable() {

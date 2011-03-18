@@ -2226,13 +2226,15 @@ public class AbstractTreeUi {
   }
 
   public List<Object> getExpandedElements() {
-    List<Object> result = new ArrayList<Object>();
-    Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
-    while (enumeration.hasMoreElements()) {
-      TreePath each = enumeration.nextElement();
-      Object eachElement = getElementFor(each.getLastPathComponent());
-      if (eachElement != null) {
-        result.add(eachElement);
+    final List<Object> result = new ArrayList<Object>();
+    final Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
+    if (enumeration != null) {
+      while (enumeration.hasMoreElements()) {
+        TreePath each = enumeration.nextElement();
+        Object eachElement = getElementFor(each.getLastPathComponent());
+        if (eachElement != null) {
+          result.add(eachElement);
+        }
       }
     }
 

@@ -68,29 +68,34 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
   private void addExceptionThrownPlaces(final PsiType type) {
     if (type instanceof PsiClassType) {
       myPlace.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }
 
-        @Override public void visitThrowStatement(PsiThrowStatement statement) {
+        @Override
+        public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
-          PsiClassType actualType = ExceptionUtil.getUnhandledException(statement, myPlace);
-          if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
-            PsiExpression psiExpression = statement.getException();
-            if (psiExpression instanceof PsiReferenceExpression) {
-              addOccurrence(psiExpression);
-            }
-            else if (psiExpression instanceof PsiNewExpression) {
-              PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
-              addOccurrence(ref);
-            }
-            else {
-              addOccurrence(statement.getException());
+          final List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, myPlace);
+          for (PsiClassType actualType : actualTypes) {
+            if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+              PsiExpression psiExpression = statement.getException();
+              if (psiExpression instanceof PsiReferenceExpression) {
+                addOccurrence(psiExpression);
+              }
+              else if (psiExpression instanceof PsiNewExpression) {
+                PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
+                addOccurrence(ref);
+              }
+              else {
+                addOccurrence(statement.getException());
+              }
             }
           }
         }
 
-        @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           PsiReference reference = expression.getMethodExpression().getReference();
           if (reference == null) return;
@@ -103,7 +108,8 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
           }
         }
 
-        @Override public void visitNewExpression(PsiNewExpression expression) {
+        @Override
+        public void visitNewExpression(PsiNewExpression expression) {
           super.visitNewExpression(expression);
           PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           if (classReference == null) return;

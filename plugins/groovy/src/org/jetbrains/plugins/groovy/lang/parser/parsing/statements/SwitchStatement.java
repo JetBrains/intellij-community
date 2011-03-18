@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class SwitchStatement implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseSwitch(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kSWITCH);
 
@@ -70,71 +70,60 @@ public class SwitchStatement implements GroovyElementTypes {
 
   }
 
-  /**
-   * Parses cases block
-   *
-   * @param builder
-   */
   private static void parseCaseBlock(PsiBuilder builder, GroovyParser parser) {
     ParserUtils.getToken(builder, mLCURLY);
     ParserUtils.getToken(builder, mNLS);
-    if (ParserUtils.getToken(builder, mRCURLY)) {
-      return;
-    }
-    if (!kCASE.equals(builder.getTokenType()) &&
-        !kDEFAULT.equals(builder.getTokenType())) {
-      builder.error(GroovyBundle.message("case.expected"));
-      while (!builder.eof() &&
-          !(kCASE.equals(builder.getTokenType()) ||
-              kDEFAULT.equals(builder.getTokenType()) ||
-              mRCURLY.equals(builder.getTokenType()))) {
-        builder.error(GroovyBundle.message("case.expected"));
-        builder.advanceLexer();
-      }
-    }
 
-    while (kCASE.equals(builder.getTokenType()) ||
-        kDEFAULT.equals(builder.getTokenType())) {
+    while (true) {
+      if (ParserUtils.getToken(builder, mRCURLY)) {
+        return;
+      }
+
+      if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT) {
+        builder.error("case, default or } expected");
+        ParserUtils.skipCountingBraces(builder, TokenSet.create(kCASE, kDEFAULT, mRCURLY));
+        if (builder.eof() || ParserUtils.getToken(builder, mRCURLY)) {
+          return;
+        }
+      }
+
       PsiBuilder.Marker sectionMarker = builder.mark();
       parseCaseLabel(builder, parser);
-      if (builder.getTokenType() == mRCURLY ||
-          ParserUtils.lookAhead(builder, mNLS, mRCURLY)) {
+      ParserUtils.getToken(builder, mNLS);
+      if (builder.getTokenType() == mRCURLY) {
         builder.error(GroovyBundle.message("expression.expected"));
       } else {
         parser.parseSwitchCaseList(builder);
       }
       sectionMarker.done(CASE_SECTION);
-
-      if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT && builder.getTokenType() != mRCURLY) {
-        builder.error("case, default or } expected");
-        while (!builder.eof() && builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT && builder.getTokenType() != mRCURLY) {
-          builder.advanceLexer();
-        }
-      }
+      ParserUtils.getToken(builder, mNLS);
     }
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
   }
 
   /**
    * Parses one or more sequential 'case' or 'default' labels
-   *
-   * @param builder
    */
-  public static void parseCaseLabel(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker label = builder.mark();
+  public static boolean parseCaseLabel(PsiBuilder builder, GroovyParser parser) {
     IElementType elem = builder.getTokenType();
-    ParserUtils.getToken(builder, TokenSet.create(kCASE, kDEFAULT));
+    if (elem != kCASE && elem != kDEFAULT) {
+      return false;
+    }
 
+    PsiBuilder.Marker label = builder.mark();
+    builder.advanceLexer();
     if (kCASE.equals(elem)) {
       AssignmentExpression.parse(builder, parser, true);
     }
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);
+    PsiBuilder.Marker beforeNls = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (builder.getTokenType() == kCASE ||
-        builder.getTokenType() == kDEFAULT) {
-      parseCaseLabel(builder, parser);
+    if (parseCaseLabel(builder, parser)) {
+      beforeNls.drop();
+    } else {
+      beforeNls.rollbackTo();
     }
+    return true;
   }
 
 }

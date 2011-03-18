@@ -39,5 +39,5 @@ Groovy script
         Command arguments
           Literal
             PsiElement(string)(''abc'')
-      PsiElement(new line)('\n')
+    PsiElement(new line)('\n')
     PsiElement(})('}')

@@ -171,8 +171,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                        final List<PsiMethod> validEnclosingMethods,
                                                        final Introducer introducer) {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox("Choose base method", true);
-    superMethod.setMnemonic('b');
+    final JCheckBox superMethod = new JCheckBox("Use super method of", true);
+    superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(validEnclosingMethods.toArray());
     list.setCellRenderer(new MethodCellRenderer());

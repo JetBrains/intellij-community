@@ -224,7 +224,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testTripleEqual() throws Exception {
     checkParsing "2===3", """Groovy script
-  Equality expression
+  Relational expression
     Literal
       PsiElement(Integer)('2')
     PsiElement(==)('===')

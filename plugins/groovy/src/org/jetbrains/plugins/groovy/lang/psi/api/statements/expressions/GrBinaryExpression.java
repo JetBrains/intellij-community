@@ -16,27 +16,37 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ilyas
  */
-public interface GrBinaryExpression extends GrExpression {
+public interface GrBinaryExpression extends GrExpression, PsiPolyVariantReference {
 
   /**
    * @return left operand of binary expression
    */
   @NotNull
-  public GrExpression getLeftOperand();
+  GrExpression getLeftOperand();
 
   /**
    * @return right operand of binary expression
    */
   @Nullable
-  public GrExpression getRightOperand();
+  GrExpression getRightOperand();
 
   @Nullable
   IElementType getOperationTokenType();
+
+  @Nullable
+  PsiElement getOperationToken();
+
+  @NotNull
+  @Override
+  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
 }

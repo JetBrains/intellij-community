@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+class Test {
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
+    protected String x;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.lang.ASTNode;
-
-/**
- * @author ilyas
- */
-public abstract class GrRegexExpressionImpl extends GrBinaryExpressionImpl {
-  public GrRegexExpressionImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Regex expression";
-  }
+    void simpleMethod() {
+        x = "";
+        System.out.println(x);
+        System.out.println("");
+    }
 }

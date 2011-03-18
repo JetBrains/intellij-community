@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+class Test {
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
+    protected String x;
 
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author ilyas
- */
-public class GrSimplePowerExpressionImpl extends GrPowerExpressionImpl {
-
-  public GrSimplePowerExpressionImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Simple power expression";
-  }
+    void simpleMethod() {
+        x = "";
+        System.out.println(x);
+        System.out.println("");
+    }
 }

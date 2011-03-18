@@ -20,6 +20,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,12 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ChromeSettings extends BrowserSpecificSettings {
+  @NonNls public static final String REMOTE_SHELL_PORT_ARG = "--remote-shell-port";
+  public static final int DEFAULT_REMOTE_SHELL_PORT = 7930;
   private String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
+  private boolean myEnableRemoteDebug;
+  private int myRemoteShellPort = DEFAULT_REMOTE_SHELL_PORT;
 
   public ChromeSettings() {
   }
@@ -39,13 +44,31 @@ public class ChromeSettings extends BrowserSpecificSettings {
     return myUserDataDirectoryPath;
   }
 
-  public void setUserDataDirectoryPath(String userDataDirectoryPath) {
-    myUserDataDirectoryPath = userDataDirectoryPath;
-  }
-
   @Tag("use-custom-profile")
   public boolean isUseCustomProfile() {
     return myUseCustomProfile;
+  }
+
+  @Tag("enable-remote-debug")
+  public boolean isEnableRemoteDebug() {
+    return myEnableRemoteDebug;
+  }
+
+  @Tag("remote-shell-port")
+  public int getRemoteShellPort() {
+    return myRemoteShellPort;
+  }
+
+  public void setEnableRemoteDebug(boolean enableRemoteDebug) {
+    myEnableRemoteDebug = enableRemoteDebug;
+  }
+
+  public void setRemoteShellPort(int remoteShellPort) {
+    myRemoteShellPort = remoteShellPort;
+  }
+
+  public void setUserDataDirectoryPath(String userDataDirectoryPath) {
+    myUserDataDirectoryPath = userDataDirectoryPath;
   }
 
   public void setUseCustomProfile(boolean useCustomProfile) {
@@ -55,10 +78,23 @@ public class ChromeSettings extends BrowserSpecificSettings {
   @NotNull
   @Override
   public String[] getAdditionalParameters() {
-    if (!myUseCustomProfile || myUserDataDirectoryPath == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] customProfileArg;
+    if (myUseCustomProfile && myUserDataDirectoryPath != null) {
+      customProfileArg = new String[]{"--user-data-dir=" + FileUtil.toSystemDependentName(myUserDataDirectoryPath)};
     }
-    return new String[]{"--user-data-dir=" + FileUtil.toSystemDependentName(myUserDataDirectoryPath)};
+    else {
+      customProfileArg = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    String[] remoteShellArg;
+    if (myEnableRemoteDebug) {
+      remoteShellArg = new String[]{REMOTE_SHELL_PORT_ARG + "=" + myRemoteShellPort};
+    }
+    else {
+      remoteShellArg = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    return ArrayUtil.mergeArrays(customProfileArg, remoteShellArg);
   }
 
   @Override

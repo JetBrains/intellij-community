@@ -89,4 +89,7 @@ public class ConsoleExecuteActionHandler {
   public void setAddCurrentToHistory(boolean addCurrentToHistory) {
     myAddCurrentToHistory = addCurrentToHistory;
   }
+
+  public void finishExecution() {
+  }
 }

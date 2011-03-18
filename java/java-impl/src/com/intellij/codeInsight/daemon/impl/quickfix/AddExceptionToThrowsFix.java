@@ -178,7 +178,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
   @Nullable
   private static PsiElement findElement(PsiElement element, PsiMethod topElement) {
-    if (element == null) return null;
+    if (element == null || element == topElement) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
     if (!filterInProjectExceptions(topElement, unhandledExceptions).isEmpty()) {
       return element;

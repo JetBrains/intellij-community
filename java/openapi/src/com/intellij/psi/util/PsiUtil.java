@@ -423,8 +423,10 @@ public final class PsiUtil extends PsiUtilBase {
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
+
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpression[] argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
+    final PsiType[] types = ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE);
+    return getApplicabilityLevel(method, substitutorForMethod, types, getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
@@ -889,17 +891,23 @@ public final class PsiUtil extends PsiUtilBase {
     modifierList.setModifierProperty(property, value);
   }
 
-  public static boolean isTryBlock(final PsiElement element) {
+  public static boolean isTryBlock(@Nullable final PsiElement element) {
+    if (element == null) return false;
     final PsiElement parent = element.getParent();
     return parent instanceof PsiTryStatement && element == ((PsiTryStatement)parent).getTryBlock();
   }
 
-  public static boolean isElseBlock(final PsiElement element) {
+  public static boolean isElseBlock(@Nullable final PsiElement element) {
+    if (element == null) return false;
     final PsiElement parent = element.getParent();
     return parent instanceof PsiIfStatement && element == ((PsiIfStatement)parent).getElseBranch();
   }
 
   public static boolean isJavaToken(@Nullable final PsiElement element, final IElementType type) {
     return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == type;
+  }
+
+  public static boolean isCatchParameter(@Nullable final PsiElement element) {
+    return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 }

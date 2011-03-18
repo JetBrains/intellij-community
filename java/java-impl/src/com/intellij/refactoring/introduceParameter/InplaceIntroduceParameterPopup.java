@@ -15,43 +15,28 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.TitlePanel;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +49,6 @@ import java.util.List;
  */
 class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
-  private Balloon myBalloon;
   private final Project myProject;
   private final Editor myEditor;
   private final TypeSelectorManagerImpl myTypeSelectorManager;
@@ -104,7 +88,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     myMethodToSearchFor = methodToSearchFor;
     myOccurrences = occurrences;
     myMustBeFinal = mustBeFinal;
-    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null;
+    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
     myExprText = myExpr != null ? myExpr.getText() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
@@ -180,7 +164,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     return myOccurrenceMarkers;
   }
 
-  private class ParameterInplaceIntroducer extends VariableInplaceIntroducer {
+  private class ParameterInplaceIntroducer extends AbstractInplaceIntroducer {
 
     private SmartTypePointer myParameterTypePointer;
     private SmartTypePointer myDefaultParameterTypePointer;
@@ -190,7 +174,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     public ParameterInplaceIntroducer(PsiParameter parameter) {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, parameter, myMustBeFinal,
-            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, getOccurrenceMarkers());
+            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers());
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
 
@@ -208,63 +192,30 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     }
 
     @Override
+    protected boolean isReplaceAllOccurrences() {
+      return InplaceIntroduceParameterPopup.this.isReplaceAllOccurences();
+    }
+
+    @Override
+    protected PsiExpression getExpr() {
+      return myExpr;
+    }
+
+    @Override
+    protected PsiExpression[] getOccurrences() {
+      return myOccurrences;
+    }
+
+    @Override
+    protected List<RangeMarker> getOccurrenceMarkers() {
+      return InplaceIntroduceParameterPopup.this.getOccurrenceMarkers();
+    }
+
+    @Override
     protected PsiVariable getVariable() {
       return getParameter();
     }
 
-    @Override
-    protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-      final PsiVariable variable = getVariable();
-      if (variable != null) {
-        for (PsiReference reference : ReferencesSearch.search(variable)) {
-          refs.remove(reference);
-        }
-      }
-    }
-
-    @Override
-    protected boolean appendAdditionalElement(List<Pair<PsiElement, TextRange>> stringUsages) {
-      return true;
-    }
-
-    @Override
-    protected void collectAdditionalElementsToRename(boolean processTextOccurrences, List<Pair<PsiElement, TextRange>> stringUsages) {
-      if (isReplaceAllOccurences()) {
-        for (PsiExpression expression : myOccurrences) {
-          stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
-        }
-      }
-      else if (myExpr != null) {
-        stringUsages.add(Pair.<PsiElement, TextRange>create(myExpr, new TextRange(0, myExpr.getTextLength())));
-      }
-    }
-
-    @Override
-    protected void collectAdditionalRangesToHighlight(Map<TextRange, TextAttributes> rangesToHighlight,
-                                                      Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                                      EditorColorsManager colorsManager) {
-    }
-
-    @Override
-    protected void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
-                                 @NotNull Editor editor,
-                                 @NotNull Collection<RangeHighlighter> highlighters,
-                                 @NotNull HighlightManager highlightManager) {
-      final TextAttributes attributes =
-        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      final int variableNameLength = getVariable().getName().length();
-      if (isReplaceAllOccurences()) {
-        for (RangeMarker marker : getOccurrenceMarkers()) {
-          final int startOffset = marker.getStartOffset();
-          highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
-        }
-      }
-      else if (myExpr != null) {
-        final int startOffset = myExprMarker.getStartOffset();
-        highlightManager.addOccurrenceHighlight(editor, startOffset, startOffset + variableNameLength, attributes, 0, highlighters, null);
-      }
-      super.addHighlights(ranges, editor, highlighters, highlightManager);
-    }
 
     @Override
     protected void saveSettings(PsiVariable psiVariable) {
@@ -300,7 +251,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
           @Override
           public void run() {
-            conflictsFound[0] = false;
+            conflictsFound[0] = processor.hasConflicts();
           }
         });
         processor.run();
@@ -336,7 +287,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         public void run() {
           final PsiFile containingFile = myMethod.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker);
+          myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker, myExprText);
           if (myExpr != null) {
             myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
           }
@@ -347,7 +298,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
               myOccurrences[i] = myExpr;
               continue;
             }
-            final PsiExpression psiExpression = restoreExpression(containingFile, psiParameter, elementFactory, marker);
+            final PsiExpression psiExpression = restoreExpression(containingFile, psiParameter, elementFactory, marker, myExprText);
             if (psiExpression != null) {
               myOccurrences[i] = psiExpression;
             }
@@ -358,21 +309,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           }
         }
       });
-    }
-
-    @Nullable
-    private PsiExpression restoreExpression(PsiFile containingFile,
-                                            PsiParameter psiParameter,
-                                            PsiElementFactory elementFactory,
-                                            RangeMarker marker) {
-      if (myExprText == null) return null;
-      if (psiParameter == null || !psiParameter.isValid()) return null;
-      final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
-      final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-      if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == psiParameter) {
-        return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(myExprText, myMethod));
-      }
-      return null;
     }
 
 

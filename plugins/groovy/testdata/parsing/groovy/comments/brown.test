@@ -8,9 +8,9 @@ Groovy script
     PsiElement(if)('if')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Logical AND expression
-      Logical AND expression
-        Logical AND expression
+    Logical expression
+      Logical expression
+        Logical expression
           Unary expression
             PsiElement(!)('!')
             Method call

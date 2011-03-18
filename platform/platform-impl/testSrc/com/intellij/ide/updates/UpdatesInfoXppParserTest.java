@@ -54,11 +54,6 @@ public class UpdatesInfoXppParserTest extends TestCase {
 
   }
 
-  public void testBrokenXmlParsing() throws Exception {
-    final UpdatesInfo info = InfoReader.read("broken.xml");
-    Assert.assertNull(info);
-  }
-
   public void testEmptyChannels() throws Exception {
     final UpdatesInfo info = InfoReader.read("emptyChannels.xml");
     Assert.assertNotNull(info);

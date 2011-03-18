@@ -90,7 +90,7 @@ public class VcsHistoryProviderBackgroundableProxy {
                                        @Nullable VcsBackgroundableActions actionKey, boolean canUseCache) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session =
-        myVcsHistoryCache.get(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>) myDelegate);
+        myVcsHistoryCache.getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
       if (session != null) {
         partner.reportCreatedEmptySession(session);
         partner.finished();
@@ -114,17 +114,19 @@ public class VcsHistoryProviderBackgroundableProxy {
       cachedPartner = new HistoryPartnerProxy(partner, new Consumer<VcsAbstractHistorySession>() {
         @Override
         public void consume(VcsAbstractHistorySession session) {
-          myVcsHistoryCache.put(filePath, vcsKey, (VcsAbstractHistorySession)session.copy(),
-                                (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate);
+          final FilePath correctedPath =
+            ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(session);
+          myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(),
+                                (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate, true);
         }
       });
     } else {
       cachedPartner = partner;
     }
-    reportHistory(filePath, resultingActionKey, handler, cachedPartner);
+    reportHistory(filePath, vcsKey, resultingActionKey, handler, cachedPartner);
   }
 
-  private void reportHistory(final FilePath filePath,
+  private void reportHistory(final FilePath filePath, final VcsKey vcsKey,
                              final VcsBackgroundableActions resultingActionKey,
                              final BackgroundableActionEnabledHandler handler,
                              final VcsAppendableHistorySessionPartner cachedPartner) {
@@ -132,7 +134,12 @@ public class VcsHistoryProviderBackgroundableProxy {
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myDelegate.reportAppendableHistory(filePath, cachedPartner);
+          final VcsHistorySession cachedSession = myCachesHistory ? getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey) : null;
+          if (cachedSession != null) {
+            cachedPartner.reportCreatedEmptySession((VcsAbstractHistorySession)cachedSession);
+          } else {
+            myDelegate.reportAppendableHistory(filePath, cachedPartner);
+          }
         }
         catch (VcsException e) {
           cachedPartner.reportException(e);
@@ -226,28 +233,41 @@ public class VcsHistoryProviderBackgroundableProxy {
     public VcsHistorySession compute() throws VcsException {
       VcsHistorySession session = null;
       // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      if (pi != null) {
-        pi.setText2("Checking last revision");
-      }
-      final ItemLatestState lastRevision = myDiffProvider.getLastRevision(myFilePath);
-      if (lastRevision != null && ! lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
-        final VcsAbstractHistorySession cached = myVcsHistoryCache
-          .get(myFilePath, myVcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
-        final List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
-          session = cached;
-        }
-      }
+      session = getSessionFromCacheWithLastRevisionCheck(myFilePath, myVcsKey);
       if (session == null) {
         session = myDelegate.createSessionFor(myFilePath);
-        myVcsHistoryCache.put(myFilePath, myVcsKey, (VcsAbstractHistorySession)((VcsAbstractHistorySession) session).copy(),
-                              (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate);
+        final FilePath correctedPath =
+          ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(
+            (VcsAbstractHistorySession)session);
+        myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)((VcsAbstractHistorySession) session).copy(),
+                              (VcsCacheableHistorySessionFactory<Serializable,VcsAbstractHistorySession>) myDelegate, true);
       }
       if (myConsumer != null) {
         myConsumer.consume(session);
       }
       return session;
     }
+  }
+
+  @Nullable
+  private VcsHistorySession getSessionFromCacheWithLastRevisionCheck(final FilePath filePath, final VcsKey vcsKey) {
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    if (pi != null) {
+      pi.setText2("Checking last revision");
+    }
+    final VcsAbstractHistorySession cached = myVcsHistoryCache
+      .getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
+    if (cached == null) return null;
+    final FilePath correctedFilePath =
+      ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);
+
+    final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
+    if (lastRevision != null && ! lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
+      final List<VcsFileRevision> revisionList = cached.getRevisionList();
+      if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
+        return cached;
+      }
+    }
+    return null;
   }
 }

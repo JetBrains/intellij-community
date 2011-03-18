@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,8 @@ public class JDBCResourceInspection extends ResourceInspection {
                 return;
             }
             final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
+            if (parent instanceof PsiReturnStatement ||
+                    parent instanceof PsiResourceVariable) {
                 return;
             }
             final PsiVariable boundVariable = getVariable(parent);

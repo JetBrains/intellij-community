@@ -4,7 +4,7 @@
   <option name="EDITOR_FONT_NAME" value="Monaco" />
   <colors>
     <option name="SELECTION_BACKGROUND" value="49483E" />
-    <option name="CARET_ROW_COLOR" value="49483E" />
+    <option name="CARET_ROW_COLOR" value="25241a" />
     <option name="WHITESPACES" value="49483E" />
     <option name="CARET_COLOR" value="F8F8F0" />
     <option name="INDENT_GUIDE" value="49483E" />
@@ -892,7 +892,9 @@
       </value>
     </option>
     <option name="RUBY_HEREDOC_ID">
-      <value />
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
     </option>
     <option name="RUBY_NUMBER">
       <value>
@@ -1014,6 +1016,125 @@
         <option name="FOREGROUND" value="66D9EF" />
       </value>
     </option>
+    <option name="HAML_TEXT">
+      <value />
+    </option>
+    <option name="HAML_TAG">
+      <value />
+    </option>
+    <option name="HAML_CLASS">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="HAML_ID">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="HAML_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="HAML_XHTML">
+      <value />
+    </option>
+    <option name="HAML_RUBY_CODE">
+      <value />
+    </option>
+    <option name="HAML_RUBY_START">
+      <value />
+    </option>
+    <option name="HAML_LINE_CONTINUATION">
+      <value />
+    </option>
+    <option name="HAML_FILTER">
+      <value />
+    </option>
+    <option name="HAML_FILTER_CONTENT">
+      <value />
+    </option>
+    <option name="GHERKIN_TEXT">
+      <value />
+    </option>
+    <option name="GHERKIN_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="GHERKIN_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="GHERKIN_TAG">
+      <value>
+        <option name="FOREGROUND" value="66D9EF" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="GHERKIN_PYSTRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="GHERKIN_TABLE_HEADER_CELL">
+      <value />
+    </option>
+    <option name="GHERKIN_TABLE_CELL">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="PIPE">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="GHERKIN_OUTLINE_PARAMETER_SUBSTITUTION">
+      <value />
+    </option>
+    <option name="GHERKIN_REGEXP_PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTLET_START_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTLET_END_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
+    <option name="RHTML_EXPRESSION_START_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
+    <option name="RHTML_EXPRESSION_END_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
+    <option name="RHTML_COMMENT_ID">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="RHTML_OMIT_NEW_LINE_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
+    <option name="RHTML_SCRIPTING_BACKGROUND_ID">
+      <value>
+        <option name="BACKGROUND" value="373737" />
+      </value>
+    </option>
     <option name="CUSTOM_NUMBER_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="AE81FF" />
@@ -1047,46 +1168,6 @@
       <value>
         <option name="FOREGROUND" value="F8F8F0" />
         <option name="BACKGROUND" value="F92672" />
-      </value>
-    </option>
-    <option name="GHERKIN_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="75715E" />
-      </value>
-    </option>
-    <option name="GHERKIN_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="75715E" />
-      </value>
-    </option>
-    <option name="GHERKIN_TAG">
-      <value/>
-    </option>
-    <option name="GHERKIN_PYSTRING">
-      <value>
-        <option name="FOREGROUND" value="E6DB74" />
-      </value>
-    </option>
-    <option name="GHERKIN_TABLE_HEADER_CELL">
-      <value>
-        <option name="FOREGROUND" value="FD971F" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="GHERKIN_TABLE_CELL">
-      <value>
-        <option name="FOREGROUND" value="E6DB74" />
-      </value>
-    </option>
-    <option name="GHERKIN_OUTLINE_PARAMETER_SUBSTITUTION">
-      <value>
-        <option name="FOREGROUND" value="FD971F" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="GHERKIN_REGEXP_PARAMETER">
-      <value>
-        <option name="FOREGROUND" value="E6DB74" />
       </value>
     </option>
   </attributes>

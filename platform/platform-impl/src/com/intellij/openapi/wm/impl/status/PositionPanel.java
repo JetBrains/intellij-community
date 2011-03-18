@@ -120,7 +120,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   public void selectionChanged(final SelectionEvent e) {
     final Editor editor = e.getEditor();
     Project project = editor.getProject();
-    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
+    if (project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
        updatePosition(editor);
     }
   }
@@ -128,7 +128,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   public void caretPositionChanged(final CaretEvent e) {
     final Editor editor = e.getEditor();
     Project project = editor.getProject();
-    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
+    if (project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
        updatePosition(editor);
     }
   }

@@ -29,6 +29,9 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
   public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
   public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";
+  public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
+  public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
+  public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
 
   private GroovyCommonClassNames() {
   }

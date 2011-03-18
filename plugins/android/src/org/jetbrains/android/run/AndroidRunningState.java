@@ -254,7 +254,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   @Nullable
   private IDevice chooseDeviceAutomaticaly() {
-    final AndroidDebugBridge bridge = myFacet.getDebugBridge();
+    final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
     if (bridge == null) {
       return null;
     }
@@ -551,7 +551,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean checkDdms() {
-    if (myDebugMode && AndroidRunConfigurationBase.isDdmsCorrupted(myFacet)) {
+    AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
+    if (myDebugMode && bridge != null && AndroidRunConfigurationBase.isDdmsCorrupted(bridge)) {
       message("Debug info is not available. Please close other application using ADB: DDMS, Eclipse", STDERR);
       return false;
     }

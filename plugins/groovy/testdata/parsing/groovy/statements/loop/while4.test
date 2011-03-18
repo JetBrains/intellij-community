@@ -6,7 +6,7 @@ Groovy script
     PsiElement(while)('while')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Equality expression
+    Relational expression
       Reference expression
         PsiElement(identifier)('a')
       PsiElement(==)('==')

@@ -232,9 +232,16 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
   }
 
   private static Indent indentForSwitchStatement(PsiElement psiParent, ASTNode child) {
-    if (CASE_SECTION.equals(child.getElementType()) && CodeStyleSettingsManager.getSettings(psiParent.getProject()).INDENT_CASE_FROM_SWITCH) {
-      return Indent.getNormalIndent();
+    if (CASE_SECTION.equals(child.getElementType())) {
+      return getSwitchCaseIndent(psiParent);
     }
+    return Indent.getNoneIndent();
+  }
+
+  public static Indent getSwitchCaseIndent(PsiElement psiParent) {
+    if (CodeStyleSettingsManager.getSettings(psiParent.getProject()).INDENT_CASE_FROM_SWITCH) {
+        return Indent.getNormalIndent();
+      }
     return Indent.getNoneIndent();
   }
 }

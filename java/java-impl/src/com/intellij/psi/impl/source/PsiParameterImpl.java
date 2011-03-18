@@ -179,7 +179,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiElement getDeclarationScope() {
     final PsiElement parent = getParent();
     if (parent == null) return this;
-    if (parent instanceof PsiParameterList){
+    if (parent instanceof PsiParameterList) {
       return parent.getParent();
     }
     if (parent instanceof PsiForeachStatement) {
@@ -191,16 +191,17 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     PsiElement[] children = parent.getChildren();
     //noinspection ConstantConditions
     if (children != null) {
-      for(int i = 0; i < children.length; i++){
-        if (children[i].equals(this)){
-          while(!(children[i] instanceof PsiCodeBlock)){
+      for (int i = 0; i < children.length; i++) {
+        if (children[i].equals(this)) {
+          while (!(children[i] instanceof PsiCodeBlock)) {
+            //noinspection AssignmentToForLoopParameter
             i++;
           }
           return children[i];
         }
       }
     }
-    LOG.error("codeblock not found among parameter' "+this+" parents children: "+ Arrays.asList(children));
+    LOG.error("Code block not found among parameter' " + this + " parents children: " + Arrays.asList(children));
     return null;
   }
 
@@ -211,7 +212,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     myCachedType = null;
-    return SourceTreeToPsiMap.psiElementToTree(getTypeElement()).findChildByType(JavaTokenType.ELLIPSIS) != null;
+    return SourceTreeToPsiMap.psiToTreeNotNull(getTypeElement()).findChildByType(JavaTokenType.ELLIPSIS) != null;
   }
 
   @NotNull

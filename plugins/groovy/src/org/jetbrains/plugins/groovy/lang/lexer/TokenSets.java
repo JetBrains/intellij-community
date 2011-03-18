@@ -124,4 +124,12 @@ public abstract class TokenSets implements GroovyTokenTypes {
   );
 
   public static TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
+
+  public static final TokenSet RELATIONS = TokenSet.create(
+          mLT,
+          mGT,
+          mLE,
+          mGE,
+          kIN
+  );
 }
