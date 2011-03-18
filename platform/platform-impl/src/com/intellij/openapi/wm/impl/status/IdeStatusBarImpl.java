@@ -819,7 +819,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         if (vks.size() == 1) {
           Integer stroke = vks.iterator().next();
           String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(stroke.intValue(), 0));
-          text += "\nUse double click of " + keystrokeText + " to popup them when hidden";
+          text += ".\nUse double click of " + keystrokeText + " to popup them when hidden";
         }
         if (!text.equals(getToolTipText())) {
           setToolTipText(text);
