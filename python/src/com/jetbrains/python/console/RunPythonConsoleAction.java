@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -89,7 +90,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
-        return "'" + input + "'";
+        return "'" + FileUtil.toSystemDependentName(input).replace("\\", "\\\\") + "'";
       }
     }));
 
