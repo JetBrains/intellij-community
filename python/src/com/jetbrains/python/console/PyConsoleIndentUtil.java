@@ -23,11 +23,9 @@ public class PyConsoleIndentUtil {
 
     List<String> lines = Lists.newArrayList();
     List<Integer> indents = Lists.newArrayList();
-    int minIndent = Integer.MAX_VALUE;
     while (s.hasNextLine()) {
       String line = s.nextLine();
       int indent = 0;
-      boolean flag = false;
       for (char c : line.toCharArray()) {
         if (c == ' ') {
           indent++;
@@ -36,15 +34,13 @@ public class PyConsoleIndentUtil {
           indent += TAB_INDENT;
         }
         else {
-          flag = true;
           break;
         }
       }
-      if (flag && indent < minIndent) {
-        minIndent = indent;
+      if (!StringUtil.isEmpty(line)) {
+        lines.add(line.trim());
+        indents.add(indent);
       }
-      lines.add(line.trim());
-      indents.add(indent);
     }
 
     int[] indentArray = ArrayUtil.toIntArray(indents);
@@ -105,7 +101,6 @@ public class PyConsoleIndentUtil {
         else {
           lastIndented = false;
         }
-
       }
     }
   }

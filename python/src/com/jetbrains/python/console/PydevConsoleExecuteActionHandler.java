@@ -57,7 +57,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     while (s.hasNextLine()) {
       String line = s.nextLine();
       int indentSize = myIndentHelper.getIndent(line, false);
-      if (indentSize < myCurrentIndentSize &&!shouldIndent(line)) {
+      if (indentSize == 0 && indentSize < myCurrentIndentSize &&!shouldIndent(line)) {
         doProcessLine("\n");
         doProcessLine(line);
       }
