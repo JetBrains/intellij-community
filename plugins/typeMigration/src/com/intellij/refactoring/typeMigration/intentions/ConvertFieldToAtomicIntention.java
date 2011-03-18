@@ -57,7 +57,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiVariable == null) psiVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
-    if (psiVariable == null) return false;
+    if (psiVariable == null || psiVariable instanceof PsiResourceVariable) return false;
     if (psiVariable.getTypeElement() == null) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(psiVariable)) return false;
     final PsiType psiType = psiVariable.getType();

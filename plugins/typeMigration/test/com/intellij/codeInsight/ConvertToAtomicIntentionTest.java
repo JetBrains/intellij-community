@@ -1,16 +1,13 @@
-/*
- * User: anna
- * Date: 28-Oct-2009
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
+/**
+ * @author anna
+ * Date: 28-Oct-2009
+ */
 public class ConvertToAtomicIntentionTest extends LightQuickFixTestCase {
-
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;
