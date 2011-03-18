@@ -308,7 +308,6 @@ public class CompletionData {
     }
     else{
       final Object[] completions = reference.getVariants();
-      if(completions == null) return;
 
       for (Object completion : completions) {
         if (completion == null) {
