@@ -16,15 +16,14 @@
 package git4idea.diff;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
@@ -118,8 +117,22 @@ public class GitDiffProvider implements DiffProvider {
     if (GitUtil.gitRootOrNull(selectedFile) == null) {
       return null;
     }
+
+    // faster, if there were no renames
+    FilePath filePath = VcsUtil.getFilePath(path);
     try {
-      FilePath filePath = VcsUtil.getFilePath(path);
+      final CommittedChangesProvider committedChangesProvider = GitVcs.getInstance(myProject).getCommittedChangesProvider();
+      final Pair<CommittedChangeList, FilePath> pair = committedChangesProvider.getOneList(selectedFile, revisionNumber);
+      if (pair != null) {
+        return GitContentRevision.createRevision(pair.getSecond(), revisionNumber, myProject, selectedFile.getCharset());
+      }
+    }
+    catch (VcsException e) {
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
+    }
+
+    try {
+
       for (VcsFileRevision f : GitHistoryUtils.history(myProject, filePath)) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {

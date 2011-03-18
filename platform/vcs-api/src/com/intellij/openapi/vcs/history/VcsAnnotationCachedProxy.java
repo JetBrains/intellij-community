@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.VcsAnnotation;
 import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -77,8 +76,11 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
       final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
       final VcsAbstractHistorySession history = getHistory(revisionNumber, filePath, historyProvider, vcsAnnotation.getFirstRevision());
       // question is whether we need "not moved" path here?
-      final ContentRevision fileContent = loadContent(file, revisionNumber, currentRevision, filePath);
-      return cacheableAnnotationProvider.restore(vcsAnnotation, history, fileContent.getContent());
+      final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
+      final FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, history, fileContent.getContent(), currentRevision);
+      if (restored != null) {
+        return restored;
+      }
     }
 
     final FileAnnotation fileAnnotation = annotationProvider.annotate(file);
@@ -89,16 +91,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
       loadHistoryInBackgroundToCache(revisionNumber, filePath, vcsAnnotation);
     }
     return fileAnnotation;
-  }
-
-  private ContentRevision loadContent(VirtualFile file, VcsRevisionNumber revisionNumber, boolean currentRevision, FilePath filePath) {
-    final ContentRevision fileContent;
-    if (currentRevision) {
-      fileContent = CurrentContentRevision.create(filePath);
-    } else {
-      fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
-    }
-    return fileContent;
   }
 
   // todo will be removed - when annotation will be presented together with history

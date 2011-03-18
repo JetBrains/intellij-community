@@ -26,5 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public interface VcsCacheableAnnotationProvider {
   VcsAnnotation createCacheable(final FileAnnotation fileAnnotation);
   @Nullable
-  FileAnnotation restore(final VcsAnnotation vcsAnnotation, VcsAbstractHistorySession session, String annotatedContent);
+  FileAnnotation restore(final VcsAnnotation vcsAnnotation,
+                         VcsAbstractHistorySession session,
+                         String annotatedContent,
+                         boolean forCurrentRevision);
 }

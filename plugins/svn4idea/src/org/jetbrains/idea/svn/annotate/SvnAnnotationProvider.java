@@ -216,7 +216,10 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   @Nullable
   @Override
-  public FileAnnotation restore(VcsAnnotation vcsAnnotation, VcsAbstractHistorySession session, String annotatedContent) {
+  public FileAnnotation restore(VcsAnnotation vcsAnnotation,
+                                VcsAbstractHistorySession session,
+                                String annotatedContent,
+                                boolean forCurrentRevision) {
     final SvnFileAnnotation annotation =
       new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent);
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
