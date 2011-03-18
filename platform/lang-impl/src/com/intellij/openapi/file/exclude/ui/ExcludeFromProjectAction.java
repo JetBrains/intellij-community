@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.file.exclude.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -31,11 +33,55 @@ public class ExcludeFromProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null)  return;
+    if (project == null) return;
     final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) return;
-    ProjectFileExclusionManager fileExManager = ProjectFileExclusionManager.getInstance(project);
-    if (fileExManager == null) return;
-    fileExManager.addExclusion(file);
+    if (file.isDirectory()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          addExcludedFolder(project, file);
+        }
+      });
+    }
+    else {
+      ProjectFileExclusionManager fileExManager = ProjectFileExclusionManager.getInstance(project);
+      if (fileExManager == null) return;
+      fileExManager.addExclusion(file);
+    }
+  }
+
+  private static void addExcludedFolder(Project project, VirtualFile folder) {
+    Module module = ModuleUtil.findModuleForFile(folder, project);
+    if (module == null) return;
+    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    for (ContentEntry entry : model.getContentEntries()) {
+      VirtualFile entryFile = entry.getFile();
+      if (entryFile != null) {
+        if (VfsUtil.isAncestor(entryFile, folder, true)) {
+          entry.addExcludeFolder(folder);
+          model.commit();
+          return;
+        }
+      }
+    }
+    model.dispose();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Presentation presentation = e.getPresentation();
+    if (file == null) {
+      presentation.setVisible(false);
+      return;
+    }
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project != null) {
+      if (file.equals(project.getBaseDir()) || !file.isWritable()) {
+        presentation.setEnabled(false);
+      }
+    }
   }
 }
