@@ -86,17 +86,17 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
           public void consume(final Sdk jdk) {
             successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
             myJdkChooser.updateList(jdk, type);
+
+            if (!successfullyAdded[0]) {
+              try {
+                projectJdksModel.apply(jdkConfig);
+              }
+              catch (ConfigurationException e1) {
+                //name can't be wrong
+              }
+            }
           }
         });
-        if (!successfullyAdded[0]) {
-          try {
-            projectJdksModel.apply(jdkConfig);
-          }
-          catch (ConfigurationException e1) {
-            //name can't be wrong
-          }
-        }
-
       }
     });
   }
