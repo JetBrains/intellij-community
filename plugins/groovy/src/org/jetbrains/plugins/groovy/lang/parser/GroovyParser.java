@@ -211,11 +211,20 @@ public class GroovyParser implements PsiParser {
       while (ParserUtils.getToken(builder, mSEMI)) {}
       PsiBuilder.Marker beforeSeparators = builder.mark();
       ParserUtils.getToken(builder, mNLS);
-      if (builder.getTokenType() == kCASE || builder.getTokenType() == kDEFAULT || !parseStatement(builder, false) && !parseExtendedStatement(builder)) {
+      if (builder.eof() || builder.getTokenType() == kCASE || builder.getTokenType() == kDEFAULT || builder.getTokenType() == mRCURLY) {
         beforeSeparators.rollbackTo();
         break;
       }
       beforeSeparators.drop();
+      boolean first = true;
+      if (!parseStatement(builder, false) && !parseExtendedStatement(builder)) {
+        if (first) {
+          builder.error("statement expected");
+          first = false;
+        }
+        assert builder.getTokenType() != mLCURLY && builder.getTokenType() != mRCURLY;
+        builder.advanceLexer();
+      }
     }
   }
 
@@ -363,7 +372,7 @@ public class GroovyParser implements PsiParser {
       return parseIfStatement(builder);
     }
     if (GroovyTokenTypes.kSWITCH.equals(builder.getTokenType())) {
-      return SwitchStatement.parse(builder, this);
+      return SwitchStatement.parseSwitch(builder, this);
     }
     if (GroovyTokenTypes.kTRY.equals(builder.getTokenType())) {
       return TryCatchStatement.parse(builder, this);
