@@ -43,8 +43,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +112,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
   private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
+    myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
     myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
 
