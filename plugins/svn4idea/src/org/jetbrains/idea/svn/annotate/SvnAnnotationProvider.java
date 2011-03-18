@@ -19,12 +19,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
@@ -33,11 +36,10 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
-public class SvnAnnotationProvider implements AnnotationProvider {
+public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
+  private static final Object MERGED_KEY = new Object();
   private final SvnVcs myVcs;
 
   public SvnAnnotationProvider(final SvnVcs vcs) {
@@ -96,46 +98,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           }
 
           // ignore mime type=true : IDEA-19562
-          final ISVNAnnotateHandler annotateHandler = new ISVNAnnotateHandler() {
-            public void handleLine(Date date, long revision, String author, String line) {
-              if (progress != null) {
-                progress.checkCanceled();
-              }
-              result.appendLineInfo(date, revision, author, null, -1, null);
-            }
-
-            public void handleLine(final Date date,
-                                   final long revision,
-                                   final String author,
-                                   final String line,
-                                   final Date mergedDate,
-                                   final long mergedRevision,
-                                   final String mergedAuthor,
-                                   final String mergedPath,
-                                   final int lineNumber) throws SVNException {
-              if (progress != null) {
-                progress.checkCanceled();
-              }
-              if (revision == -1) return;
-              if ((mergedDate != null) && (revision > mergedRevision)) {
-                // !!! merged date = date of merge, i.e. date -> date of original change etc.
-                result.setLineInfo(lineNumber, date, revision, author, mergedDate, mergedRevision, mergedAuthor);
-              } else {
-                result.setLineInfo(lineNumber, date, revision, author, null, -1, null);
-              }
-            }
-
-            public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
-              throws SVNException {
-              if (progress != null) {
-                progress.checkCanceled();
-              }
-              return false;
-            }
-
-            public void handleEOF() {
-            }
-          };
+          final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(progress, result);
 
           final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
@@ -150,6 +113,9 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
           }
 
+          if (rp.get(1).getNumber() > 0) {
+            result.setFirstRevision(rp.get(1));
+          }
           annotation[0] = result;
         }
         catch (SVNException e) {
@@ -171,6 +137,113 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       throw new VcsException(exception[0]);
     }
     return annotation[0];
+  }
+
+  private ISVNAnnotateHandler createAnnotationHandler(final ProgressIndicator progress, final SvnFileAnnotation result) {
+    return new ISVNAnnotateHandler() {
+      public void handleLine(Date date, long revision, String author, String line) {
+        if (progress != null) {
+          progress.checkCanceled();
+        }
+        result.appendLineInfo(date, revision, author, null, -1, null);
+      }
+
+      public void handleLine(final Date date,
+                             final long revision,
+                             final String author,
+                             final String line,
+                             final Date mergedDate,
+                             final long mergedRevision,
+                             final String mergedAuthor,
+                             final String mergedPath,
+                             final int lineNumber) throws SVNException {
+        if (progress != null) {
+          progress.checkCanceled();
+        }
+        if (revision == -1) return;
+        if ((mergedDate != null) && (revision > mergedRevision)) {
+          // !!! merged date = date of merge, i.e. date -> date of original change etc.
+          result.setLineInfo(lineNumber, date, revision, author, mergedDate, mergedRevision, mergedAuthor);
+        } else {
+          result.setLineInfo(lineNumber, date, revision, author, null, -1, null);
+        }
+      }
+
+      public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
+        throws SVNException {
+        if (progress != null) {
+          progress.checkCanceled();
+        }
+        return false;
+      }
+
+      public void handleEOF() {
+      }
+    };
+  }
+
+  @Override
+  public VcsAnnotation createCacheable(FileAnnotation fileAnnotation) {
+    final SvnFileAnnotation svnFileAnnotation = (SvnFileAnnotation)fileAnnotation;
+    svnFileAnnotation.getAnnotationSourceSwitcher().switchTo(AnnotationSource.LOCAL);
+    final int size = svnFileAnnotation.getNumLines();
+
+    final VcsUsualLineAnnotationData lineAnnotationData = new VcsUsualLineAnnotationData(size);
+    for (int i = 0; i < size; i++) {
+      final VcsRevisionNumber revisionNumber = svnFileAnnotation.getLineRevisionNumber(i);
+      lineAnnotationData.put(i,  revisionNumber);
+    }
+
+    final VcsRareLineAnnotationData merged = new VcsRareLineAnnotationData(size);
+    final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    svnFileAnnotation.getAnnotationSourceSwitcher().switchTo(AnnotationSource.MERGE);
+    for (int i = 0; i < size; i++) {
+      if (svnFileAnnotation.getAnnotationSourceSwitcher().mergeSourceAvailable(i)) {
+        final VcsRevisionNumber number = svnFileAnnotation.getLineRevisionNumber(i);
+        merged.put(i, number);
+        addMap.put(number, svnFileAnnotation.getRevision(((SvnRevisionNumber) number).getRevision().getNumber()));
+      }
+    }
+
+    final VcsAnnotation vcsAnnotation = new VcsAnnotation(new FilePathImpl(svnFileAnnotation.getFile()), lineAnnotationData,
+                                                          svnFileAnnotation.getFirstRevisionNumber());
+    if (! merged.isEmpty()) {
+      vcsAnnotation.addAnnotation(MERGED_KEY, merged);
+      vcsAnnotation.addCachedOtherRevisions(addMap);
+    }
+    return vcsAnnotation;
+  }
+
+  @Nullable
+  @Override
+  public FileAnnotation restore(VcsAnnotation vcsAnnotation, VcsAbstractHistorySession session, String annotatedContent) {
+    final SvnFileAnnotation annotation =
+      new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent);
+    final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
+    final VcsLineAnnotationData data = vcsAnnotation.getAdditionalAnnotations().get(MERGED_KEY);
+    final Map<VcsRevisionNumber,VcsFileRevision> historyAsMap = session.getHistoryAsMap();
+    final Map<VcsRevisionNumber, VcsFileRevision> cachedOtherRevisions = vcsAnnotation.getCachedOtherRevisions();
+
+    for (int i = 0; i < basicAnnotation.getNumLines(); i++) {
+      final VcsRevisionNumber revision = basicAnnotation.getRevision(i);
+      final VcsRevisionNumber mergedData = data == null ? null : data.getRevision(i);
+      final VcsFileRevision fileRevision = historyAsMap.get(revision);
+      if (fileRevision == null) return null;
+      if (mergedData == null) {
+        annotation.setLineInfo(i, fileRevision.getRevisionDate(), ((SvnRevisionNumber) revision).getRevision().getNumber(),
+                             fileRevision.getAuthor(), null, -1, null);
+      } else {
+        final VcsFileRevision mergedRevision = cachedOtherRevisions.get(mergedData);
+        if (mergedRevision == null) return null;
+        annotation.setLineInfo(i, fileRevision.getRevisionDate(), ((SvnRevisionNumber) revision).getRevision().getNumber(),
+                             fileRevision.getAuthor(), mergedRevision.getRevisionDate(),
+                             ((SvnRevisionNumber) mergedRevision.getRevisionNumber()).getRevision().getNumber(), mergedRevision.getAuthor());
+      }
+    }
+    if (vcsAnnotation.getFirstRevision() != null) {
+      annotation.setFirstRevision(((SvnRevisionNumber) vcsAnnotation.getFirstRevision()).getRevision());
+    }
+    return annotation;
   }
 
   private static class MySteppedLogGetter {

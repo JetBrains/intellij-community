@@ -324,12 +324,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               FilePath filePath, VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              AnnotationProvider annotationProvider,
                               ContentManager contentManager, final Runnable refresher) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myVcs = vcs;
     myProvider = provider;
-    myAnnotationProvider = annotationProvider;
+    myAnnotationProvider = myVcs.getCachingAnnotationProvider();
     myRefresher = refresher;
     myHistorySession = session;         
     myFilePath = filePath;
