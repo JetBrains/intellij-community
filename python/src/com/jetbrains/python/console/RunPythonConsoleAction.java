@@ -71,14 +71,9 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module);
 
-    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
-      @Override
-      public String apply(String input) {
-        return "'" + input + "'";
-      }
-    }));
+    final String self_path_append = constructPythonPathCommand(pythonPath);
+
     String workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
-    final String self_path_append = "sys.path.extend([" + path + "])";
     BuildoutFacet facet = BuildoutFacet.getInstance(module);
     if (facet != null) {
       setup_fragment = new String[]{facet.getPathPrependStatement(), self_path_append};
@@ -88,5 +83,16 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     }
 
     return PydevConsoleRunner.run(project, sdk, PyBundle.message("python.console"), workingDir, setup_fragment);
+  }
+
+  public static String constructPythonPathCommand(Collection<String> pythonPath) {
+    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
+      @Override
+      public String apply(String input) {
+        return "'" + input + "'";
+      }
+    }));
+
+    return "sys.path.extend([" + path + "])";
   }
 }
