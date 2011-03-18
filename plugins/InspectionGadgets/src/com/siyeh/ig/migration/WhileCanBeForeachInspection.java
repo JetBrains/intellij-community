@@ -426,14 +426,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 return false;
             }
             final PsiVariable variable = (PsiVariable)declaredElement;
-            final PsiType variableType = variable.getType();
-            final PsiType iteratorType =
-                    TypeUtils.getType(CommonClassNames.JAVA_UTIL_ITERATOR,
-                            whileStatement);
-            if (iteratorType == null) {
-                return false;
-            }
-            if (!iteratorType.isAssignableFrom(variableType)) {
+            if (!TypeUtils.variableHasTypeOrSubtype(variable,
+                    CommonClassNames.JAVA_UTIL_ITERATOR,
+                    "java.util.ListIterator")) {
                 return false;
             }
             final PsiExpression initialValue = variable.getInitializer();
@@ -449,7 +444,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                     initialCall.getMethodExpression();
             @NonNls final String initialCallName =
                     initialMethodExpression.getReferenceName();
-            if (!"iterator".equals(initialCallName)) {
+            if (!"iterator".equals(initialCallName) &&
+                    !"listIterator".equals(initialCallName)) {
                 return false;
             }
             final PsiExpression qualifier =

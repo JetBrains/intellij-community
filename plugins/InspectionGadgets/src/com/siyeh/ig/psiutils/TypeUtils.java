@@ -18,7 +18,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +121,29 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
+        if (!(type instanceof PsiClassType)) {
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+            return false;
+        }
+        for (String typeName : typeNames) {
+            if (InheritanceUtil.isInheritor(aClass, typeName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean variableHasTypeOrSubtype(
+            @Nullable PsiVariable variable,
+            @NonNls @NotNull String... typeNames) {
+        if (variable == null) {
+            return false;
+        }
+        final PsiType type = variable.getType();
         if (!(type instanceof PsiClassType)) {
             return false;
         }
