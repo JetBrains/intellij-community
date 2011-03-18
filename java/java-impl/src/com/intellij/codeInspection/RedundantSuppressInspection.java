@@ -187,50 +187,56 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         for (PsiElement suppressedScope : suppressedScopes.keySet()) {
           Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
           if (!suppressedIds.contains(toolId)) continue;
-          boolean hasErrorInsideSuppressedScope = false;
           for (CommonProblemDescriptor descriptor : descriptors) {
             if (!(descriptor instanceof ProblemDescriptor)) continue;
             PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element == null) continue;
             PsiElement annotation = SuppressManager.getInstance().getElementToolSuppressedIn(element, toolId);
             if (annotation != null && PsiTreeUtil.isAncestor(suppressedScope, annotation, false) || annotation == null && !PsiTreeUtil.isAncestor(suppressedScope, element, false)) {
-              hasErrorInsideSuppressedScope = true;
+              suppressedIds.remove(toolId);
               break;
             }
           }
-          if (!hasErrorInsideSuppressedScope) {
-            PsiMember psiMember;
-            String problemLine = null;
-            if (suppressedScope instanceof PsiMember) {
-              psiMember = (PsiMember)suppressedScope;
-            } else {
-              psiMember = PsiTreeUtil.getParentOfType(suppressedScope, PsiDocCommentOwner.class);
-              final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(suppressedScope, PsiStatement.class);
-              problemLine = statement != null ? statement.getText() : null;
+        }
+      }
+      for (PsiElement suppressedScope : suppressedScopes.keySet()) {
+        Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
+        for (String toolId : suppressedIds) {
+          PsiMember psiMember;
+          String problemLine = null;
+          if (suppressedScope instanceof PsiMember) {
+            psiMember = (PsiMember)suppressedScope;
+          }
+          else {
+            psiMember = PsiTreeUtil.getParentOfType(suppressedScope, PsiDocCommentOwner.class);
+            final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(suppressedScope, PsiStatement.class);
+            problemLine = statement != null ? statement.getText() : null;
+          }
+          if (psiMember != null && psiMember.isValid()) {
+            String description = InspectionsBundle.message("inspection.redundant.suppression.description");
+            if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
+            final String key = toolId + (problemLine != null ? ";" + problemLine : "");
+            QuickFix fix = myQuickFixes.get(key);
+            if (fix == null) {
+              fix = new RemoveSuppressWarningAction(toolId, problemLine);
+              myQuickFixes.put(key, fix);
             }
-            if (psiMember != null && psiMember.isValid()) {
-              String description = InspectionsBundle.message("inspection.redundant.suppression.description");
-              if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
-              final String key = toolId + (problemLine != null ? ";" + problemLine : "");
-              QuickFix fix = myQuickFixes.get(key);
-              if (fix == null) {
-                fix = new RemoveSuppressWarningAction(toolId, problemLine);
-                myQuickFixes.put(key, fix);
-              }
-              PsiElement identifier = null;
-              if (psiMember instanceof PsiMethod) {
-                identifier = ((PsiMethod)psiMember).getNameIdentifier();
-              } else if (psiMember instanceof PsiField) {
-                identifier = ((PsiField)psiMember).getNameIdentifier();
-              } else if (psiMember instanceof PsiClass) {
-                identifier = ((PsiClass)psiMember).getNameIdentifier();
-              }
-              if (identifier == null) {
-                identifier = psiMember;
-              }
-              result.add(manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                         false));
+            PsiElement identifier = null;
+            if (psiMember instanceof PsiMethod) {
+              identifier = ((PsiMethod)psiMember).getNameIdentifier();
             }
+            else if (psiMember instanceof PsiField) {
+              identifier = ((PsiField)psiMember).getNameIdentifier();
+            }
+            else if (psiMember instanceof PsiClass) {
+              identifier = ((PsiClass)psiMember).getNameIdentifier();
+            }
+            if (identifier == null) {
+              identifier = psiMember;
+            }
+            result.add(
+              manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                              false));
           }
         }
       }
