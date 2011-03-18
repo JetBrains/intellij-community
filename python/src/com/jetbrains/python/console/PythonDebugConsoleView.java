@@ -42,8 +42,9 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements P
 
   @Override
   public void executeCode(@NotNull String code) {
-    getPythonLanguageConsole().addTextToCurrentEditor(code);
+    getPythonLanguageConsole().addTextToCurrentEditor(PyConsoleIndentUtil.normalize(code));
     myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
+    myExecuteActionHandler.finishExecution();
   }
 
   private static class PythonLanguageConsole extends LanguageConsoleImpl {

@@ -589,6 +589,7 @@
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
       <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
+      <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
 
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">

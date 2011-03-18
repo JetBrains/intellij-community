@@ -179,6 +179,19 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
   }
 
+  @Override
+  public void finishExecution() {
+    final LanguageConsoleImpl console = myConsoleView.getConsole();
+    final Editor currentEditor = console.getCurrentEditor();
+
+    if (myInputBuffer != null) {
+      processLine("\n");
+    }
+
+    cleanEditor(currentEditor);
+    //console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+  }
+
   private boolean shouldIndent(String line) {
     return line.endsWith(":");
   }
@@ -192,6 +205,15 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       @Override
       protected void run(Result result) throws Throwable {
         EditorModificationUtil.insertStringAtCaret(editor, myIndentHelper.fillIndent(indentSize));
+      }
+    }.execute();
+  }
+
+  private void cleanEditor(final Editor editor) {
+    new WriteCommandAction(getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        editor.getDocument().setText("");
       }
     }.execute();
   }
