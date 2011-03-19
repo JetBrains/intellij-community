@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -75,6 +76,7 @@ public class GitMergeUpdater extends GitUpdater {
     mergeTask.setExecuteResultInAwt(false);
     mergeTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
+    final AtomicBoolean failure = new AtomicBoolean();
     mergeTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {
         updateResult.set(GitUpdateResult.SUCCESS);
@@ -86,46 +88,54 @@ public class GitMergeUpdater extends GitUpdater {
       }
 
       @Override protected void onFailure() {
-        final MergeError error = mergeLineListener.getMergeError();
-        LOG.info("doUpdate merge error: " + error);
-        if (error == MergeError.CONFLICT) {
-          final boolean allMerged =
-            new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing update.",
-                                         "Can't update", "") {
-              @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-                merger.mergeCommit(myRoot);
-                return true;
-              }
-
-              @Override protected boolean proceedAfterAllMerged() throws VcsException {
-                merger.mergeCommit(myRoot);
-                return true;
-              }
-            }.merge(Collections.singleton(myRoot));
-          updateResult.set(allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE);
-        }
-        else if (error == MergeError.LOCAL_CHANGES) {
-          final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
-          final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-          final ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-            @Override protected String getDescription() {
-              return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                                "Please, commit your changes or stash them before you can merge.";
-            }
-          };
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override public void run() {
-              dialog.show();
-            }
-          });
-          updateResult.set(GitUpdateResult.ERROR);
-        } else {
-          GitUIUtil.notifyImportantError(myProject, "Error merging", GitUIUtil.stringifyErrors(mergeHandler.errors()));
-          updateResult.set(GitUpdateResult.ERROR);
-        }
+        failure.set(true);
       }
     });
+
+    if (failure.get()) {
+      updateResult.set(handleMergeFailure(mergeLineListener, merger, mergeHandler));
+    }
     return updateResult.get();
+  }
+
+  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener, final GitMerger merger, GitLineHandler mergeHandler) {
+    final MergeError error = mergeLineListener.getMergeError();
+    LOG.info("doUpdate merge error: " + error);
+    if (error == MergeError.CONFLICT) {
+      final boolean allMerged =
+        new GitMergeConflictResolver(myProject, false, "Merge conflicts detected. Resolve them before continuing update.",
+                                     "Can't complete update", "") {
+          @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+            merger.mergeCommit(myRoot);
+            return true;
+          }
+
+          @Override protected boolean proceedAfterAllMerged() throws VcsException {
+            merger.mergeCommit(myRoot);
+            return true;
+          }
+        }.merge(Collections.singleton(myRoot));
+      return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
+    }
+    else if (error == MergeError.LOCAL_CHANGES) {
+      final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
+      final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
+      final ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
+        @Override protected String getDescription() {
+          return "Your local changes to the following files would be overwritten by merge.<br/>" +
+                            "Please, commit your changes or stash them before you can merge.";
+        }
+      };
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override public void run() {
+          dialog.show();
+        }
+      });
+      return GitUpdateResult.ERROR;
+    } else {
+      GitUIUtil.notifyImportantError(myProject, "Error merging", GitUIUtil.stringifyErrors(mergeHandler.errors()));
+      return GitUpdateResult.ERROR;
+    }
   }
 
   @Override
