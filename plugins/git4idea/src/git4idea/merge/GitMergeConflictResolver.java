@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -45,7 +46,7 @@ public class GitMergeConflictResolver {
   private final boolean myReverseMerge;
   private final @NotNull String myErrorNotificationTitle;
   private final @NotNull String myErrorNotificationAdditionalDescription;
-  private final @Nullable String myMergeDialogTitle;
+  private final @NotNull MergeDialogCustomizer myMergeDialogCustomizer;
   private final AbstractVcsHelper myVcsHelper;
   private final GitVcs myVcs;
 
@@ -53,11 +54,15 @@ public class GitMergeConflictResolver {
    * @param reverseMerge specify if reverse merge provider has to be used for merging - it is the case of rebase or stash.
    */
   public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @Nullable String mergeDialogTitle, @NotNull String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
+    this(project, reverseMerge, new SimpleMergeDialogCustomizer(mergeDialogTitle), errorNotificationTitle, errorNotificationAdditionalDescription);
+  }
+
+  public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @NotNull MergeDialogCustomizer mergeDialogCustomizer, @NotNull String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
     myProject = project;
     myReverseMerge = reverseMerge;
     myErrorNotificationTitle = errorNotificationTitle;
     myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
-    myMergeDialogTitle = mergeDialogTitle;
+    myMergeDialogCustomizer = mergeDialogCustomizer;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
     myVcs = GitVcs.getInstance(project);
   }
@@ -113,7 +118,7 @@ public class GitMergeConflictResolver {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override public void run() {
             final MergeProvider mergeProvider = myReverseMerge ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
-            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), mergeProvider, myMergeDialogTitle);
+            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(finalUnmergedFiles), mergeProvider, myMergeDialogCustomizer);
           }
         });
 
@@ -172,6 +177,19 @@ public class GitMergeConflictResolver {
           }
         });
       }
+    }
+  }
+
+  private static class SimpleMergeDialogCustomizer extends MergeDialogCustomizer {
+    private final String myMergeDialogTitle;
+
+    public SimpleMergeDialogCustomizer(String mergeDialogTitle) {
+      myMergeDialogTitle = mergeDialogTitle;
+    }
+
+    @Override
+    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      return myMergeDialogTitle;
     }
   }
 }

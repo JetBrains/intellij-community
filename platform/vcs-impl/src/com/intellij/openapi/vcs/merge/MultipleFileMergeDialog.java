@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -73,6 +74,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private final ProjectManagerEx myProjectManager;
   private final List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
   private final Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
+  private final MergeDialogCustomizer myMergeDialogCustomizer;
 
   private final VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
@@ -107,14 +109,16 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     };
 
-  public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider, String description) {
+  public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider, MergeDialogCustomizer mergeDialogCustomizer) {
     super(project, false);
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myProjectManager.blockReloadingProjectOnExternalChanges();
     myFiles = new ArrayList<VirtualFile>(files);
     myProvider = provider;
+    myMergeDialogCustomizer = mergeDialogCustomizer;
 
+    final String description = myMergeDialogCustomizer.getMultipleFileMergeDescription(files);
     if (!StringUtil.isEmptyOrSpaces(description)) {
       myDescriptionLabel.setText(description);
     }
@@ -297,18 +301,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       MergeRequest request = diffRequestFactory
         .createMergeRequest(leftText, rightText, originalText, file, myProject, ActionButtonPresentation.APPLY,
                             ActionButtonPresentation.CANCEL_WITH_PROMPT);
-      String lastVersionTitle;
-      if (mergeData.LAST_REVISION_NUMBER != null) {
-        lastVersionTitle = VcsBundle.message("merge.version.title.last.version.number", mergeData.LAST_REVISION_NUMBER.asString());
-      }
-      else {
-        lastVersionTitle = VcsBundle.message("merge.version.title.last.version");
-      }
-      request.setVersionTitles(
-        new String[]{VcsBundle.message("merge.version.title.local.changes"), VcsBundle.message("merge.version.title.merge.result"),
-          lastVersionTitle});
-      request
-        .setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
+      final VcsRevisionNumber lastRevisionNumber = mergeData.LAST_REVISION_NUMBER;
+      request.setVersionTitles(new String[] {
+        myMergeDialogCustomizer.getLeftPanelTitle(file),
+        myMergeDialogCustomizer.getCenterPanelTitle(file),
+        myMergeDialogCustomizer.getRightPanelTitle(file, lastRevisionNumber)
+      });
+      request.setWindowTitle(myMergeDialogCustomizer.getMergeWindowTitle(file));
+
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
         markFileProcessed(file, MergeSession.Resolution.Merged);

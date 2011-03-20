@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -99,10 +100,10 @@ public abstract class AbstractVcsHelper {
    *
    * @param files the files to show in the merge dialog.
    * @param provider MergeProvider to be used for merging.
-   * @param description Optional description text (may be HTML) to be shown at the top of the merge dialog.
+   * @param mergeDialogCustomizer custom container of titles, descriptions and messages for the merge dialog.
    * @return changed files for which the merge was actually performed.
    */
-  public abstract @NotNull List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @Nullable String description);
+  public abstract @NotNull List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
 
   /**
    * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
