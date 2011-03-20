@@ -198,7 +198,7 @@ public class GitMergeProvider implements MergeProvider2 {
      * @return true if the merge operation can be applied
      */
     boolean isMergeable() {
-      return myStatusTheirs == Conflict.Status.MODIFIED && myStatusYours == Conflict.Status.MODIFIED;
+      return true;
     }
 
     /**
@@ -290,54 +290,42 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public ColumnInfo[] getMergeInfoColumns() {
       return new ColumnInfo[]{new StatusColumn(false), new StatusColumn(true)};
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public boolean canMerge(VirtualFile file) {
       Conflict c = myConflicts.get(file);
-      return c != null && c.isMergeable();
+      return c != null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public void conflictResolvedForFile(VirtualFile file, Resolution resolution) {
       Conflict c = myConflicts.get(file);
       assert c != null : "Conflict was not loaded for the file: " + file.getPath();
       try {
-        if (c.isMergeable()) {
-          GitFileUtils.addFiles(myProject, c.myRoot, file);
+        Conflict.Status status;
+        switch (resolution) {
+          case AcceptedTheirs:
+            status = c.myStatusTheirs;
+            break;
+          case AcceptedYours:
+            status = c.myStatusYours;
+            break;
+          case Merged:
+            status = Conflict.Status.MODIFIED;
+            break;
+          default:
+            throw new IllegalArgumentException("Unsupported resolution for unmergable files(" + file.getPath() + "): " + resolution);
         }
-        else {
-          Conflict.Status status;
-          switch (resolution) {
-            case AcceptedTheirs:
-              status = c.myStatusTheirs;
-              break;
-            case AcceptedYours:
-              status = c.myStatusYours;
-              break;
-            case Merged:
-            default:
-              throw new IllegalArgumentException("Unsupported resolution for unmergable files(" + file.getPath() + "): " + resolution);
-          }
-          switch (status) {
-            case MODIFIED:
-              GitFileUtils.addFiles(myProject, c.myRoot, file);
-              break;
-            case DELETED:
-              GitFileUtils.deleteFiles(myProject, c.myRoot, file);
-              break;
-            default:
-              throw new IllegalArgumentException("Unsupported status(" + file.getPath() + "): " + status);
-          }
+        switch (status) {
+          case MODIFIED:
+            GitFileUtils.addFiles(myProject, c.myRoot, file);
+            break;
+          case DELETED:
+            GitFileUtils.deleteFiles(myProject, c.myRoot, file);
+            break;
+          default:
+            throw new IllegalArgumentException("Unsupported status(" + file.getPath() + "): " + status);
         }
       }
       catch (VcsException e) {
