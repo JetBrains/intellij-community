@@ -140,7 +140,8 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
-      message = MessageFormat.format(((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), reference.getCanonicalText());
+      String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+      message = pattern.contains("{0}") ? MessageFormat.format(pattern, reference.getCanonicalText()) : pattern;
     }
     else {
       message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
