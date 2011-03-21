@@ -151,7 +151,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     assert selectedSdk != null;
 
     PropertiesComponent.getInstance().setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
-    myWizardContext.setProjectJdk(selectedSdk);
+    myModuleBuilder.setSdk(selectedSdk);
 
     if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
       myModuleBuilder.setProjectType(myApplicationProjectButton.isSelected() ? ProjectType.APPLICATION : ProjectType.LIBRARY);
