@@ -246,6 +246,9 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (vcsAnnotation.getFirstRevision() != null) {
       annotation.setFirstRevision(((SvnRevisionNumber) vcsAnnotation.getFirstRevision()).getRevision());
     }
+    for (VcsFileRevision revision : session.getRevisionList()) {
+      annotation.setRevision(((SvnRevisionNumber) revision.getRevisionNumber()).getRevision().getNumber(), (SvnFileRevision)revision);
+    }
     return annotation;
   }
 
