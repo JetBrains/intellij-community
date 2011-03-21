@@ -21,6 +21,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -128,7 +129,7 @@ public class XmlBlock extends AbstractXmlBlock {
         // Fix for EA-20311:
         // In case of another embedded language create a splittable XML block which can be
         // merged with other language's code blocks.
-        result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+        createLeafBlocks(child, result);
       }
       else if (child.getElementType() != TokenType.ERROR_ELEMENT) {
         result.add(new ReadOnlyBlock(child));
@@ -138,6 +139,18 @@ public class XmlBlock extends AbstractXmlBlock {
     return result;
   }
 
+  private static void createLeafBlocks(ASTNode node, List<Block> result) {
+    ASTNode child = node.getFirstChildNode();
+    if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT) {
+      result.add(new ReadOnlyBlock(node));
+      return;
+    }
+    while (child != null) {
+      createLeafBlocks(child, result);
+      child = child.getTreeNext();
+    }
+  }
+
 
   private static boolean containsOuterLanguageElement(ASTNode node) {
     ASTNode child = node.getFirstChildNode();
@@ -145,6 +158,7 @@ public class XmlBlock extends AbstractXmlBlock {
       if (child instanceof OuterLanguageElement) {
         return true;
       }
+      if (containsOuterLanguageElement(child)) return true;
       child = child.getTreeNext();
     }
     return false;
