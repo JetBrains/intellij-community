@@ -105,7 +105,7 @@ public class CommonProcessors {
     }
   }
 
-  public static class FindFirstProcessor<T> implements Processor<T> {
+  public static abstract class FindProcessor<T> implements Processor<T> {
     private T myValue = null;
 
     public boolean isFound() {
@@ -117,8 +117,21 @@ public class CommonProcessors {
     }
 
     public boolean process(T t) {
-      myValue = t;
-      return false;
+      if (accept(t)) {
+        myValue = t;
+        return false;
+      }
+      else return true;
+    }
+
+    protected abstract boolean accept(T t);
+  }
+
+  public static class FindFirstProcessor<T> extends FindProcessor<T> {
+
+    @Override
+    protected boolean accept(T t) {
+      return true;
     }
   }
 
