@@ -1012,7 +1012,8 @@ class ModuleRedeclarator(object):
       "numpy.core.multiarray",
       "numpy.core._dotblas",
       "numpy.core.umath",
-      "_collections"
+      "_collections",
+      "_functools"
     )
 
     # Some builtin classes effectively change __init__ signature without overriding it.
