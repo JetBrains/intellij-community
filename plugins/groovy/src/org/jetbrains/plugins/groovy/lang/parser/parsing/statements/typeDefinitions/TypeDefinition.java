@@ -229,7 +229,6 @@ public class TypeDefinition implements GroovyElementTypes {
   }
 
   public static boolean parseClassBody(PsiBuilder builder, String className, GroovyParser parser) {
-    //see also InterfaceBlock, EnumBlock, AnnotationBlock
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
 
@@ -246,7 +245,10 @@ public class TypeDefinition implements GroovyElementTypes {
         builder.getTokenType();
         builder.advanceLexer();
       }
-      if (!(Separators.parse(builder) || ParserUtils.lookAhead(builder, mRCURLY))) {
+      if (builder.getTokenType() == mRCURLY) {
+        break;
+      }
+      if (!Separators.parse(builder)) {
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
     }
