@@ -95,10 +95,10 @@ public class TypeDefinition implements GroovyElementTypes {
 
     TypeParameters.parse(builder);
 
-    ExtendsClause.parse(builder);
+    ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
     ParserUtils.getToken(builder, mNLS);
 
-    ImplementsClause.parse(builder);
+    ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE);
     ParserUtils.getToken(builder, mNLS);
 
     if (!parseInterfaceBlock(builder, name, parser)) {
@@ -127,12 +127,12 @@ public class TypeDefinition implements GroovyElementTypes {
     TypeParameters.parse(builder);
 
     if (kEXTENDS.equals(builder.getTokenType())) {
-      ExtendsClause.parse(builder);
+      ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
       ParserUtils.getToken(builder, mNLS);
     }
 
     if (kIMPLEMENTS.equals(builder.getTokenType())) {
-      ImplementsClause.parse(builder);
+      ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE);
     }
 
     ParserUtils.getToken(builder, mNLS);
@@ -161,7 +161,7 @@ public class TypeDefinition implements GroovyElementTypes {
       builder.advanceLexer();
     }
 
-    if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE))) {
       return true;
     }
 
