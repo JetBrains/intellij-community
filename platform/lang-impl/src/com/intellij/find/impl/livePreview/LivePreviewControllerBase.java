@@ -84,24 +84,21 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     }
   }
 
-  public synchronized boolean isReplaceDenied() {
+  public boolean isReplaceDenied() {
     return myReplaceDenied;
   }
 
-  @SuppressWarnings({"SynchronizeOnThis"})
   public void setReplaceDenied(final boolean replaceDenied) {
-      boolean changed = replaceDenied != myReplaceDenied;
-      synchronized (LivePreviewControllerBase.this) {
-        myReplaceDenied = replaceDenied;
+    boolean changed = replaceDenied != myReplaceDenied;
+    myReplaceDenied = replaceDenied;
+    if (changed && myReplaceListener != null) {
+      if (replaceDenied) {
+        myReplaceListener.replaceDenied();
       }
-      if (changed && myReplaceListener != null) {
-        if (replaceDenied) {
-          myReplaceListener.replaceDenied();
-        }
-        else {
-          myReplaceListener.replaceAllowed();
-        }
+      else {
+        myReplaceListener.replaceAllowed();
       }
+    }
   }
 
   public interface ReplaceListener {

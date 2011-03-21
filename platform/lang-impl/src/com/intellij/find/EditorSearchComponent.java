@@ -67,14 +67,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final Project myProject;
   private RegexpFieldController mySearchRegexpFieldController;
   private RegexpFieldController myReplaceRegexpFieldController;
-  private ActionInGroup myWholeWordsPair;
 
   public Editor getEditor() {
     return myEditor;
   }
 
   private final Editor myEditor;
-  private DefaultActionGroup myActionsGroup;
 
   private Map<EditorTextField, DocumentAdapter> myDocumentListeners = new HashMap<EditorTextField, DocumentAdapter>();
 
@@ -241,22 +239,21 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     myDefaultBackground = new JTextField().getBackground();
 
-    myActionsGroup = new DefaultActionGroup("search bar", false);
-    myActionsGroup.add(new ShowHistoryAction(mySearchField, this));
-    myActionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
-    myActionsGroup.add(new NextOccurrenceAction(this, mySearchField));
-    myActionsGroup.add(new FindAllAction(this));
+    DefaultActionGroup actionsGroup = new DefaultActionGroup("search bar", false);
+    actionsGroup.add(new ShowHistoryAction(mySearchField, this));
+    actionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
+    actionsGroup.add(new NextOccurrenceAction(this, mySearchField));
+    actionsGroup.add(new FindAllAction(this));
 
-    myWholeWordsPair = myActionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));
-    myWholeWordsPair.setAsSecondary(true);
+    actionsGroup.addAction(new ToggleWholeWordsOnlyAction(this)).setAsSecondary(true);
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      myActionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
-      myActionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+      actionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
+      actionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
     }
-    myActionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
-    myActionsGroup.addAction(new ToggleSelectionOnlyAction(this)).setAsSecondary(true);
+    actionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
+    actionsGroup.addAction(new ToggleSelectionOnlyAction(this)).setAsSecondary(true);
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", actionsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     myToolbarComponent = tb.getComponent();
     myToolbarComponent.setBorder(null);
@@ -412,14 +409,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     to.setInStringLiteralsOnly(from.isInStringLiteralsOnly());
   }
 
-  private void updateFindModelWithUI() {
-    myFindModel.setCaseSensitive(myCbMatchCase.isSelected());
-    myFindModel.setRegularExpressions(myCbRegexp.isSelected());
-    myFindModel.setFromCursor(false);
-    myFindModel.setSearchHighlighters(true);
-
-  }
-
   private void updateUIWithFindModel() {
     myCbMatchCase.setSelected(myFindModel.isCaseSensitive());
     myCbRegexp.setSelected(myFindModel.isRegularExpressions());
@@ -454,15 +443,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
            !stringToFind.endsWith("\t");
   }
 
-  private static FindModel createFindModel(FindModel findInFileModel, boolean isReplace) {
-    FindModel result = new FindModel();
-    result.copyFrom(findInFileModel);
-    if (isReplace) {
-      result.setReplaceState(isReplace);
-    }
-    return result;
-  }
-
   private void setMatchesLimit(int value) {
     if (mySearchResults != null) {
       mySearchResults.setMatchesLimit(value);
@@ -472,7 +452,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private void configureReplacementPane() {
     myReplacementPane = createLeadPane();
     myReplaceField = createTextField(myReplacementPane);
-//    (myReplaceField);
     DocumentAdapter replaceFieldListener = new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent event) {
@@ -540,7 +519,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     new VariantsCompletionAction(this, myReplaceField);
     new NextOccurrenceAction(this, myReplaceField);
     new PrevOccurrenceAction(this, myReplaceField);
-//    new ShowHistoryAction(myReplaceField, this);
     myReplaceRegexpFieldController = new RegexpFieldController(myReplaceField, myFindModel, this);
   }
 
@@ -573,7 +551,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myListeningSelection = b;
   }
 
-  private JPanel createLeadPane() {
+  private static JPanel createLeadPane() {
     return new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
   }
 
@@ -597,13 +575,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
           g.drawRect(0, 0, bounds.width - 1, bounds.height - 1);
         }
       }
-
-      @Override
-      protected void paintComponent(Graphics graphics) {
-        super.paintComponent(graphics);    //To change body of overridden methods use File | Settings | File Templates.
-      }
-
-
     };
     JPanel searchFieldPane = new NonOpaquePanel(new BorderLayout());
     Dimension dimension = new Dimension(200, 25);
@@ -645,7 +616,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
   public void searchBackward() {
     moveCursor(SearchResults.Direction.UP);
-
     addTextToRecents(mySearchField);
   }
 
@@ -782,8 +752,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         copy.setReplaceState(false);
         findManager.setFindNextModel(copy);
       }
-      
-      myLivePreviewController.updateInBackground(myFindModel, allowedToChangedEditorSelection);
+      if (myLivePreviewController != null) {
+        myLivePreviewController.updateInBackground(myFindModel, allowedToChangedEditorSelection);
+      }
     }
   }
 
