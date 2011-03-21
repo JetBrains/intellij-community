@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
