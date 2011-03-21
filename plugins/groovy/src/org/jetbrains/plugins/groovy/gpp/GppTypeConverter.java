@@ -48,9 +48,11 @@ public class GppTypeConverter extends GrTypeConverter {
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
       if (expectedComponent != null &&
-          isMethodCallConversion(context) && TypesUtil.isAssignable(expectedComponent, tupleType.getParameters()[0], context) && 
-          hasDefaultConstructor(lType)) {
-        return true;
+          isMethodCallConversion(context)) {
+        PsiType tupleComponent = tupleType.getParameters()[0];
+        if (tupleComponent != null && TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
+          return true;
+        }
       }
 
       if (lType instanceof PsiClassType && hasTypedContext(context)) {
