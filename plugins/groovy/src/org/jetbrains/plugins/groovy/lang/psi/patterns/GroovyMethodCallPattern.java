@@ -18,10 +18,14 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpression, GroovyMethodCallPattern> {
@@ -45,6 +49,35 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
           }
         }
         return true;
+      }
+    });
+  }
+
+  public GroovyMethodCallPattern withMethodName(final ElementPattern<? extends String> methodName) {
+    return with(new PatternCondition<GrCallExpression>("withMethodName") {
+      @Override
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
+        if (!(callExpression instanceof GrMethodCall)) return false;
+
+        GrExpression expression = ((GrMethodCall)callExpression).getInvokedExpression();
+        if (!(expression instanceof GrReferenceExpression)) return false;
+
+        GrReferenceExpression refExpression = (GrReferenceExpression)expression;
+
+        return methodName.accepts(refExpression.getName(), context);
+      }
+    });
+  }
+
+  public GroovyMethodCallPattern withMethod(final ElementPattern<? extends PsiMethod> methodPattern) {
+    return with(new PatternCondition<GrCallExpression>("methodCall") {
+      public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
+        for (GroovyResolveResult result : callExpression.getCallVariants(null)) {
+          if (methodPattern.getCondition().accepts(result.getElement(), context)) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   }
