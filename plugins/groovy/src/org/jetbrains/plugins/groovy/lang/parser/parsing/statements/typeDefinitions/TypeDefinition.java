@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstants;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -272,7 +271,7 @@ public class TypeDefinition implements GroovyElementTypes {
     Separators.parse(builder);
 
     if (parseEnumConstantStart(builder, parser)) {
-      EnumConstants.parse(builder, parser);
+      EnumConstant.parseConstantList(builder, parser);
     } else {
       ClassMember.parse(builder, enumName, parser);
     }
@@ -290,11 +289,11 @@ public class TypeDefinition implements GroovyElementTypes {
   private static boolean parseEnumConstantStart(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker checkMarker = builder.mark();
 
-    boolean result = !WRONGWAY.equals(EnumConstant.parse(builder, parser))
-            && (ParserUtils.getToken(builder, mCOMMA)
-            || ParserUtils.getToken(builder, mSEMI)
-            || ParserUtils.getToken(builder, mNLS)
-            || ParserUtils.getToken(builder, mRCURLY));
+    boolean result = EnumConstant.parseEnumConstant(builder, parser) &&
+                     (ParserUtils.getToken(builder, mCOMMA)
+                      || ParserUtils.getToken(builder, mSEMI)
+                      || ParserUtils.getToken(builder, mNLS)
+                      || ParserUtils.getToken(builder, mRCURLY));
 
     checkMarker.rollbackTo();
     return result;

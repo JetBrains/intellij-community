@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 06.04.2007
  */
 public class EnumConstant implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseEnumConstant(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker ecMarker = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
@@ -39,7 +38,7 @@ public class EnumConstant implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
       ecMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     if (mLPAREN.equals(builder.getTokenType())) {
@@ -57,7 +56,23 @@ public class EnumConstant implements GroovyElementTypes {
     }
 
     ecMarker.done(ENUM_CONSTANT);
-    return ENUM_CONSTANT;
+    return true;
 
+  }
+
+  public static void parseConstantList(PsiBuilder builder, GroovyParser parser) {
+    PsiBuilder.Marker enumConstantsMarker = builder.mark();
+
+    if (!parseEnumConstant(builder, parser)) {
+      return;
+    }
+
+    while (ParserUtils.getToken(builder, mCOMMA)) {
+      parseEnumConstant(builder, parser);
+    }
+
+    ParserUtils.getToken(builder, mCOMMA);
+
+    enumConstantsMarker.done(ENUM_CONSTANTS);
   }
 }
