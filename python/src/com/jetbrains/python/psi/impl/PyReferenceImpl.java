@@ -314,8 +314,27 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
           PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
           PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class, PyComprehensionElement.class);
-          if (ourContainer != null && ourContainer == theirContainer) {
-            return true;
+          if (ourContainer != null) {
+            if (ourContainer == theirContainer) {
+              return true;
+            }
+            if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
+              ScopeOwner ourScopeOwner = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
+              ScopeOwner theirScopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+              if (ourScopeOwner != theirScopeOwner) {
+                boolean shadowsName = false;
+                while(ourScopeOwner != theirScopeOwner && ourScopeOwner != null) {
+                  if (ControlFlowCache.getScope(ourScopeOwner).containsDeclaration(elementName)) {
+                    shadowsName = true;
+                    break;
+                  }
+                  ourScopeOwner = PsiTreeUtil.getParentOfType(ourScopeOwner, ScopeOwner.class);
+                }
+                if (!shadowsName) {
+                  return true;
+                }
+              }
+            }
           }
         }
         final PsiElement resolveResult = resolve();

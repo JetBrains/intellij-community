@@ -64,6 +64,15 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
     assertUsages(usages, "import <caret>re", "<caret>re.compile");
   }
 
+  public void testNestedFunctions() {  // PY-3118
+    final Collection<UsageInfo> usages = doTest();
+    assertUsages(usages, "<caret>bar = {}", "<caret>bar = []", "enumerate(<caret>bar)");
+  }
+
+  private Collection<UsageInfo> doTest() {
+    return myFixture.testFindUsages("findUsages/" + getTestName(false) + ".py");
+  }
+
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
     List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);

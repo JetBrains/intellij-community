@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.PyElement;
 
 /**
