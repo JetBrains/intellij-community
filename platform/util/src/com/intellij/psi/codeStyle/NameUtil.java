@@ -379,24 +379,23 @@ public class NameUtil {
   }
 
   public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true));
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower));
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), exactPrefixLen > 0);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false));
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), exactPrefixLen > 0);
   }
 
   public static boolean isUseMinusculeHumpMatcher() {
     return Registry.is("minuscule.humps.matching");
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp) {
-    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern)
-                                       : new OptimizedMatcher(pattern, regexp);
+  private static Matcher buildMatcher(final String pattern, String regexp, boolean firstLetterMatters) {
+    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, firstLetterMatters) : new OptimizedMatcher(pattern, regexp);
   }
 
   private static class OptimizedMatcher implements Matcher {
@@ -479,8 +478,10 @@ public class NameUtil {
 
   public static class MinusculeMatcher implements Matcher {
     private final String myPattern;
+    private final boolean myFirstLetterCaseMatters;
 
-    public MinusculeMatcher(String pattern) {
+    public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
+      myFirstLetterCaseMatters = firstLetterCaseMatters;
       myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.");
     }
 
@@ -503,6 +504,10 @@ public class NameUtil {
         return matches(isWordSeparator(myPattern.charAt(patternIndex)) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
       }
 
+      if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern.charAt(0)) {
+        return false;
+      }
+
       if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern.charAt(patternIndex))) {
         return false;
       }
@@ -517,7 +522,7 @@ public class NameUtil {
         }
         char p = myPattern.charAt(patternIndex + i);
         char n = w.charAt(i);
-        if (n != p && (!Character.isLowerCase(p) || StringUtil.toLowerCase(n) != p)) {
+        if (n != p && StringUtil.toLowerCase(n) != StringUtil.toLowerCase(p)) {
           break;
         }
         i++;
