@@ -35,6 +35,11 @@ import java.util.*;
 
 public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
+    @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nls
     @NotNull
     @Override

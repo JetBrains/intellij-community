@@ -37,6 +37,11 @@ public class IndexOfReplaceableByContainsInspection
         extends BaseInspection {
 
     @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -144,7 +149,8 @@ public class IndexOfReplaceableByContainsInspection
     private static class IndexOfReplaceableByContainsVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             if(!PsiUtil.isLanguageLevel5OrHigher(expression)){
                 return;
             }

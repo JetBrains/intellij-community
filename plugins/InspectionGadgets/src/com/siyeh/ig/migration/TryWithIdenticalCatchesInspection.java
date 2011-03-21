@@ -38,6 +38,12 @@ import java.util.Collections;
  * @author yole
  */
 public class TryWithIdenticalCatchesInspection extends BaseInspection {
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
