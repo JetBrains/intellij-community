@@ -776,17 +776,21 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private class HighLightingRenderer extends ColoredTableCellRenderer {
+  private class AuthorRenderer extends ColoredTableCellRenderer {
+    private final SimpleTextAttributes myCurrentUserAttributes;
     private final SimpleTextAttributes myHighlightAttributes;
     private final List<String> mySearchContext;
     private final SimpleTextAttributes myUsualAttributes;
     protected final HighlightingRendererBase myWorker;
 
-    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes,
-                                final List<String> searchContext) {
+    private AuthorRenderer(SimpleTextAttributes currentUserAttributes,
+                           SimpleTextAttributes highlightAttributes,
+                           List<String> searchContext,
+                           SimpleTextAttributes usualAttributes) {
+      myCurrentUserAttributes = currentUserAttributes;
       myHighlightAttributes = highlightAttributes;
       mySearchContext = searchContext;
-      myUsualAttributes = usualAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : usualAttributes;
+      myUsualAttributes = usualAttributes;
       myWorker = new HighlightingRendererBase(searchContext) {
         @Override
         protected void usual(String s) {
@@ -807,11 +811,63 @@ public class GitLogUI implements Disposable {
         return;
       }
       final String text = value.toString();
+
       if (mySearchContext.isEmpty()) {
         append(text, myUsualAttributes);
         return;
       }
       myWorker.tryHighlight(text);
+    }
+  }
+
+  private class HighLightingRenderer extends ColoredTableCellRenderer {
+    private final SimpleTextAttributes myHighlightAttributes;
+    private final List<String> mySearchContext;
+    private final SimpleTextAttributes myUsualAttributes;
+    private SimpleTextAttributes myUsualAttributesForRun;
+    protected final HighlightingRendererBase myWorker;
+
+    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes,
+                                final List<String> searchContext) {
+      myHighlightAttributes = highlightAttributes;
+      mySearchContext = searchContext;
+      myUsualAttributes = usualAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : usualAttributes;
+      myUsualAttributesForRun = myUsualAttributes;
+      myWorker = new HighlightingRendererBase(searchContext) {
+        @Override
+        protected void usual(String s) {
+          append(s, myUsualAttributesForRun);
+        }
+
+        @Override
+        protected void highlight(String s) {
+          append(s, SimpleTextAttributes.merge(myUsualAttributesForRun, myHighlightAttributes));
+        }
+      };
+    }
+
+    @Override
+    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBackground(getLogicBackground(selected, row));
+      if (BigTableTableModel.LOADING == value) {
+        return;
+      }
+      final String text = value.toString();
+      myUsualAttributesForRun = isCurrentUser(row, text) ?
+                                SimpleTextAttributes.merge(myUsualAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) : myUsualAttributes;
+      if (mySearchContext.isEmpty()) {
+        append(text, myUsualAttributesForRun);
+        return;
+      }
+      myWorker.tryHighlight(text);
+    }
+
+    private boolean isCurrentUser(final int row, final String text) {
+      final CommitI commitAt = myTableModel.getCommitAt(row);
+      if (commitAt == null) return false;
+      final SymbolicRefs symbolicRefs = myRefs.get(commitAt.selectRepository(myRootsUnderVcs));
+      if (symbolicRefs == null) return false;
+      return Comparing.equal(symbolicRefs.getUsername(), text);
     }
   }
 
