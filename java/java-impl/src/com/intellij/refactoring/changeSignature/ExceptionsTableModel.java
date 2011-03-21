@@ -113,9 +113,8 @@ public class ExceptionsTableModel extends AbstractTableModel implements RowEdita
   }
 
   public PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    return JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory().createTypeCodeFragment(
-        typeText, context, false, true, true
-      );
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory();
+    return elementFactory.createTypeCodeFragment(typeText, context, true, PsiElementFactory.ALLOW_ELLIPSIS);
   }
 
   public PsiTypeCodeFragment[] getTypeCodeFragments() {
