@@ -160,5 +160,16 @@ def foo() {
 }""", ";"
   }
 
+  public void testSynchronizedRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    synchronized (x<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
 
 }

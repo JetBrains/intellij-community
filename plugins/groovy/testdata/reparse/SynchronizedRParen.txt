@@ -1,0 +1,109 @@
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('cl')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Closable block
+            PsiElement({)('{')
+            PsiWhiteSpace('\n    ')
+            Parameter list
+              <empty list>
+            Synchronized statement
+              PsiElement(synchronized)('synchronized')
+              PsiWhiteSpace(' ')
+              PsiElement(()('(')
+              Method call
+                Reference expression
+                  PsiElement(identifier)('x')
+                PsiWhiteSpace(' ')
+                Arguments
+                  <empty list>
+                Closable block
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n      ')
+                  PsiComment(line comment)('//')
+                  PsiElement(new line)('\n    ')
+                  Parameter list
+                    <empty list>
+                  PsiElement(})('}')
+              PsiErrorElement:')' expected
+                <empty list>
+            PsiWhiteSpace('\n  ')
+            PsiElement(})('}')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')
+---
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('cl')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Closable block
+            PsiElement({)('{')
+            PsiWhiteSpace('\n    ')
+            Parameter list
+              <empty list>
+            Synchronized statement
+              PsiElement(synchronized)('synchronized')
+              PsiWhiteSpace(' ')
+              PsiElement(()('(')
+              Reference expression
+                PsiElement(identifier)('x')
+              PsiErrorElement:')' expected
+                <empty list>
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            Closable block
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              PsiComment(line comment)('//')
+              PsiElement(new line)('\n    ')
+              Parameter list
+                <empty list>
+              PsiElement(})('}')
+            PsiWhiteSpace('\n  ')
+            PsiElement(})('}')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')
