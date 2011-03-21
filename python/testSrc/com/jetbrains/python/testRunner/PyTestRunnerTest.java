@@ -33,11 +33,12 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath(), "true");
-    assertEquals(StringUtil.join(result, "\n"), 10, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 11, result.length);
     assertEquals("##teamcity[testCount count='2']", result [0]);
-    assertEquals("##teamcity[testSuiteStarted locationHint='python_uttestid://unittest1.BadTest' name='unittest1.BadTest']", result [1]);
-    assertEquals("##teamcity[testStarted locationHint='python_uttestid://unittest1.BadTest.test_fails' name='test_fails']", result[2]);
-    assertTrue(result [3], result[3].startsWith("##teamcity[testFailed") && result [3].contains("name='test_fails'"));
+    assertEquals("##teamcity[enteredTheMatrix]", result [1]);
+    assertEquals("##teamcity[testSuiteStarted locationHint='python_uttestid://unittest1.BadTest' name='unittest1.BadTest']", result [2]);
+    assertEquals("##teamcity[testStarted locationHint='python_uttestid://unittest1.BadTest.test_fails' name='test_fails']", result[3]);
+    assertTrue(result [4], result[4].startsWith("##teamcity[testFailed") && result [4].contains("name='test_fails'"));
   }
 
   private static File getTestDataDir() {
@@ -48,26 +49,26 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest", "true");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   public void testMethod() throws ExecutionException {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "unittest1.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::GoodTest::test_passes", "true");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   public void testFolder() throws ExecutionException {
     final File testDir = getTestDataDir();
     String[] result = runUTRunner(testDir.getPath(), testDir.getPath() + "/", "true");
-    assertEquals(StringUtil.join(result, "\n"), 14, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 15, result.length);
   }
 
   public void testDependent() throws ExecutionException {
     final File testDir = new File(PythonTestUtil.getTestDataPath(), "testRunner");
     String[] result = runUTRunner(testDir.getPath(), new File(testDir, "dependentTests/my_class_test.py").getPath(), "true");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {

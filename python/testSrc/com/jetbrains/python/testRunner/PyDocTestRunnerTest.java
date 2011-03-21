@@ -26,16 +26,17 @@ public class PyDocTestRunnerTest extends LightPlatformTestCase {
 
   public void testEmptySuite() throws ExecutionException {
     String[] result = runUTRunner(PathManager.getHomePath());
-    assertEquals("##teamcity[testCount count='0']", result [0]);
+    assertEquals("##teamcity[enteredTheMatrix]", result [0]);
+    assertEquals("##teamcity[testCount count='0']", result [1]);
   }
 
   public void testFile() throws ExecutionException {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "test_file.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
-    assertEquals(StringUtil.join(result, "\n"), 13, result.length);
-    assertEquals("##teamcity[testCount count='3']", result [0]);
-    assertTrue(result[1].contains("name='test_file.FirstGoodTest'"));
+    assertEquals(StringUtil.join(result, "\n"), 14, result.length);
+    assertEquals("##teamcity[testCount count='3']", result [1]);
+    assertTrue(result[2].contains("name='test_file.FirstGoodTest'"));
   }
 
   private static File getTestDataDir() {
@@ -46,21 +47,21 @@ public class PyDocTestRunnerTest extends LightPlatformTestCase {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "test_file.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::FirstGoodTest");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   public void testMethod() throws ExecutionException {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "test_file.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::SecondGoodTest::test_passes");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   public void testFunction() throws ExecutionException {
     final File testDir = getTestDataDir();
     File testFile = new File(testDir, "test_file.py");
     String[] result = runUTRunner(testDir.getPath(), testFile.getPath() + "::factorial");
-    assertEquals(StringUtil.join(result, "\n"), 5, result.length);
+    assertEquals(StringUtil.join(result, "\n"), 6, result.length);
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {

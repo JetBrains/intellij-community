@@ -63,6 +63,7 @@ class DocTestRunner(doctest.DocTestRunner):
         doctest.DocTestRunner.__init__(self, verbose, optionflags)
         self.stream = sys.stdout
         self.result = TeamcityDocTestResult(self.stream)
+        #self.result.messages.testMatrixEntered()
         self._tests = []
 
     def addTests(self, tests):
@@ -340,6 +341,5 @@ if __name__ == "__main__":
             raise NameError('Module "%s" has no class "%s"' % (module, a[1]))
 
   debug("/ Loaded " + str(runner.countTests()) + " tests")
-  TeamcityServiceMessages(sys.stdout).testMatrixEntered()
   TeamcityServiceMessages(sys.stdout).testCount(runner.countTests())
   runner.start()
