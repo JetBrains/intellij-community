@@ -1,0 +1,9 @@
+Types:
+PsiParameter:e : Test.E
+PsiReferenceExpression:e : Test.E
+
+Conversions:
+
+New expression type changes:
+Fails:
+e->Test.E

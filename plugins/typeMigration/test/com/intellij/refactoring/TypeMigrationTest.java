@@ -1,8 +1,11 @@
 package com.intellij.refactoring;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiEllipsisType;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 
 /**
  * @author db
@@ -748,5 +751,34 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestMethodType("test234",
                      myJavaFacade.getElementFactory().createTypeFromText("int", null),
                      myJavaFacade.getElementFactory().createTypeFromText("long", null));
+  }
+
+  // test type migration in disjunction type
+  public void testT128() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+
+    final PsiType rootType = myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null);
+    final PsiType migrationType = myJavaFacade.getElementFactory().createTypeFromText("Test.E", null);
+
+    start(new RulesProvider() {
+      @Override
+      public TypeMigrationRules provide() throws Exception {
+        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
+        rules.setMigrationRootType(migrationType);
+        return rules;
+      }
+
+      @Override
+      public PsiElement victims(final PsiClass aClass) {
+        final PsiMethod[] methods = aClass.getMethods();
+        assert methods.length == 1 : aClass.getText();
+        final PsiCatchSection catchSection = PsiTreeUtil.findChildOfType(methods[0], PsiCatchSection.class);
+        assert catchSection != null : methods[0].getText();
+        final PsiParameter parameter = catchSection.getParameter();
+        assert parameter != null : catchSection.getText();
+        return parameter;
+      }
+    });
   }
 }
