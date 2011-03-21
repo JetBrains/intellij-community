@@ -87,6 +87,7 @@ public class ForStatement implements GroovyElementTypes {
         if (!mRPAREN.equals(builder.getTokenType()) &&
             !mSEMI.equals(builder.getTokenType()) &&
             !mCOMMA.equals(builder.getTokenType()) &&
+            !mRCURLY.equals(builder.getTokenType()) &&
             !mNLS.equals(builder.getTokenType())) {
           builder.advanceLexer();
         }
