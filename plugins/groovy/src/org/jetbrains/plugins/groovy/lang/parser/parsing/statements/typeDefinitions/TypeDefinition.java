@@ -23,10 +23,11 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.EnumBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.InterfaceBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstants;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -101,7 +102,7 @@ public class TypeDefinition implements GroovyElementTypes {
     ImplementsClause.parse(builder);
     ParserUtils.getToken(builder, mNLS);
 
-    if (!InterfaceBlock.parse(builder, name, parser)) {
+    if (!parseInterfaceBlock(builder, name, parser)) {
       builder.error(GroovyBundle.message("interface.body.expected"));
     }
 
@@ -167,7 +168,7 @@ public class TypeDefinition implements GroovyElementTypes {
 
     Separators.parse(builder);
 
-    EnumBlock.parse(builder, name, parser);
+    parseEnumBlock(builder, name, parser);
 
     return true;
   }
@@ -256,6 +257,66 @@ public class TypeDefinition implements GroovyElementTypes {
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     cbMarker.done(CLASS_BODY);
+    return true;
+  }
+
+  private static boolean parseEnumBlock(PsiBuilder builder, String enumName, GroovyParser parser) {
+    //see also InterfaceBlock, EnumBlock, AnnotationBlock
+    PsiBuilder.Marker ebMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      ebMarker.rollbackTo();
+      return false;
+    }
+
+    Separators.parse(builder);
+
+    if (parseEnumConstantStart(builder, parser)) {
+      EnumConstants.parse(builder, parser);
+    } else {
+      ClassMember.parse(builder, enumName, parser);
+    }
+
+    while (Separators.parse(builder)) {
+      ClassMember.parse(builder, enumName, parser);
+    }
+
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+
+    ebMarker.done(ENUM_BODY);
+    return true;
+  }
+
+  private static boolean parseEnumConstantStart(PsiBuilder builder, GroovyParser parser) {
+    PsiBuilder.Marker checkMarker = builder.mark();
+
+    boolean result = !WRONGWAY.equals(EnumConstant.parse(builder, parser))
+            && (ParserUtils.getToken(builder, mCOMMA)
+            || ParserUtils.getToken(builder, mSEMI)
+            || ParserUtils.getToken(builder, mNLS)
+            || ParserUtils.getToken(builder, mRCURLY));
+
+    checkMarker.rollbackTo();
+    return result;
+  }
+
+  private static boolean parseInterfaceBlock(PsiBuilder builder, String interfaceName, GroovyParser parser) {
+    //see also InterfaceBlock, EnumBlock, AnnotationBlock
+    PsiBuilder.Marker ibMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mLCURLY)) {
+      ibMarker.rollbackTo();
+      return false;
+    }
+
+    while (!builder.eof() && builder.getTokenType() != mRCURLY) {
+      if (!InterfaceMember.parse(builder, interfaceName, parser)) builder.advanceLexer();
+      Separators.parse(builder);
+    }
+
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+
+    ibMarker.done(CLASS_BODY);
     return true;
   }
 }
