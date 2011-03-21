@@ -175,6 +175,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(validEnclosingMethods.toArray());
+    list.setVisibleRowCount(5);
     list.setCellRenderer(new MethodCellRenderer());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);

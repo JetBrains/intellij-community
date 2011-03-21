@@ -57,7 +57,7 @@ public class InterfaceMember implements GroovyElementTypes {
     if (TypeDeclarationStart.parse(builder, parser)) {
       typeDeclStartMarker.rollbackTo();
 
-      return TypeDefinition.parse(builder, parser);
+      return TypeDefinition.parseTypeDefinition(builder, parser);
     }
     typeDeclStartMarker.rollbackTo();
 

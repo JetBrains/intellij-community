@@ -82,7 +82,7 @@ public abstract class LocalToFieldHandler {
 
     if (classes.isEmpty()) return false;
     if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      if (convertLocalToField(local, classes.get(0), editor, tempIsStatic)) return false;
+      if (convertLocalToField(local, classes.get(classes.size() - 1), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
@@ -211,15 +211,29 @@ public abstract class LocalToFieldHandler {
             if ("this".equals(text)) {
               continue;
             }
+            if ("super".equals(text) && enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+              local.delete();
+              return (PsiStatement)body.addAfter(assignment, first);
+            }
           }
         }
+        if (enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+          local.delete();
+          return (PsiStatement)body.addBefore(assignment, first);
+        }
       }
+
       assignment = (PsiStatement)body.add(assignment);
       added = true;
     }
     if (!added && enclosingConstructor == null) {
-      PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
-      assignment = (PsiStatement)constructor.getBody().add(assignment);
+      if (aClass instanceof PsiAnonymousClass) {
+        final PsiClassInitializer classInitializer = (PsiClassInitializer)aClass.addAfter(factory.createClassInitializer(), field);
+        assignment = (PsiStatement)classInitializer.getBody().add(assignment);
+      } else {
+        PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
+        assignment = (PsiStatement)constructor.getBody().add(assignment);
+      }
     }
 
     if (enclosingConstructor == null) local.delete();

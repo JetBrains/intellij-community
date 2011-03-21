@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.StandardPatterns;
@@ -146,7 +147,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
           addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
         }
 
-        Map<String, String[]> namedArguments = GroovyNamedArgumentProvider.getNamedArguments(call, method);
+        Map<String, Condition<PsiType>> namedArguments = GroovyNamedArgumentProvider.getNamedArguments(call, method);
 
         for (String namedArgumentName : namedArguments.keySet()) {
           if (!usedNames.contains(namedArgumentName)) {

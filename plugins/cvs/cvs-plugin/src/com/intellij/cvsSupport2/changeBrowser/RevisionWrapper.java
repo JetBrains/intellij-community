@@ -38,7 +38,13 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
   }
 
   public int compareTo(final RevisionWrapper o) {
-    return (int)(myTime - o.myTime);
+    final long diff = myTime - o.myTime;
+    if (diff < 0) {
+      return -1;
+    } else if (diff > 0) {
+      return 1;
+    }
+    return 0;
   }
 
   public String getFile() {

@@ -73,16 +73,12 @@ public class ForStatement implements GroovyElementTypes {
 
     if (!StrictContextExpression.parse(builder, parser)) return;
 
-    while (mCOMMA.equals(builder.getTokenType())) {
-
-      if (ParserUtils.lookAhead(builder, mCOMMA, mNLS, mRPAREN) || ParserUtils.lookAhead(builder, mCOMMA, mRPAREN)) {
-        ParserUtils.getToken(builder, mCOMMA);
+    while (ParserUtils.getToken(builder, mCOMMA)) {
+      ParserUtils.getToken(builder, mNLS);
+      if (builder.getTokenType() == mRPAREN) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
-      else {
-        ParserUtils.getToken(builder, mCOMMA);
-      }
-      ParserUtils.getToken(builder, mNLS);
+
       if (!StrictContextExpression.parse(builder, parser)) {
         ParserUtils.getToken(builder, mNLS);
         if (!mRPAREN.equals(builder.getTokenType()) && !mSEMI.equals(builder.getTokenType())) {
@@ -91,6 +87,7 @@ public class ForStatement implements GroovyElementTypes {
         if (!mRPAREN.equals(builder.getTokenType()) &&
             !mSEMI.equals(builder.getTokenType()) &&
             !mCOMMA.equals(builder.getTokenType()) &&
+            !mRCURLY.equals(builder.getTokenType()) &&
             !mNLS.equals(builder.getTokenType())) {
           builder.advanceLexer();
         }

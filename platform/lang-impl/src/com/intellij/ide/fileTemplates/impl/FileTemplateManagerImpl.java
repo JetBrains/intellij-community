@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -757,7 +758,18 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
     Set<VirtualFile> templatesList = new THashSet<VirtualFile>();
     for (VirtualFile topDir : topDirs) {
-      VirtualFile parentDir = myDefaultTemplatesDir.equals(".") ? topDir : topDir.findChild(myDefaultTemplatesDir);
+      final VirtualFile parentDir;
+      if (myDefaultTemplatesDir.equals(".")) {
+        parentDir = topDir;
+      }
+      else {
+        if (topDir instanceof NewVirtualFile) {
+          parentDir = ((NewVirtualFile)topDir).refreshAndFindChild(myDefaultTemplatesDir);
+        }
+        else {
+          parentDir = topDir.findChild(myDefaultTemplatesDir);
+        }
+      }
       if (parentDir != null) {
         templatesList.addAll(listDir(parentDir));
       }

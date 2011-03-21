@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -37,8 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  */
 public class BuiltInTypeFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
+    if (InstanceOfFilter.isInfixOperatorPosition(context)) {
+      return false;
+    }
+
     final PsiElement parent = context.getParent();
     if (parent == null) return false;
+
     PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
     if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;

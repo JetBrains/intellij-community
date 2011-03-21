@@ -408,6 +408,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertTrue(getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    if (manager instanceof FileDocumentManagerImpl) {
+      assertEmpty(manager.getUnsavedDocuments());
+    }
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
@@ -456,7 +461,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
 
-    new WriteCommandAction.Simple(getProject()) {
+    new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {
         if (ourSourceRoot != null) {
@@ -475,12 +480,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
+
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
+        manager.saveAllDocuments();
         if (manager instanceof FileDocumentManagerImpl) {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
-
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
-        manager.saveAllDocuments();
       }
     }.execute().throwException();
 

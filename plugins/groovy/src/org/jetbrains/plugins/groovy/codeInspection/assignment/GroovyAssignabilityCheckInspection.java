@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -316,16 +317,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (namedArguments.length == 0) return;
 
-      MultiMap<String, String> map = new MultiMapBasedOnSet<String, String>();
+      MultiMap<String, Condition<PsiType>> map = new MultiMap<String, Condition<PsiType>>();
 
       GroovyResolveResult[] callVariants = call.getCallVariants(null);
       for (GroovyResolveResult callVariant : callVariants) {
         PsiElement element = callVariant.getElement();
         if (element instanceof PsiMethod) {
-          Map<String, String[]> arguments = GroovyNamedArgumentProvider.getNamedArguments(call, (PsiMethod)element);
+          Map<String, Condition<PsiType>> arguments = GroovyNamedArgumentProvider.getNamedArguments(call, (PsiMethod)element);
 
-          for (Map.Entry<String, String[]> entry : arguments.entrySet()) {
-            map.putValues(entry.getKey(), Arrays.asList(entry.getValue()));
+          for (Map.Entry<String, Condition<PsiType>> entry : arguments.entrySet()) {
+            map.putValue(entry.getKey(), entry.getValue());
           }
         }
       }
@@ -333,9 +334,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       for (GrNamedArgument namedArgument : namedArguments) {
         String labelName = namedArgument.getLabelName();
 
-        Collection<String> allowTypes = map.get(labelName);
+        Collection<Condition<PsiType>> conditions = map.get(labelName);
 
-        if (allowTypes.isEmpty()) continue;
+        if (conditions.isEmpty()) continue;
 
         GrExpression namedArgumentExpression = namedArgument.getExpression();
         if (namedArgumentExpression == null) continue;
@@ -349,8 +350,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
         boolean correct = false;
 
-        for (String typeName : allowTypes) {
-          if (InheritanceUtil.isInheritor(expressionType, typeName)) {
+        for (Condition<PsiType> condition : conditions) {
+          if (condition.value(expressionType)) {
             correct = true;
             break;
           }

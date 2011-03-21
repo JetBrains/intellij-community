@@ -138,5 +138,16 @@ def foo() {
 """, "\b"
   }
 
+  public void testSwitchRParen() {
+    checkReparse """
+def foo() {
+    switch (word w w)<caret> {
+      case 2:
+        def x = (y)
+    }
+  }
+""", "\b"
+  }
+
 
 }

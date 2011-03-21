@@ -28,12 +28,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CommandArguments implements GroovyElementTypes {
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-
+  public static boolean parseCommandArguments(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     if (commandArgParse(builder, parser)) {
-      while (builder.getTokenType() == mCOMMA) {
-        ParserUtils.getToken(builder, mCOMMA);
+      while (ParserUtils.getToken(builder, mCOMMA)) {
         ParserUtils.getToken(builder, mNLS);
         if (!commandArgParse(builder, parser)) {
           builder.error(GroovyBundle.message("expression.expected"));
@@ -43,10 +41,9 @@ public class CommandArguments implements GroovyElementTypes {
       marker.done(COMMAND_ARGUMENTS);
       return true;
     }
-    else {
-      marker.drop();
-      return false;
-    }
+
+    marker.drop();
+    return false;
   }
 
   private static boolean commandArgParse(PsiBuilder builder, GroovyParser parser) {
@@ -62,9 +59,8 @@ public class CommandArguments implements GroovyElementTypes {
       }
       return true;
     }
-    else {
-      commandMarker.drop();
-      return ExpressionStatement.argParse(builder, parser);
-    }
+
+    commandMarker.drop();
+    return ExpressionStatement.argParse(builder, parser);
   }
 }

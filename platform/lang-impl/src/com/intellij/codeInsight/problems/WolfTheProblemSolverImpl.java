@@ -224,7 +224,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
+  public void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress, @NotNull ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
 
     List<VirtualFile> files;
@@ -242,13 +242,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       for (final VirtualFile virtualFile : files) {
         progress.checkCanceled();
         if (virtualFile == null) break;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (progress.isCanceled()) return;
-            statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
-          }
-        });
-        if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
+        if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress, statusBar)) {
           doRemove(virtualFile);
         }
         if (virtualFile.isValid()) pass.advanceProgress(virtualFile.getLength());
@@ -270,13 +264,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   // returns true if car has been cleaned
-  private boolean orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
+  private boolean orderVincentToCleanTheCar(final VirtualFile file, final ProgressIndicator progressIndicator, final StatusBar statusBar) throws ProcessCanceledException {
     if (!isToBeHighlighted(file)) {
       clearProblems(file);
       return true; // file is going to be red waved no more
     }
     if (hasSyntaxErrors(file)) {
-      // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
+      // optimization: it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
       return false;
     }
     if (myProject.isDisposed()) return false;
@@ -298,8 +292,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
             }
           };
         }
-
       };
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (progressIndicator.isCanceled()) return;
+          statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
+        }
+      });
       pass.collectInformation(progressIndicator);
     }
     catch (HaveGotErrorException e) {

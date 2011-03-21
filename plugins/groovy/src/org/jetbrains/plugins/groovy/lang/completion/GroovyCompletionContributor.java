@@ -31,8 +31,10 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -69,7 +71,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.util.containers.CollectionFactory.hashMap;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
 /**
  * @author ilyas
@@ -522,30 +523,52 @@ public class GroovyCompletionContributor extends CompletionContributor {
       if (semicolonNeeded(context)) {
         context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";");
       }
-      else if (isInClosurePropertyParameters(context.getFile().findElementAt(context.getStartOffset()))) {
+      else if (isInPossibleClosureParameter(context.getFile().findElementAt(context.getStartOffset()))) {
         context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + "->");
       }
     }
   }
 
-  public static boolean isInClosurePropertyParameters(PsiElement position) { //Closure cl={String x, <caret>...
+  public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
     if (position == null) return false;
 
-    GrVariableDeclaration declaration = PsiTreeUtil.getParentOfType(position, GrVariableDeclaration.class, false, GrStatement.class);
-    if (declaration == null) {
-      if (position.getParent() instanceof PsiErrorElement) position = position.getParent();
-      PsiElement prev = position.getPrevSibling();
-      prev = skipWhitespaces(prev, false);
-      if (prev instanceof PsiErrorElement) {
-        prev = prev.getPrevSibling();
-      }
-      prev = skipWhitespaces(prev, false);
-      if (prev instanceof GrVariableDeclaration) declaration = (GrVariableDeclaration)prev;
+    if (position instanceof PsiWhiteSpace || position.getNode().getElementType() == GroovyElementTypes.mNLS) {
+      position = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
     }
-    if (declaration != null) {
-      if (!(declaration.getParent() instanceof GrClosableBlock)) return false;
-      PsiElement prevSibling = skipWhitespaces(declaration.getPrevSibling(), false);
-      return prevSibling instanceof GrParameterList;
+
+    boolean hasCommas = false;
+    while (position != null) {
+      PsiElement parent = position.getParent();
+      if (parent instanceof GrVariable) {
+        PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(parent);
+        hasCommas = prev != null && prev.getNode().getElementType() == GroovyElementTypes.mCOMMA;
+      }
+
+      if (parent instanceof GrClosableBlock) {
+        PsiElement sibling = position.getPrevSibling();
+        while (sibling != null) {
+          if (sibling instanceof GrParameterList) {
+            return hasCommas;
+          }
+
+          boolean isComma = sibling instanceof LeafPsiElement && GroovyElementTypes.mCOMMA == ((LeafPsiElement)sibling).getElementType();
+          hasCommas |= isComma;
+
+          if (isComma ||
+              sibling instanceof PsiWhiteSpace ||
+              sibling instanceof PsiErrorElement ||
+              sibling instanceof GrVariableDeclaration ||
+              sibling instanceof GrReferenceExpression && !((GrReferenceExpression)sibling).isQualified()
+            ) {
+            sibling = sibling.getPrevSibling();
+          }
+          else {
+            return false;
+          }
+        }
+        return false;
+      }
+      position = parent;
     }
     return false;
   }

@@ -105,7 +105,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
-    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
                                        allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, createOccurenceManager(expr, parentClass));

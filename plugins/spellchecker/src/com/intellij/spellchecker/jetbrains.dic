@@ -92,6 +92,7 @@ fulltext
 gdata
 geometrycollection
 getters
+globals
 google
 hardcoded
 holdability
@@ -104,6 +105,7 @@ https
 impl
 inbox
 indextype
+indices
 infile
 init
 initializer
@@ -306,6 +308,7 @@ tinytext
 todo
 tokenize
 tokenizer
+tooltip
 tooltips
 trinary
 twitter
@@ -333,6 +336,7 @@ vertices
 webservice
 whitespace
 whitespaces
+wiki
 wildcard
 workflow
 wsdl

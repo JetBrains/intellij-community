@@ -1,0 +1,139 @@
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Switch statement
+        PsiElement(switch)('switch')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Reference expression
+          PsiElement(identifier)('word')
+        PsiErrorElement:')' expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('w')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('w')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Closable block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n      ')
+        Parameter list
+          <empty list>
+        PsiErrorElement:'case' outside 'switch' block
+          Case label
+            PsiElement(case)('case')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Integer)('2')
+            PsiElement(:)(':')
+        PsiElement(new line)('\n        ')
+        Variable definitions
+          Modifiers
+            PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          Variable
+            PsiElement(identifier)('x')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            Parenthesized expression
+              PsiElement(()('(')
+              Reference expression
+                PsiElement(identifier)('y')
+              PsiElement())(')')
+        PsiElement(new line)('\n    ')
+        PsiElement(})('}')
+      PsiElement(new line)('\n  ')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+---
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Switch statement
+        PsiElement(switch)('switch')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        Reference expression
+          PsiElement(identifier)('word')
+        PsiErrorElement:')' expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('w')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Method call
+            Reference expression
+              PsiElement(identifier)('w')
+            PsiWhiteSpace(' ')
+            Arguments
+              <empty list>
+            Closable block
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              Parameter list
+                <empty list>
+              PsiErrorElement:'case' outside 'switch' block
+                Case label
+                  PsiElement(case)('case')
+                  PsiWhiteSpace(' ')
+                  Literal
+                    PsiElement(Integer)('2')
+                  PsiElement(:)(':')
+              PsiElement(new line)('\n        ')
+              Variable definitions
+                Modifiers
+                  PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                Variable
+                  PsiElement(identifier)('x')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  Parenthesized expression
+                    PsiElement(()('(')
+                    Reference expression
+                      PsiElement(identifier)('y')
+                    PsiElement())(')')
+              PsiElement(new line)('\n    ')
+              PsiElement(})('}')
+      PsiWhiteSpace('\n  ')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')

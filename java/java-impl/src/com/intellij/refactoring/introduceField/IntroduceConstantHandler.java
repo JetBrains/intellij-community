@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -138,9 +139,18 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
+      new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+                                        anchorElement, anchorElementIfAll,
+                                        createOccurenceManager(expr, parentClass)).performInplaceIntroduce();
+      return null;
+    }
+
+
     final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, false, occurences, getParentClass(),
-                                  new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences));
+                                  typeSelectorManager);
     dialog.show();
     if (!dialog.isOK()) {
       if (occurences.length > 1) {
