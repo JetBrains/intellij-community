@@ -345,6 +345,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.exceptions.ObscureThrownExceptionsIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

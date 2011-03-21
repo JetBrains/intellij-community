@@ -15,27 +15,23 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class MulticatchPredicate implements PsiElementPredicate {
-
+class ObscureThrownExceptionsPredicate implements PsiElementPredicate {
+    
     public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiKeyword)) {
+        if (!(element instanceof PsiReferenceList)) {
             return false;
         }
-        final PsiJavaToken javaToken = (PsiJavaToken) element;
-        final IElementType tokenType = javaToken.getTokenType();
-        if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiMethod)) {
             return false;
         }
-        final PsiElement parent = javaToken.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-            return false;
-        }
-        final PsiCatchSection catchSection = (PsiCatchSection) parent;
-        final PsiType type = catchSection.getCatchType();
-        return type instanceof PsiDisjunctionType;
+        final PsiMethod method = (PsiMethod) parent;
+        final PsiReferenceList throwsList = method.getThrowsList();
+        return throwsList.equals(element);
     }
 }

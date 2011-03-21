@@ -35,10 +35,11 @@ public abstract class MutablyNamedIntention extends Intention{
     @Override
     public final boolean isAvailable(@NotNull Project project, Editor editor,
                                      @NotNull PsiElement node) {
-      final PsiElement element = findMatchingElement(node);
-      if(element != null){
-          m_text = getTextForElement(element);
-      }
-      return element != null;
+        final PsiElement element = findMatchingElement(node);
+        if (element == null) {
+            return false;
+        }
+        m_text = getTextForElement(element);
+        return m_text != null;
     }
 }
