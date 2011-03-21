@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -119,7 +119,7 @@ public class AntTasksProvider {
     final ArrayList<URL> urls = new ArrayList<URL>();
     for (VirtualFile jar : jars) {
       VirtualFile localFile = PathUtil.getLocalFile(jar);
-      if (localFile.getFileSystem() instanceof JarFileSystem) {
+      if (localFile.getFileSystem() instanceof LocalFileSystem) {
         urls.add(VfsUtil.convertToURL(localFile.getUrl()));
       }
     }
