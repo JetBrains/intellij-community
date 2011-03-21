@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -131,7 +132,8 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == psiVariable) {
+    if (expression instanceof PsiReferenceExpression && (((PsiReferenceExpression)expression).resolve() == psiVariable ||
+                                                         Comparing.strEqual(psiVariable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
     }
     return null;
