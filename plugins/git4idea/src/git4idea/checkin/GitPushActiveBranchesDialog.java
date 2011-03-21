@@ -232,7 +232,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         List<VcsException> exceptions = new ArrayList<VcsException>();
         List<VcsException> pushExceptions = new ArrayList<VcsException>();
         for (int i = 0; i < 3; i++) {
-          final RebaseInfo rebaseInfo = collectRebaseInfo();
+          RebaseInfo rebaseInfo = collectRebaseInfo();
 
           if (rebaseInfo.reorderedCommits.isEmpty()) { // if we have to reorder commits, rebase must pre
             final Collection<Root> rootsToPush = getRootsToPush(); // collect roots from the dialog
@@ -262,6 +262,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
           updateTree(roots, rebaseInfo.uncheckedCommits);
 
           if (isRebaseNeeded()) {
+            rebaseInfo = collectRebaseInfo();
             executeRebase(exceptions, rebaseInfo);
             if (!exceptions.isEmpty()) {
               notifyMessage(myProject, "Failed to rebase", null, NotificationType.ERROR, true, exceptions);
