@@ -69,7 +69,7 @@ import java.util.List;
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new Color(255,128,0));
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, UIUtil.getTableForeground());
   public static final String GIT_LOG_TABLE_PLACE = "git log table";
   private final Project myProject;
   private BigTableTableModel myTableModel;
