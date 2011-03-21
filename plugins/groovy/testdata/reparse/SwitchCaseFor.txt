@@ -1,0 +1,94 @@
+Groovy script
+  PsiElement(new line)('\n  ')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Switch statement
+        PsiElement(switch)('switch')
+        PsiElement(()('(')
+        Reference expression
+          PsiElement(identifier)('x')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement({)('{')
+        PsiWhiteSpace('\n      ')
+        Case section
+          Case label
+            PsiElement(case)('case')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Integer)('2')
+            PsiElement(:)(':')
+          PsiElement(new line)('\n      ')
+          RETURN statement
+            PsiElement(return)('return')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Integer)('2')
+        PsiElement(new line)('\n    ')
+        PsiElement(})('}')
+      PsiElement(new line)('\n  ')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+---
+Groovy script
+  PsiElement(new line)('\n  ')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      Switch statement
+        PsiElement(switch)('switch')
+        PsiElement(()('(')
+        Reference expression
+          PsiElement(identifier)('x')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement({)('{')
+        PsiWhiteSpace('\n      ')
+        Case section
+          Case label
+            PsiElement(case)('case')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Integer)('2')
+            PsiElement(:)(':')
+          PsiElement(new line)('\n      ')
+          For statement
+            PsiElement(for)('for')
+            PsiErrorElement:'(' expected
+              <empty list>
+          PsiWhiteSpace(' ')
+          RETURN statement
+            PsiElement(return)('return')
+            PsiWhiteSpace(' ')
+            Literal
+              PsiElement(Integer)('2')
+        PsiElement(new line)('\n    ')
+        PsiElement(})('}')
+      PsiElement(new line)('\n  ')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')

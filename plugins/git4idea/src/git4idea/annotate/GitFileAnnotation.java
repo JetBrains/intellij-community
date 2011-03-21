@@ -274,6 +274,10 @@ public class GitFileAnnotation implements FileAnnotation {
     myContentBuffer.append(line);
   }
 
+  public int getNumLines() {
+    return myLines.size();
+  }
+
   /**
    * Revision annotation aspect implementation
    */
@@ -372,5 +376,9 @@ public class GitFileAnnotation implements FileAnnotation {
         fireAnnotationChanged();
       }
     }
+  }
+
+  public VirtualFile getFile() {
+    return myFile;
   }
 }

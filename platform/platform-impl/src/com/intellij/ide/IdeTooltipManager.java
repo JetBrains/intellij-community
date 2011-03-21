@@ -157,6 +157,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     JComponent comp = (JComponent)c;
     Window wnd = SwingUtilities.getWindowAncestor(comp);
+    if (wnd == null) return;
+
     if (!wnd.isActive()) {
       if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
     }

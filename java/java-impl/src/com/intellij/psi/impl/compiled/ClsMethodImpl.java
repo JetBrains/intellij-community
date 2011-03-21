@@ -211,7 +211,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
         final String text = getStub().getDefaultValueText();
         if (StringUtil.isEmpty(text)) return null;
 
-        myDefaultValue = ClsAnnotationsUtil.createMemberValueFromText(text, getManager(), this);
+        myDefaultValue = ClsParsingUtil.createMemberValueFromText(text, getManager(), this);
       }
       return myDefaultValue;
     }

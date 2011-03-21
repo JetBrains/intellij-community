@@ -16,23 +16,30 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SystemNotifications;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,5 +197,58 @@ public class TestsUIUtil {
       return this;
     }
 
+  }
+
+  public static class DelegatingRuntimeConfiguration<T extends RunConfigurationBase & LocatableConfiguration>
+    extends RuntimeConfiguration {
+    private final T myConfig;
+
+    public DelegatingRuntimeConfiguration(T config) {
+      super(config.getName(), config.getProject(), config.getFactory());
+      myConfig = config;
+    }
+
+    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+      return myConfig.getConfigurationEditor();
+    }
+
+    @SuppressWarnings({"CloneDoesntCallSuperClone"})
+    @Override
+    public RuntimeConfiguration clone() {
+      return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
+    }
+
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+      return myConfig.getState(executor, env);
+    }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {
+      myConfig.checkConfiguration();
+    }
+
+    @Override
+    public boolean isGeneratedName() {
+      return myConfig.isGeneratedName();
+    }
+
+    @Override
+    public String suggestedName() {
+      return myConfig.suggestedName();
+    }
+
+    @Override
+    public void readExternal(Element element) throws InvalidDataException {
+      myConfig.readExternal(element);
+    }
+
+    @Override
+    public void writeExternal(Element element) throws WriteExternalException {
+      myConfig.writeExternal(element);
+    }
+
+    public T getPeer() {
+      return myConfig;
+    }
   }
 }

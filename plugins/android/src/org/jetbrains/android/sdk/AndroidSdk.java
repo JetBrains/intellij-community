@@ -23,6 +23,10 @@ import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -47,6 +51,8 @@ import static org.jetbrains.android.util.AndroidUtils.ADB;
  */
 public abstract class AndroidSdk {
   private static volatile boolean myDdmLibInitialized = false;
+
+  private static volatile boolean myAdbCrashed = false;
 
   private static final Object myDdmsLock = new Object();
 
@@ -138,7 +144,77 @@ public abstract class AndroidSdk {
     return getLocation().hashCode();
   }
 
-  public void initializeDdmlib() {
+  private boolean initializeDdmlib(@NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    while (true) {
+      final MyInitializeDdmlibTask task = new MyInitializeDdmlibTask(project);
+
+      Thread t = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          doInitializeDdmlib();
+          task.finish();
+        }
+      });
+
+      t.start();
+
+      boolean retryWas = false;
+
+      while (!task.isFinished()) {
+        ProgressManager.getInstance().run(task);
+
+        boolean finished = task.isFinished();
+
+        myAdbCrashed = !finished;
+
+        if (task.isCanceled()) {
+          forceInterrupt(t);
+          return false;
+        }
+
+        if (!finished) {
+          int result = Messages
+            .showDialog(project, "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
+                        CommonBundle.getErrorTitle(), new String[]{"&Retry", "&Cancel"}, 0, Messages.getErrorIcon());
+
+          if (result == 1) {
+            forceInterrupt(t);
+            return false;
+          }
+          retryWas = true;
+        }
+      }
+
+      // task finished, but if we had problems, ddmlib can be still initialized incorrectly, so we invoke initialize once again
+      if (!retryWas) {
+        break;
+      }
+    }
+
+    return true;
+  }
+
+  @SuppressWarnings({"BusyWait"})
+  private static void forceInterrupt(Thread thread) {
+    /*
+      ddmlib has incorrect handling of InterruptedException, so we need to invoke it several times,
+      because there are three blocking invokation in succession
+    */
+
+    for (int i = 0; i < 6 && thread.isAlive(); i++) {
+      thread.interrupt();
+      try {
+        Thread.sleep(200);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void doInitializeDdmlib() {
     synchronized (myDdmsLock) {
       String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
@@ -148,7 +224,7 @@ public abstract class AndroidSdk {
         AndroidDebugBridge.createBridge(adbPath, true);
       }
       else {
-        AndroidDebugBridge.createBridge(adbPath, false);
+        AndroidDebugBridge.createBridge(adbPath, myAdbCrashed);
       }
     }
   }
@@ -170,8 +246,10 @@ public abstract class AndroidSdk {
   }
 
   @Nullable
-  public AndroidDebugBridge getDebugBridge(Project project) {
-    initializeDdmlib();
+  public AndroidDebugBridge getDebugBridge(@NotNull Project project) {
+    if (!initializeDdmlib(project)) {
+      return null;
+    }
     return AndroidDebugBridge.getBridge();
   }
 
@@ -187,5 +265,65 @@ public abstract class AndroidSdk {
       }
     }
     return result;
+  }
+
+  private static class MyInitializeDdmlibTask extends Task.Modal {
+    private final Object myLock = new Object();
+    private volatile boolean myFinished;
+    private volatile boolean myCanceled;
+
+    public MyInitializeDdmlibTask(Project project) {
+      super(project, "Connecting to ADB process", true);
+    }
+
+    public boolean isFinished() {
+      synchronized (myLock) {
+        return myFinished;
+      }
+    }
+
+    public boolean isCanceled() {
+      synchronized (myLock) {
+        return myCanceled;
+      }
+    }
+
+    public void finish() {
+      synchronized (myLock) {
+        myFinished = true;
+        myLock.notifyAll();
+      }
+    }
+
+    @Override
+    public void onCancel() {
+      synchronized (myLock) {
+        myCanceled = true;
+        myLock.notifyAll();
+      }
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      synchronized (myLock) {
+        final long startTime = System.currentTimeMillis();
+
+        final long timeout = 7000;
+
+        while (!myFinished && !myCanceled) {
+          long wastedTime = System.currentTimeMillis() - startTime;
+          if (wastedTime >= timeout) {
+            break;
+          }
+          try {
+            myLock.wait(timeout - wastedTime);
+          }
+          catch (InterruptedException e) {
+            break;
+          }
+        }
+      }
+    }
   }
 }

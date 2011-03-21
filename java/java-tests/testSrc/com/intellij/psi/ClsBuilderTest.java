@@ -1,6 +1,3 @@
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
@@ -15,11 +12,14 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.cls.ClsFormatException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * @author max
+ */
 public class ClsBuilderTest extends LightIdeaTestCase {
   public void testUtilList() throws Exception {
     doTest("java/util/List.class");
@@ -67,41 +67,46 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
-  private void doTest(final String classname) throws IOException, ClsFormatException {
-    VirtualFile vFile = findFile(classname);
+  private void doTest(final String className) throws IOException, ClsFormatException {
+    VirtualFile vFile = findFile(className);
     doTest(vFile, getTestName(false)+".txt");
   }
 
   private static void doTest(VirtualFile vFile, String goldFile) throws ClsFormatException, IOException {
     final PsiFileStub stub = ClsStubBuilder.build(vFile, vFile.contentsToByteArray());
+    assert stub != null : vFile;
     final String butWas = ((StubBase)stub).printTree();
 
     final String goldFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + goldFile;
     String expected = "";
     try {
-      expected = FileUtil.loadTextAndClose(new FileReader(goldFilePath));
+      expected = new String(FileUtil.loadFileText(new File(goldFilePath)));
       expected = StringUtil.convertLineSeparators(expected);
     }
     catch (FileNotFoundException e) {
-      System.out.println("No expected data found at:" + goldFilePath);
-      System.out.println("Creating one.");
+      System.out.println("No expected data found at: " + goldFilePath + ", creating one.");
       final FileWriter fileWriter = new FileWriter(goldFilePath);
-      fileWriter.write(butWas);
-      fileWriter.close();
-      fail("No test data found. Created one");
+      try {
+        fileWriter.write(butWas);
+        fileWriter.close();
+      }
+      finally {
+        fileWriter.close();
+        fail("No test data found. Created one");
+      }
     }
 
     assertEquals(expected, butWas);
   }
 
-  private VirtualFile findFile(final String classname) {
+  private VirtualFile findFile(final String className) {
     final VirtualFile[] roots = getProjectJDK().getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile root : roots) {
-      VirtualFile vFile = root.findFileByRelativePath(classname);
+      VirtualFile vFile = root.findFileByRelativePath(className);
       if (vFile != null) return vFile;
     }
 
-    fail("Cannot file classfile for: " + classname);
+    fail("Cannot file class file for: " + className);
     return null;
   }
 }

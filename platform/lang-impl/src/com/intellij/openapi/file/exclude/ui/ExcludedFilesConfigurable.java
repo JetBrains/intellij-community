@@ -38,7 +38,7 @@ public class ExcludedFilesConfigurable implements SearchableConfigurable {
 
   public ExcludedFilesConfigurable(Project project) {
     myExclusionManager = ProjectFileExclusionManager.getInstance(project);
-    myExcludedFilesPanel = new ExcludedFilesPanel(myExclusionManager != null ? myExclusionManager.getExcludedFiles() : null);
+    myExcludedFilesPanel = new ExcludedFilesPanel(myExclusionManager != null ? myExclusionManager.getSortedExcludedFiles() : null);
   }
 
   @NotNull
@@ -104,11 +104,11 @@ public class ExcludedFilesConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    myExcludedFilesPanel.resetFiles(myExclusionManager != null ? myExclusionManager.getExcludedFiles() : null);
+    myExcludedFilesPanel.resetFiles(myExclusionManager != null ? myExclusionManager.getSortedExcludedFiles() : null);
   }
 
   @Override
   public void disposeUIResources() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    //
   }
 }

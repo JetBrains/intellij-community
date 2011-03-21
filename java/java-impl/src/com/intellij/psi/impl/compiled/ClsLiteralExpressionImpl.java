@@ -15,15 +15,12 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsLiteralExpressionImpl");
-
   private ClsElementImpl myParent;
   private final String myText;
   private final PsiType myType;

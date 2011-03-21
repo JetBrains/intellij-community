@@ -56,6 +56,10 @@ public class GeneralCommandLine {
     myWorkDirectory = workingDirectory;
   }
 
+  public File getWorkDirectory() {
+    return myWorkDirectory;
+  }
+
   public void setEnvParams(final Map<String, String> envParams) {
     myEnvParams = envParams;
   }

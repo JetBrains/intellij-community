@@ -27,25 +27,24 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Rustam Vishnyakov
  */
-@State(name = "ExcludedFiles", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
+@State(name = "ProjectFileExclusionManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
 public class ProjectFileExclusionManager implements PersistentStateComponent<Element> {
 
   private final static String FILE_ELEMENT = "file";
-  private final static String PATH_ATTR = "path";
+  private final static String PATH_ATTR = "url";
 
-  private final Map<String,VirtualFile> myExcludedFiles = new TreeMap<String,VirtualFile>();
+  private final Set<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
   private final Project myProject;
 
   public ProjectFileExclusionManager(Project project) {
@@ -54,14 +53,14 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
 
   public void addExclusion(VirtualFile file) {
     if (file.isDirectory()) return;
-    myExcludedFiles.put(file.getPath(), file);
+    myExcludedFiles.add(file);
     FileBasedIndex.getInstance().requestReindexExcluded(file);
     fireRootsChange(myProject);
   }
 
   public void removeExclusion(VirtualFile file) {
-    if (myExcludedFiles.containsValue(file)) {
-      myExcludedFiles.remove(file.getPath());
+    if (myExcludedFiles.contains(file)) {
+      myExcludedFiles.remove(file);
       FileBasedIndex.getInstance().requestReindex(file);
       fireRootsChange(myProject);
     }
@@ -77,18 +76,28 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
   }
 
   public boolean isExcluded(VirtualFile file) {
-    return myExcludedFiles.containsKey(file.getPath());
+    return myExcludedFiles.contains(file);
   }
 
   public Collection<VirtualFile> getExcludedFiles() {
-    return myExcludedFiles.values();
+    return myExcludedFiles;
+  }
+
+  public Collection<VirtualFile> getSortedExcludedFiles() {
+    List<VirtualFile> excludedFiles = new ArrayList<VirtualFile>();
+    excludedFiles.addAll(myExcludedFiles);
+    Collections.sort(excludedFiles, new Comparator<VirtualFile>() {
+      public int compare(final VirtualFile file1, final VirtualFile file2) {
+        return file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase());
+      }
+    });
+    return excludedFiles;
   }
 
   @Override
   public Element getState() {
     final Element root = new Element("root");
-    for (String key : myExcludedFiles.keySet()) {
-      VirtualFile vf = myExcludedFiles.get(key);
+    for (VirtualFile vf : getSortedExcludedFiles()) {
       final Element vfElement = new Element(FILE_ELEMENT);
       final Attribute filePathAttr = new Attribute(PATH_ATTR, VfsUtil.pathToUrl(vf.getPath()));
       vfElement.setAttribute(filePathAttr);
@@ -108,7 +117,7 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
           final String filePath = filePathAttr.getValue();
           VirtualFile vf = vfManager.findFileByUrl(filePath);
           if (vf != null) {
-            myExcludedFiles.put(vf.getPath(), vf);
+            myExcludedFiles.add(vf);
           }
         }
       }

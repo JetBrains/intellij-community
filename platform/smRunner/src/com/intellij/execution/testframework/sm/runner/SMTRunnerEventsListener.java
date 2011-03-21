@@ -28,12 +28,12 @@ public interface SMTRunnerEventsListener {
    * On start testing, before tests and suits launching
    * @param testsRoot
    */
-  void onTestingStarted(@NotNull SMTestProxy testsRoot);
+  void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
   /**
    * After test framework finish testing
    * @param testsRootNode
    */
-  void onTestingFinished(@NotNull SMTestProxy testsRoot);
+  void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
   /*
    * Tests count in next suite. For several suites this method will be invoked several times
    */

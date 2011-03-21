@@ -41,7 +41,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   private TreeModel myTreeModel;
   private SMTestRunnerResultsForm myResultsViewer;
   private TestConsoleProperties myConsoleProperties;
-  private SMTestProxy myTestsRootNode;
+  private SMTestProxy.SMRootTestProxy myTestsRootNode;
 
   @Override
   protected void setUp() throws Exception {
@@ -377,6 +377,29 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
   public void testCustomProgress_NotRun() {
     myResultsViewer.onTestingStarted(myTestsRootNode);
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+
+    assertEquals(Color.LIGHT_GRAY, myResultsViewer.getTestsStatusColor());
+  }
+
+  public void testCustomProgress_NotRun_ReporterAttached() {
+    myResultsViewer.onTestingStarted(myTestsRootNode);
+    myTestsRootNode.setTestsReporterAttached();
+    myResultsViewer.onTestingFinished(myTestsRootNode);
+
+    // e.g. reporter attached but tests were actually launched
+    // seems cannot happen in current implementation but is expected behaviour
+    // for future
+    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
+  }
+
+  public void testCustomProgress_Terminated_SmthFailed() {
+    myResultsViewer.onTestingStarted(myTestsRootNode);
+
+    final SMTestProxy test1 = createTestProxy("some_test1", myTestsRootNode);
+    myResultsViewer.onTestStarted(test1);
+    myResultsViewer.onTestFailed(test1);
+    myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
     assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());

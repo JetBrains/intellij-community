@@ -713,7 +713,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
         }
 
         private static boolean isArrayElementDeclaration(
-                PsiStatement statement, PsiVariable arrayVariable, String indexName){
+                PsiStatement statement, PsiVariable arrayVariable,
+                String indexName){
             if(!(statement instanceof PsiDeclarationStatement)){
                 return false;
             }
@@ -1081,17 +1082,9 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(variable == null){
             return false;
         }
-        final PsiType variableType = variable.getType();
-        if(!(variableType instanceof PsiClassType)){
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) variableType;
-        final PsiClass declaredClass = classType.resolve();
-        if(declaredClass == null){
-            return false;
-        }
-        if(!InheritanceUtil.isInheritor(declaredClass,
-                CommonClassNames.JAVA_UTIL_ITERATOR)){
+        if(!TypeUtils.variableHasTypeOrSubtype(variable,
+                CommonClassNames.JAVA_UTIL_ITERATOR,
+                "java.util.ListIterator")){
             return false;
         }
         final PsiExpression initialValue = variable.getInitializer();
@@ -1105,9 +1098,10 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 (PsiMethodCallExpression) initialValue;
         final PsiReferenceExpression initialMethodExpression =
                 initialCall.getMethodExpression();
-        final String initialCallName =
+        @NonNls final String initialCallName =
                 initialMethodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.ITERATOR.equals(initialCallName)){
+        if(!HardcodedMethodConstants.ITERATOR.equals(initialCallName) &&
+                !"listIterator".equals(initialCallName)){
             return false;
         }
         final PsiExpressionList argumentList = initialCall.getArgumentList();

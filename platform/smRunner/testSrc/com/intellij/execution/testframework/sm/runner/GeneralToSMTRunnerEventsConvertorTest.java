@@ -276,7 +276,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final Marker finishedMarker = new Marker();
     myEventsProcessor.addEventsListener(new SMTRunnerEventsAdapter(){
       @Override
-      public void onTestingFinished(@NotNull SMTestProxy testsRoot) {
+      public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
         finishedMarker.set();
       }
     });

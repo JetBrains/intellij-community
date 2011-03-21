@@ -155,14 +155,12 @@ public class CacheUtils {
           for (final int infoQName : filteredDeps.getFirst()) {
             final String qualifiedName = dependencyCache.resolve(infoQName);
             final String sourceFileName = cache.getSourceFileName(infoQName);
-            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName);
+            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName, true);
             if (file != null) {
-              if (!compilerConfiguration.isExcludedFromCompilation(file)) {
-                dependentFiles.add(file);
-                if (ApplicationManager.getApplication().isUnitTestMode()) {
-                  LOG.assertTrue(file.isValid());
-                  CompilerManagerImpl.addRecompiledPath(file.getPath());
-                }
+              dependentFiles.add(file);
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                LOG.assertTrue(file.isValid());
+                CompilerManagerImpl.addRecompiledPath(file.getPath());
               }
             }
             else {

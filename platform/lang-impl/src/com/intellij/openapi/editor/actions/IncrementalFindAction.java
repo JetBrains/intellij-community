@@ -93,6 +93,7 @@ public class IncrementalFindAction extends EditorAction {
           model.setStringToFind(selectedText);
         }
       }
+      model.setPromptOnReplace(false);
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {

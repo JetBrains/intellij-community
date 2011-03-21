@@ -251,7 +251,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
           @Override
           public void run() {
-            conflictsFound[0] = false;
+            conflictsFound[0] = processor.hasConflicts();
           }
         });
         processor.run();

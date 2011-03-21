@@ -138,7 +138,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     if (vcs == null) return;
 
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();

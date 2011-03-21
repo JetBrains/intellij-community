@@ -35,6 +35,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
   private static final MyOccurenceFilter MY_OCCURENCE_FILTER = new MyOccurenceFilter();
+  private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
     super(false);
@@ -105,9 +106,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && ApplicationManagerEx.getApplicationEx().isInternal()) {
-      new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
-                                     allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, createOccurenceManager(expr, parentClass))
-        .startTemplate();
+      myInplaceIntroduceFieldPopup =
+        new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, createOccurenceManager(expr, parentClass));
+      myInplaceIntroduceFieldPopup.startTemplate();
       return null;
     }
 
@@ -137,6 +139,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                         dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                         localVariable,
                         dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
+  }
+
+  public InplaceIntroduceFieldPopup getInplaceIntroduceFieldPopup() {
+    return myInplaceIntroduceFieldPopup;
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {

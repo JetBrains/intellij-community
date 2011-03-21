@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.VcsAnnotation;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,11 +35,14 @@ import java.util.Map;
 public class VcsHistoryCache {
   private final Object myLock;
   private final SLRUMap<BaseKey, CachedHistory> myHistoryCache;
-  //private final SLRUCache<Trinity<VirtualFile, VcsKey, VcsRevisionNumber>, String> myRevisionContentCache;
+  private final SLRUMap<WithRevisionKey, VcsAnnotation> myAnnotationCache;
+  //private final SLRUMap<WithRevisionKey, String> myContentCache;
 
   public VcsHistoryCache() {
     myLock = new Object();
     myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(10, 10);
+    myAnnotationCache = new SLRUMap<WithRevisionKey, VcsAnnotation>(10, 5);
+    //myContentCache = new SLRUMap<WithRevisionKey, String>(20, 20);
   }
 
   public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
@@ -92,11 +96,57 @@ public class VcsHistoryCache {
     }
   }
 
+  public void put(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
+                  @NotNull final VcsAnnotation vcsAnnotation) {
+    synchronized (myLock) {
+      myAnnotationCache.put(new WithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
+    }
+  }
+
+  public VcsAnnotation get(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
+    synchronized (myLock) {
+      return myAnnotationCache.get(new WithRevisionKey(filePath, vcsKey, number));
+    }
+  }
+
+  private static class WithRevisionKey extends BaseKey {
+    private final VcsRevisionNumber myRevisionNumber;
+
+    private WithRevisionKey(FilePath filePath, VcsKey vcsKey, @NotNull VcsRevisionNumber revisionNumber) {
+      super(filePath, vcsKey);
+      myRevisionNumber = revisionNumber;
+    }
+
+    public VcsRevisionNumber getRevisionNumber() {
+      return myRevisionNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+
+      WithRevisionKey that = (WithRevisionKey)o;
+
+      if (!myRevisionNumber.equals(that.myRevisionNumber)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myRevisionNumber.hashCode();
+      return result;
+    }
+  }
+
   private static class BaseKey {
     private final FilePath myFilePath;
     private final VcsKey myVcsKey;
 
-    private BaseKey(FilePath filePath, VcsKey vcsKey) {
+    BaseKey(FilePath filePath, VcsKey vcsKey) {
       myFilePath = filePath;
       myVcsKey = vcsKey;
     }

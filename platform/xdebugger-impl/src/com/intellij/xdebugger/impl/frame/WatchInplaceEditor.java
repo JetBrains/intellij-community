@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
@@ -34,11 +36,16 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   @Nullable private final WatchNode myOldNode;
 
-  public WatchInplaceEditor(WatchesRootNode rootNode, final WatchNode node, @NonNls final String historyId, final @Nullable WatchNode oldNode) {
+  public WatchInplaceEditor(WatchesRootNode rootNode,
+                            final WatchNode node,
+                            @NonNls final String historyId,
+                            final @Nullable WatchNode oldNode) {
     super((XDebuggerTreeNode)node, historyId);
     myRootNode = rootNode;
     myOldNode = oldNode;
     myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");
+    final XDebugSession session = rootNode.getTree().getSession();
+    new WatchEditorSessionListener(session).install();
   }
 
   protected JComponent createInplaceEditorComponent() {
@@ -66,5 +73,42 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private XWatchesView getWatchesView() {
     XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
     return tab.getWatchesView();
+  }
+
+  private class WatchEditorSessionListener extends XDebugSessionAdapter {
+    private final XDebugSession mySession;
+
+    public WatchEditorSessionListener(XDebugSession session) {
+      mySession = session;
+    }
+
+    public void install() {
+      mySession.addSessionListener(this);
+    }
+
+    private void cancel() {
+      mySession.removeSessionListener(this);
+      cancelEditing();
+    }
+
+    @Override
+    public void sessionPaused() {
+      cancel();
+    }
+
+    @Override
+    public void beforeSessionResume() {
+      cancel();
+    }
+
+    @Override
+    public void sessionResumed() {
+      cancel();
+    }
+
+    @Override
+    public void sessionStopped() {
+      cancel();
+    }
   }
 }

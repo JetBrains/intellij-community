@@ -107,8 +107,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
-
-
   public void testDiamondMisc() throws Exception {
     doTest(false, false);
   }
@@ -204,5 +202,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   public void testUncheckedGenericsArrayCreation() throws Exception {
     doTest(true, false);
+  }
+
+  public void testPreciseRethrow() throws Exception {
+    doTest(false, false);
   }
 }

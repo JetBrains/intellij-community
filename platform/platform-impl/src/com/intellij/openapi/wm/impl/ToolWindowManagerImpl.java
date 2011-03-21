@@ -259,25 +259,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
 
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = 0;
-    for (Shortcut each : baseShortcut) {
-      if (each instanceof KeyboardShortcut) {
-        KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
-        baseModifiers = keyStroke.getModifiers();
-        if (baseModifiers > 0) {
-          break;
-        }
-      }
-    }
+    Set<Integer> vks = getActivateToolWindowVKs();
 
-    if (baseModifiers == 0) {
+    if (vks.size() == 0) {
       resetHoldState();
       return false;
     }
 
-    Set<Integer> vks = QuickAccessSettings.getModifiersVKs(baseModifiers);
     if (vks.contains(e.getKeyCode())) {
       boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
       int modifiers = e.getModifiers();
@@ -295,6 +283,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
     return false;
+  }
+
+  public static Set<Integer> getActivateToolWindowVKs() {
+    if (ApplicationManager.getApplication() == null) return new HashSet<Integer>();
+
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
+    int baseModifiers = 0;
+    for (Shortcut each : baseShortcut) {
+      if (each instanceof KeyboardShortcut) {
+        KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
+        baseModifiers = keyStroke.getModifiers();
+        if (baseModifiers > 0) {
+          break;
+        }
+      }
+    }
+    return QuickAccessSettings.getModifiersVKs(baseModifiers);
   }
 
   private void resetHoldState() {

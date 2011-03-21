@@ -36,7 +36,6 @@ public class ChromeSettings extends BrowserSpecificSettings {
   private int myRemoteShellPort = DEFAULT_REMOTE_SHELL_PORT;
 
   public ChromeSettings() {
-
   }
 
   @Nullable

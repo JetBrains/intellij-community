@@ -15,7 +15,7 @@ Groovy script
       PsiErrorElement:'catch' without 'try'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      Method call
+      Call expression
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
@@ -23,22 +23,20 @@ Groovy script
             PsiElement(identifier)('Exception1')
           PsiErrorElement:')' expected
             <empty list>
-          PsiWhiteSpace(' ')
-          PsiElement(identifier)('e1')
-          PsiElement())(')')
         PsiWhiteSpace(' ')
-        Arguments
-          <empty list>
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          PsiElement(})('}')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('e1')
+      PsiErrorElement:';', '}' or new line expected
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement({)('{')
+        PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'catch' without 'try'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      Method call
+      Call expression
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
@@ -46,17 +44,15 @@ Groovy script
             PsiElement(identifier)('Exception1')
           PsiErrorElement:')' expected
             <empty list>
-          PsiWhiteSpace(' ')
-          PsiElement(identifier)('e2')
-          PsiElement())(')')
         PsiWhiteSpace(' ')
-        Arguments
-          <empty list>
-        Closable block
-          PsiElement({)('{')
-          Parameter list
-            <empty list>
-          PsiElement(})('}')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('e2')
+      PsiErrorElement:';', '}' or new line expected
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement({)('{')
+        PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'finally' without 'try'
         PsiElement(finally)('finally')

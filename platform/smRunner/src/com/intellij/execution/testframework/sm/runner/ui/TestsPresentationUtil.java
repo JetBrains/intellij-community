@@ -132,8 +132,8 @@ public class TestsPresentationUtil {
     return sb.toString();
   }
 
-  public static void formatRootNodeWithChildren(final SMTestProxy testProxy,
-                                          final TestTreeRenderer renderer) {
+  public static void formatRootNodeWithChildren(final SMTestProxy.SMRootTestProxy testProxy,
+                                                final TestTreeRenderer renderer) {
     renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
 
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
@@ -149,7 +149,7 @@ public class TestsPresentationUtil {
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public static void formatRootNodeWithoutChildren(final SMTestProxy testProxy,
+  public static void formatRootNodeWithoutChildren(final SMTestProxy.SMRootTestProxy testProxy,
                                                    final TestTreeRenderer renderer) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
@@ -181,8 +181,9 @@ public class TestsPresentationUtil {
       }
       else {
         renderer.setIcon(PoolOfTestIcons.NOT_RAN);
-        renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
+        renderer.append(testProxy.isTestsReporterAttached()
+                        ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")
+                        : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"),
                         SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }

@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -106,6 +107,10 @@ public class LookupManagerImpl extends LookupManager {
                            @NotNull LookupElement[] items,
                            final String prefix,
                            @NotNull final LookupArranger arranger) {
+    for (LookupElement item : items) {
+      assert item != null;
+    }
+
     final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
     lookup.show();
     return lookup;
@@ -132,7 +137,7 @@ public class LookupManagerImpl extends LookupManager {
     }
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
 
-    new UiNotifyConnector(editor.getContentComponent(), new Activatable() {
+   final UiNotifyConnector connector = new UiNotifyConnector(editor.getContentComponent(), new Activatable() {
       @Override
       public void showNotify() {
       }
@@ -184,6 +189,7 @@ public class LookupManagerImpl extends LookupManager {
         if (myActiveLookup == null) return;
         LOG.assertTrue(myActiveLookup.isLookupDisposed());
         myActiveLookup.removeLookupListener(this);
+        Disposer.dispose(connector);
         Lookup lookup = myActiveLookup;
         myActiveLookup = null;
         myActiveLookupEditor = null;

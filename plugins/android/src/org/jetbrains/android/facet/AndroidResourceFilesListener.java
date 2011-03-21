@@ -51,13 +51,22 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
   private final AndroidFacet myFacet;
   private String myCachedPackage = null;
 
-  public AndroidResourceFilesListener(AndroidFacet facet) {
+  public AndroidResourceFilesListener(final AndroidFacet facet) {
     myFacet = facet;
     myQueue = new MergingUpdateQueue("AndroidResourcesCompilationQueue", 300, true, null, myFacet, null, false);
-    Manifest manifest = facet.getManifest();
-    if (manifest != null) {
-      myCachedPackage = manifest.getPackage().getValue();
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (facet.getModule().getProject().isDisposed()) {
+          return;
+        }
+
+        Manifest manifest = facet.getManifest();
+        if (manifest != null) {
+          myCachedPackage = manifest.getPackage().getValue();
+        }
+      }
+    });
   }
 
   @Override

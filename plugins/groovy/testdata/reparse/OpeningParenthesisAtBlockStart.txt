@@ -1,0 +1,103 @@
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('home')
+      PsiElement(new line)('\n  ')
+      Method call
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('simplePlugins')
+          PsiElement(.)('.')
+          PsiElement(identifier)('each')
+        PsiWhiteSpace(' ')
+        Arguments
+          <empty list>
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Parameter list
+            <empty list>
+          Call expression
+            Reference expression
+              PsiElement(identifier)('layoutPlugin')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Reference expression
+                PsiElement(identifier)('it')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  PsiErrorElement:';' or new line expected
+    PsiElement(})('}')
+---
+Groovy script
+  PsiElement(new line)('\n')
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Reference expression
+        Call expression
+          Parenthesized expression
+            PsiElement(()('(')
+            Reference expression
+              PsiElement(identifier)('String')
+            PsiErrorElement:')' expected
+              <empty list>
+          PsiWhiteSpace(' ')
+          Command arguments
+            Reference expression
+              PsiElement(identifier)('home')
+        PsiWhiteSpace('\n  ')
+        PsiElement(identifier)('simplePlugins')
+      PsiErrorElement:';', '}' or new line expected
+        PsiElement(.)('.')
+        PsiElement(identifier)('each')
+        PsiWhiteSpace(' ')
+        PsiElement({)('{')
+        PsiWhiteSpace('\n    ')
+        PsiElement(identifier)('layoutPlugin')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('it')
+        PsiElement(new line)('\n  ')
+        PsiElement(})('}')
+      PsiWhiteSpace('\n\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  PsiErrorElement:';' or new line expected
+    PsiElement(})('}')

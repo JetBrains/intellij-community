@@ -311,4 +311,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
     doHighlighting();
   }
+
+  public void testClassicRethrow() throws Exception {
+    doTest(false, false);
+  }
 }

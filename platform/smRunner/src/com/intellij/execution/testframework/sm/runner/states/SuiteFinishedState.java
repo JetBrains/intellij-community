@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.sm.runner.states;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.annotations.NonNls;
 
@@ -121,6 +120,26 @@ public abstract class SuiteFinishedState extends AbstractState {
       return "EMPTY FINISHED SUITE";
     }
   };
+
+    /**
+   * Finished byt tests reporter wasn't attached
+   */
+    public static SuiteFinishedState TESTS_REPORTER_NOT_ATTACHED = new SuiteFinishedState() {
+      @Override
+      public boolean isDefect() {
+        return false;
+      }
+
+      public Magnitude getMagnitude() {
+        return Magnitude.COMPLETE_INDEX;
+      }
+
+      @Override
+      public String toString() {
+        //noinspection HardCodedStringLiteral
+        return "TESTS REPORTER NOT ATTACHED";
+      }
+    };
 
   private SuiteFinishedState() {
   }

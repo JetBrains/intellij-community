@@ -140,6 +140,11 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                 newTryStatementText.append('\n');
             }
             newTryStatementText.append('}');
+            final PsiCatchSection[] catchSections =
+                    tryStatement.getCatchSections();
+            for (PsiCatchSection catchSection : catchSections) {
+                newTryStatementText.append(catchSection.getText());
+            }
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             assert finallyBlock != null;
             final PsiStatement[] statements = finallyBlock.getStatements();

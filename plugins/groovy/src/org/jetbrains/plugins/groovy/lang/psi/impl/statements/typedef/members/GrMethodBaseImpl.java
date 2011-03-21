@@ -205,8 +205,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
     @Nullable
     private PsiType getInferredType(GrMethod method) {
+      assert method.isValid() : "invalid method";
+
       final GrOpenBlock block = method.getBlock();
       if (block == null) return null;
+      assert block.isValid() : "invalid code block";
 
       if (GroovyPsiManager.isTypeBeingInferred(method)) {
         return null;

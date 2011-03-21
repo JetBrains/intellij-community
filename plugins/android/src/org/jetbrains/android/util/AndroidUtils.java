@@ -494,8 +494,9 @@ public class AndroidUtils {
       return null;
     }
     for (Sdk library : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (library.getSdkType().equals(AndroidSdkType.getInstance())) {
-        AndroidSdk sdk1 = AndroidSdk.parse(library.getHomePath(), new EmptySdkLog());
+      String homePath = library.getHomePath();
+      if (homePath != null && library.getSdkType().equals(AndroidSdkType.getInstance())) {
+        AndroidSdk sdk1 = AndroidSdk.parse(homePath, new EmptySdkLog());
         if (sdk1 != null && sdk1.equals(sdk)) {
           AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)library.getSdkAdditionalData();
           if (data != null) {

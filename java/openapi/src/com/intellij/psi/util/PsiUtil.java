@@ -891,17 +891,23 @@ public final class PsiUtil extends PsiUtilBase {
     modifierList.setModifierProperty(property, value);
   }
 
-  public static boolean isTryBlock(final PsiElement element) {
+  public static boolean isTryBlock(@Nullable final PsiElement element) {
+    if (element == null) return false;
     final PsiElement parent = element.getParent();
     return parent instanceof PsiTryStatement && element == ((PsiTryStatement)parent).getTryBlock();
   }
 
-  public static boolean isElseBlock(final PsiElement element) {
+  public static boolean isElseBlock(@Nullable final PsiElement element) {
+    if (element == null) return false;
     final PsiElement parent = element.getParent();
     return parent instanceof PsiIfStatement && element == ((PsiIfStatement)parent).getElseBranch();
   }
 
   public static boolean isJavaToken(@Nullable final PsiElement element, final IElementType type) {
     return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == type;
+  }
+
+  public static boolean isCatchParameter(@Nullable final PsiElement element) {
+    return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 }

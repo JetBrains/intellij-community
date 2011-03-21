@@ -191,6 +191,22 @@ public class InplaceIntroduceFieldPopup {
     });
   }
 
+  public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {
+    myIntroduceFieldPanel.setReplaceAllOccurrences(replaceAllOccurrences);
+  }
+
+  public void setCreateFinal(boolean createFinal) {
+    myIntroduceFieldPanel.setCreateFinal(createFinal);
+  }
+
+  public void setInitializeInFieldDeclaration() {
+    myIntroduceFieldPanel.setInitializeInFieldDeclaration();
+  }
+
+  public void setVisibility(String visibility) {
+    myIntroduceFieldPanel.setVisibility(visibility);
+  }
+
   class FieldInplaceIntroducer extends AbstractInplaceIntroducer {
 
     private RangeMarker myFieldRangeStart;
@@ -343,13 +359,14 @@ public class InplaceIntroduceFieldPopup {
         new WriteCommandAction(myProject) {
           @Override
           protected void run(Result result) throws Throwable {
+            final Document document = myEditor.getDocument();
+            PsiDocumentManager.getInstance(getProject()).commitDocument(document);
             final PsiVariable variable = getVariable();
             LOG.assertTrue(variable != null);
             final PsiModifierList modifierList = variable.getModifierList();
             LOG.assertTrue(modifierList != null);
             int textOffset = modifierList.getTextOffset();
 
-            final Document document = myEditor.getDocument();
             String visibility = myIntroduceFieldPanel.getFieldVisibility();
             if (visibility == PsiModifier.PACKAGE_LOCAL) {
               visibility = "";
@@ -369,10 +386,15 @@ public class InplaceIntroduceFieldPopup {
               length = PsiModifier.PRIVATE.length();
             }
 
-            final int startOffset = textOffset + Math.max(idx, 0);
-            final int endOffset = textOffset + (idx > -1 ? length : 0);
+            final int startOffset = textOffset + idx;
+            final int endOffset;
+            if (idx == -1) {
+              endOffset = startOffset;
+            } else {
+              endOffset = textOffset + length;
+            }
 
-            document.replaceString(startOffset, endOffset, visibility + (startOffset == endOffset ? " " : ""));
+            document.replaceString(startOffset, endOffset, visibility);
           }
         }.execute();
       }

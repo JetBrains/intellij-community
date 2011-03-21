@@ -30,11 +30,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * @author peter
@@ -124,16 +130,34 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
         myDirectory.createSubdirectory(myNewFileName);
       }
       else {
-        final PsiFile newFile = myDirectory.createFile(myNewFileName);
+        String newFileName = myNewFileName;
+        String newDirectories = null;
+        if (myNewFileName.contains("/")) {
+          int pos = myNewFileName.lastIndexOf("/");
+          newFileName = myNewFileName.substring(pos + 1);
+          newDirectories = myNewFileName.substring(0, pos);
+        }
+        PsiDirectory directory = myDirectory;
+        if (newDirectories != null) {
+          try {
+            VfsUtil.createDirectoryIfMissing(myDirectory.getVirtualFile(), newDirectories);
+            VirtualFile vfsDir = VfsUtil.findRelativeFile(myDirectory.getVirtualFile(), newDirectories);
+            directory = new PsiDirectoryImpl((PsiManagerImpl)myDirectory.getManager(), vfsDir);
+          }
+          catch (IOException e) {
+            throw new IncorrectOperationException(e.getMessage());
+          }
+        }
+        final PsiFile newFile = directory.createFile(newFileName);
         String text = getFileText();
 
         if (text != null) {
-          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + myNewFileName, text);
+          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + newFileName, text);
           final PsiElement psiElement = CodeStyleManager.getInstance(project).reformat(psiFile);
           text = psiElement.getText();
         }
 
-        final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
+        final FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
         final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
 
         if (text != null) {

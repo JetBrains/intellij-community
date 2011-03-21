@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -23,8 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsPrefixExpressionImpl");
-
   private final ClsElementImpl myParent;
   private final PsiExpression myOperand;
 
