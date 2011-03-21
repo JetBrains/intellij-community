@@ -17,6 +17,8 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -160,11 +162,6 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
           final PsiModifierList modifierList = variable.getModifierList();
           LOG.assertTrue(modifierList != null);
           int textOffset = modifierList.getTextOffset();
-
-          String visibility = getVisibility();
-          if (visibility == PsiModifier.PACKAGE_LOCAL) {
-            visibility = "";
-          }
           final String modifierListText = modifierList.getText();
 
           int length = PsiModifier.PUBLIC.length();
@@ -189,7 +186,25 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
             endOffset = textOffset + length;
           }
 
-          document.replaceString(startOffset, endOffset, visibility);
+          String visibility = getVisibility();
+          if (visibility == PsiModifier.PACKAGE_LOCAL) {
+            visibility = "";
+          }
+          final String finalVisibility = visibility;
+
+          Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              document.replaceString(startOffset, endOffset, finalVisibility);
+            }
+          };
+
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(runnable);
+          } else {
+            runnable.run();
+          }
         }
       }.execute();
     }
