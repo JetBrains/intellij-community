@@ -80,6 +80,7 @@ fulltext
 geometrycollection
 getters
 gdata
+globals
 google
 hardcoded
 holdability
@@ -92,6 +93,7 @@ https
 impl
 inbox
 indextype
+indices
 infile
 init
 initializer
@@ -204,6 +206,7 @@ plsql
 plugin
 plugins
 posix
+postfix
 pragma
 prebuilt
 prepend
@@ -257,6 +260,7 @@ systimestamp
 tablespace
 taglib
 temptable
+throwable
 timestamp
 tinyblob
 tinyint
@@ -264,6 +268,7 @@ tinytext
 todo
 tokenize
 tokenizer
+tooltip
 tooltips
 trinary
 twitter
@@ -289,6 +294,7 @@ versa
 vertices
 webservice
 whitespace
+wiki
 wildcard
 workflow
 wsdl
@@ -300,6 +306,3 @@ xslt
 youtube
 zend
 zerofill
-indices
-postfix
-Throwable
