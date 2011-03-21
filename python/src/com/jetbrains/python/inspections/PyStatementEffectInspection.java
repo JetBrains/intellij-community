@@ -128,6 +128,14 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
+      else if (expression instanceof PyTupleExpression) {
+        PyExpression[] elements = ((PyTupleExpression)expression).getElements();
+        for (PyExpression element : elements) {
+          if (hasEffect(element)) {
+            return true;
+          }
+        }
+      }
       return false;
     }
   }

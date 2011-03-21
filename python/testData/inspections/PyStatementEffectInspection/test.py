@@ -20,3 +20,5 @@ cout << "Hello, world" # must not be reported
 len(x) if True else len(y)
 
 (foo())
+
+foo(),
