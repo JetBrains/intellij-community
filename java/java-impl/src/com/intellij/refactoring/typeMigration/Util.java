@@ -4,18 +4,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author db
  * Date: Nov 4, 2004
- * Time: 2:40:49 PM
- * To change this template use File | Settings | File Templates.
  */
 public class Util {
+  private Util() { }
 
-  public static PsiElement getEssentialParent (final PsiElement element){
+  public static PsiElement getEssentialParent(final PsiElement element) {
     final PsiElement parent = element.getParent();
 
-    if (parent instanceof PsiParenthesizedExpression){
+    if (parent instanceof PsiParenthesizedExpression) {
       return getEssentialParent(parent);
     }
 
@@ -24,7 +22,7 @@ public class Util {
 
   public static PsiElement normalizeElement(final PsiElement element) {
     if (element instanceof PsiMethod) {
-      final PsiMethod superMethod = ((PsiMethod) element).findDeepestSuperMethod();
+      final PsiMethod superMethod = ((PsiMethod)element).findDeepestSuperMethod();
 
       return superMethod == null ? element : superMethod;
     }
@@ -45,7 +43,7 @@ public class Util {
   }
 
   public static boolean canBeMigrated(final PsiElement e) {
-    if (e == null){
+    if (e == null) {
       return false;
     }
 
@@ -58,15 +56,20 @@ public class Util {
     final PsiType type = TypeMigrationLabeler.getElementType(element);
 
     if (type != null) {
-      final PsiType elemenType = type instanceof PsiArrayType ? type.getDeepComponentType() : type;
+      final PsiType elementType = type instanceof PsiArrayType ? type.getDeepComponentType() : type;
 
-      if (elemenType instanceof PsiPrimitiveType) {
-        return !elemenType.equals(PsiType.VOID);
+      if (elementType instanceof PsiPrimitiveType) {
+        return !elementType.equals(PsiType.VOID);
       }
 
-      final PsiClass aClass = ((PsiClassType)elemenType).resolve();
-
-      return aClass != null/* && !aClass.hasTypeParameters()*/;
+      if (elementType instanceof PsiClassType) {
+        final PsiClass aClass = ((PsiClassType)elementType).resolve();
+        return aClass != null;
+      }
+      else if (elementType instanceof PsiDisjunctionType) {
+        final PsiType lub = ((PsiDisjunctionType)elementType).getLeastUpperBound();
+        return lub != null;
+      }
     }
 
     return false;
