@@ -74,6 +74,12 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     return AndroidSdkUtils.isAndroidSdk(path);
   }
 
+  @Override
+  public String getVersionString(Sdk sdk) {
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
+    return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
+  }
+
   @Nullable
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
