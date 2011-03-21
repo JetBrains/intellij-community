@@ -113,6 +113,7 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
     finally {
       myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);
+      InplaceIntroduceFieldPopup.setInitializationPlace(null);
     }
   }
 
