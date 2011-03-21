@@ -19,7 +19,7 @@ import java.util.List;
 
 public class SearchResults {
 
-  public enum Direction {UP, DOWN;}
+  public enum Direction {UP, DOWN}
 
   private int myActualFound = 0;
 
@@ -297,6 +297,7 @@ public class SearchResults {
     return firstOccurrenceBeforeOffset(offset);
   }
 
+  @Nullable
   private LiveOccurrence firstOccurrenceBeforeOffset(int offset) {
     for (int i = getOccurrences().size()-1; i >= 0; --i) {
       if (getOccurrences().get(i).getPrimaryRange().getEndOffset() < offset) {
@@ -312,6 +313,7 @@ public class SearchResults {
     return firstOccurrenceAfterOffset(caret);
   }
 
+  @Nullable
   private LiveOccurrence firstOccurrenceAfterOffset(int offset) {
     LiveOccurrence afterCaret = null;
     for (LiveOccurrence occurrence : getOccurrences()) {

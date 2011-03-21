@@ -273,13 +273,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     myHighlighters.addAll(toAdd);
   }
 
-  private static TextAttributes dotted(TextAttributes attrs) {
-    TextAttributes textAttributes = attrs.clone();
-    textAttributes.setEffectColor(Color.WHITE);
-    textAttributes.setEffectType(EffectType.BOXED);
-    return textAttributes;
-  }
-
   private void showReplacementPreview() {
     hideBalloon();
     final LiveOccurrence cursor = mySearchResults.getCursor();
