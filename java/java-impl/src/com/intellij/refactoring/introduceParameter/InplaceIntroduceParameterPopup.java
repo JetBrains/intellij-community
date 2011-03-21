@@ -240,25 +240,30 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         final TIntArrayList parametersToRemove = getParametersToRemove();
 
         final IntroduceParameterProcessor processor =
-          new IntroduceParameterProcessor(myProject, myMethod,
-                                          myMethodToSearchFor, parameterInitializer, myExpr,
-                                          myLocalVar, isDeleteLocalVariable, myParameterName,
-                                          isReplaceAllOccurences(),
-                                          getReplaceFieldsWithGetters(), myMustBeFinal || myFinal, isGenerateDelegate(),
-                                          myParameterTypePointer.getType(),
-                                          parametersToRemove);
-        final boolean [] conflictsFound = new boolean[] {true};
-        processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-          @Override
+              new IntroduceParameterProcessor(myProject, myMethod,
+                                              myMethodToSearchFor, parameterInitializer, myExpr,
+                                              myLocalVar, isDeleteLocalVariable, myParameterName,
+                                              isReplaceAllOccurences(),
+                                              getReplaceFieldsWithGetters(), myMustBeFinal || myFinal, isGenerateDelegate(),
+                                              myParameterTypePointer.getType(),
+                                              parametersToRemove);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            conflictsFound[0] = processor.hasConflicts();
+            final boolean [] conflictsFound = new boolean[] {true};
+            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+              @Override
+              public void run() {
+                conflictsFound[0] = processor.hasConflicts();
+              }
+            });
+            processor.run();
+            normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+            ParameterInplaceIntroducer.super.moveOffsetAfter(!conflictsFound[0]);
           }
         });
-        processor.run();
-        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-        success = !conflictsFound[0];
+      } else {
+        super.moveOffsetAfter(success);
       }
-      super.moveOffsetAfter(success);
     }
 
     private void normalizeParameterIdxAccordingToRemovedParams(TIntArrayList parametersToRemove) {
