@@ -307,4 +307,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile("completion/importInMiddleOfHierarchy/a.after.py");
   }
+
+  public void testLambdaInExpression() {  // PY-3150
+    doTest();
+  }
 }
