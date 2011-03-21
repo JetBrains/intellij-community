@@ -477,16 +477,24 @@ public class NameUtil {
 
 
   public static class MinusculeMatcher implements Matcher {
-    private final String myPattern;
+    private final char[] myPattern;
     private final boolean myFirstLetterCaseMatters;
+    private final int myFirstUpperCase;
 
     public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
       myFirstLetterCaseMatters = firstLetterCaseMatters;
-      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.");
+      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
+      for (int i = 0; i < myPattern.length; i++) {
+        if (Character.isUpperCase(myPattern[i])) {
+          myFirstUpperCase = i;
+          return;
+        }
+      }
+      myFirstUpperCase = -1;
     }
 
     private boolean matches(int patternIndex, List<String> words, int wordIndex) {
-      if (patternIndex == myPattern.length()) {
+      if (patternIndex == myPattern.length) {
         return true;
       }
       if (wordIndex == words.size()) {
@@ -495,32 +503,32 @@ public class NameUtil {
 
       String w = words.get(wordIndex);
 
-      if ('*' == myPattern.charAt(patternIndex)) {
+      if ('*' == myPattern[patternIndex]) {
         return handleAsterisk(patternIndex, words, wordIndex);
       }
 
       if (isWordSeparator(w.charAt(0))) {
         assert w.length() == 1 : "'" + w + "'";
-        return matches(isWordSeparator(myPattern.charAt(patternIndex)) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
+        return matches(isWordSeparator(myPattern[patternIndex]) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
       }
 
-      if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern.charAt(0)) {
+      if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern[0]) {
         return false;
       }
 
-      if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern.charAt(patternIndex))) {
+      if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
         return false;
       }
 
       int i = 1;
       while (true) {
-        if (patternIndex + i == myPattern.length()) {
+        if (patternIndex + i == myPattern.length) {
           return true;
         }
-        if (i == w.length()) {
+        if (i == w.length() || myFirstUpperCase == patternIndex + i) {
           break;
         }
-        char p = myPattern.charAt(patternIndex + i);
+        char p = myPattern[patternIndex + i];
         char n = w.charAt(i);
         if (n != p && StringUtil.toLowerCase(n) != StringUtil.toLowerCase(p)) {
           break;
@@ -529,7 +537,7 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (wordIndex == words.size() - 1) {
-        if (patternIndex + i == myPattern.length() - 1 && ' ' == myPattern.charAt(patternIndex + i)) {
+        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i]) {
           return i == w.length();
         }
 
@@ -545,14 +553,14 @@ public class NameUtil {
     }
 
     private boolean handleAsterisk(int patternIndex, List<String> words, int wordIndex) {
-      while ('*' == myPattern.charAt(patternIndex)) {
+      while ('*' == myPattern[patternIndex]) {
         patternIndex++;
-        if (patternIndex == myPattern.length()) {
+        if (patternIndex == myPattern.length) {
           return true;
         }
       }
 
-      String nextChar = String.valueOf(myPattern.charAt(patternIndex));
+      String nextChar = String.valueOf(myPattern[patternIndex]);
 
       for (int i = wordIndex; i < words.size(); i++) {
         String s = words.get(i);
@@ -588,7 +596,7 @@ public class NameUtil {
       }
 
       if (words.isEmpty()) {
-        return myPattern.equals(name);
+        return myPattern.length == 0;
       }
 
       return matches(0, words, 0);
