@@ -20,7 +20,9 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.AnnotationBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -28,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class AnnotationDefinition implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  public static boolean parseAnnotationDefinition(PsiBuilder builder, GroovyParser parser) {
     if (!ParserUtils.getToken(builder, mAT)) {
       return false;
     }
@@ -42,8 +44,45 @@ public class AnnotationDefinition implements GroovyElementTypes {
       return false;
     }
 
-    AnnotationBlock.parse(builder, parser);
+    PsiBuilder.Marker abMarker = builder.mark();
 
+    if (!ParserUtils.getToken(builder, mLCURLY, GroovyBundle.message("lcurly.expected"))) {
+      abMarker.rollbackTo();
+      return false;
+    }
+
+    Separators.parse(builder);
+
+    while (!builder.eof() && builder.getTokenType() != mRCURLY) {
+      if (!parseAnnotationMember(builder, parser)) builder.advanceLexer();
+      Separators.parse(builder);
+    }
+
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+
+    abMarker.done(CLASS_BODY);
     return true;
+  }
+
+  private static boolean parseAnnotationMember(PsiBuilder builder, GroovyParser parser) {
+    //type definition
+    PsiBuilder.Marker typeDeclStartMarker = builder.mark();
+
+    if (TypeDefinition.parse(builder, parser)) {
+      typeDeclStartMarker.drop();
+      return true;
+    }
+
+    typeDeclStartMarker.rollbackTo();
+
+    PsiBuilder.Marker declMarker = builder.mark();
+
+    if (Declaration.parse(builder, true, true, parser)) {
+      declMarker.drop();
+      return true;
+    }
+
+    declMarker.rollbackTo();
+    return false;
   }
 }

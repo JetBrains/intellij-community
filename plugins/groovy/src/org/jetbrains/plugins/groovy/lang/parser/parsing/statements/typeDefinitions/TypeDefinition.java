@@ -66,7 +66,7 @@ public class TypeDefinition implements GroovyElementTypes {
       return ENUM_DEFINITION;
     }
 
-    if (builder.getTokenType() == mAT && AnnotationDefinition.parse(builder, parser)) {
+    if (builder.getTokenType() == mAT && AnnotationDefinition.parseAnnotationDefinition(builder, parser)) {
       return ANNOTATION_DEFINITION;
     }
 
