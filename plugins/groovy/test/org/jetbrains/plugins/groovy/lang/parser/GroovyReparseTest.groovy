@@ -149,5 +149,16 @@ def foo() {
 """, "\b"
   }
 
+  public void testWhileRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    while (true<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
 
 }
