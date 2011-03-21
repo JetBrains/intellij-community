@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public class GroovyCompletionConfidence extends CompletionConfidence {
 
   private static boolean isPossibleClosureParameter(GrReferenceExpression ref) {
-    return PsiJavaPatterns.psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref);
+    return PsiJavaPatterns.psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref) || GroovyCompletionContributor.isInPossibleClosureParameter(ref);
   }
 
   @NotNull

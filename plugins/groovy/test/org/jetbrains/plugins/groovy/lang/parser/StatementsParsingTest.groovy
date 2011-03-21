@@ -187,49 +187,10 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testVardef$vardeferrsingle4() throws Throwable { doTest(); }
   public void testWith$with1() throws Throwable { doTest(); }
   public void testWith$with2() throws Throwable { doTest(); }
+
   public void testAfterAs() throws Throwable { doTest(); }
   public void testUnnamedField() throws Throwable { doTest(); }
-
-  public void testIfRecovery() throws Throwable { 
-    checkParsing """def test239() {
-                      if (foo() {}
-                    }""",
-"""Groovy script
-  Method
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('test239')
-    PsiElement(()('(')
-    Parameter list
-      <empty list>
-    PsiElement())(')')
-    PsiWhiteSpace(' ')
-    Throw clause
-      <empty list>
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace('\\n                      ')
-      IF statement
-        PsiElement(if)('if')
-        PsiWhiteSpace(' ')
-        PsiElement(()('(')
-        Method call
-          Reference expression
-            PsiElement(identifier)('foo')
-          Arguments
-            PsiElement(()('(')
-            PsiElement())(')')
-          PsiWhiteSpace(' ')
-          Closable block
-            PsiElement({)('{')
-            Parameter list
-              <empty list>
-            PsiElement(})('}')
-        PsiErrorElement:')' expected
-          <empty list>
-      PsiWhiteSpace('\\n                    ')
-      PsiElement(})('}')"""
-  }
+  public void testIfRecovery() throws Throwable { doTest(); }
+  public void testSemicolonsOnDifferentLines() throws Throwable { doTest(); }
 
 }

@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,6 +46,9 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  * @author ilyas, Dmitry.Krasilschikov
  */
 public class GroovyParser implements PsiParser {
+
+  public static final TokenSet RCURLY_ONLY = TokenSet.create(mRCURLY);
+  public static final TokenSet CASE_SECTION_END = TokenSet.create(kCASE, kDEFAULT, mRCURLY);
 
   public boolean parseDeep() {
     return false;
@@ -202,29 +206,8 @@ public class GroovyParser implements PsiParser {
   }
 
   public void parseSwitchCaseList(PsiBuilder builder) {
-    if (!parseStatement(builder, false) && !parseExtendedStatement(builder)) {
-      builder.error(GroovyBundle.message("wrong.statement"));
-      return;
-    }
-
-    while (true) {
-      while (ParserUtils.getToken(builder, mSEMI)) {}
-      PsiBuilder.Marker beforeSeparators = builder.mark();
-      ParserUtils.getToken(builder, mNLS);
-      if (builder.eof() || builder.getTokenType() == kCASE || builder.getTokenType() == kDEFAULT || builder.getTokenType() == mRCURLY) {
-        beforeSeparators.rollbackTo();
-        break;
-      }
-      beforeSeparators.drop();
-      boolean first = true;
-      if (!parseStatement(builder, false) && !parseExtendedStatement(builder)) {
-        if (first) {
-          builder.error("statement expected");
-          first = false;
-        }
-        assert builder.getTokenType() != mLCURLY && builder.getTokenType() != mRCURLY;
-        builder.advanceLexer();
-      }
+    if (parseGenericStatement(builder, CASE_SECTION_END)) {
+      parseCodeBlock(builder, CASE_SECTION_END);
     }
   }
 
@@ -281,76 +264,71 @@ public class GroovyParser implements PsiParser {
     }
   }
 
-  /**
-   * Rolls marker forward after possible errors
-   */
-  private void cleanAfterError(PsiBuilder builder, boolean rCurlyNeeded) {
-    int braceLevel = 1;
-    int i = 0;
-    PsiBuilder.Marker em = builder.mark();
+  public void parseBlockBody(PsiBuilder builder) {
+    skipSeparators(builder);
+    parseCodeBlock(builder, RCURLY_ONLY);
+    ParserUtils.getToken(builder, mNLS);
+  }
+
+  private void parseCodeBlock(PsiBuilder builder, TokenSet until) {
     while (true) {
-      if (builder.eof()) {
-        break;
-      }
-      final IElementType type = builder.getTokenType();
-      if (GroovyTokenTypes.mLCURLY == type) {
-        braceLevel++;
-      }
-      else if (GroovyTokenTypes.mRCURLY == type) {
-        braceLevel--;
-        if (braceLevel == 0) {
-          break;
-        }
-      }
-      else if (braceLevel == 1) {
-        if (!rCurlyNeeded && (GroovyTokenTypes.mNLS.equals(type) || GroovyTokenTypes.mSEMI.equals(type))) {
-          break;
-        }
-        if (isExtendedSeparator(type)) {
-          break;
-        }
-      }
-      builder.advanceLexer();
-      i++;
-    }
-    if (i > 0) {
-      em.error(GroovyBundle.message("separator.or.rcurly.expected"));
-    } else {
-      em.drop();
+      if (builder.eof() || until.contains(builder.getTokenType())) break;
+      if (!parseGenericStatement(builder, until)) break;
     }
   }
 
-  public void parseBlockBody(PsiBuilder builder) {
+  private boolean parseGenericStatement(PsiBuilder builder, TokenSet until) {
+    boolean plainStatement = parseStatement(builder, false);
 
-
-    parseExtendedStatement(builder);
-    if (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) || GroovyTokenTypes.mNLS.equals(builder.getTokenType())) {
-      Separators.parse(builder);
-    }
-    while (parseExtendedStatement(builder)) {
-      Separators.parse(builder);
-    }
-
-    boolean result = parseStatement(builder, false);
-
-    while (result &&
-        (GroovyTokenTypes.mSEMI.equals(builder.getTokenType()) ||
-            GroovyTokenTypes.mNLS.equals(builder.getTokenType()) || parseExtendedStatement(builder))) {
-      Separators.parse(builder);
-      while (parseExtendedStatement(builder)) {
-        Separators.parse(builder);
+    if (plainStatement || parseExtendedStatement(builder)) {
+      if (parseSeparatorsWithoutLastNls(builder, plainStatement, until)) {
+        return false;
       }
-      result = parseStatement(builder, false);
-      if (!isExtendedSeparator(builder.getTokenType())) {
-        cleanAfterError(builder, false);
+    } else {
+      builder.error(GroovyBundle.message("wrong.statement"));
+      assert builder.getTokenType() != mLCURLY && builder.getTokenType() != mRCURLY;
+      builder.advanceLexer();
+    }
+    return true;
+  }
+
+  private boolean parseSeparatorsWithoutLastNls(PsiBuilder builder, boolean requireSeparator, TokenSet until) {
+    boolean hasSeparator = false;
+    while (true) {
+      while (builder.getTokenType() == mSEMI || isExtendedSeparator(builder.getTokenType())) {
+        hasSeparator = true;
+        builder.advanceLexer();
+      }
+
+      if (builder.getTokenType() == mNLS) {
+        PsiBuilder.Marker beforeNls = builder.mark();
+        hasSeparator = true;
+        builder.advanceLexer();
+        if (builder.eof() || until.contains(builder.getTokenType())) {
+          beforeNls.rollbackTo();
+          return true;
+        }
+        beforeNls.drop();
+      } else {
+        break;
       }
     }
-    cleanAfterError(builder, true);
-    Separators.parse(builder);
-    while (parseExtendedStatement(builder)) {
-      Separators.parse(builder);
+    if (builder.eof() || until.contains(builder.getTokenType())) {
+      return true;
     }
+    if (requireSeparator && !hasSeparator) {
+      builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
+    }
+    return false;
+  }
 
+  private boolean skipSeparators(PsiBuilder builder) {
+    boolean hasSeparators = false;
+    while (builder.getTokenType() == mSEMI || isExtendedSeparator(builder.getTokenType()) || builder.getTokenType() == mNLS) {
+      hasSeparators = true;
+      builder.advanceLexer();
+    }
+    return hasSeparators;
   }
 
   public boolean parseStatement(PsiBuilder builder, boolean isBlockStatementNeeded) {
@@ -372,7 +350,8 @@ public class GroovyParser implements PsiParser {
       return parseIfStatement(builder);
     }
     if (GroovyTokenTypes.kSWITCH.equals(builder.getTokenType())) {
-      return SwitchStatement.parseSwitch(builder, this);
+      SwitchStatement.parseSwitch(builder, this);
+      return true;
     }
     if (GroovyTokenTypes.kTRY.equals(builder.getTokenType())) {
       return TryCatchStatement.parse(builder, this);

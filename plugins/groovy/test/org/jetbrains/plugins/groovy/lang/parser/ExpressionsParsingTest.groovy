@@ -194,6 +194,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testDollar() throws Throwable { doTest(); }
 
   public void testNoArrowClosure() throws Throwable { doTest(); }
+  public void testNoArrowClosure2() throws Throwable { doTest(); }
 
   public void testPropertyAccessError() throws Throwable {
     checkParsing "a[b{}}", """Groovy script

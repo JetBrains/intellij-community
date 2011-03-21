@@ -86,16 +86,28 @@ Groovy script
         PsiWhiteSpace('\n  ')
         PsiElement(identifier)('simplePlugins')
       PsiErrorElement:';', '}' or new line expected
-        PsiElement(.)('.')
-        PsiElement(identifier)('each')
+        <empty list>
+      PsiElement(.)('.')
+      Method call
+        Reference expression
+          PsiElement(identifier)('each')
         PsiWhiteSpace(' ')
-        PsiElement({)('{')
-        PsiWhiteSpace('\n    ')
-        PsiElement(identifier)('layoutPlugin')
-        PsiWhiteSpace(' ')
-        PsiElement(identifier)('it')
-        PsiElement(new line)('\n  ')
-        PsiElement(})('}')
+        Arguments
+          <empty list>
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          Parameter list
+            <empty list>
+          Call expression
+            Reference expression
+              PsiElement(identifier)('layoutPlugin')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Reference expression
+                PsiElement(identifier)('it')
+          PsiElement(new line)('\n  ')
+          PsiElement(})('}')
       PsiWhiteSpace('\n\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')

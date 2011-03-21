@@ -31,13 +31,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class SwitchStatement implements GroovyElementTypes {
 
-  public static boolean parseSwitch(PsiBuilder builder, GroovyParser parser) {
+  public static void parseSwitch(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kSWITCH);
 
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.done(SWITCH_STATEMENT);
-      return true;
+      return;
     }
     if (!StrictContextExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -45,14 +45,9 @@ public class SwitchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
 
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
-        builder.error(GroovyBundle.message("rparen.expected"));
-        builder.advanceLexer();
-      }
-      if (!ParserUtils.getToken(builder, mRPAREN)) {
-        marker.done(SWITCH_STATEMENT);
-        return true;
-      }
+      builder.error(GroovyBundle.message("rparen.expected"));
+      marker.done(SWITCH_STATEMENT);
+      return;
     }
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
@@ -61,13 +56,11 @@ public class SwitchStatement implements GroovyElementTypes {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("case.block.expected"));
       marker.done(SWITCH_STATEMENT);
-      return true;
+      return;
     }
     warn.drop();
     parseCaseBlock(builder, parser);
     marker.done(SWITCH_STATEMENT);
-    return true;
-
   }
 
   private static void parseCaseBlock(PsiBuilder builder, GroovyParser parser) {
