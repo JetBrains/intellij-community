@@ -43,9 +43,15 @@ public interface PsiTypeCodeFragment extends JavaCodeFragment {
    */
   boolean isVoidValid();
 
-  class IncorrectTypeException extends Exception {}
+  class IncorrectTypeException extends Exception {
+    public IncorrectTypeException(final String message) { super(message); }
+  }
 
-  class TypeSyntaxException extends IncorrectTypeException {}
+  class TypeSyntaxException extends IncorrectTypeException {
+    public TypeSyntaxException(final String message) { super(message); }
+  }
 
-  class NoTypeException extends IncorrectTypeException {}
+  class NoTypeException extends IncorrectTypeException {
+    public NoTypeException(final String message) { super(message); }
+  }
 }
