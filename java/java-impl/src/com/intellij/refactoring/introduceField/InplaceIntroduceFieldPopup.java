@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -39,8 +36,6 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.TitlePanel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -78,6 +73,7 @@ public class InplaceIntroduceFieldPopup {
   private String myFieldName;
 
   private boolean myInitListeners = false;
+  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -126,7 +122,7 @@ public class InplaceIntroduceFieldPopup {
     gc.insets.top = 5;
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
-    myIntroduceFieldPanel.initializeControls(initializerExpression);
+    myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
     myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -297,6 +293,7 @@ public class InplaceIntroduceFieldPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
         final BaseExpressionToFieldHandler.Settings settings =
           new BaseExpressionToFieldHandler.Settings(myFieldName, myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                     myIntroduceFieldPanel.isDeclareFinal(),

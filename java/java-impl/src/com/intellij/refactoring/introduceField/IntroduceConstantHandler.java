@@ -155,7 +155,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
 
     final IntroduceConstantDialog dialog =
-      new IntroduceConstantDialog(project, parentClass, expr, localVariable, false, occurences, getParentClass(),
+      new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurences, getParentClass(),
                                   typeSelectorManager);
     dialog.show();
     if (!dialog.isOK()) {

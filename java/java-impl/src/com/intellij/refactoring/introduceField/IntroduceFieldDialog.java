@@ -80,7 +80,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     setTitle(REFACTORING_NAME);
     init();
 
-    myCentralPanel.initializeControls(initializerExpression);
+    myCentralPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
     updateButtons();
   }
 

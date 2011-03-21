@@ -136,13 +136,10 @@ public class InplaceIntroduceConstantPopup {
     myWholePanel.add(myCbDeleteVariable, gc);
     if (myLocalVariable != null) {
       if (myReplaceAllCb != null) {
-        updateCbDeleteVariable();
-        myReplaceAllCb.addItemListener(
-          new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            updateCbDeleteVariable();
-          }
-        });
+        myReplaceAllCb.setEnabled(false);
+        myReplaceAllCb.setSelected(true);
+        myCbDeleteVariable.setSelected(true);
+        myCbDeleteVariable.setEnabled(false);
       }
     } else {
       myCbDeleteVariable.setVisible(false);
