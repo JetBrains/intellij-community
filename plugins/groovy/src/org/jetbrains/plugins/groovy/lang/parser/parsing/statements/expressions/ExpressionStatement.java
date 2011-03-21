@@ -49,7 +49,7 @@ public class ExpressionStatement implements GroovyElementTypes {
         marker.drop();
         return PATH_METHOD_CALL;
       }
-      else if (CommandArguments.parse(builder, parser)) {
+      else if (CommandArguments.parseCommandArguments(builder, parser)) {
         marker.done(CALL_EXPRESSION);
         return CALL_EXPRESSION;
       }
@@ -111,7 +111,7 @@ public class ExpressionStatement implements GroovyElementTypes {
         exprStatement = exprStatement.precede();
         exprStatement.done(PATH_METHOD_CALL);
       }
-      else if (CommandArguments.parse(builder, parser)) {
+      else if (CommandArguments.parseCommandArguments(builder, parser)) {
         exprStatement.done(CALL_EXPRESSION);
       }
       else {
