@@ -127,7 +127,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   @Override
   public void cursorMoved(boolean toChangeSelection) {
-    updateCursorHighlighting(true);
+    updateCursorHighlighting(toChangeSelection);
   }
 
   public void editorChanged(SearchResults sr, Editor oldEditor) {
