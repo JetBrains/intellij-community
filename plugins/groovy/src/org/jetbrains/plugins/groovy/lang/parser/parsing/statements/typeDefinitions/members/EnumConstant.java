@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -53,7 +53,7 @@ public class EnumConstant implements GroovyElementTypes {
     }
 
     if (builder.getTokenType() == mLCURLY) {
-      ClassBlock.parse(builder, null, parser);
+      TypeDefinition.parseClassBody(builder, null, parser);
     }
 
     ecMarker.done(ENUM_CONSTANT);

@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOr
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -146,7 +146,7 @@ public class PrimaryExpression implements GroovyElementTypes {
       methodCallArgsParse(builder, parser);
       if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);
-        ClassBlock.parse(builder, name, parser);
+        TypeDefinition.parseClassBody(builder, name, parser);
         anonymousMarker.done(ANONYMOUS_CLASS_DEFINITION);
         return NEW_EXPRESSION;
       }

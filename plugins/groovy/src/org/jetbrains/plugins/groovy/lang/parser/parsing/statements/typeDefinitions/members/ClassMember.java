@@ -40,7 +40,7 @@ public class ClassMember implements GroovyElementTypes {
     if (TypeDeclarationStart.parse(builder, parser)) {
       typeDeclStartMarker.rollbackTo();
 
-      if (!TypeDefinition.parse(builder, parser)) {
+      if (!TypeDefinition.parseTypeDefinition(builder, parser)) {
         builder.error(GroovyBundle.message("type.definition.expected"));
         return false;
       }
