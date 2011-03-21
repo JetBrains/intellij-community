@@ -5,8 +5,10 @@ import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
+  private static final String TEXT = "Preserve Case";
+
   public TogglePreserveCaseAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, "Preserve Case");
+    super(editorSearchComponent, TEXT);
   }
 
   @Override

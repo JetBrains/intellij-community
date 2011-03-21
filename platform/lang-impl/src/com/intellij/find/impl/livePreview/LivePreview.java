@@ -209,6 +209,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
           myCursorHighlighter = null;
         }
       }
+      myHighlighters.clear();
       if (myListeningSelection) {
         editor.getSelectionModel().removeSelectionListener(this);
         myListeningSelection = false;
