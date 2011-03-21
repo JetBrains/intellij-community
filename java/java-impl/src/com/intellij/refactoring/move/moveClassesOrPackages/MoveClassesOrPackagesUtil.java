@@ -116,7 +116,6 @@ public class MoveClassesOrPackagesUtil {
   // Does not process non-code usages!
   public static PsiPackage doMovePackage(PsiPackage aPackage, MoveDestination moveDestination)
     throws IncorrectOperationException {
-    PsiManager manager = aPackage.getManager();
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
     final String newPrefix;
@@ -141,7 +140,7 @@ public class MoveClassesOrPackagesUtil {
 
     aPackage.handleQualifiedNameChange(newPackageQualifiedName);
 
-    return JavaPsiFacade.getInstance(manager.getProject()).findPackage(newPackageQualifiedName);
+    return JavaPsiFacade.getInstance(targetPackage.getManager().getProject()).findPackage(newPackageQualifiedName);
   }
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
