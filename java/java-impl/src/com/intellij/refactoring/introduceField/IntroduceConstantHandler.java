@@ -70,6 +70,12 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
+    final PsiElement parent = localVariable.getParent();
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+      return false;
+    }
     final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true){
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,
