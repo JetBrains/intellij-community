@@ -576,9 +576,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
         }
       }
     };
-
-    editorTextField.setOpaque(false);
-
     JPanel searchFieldPane = new NonOpaquePanel(new BorderLayout());
     Dimension dimension = new Dimension(200, 25);
     searchFieldPane.add(editorTextField, BorderLayout.CENTER);
