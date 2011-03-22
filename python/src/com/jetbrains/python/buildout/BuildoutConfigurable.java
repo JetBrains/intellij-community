@@ -2,6 +2,7 @@ package com.jetbrains.python.buildout;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -172,7 +174,16 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     }
     if (paths != null) {
       for (String dir : paths) {
-        modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+        VirtualFile pathEntry = LocalFileSystem.getInstance().findFileByPath(dir);
+        if (pathEntry != null && !pathEntry.isDirectory() && pathEntry.getFileType() instanceof ArchiveFileType) {
+          pathEntry = JarFileSystem.getInstance().getJarRootForLocalFile(pathEntry);
+        }
+        if (pathEntry != null) {
+          modifiableModel.addRoot(pathEntry, OrderRootType.CLASSES);
+        }
+        else {
+          modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+        }
       }
     }
     modifiableModel.commit();
