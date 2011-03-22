@@ -43,13 +43,15 @@ public class FindAllAction extends EditorHeaderAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    final FindModel model = FindManager.getInstance(project).getFindInFileModel();
-    final FindModel realModel = (FindModel)model.clone();
-    String text = getEditorSearchComponent().getTextInField();
-    if (StringUtil.isEmpty(text)) return;
-    realModel.setStringToFind(text);
-    FindUtil.findAll(project, editor, realModel);
+    Editor editor = getEditorSearchComponent().getEditor();
+    Project project = editor.getProject();
+    if (project != null && !project.isDisposed()) {
+      final FindModel model = FindManager.getInstance(project).getFindInFileModel();
+      final FindModel realModel = (FindModel)model.clone();
+      String text = getEditorSearchComponent().getTextInField();
+      if (StringUtil.isEmpty(text)) return;
+      realModel.setStringToFind(text);
+      FindUtil.findAll(project, editor, realModel);
+    }
   }
 }
