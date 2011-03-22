@@ -826,7 +826,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     public void performReplace() {
       String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
       performReplace(mySearchResults.getCursor(), replacement, myEditor);
-      getFocusBack();
+      //getFocusBack();
       addTextToRecents(myReplaceField) ;
     }
 
