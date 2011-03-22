@@ -114,8 +114,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           final LinkedList<SVNRevision> rp = logGetter.getRevisionPoints();
 
           for (int i = 0; i < rp.size() - 1; i++) {
-            //final SVNRevision rEnd = (i + 1) == rp.size() ? SVNRevision.create(0) : rp.get(i + 1);
-            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
+            client.doAnnotate(ioFile, SVNRevision.UNDEFINED, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
           }
 
           if (rp.get(1).getNumber() > 0) {
