@@ -60,7 +60,9 @@ public class InplaceIntroduceFieldPopup {
 
   private final TypeSelectorManagerImpl myTypeSelectorManager;
   private final PsiElement myAnchorElement;
+  private int myAnchorIdx = -1;
   private final PsiElement myAnchorElementIfAll;
+  private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
   private List<RangeMarker> myOccurrenceMarkers;
 
@@ -97,6 +99,16 @@ public class InplaceIntroduceFieldPopup {
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
+    for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
+      PsiExpression occurrence = occurrences[i];
+      PsiElement parent = occurrence.getParent();
+      if (parent == myAnchorElement) {
+        myAnchorIdx = i;
+      }
+      if (parent == myAnchorElementIfAll) {
+        myAnchorIdxIfAll = i;
+      }
+    }
     myOccurenceManager = occurenceManager;
     myProject = myLocalVariable != null ? myLocalVariable.getProject() : myInitializerExpression.getProject();
     myEditor = editor;
@@ -315,7 +327,8 @@ public class InplaceIntroduceFieldPopup {
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
                                                                     myOccurrences, myOccurenceManager,
-                                                                    myAnchorElementIfAll, myAnchorElement, myEditor,
+                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
                                                                     myParentClass);
           convertToFieldRunnable.run();
         }
