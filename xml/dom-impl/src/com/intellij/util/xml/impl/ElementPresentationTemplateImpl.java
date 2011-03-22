@@ -17,6 +17,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.ide.presentation.PresentationIconProvider;
+import com.intellij.ide.presentation.PresentationNameProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
@@ -42,10 +43,17 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     }
   };
 
-  private final NullableLazyValue<NullableFunction<DomElement, String>> myNamer = new MyLazyValue<String>() {
+  private final NullableLazyValue<PresentationNameProvider> myNamer = new NullableLazyValue<PresentationNameProvider>() {
     @Override
-    String getClassName() {
-      return myPresentation.namerClass();
+    protected PresentationNameProvider compute() {
+      Class<? extends PresentationNameProvider> aClass = myPresentation.nameProviderClass();
+
+      try {
+        return aClass == PresentationNameProvider.class ? null : aClass.newInstance();
+      }
+      catch (Exception e) {
+        return null;
+      }
     }
   };
 
@@ -73,8 +81,8 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     return new ElementPresentation() {
       @Override
       public String getElementName() {
-        NullableFunction<DomElement, String> namer = myNamer.getValue();
-        return namer == null ? ElementPresentationManager.getElementName(element) : namer.fun(element);
+        PresentationNameProvider namer = myNamer.getValue();
+        return namer == null ? ElementPresentationManager.getElementName(element) : namer.getName(element);
       }
 
       @Override

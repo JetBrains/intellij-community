@@ -34,7 +34,7 @@ public @interface Presentation {
 
   Class<? extends PresentationIconProvider> iconProviderClass() default PresentationIconProvider.class;
 
-  String namerClass() default "";
+  Class<? extends PresentationNameProvider> nameProviderClass() default PresentationNameProvider.class;
 
   String typeName() default "";
 }
