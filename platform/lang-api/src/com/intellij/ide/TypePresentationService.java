@@ -6,6 +6,7 @@ import com.intellij.ide.presentation.PresentationTemplateImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,14 +23,22 @@ public class TypePresentationService {
 
   @Nullable
   public Icon getTypeIcon(Class type) {
-    PresentationTemplate template = mySuperClasses.get(type);
-    return template == null ? null : template.getIcon(null, 0);
+    Set<PresentationTemplate> templates = mySuperClasses.get(type);
+    for (PresentationTemplate template : templates) {
+      Icon icon = template.getIcon(null, 0);
+      if (icon != null) return icon;
+    }
+    return null;
   }
 
   @Nullable
   public String getTypePresentableName(Class type) {
-    PresentationTemplate template = mySuperClasses.get(type);
-    return template == null ? null : template.getTypeName();
+    Set<PresentationTemplate> templates = mySuperClasses.get(type);
+    for (PresentationTemplate template : templates) {
+      String typeName = template.getTypeName();
+      if (typeName != null) return typeName;
+    }
+    return null;
   }
 
   public static TypePresentationService getService() {
@@ -79,30 +88,27 @@ public class TypePresentationService {
   private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<String, NullableLazyValue<Icon>>();
   private final Map<String, NullableLazyValue<String>> myNames = new HashMap<String, NullableLazyValue<String>>();
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<Class, PresentationTemplate> mySuperClasses = new ConcurrentFactoryMap<Class, PresentationTemplate>() {
+  private final FactoryMap<Class, Set<PresentationTemplate>> mySuperClasses = new ConcurrentFactoryMap<Class, Set<PresentationTemplate>>() {
     @Override
-    protected PresentationTemplate create(Class key) {
-      return walkSupers(key, new LinkedHashSet<Class>());
+    protected Set<PresentationTemplate> create(Class key) {
+      LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<PresentationTemplate>();
+      walkSupers(key, new LinkedHashSet<Class>(), templates);
+      return templates;
     }
 
-    @Nullable
-    private PresentationTemplate walkSupers(Class aClass, Set<Class> result) {
-      if (!result.add(aClass)) {
-        return null;
+    private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
+      if (!classes.add(aClass)) {
+        return;
       }
-      PresentationTemplate template = createPresentationTemplate(aClass);
-      if (template != null) return template;
+      ContainerUtil.addIfNotNull(createPresentationTemplate(aClass), templates);
       final Class superClass = aClass.getSuperclass();
       if (superClass != null) {
-        template = walkSupers(superClass, result);
-        if (template != null) return template;
+        walkSupers(superClass, classes, templates);
       }
 
       for (Class intf : aClass.getInterfaces()) {
-        template = walkSupers(intf, result);
-        if (template != null) return template;
+        walkSupers(intf, classes, templates);
       }
-      return null;
     }
   };
 
