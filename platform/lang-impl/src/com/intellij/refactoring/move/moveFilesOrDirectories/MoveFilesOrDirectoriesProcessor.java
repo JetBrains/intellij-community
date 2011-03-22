@@ -219,7 +219,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void retargetUsages(UsageInfo[] usages, Map<PsiElement, PsiElement> oldToNewMap) {
+  protected void retargetUsages(UsageInfo[] usages, Map<PsiElement, PsiElement> oldToNewMap) {
     final List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
     for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof MyUsageInfo) {
