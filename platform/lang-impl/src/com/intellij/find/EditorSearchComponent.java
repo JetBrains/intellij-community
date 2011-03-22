@@ -705,6 +705,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       myDocumentListener = null;
     }
     myLivePreview.cleanUp();
+    myLivePreview.dispose();
     if (myListeningSelection) {
       myEditor.getSelectionModel().removeSelectionListener(this);
     }
