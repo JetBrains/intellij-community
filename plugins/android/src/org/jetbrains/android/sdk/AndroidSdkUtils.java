@@ -201,8 +201,7 @@ public class AndroidSdkUtils {
     final SdkModificator sdkModificator = androidSdk.getSdkModificator();
 
     sdkModificator.setName(sdkName);
-    String versionString = target.getVersionName();
-    sdkModificator.setVersionString(versionString != null ? versionString : "unknown");
+    sdkModificator.setVersionString(javaSdk.getVersionString());
     sdkModificator.setSdkAdditionalData(data);
 
     if (addRoots) {

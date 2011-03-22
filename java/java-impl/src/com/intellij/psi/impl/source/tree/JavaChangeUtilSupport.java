@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/*
+/**
  * @author max
  */
 public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
@@ -184,8 +184,8 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         return ChangeUtil.generateTreeElement(te, table, manager);
       }
       if (type instanceof PsiDisjunctionType) {
-        LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiDisjunctionType)type).getLeastUpperBound());
-        return ChangeUtil.generateTreeElement(te, table, manager);
+        final String originalText = original.getText();
+        return createType(original.getProject(), originalText, null, generated);
       }
       PsiClassType classType = (PsiClassType)type;
 

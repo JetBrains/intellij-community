@@ -6,7 +6,7 @@ class C {
     void m() {
         try { }
         catch (E1 | E2 ex) {
-            final B<? extends Number> b = ex;
+            final Exception b = ex;
         }
     }
 }

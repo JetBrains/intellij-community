@@ -222,7 +222,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSiblingInnerClassType() throws Exception {
-    doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B"){
+    doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B") {
       @Override
       public IntroduceVariableSettings getSettings(Project project, Editor editor,
                                                    PsiExpression expr, PsiExpression[] occurrences,
@@ -249,11 +249,11 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testMultiCatchSimple() throws Exception {
-    doTest(new MockIntroduceVariableHandler("e", true, true, false, "C.E1 | C.E2"));
+    doTest(new MockIntroduceVariableHandler("e", true, true, false, "java.lang.Exception", true));
   }
 
   public void testMultiCatchTyped() throws Exception {
-    doTest(new MockIntroduceVariableHandler("b", true, true, false, "C.E1 | C.E2"));
+    doTest(new MockIntroduceVariableHandler("b", true, true, false, "java.lang.Exception", true));
   }
 
   private void doTest(IntroduceVariableBase testMe) throws Exception {

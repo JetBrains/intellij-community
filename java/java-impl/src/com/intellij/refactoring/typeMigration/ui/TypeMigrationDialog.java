@@ -203,9 +203,11 @@ public class TypeMigrationDialog extends RefactoringDialog {
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
 
     final PsiType rootType = getRootType();
-    final PsiType migrationType = CanonicalTypes.createTypeWrapper(getMigrationType()).getType(myRoot, myRoot.getManager());
+    final CanonicalTypes.Type typeWrapper = CanonicalTypes.createTypeWrapper(getMigrationType());
+    assert typeWrapper != null : getMigrationType();
+    final PsiType migrationType = typeWrapper.getType(myRoot, myRoot.getManager());
 
-    if (Comparing.equal(rootType, migrationType)){
+    if (Comparing.equal(rootType, migrationType)) {
       close(DialogWrapper.OK_EXIT_CODE);
       return;
     }

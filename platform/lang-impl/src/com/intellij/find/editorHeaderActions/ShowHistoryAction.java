@@ -21,9 +21,9 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
-  private EditorTextField myTextField;
+  private JComponent myTextField;
 
-  public ShowHistoryAction(EditorTextField textField, EditorSearchComponent editorSearchComponent) {
+  public ShowHistoryAction(JComponent textField, EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     myTextField = textField;
     getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/search.png"));

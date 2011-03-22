@@ -16,7 +16,6 @@
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -28,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ChromeSettings extends BrowserSpecificSettings {
-  @NonNls public static final String REMOTE_SHELL_PORT_ARG = "--remote-shell-port";
+  @NonNls public static final String REMOTE_SHELL_PORT_ARG = "--remote-shell-port=";
+  @NonNls public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
   public static final int DEFAULT_REMOTE_SHELL_PORT = 7930;
   private String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
@@ -80,7 +80,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
   public String[] getAdditionalParameters() {
     String[] customProfileArg;
     if (myUseCustomProfile && myUserDataDirectoryPath != null) {
-      customProfileArg = new String[]{"--user-data-dir=" + FileUtil.toSystemDependentName(myUserDataDirectoryPath)};
+      customProfileArg = new String[]{USER_DATA_DIR_ARG + FileUtil.toSystemDependentName(myUserDataDirectoryPath)};
     }
     else {
       customProfileArg = ArrayUtil.EMPTY_STRING_ARRAY;
@@ -88,7 +88,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
 
     String[] remoteShellArg;
     if (myEnableRemoteDebug) {
-      remoteShellArg = new String[]{REMOTE_SHELL_PORT_ARG + "=" + myRemoteShellPort};
+      remoteShellArg = new String[]{REMOTE_SHELL_PORT_ARG + myRemoteShellPort};
     }
     else {
       remoteShellArg = ArrayUtil.EMPTY_STRING_ARRAY;
@@ -98,7 +98,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
   }
 
   @Override
-  public Configurable createConfigurable() {
+  public ChromeSettingsConfigurable createConfigurable() {
     return new ChromeSettingsConfigurable(this);
   }
 }

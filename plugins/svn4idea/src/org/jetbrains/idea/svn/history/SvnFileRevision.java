@@ -182,7 +182,7 @@ public class SvnFileRevision implements VcsFileRevision {
       }
       try {
         SVNWCClient client = myVCS.createWCClient();
-        client.doGetFileContents(SVNURL.parseURIEncoded(myURL), myPegRevision, myRevision, true, myDst);
+        client.doGetFileContents(SVNURL.parseURIEncoded(myURL), myRevision, myRevision, true, myDst);
       }
       catch (SVNException e) {
         myException = e;

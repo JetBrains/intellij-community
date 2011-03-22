@@ -34,6 +34,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
@@ -82,9 +83,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private String myActivityName;
   private ProjectType myProjectType;
   private Module myTestedModule;
+  private Sdk mySdk;
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
+
+    rootModel.setSdk(mySdk);
+
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
@@ -159,13 +164,17 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private boolean createProjectByAndroidTool(final VirtualFile contentRoot,
                                              final VirtualFile sourceRoot,
                                              final AndroidFacet facet) {
-    AndroidFacetConfiguration configuration = facet.getConfiguration();
-    AndroidPlatform platform = configuration.getAndroidPlatform();
-    IAndroidTarget target = configuration.getAndroidTarget();
-
     final Module module = facet.getModule();
+    AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
-    if (platform != null && target != null) {
+    if (platform == null) {
+      Messages.showErrorDialog(module.getProject(), "Cannot parse Android SDK", CommonBundle.getErrorTitle());
+      return true;
+    }
+
+    IAndroidTarget target = platform.getTarget();
+
+    if (target != null) {
       final String androidToolPath =
         platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName());
 
@@ -462,6 +471,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   public void setPackageName(String packageName) {
     myPackageName = packageName;
+  }
+
+  public void setSdk(Sdk sdk) {
+    mySdk = sdk;
   }
 
   public ModuleType getModuleType() {
