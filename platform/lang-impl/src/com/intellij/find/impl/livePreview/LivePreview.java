@@ -17,6 +17,7 @@ package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindModel;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -286,7 +287,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
       String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (replacementPreviewText != null && mySearchResults.getFindModel().isRegularExpressions()) {
+      final FindModel findModel = mySearchResults.getFindModel();
+      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
         replacementView.setDelegate(this);
