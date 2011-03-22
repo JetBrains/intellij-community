@@ -753,13 +753,21 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                      myJavaFacade.getElementFactory().createTypeFromText("long", null));
   }
 
-  // test type migration in disjunction type
+  // test type migration from disjunction type
   public void testT128() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("Test.E", null));
+  }
 
-    final PsiType rootType = myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null);
-    final PsiType migrationType = myJavaFacade.getElementFactory().createTypeFromText("Test.E", null);
+  // test type migration to disjunction type
+  public void testT129() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null));
+  }
 
+  private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) throws Exception {
     start(new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
