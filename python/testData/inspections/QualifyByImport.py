@@ -1,3 +1,3 @@
 import QualifyByImportFoo
 
-<caret><warning descr="Unresolved reference 'foo'">foo</warning> # must be qualified
+<caret><error descr="Unresolved reference 'foo'">foo</error> # must be qualified

@@ -400,7 +400,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] space_strings = {"assert", "del", "exec", "from", "import", "lambda", "print", "raise"};
+          final @NonNls String[] space_strings = {"assert", "del", "exec", "from", "import", "print", "raise"};
           final @NonNls String[] just_strings = {"pass"};
           putKeywords(space_strings, TailType.SPACE, result);
           putKeywords(just_strings, TailType.NONE, result);
@@ -545,7 +545,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(IN_DEFINITION)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider("not")
+      new PyKeywordCompletionProvider("not", "lambda")
     );
   }
 
