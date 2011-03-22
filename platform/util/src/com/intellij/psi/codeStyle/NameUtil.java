@@ -479,18 +479,10 @@ public class NameUtil {
   public static class MinusculeMatcher implements Matcher {
     private final char[] myPattern;
     private final boolean myFirstLetterCaseMatters;
-    private final int myFirstUpperCase;
 
     public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
       myFirstLetterCaseMatters = firstLetterCaseMatters;
       myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
-      for (int i = 0; i < myPattern.length; i++) {
-        if (Character.isUpperCase(myPattern[i])) {
-          myFirstUpperCase = i;
-          return;
-        }
-      }
-      myFirstUpperCase = -1;
     }
 
     private boolean matches(int patternIndex, List<String> words, int wordIndex) {
@@ -520,17 +512,24 @@ public class NameUtil {
         return false;
       }
 
+      boolean uppers = Character.isUpperCase(myPattern[patternIndex]);
+
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
           return true;
         }
-        if (i == w.length() || myFirstUpperCase == patternIndex + i) {
+        if (i == w.length()) {
           break;
         }
         char p = myPattern[patternIndex + i];
-        char n = w.charAt(i);
-        if (n != p && StringUtil.toLowerCase(n) != StringUtil.toLowerCase(p)) {
+        if (uppers && Character.isUpperCase(p)) {
+          p = StringUtil.toLowerCase(p);
+        } else {
+          uppers = false;
+        }
+
+        if (StringUtil.toLowerCase(w.charAt(i)) != p) {
           break;
         }
         i++;
