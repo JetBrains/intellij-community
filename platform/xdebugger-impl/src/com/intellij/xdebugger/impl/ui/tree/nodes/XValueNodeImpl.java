@@ -76,8 +76,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                              @NonNls @NotNull final String value,
-                              final boolean hasChildren) {
+                              @NonNls @NotNull final String value, final boolean hasChildren) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
@@ -116,7 +115,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     String value;
     try {
-      StringUtil.escapeStringCharacters(myValue.length(), myValue, null, builder);
+      StringUtil.escapeStringCharacters(myValue.length(), myValue, null, false, builder);
       value = builder.toString();
     }
     finally {
