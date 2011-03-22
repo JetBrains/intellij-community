@@ -189,6 +189,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     removeFromEditor(mySearchResults.getEditor());
   }
 
+  public void dispose() {
+    mySearchResults.removeListener(this);
+  }
+
   private void removeFromEditor(Editor editor) {
     if (myReplacementBalloon != null) {
       myReplacementBalloon.hide();
