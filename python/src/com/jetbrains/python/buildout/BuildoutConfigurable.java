@@ -28,7 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A silly configurable to add buildout facet configurator to PyCharm
@@ -149,7 +152,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
-            fillLibrary(lib, paths);
+            fillLibrary(module.getProject(), lib, paths);
             return;
           }
         }
@@ -160,23 +163,31 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           .getLibraryTable(root_model.getProject())
           .createLibrary(BUILDOUT_LIB_NAME)
         ;
-        fillLibrary(lib, paths);
+        fillLibrary(module.getProject(), lib, paths);
         root_model.addLibraryEntry(lib);
         root_model.commit();
       }
     });
   }
 
-  private static void fillLibrary(Library lib, List<String> paths) {
+  private static void fillLibrary(Project project, Library lib, List<String> paths) {
     Library.ModifiableModel modifiableModel = lib.getModifiableModel();
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
+    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    Collections.addAll(roots, rootManager.getContentRoots());
+    Collections.addAll(roots, rootManager.getContentSourceRoots());
     if (paths != null) {
       for (String dir : paths) {
         VirtualFile pathEntry = LocalFileSystem.getInstance().findFileByPath(dir);
         if (pathEntry != null && !pathEntry.isDirectory() && pathEntry.getFileType() instanceof ArchiveFileType) {
           pathEntry = JarFileSystem.getInstance().getJarRootForLocalFile(pathEntry);
+        }
+        // buildout includes source root of project in paths; don't add it as library home
+        if (pathEntry != null && roots.contains(pathEntry)) {
+          continue;
         }
         if (pathEntry != null) {
           modifiableModel.addRoot(pathEntry, OrderRootType.CLASSES);
